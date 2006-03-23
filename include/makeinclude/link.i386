@@ -1,0 +1,40 @@
+OUTPUT_FORMAT("elf32-i386")
+ENTRY(entry)
+
+physical_load_addr	= 0x00101000;
+/*virtual_load_addr	= 0xC0000000;*/
+/*start = (entry - virtual_load_addr) + physical_load_addr;*/
+
+SECTIONS
+{
+  . = physical_load_addr; /*virtual_load_addr*/
+
+  .text : AT (physical_load_addr)
+  {
+    start_text = .;
+    *(.text)
+    *(.rodata)
+    end_text = .;
+  }
+
+  .data ALIGN (0x1000) : AT (physical_load_addr + (start_data - start_text))
+  {
+    start_data = .;
+    __CTOR_LIST__ = .; LONG((__CTOR_END__ - __CTOR_LIST__) / 4 - 2) *(.ctors) LONG(0) __CTOR_END__ = .; 
+    __DTOR_LIST__ = .; LONG((__DTOR_END__ - __DTOR_LIST__) / 4 - 2) *(.dtors) LONG(0) __DTOR_END__ = .; 
+    *(.gnu*)
+    *(.note*)
+    *(.data)
+    *(.rodata)
+    *(.comment)
+    *(COMMON)
+    end_data = .;
+  }
+
+  .bss : AT (physical_load_addr + (start_bss - start_text))
+  {
+    start_bss = .;
+    *(.bss)
+    end_bss = .;
+  }
+}

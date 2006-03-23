@@ -1,0 +1,48 @@
+###############################################################################
+###############################################################################
+clean.local:
+	$(RM) $(MY_OBJS) $(MY_LIB) $(MY_ELF)
+
+all.local: $(MY_OBJS) $(MY_LIB) $(MY_ELF)
+
+
+###############################################################################
+###############################################################################
+# Create library file from MY_OBJS + MY_LIBS
+$(MY_LIB): $(MY_OBJS) $(MY_LIBS)
+	@echo [LD ] $@
+	$(LD) -r -o $@ $^
+
+# Create object file from .c file
+$(VDIR)%.o: %.c $(VDIR).creation_stamp
+	@echo [CC ] $<
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $<
+
+# Create object file from .cpp file
+$(VDIR)%.o: %.cpp $(VDIR).creation_stamp
+	@echo [CC ] $<
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ -c $<
+
+# Create object file from .s file
+$(VDIR)%.o: %.s $(VDIR).creation_stamp
+	@echo [CC ] $<
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $<
+
+# Create object file from .S file
+$(VDIR)%.o: %.S $(VDIR).creation_stamp
+	@echo [CC ] $<
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ -c $<
+
+
+###############################################################################
+# ACE, rules.local.GNU
+###############################################################################
+ifeq ($(OS),"Windows_NT")
+$(VDIR).creation_stamp:
+	@if not exist $(VDIR) mkdir $(VDIR)
+	@echo > $@
+else
+$(VDIR).creation_stamp:
+	@-test -d $(VDIR) || mkdir $(VDIR) $(ACE_NUL_STDERR)
+	@touch $@
+endif

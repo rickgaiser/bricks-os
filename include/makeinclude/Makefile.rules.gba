@@ -1,0 +1,20 @@
+#######
+# GBA #
+#######
+CROSS_COMPILE	=arm-elf-
+CFLAGS		=-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork
+CXXFLAGS	=$(CFLAGS)
+LFLAGS		=-mthumb -mthumb-interwork
+
+INCLUDES	+= \
+
+
+# Create .elf file from MY_OBJS + MY_LIBS
+$(MY_ELF): $(MY_OBJS) $(MY_LIBS)
+	@echo [CC ] $@
+	$(CXX) $(LFLAGS) -specs=gba.specs $^ -o $@
+
+# Create .gba file from .elf file
+#%.gba: %.elf
+#	@echo [OBJ] $@
+#	$(OBJCOPY) -O binary $< $@

@@ -1,0 +1,37 @@
+#ifndef STRING_H
+#define STRING_H
+
+
+#include "ostream"
+
+
+namespace std
+{
+
+  #define STRING_SIZE 80
+
+  class string
+  {
+  public:
+    string();
+    string(const char * string);
+
+    const char * c_str() const;
+
+    bool operator==(const string & string) const;
+    bool operator==(const char   * string) const;
+
+    bool strcmp(const char * string) const;
+    int  strlen(const char * string) const;
+
+  private:
+    char string_[STRING_SIZE];
+    int iLength_;
+  };
+
+  ostream & operator<<(ostream & os, const string & s);
+
+}
+
+
+#endif
