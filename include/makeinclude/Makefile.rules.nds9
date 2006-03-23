@@ -1,0 +1,15 @@
+###########
+# DS ARM9 #
+###########
+CROSS_COMPILE	=arm-elf-
+CFLAGS		=-g -O2 -mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -mthumb-interwork -DARM9
+CXXFLAGS	=$(CFLAGS)
+LFLAGS		=-mthumb-interwork
+
+INCLUDES	+= \
+		  -ID:/dev/env/libnds/include \
+
+# Create .elf file from MY_OBJS + MY_LIBS
+$(MY_ELF): $(MY_OBJS) $(MY_LIBS)
+	@echo [CC ] $@
+	$(CXX) $(LFLAGS) -specs=ds_arm9.specs $^ -L$(DEVKITPRO)/libnds/lib -lnds9 -o $@

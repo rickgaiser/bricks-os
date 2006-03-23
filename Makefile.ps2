@@ -1,0 +1,8 @@
+MAKEFLAGS	+=--no-print-directory -s
+
+
+all:
+	make -f Makefile all TARGET=ps2
+
+clean:
+	make -f Makefile clean TARGET=ps2

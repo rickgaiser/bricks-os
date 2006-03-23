@@ -1,0 +1,16 @@
+MAKEFLAGS	+=--no-print-directory -s
+
+
+all:
+	make -f Makefile all TARGET=nds7
+	make -f Makefile all TARGET=nds9
+	arm-elf-objcopy -O binary bin/Bricks-nds7.elf bin/Bricks-nds7.bin
+	arm-elf-objcopy -O binary bin/Bricks-nds9.elf bin/Bricks-nds9.bin
+	ndstool -c bin/Bricks-nds.nds -9 bin/Bricks-nds9.bin -7 bin/Bricks-nds7.bin
+
+install:
+	D:/dev/nds/wifime/rt2560_app_wmb_1_4_beta_1/wmb.exe -data D:/dev/projects/bricks/bin/Bricks-nds.nds
+
+clean:
+	make -f Makefile clean TARGET=nds7
+	make -f Makefile clean TARGET=nds9

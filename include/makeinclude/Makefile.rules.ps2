@@ -1,0 +1,25 @@
+#######
+# PS2 #
+#######
+CROSS_COMPILE	=ee-
+CFLAGS		=-D_EE -O2 -G0 -Wall
+CXXFLAGS	=$(CFLAGS)
+LFLAGS		=-mno-crt0 -L$(PS2SDK)/ee/lib -T$(BRICKS_ROOT)/include/makeinclude/link.ps2
+
+INCLUDES	+= \
+		   -I$(PS2SDK)/ee/include \
+		   -I$(PS2SDK)/common/include
+
+STARTUP_LIBS	=
+STARTUP_LIBS	+= -lsupc++
+STARTUP_LIBS	+= \
+		  -ldebug \
+		  -lc \
+		  -lsyscall \
+		  -lkernel
+
+
+# Create .elf file from MY_OBJS + MY_LIBS
+$(MY_ELF): $(MY_OBJS) $(MY_LIBS)
+	@echo [CC ] $@
+	$(CC) $(LFLAGS) -o $@ $(PS2SDK)/ee/startup/crt0.o $^ $(STARTUP_LIBS)
