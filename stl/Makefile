@@ -1,4 +1,3 @@
-#TARGET		=gba
 LIB		=stl
 OBJS		=\
 		 ostream \
