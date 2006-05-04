@@ -1,0 +1,43 @@
+#ifndef VECTOR_H
+#define VECTOR_H
+
+
+namespace std
+{
+
+  
+  template <class T>
+  class vector
+  {
+  public:
+    // FIXME: Should be dynamic but we don't have memory management
+    #define MAX_VECTOR_SIZE 10
+
+    typedef T value_type;
+    typedef T * pointer;
+    typedef T & reference;
+    typedef const T & const_reference;
+    typedef unsigned int size_type;
+
+  public:
+    vector();
+    virtual ~vector();
+
+    void push_back(const_reference t);
+
+    const_reference operator[](size_type n) const;
+    reference operator[](size_type n);
+
+  private:
+    value_type vec_[MAX_VECTOR_SIZE];
+    size_type  iUsed_;
+  };
+
+
+};
+
+
+#include "vector.inl"
+
+
+#endif

@@ -8,11 +8,12 @@
 namespace std
 {
 
-  #define STRING_SIZE 80
-
   class string
   {
   public:
+    // FIXME: Should be dynamic but we don't have memory management
+    #define STRING_SIZE 80
+
     string();
     string(const char * string);
 
