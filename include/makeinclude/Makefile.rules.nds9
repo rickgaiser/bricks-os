@@ -1,7 +1,7 @@
 ###########
 # DS ARM9 #
 ###########
-CROSS_COMPILE	=arm-elf-
+CROSS_COMPILE	=arm-eabi-
 CFLAGS		=-g -O2 -mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -mthumb-interwork -DARM9
 CXXFLAGS	=$(CFLAGS)
 LFLAGS		=-mthumb-interwork

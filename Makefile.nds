@@ -4,8 +4,8 @@ MAKEFLAGS	+=--no-print-directory -s
 all:
 	make -f Makefile all TARGET=nds7
 	make -f Makefile all TARGET=nds9
-	arm-elf-objcopy -O binary bin/Bricks-nds7.elf bin/Bricks-nds7.bin
-	arm-elf-objcopy -O binary bin/Bricks-nds9.elf bin/Bricks-nds9.bin
+	arm-eabi-objcopy -O binary bin/Bricks-nds7.elf bin/Bricks-nds7.bin
+	arm-eabi-objcopy -O binary bin/Bricks-nds9.elf bin/Bricks-nds9.bin
 	ndstool -c bin/Bricks-nds.nds -9 bin/Bricks-nds9.bin -7 bin/Bricks-nds7.bin
 
 install:
