@@ -1,18 +1,20 @@
 ifeq ($(TARGET),gba)
-  DIRS = arm
+  ARCH = arm
 endif
 ifeq ($(TARGET),nds7)
-  DIRS = arm
+  ARCH = arm
 endif
 ifeq ($(TARGET),nds9)
-  DIRS = arm
+  ARCH = arm
 endif
 ifeq ($(TARGET),ps2)
-  DIRS = mips
+  ARCH = mips
 endif
 ifeq ($(TARGET),i386)
-  DIRS = i386
+  ARCH = i386
 endif
+
+DIRS = $(ARCH)
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

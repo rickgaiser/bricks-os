@@ -1,6 +1,5 @@
 LIB		=kernel
 OBJS		=\
-		 arch \
 		 interrupt \
 		 interruptManager \
 		 timerManager \

@@ -1,10 +1,9 @@
-LIBS		+=archarm
 LIB		=arch
 OBJS		=\
                  support \
                  isr \
-		 gbaArch \
-		 gbaIRQ \
+		 arch \
+		 irq \
 		 gbaVideo \
 		 gbaKeyboard
 

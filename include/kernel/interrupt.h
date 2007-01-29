@@ -2,7 +2,7 @@
 #define INTERRUPT_H
 
 
-#include "archIRQ.h"
+#include "asm/irq.h"
 
 
 #define MAX_OBSERVERS 2
@@ -33,7 +33,7 @@ public:
 
   virtual int  handle(int isr);
 
-  IArchIRQ                 * hardware_;
+  CIRQ                     * hardware_;
 
 private:
   IInterruptServiceRoutine * observers_[MAX_OBSERVERS];

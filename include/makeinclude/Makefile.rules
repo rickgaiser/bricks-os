@@ -1,13 +1,34 @@
-###############################################################################
-###############################################################################
+#----------------------------------------------------------------------------
+ifeq ($(strip $(ARCH)),)
+  $(error "ARCH not specified")
+endif
+ifeq ($(strip $(TARGET)),)
+  $(error "TARGET not specified")
+endif
+
+#----------------------------------------------------------------------------
+ifndef VDIR
+VDIR            =obj-$(TARGET)/
+endif
+ifndef VSHDIR
+  VSHDIR        =shobj-$(TARGET)/
+endif
+
+#----------------------------------------------------------------------------
 MY_OBJS		=$(addprefix $(VDIR),$(addsuffix .o,$(OBJS)))
-MY_LIB		=$(addprefix $(BRICKS_ROOT)/lib/lib,$(addsuffix -$(TARGET).a,$(LIB)))
-MY_ELF		=$(addprefix $(BRICKS_ROOT)/bin/,$(addsuffix -$(TARGET).elf,$(ELF)))
-MY_LIBS		=$(addprefix $(BRICKS_ROOT)/lib/lib,$(addsuffix -$(TARGET).a,$(LIBS)))
+MY_LIB		=$(addprefix $(BRICKS_ROOT)/lib/$(TARGET)/lib,$(addsuffix .a,$(LIB)))
+MY_ELF		=$(addprefix $(BRICKS_ROOT)/bin/$(TARGET)/,$(addsuffix .elf,$(ELF)))
+MY_LIBS		=$(addprefix $(BRICKS_ROOT)/lib/$(TARGET)/lib,$(addsuffix .a,$(LIBS)))
 
+#----------------------------------------------------------------------------
+INCLUDES	+= \
+		-I. \
+		-I$(BRICKS_ROOT)/include \
+		-I$(BRICKS_ROOT)/include/include-$(ARCH) \
+		-I$(BRICKS_ROOT)/include/posix \
+		-I$(BRICKS_ROOT)/include/stl \
 
-###############################################################################
-###############################################################################
+#----------------------------------------------------------------------------
 AS		=$(CROSS_COMPILE)as
 LD		=$(CROSS_COMPILE)ld
 CC		=$(CROSS_COMPILE)gcc
@@ -20,42 +41,18 @@ OBJCOPY		=$(CROSS_COMPILE)objcopy
 OBJDUMP		=$(CROSS_COMPILE)objdump
 AWK		=awk
 
-INCLUDES	+= \
-		  -I. \
-		  -I$(BRICKS_ROOT)/include \
-		  -I$(BRICKS_ROOT)/include/posix \
-		  -I$(BRICKS_ROOT)/include/stl \
-
-
-###############################################################################
-# ACE, wrapper_macros.GNU
-###############################################################################
-# Let users override the default VDIR directories
-ifndef VDIR
-VDIR            = obj-$(TARGET)/
-endif
-ifndef VSHDIR
-  VSHDIR        = shobj-$(TARGET)/
-endif
-
-
-###############################################################################
-###############################################################################
+#----------------------------------------------------------------------------
 include $(BRICKS_ROOT)/include/makeinclude/Makefile.rules.$(TARGET)
 
-
-###############################################################################
+#----------------------------------------------------------------------------
 # ACE, macros.GNU
-###############################################################################
+#----------------------------------------------------------------------------
 include $(BRICKS_ROOT)/include/makeinclude/macros.GNU
 
-
-###############################################################################
-###############################################################################
+#----------------------------------------------------------------------------
 include $(BRICKS_ROOT)/include/makeinclude/rules.local.BRICKS
 
-
-###############################################################################
+#----------------------------------------------------------------------------
 # ACE, rules.nested.GNU
-###############################################################################
+#----------------------------------------------------------------------------
 include $(BRICKS_ROOT)/include/makeinclude/rules.nested.GNU

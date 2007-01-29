@@ -3,7 +3,7 @@
 
 
 #include "interrupt.h"
-#include "archIRQ.h"
+#include "asm/irq.h"
 
 
 // Max number of supported interrupts
@@ -22,8 +22,8 @@ public:
   void attach(unsigned int irq, IInterruptServiceRoutine * isr);
   void detach(unsigned int irq, IInterruptServiceRoutine * isr);
 
-  void attach(unsigned int irq, IArchIRQ * irqhardware);
-  void detach(unsigned int irq, IArchIRQ * irqhardware);
+  void attach(unsigned int irq, CIRQ * irqhardware);
+  void detach(unsigned int irq, CIRQ * irqhardware);
 
   unsigned int isr(unsigned int irq, pt_regs * regs);
 

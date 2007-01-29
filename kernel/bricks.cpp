@@ -1,8 +1,9 @@
 // SYS include files
 #include "kernel/bricks.h"
-#include "kernel/arch.h"
 #include "kernel/timerManager.h"
 #include "kernel/taskManager.h"
+#include "asm/arch.h"
+#include "asm/cpu.h"
 
 // STL include files
 #include "iostream"
@@ -21,7 +22,7 @@ CBricks   CBricks::singleton_;
 CBricks *
 CBricks::instance()
 {
-  return(&singleton_);
+  return &singleton_;
 }
 
 // -----------------------------------------------------------------------------
@@ -40,7 +41,7 @@ int
 CBricks::main()
 {
   // Initialize architecture first
-  if(arch::pArch->init() == -1)
+  if(arch::init() == -1)
     std::cout<<"Arch...ERROR"<<std::endl;
   else
     std::cout<<"Arch...OK"<<std::endl;
@@ -64,7 +65,7 @@ CBricks::main()
   std::cout<<"========="<<std::endl;
 
   // Enable interrupts
-  arch::pProcessor->sti();
+  CCPU::sti();
 
   // Forever do nothing
 //  std::cout<<"Entering key loop"<<std::endl;

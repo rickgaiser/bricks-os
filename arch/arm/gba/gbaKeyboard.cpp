@@ -1,6 +1,6 @@
 #include "gbaKeyboard.h"
 #include "kernel/interruptManager.h"
-#include "gba.h"
+#include "asm/gba.h"
 #include "iostream"
   
 

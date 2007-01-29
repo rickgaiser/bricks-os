@@ -1,5 +1,5 @@
 #include "kernel/interruptManager.h"
-#include "kernel/arch.h"
+#include "asm/cpu.h"
 #include "iostream"
 
 
@@ -57,7 +57,7 @@ CInterruptManager::detach(unsigned int irq, IInterruptServiceRoutine * isr)
 
 // -----------------------------------------------------------------------------
 void
-CInterruptManager::attach(unsigned int irq, IArchIRQ * irqhardware)
+CInterruptManager::attach(unsigned int irq, CIRQ * irqhardware)
 {
   if(irq < MAX_INT_COUNT)
     interrupt_[irq].hardware_ = irqhardware;
@@ -65,7 +65,7 @@ CInterruptManager::attach(unsigned int irq, IArchIRQ * irqhardware)
 
 // -----------------------------------------------------------------------------
 void
-CInterruptManager::detach(unsigned int irq, IArchIRQ * irqhardware)
+CInterruptManager::detach(unsigned int irq, CIRQ * irqhardware)
 {
   if(irq < MAX_INT_COUNT)
     interrupt_[irq].hardware_ = 0;
@@ -76,7 +76,7 @@ unsigned int
 CInterruptManager::isr(unsigned int irq, pt_regs * regs)
 {
   // First disable interrupts
-  arch::pProcessor->cli();
+  CCPU::cli();
 
   if(irq < MAX_INT_COUNT)
   {
@@ -96,7 +96,7 @@ CInterruptManager::isr(unsigned int irq, pt_regs * regs)
   }
 
   // Enable interrupt again and return
-  arch::pProcessor->sti();
+  CCPU::sti();
 
-  return(0);
+  return 0;
 }
