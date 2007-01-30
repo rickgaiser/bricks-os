@@ -73,10 +73,9 @@ CBricks::main()
   {
     char buffer[10];
 
-    ::read(STDIN, buffer, 10);
-
-    std::cout<<"key pressed: "<<buffer<<std::endl;
+    if(::read(STDIN, buffer, 10) > 0)
+      std::cout<<"key pressed: "<<buffer<<std::endl;
   }
 
-  return(0);
+  return 0;
 }

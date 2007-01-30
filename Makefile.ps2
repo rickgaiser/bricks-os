@@ -2,7 +2,7 @@ MAKEFLAGS	+=--no-print-directory -s
 
 
 all:
-	make -f Makefile all TARGET=ps2
+	make -f Makefile all ARCH=mips TARGET=ps2
 
 clean:
-	make -f Makefile clean TARGET=ps2
+	make -f Makefile clean ARCH=mips TARGET=ps2

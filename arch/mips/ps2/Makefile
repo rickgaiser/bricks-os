@@ -1,7 +1,7 @@
 LIB		=arch
 OBJS		=\
 		 support\
-                 ps2Arch\
+		 arch\
 		 ps2Video\
 
 
