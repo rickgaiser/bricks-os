@@ -6,7 +6,9 @@ OBJS		=\
 		 video \
 		 fileio \
 		 bricks \
-		 timeValue\
+		 timeValue \
+		 memoryManager \
+
 
 #		 task \
 		 taskManager \

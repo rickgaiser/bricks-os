@@ -2,38 +2,32 @@
 #define MEMORYMANAGER_H
 
 
-#include "memoryMap.h"
+#include "stddef.h"
 
 
-/**
- * \brief Memory Manager class owns all physical memory
- *
- *   The memory manager is the owner of all physical memory. It is responsible
- *   for:
- *     - creating memory maps (CMemoryMap objects)
- *     - deleting memory maps
- *     - adding sections to memory maps
- */
+#define kmalloc CMemoryManager::malloc
+#define kfree   CMemoryManager::free
+
+
+struct SMemBlockHeader
+{
+  bool bAllocated;
+  size_t iSize;
+
+  // List
+  SMemBlockHeader * pPrev;
+  SMemBlockHeader * pNext;
+};
+
 class CMemoryManager
 {
 public:
-  CMemoryManager();
-  virtual ~CMemoryManager();
-
-  /**
-   * \brief Create CMemoryMap object and release ownership
-   */
-  CMemoryMap * createMemoryMap();
-  /**
-   * \brief Gain ownership of CMemoryMap object and delete it
-   */
-  void deleteMemoryMap(CMemoryMap * pMemoryMAp);
-  /**
-   * \brief Add a section to CMemoryMap object
-   */
-  void addSection(CMemoryMap * pMemoryMap, unsigned char * pData, unsigned int iSize, unsigned char * pOffset);
+  static int init();
+  static void * malloc(size_t size/*, SHeap * heap*/);
+  static void free(void * block);
 
 private:
+  CMemoryManager(){}
 };
 
 
