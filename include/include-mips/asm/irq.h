@@ -1,5 +1,8 @@
-#ifndef IRQ_H
-#define IRQ_H
+#ifndef ASM_IRQ_H
+#define ASM_IRQ_H
+
+
+#define MAX_INTERRUPTS 0x30 // ???
 
 
 // -----------------------------------------------------------------------------
