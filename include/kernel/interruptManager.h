@@ -6,10 +6,6 @@
 #include "asm/irq.h"
 
 
-// Max number of supported interrupts
-#define MAX_INT_COUNT 0x30
-
-
 // Early declaration
 struct pt_regs;
 
@@ -33,7 +29,7 @@ private:
 
   static CInterruptManager   singleton_;   // Interrupt Manager Singleton
 
-  CInterrupt   interrupt_[MAX_INT_COUNT];  // Interrupt objects
+  CInterrupt   interrupt_[MAX_INTERRUPTS];  // Interrupt objects
 };
 
 

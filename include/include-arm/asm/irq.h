@@ -1,7 +1,8 @@
-#ifndef IRQ_H
-#define IRQ_H
+#ifndef ASM_IRQ_H
+#define ASM_IRQ_H
 
 
+#include "asm/arch/irq.h"
 #include "asm/gba.h"
 
 

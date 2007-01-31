@@ -29,7 +29,7 @@ CInterruptManager::~CInterruptManager()
 void
 CInterruptManager::attach(unsigned int irq, IInterruptServiceRoutine * isr)
 {
-  if(irq < MAX_INT_COUNT)
+  if(irq < MAX_INTERRUPTS)
   {
     interrupt_[irq].attach(isr);
     // If this is the first ISR, enable the interrupt
@@ -44,7 +44,7 @@ CInterruptManager::attach(unsigned int irq, IInterruptServiceRoutine * isr)
 void
 CInterruptManager::detach(unsigned int irq, IInterruptServiceRoutine * isr)
 {
-  if(irq < MAX_INT_COUNT)
+  if(irq < MAX_INTERRUPTS)
   {
     interrupt_[irq].detach(isr);
     // If this is the last ISR, disable the interrupt
@@ -59,7 +59,7 @@ CInterruptManager::detach(unsigned int irq, IInterruptServiceRoutine * isr)
 void
 CInterruptManager::attach(unsigned int irq, CIRQ * irqhardware)
 {
-  if(irq < MAX_INT_COUNT)
+  if(irq < MAX_INTERRUPTS)
     interrupt_[irq].hardware_ = irqhardware;
 }
 
@@ -67,7 +67,7 @@ CInterruptManager::attach(unsigned int irq, CIRQ * irqhardware)
 void
 CInterruptManager::detach(unsigned int irq, CIRQ * irqhardware)
 {
-  if(irq < MAX_INT_COUNT)
+  if(irq < MAX_INTERRUPTS)
     interrupt_[irq].hardware_ = 0;
 }
 
@@ -78,7 +78,7 @@ CInterruptManager::isr(unsigned int irq, pt_regs * regs)
   // First disable interrupts
   CCPU::cli();
 
-  if(irq < MAX_INT_COUNT)
+  if(irq < MAX_INTERRUPTS)
   {
     if(interrupt_[irq].isrCount() != 0)
     {

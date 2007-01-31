@@ -25,6 +25,7 @@ INCLUDES	+= \
 		-I. \
 		-I$(BRICKS_ROOT)/include \
 		-I$(BRICKS_ROOT)/include/include-$(ARCH) \
+		-I$(BRICKS_ROOT)/include/include-$(ARCH)/include-$(TARGET) \
 		-I$(BRICKS_ROOT)/include/posix \
 		-I$(BRICKS_ROOT)/include/stl \
 
