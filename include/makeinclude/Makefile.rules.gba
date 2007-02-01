@@ -1,18 +1,21 @@
-#######
-# GBA #
-#######
+#----------------------------------------------------------------------------
+# GBA
+#----------------------------------------------------------------------------
+MY_INCL_PATH	+=\
+
+MY_LIBS_PATH	+=\
+
+#----------------------------------------------------------------------------
 CROSS_COMPILE	=arm-eabi-
 CFLAGS		=-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork
 CXXFLAGS	=$(CFLAGS)
-LFLAGS		=-mthumb -mthumb-interwork
+LFLAGS		=-mthumb -mthumb-interwork -specs=gba.specs 
 
-INCLUDES	+= \
-
-
+#----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
-$(MY_ELF): $(MY_OBJS) $(MY_LIBS)
+$(MY_ELF): $(MY_OBJS)
 	@echo [CC ] $@
-	$(CXX) $(LFLAGS) -specs=gba.specs $^ -o $@
+	$(CXX) $(LFLAGS) -o $@ $^ $(MY_LIBS)
 
 # Create .gba file from .elf file
 #%.gba: %.elf

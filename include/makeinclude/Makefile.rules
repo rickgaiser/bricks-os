@@ -13,21 +13,33 @@ endif
 ifndef VSHDIR
   VSHDIR        =shobj-$(TARGET)/
 endif
+ifndef ELF_PATH
+  ELF_PATH	=$(BRICKS_ROOT)/bin/$(TARGET)/
+endif
+ifndef LIB_PATH
+  LIB_PATH	=$(BRICKS_ROOT)/lib/$(TARGET)/
+endif
 
 #----------------------------------------------------------------------------
+MY_ELF		=$(addprefix $(ELF_PATH),$(addsuffix .elf,$(ELF)))
+MY_INCL_PATH	=$(addprefix -I,$(INCL_PATH))
+MY_LIB		=$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(LIB)))
+MY_LIBS		=$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(LIBS)))
+#MY_LIBS		=$(addprefix -l,$(LIBS))
+MY_LIBS_PATH	=$(addprefix -L,$(LIBS_PATH))
 MY_OBJS		=$(addprefix $(VDIR),$(addsuffix .o,$(OBJS)))
-MY_LIB		=$(addprefix $(BRICKS_ROOT)/lib/$(TARGET)/lib,$(addsuffix .a,$(LIB)))
-MY_ELF		=$(addprefix $(BRICKS_ROOT)/bin/$(TARGET)/,$(addsuffix .elf,$(ELF)))
-MY_LIBS		=$(addprefix $(BRICKS_ROOT)/lib/$(TARGET)/lib,$(addsuffix .a,$(LIBS)))
 
 #----------------------------------------------------------------------------
-INCLUDES	+= \
+MY_INCL_PATH	+= \
 		-I. \
 		-I$(BRICKS_ROOT)/include \
 		-I$(BRICKS_ROOT)/include/include-$(ARCH) \
 		-I$(BRICKS_ROOT)/include/include-$(ARCH)/include-$(TARGET) \
 		-I$(BRICKS_ROOT)/include/posix \
 		-I$(BRICKS_ROOT)/include/stl \
+
+MY_LIBS_PATH	+= \
+		-L$(BRICKS_ROOT)/lib/$(TARGET) \
 
 #----------------------------------------------------------------------------
 AS		=$(CROSS_COMPILE)as

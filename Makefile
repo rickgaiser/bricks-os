@@ -3,7 +3,6 @@ DIRS		=\
 		 libc \
 		 arch \
 		 kernel \
-#		 tests \
 
 LIBS		=\
 		 arch \

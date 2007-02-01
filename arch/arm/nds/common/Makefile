@@ -4,8 +4,8 @@ OBJS		=\
 		 dsIPC\
 
 
-INCLUDES	+=\
-		 -I$(DEVKITPRO)/libnds/include\
+INCL_PATH	+=\
+		 $(DEVKITPRO)/libnds/include\
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

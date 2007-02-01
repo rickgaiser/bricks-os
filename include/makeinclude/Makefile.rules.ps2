@@ -6,7 +6,7 @@ CFLAGS		=-D_EE -O2 -G0 -Wall
 CXXFLAGS	=$(CFLAGS)
 LFLAGS		=-mno-crt0 -L$(PS2SDK)/ee/lib -T$(BRICKS_ROOT)/include/makeinclude/link.ps2
 
-INCLUDES	+= \
+MY_INCL_PATH	+= \
 		   -I$(PS2SDK)/ee/include \
 		   -I$(PS2SDK)/common/include
 

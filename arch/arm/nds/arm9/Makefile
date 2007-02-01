@@ -13,9 +13,9 @@ OBJS		=\
 		 dsCart\
 
 
-INCLUDES	+=\
-		 -I$(DEVKITPRO)/libnds/include\
-		 -I../common\
+INCL_PATH	+=\
+		 $(DEVKITPRO)/libnds/include\
+		 ../common\
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU
