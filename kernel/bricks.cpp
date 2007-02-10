@@ -1,7 +1,9 @@
 // SYS include files
 #include "kernel/bricks.h"
+#include "kernel/interruptManager.h"
 #include "kernel/timerManager.h"
 #include "kernel/taskManager.h"
+#include "kernel/memoryManager.h"
 #include "asm/arch.h"
 #include "asm/cpu.h"
 
@@ -14,45 +16,25 @@
 
 
 // -----------------------------------------------------------------------------
-// Static data members
-CBricks   CBricks::singleton_;
-
-
-// -----------------------------------------------------------------------------
-CBricks *
-CBricks::instance()
-{
-  return &singleton_;
-}
-
-// -----------------------------------------------------------------------------
-CBricks::CBricks()
- : pInterruptManager_(CInterruptManager::instance())
-{
-}
-
-// -----------------------------------------------------------------------------
-CBricks::~CBricks()
-{
-}
-
-// -----------------------------------------------------------------------------
 int
-CBricks::main()
+bricks_main()
 {
+  // Initialize the memory manager so we can use new/delete/malloc/free
+  CMemoryManager::init();
+
   // Initialize architecture first
   if(arch::init() == -1)
     std::cout<<"Arch...ERROR"<<std::endl;
   else
     std::cout<<"Arch...OK"<<std::endl;
-
+/*
   // Initialize timer manager
   std::cout<<"Timer manager...";
   if(CTimerManager::instance()->init() == -1)
     std::cout<<"ERROR"<<std::endl;
   else
     std::cout<<"OK"<<std::endl;
-/*  
+
   // Initialize task manager
   std::cout<<"Task manager...";
   if(CTaskManager::instance()->init() == -1)

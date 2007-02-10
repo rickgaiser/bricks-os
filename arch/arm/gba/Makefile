@@ -6,7 +6,6 @@ OBJS		=\
 		 irq \
 		 gbaVideo \
 		 gbaKeyboard \
-		 heap \
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

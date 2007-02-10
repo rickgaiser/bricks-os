@@ -2,7 +2,7 @@
 #define CPU_H
 
 
-#include "gba.h"
+#include "asm/arch/registers.h"
 
 
 class CCPU

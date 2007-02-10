@@ -9,7 +9,7 @@ all.local: $(MY_OBJS) $(MY_LIB) $(MY_ELF)
 # Create library file from MY_OBJS + MY_LIBS
 $(MY_LIB): $(MY_OBJS)
 	@echo [LD ] $@
-	$(LD) -r -o $@ $^ $(MY_LIBS)
+	$(LD) -r -o $@ $^ $(MY_LIBS_PATH) $(MY_LIBS)
 
 # Create object file from .c file
 $(VDIR)%.o: %.c $(VDIR).creation_stamp

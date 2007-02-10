@@ -5,25 +5,8 @@
 
 // -----------------------------------------------------------------------------
 // Static data members
-CInterruptManager   CInterruptManager::singleton_;
+CInterrupt   CInterruptManager::interrupt_[MAX_INTERRUPTS];
 
-
-// -----------------------------------------------------------------------------
-CInterruptManager *
-CInterruptManager::instance()
-{
-  return(&singleton_);
-}
-
-// -----------------------------------------------------------------------------
-CInterruptManager::CInterruptManager()
-{
-}
-
-// -----------------------------------------------------------------------------
-CInterruptManager::~CInterruptManager()
-{
-}
 
 // -----------------------------------------------------------------------------
 void

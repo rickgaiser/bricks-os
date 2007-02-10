@@ -10,16 +10,16 @@ CDSCart::CDSCart()
 // -----------------------------------------------------------------------------
 CDSCart::~CDSCart()
 {
-  CInterruptManager::instance()->detach(13, this);
+  CInterruptManager::detach(13, this);
 }
 
 // -----------------------------------------------------------------------------
 int
 CDSCart::init()
 {
-  CInterruptManager::instance()->attach(13, this);
+  CInterruptManager::attach(13, this);
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -28,5 +28,5 @@ CDSCart::isr(int irq)
 {
   std::cout<<"CDSCart::isr: gba cart ejected"<<std::endl;
 
-  return(0);
+  return 0;
 }

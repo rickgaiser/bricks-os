@@ -2,7 +2,6 @@
 #include "asm/irq.h"
 
 
-
 // Assembler isr function calling our "C" isr function
 extern "C" void __isr();
 

@@ -1,6 +1,6 @@
 #include "gbaKeyboard.h"
 #include "kernel/interruptManager.h"
-#include "asm/gba.h"
+#include "asm/arch/registers.h"
 #include "iostream"
   
 
@@ -34,9 +34,9 @@ CGBAKeyboard::init()
              | KEY_R
              | KEY_L;
 
-  CInterruptManager::instance()->attach(12, this);
+  CInterruptManager::attach(12, this);
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------

@@ -1,25 +1,21 @@
 #include "kernel/bricks.h"
 #include "kernel/memoryManager.h"
-#include "stddef.h"
 
 
-// -----------------------------------------------------------------------------
-void *
-operator new(size_t size)
+extern char __iheap_start, __iwram_top;
+extern char __eheap_start, __eheap_end;
+
+SHeap heaps[] =
 {
-  return kmalloc(size);
-}
+  {&__eheap_start, &__eheap_end - &__eheap_start, 0}
+ ,{&__iheap_start, &__iwram_top - &__iheap_start, 0}
+};
+const int iHeapCount(sizeof(heaps) / sizeof(SHeap));
 
-// -----------------------------------------------------------------------------
-void
-operator delete(void * mem)
-{
-  kfree(mem);
-}
 
 // -----------------------------------------------------------------------------
 int
 main(int, char *[])
 {
-  return CBricks::instance()->main();
+  return bricks_main();
 }

@@ -1,15 +1,18 @@
-###########
-# DS ARM7 #
-###########
+#----------------------------------------------------------------------------
+# DS ARM7
+#----------------------------------------------------------------------------
+MY_INCL_PATH	+=\
+
+MY_LIBS_PATH	+=\
+
+#----------------------------------------------------------------------------
 CROSS_COMPILE	=arm-eabi-
-CFLAGS		=-g -O2 -mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb-interwork -DARM7
-CXXFLAGS	=$(CFLAGS)
-LFLAGS		=-mthumb-interwork
+CFLAGS		=-O2 -mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb-interwork -DARM7
+CXXFLAGS	=$(CFLAGS) -fno-rtti -fno-exceptions
+LFLAGS		=-mthumb-interwork -specs=ds_arm7.specs $(MY_LIBS_PATH)
 
-MY_INCL_PATH	+= \
-		  -ID:/dev/env/libnds/include \
-
+#----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
-$(MY_ELF): $(MY_OBJS) $(MY_LIBS)
+$(MY_ELF): $(MY_OBJS)
 	@echo [CC ] $@
-	$(CXX) $(LFLAGS) -specs=ds_arm7.specs $^ -L$(DEVKITPRO)/libnds/lib -lnds7 -o $@
+	$(CXX) $(LFLAGS) $^ $(MY_LIBS) -o $@

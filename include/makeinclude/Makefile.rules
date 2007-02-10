@@ -24,8 +24,7 @@ endif
 MY_ELF		=$(addprefix $(ELF_PATH),$(addsuffix .elf,$(ELF)))
 MY_INCL_PATH	=$(addprefix -I,$(INCL_PATH))
 MY_LIB		=$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(LIB)))
-MY_LIBS		=$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(LIBS)))
-#MY_LIBS		=$(addprefix -l,$(LIBS))
+MY_LIBS		=$(addprefix -l,$(LIBS))
 MY_LIBS_PATH	=$(addprefix -L,$(LIBS_PATH))
 MY_OBJS		=$(addprefix $(VDIR),$(addsuffix .o,$(OBJS)))
 

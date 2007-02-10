@@ -1,15 +1,20 @@
-###########
-# DS ARM9 #
-###########
+#----------------------------------------------------------------------------
+# DS ARM9
+#----------------------------------------------------------------------------
+MY_INCL_PATH	+=\
+                -I$(DEVKITPRO)/libnds/include \
+
+MY_LIBS_PATH	+=\
+                -L$(DEVKITPRO)/libnds/lib \
+
+#----------------------------------------------------------------------------
 CROSS_COMPILE	=arm-eabi-
-CFLAGS		=-g -O2 -mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -mthumb-interwork -DARM9
-CXXFLAGS	=$(CFLAGS)
-LFLAGS		=-mthumb-interwork
+CFLAGS		=-O2 -mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -mthumb-interwork -DARM9
+CXXFLAGS	=$(CFLAGS) -fno-rtti -fno-exceptions
+LFLAGS		=-mthumb-interwork -specs=ds_arm9.specs $(MY_LIBS_PATH)
 
-MY_INCL_PATH	+= \
-		  -ID:/dev/env/libnds/include \
-
+#----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
-$(MY_ELF): $(MY_OBJS) $(MY_LIBS)
+$(MY_ELF): $(MY_OBJS)
 	@echo [CC ] $@
-	$(CXX) $(LFLAGS) -specs=ds_arm9.specs $^ -L$(DEVKITPRO)/libnds/lib -lnds9 -o $@
+	$(CXX) $(LFLAGS) $^ $(MY_LIBS) -lnds9 -o $@

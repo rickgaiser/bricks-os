@@ -19,6 +19,13 @@ struct SMemBlockHeader
   SMemBlockHeader * pNext;
 };
 
+struct SHeap
+{
+  void * pStart;
+  size_t iSize;
+  SMemBlockHeader * pListHead;
+};
+
 class CMemoryManager
 {
 public:
@@ -29,6 +36,10 @@ public:
 private:
   CMemoryManager(){}
 };
+
+
+extern SHeap heaps[];
+extern const int iHeapCount;
 
 
 #endif

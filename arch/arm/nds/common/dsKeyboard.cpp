@@ -1,16 +1,6 @@
 #include "dsKeyboard.h"
 #include "kernel/interruptManager.h"
-#include "nds/arm9/input.h"
-#include "nds/registers_alt.h"
-  
-
-// These shouldn't be here
-#ifdef ARM7
-#define REG_KEYXY    (*(vu16*)0x04000136)
-#endif
-#define KEY_CNT_IRQ  (1<<14)
-#define KEY_CNT_OR   (0<<15)
-#define KEY_CNT_AND  (1<<15)
+#include "asm/arch/registers.h"
   
 
 // -----------------------------------------------------------------------------
@@ -43,9 +33,9 @@ CDSKeyboard::init()
              | KEY_R
              | KEY_L;
 
-  CInterruptManager::instance()->attach(12, this);
+  CInterruptManager::attach(12, this);
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -81,7 +71,7 @@ CDSKeyboard::isr(int irq)
 
   iBufferCount_ = 1;
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -109,5 +99,5 @@ CDSKeyboard::read(void * data, size_t size)
     iRetVal = -1;
   }
   
-  return(iRetVal);
+  return iRetVal;
 }

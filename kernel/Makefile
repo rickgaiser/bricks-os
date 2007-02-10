@@ -2,7 +2,6 @@ LIB		=kernel
 OBJS		=\
 		 interrupt \
 		 interruptManager \
-		 timerManager \
 		 video \
 		 fileio \
 		 bricks \
@@ -12,5 +11,6 @@ OBJS		=\
 
 #		 task \
 		 taskManager \
+		 timerManager \
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

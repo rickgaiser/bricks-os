@@ -13,23 +13,18 @@ struct pt_regs;
 class CInterruptManager
 {
 public:
-  static CInterruptManager * instance();  
+  static void attach(unsigned int irq, IInterruptServiceRoutine * isr);
+  static void detach(unsigned int irq, IInterruptServiceRoutine * isr);
 
-  void attach(unsigned int irq, IInterruptServiceRoutine * isr);
-  void detach(unsigned int irq, IInterruptServiceRoutine * isr);
+  static void attach(unsigned int irq, CIRQ * irqhardware);
+  static void detach(unsigned int irq, CIRQ * irqhardware);
 
-  void attach(unsigned int irq, CIRQ * irqhardware);
-  void detach(unsigned int irq, CIRQ * irqhardware);
-
-  unsigned int isr(unsigned int irq, pt_regs * regs);
+  static unsigned int isr(unsigned int irq, pt_regs * regs);
 
 private:
-  CInterruptManager();
-  virtual ~CInterruptManager();
+  CInterruptManager(){}
 
-  static CInterruptManager   singleton_;   // Interrupt Manager Singleton
-
-  CInterrupt   interrupt_[MAX_INTERRUPTS];  // Interrupt objects
+  static CInterrupt   interrupt_[MAX_INTERRUPTS];  // Interrupt objects
 };
 
 

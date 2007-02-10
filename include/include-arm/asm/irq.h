@@ -3,7 +3,7 @@
 
 
 #include "asm/arch/irq.h"
-#include "asm/gba.h"
+#include "asm/arch/registers.h"
 
 
 //---------------------------------------------------------------------------

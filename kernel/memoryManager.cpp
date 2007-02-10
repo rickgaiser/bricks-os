@@ -1,9 +1,22 @@
 #include "kernel/memoryManager.h"
-#include "asm/heap.h"
 
 
-const static int iMinBlockSize(sizeof(SMemBlockHeader) + 1);
+const size_t iMinBlockSize(sizeof(SMemBlockHeader) + 1);
 
+
+// -----------------------------------------------------------------------------
+void *
+operator new(size_t size)
+{
+  return kmalloc(size);
+}
+
+// -----------------------------------------------------------------------------
+void
+operator delete(void * mem)
+{
+  kfree(mem);
+}
 
 // -----------------------------------------------------------------------------
 int
@@ -13,7 +26,6 @@ CMemoryManager::init()
   {
     SHeap * pHeap = &(heaps[i]);
     SMemBlockHeader * pHeader = (SMemBlockHeader *)pHeap->pStart;
-    int size(pHeap->iSize);
 
     // Initialize the header
     pHeader->bAllocated = false;

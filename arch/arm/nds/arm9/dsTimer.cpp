@@ -1,7 +1,7 @@
 #include "dsTimer.h"
 #include "kernel/interruptManager.h"
 #include "kernel/timerManager.h"
-#include "nds/registers_alt.h"
+#include "asm/arch/registers.h"
 
 
 // -----------------------------------------------------------------------------

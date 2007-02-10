@@ -1,18 +1,16 @@
-LIBS		+=\
-		 archnds \
-		 archarm \
+#LIBS            +=\
+                archnds \
 
-LIB		=arch
-OBJS		=\
-                 support \
-		 isr\
-		 ds7Arch\
-		 ds7IRQ\
+LIB             =arch
+OBJS            =\
+                support \
+                isr \
+                arch \
+                irq \
 
 
-INCL_PATH	+=\
-		 $(DEVKITPRO)/libnds/include\
-		 ../common\
+INCL_PATH       +=\
+                ../common \
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

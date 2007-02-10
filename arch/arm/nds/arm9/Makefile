@@ -1,21 +1,20 @@
-LIBS		+=\
-		 archnds \
-		 archarm \
+LIBS            +=\
+                archnds \
 
-LIB		=arch
-OBJS		=\
-		 support\
-                 isr\
-                 ds9Arch\
-		 ds9IRQ\
-		 ds9Video\
-		 dsTimer\
-		 dsCart\
+LIB             =arch
+OBJS            =\
+                support \
+                isr \
+                arch \
+                irq \
+                ds9Video \
+                dsCart \
 
+#                dsTimer \
 
-INCL_PATH	+=\
-		 $(DEVKITPRO)/libnds/include\
-		 ../common\
+INCL_PATH       +=\
+                $(DEVKITPRO)/libnds/include \
+                ../common \
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

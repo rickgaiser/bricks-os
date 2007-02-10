@@ -1,19 +1,16 @@
-#include "ds7Arch.h"
-#include "../../common/processor.h"
-#include "kernel/arch.h"
 #include "kernel/bricks.h"
+#include "kernel/memoryManager.h"
 
 
-CDS7Arch    cArch;
-CProcessor  cProcessor;
+SHeap heaps[] =
+{
+};
+const int iHeapCount(sizeof(heaps) / sizeof(SHeap));
 
 
 // -----------------------------------------------------------------------------
 int
 main(int, char *[])
 {
-  arch::pArch      = &cArch;
-  arch::pProcessor = &cProcessor;
-
-  return(CBricks::instance()->main());
+  return bricks_main();
 }

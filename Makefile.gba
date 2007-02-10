@@ -4,6 +4,7 @@ MAKEFLAGS	+=--no-print-directory -s
 all:
 	make -f Makefile all ARCH=arm TARGET=gba
 	arm-eabi-objcopy -O binary bin/gba/Bricks.elf bin/gba/Bricks.gba
+	gbafix bin/gba/Bricks.gba
 
 clean:
 	make -f Makefile clean ARCH=arm TARGET=gba

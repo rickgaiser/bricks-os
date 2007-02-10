@@ -1,8 +1,7 @@
 #include "dsIPC.h"
 #include "kernel/interruptManager.h"
-#include "nds/ipc.h"
 #include "iostream"
-#include "nds/interrupts.h"
+#include "asm/arch/registers.h"
 
 
 // -----------------------------------------------------------------------------
@@ -20,9 +19,9 @@ int
 CDSIPC::init()
 {
   // Register ISRs
-  CInterruptManager::instance()->attach(16, this); // ipc
-  CInterruptManager::instance()->attach(17, this); // send buf empty
-  CInterruptManager::instance()->attach(18, this); // recv buf not empty
+  CInterruptManager::attach(16, this); // ipc
+  CInterruptManager::attach(17, this); // send buf empty
+  CInterruptManager::attach(18, this); // recv buf not empty
 
   // Enable interrupts from ARM7
   REG_IPC_SYNC = IPC_SYNC_IRQ_ENABLE;
@@ -62,14 +61,14 @@ CDSIPC::isr(int irq)
     std::cout<<"CDSIPC::isr: ERROR: unknown interrupt"<<std::endl;
   }
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
 int
 CDSIPC::read(void * data, size_t size)
 {
-  return(-1);
+  return -1;
 }
 
 // -----------------------------------------------------------------------------
@@ -96,7 +95,7 @@ CDSIPC::write(const void * data, size_t size)
     iRetVal = -1;
   }
 
-  return(iRetVal);
+  return iRetVal;
 
 
   /*
