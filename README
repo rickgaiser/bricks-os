@@ -1,0 +1,55 @@
+Bricks-OS
+=========
+ 1 - About Bricks-OS
+ 2 - How to compile
+ 3 - How to use
+ 4 - Supported platforms
+
+
+1 - About Bricks-OS
+-------------------
+  Bricks-OS is an Operating System primarily for Game Consoles. It's goal is to
+  be a microkernel based network distributed operating system. This is achieved
+  by using messages to communicate (like Minix/QNX).
+  
+  Example: A Gameboy Advance (GBA) can communicate with a GameCube (NGC). If
+  they setup a communication channel the GBA can use all resources of the NGC,
+  instantly giving the GBA access to a network adapter, DVD drive, high
+  resolution display and more.
+  
+  It is distributed under the GNU General Public License - see the
+  accompanying COPYING file for more details. 
+
+2 -  How to compile
+-------------------
+  Bricks-OS currently compiles using devkitPro (http://www.devkitpro.org/)
+  under windows. It should be able to compile under other operating systems as
+  well but this has not been tested.
+  The "BRICKS_ROOT" environment variable is needed for Bricks-OS to compile.
+  Pointing to the root directory of the Bricks-OS source.
+  The command line is as follows:
+    make -f Makefile.${TARGET} clean all
+  
+  This will result in a binary located at:
+    $(BRICKS_ROOT)/bin/$(TARGET)/Bricks.elf
+
+  Example (for Gameboy Advance):
+    make -f Makefile.gba clean all
+
+3 - How to use
+--------------
+  Currently Bricks-OS will show a welcoming message. On some platforms it will
+  also display key presses. Message:
+    Bricks-OS
+    =========
+
+4 - Supported platforms
+-----------------------
+  Compiles on:
+   - Windows (using devkitPro (http://www.devkitpro.org/))
+  
+  Compiles to:
+   - Gameboy Advance (gba)
+   - Nintendo DS (nds)
+   - Playstation2 (ps2)
+   - PC (i386)
