@@ -38,23 +38,37 @@ ostream::operator<<(char c)
 ostream &
 ostream::operator<<(int i)
 {
-  char c(' ');
+  return operator<<(static_cast<long>(i));
+}
 
+// -----------------------------------------------------------------------------
+ostream &
+ostream::operator<<(long i)
+{
   if(i < 0)
   {
-    c = '-';
+    char c('-');
     ::write(STDOUT, &c, 1);
     i = -i;
   }
-  else
-  {
-    c = '+';
-    ::write(STDOUT, &c, 1);
-  }
 
+  return operator<<(static_cast<unsigned int>(i));
+}
+
+// -----------------------------------------------------------------------------
+ostream &
+ostream::operator<<(unsigned int i)
+{
+  return operator<<(static_cast<unsigned long>(i));
+}
+
+// -----------------------------------------------------------------------------
+ostream &
+ostream::operator<<(unsigned long i)
+{
   bool bPrint(false);
 
-  for(int iWalker(1000000000); iWalker != 0; iWalker /= 10)
+  for(int iWalker(1000000000); iWalker > 0; iWalker /= 10)
   {
     int iTemp;
 
@@ -62,18 +76,16 @@ ostream::operator<<(int i)
     i     = i % iWalker;
 
     if(iTemp > 0)
-    {
       bPrint = true;
-    }
 
     if((bPrint == true) || (iWalker == 1))
     {
-      c = '0' + iTemp;
+      char c('0' + iTemp);
       ::write(STDOUT, &c, 1);
     }
   }
 
-  return(*this);
+  return *this;
 }
 
 
