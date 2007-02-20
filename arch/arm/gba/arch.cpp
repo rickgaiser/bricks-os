@@ -2,11 +2,13 @@
 #include "asm/irq.h"
 #include "gbaVideo.h"
 #include "gbaKeyboard.h"
+#include "serial.h"
 
 
 CIRQ           * pGBAIRQ;
 CGBAVideo      * pGBAVideo;
 CGBAKeyboard   * pGBAKeyboard;
+CGBASerial     * pGBASerial;
 
 extern IFileIO * pKeyboard;
 extern IFileIO * pVideo;
@@ -31,6 +33,10 @@ arch::init()
   if(pGBAKeyboard->init() == -1)
     iRetVal = -1;
   pKeyboard = pGBAKeyboard;
+
+  pGBASerial = new CGBASerial;
+  if(pGBASerial->init() == -1)
+    iRetVal = -1;
 
   return iRetVal;
 }
