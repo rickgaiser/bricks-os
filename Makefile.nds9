@@ -1,0 +1,10 @@
+MAKEFLAGS	+=--no-print-directory -s
+
+
+all:
+	make -f Makefile all ARCH=arm TARGET=nds9
+	arm-eabi-objcopy -O binary bin/nds9/Bricks.elf bin/nds9/Bricks.bin
+	ndstool -c bin/nds9/Bricks.nds -9 bin/nds9/Bricks.bin
+
+clean:
+	make -f Makefile clean ARCH=arm TARGET=nds9

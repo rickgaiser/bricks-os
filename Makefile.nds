@@ -8,9 +8,6 @@ all:
 	arm-eabi-objcopy -O binary bin/nds9/Bricks.elf bin/nds9/Bricks.bin
 	ndstool -c bin/nds9/Bricks.nds -9 bin/nds9/Bricks.bin -7 bin/nds7/Bricks.bin
 
-install:
-	D:/dev/nds/wifime/rt2560_app_wmb_1_4_beta_1/wmb.exe -data D:/dev/projects/bricks/bin/Bricks-nds.nds
-
 clean:
 	make -f Makefile clean ARCH=arm TARGET=nds7
 	make -f Makefile clean ARCH=arm TARGET=nds9
