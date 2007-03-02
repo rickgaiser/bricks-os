@@ -41,6 +41,20 @@ MY_LIBS_PATH	+= \
 		-L$(BRICKS_ROOT)/lib/$(TARGET) \
 
 #----------------------------------------------------------------------------
+CFLAGS		=\
+		-O2 \
+		-Wall \
+
+CXXFLAGS	=\
+		-O2 \
+		-Wall \
+		-fno-rtti \
+		-fno-exceptions \
+
+#----------------------------------------------------------------------------
+include $(BRICKS_ROOT)/include/makeinclude/Makefile.rules.$(TARGET)
+
+#----------------------------------------------------------------------------
 AS		=$(CROSS_COMPILE)as
 LD		=$(CROSS_COMPILE)ld
 CC		=$(CROSS_COMPILE)gcc
@@ -52,9 +66,6 @@ STRIP		=$(CROSS_COMPILE)strip
 OBJCOPY		=$(CROSS_COMPILE)objcopy
 OBJDUMP		=$(CROSS_COMPILE)objdump
 AWK		=awk
-
-#----------------------------------------------------------------------------
-include $(BRICKS_ROOT)/include/makeinclude/Makefile.rules.$(TARGET)
 
 #----------------------------------------------------------------------------
 # ACE, macros.GNU

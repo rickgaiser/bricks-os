@@ -2,7 +2,7 @@
 #define DSKEYBOARD_H
 
 
-#include "kernel/file.h"
+#include "kernel/fs.h"
 #include "kernel/interrupt.h"
 
 
@@ -20,7 +20,7 @@ public:
   virtual int isr(int irq);
 
   // Inherited from IDriver
-  virtual int read(void * data, size_t size);
+  virtual ssize_t read(void * buffer, size_t size, loff_t * = 0);
 
 private:
   volatile int iBufferCount_;

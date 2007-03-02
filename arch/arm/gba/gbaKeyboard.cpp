@@ -2,7 +2,7 @@
 #include "kernel/interruptManager.h"
 #include "asm/arch/registers.h"
 #include "iostream"
-  
+
 
 // -----------------------------------------------------------------------------
 CGBAKeyboard::CGBAKeyboard()
@@ -22,7 +22,7 @@ int
 CGBAKeyboard::init()
 {
   REG_KEYCNT = KEY_CNT_OR
-             | KEY_CNT_IRQ 
+             | KEY_CNT_IRQ
              | KEY_A
              | KEY_B
              | KEY_SELECT
@@ -66,15 +66,15 @@ CGBAKeyboard::isr(int irq)
 
   iBufferCount_ = 1;
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
-int
-CGBAKeyboard::read(void * data, size_t size)
+ssize_t
+CGBAKeyboard::read(void * buffer, size_t size, loff_t *)
 {
-  int    iRetVal(0);
-  char * string((char *)data);
+  int    iRetVal(-1);
+  char * string = static_cast<char *>(buffer);
 
   if(size >= 2)
   {
@@ -89,10 +89,6 @@ CGBAKeyboard::read(void * data, size_t size)
     // Allow next key
     iBufferCount_ = 0;
   }
-  else
-  {
-    iRetVal = -1;
-  }
-  
-  return(iRetVal);
+
+  return iRetVal;
 }

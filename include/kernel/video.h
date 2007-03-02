@@ -2,7 +2,7 @@
 #define VIDEO_H
 
 
-#include "file.h"
+#include "kernel/fs.h"
 
 
 class CAVideo
@@ -13,8 +13,8 @@ public:
   virtual ~CAVideo();
 
   // Inherited from IFileIO
-  virtual int write(const void * data, size_t size);
-  
+  virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);
+
   virtual void cls();
   virtual void put(char c);
   virtual void put(const char * s);

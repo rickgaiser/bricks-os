@@ -6,18 +6,13 @@ MY_INCL_PATH	+=\
 MY_LIBS_PATH	+=\
 
 #----------------------------------------------------------------------------
-CROSS_COMPILE	=arm-eabi-
-CFLAGS		=-O2 -mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork
-CXXFLAGS	=$(CFLAGS) -fno-rtti -fno-exceptions
-LFLAGS		=-mthumb -mthumb-interwork -specs=gba.specs $(MY_LIBS_PATH)
+CROSS_COMPILE   =arm-eabi-
+CFLAGS          +=-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork
+CXXFLAGS        +=-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork
+LFLAGS          +=-mthumb -mthumb-interwork -specs=gba.specs $(MY_LIBS_PATH)
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS)
 	@echo [CC ] $@
 	$(CXX) $(LFLAGS) $^ $(MY_LIBS) -o $@
-
-# Create .gba file from .elf file
-#%.gba: %.elf
-#	@echo [OBJ] $@
-#	$(OBJCOPY) -O binary $< $@

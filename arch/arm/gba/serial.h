@@ -3,7 +3,7 @@
 
 
 #include "kernel/interrupt.h"
-#include "kernel/file.h"
+#include "kernel/fs.h"
 #include "unistd.h"
 
 
@@ -21,7 +21,7 @@ public:
   virtual int isr(int irq);
 
   // Inherited from IFileIO
-  virtual int write(const void * data, size_t size);
+  virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);
 
 private:
 };

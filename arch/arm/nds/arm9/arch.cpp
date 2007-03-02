@@ -1,21 +1,19 @@
+#include "kernel/task.h"
 #include "asm/arch.h"
 #include "asm/irq.h"
 #include "ds9Video.h"
 #include "dsKeyboard.h"
-#include "dsCart.h"
+//#include "dsCart.h"
 //#include "dsTimer.h"
-#include "dsIPC.h"
+//#include "dsIPC.h"
 
 
-CIRQ              cIRQ;
-//CDSTimerManager   cTimerManager;
-CDS9Video         cVideo;
-CDSKeyboard       cKeyboard;
-CDSCart           cCart;
-CDSIPC            cIPC;
-
-extern IFileIO * pKeyboard;
-extern IFileIO * pVideo;
+CIRQ           * pIRQ;
+//CDSTimerManager * cTimerManager;
+CDS9Video      * pVideo;
+CDSKeyboard    * pKeyboard;
+//CDSCart        * pCart;
+//CDSIPC         * pIPC;
 
 
 // -----------------------------------------------------------------------------
@@ -24,21 +22,32 @@ arch::init()
 {
   int iRetVal(0);
 
-  pVideo    = &cVideo;
-  pKeyboard = &cKeyboard;
-
-  if(cIRQ.init() == -1)
+  pIRQ = new CIRQ;
+  if(pIRQ->init() == -1)
     iRetVal = -1;
+
+  pVideo = new CDS9Video;
+  if(pVideo->init() == -1)
+    iRetVal = -1;
+
+  pKeyboard = new CDSKeyboard;
+  if(pKeyboard->init() == -1)
+    iRetVal = -1;
+
 //  if(cTimerManager.init() == -1)
 //    iRetVal = -1;
-  if(cVideo.init() == -1)
-    iRetVal = -1;
-  if(cKeyboard.init() == -1)
-    iRetVal = -1;
-  if(cCart.init() == -1)
-    iRetVal = -1;
-  if(cIPC.init() == -1)
-    iRetVal = -1;
+//  if(cCart.init() == -1)
+//    iRetVal = -1;
+//  if(cIPC.init() == -1)
+//    iRetVal = -1;
+
+  // Set standard in/out for tasks
+  CTask::setStandardOutput(pVideo);
+  CTask::setStandardInput(pKeyboard);
+  // Create task structure
+  CTask * pTask = new CTask(0, 0, 0);
+  pTask->eState_ = TS_RUNNING;
+  CTask::addTask(pTask);
 
   return iRetVal;
 }

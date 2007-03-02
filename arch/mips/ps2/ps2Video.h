@@ -2,7 +2,7 @@
 #define PS2VIDEO_H
 
 
-#include "kernel/file.h"
+#include "kernel/fs.h"
 
 
 class CPS2Video
@@ -14,7 +14,8 @@ public:
 
   virtual int init();
 
-  virtual int write(const void * data, size_t size);
+  // Inherited from IFileIO
+  virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);
 
 private:
   void cls();

@@ -24,16 +24,16 @@ CPS2Video::init()
 
   this->cls();
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
-int
-CPS2Video::write(const void * data, size_t size)
+ssize_t
+CPS2Video::write(const void * buffer, size_t size, loff_t *)
 {
-  scr_printf("%s", (char *)data);
+  scr_printf("%s", (char *)buffer);
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------

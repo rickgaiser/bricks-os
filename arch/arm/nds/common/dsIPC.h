@@ -3,7 +3,7 @@
 
 
 #include "kernel/interrupt.h"
-#include "kernel/file.h"
+#include "kernel/fs.h"
 
 
 class CDSIPC
@@ -20,8 +20,8 @@ public:
   virtual int isr(int irq);
 
   // Inherited from IFileIO
-  virtual int read (      void * data, size_t size);
-  virtual int write(const void * data, size_t size);
+  virtual ssize_t read (      void * buffer, size_t size, loff_t * = 0);
+  virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);
 };
 
 

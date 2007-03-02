@@ -43,7 +43,7 @@ namespace std
 
   private:
     char string_[STRING_SIZE];
-    int iLength_;
+    size_type iLength_;
   };
 
   ostream & operator<<(ostream & os, const string & s);

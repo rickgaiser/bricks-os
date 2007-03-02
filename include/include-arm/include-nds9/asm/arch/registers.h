@@ -6,7 +6,13 @@
 
 
 typedef void (*fnptr)();
-extern fnptr __irq_vector[];
+extern uint32_t __itcm_start;
+extern uint32_t __ewram_end;
+extern uint32_t __eheap_end;
+extern uint32_t __dtcm_start;
+extern uint32_t __dtcm_top;
+extern uint32_t __irq_flags;  // DTCM + 0x3ff8
+extern fnptr    __irq_vector; // DTCM + 0x3ffc
 
 
 // "REG_KEYS" bits
@@ -38,10 +44,7 @@ extern fnptr __irq_vector[];
 #define IPC_FIFO_ENABLE       (1<<15)
 
 // Registers
-#define REG_INTMAIN           *(__irq_vector)
-#define REG_IME               (*(vuint16_t*)0x04000208)
-#define REG_IE                (*(vuint32_t*)0x04000210)
-#define REG_IF                (*(vuint32_t*)0x04000214)
+#define REG_INTMAIN           (__irq_vector)
 #define REG_TIME              ( (vuint16_t*)0x04000100)
 #define REG_TM0D              (*(vuint16_t*)0x04000100)
 #define REG_TM0CNT            (*(vuint16_t*)0x04000102)
@@ -55,6 +58,9 @@ extern fnptr __irq_vector[];
 #define REG_IPC_SYNC          (*(vuint16_t*)0x04000180)
 #define REG_IPC_FIFO_CR       (*(vuint16_t*)0x04000184)
 #define REG_IPC_FIFO_TX       (*(vuint32_t*)0x04000188)
+#define REG_IME               (*(vuint16_t*)0x04000208)
+#define REG_IE                (*(vuint32_t*)0x04000210)
+#define REG_IF                (*(vuint32_t*)0x04000214)
 #define REG_IPC_FIFO_RX       (*(vuint32_t*)0x04100000)
 
 

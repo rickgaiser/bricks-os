@@ -14,6 +14,8 @@
 class IInterruptServiceRoutine
 {
 public:
+  virtual ~IInterruptServiceRoutine(){}
+
   virtual int isr(int irq) = 0;
 };
 

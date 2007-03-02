@@ -29,12 +29,12 @@ CAVideo::cls()
 }
 
 // -----------------------------------------------------------------------------
-int
-CAVideo::write(const void * data, size_t size)
+ssize_t
+CAVideo::write(const void * buffer, size_t size, loff_t *)
 {
   for(size_t i(0); i != size; i++)
   {
-    this->put(((const char *)data)[i]);
+    this->put(((const char *)buffer)[i]);
   }
 
   return(0);

@@ -2,11 +2,13 @@
 #define TASK_H
 
 
-#include "memoryMap.h"
-#include "file.h"
+#include "asm/irq.h"
+#include "kernel/fs.h"
+#include "inttypes.h"
 
 
-#define MAX_FILES 20
+#define MAX_TASK_COUNT 10
+#define MAX_FILE_COUNT 10
 
 
 // -----------------------------------------------------------------------------
@@ -24,18 +26,26 @@ enum ETaskState
 class CTask
 {
 public:
-  CTask();
+  CTask(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
   virtual ~CTask();
 
-  CMemoryMap * memoryMap();
-  void memoryMap(CMemoryMap * pMemoryMap);
+  static void addTask(CTask * pTask);
+  static void setStandardInput(IFileIO * pSTDIN);
+  static void setStandardOutput(IFileIO * pSTDOUT);
 
-  CFileHandle * pFiles_[MAX_FILES];
+  static uint32_t   iTaskCount_;
+  static CTask    * pCurrentTask_;
+  static IFileIO  * pSTDIN_;
+  static IFileIO  * pSTDOUT_;
 
-public: // but should be private
-  ETaskState    eState_;
-private:
-  CMemoryMap  * pMemoryMap_;
+  IFileIO    * pFiles_[MAX_FILE_COUNT];
+  ETaskState   eState_;
+  pt_regs    * pTaskState_;
+  uint32_t   * pStack_;
+  uint32_t   * pSvcStack_;
+
+  CTask      * prev;
+  CTask      * next;
 };
 
 

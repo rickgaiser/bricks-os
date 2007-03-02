@@ -1,7 +1,7 @@
 #include "dsKeyboard.h"
 #include "kernel/interruptManager.h"
 #include "asm/arch/registers.h"
-  
+
 
 // -----------------------------------------------------------------------------
 CDSKeyboard::CDSKeyboard()
@@ -21,7 +21,7 @@ int
 CDSKeyboard::init()
 {
   REG_KEYCNT = KEY_CNT_OR
-             | KEY_CNT_IRQ 
+             | KEY_CNT_IRQ
              | KEY_A
              | KEY_B
              | KEY_SELECT
@@ -75,11 +75,11 @@ CDSKeyboard::isr(int irq)
 }
 
 // -----------------------------------------------------------------------------
-int
-CDSKeyboard::read(void * data, size_t size)
+ssize_t
+CDSKeyboard::read(void * buffer, size_t size, loff_t *)
 {
-  int    iRetVal(0);
-  char * string((char *)data);
+  int    iRetVal(-1);
+  char * string = static_cast<char *>(buffer);
 
   if(size >= 2)
   {
@@ -94,10 +94,6 @@ CDSKeyboard::read(void * data, size_t size)
     // Allow next key
     iBufferCount_ = 0;
   }
-  else
-  {
-    iRetVal = -1;
-  }
-  
+
   return iRetVal;
 }

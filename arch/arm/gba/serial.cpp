@@ -36,20 +36,24 @@ CGBASerial::isr(int irq)
     std::cout<<(char)REG_SIODATA8;
   }
   std::cout<<std::endl;
-  
+
   return 0;
 }
 
 // -----------------------------------------------------------------------------
-int
-CGBASerial::write(const void * data, size_t size)
+ssize_t
+CGBASerial::write(const void * buffer, size_t size, loff_t *)
 {
-  const unsigned char * pData = static_cast<const unsigned char *>(data);
+  ssize_t iRetVal(0);
+  const unsigned char * pData = static_cast<const unsigned char *>(buffer);
 
-  for(int i(0); i < size; i++)
+  for(size_t i(0); i < size; i++)
   {
     while((REG_SIOCNT & SIO_TRANS_DATA_FULL) == true)
       ;
     REG_SIODATA8 = pData[i];
+    iRetVal++;
   }
+
+  return iRetVal;
 }
