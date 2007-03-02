@@ -1,0 +1,12 @@
+MAKEFLAGS	+=--no-print-directory -s
+
+
+all:
+	make -f Makefile.gba all
+	make -f Makefile.nds9 all
+	make -f Makefile.ps2 all
+
+clean:
+	make -f Makefile.gba clean
+	make -f Makefile.nds9 clean
+	make -f Makefile.ps2 clean
