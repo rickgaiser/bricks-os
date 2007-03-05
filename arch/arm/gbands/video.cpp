@@ -1,9 +1,15 @@
-#include "ds9Video.h"
+#include "video.h"
 #include "asm/arch/registers.h"
 
 
+#ifdef GBA
+#define CHARS_PER_LINE 30
+#define LINE_COUNT     20
+#endif
+#ifdef NDS9
 #define CHARS_PER_LINE 32
 #define LINE_COUNT     24
+#endif
 
 
 #define BIN_EGA_PAL_SIZE 512
@@ -691,32 +697,40 @@ const unsigned char bin_font[] =
 
 
 // -----------------------------------------------------------------------------
-CDS9Video::CDS9Video()
+CGBAVideo::CGBAVideo()
  : CAVideo(CHARS_PER_LINE, LINE_COUNT)
+#ifdef GBA
+ , pVideo_(reinterpret_cast<unsigned short *>(0x6000000))
+#endif
+#ifdef NDS9
  , pVideo_(reinterpret_cast<unsigned short *>(SCREEN_BASE_BLOCK(31)))
+#endif
 {
   // Don't use constructor, use init function instead
 }
 
 // -----------------------------------------------------------------------------
-CDS9Video::~CDS9Video()
+CGBAVideo::~CGBAVideo()
 {
 }
 
 // -----------------------------------------------------------------------------
 int
-CDS9Video::init()
+CGBAVideo::init()
 {
-  // Power up screens
+#ifdef GBA
+  // Switch to display mode 0
+  REG_DISPCNT = 0x1140;  // mode 0, bg0, obj, 1d sprites
+  REG_BG0CNT  = 0x0088;  // 8-bit, tiles 0x06008000, map 0x06000000, 256x256
+  REG_BG0HOFS = 0;
+  REG_BG0VOFS = 0;
+#endif
+#ifdef NDS9
   REG_POWCNT |= POWER_ALL_2D;
-
-  // Use the main screen for output
   REG_DISPCNT = MODE_0_2D | DISPLAY_BG0_ACTIVE;
-
-//  vramSetBankA(VRAM_A_MAIN_BG);
   REG_VRAM_A_CR = VRAM_ENABLE | VRAM_A_MAIN_BG;
-
   REG_BG0_CR = BG_256_COLOR | BG_TILE_BASE(0) | BG_MAP_BASE(31);
+#endif
 
   // Set the background and object palette
   for(int i(0); i < 256; i++)
@@ -727,7 +741,12 @@ CDS9Video::init()
 
   // Set our text font
   for(int i(0); i < BIN_FONT_SIZE/2; i++)
+#ifdef GBA
+    reinterpret_cast<unsigned short *>(0x06008000)[i] = bin_font[i * 2] | (bin_font[i * 2 + 1] << 8);
+#endif
+#ifdef NDS9
     reinterpret_cast<unsigned short *>(0x06000000)[i] = bin_font[i * 2] | (bin_font[i * 2 + 1] << 8);
+#endif
 
   this->cls();
 
@@ -736,14 +755,14 @@ CDS9Video::init()
 
 // -----------------------------------------------------------------------------
 void
-CDS9Video::put(int iX, int iY, char c)
+CGBAVideo::put(int iX, int iY, char c)
 {
   pVideo_[iY * 32 + iX] = c;
 }
 
 // -----------------------------------------------------------------------------
 char
-CDS9Video::get(int iX, int iY)
+CGBAVideo::get(int iX, int iY)
 {
   return pVideo_[iY * 32 + iX];
 }

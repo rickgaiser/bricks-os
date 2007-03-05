@@ -1,5 +1,5 @@
-#ifndef GBAKEYBOARD_H
-#define GBAKEYBOARD_H
+#ifndef ARCH_KEYBOARD_H
+#define ARCH_KEYBOARD_H
 
 
 #include "kernel/fs.h"

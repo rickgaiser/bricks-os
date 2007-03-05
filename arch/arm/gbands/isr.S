@@ -1,6 +1,6 @@
     .extern isr
     .global __isr
-    .section .iwram,"ax", %progbits
+@    .section .iwram,"ax", %progbits
     .code 32
 
 __isr:

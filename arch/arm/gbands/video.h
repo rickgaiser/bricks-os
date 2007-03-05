@@ -1,5 +1,5 @@
-#ifndef GBAVIDEO_H
-#define GBAVIDEO_H
+#ifndef ARCH_VIDEO_H
+#define ARCH_VIDEO_H
 
 
 #include "kernel/video.h"

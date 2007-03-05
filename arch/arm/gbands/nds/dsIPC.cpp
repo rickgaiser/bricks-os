@@ -24,7 +24,7 @@ CDSIPC::init()
   CInterruptManager::attach(18, this); // recv buf not empty
 
   // Enable interrupts from ARM7
-  REG_IPC_SYNC = IPC_SYNC_IRQ_ENABLE;
+//  REG_IPC_SYNC = IPC_SYNC_IRQ_ENABLE;
 
   // fifo init
   REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR | IPC_FIFO_RECV_IRQ | IPC_FIFO_ERROR; // IPC_FIFO_SEND_IRQ
@@ -36,6 +36,8 @@ CDSIPC::init()
 int
 CDSIPC::isr(int irq)
 {
+//  std::cout<<"CDSIPC::isr"<<std::endl;
+
   switch(irq)
   {
     case 16:

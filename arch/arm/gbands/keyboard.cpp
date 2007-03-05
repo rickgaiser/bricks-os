@@ -1,7 +1,6 @@
-#include "gbaKeyboard.h"
+#include "keyboard.h"
 #include "kernel/interruptManager.h"
 #include "asm/arch/registers.h"
-#include "iostream"
 
 
 // -----------------------------------------------------------------------------
@@ -63,6 +62,12 @@ CGBAKeyboard::isr(int irq)
     iKey_ = '>';
   if(~REG_KEYS & KEY_L)
     iKey_ = '<';
+#ifdef NDS7
+  if(~REG_KEYXY & (1<<0))
+    iKey_ = 'X';
+  if(~REG_KEYXY & (1<<1))
+    iKey_ = 'Y';
+#endif
 
   iBufferCount_ = 1;
 

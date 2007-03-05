@@ -6,7 +6,13 @@
 
 
 typedef void (*fnptr)();
-extern fnptr __irq_vector[];
+extern uint32_t __itcm_start;
+extern uint32_t __ewram_end;
+extern uint32_t __eheap_end;
+extern uint32_t __dtcm_start;
+extern uint32_t __dtcm_top;
+extern uint32_t __irq_flags;  // DTCM + 0x3ff8
+extern fnptr    __irq_vector; // DTCM + 0x3ffc
 
 
 // "REG_KEYS" bits
@@ -38,7 +44,7 @@ extern fnptr __irq_vector[];
 #define IPC_FIFO_ENABLE       (1<<15)
 
 // Registers
-#define REG_INTMAIN           *(__irq_vector)
+#define REG_INTMAIN           (__irq_vector)
 #define REG_IME               (*(vuint16_t*)0x04000208)
 #define REG_IE                (*(vuint32_t*)0x04000210)
 #define REG_IF                (*(vuint32_t*)0x04000214)
