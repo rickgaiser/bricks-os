@@ -1,4 +1,9 @@
 #include "gbaVideo.h"
+#include "asm/arch/registers.h"
+
+
+#define CHARS_PER_LINE 30
+#define LINE_COUNT     20
 
 
 #define BIN_EGA_PAL_SIZE 512
@@ -688,7 +693,7 @@ const unsigned char bin_font[] =
 // -----------------------------------------------------------------------------
 CGBAVideo::CGBAVideo()
  : CAVideo(CHARS_PER_LINE, LINE_COUNT)
- , pVideo_(VIDEO_START)
+ , pVideo_(reinterpret_cast<unsigned short *>(0x6000000))
 {
   // Don't use constructor, use init function instead
 }
@@ -709,41 +714,19 @@ CGBAVideo::init()
   REG_BG0VOFS = 0;
 
   // Set the background and object palette
-  for(int i(0); i != 256; i++)
+  for(int i(0); i < 256; i++)
   {
-    s_bgPalette[i]  = bin_ega_pal[i * 2] | (bin_ega_pal[i * 2 + 1] << 8); 
-    s_objPalette[i] = bin_ega_pal[i * 2] | (bin_ega_pal[i * 2 + 1] << 8); 
+    BG_PALETTE[i]     = bin_ega_pal[i * 2] | (bin_ega_pal[i * 2 + 1] << 8);
+    SPRITE_PALETTE[i] = bin_ega_pal[i * 2] | (bin_ega_pal[i * 2 + 1] << 8);
   }
 
   // Set our text font
-  unsigned short * pFont = (unsigned short *)0x06008000;
-  for(int i(0); i != BIN_FONT_SIZE/2; i++)
-    pFont[i] = bin_font[i * 2] | (bin_font[i * 2 + 1] << 8);
-
-/*
-  unsigned short * pVideo  = (unsigned short *)VRAM_BASE;
-  unsigned short * palette = (unsigned short *)BG_PAL;
-
-  // Switch to display mode 4 (240x160x8bpp)
-  REG_DISPCNT = DISP_MODE(4) | DISP_BG2;
-
-  for(int i(0); i < 256; i++)
-  {
-    palette[i] = Palette[i];
-  }
-
-  for(int y(0); y < 160; y++) 
-  {
-    for(int x(0); x < 120; x++)
-    {
-      pVideo[y * 120 + x] = Data[y * 240 + x * 2] | (Data[y * 240 + x * 2 + 1] << 8);
-    }
-  }
-*/  
+  for(int i(0); i < BIN_FONT_SIZE/2; i++)
+    reinterpret_cast<unsigned short *>(0x06008000)[i] = bin_font[i * 2] | (bin_font[i * 2 + 1] << 8);
 
   this->cls();
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -757,5 +740,5 @@ CGBAVideo::put(int iX, int iY, char c)
 char
 CGBAVideo::get(int iX, int iY)
 {
-  return(pVideo_[iY * 32 + iX]);
+  return pVideo_[iY * 32 + iX];
 }

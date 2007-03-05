@@ -84,9 +84,17 @@ typedef void (*fnptr)();
 #define SIO_RECV_DATA_EMPTY   0x0020 // No data received
 #define SIO_IF_ENABLE         0x4000 // Enable interrupt request
 
+// Memory Locations
+#define BG_PALETTE            ( ( uint16_t*)0x05000000)
+#define SPRITE_PALETTE        ( ( uint16_t*)0x05000200)
+
 // Registers
 #define REG_INTMAIN           (*(fnptr*)(0x03007ffc))
+#define REG_DISPCNT           (*(vuint16_t*)0x04000000) // Display Control (Mode)
 #define REG_DISPSTAT          (*(vuint16_t*)0x04000004) // ???
+#define REG_BG0CNT            (*(vuint16_t*)0x04000008) // Background 0
+#define REG_BG0HOFS           (*(vuint16_t*)0x04000010) // Background 0 Horizontal Offset
+#define REG_BG0VOFS           (*(vuint16_t*)0x04000012) // Background 0 Vertical Offset
 #define REG_TM0D              (*(vuint16_t*)0x04000100) // Timer 0
 #define REG_TM0CNT            (*(vuint16_t*)0x04000102) // Timer 0 Control
 #define REG_TM1D              (*(vuint32_t*)0x04000104) // Timer 1
