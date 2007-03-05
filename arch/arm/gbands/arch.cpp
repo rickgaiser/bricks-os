@@ -36,6 +36,13 @@ CDSIPC         cIPC;
 
 
 // -----------------------------------------------------------------------------
+extern "C" void
+printit(int argc, char * argv[])
+{
+  std::cout<<"printit("<<(uint32_t)argc<<", "<<(uint32_t)argv<<')'<<std::endl;
+}
+
+// -----------------------------------------------------------------------------
 int
 arch::init()
 {
@@ -79,9 +86,16 @@ arch::init()
 //    iRetVal = -1;
 
   // Create task structure
-  CTask cTask(0, 0, 0);
-  cTask.eState_ = TS_RUNNING;
-  CTask::addTask(&cTask);
+  CTask * pTask = new CTask(0, 0, 0);
+  pTask->eState_ = TS_RUNNING;
+  CTask::addTask(pTask);
+
+  pTask = new CTask((void *)printit, 1024, 1024, 123, (char **)321);
+  pTask->eState_ = TS_RUNNING;
+  CTask::addTask(pTask);
+
+  setTimerFrequency(0, 100.0f);
+  cIRQ.enable(3);
 
   return iRetVal;
 }

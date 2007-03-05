@@ -3,11 +3,47 @@
 #include "iostream"
 
 
+extern pt_regs * current_thread;
 uint32_t  CTask::iTaskCount_(0);
 CTask   * CTask::pCurrentTask_ = 0;
 IFileIO * CTask::pSTDIN_ = 0;
 IFileIO * CTask::pSTDOUT_ = 0;
 
+extern "C" void schedule();
+
+
+// -----------------------------------------------------------------------------
+extern "C" void
+kill()
+{
+  CTask * pTemp = CTask::pCurrentTask_;
+
+  std::cout<<"suicide!"<<std::endl;
+
+  if(CTask::pCurrentTask_->prev == CTask::pCurrentTask_->next)
+  {
+    // Remove current task from list
+    pTemp->prev->next = pTemp->next;
+    pTemp->next->prev = pTemp->prev;
+
+    // Set new current task
+    CTask::pCurrentTask_ = pTemp->prev;
+
+    // Delete task
+    delete pTemp;
+
+    // FIXME: How does this function return, there is nothing to return to.
+    while(true){}
+
+    // Reschedule so the next task will run
+    schedule();
+  }
+  else
+  {
+    std::cout<<"ERROR: Can not kill last task"<<std::endl;
+    while(true){}
+  }
+}
 
 // -----------------------------------------------------------------------------
 CTask::CTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
@@ -27,6 +63,8 @@ CTask::CTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[
     pStack_ = new uint32_t[stack];
   if(svcstack != 0)
     pSvcStack_ = new uint32_t[svcstack];
+
+  taskInit(pTaskState_, entry, pStack_ + stack, pSvcStack_ + svcstack, argc, reinterpret_cast<uint32_t>(argv));
 
   prev = this;
   next = this;
@@ -49,6 +87,7 @@ CTask::addTask(CTask * pTask)
 {
   if(iTaskCount_ == 0)
   {
+    current_thread = pTask->pTaskState_;
     pCurrentTask_ = pTask;
     iTaskCount_++;
   }
