@@ -14,58 +14,58 @@ ifndef VSHDIR
   VSHDIR        =shobj-$(TARGET)/
 endif
 ifndef ELF_PATH
-  ELF_PATH	=$(BRICKS_ROOT)/bin/$(TARGET)/
+  ELF_PATH      =$(BRICKS_ROOT)/bin/$(TARGET)/
 endif
 ifndef LIB_PATH
-  LIB_PATH	=$(BRICKS_ROOT)/lib/$(TARGET)/
+  LIB_PATH      =$(BRICKS_ROOT)/lib/$(TARGET)/
 endif
 
 #----------------------------------------------------------------------------
-MY_ELF		=$(addprefix $(ELF_PATH),$(addsuffix .elf,$(ELF)))
-MY_INCL_PATH	=$(addprefix -I,$(INCL_PATH))
-MY_LIB		=$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(LIB)))
-MY_LIBS		=$(addprefix -l,$(LIBS))
-MY_LIBS_PATH	=$(addprefix -L,$(LIBS_PATH))
-MY_OBJS		=$(addprefix $(VDIR),$(addsuffix .o,$(OBJS)))
+MY_ELF          =$(addprefix $(ELF_PATH),$(addsuffix .elf,$(ELF)))
+MY_INCL_PATH    =$(addprefix -I,$(INCL_PATH))
+MY_LIB          =$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(LIB)))
+MY_LIBS         =$(addprefix -l,$(LIBS))
+MY_LIBS_PATH    =$(addprefix -L,$(LIBS_PATH))
+MY_OBJS         =$(addprefix $(VDIR),$(addsuffix .o,$(OBJS)))
 
 #----------------------------------------------------------------------------
-MY_INCL_PATH	+= \
-		-I. \
-		-I$(BRICKS_ROOT)/include \
-		-I$(BRICKS_ROOT)/include/include-$(ARCH) \
-		-I$(BRICKS_ROOT)/include/include-$(ARCH)/include-$(TARGET) \
-		-I$(BRICKS_ROOT)/include/posix \
-		-I$(BRICKS_ROOT)/include/stl \
+MY_INCL_PATH    += \
+                -I. \
+                -I$(BRICKS_ROOT)/include \
+                -I$(BRICKS_ROOT)/include/include-$(ARCH) \
+                -I$(BRICKS_ROOT)/include/include-$(ARCH)/include-$(TARGET) \
+                -I$(BRICKS_ROOT)/include/posix \
+                -I$(BRICKS_ROOT)/include/stl \
 
 MY_LIBS_PATH	+= \
-		-L$(BRICKS_ROOT)/lib/$(TARGET) \
+                -L$(BRICKS_ROOT)/lib/$(TARGET) \
 
 #----------------------------------------------------------------------------
-CFLAGS		=\
-		-O2 \
-		-Wall \
+CFLAGS          =\
+                -O2 \
+                -Wall \
 
-CXXFLAGS	=\
-		-O2 \
-		-Wall \
-		-fno-rtti \
-		-fno-exceptions \
+CXXFLAGS        =\
+                -O2 \
+                -Wall \
+                -fno-rtti \
+                -fno-exceptions \
 
 #----------------------------------------------------------------------------
 include $(BRICKS_ROOT)/include/makeinclude/Makefile.rules.$(TARGET)
 
 #----------------------------------------------------------------------------
-AS		=$(CROSS_COMPILE)as
-LD		=$(CROSS_COMPILE)ld
-CC		=$(CROSS_COMPILE)gcc
-CPP		=$(CROSS_COMPILE)g++
-CXX		=$(CROSS_COMPILE)g++
-AR		=$(CROSS_COMPILE)ar
-NM		=$(CROSS_COMPILE)nm
-STRIP		=$(CROSS_COMPILE)strip
-OBJCOPY		=$(CROSS_COMPILE)objcopy
-OBJDUMP		=$(CROSS_COMPILE)objdump
-AWK		=awk
+AS              =$(CROSS_COMPILE)as
+LD              =$(CROSS_COMPILE)ld
+CC              =$(CROSS_COMPILE)gcc
+CPP             =$(CROSS_COMPILE)g++
+CXX             =$(CROSS_COMPILE)g++
+AR              =$(CROSS_COMPILE)ar
+NM              =$(CROSS_COMPILE)nm
+STRIP           =$(CROSS_COMPILE)strip
+OBJCOPY         =$(CROSS_COMPILE)objcopy
+OBJDUMP         =$(CROSS_COMPILE)objdump
+AWK             =awk
 
 #----------------------------------------------------------------------------
 # ACE, macros.GNU

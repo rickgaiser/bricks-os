@@ -7,8 +7,8 @@ MY_LIBS_PATH	+=\
 
 #----------------------------------------------------------------------------
 CROSS_COMPILE   =arm-eabi-
-CFLAGS          +=-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork -DGBA
-CXXFLAGS        +=-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork -DGBA
+CFLAGS          +=-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork -falign-functions=32 -DGBA
+CXXFLAGS        +=-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork -falign-functions=32 -DGBA
 LFLAGS          +=-mthumb -mthumb-interwork -specs=gba.specs $(MY_LIBS_PATH)
 
 #----------------------------------------------------------------------------

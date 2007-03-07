@@ -5,17 +5,17 @@
 #ifdef GBA
 #include "video.h"
 #include "keyboard.h"
-#endif
+#include "gba/serial.h"
+#endif // GBA
 #ifdef NDS7
 #include "keyboard.h"
 #include "nds/dsIPC.h"
-#endif
+#endif // NDS7
 #ifdef NDS9
 #include "video.h"
 #include "nds/dsIPC.h"
-#endif
+#endif // NDS 9
 #include "timer.h"
-//#include "serial.h"
 #include "iostream"
 
 
@@ -23,24 +23,17 @@ CIRQ           cIRQ;
 #ifdef GBA
 CGBAVideo      cVideo;
 CGBAKeyboard   cKeyboard;
-#endif
+CGBASerial     cSerial;
+#endif // GBA
 #ifdef NDS7
 CGBAKeyboard   cKeyboard;
 CDSIPC         cIPC;
-#endif
+#endif // NDS7
 #ifdef NDS9
 CGBAVideo      cVideo;
 CDSIPC         cIPC;
-#endif
-//CGBASerial     cSerial;
+#endif // NDS9
 
-
-// -----------------------------------------------------------------------------
-extern "C" void
-printit(int argc, char * argv[])
-{
-  std::cout<<"printit("<<(uint32_t)argc<<", "<<(uint32_t)argv<<')'<<std::endl;
-}
 
 // -----------------------------------------------------------------------------
 int
@@ -59,7 +52,10 @@ arch::init()
   if(cKeyboard.init() == -1)
     iRetVal = -1;
   CTask::setStandardInput(&cKeyboard);
-#endif
+
+  if(cSerial.init() == -1)
+    iRetVal = -1;
+#endif // GBA
 
 #ifdef NDS7
   if(cIPC.init() == -1)
@@ -69,7 +65,7 @@ arch::init()
   if(cKeyboard.init() == -1)
     iRetVal = -1;
   CTask::setStandardInput(&cKeyboard);
-#endif
+#endif // NDS7
 
 #ifdef NDS9
   if(cVideo.init() == -1)
@@ -79,18 +75,10 @@ arch::init()
   if(cIPC.init() == -1)
     iRetVal = -1;
   CTask::setStandardInput(&cIPC);
-#endif
-
-//  pSerial = new CGBASerial;
-//  if(pSerial->init() == -1)
-//    iRetVal = -1;
+#endif // NDS9
 
   // Create task structure
   CTask * pTask = new CTask(0, 0, 0);
-  pTask->eState_ = TS_RUNNING;
-  CTask::addTask(pTask);
-
-  pTask = new CTask((void *)printit, 1024, 1024, 123, (char **)321);
   pTask->eState_ = TS_RUNNING;
   CTask::addTask(pTask);
 

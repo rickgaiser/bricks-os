@@ -18,9 +18,9 @@ kill()
 {
   CTask * pTemp = CTask::pCurrentTask_;
 
-  std::cout<<"suicide!"<<std::endl;
+//  std::cout<<"suicide!"<<std::endl;
 
-  if(CTask::pCurrentTask_->prev == CTask::pCurrentTask_->next)
+  if(pTemp != pTemp->next)
   {
     // Remove current task from list
     pTemp->prev->next = pTemp->next;
