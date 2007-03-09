@@ -1,20 +1,6 @@
 #include "timer.h"
-
-
-#ifdef GBA
-#define CPU_FREQUENCY 16780000
-#endif
-#ifdef NDS
-#define CPU_FREQUENCY 33513982
-#endif
-
-#define TIMER_SPEED_0  0x0000  // CPU
-#define TIMER_SPEED_1  0x0001  // CPU /   64
-#define TIMER_SPEED_2  0x0002  // CPU /  256
-#define TIMER_SPEED_3  0x0003  // CPU / 1024
-
-#define TIMER_IRQ      0x0040
-#define TIMER_ENABLE   0x0080
+#include "asm/arch/registers.h"
+#include "asm/arch/macros.h"
 
 
 // -----------------------------------------------------------------------------
@@ -33,23 +19,23 @@ setTimerFrequency(int timerId, float freq)
 
   if(freq >= minTimerFreq0)
   {
-    TIMER_COUNT(timerId)   = 0x10000 - static_cast<unsigned short>(maxTimerFreq0 / freq);
-    TIMER_CONTROL(timerId) = TIMER_ENABLE | TIMER_IRQ | TIMER_SPEED_0;
+    REG_TMD(timerId)   = 0x10000 - static_cast<unsigned short>(maxTimerFreq0 / freq);
+    REG_TMCNT(timerId) = TIMER_ENABLE | TIMER_IRQ | TIMER_SPEED_0;
   }
   else if(freq >= minTimerFreq1)
   {
-    TIMER_COUNT(timerId)   = 0x10000 - static_cast<unsigned short>(maxTimerFreq1 / freq);
-    TIMER_CONTROL(timerId) = TIMER_ENABLE | TIMER_IRQ | TIMER_SPEED_1;
+    REG_TMD(timerId)   = 0x10000 - static_cast<unsigned short>(maxTimerFreq1 / freq);
+    REG_TMCNT(timerId) = TIMER_ENABLE | TIMER_IRQ | TIMER_SPEED_1;
   }
   else if(freq >= minTimerFreq2)
   {
-    TIMER_COUNT(timerId)   = 0x10000 - static_cast<unsigned short>(maxTimerFreq2 / freq);
-    TIMER_CONTROL(timerId) = TIMER_ENABLE | TIMER_IRQ | TIMER_SPEED_2;
+    REG_TMD(timerId)   = 0x10000 - static_cast<unsigned short>(maxTimerFreq2 / freq);
+    REG_TMCNT(timerId) = TIMER_ENABLE | TIMER_IRQ | TIMER_SPEED_2;
   }
   else
   {
-    TIMER_COUNT(timerId)   = 0x10000 - static_cast<unsigned short>(maxTimerFreq3 / freq);
-    TIMER_CONTROL(timerId) = TIMER_ENABLE | TIMER_IRQ | TIMER_SPEED_3;
+    REG_TMD(timerId)   = 0x10000 - static_cast<unsigned short>(maxTimerFreq3 / freq);
+    REG_TMCNT(timerId) = TIMER_ENABLE | TIMER_IRQ | TIMER_SPEED_3;
   }
 }
 

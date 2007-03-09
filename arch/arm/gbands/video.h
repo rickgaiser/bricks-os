@@ -3,6 +3,7 @@
 
 
 #include "kernel/video.h"
+#include "inttypes.h"
 
 
 // The GBA has 6 display modes:
@@ -24,10 +25,10 @@ public:
   virtual int init();
 
 private:
-  virtual void put(int iX, int iY, char c);
-  virtual char get(int iX, int iY);
+  virtual void put(int x, int y, char c);
+  virtual char get(int x, int y);
 
-  unsigned short * pVideo_;
+  uint16_t * pVideo_;
 };
 
 

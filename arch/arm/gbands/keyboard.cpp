@@ -63,9 +63,9 @@ CGBAKeyboard::isr(int irq)
   if(~REG_KEYS & KEY_L)
     iKey_ = '<';
 #ifdef NDS7
-  if(~REG_KEYXY & (1<<0))
+  if(~REG_KEYSXY & KEY_X)
     iKey_ = 'X';
-  if(~REG_KEYXY & (1<<1))
+  if(~REG_KEYSXY & KEY_Y)
     iKey_ = 'Y';
 #endif
 

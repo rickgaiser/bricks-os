@@ -699,12 +699,7 @@ const unsigned char bin_font[] =
 // -----------------------------------------------------------------------------
 CGBAVideo::CGBAVideo()
  : CAVideo(CHARS_PER_LINE, LINE_COUNT)
-#ifdef GBA
- , pVideo_(reinterpret_cast<unsigned short *>(0x6000000))
-#endif
-#ifdef NDS9
- , pVideo_(reinterpret_cast<unsigned short *>(SCREEN_BASE_BLOCK(31)))
-#endif
+ , pVideo_(reinterpret_cast<uint16_t *>(SCREEN_BASE_BLOCK(31)))
 {
   // Don't use constructor, use init function instead
 }
@@ -718,35 +713,23 @@ CGBAVideo::~CGBAVideo()
 int
 CGBAVideo::init()
 {
-#ifdef GBA
-  // Switch to display mode 0
-  REG_DISPCNT = 0x1140;  // mode 0, bg0, obj, 1d sprites
-  REG_BG0CNT  = 0x0088;  // 8-bit, tiles 0x06008000, map 0x06000000, 256x256
-  REG_BG0HOFS = 0;
-  REG_BG0VOFS = 0;
-#endif
+  REG_DISPCNT = MODE_0 | BG0_ENABLE;
+  REG_BG0CNT  = BG_256_COLOR | BG_TILE_BASE(0) | BG_MAP_BASE(31);
 #ifdef NDS9
-  REG_POWCNT |= POWER_ALL_2D;
-  REG_DISPCNT = MODE_0_2D | DISPLAY_BG0_ACTIVE;
-  REG_VRAM_A_CR = VRAM_ENABLE | VRAM_A_MAIN_BG;
-  REG_BG0_CR = BG_256_COLOR | BG_TILE_BASE(0) | BG_MAP_BASE(31);
+  REG_POWCNT |= POWER_LCD | POWER_2D_TOP;
+  REG_VRAM_A_CR = VRAM_ENABLE | VRAM_TYPE_MAIN_BG;
 #endif
 
   // Set the background and object palette
   for(int i(0); i < 256; i++)
   {
-    BG_PALETTE[i]     = bin_ega_pal[i * 2] | (bin_ega_pal[i * 2 + 1] << 8);
-    SPRITE_PALETTE[i] = bin_ega_pal[i * 2] | (bin_ega_pal[i * 2 + 1] << 8);
+    BG_PALETTE[i]     = ((uint16_t *)bin_ega_pal)[i];
+    SPRITE_PALETTE[i] = ((uint16_t *)bin_ega_pal)[i];
   }
 
   // Set our text font
   for(int i(0); i < BIN_FONT_SIZE/2; i++)
-#ifdef GBA
-    reinterpret_cast<unsigned short *>(0x06008000)[i] = bin_font[i * 2] | (bin_font[i * 2 + 1] << 8);
-#endif
-#ifdef NDS9
-    reinterpret_cast<unsigned short *>(0x06000000)[i] = bin_font[i * 2] | (bin_font[i * 2 + 1] << 8);
-#endif
+    reinterpret_cast<uint16_t *>(0x06000000)[i] = ((uint16_t *)bin_font)[i];
 
   this->cls();
 
@@ -755,14 +738,14 @@ CGBAVideo::init()
 
 // -----------------------------------------------------------------------------
 void
-CGBAVideo::put(int iX, int iY, char c)
+CGBAVideo::put(int x, int y, char c)
 {
-  pVideo_[iY * 32 + iX] = c;
+  pVideo_[y * 32 + x] = c;
 }
 
 // -----------------------------------------------------------------------------
 char
-CGBAVideo::get(int iX, int iY)
+CGBAVideo::get(int x, int y)
 {
-  return pVideo_[iY * 32 + iX];
+  return pVideo_[y * 32 + x];
 }
