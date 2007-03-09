@@ -12,13 +12,16 @@
 #include "pthread.h"
 
 
+extern void bwm();
+
+
 // -----------------------------------------------------------------------------
 // Thread passes STDIN to STDOUT
 void *
 pipeThread(void * arg)
 {
-  std::cout<<"Thread Running"<<std::endl;
-
+  std::cout<<"Threads...OK"<<std::endl;
+#ifdef NDS7
   // Forever print key presses
   char buffer[10];
   while(true)
@@ -26,7 +29,7 @@ pipeThread(void * arg)
     if(::read(STDIN, buffer, 10) > 0)
       std::cout<<buffer;
   }
-
+#endif // NDS7
   return 0;
 }
 
@@ -53,8 +56,18 @@ bricks_main()
     std::cout<<"ERROR: Unable to create thread!"<<std::endl;
 
   // Enable interrupts
+  std::cout<<"Interrupts...";
   CCPU::sti();
-  std::cout<<"Interrupts enabled"<<std::endl;
+  std::cout<<"OK"<<std::endl;
+
+#ifndef NDS7
+  // Wait for user input
+  std::cout<<"   Press any key to start"<<std::endl;
+  std::cout<<"-=Bricks-OS Window Manager=-"<<std::endl;
+  char buffer[10];
+  while(::read(STDIN, buffer, 10) <= 0){}
+  bwm();
+#endif
 
   // Halt current thread
   // FIXME: Forever consuming CPU time now!

@@ -13,19 +13,20 @@ endif
 
 LIB             =arch
 OBJS            =\
-                isr \
                 arch \
                 irq \
+                isr \
                 timer \
 
+
 ifeq ($(TARGET),gba)
-OBJS            += video keyboard
+OBJS            += keyboard video videoDevice
 endif
 ifeq ($(TARGET),nds7)
 OBJS            += keyboard
 endif
 ifeq ($(TARGET),nds9)
-OBJS            += video
+OBJS            += video videoDevice
 endif
 
 

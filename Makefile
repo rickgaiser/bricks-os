@@ -1,14 +1,16 @@
-DIRS		=\
-		 stl \
-		 arch \
-		 kernel \
+DIRS            =\
+                stl \
+                arch \
+                kernel \
+                bwm \
 
-LIBS		=\
-		 arch \
-		 stl \
-		 kernel \
+LIBS            =\
+                arch \
+                stl \
+                kernel \
+                bwm \
 
-ELF		=Bricks
+ELF             =Bricks
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

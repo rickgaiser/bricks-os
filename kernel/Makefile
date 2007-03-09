@@ -1,14 +1,15 @@
 LIB             =kernel
 OBJS            =\
+                bricks \
+                fileio \
                 interrupt \
                 interruptManager \
-                video \
-                fileio \
-                bricks \
-                timeValue \
                 memoryManager \
-                task \
                 pthread \
+                task \
+                timeValue \
+                video \
+                videoManager \
 
 #                taskManager \
                 timerManager \
