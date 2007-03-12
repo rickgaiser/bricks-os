@@ -47,7 +47,18 @@ inline void
 dmaFill16(uint16_t source, void * dest, uint32_t count)
 {
   DMA3WAIT();
+#ifdef GBA
   DMA3COPY(&source, dest, DMA_DST_INC | DMA_SRC_FIXED | DMA16 | count);
+#endif // GBA
+#ifdef NDS7
+  DMA3COPY(&source, dest, DMA_DST_INC | DMA_SRC_FIXED | DMA16 | count);
+#endif // NDS7
+#ifdef NDS9
+  REG_DMA3FILL = (uint32_t)(source);
+  REG_DMA3SAD  = (uint32_t)(&REG_DMA0FILL);
+  REG_DMA3DAD  = (uint32_t)(dest);
+  REG_DMA3CNT  = DMA_ENABLE | DMA_DST_INC | DMA_SRC_FIXED | DMA16 | count;
+#endif // NDS9
   DMA3WAIT();
 }
 
@@ -64,18 +75,21 @@ dmaFill32(uint32_t source, void * dest, uint32_t count)
 inline void
 dmaCopyASync(const void * source, void * dest, uint32_t size)
 {
+  DMA3WAIT();
   DMA3COPY(source, dest, DMA_DST_INC | DMA_SRC_INC | DMA16 | size>>1);
 }
 
 inline void
 dmaFillASync16(uint16_t source, void * dest, uint32_t count)
 {
+  DMA3WAIT();
   DMA3COPY(&source, dest, DMA_DST_INC | DMA_SRC_FIXED | DMA16 | count);
 }
 
 inline void
 dmaFillASync32(uint32_t source, void * dest, uint32_t count)
 {
+  DMA3WAIT();
   DMA3COPY(&source, dest, DMA_DST_INC | DMA_SRC_FIXED | DMA32 | count);
 }
 

@@ -67,24 +67,54 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 #define BG_BMP16_512x256      (BG_RS_64x64 | BG_256_COLOR | (1<<2))
 #define BG_BMP16_512x512      (BG_RS_128x128 | BG_256_COLOR | (1<<2))
 // "REG_DMAxCNT" bits
-#define DMA_DST_INC           (0<<21)
-#define DMA_DST_DEC           (1<<21)
-#define DMA_DST_FIXED         (2<<21)
-#define DMA_DST_RELOAD        (3<<21)
-#define DMA_SRC_INC           (0<<23)
-#define DMA_SRC_DEC           (1<<23)
-#define DMA_SRC_FIXED         (2<<23)
+enum EDMASOURCEMODE
+{
+    DMA_SRC_INC =               (0<<23)
+  , DMA_SRC_DEC =               (1<<23)
+  , DMA_SRC_FIXED =             (2<<23)
+};
+enum EDMADESTINATIONMODE
+{
+    DMA_DST_INC =               (0<<21)
+  , DMA_DST_DEC =               (1<<21)
+  , DMA_DST_FIXED =             (2<<21)
+  , DMA_DST_RELOAD =            (3<<21)
+};
 #define DMA_REPEAT            (1<<25)
 #define DMA16                 (0<<26)
 #define DMA32                 (1<<26)
-#define DMA_IMMEDIATE         (0<<27)
-#define DMA_VBLANK            (1<<27)
-#define DMA_HBLANK            (2<<27)
-#define DMA_HSTART            (3<<27)
-#define DMA_MAIN_MEM_DISPLAY  (4<<27)
-#define DMA_DS_CARD           (5<<27)
-#define DMA_CARD              (6<<27)
-#define DMA_GEOMETRY_FIFO     (7<<27)
+#ifdef GBA
+#define DMA_CARD              (1<<27)
+enum EDMAMODE
+{
+    DMA_IMMEDIATE =             (0<<28)
+  , DMA_VBLANK =                (1<<28)
+  , DMA_HBLANK =                (2<<28)
+  , DMA_SPECIAL =               (3<<28)
+};
+#endif // GBA
+#ifdef NDS7
+enum EDMAMODE
+{
+    DMA_IMMEDIATE =             (0<<28)
+  , DMA_VBLANK =                (1<<28)
+  , DMA_DSCARD =                (2<<28)
+  , DMA_SPECIAL =               (3<<28)
+};
+#endif // NDS7
+#ifdef NDS9
+enum EDMAMODE
+{
+    DMA_IMMEDIATE =             (0<<27)
+  , DMA_VBLANK =                (1<<27)
+  , DMA_HBLANK =                (2<<27)
+  , DMA_HSTART =                (3<<27)
+  , DMA_MAIN_MEM_DISPLAY =      (4<<27)
+  , DMA_DS_CARD =               (5<<27)
+  , DMA_CARD =                  (6<<27)
+  , DMA_GEOMETRY_FIFO =         (7<<27)
+};
+#endif // NDS9
 #define DMA_IRQ               (1<<30)
 #define DMA_ENABLE            (1<<31)
 #define DMA_BUSY              (1<<31)
@@ -243,11 +273,12 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 // Registers
 #ifdef GBA
 #define REG_INTMAIN           (*(fnptr*)(0x03007ffc))
+#define REG_DISPCNT           (*(vuint16_t*)0x04000000) // See bits above
 #endif // GBA
 #ifdef NDS
 #define REG_INTMAIN           (__irq_vector)
-#endif // NDS
 #define REG_DISPCNT           (*(vuint32_t*)0x04000000) // See bits above
+#endif // NDS
 #define REG_DISPSTAT          (*(vuint16_t*)0x04000004) // See bits above
 #define REG_VCOUNT            (*(vuint16_t*)0x04000006)
 #define REG_BG0CNT            (*(vuint16_t*)0x04000008) // See bits above
@@ -255,6 +286,28 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 #define REG_BG2CNT            (*(vuint16_t*)0x0400000C) // See bits above
 #define REG_BG3CNT            (*(vuint16_t*)0x0400000E) // See bits above
 #define REG_BGCNT(n)          (*((&REG_BG0CNT)+n))
+#define REG_BG0_X             (*(vuint16_t*)0x04000010)
+#define REG_BG0_Y             (*(vuint16_t*)0x04000012)
+#define REG_BG1_X             (*(vuint16_t*)0x04000014)
+#define REG_BG1_Y             (*(vuint16_t*)0x04000016)
+#define REG_BG2_X             (*(vuint16_t*)0x04000018)
+#define REG_BG2_Y             (*(vuint16_t*)0x0400001A)
+#define REG_BG3_X             (*(vuint16_t*)0x0400001C)
+#define REG_BG3_Y             (*(vuint16_t*)0x0400001E)
+#define REG_BG_X(n)           (*((&REG_BG0_X)+(n*2)))
+#define REG_BG_Y(n)           (*((&REG_BG0_Y)+(n*2)))
+#define REG_BG2_XDX           (*(vuint16_t*)0x04000020)
+#define REG_BG2_XDY           (*(vuint16_t*)0x04000022)
+#define REG_BG2_YDX           (*(vuint16_t*)0x04000024)
+#define REG_BG2_YDY           (*(vuint16_t*)0x04000026)
+#define REG_BG2_CX            (*(vuint32_t*)0x04000028)
+#define REG_BG2_CY            (*(vuint32_t*)0x0400002C)
+#define REG_BG3_XDX           (*(vuint16_t*)0x04000030)
+#define REG_BG3_XDY           (*(vuint16_t*)0x04000032)
+#define REG_BG3_YDX           (*(vuint16_t*)0x04000034)
+#define REG_BG3_YDY           (*(vuint16_t*)0x04000036)
+#define REG_BG3_CX            (*(vuint32_t*)0x04000038)
+#define REG_BG3_CY            (*(vuint32_t*)0x0400003C)
 #define REG_DMA0SAD           (*(vuint32_t*)0x040000b0) // DMA source addr
 #define REG_DMA0DAD           (*(vuint32_t*)0x040000b4) // DMA destination addr
 #define REG_DMA0CNT           (*(vuint32_t*)0x040000b8) // See bits above
@@ -270,6 +323,13 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 #define REG_DMASAD(n)         (*((&REG_DMA0SAD)+(n*3)))
 #define REG_DMADAD(n)         (*((&REG_DMA0DAD)+(n*3)))
 #define REG_DMACNT(n)         (*((&REG_DMA0CNT)+(n*3)))
+#ifdef NDS9
+#define REG_DMA0FILL          (*(vuint32_t*)0x040000e0)
+#define REG_DMA1FILL          (*(vuint32_t*)0x040000e4)
+#define REG_DMA2FILL          (*(vuint32_t*)0x040000e8)
+#define REG_DMA3FILL          (*(vuint32_t*)0x040000ec)
+#define REG_DMAFILL(n)        (*((&REG_DMA0FILL)+n))
+#endif // NDS9
 #define REG_BRIGHTNESS        (*(vuint16_t*)0x0400006C)
 #define REG_TM0D              (*(vuint16_t*)0x04000100)
 #define REG_TM0CNT            (*(vuint16_t*)0x04000102) // See bits above
@@ -302,9 +362,15 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 #define REG_IPC_SYNC          (*(vuint16_t*)0x04000180) // See bits above
 #define REG_IPC_FIFO_CR       (*(vuint16_t*)0x04000184) // See bits above
 #define REG_IPC_FIFO_TX       (*(vuint32_t*)0x04000188)
+#ifdef GBA
+#define REG_IE                (*(vuint16_t*)0x04000200) // See bits above
+#define REG_IF                (*(vuint16_t*)0x04000202) // See bits above
+#endif // GBA
 #define REG_IME               (*(vuint16_t*)0x04000208)
+#ifdef NDS
 #define REG_IE                (*(vuint32_t*)0x04000210) // See bits above
 #define REG_IF                (*(vuint32_t*)0x04000214) // See bits above
+#endif // NDS
 #define REG_VRAM_CR           (*(vuint32_t*)0x04000240)
 #define REG_VRAM_A_CR         (*(vuint8_t *)0x04000240)
 #define REG_VRAM_B_CR         (*(vuint8_t *)0x04000241)
