@@ -31,9 +31,9 @@ CSurface::fillRect(int x, int y, int width, int height, color_t color)
 {
   for(int iY(y); iY < (y + height); iY++)
   {
-    int iLineOffset(iY * this->width);
+    int iLineOffset(iY * this->width + x);
 
-    for(int iX(x); iX < (x + width); iX++)
+    for(int iX(0); iX < width; iX++)
     {
       p[iLineOffset + iX] = color;
     }
