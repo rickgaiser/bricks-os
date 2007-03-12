@@ -24,12 +24,22 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 #endif
 
 // "REG_DISPCNT" bits
+#ifdef GBA
+#define MODE_0                0
+#define MODE_1                1
+#define MODE_2                2
+#define MODE_3                3
+#define MODE_4                4
+#define MODE_5                5
+#endif // GBA
+#ifdef NDS
 #define MODE_0                0x10000
 #define MODE_1                0x10001
 #define MODE_2                0x10002
 #define MODE_3                0x10003
 #define MODE_4                0x10004
 #define MODE_5                0x10005
+#endif // NDS
 #define BG0_ENABLE            (1<<8)
 #define BG1_ENABLE            (1<<9)
 #define BG2_ENABLE            (1<<10)
