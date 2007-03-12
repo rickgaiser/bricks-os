@@ -6,6 +6,8 @@
 
 // -----------------------------------------------------------------------------
 CDSIPC::CDSIPC()
+ : iBufferCount_(0)
+ , iKey_('~')
 {
 }
 
@@ -49,8 +51,8 @@ CDSIPC::isr(int irq)
     case 18:
       while(!(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY))
       {
-        char c = REG_IPC_FIFO_RX;
-        std::cout<<c;
+        iKey_ = REG_IPC_FIFO_RX;
+        iBufferCount_ = 1;
       }
       break;
     default:
@@ -64,7 +66,24 @@ CDSIPC::isr(int irq)
 ssize_t
 CDSIPC::read (void * buffer, size_t size, loff_t *)
 {
-  return -1;
+  int    iRetVal(-1);
+  char * string = static_cast<char *>(buffer);
+
+  if(size >= 2)
+  {
+    // Wait for key
+    while(iBufferCount_ == 0){}
+
+    // Copy key
+    string[0] = iKey_;
+    string[1] = 0;
+    iRetVal   = 2;
+
+    // Allow next key
+    iBufferCount_ = 0;
+  }
+
+  return iRetVal;
 }
 
 // -----------------------------------------------------------------------------
