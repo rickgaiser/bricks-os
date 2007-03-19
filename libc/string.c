@@ -1,11 +1,12 @@
 #include "string.h"
+#include "inttypes.h"
 
 
 // -----------------------------------------------------------------------------
 int
 strcmp(const char * s1, const char * s2)
 {
-  int i(0);
+  int i = 0;
   while((s1[i] != 0) && (s2[i] != 0) && (s1[i] == s2[i]))
     i++;
   return (s1[i] - s2[i]);
@@ -15,7 +16,7 @@ strcmp(const char * s1, const char * s2)
 size_t
 strlen(const char * s)
 {
-  int iLength(0);
+  int iLength = 0;
 
   while(s[iLength] == 0)
     iLength++;
@@ -36,4 +37,15 @@ memset(void * data, int fill_char, size_t size)
   }
 
   return(data);
+}
+
+// -----------------------------------------------------------------------------
+void *
+memcpy(void * s1, const void * s2, size_t n)
+{
+  int i;
+  for(i = 0; i < n; i++)
+    ((uint8_t *)s1)[i] = ((uint8_t *)s2)[i];
+
+  return s1;
 }
