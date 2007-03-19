@@ -1,5 +1,6 @@
 #include "bwm/bwm.h"
 #include "kernel/videoManager.h"
+#include "GL/gl.h"
 #include "iostream"
 
 
@@ -21,35 +22,129 @@ color_t clPanelFill(BxRGB(212, 208, 200));
 
 // -----------------------------------------------------------------------------
 void
-bwm()
+testFill(CSurface * surface)
+{
+  for(int i(0); i < 0x001f; i++)
+  {
+    // Fill entire screen with one color
+    surface->fill(i);
+    // Display progress bar
+    surface->fillRect(1, surface->height - 12, surface->width - 2, 10, clWhite);
+    surface->fillRect(3, surface->height - 10, ((surface->width - 6) * i) / 0x001f, 6, clBlack);
+    // Swap back and front buffer, placing the rendered image on screen
+    surface->swap();
+  }
+}
+
+// -----------------------------------------------------------------------------
+void
+testGL(CSurface * surface)
+{
+  // Set render surface
+  glSetSurface(surface);
+
+  // Initialize GL
+  glClearColor(0.23f, 0.43f, 0.65f, 0.0f);
+  glEnable(GL_DEPTH_TEST);
+//  glClearDepth(1.0);
+  glEnable(GL_CULL_FACE);
+  glShadeModel(/*GL_FLAT*/GL_SMOOTH);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glViewport(0, 0, surface->width, surface->height);
+  gluPerspective(45.0f, (float)surface->width / (float)surface->height, 0.1f, 100.0f);
+
+  // Show Pyramid for 1 full rotation around y axis
+  for(float fYRotTriangle(0.0f); fYRotTriangle <= 360.0f; fYRotTriangle += 2.0f)
+  {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glLoadIdentity();
+    glTranslatef(0.0f, 0.0f, -3.0f);
+    glRotatef(fYRotTriangle, 0.0f, 1.0f, 0.0f);
+
+    glBegin(GL_TRIANGLES);
+      // Front
+      glColor3ub(255,0,0);
+      glVertex3i(0,1,0);
+      glColor3ub(0,255,0);
+      glVertex3i(-1,-1,1);
+      glColor3ub(0,0,255);
+      glVertex3i(1,-1,1);
+      // Right
+      glColor3ub(255,0,0);
+      glVertex3i(0,1,0);
+      glColor3ub(0,0,255);
+      glVertex3i(1,-1,1);
+      glColor3ub(0,255,0);
+      glVertex3i(1,-1,-1);
+      // Back
+      glColor3ub(255,0,0);
+      glVertex3i(0,1,0);
+      glColor3ub(0,255,0);
+      glVertex3i(1,-1,-1);
+      glColor3ub(0,0,255);
+      glVertex3i(-1,-1,-1);
+      // Left
+      glColor3ub(255,0,0);
+      glVertex3i(0,1,0);
+      glColor3ub(0,0,255);
+      glVertex3i(-1,-1,-1);
+      glColor3ub(0,255,0);
+      glVertex3i(-1,-1,1);
+    glEnd();
+
+    // Display progress bar
+    surface->fillRect(1, surface->height - 12, surface->width - 2, 10, clWhite);
+    surface->fillRect(3, surface->height - 10, ((surface->width - 6) * static_cast<int>(fYRotTriangle)) / 360, 6, clBlack);
+
+    surface->swap();
+  }
+}
+
+// -----------------------------------------------------------------------------
+int
+bwm(int argc, char * argv[])
 {
   CAVideoDevice ** devices;
   int iDeviceCount;
   videoManager.listDevices(&devices, &iDeviceCount);
-  std::cout<<"Found "<<iDeviceCount<<" video device(s)"<<std::endl;
-  for(int iDev(0); iDev < iDeviceCount; iDev++)
+  if(iDeviceCount > 0)
   {
-    const SVideoMode * modes;
-    int iModeCount;
-    devices[iDev]->listModes(&modes, &iModeCount);
-    std::cout<<" - dev1: "<<iModeCount<<" mode(s)"<<std::endl;
-    for(int iMode(0); iMode < iModeCount; iMode++)
+    for(int iDev(0); iDev < iDeviceCount; iDev++)
     {
-      std::cout<<"   - "<<modes[iMode].xres<<"x"<<modes[iMode].yres<<"x"<<modes[iMode].bitsPerPixel<<std::endl;
-      if((modes[iMode].format == pfR5G5B5) || (modes[iMode].format == pfA1R5G5B5))
+      const SVideoMode * modes;
+      int iModeCount;
+      devices[iDev]->listModes(&modes, &iModeCount);
+      if(iModeCount > 0)
       {
-        devices[iDev]->setMode(&modes[iMode]);
-        CSurface * pVideoSurface;
-        devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
-        pVideoSurface->fill(clDesktop);
-        pVideoSurface->swap();
-        for(int i(0); i < 0x7fff; i++)
+        for(int iMode(0); iMode < iModeCount; iMode++)
         {
-          pVideoSurface->fill(i | 0x8000);
-          pVideoSurface->swap(true);
+          if((modes[iMode].format == pfR5G5B5) || (modes[iMode].format == pfA1R5G5B5))
+          {
+            devices[iDev]->setMode(&modes[iMode]);
+            CSurface * pVideoSurface;
+            devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
+
+            testFill(pVideoSurface);
+            testGL(pVideoSurface);
+
+            delete pVideoSurface;
+          }
         }
-        delete pVideoSurface;
+      }
+      else
+      {
+        std::cout<<"ERROR: Device has no modes!"<<std::endl;
       }
     }
   }
+  else
+  {
+    std::cout<<"ERROR: No video devices!"<<std::endl;
+  }
+
+  return 0;
 }

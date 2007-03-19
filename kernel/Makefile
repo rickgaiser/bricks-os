@@ -2,6 +2,7 @@ LIB             =kernel
 OBJS            =\
                 bricks \
                 fileio \
+                gl \
                 interrupt \
                 interruptManager \
                 memoryManager \
