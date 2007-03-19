@@ -6,6 +6,8 @@ OBJS            =\
                 interruptManager \
                 memoryManager \
                 pthread \
+                srr \
+                srrTest \
                 task \
                 timeValue \
                 video \
@@ -13,6 +15,5 @@ OBJS            =\
 
 #                taskManager \
                 timerManager \
-                srr \
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

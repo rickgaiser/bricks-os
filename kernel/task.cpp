@@ -6,6 +6,7 @@
 extern pt_regs * current_thread;
 uint32_t  CTask::iTaskCount_(0);
 CTask   * CTask::pCurrentTask_ = 0;
+CTask   * CTask::taskTable_[MAX_TASK_COUNT];
 IFileIO * CTask::pSTDIN_ = 0;
 IFileIO * CTask::pSTDOUT_ = 0;
 
@@ -58,6 +59,12 @@ CTask::CTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[
   for(int i(3); i < MAX_FILE_COUNT; i++)
     pFiles_[i] = 0;
 
+  for(int i(0); i < MAX_CHANNEL_COUNT; i++)
+    pChannel_[i] = 0;
+
+  for(int i(0); i < MAX_CONNECTION_COUNT; i++)
+    pConnection_[i] = 0;
+
   pTaskState_ = new pt_regs;
   if(stack != 0)
     pStack_ = new uint32_t[stack];
@@ -87,8 +94,11 @@ CTask::addTask(CTask * pTask)
 {
   if(iTaskCount_ == 0)
   {
+    for(int iTask(0); iTask < MAX_TASK_COUNT; iTask++)
+      taskTable_[iTask] = 0;
     current_thread = pTask->pTaskState_;
     pCurrentTask_ = pTask;
+    taskTable_[0] = pTask;
     iTaskCount_++;
   }
   else if(iTaskCount_ < MAX_TASK_COUNT)
@@ -98,6 +108,15 @@ CTask::addTask(CTask * pTask)
 
     pCurrentTask_->next->prev = pTask;
     pCurrentTask_->next = pTask;
+
+    for(int iTask(0); iTask < MAX_TASK_COUNT; iTask++)
+    {
+      if(taskTable_[iTask] == 0)
+      {
+        taskTable_[iTask] = pTask;
+        break;
+      }
+    }
 
     iTaskCount_++;
   }
