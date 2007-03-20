@@ -1,5 +1,6 @@
+#include "kernel/bricks.h"
+#include "kernel/memoryManager.h"
 #include "kernel/task.h"
-#include "asm/arch.h"
 #include "ps2Video.h"
 
 
@@ -9,9 +10,12 @@ CPS2Video        cVideo;
 
 // -----------------------------------------------------------------------------
 int
-arch::init()
+main(int, char *[])
 {
   int iRetVal(0);
+
+  // Initialize the memory manager so we can use new/delete/malloc/free
+  CMemoryManager::init();
 
   if(cVideo.init() == -1)
     iRetVal = -1;
@@ -24,5 +28,5 @@ arch::init()
   pTask->eState_ = TS_RUNNING;
   CTask::addTask(pTask);
 
-  return iRetVal;
+  return bricks_main();
 }

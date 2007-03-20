@@ -1,5 +1,6 @@
+#include "kernel/bricks.h"
+#include "kernel/memoryManager.h"
 #include "kernel/task.h"
-#include "asm/arch.h"
 #include "asm/cpu.h"
 #include "asm/irq.h"
 #ifdef GBA
@@ -41,9 +42,12 @@ CDSIPC         cIPC;
 
 // -----------------------------------------------------------------------------
 int
-arch::init()
+main(int, char *[])
 {
   int iRetVal(0);
+
+  // Initialize the memory manager so we can use new/delete/malloc/free
+  CMemoryManager::init();
 
   if(cIRQ.init() == -1)
     iRetVal = -1;
@@ -93,5 +97,5 @@ arch::init()
   setTimerFrequency(0, 100.0f);
   cIRQ.enable(3);
 
-  return iRetVal;
+  return bricks_main();
 }

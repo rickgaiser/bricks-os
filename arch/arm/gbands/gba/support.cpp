@@ -1,4 +1,3 @@
-#include "kernel/bricks.h"
 #include "kernel/memoryManager.h"
 
 
@@ -11,11 +10,3 @@ SHeap heaps[] =
  ,{&__iheap_start, &__iwram_top - &__iheap_start, 0}
 };
 const int iHeapCount(sizeof(heaps) / sizeof(SHeap));
-
-
-// -----------------------------------------------------------------------------
-int
-main(int, char *[])
-{
-  return bricks_main();
-}
