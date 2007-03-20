@@ -1,4 +1,5 @@
 #include "kernel/videoManager.h"
+#include "string.h"
 
 
 CVideoManager videoManager;
@@ -59,11 +60,7 @@ CSurface::swap(bool bForceCopy)
 {
   // "bForceCopy" can be ignored, we always copy
   if(pBack != 0)
-  {
-    for(uint32_t y(0); y < height; y++)
-      for(uint32_t x(0); x < width; x++)
-        pFront[y*width+x] = pBack[y*width+x];
-  }
+    memcpy(pFront, pBack, width * height * sizeof(pixel_t));
 }
 
 //---------------------------------------------------------------------------

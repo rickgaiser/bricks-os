@@ -55,13 +55,13 @@ public:
 
 public:
   // Edge x
-  GLint     x_[160];
+  GLint     x_[192];
 //  GLint   * x_;
   // Edge depth (fp: 8.8)
-  zbuf_t    z_[160];
+  zbuf_t    z_[192];
 //  zbuf_t  * z_;
   // Edge color (fp: 24.8)
-  SColor    c_[160];
+  SColor    c_[192];
 //  SColor  * c_;
 };
 
@@ -113,7 +113,7 @@ CGLContext context;
 //-----------------------------------------------------------------------------
 #define SCREENX(v) (m_fptoi(m_fpdiv(m_fpmul(v[0], context.fpFieldofviewXScalar), -v[2])) + (context.viewportWidth  >> 1))
 #define SCREENY(v) (m_fptoi(m_fpdiv(m_fpmul(v[1], context.fpFieldofviewYScalar), -v[2])) + (context.viewportHeight >> 1))
-#define RGB(r,g,b) (((b << 7) & 0xfc00) | ((g << 2) & 0x03e0) | ((r >> 3) & 0x001f))
+#define RGB(r,g,b) (0x8000 | ((b << 7) & 0x7c00) | ((g << 2) & 0x03e0) | ((r >> 3) & 0x001f))
 
 
 //-----------------------------------------------------------------------------
@@ -742,9 +742,6 @@ glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 }
 
 //-----------------------------------------------------------------------------
-// GBA 240x160(38400px):  54% @ 30fps ( 55fps max) ewram
-// GBA 160x128(20480px):  29% @ 30fps (103fps max) ewram
-// GBA 160x128(20480px):  22% @ 30fps (136fps max) vram
 void
 glClear(GLbitfield mask)
 {
