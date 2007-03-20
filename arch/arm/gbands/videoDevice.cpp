@@ -23,19 +23,17 @@ CGBASurface::~CGBASurface()
 void
 CGBASurface::fill(color_t color)
 {
-//  dmaFill16(color | 0x8000, p, width * height);
-  fillRect(0, 0, this->width, this->height, color | 0x8000);
+  dmaFill16(color | 0x8000, p, width * height);
 }
 
 //---------------------------------------------------------------------------
 void
 CGBASurface::fillRect(int x, int y, int width, int height, color_t color)
 {
-//  for(int iY(y); iY < (y + height); iY++)
-//  {
-//    dmaFill16(color | 0x8000, &p[iY * this->width + x], width);
-//  }
-  CSurface::fillRect(x, y, width, height, color | 0x8000);
+  for(int iY(y); iY < (y + height); iY++)
+  {
+    dmaFill16(color | 0x8000, &p[iY * this->width + x], width);
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -44,41 +42,29 @@ CGBASurface::swap(bool bForceCopy)
 {
   if(pBack != 0)
   {
-#ifdef GBA
     if(bForceCopy == true)
     {
       dmaCopy(pBack, pFront, (width*height) << 1);
     }
     else
     {
+#ifdef GBA
       if(width == 240)
       {
         dmaCopy(pBack, pFront, (width*height) << 1);
       }
       else if(width == 160)
       {
+#endif // GBA
         bSwap = true;
         while(bSwap == true){}
         p = pFront;
         pFront = pBack;
         pBack = p;
+#ifdef GBA
       }
-    }
 #endif // GBA
-#ifdef NDS9
-    if(bForceCopy == true)
-    {
-      dmaCopy(pBack, pFront, (width*height) << 1);
     }
-    else
-    {
-      bSwap = true;
-      while(bSwap == true){}
-      p = pFront;
-      pFront = pBack;
-      pBack = p;
-    }
-#endif // NDS9
   }
 }
 
