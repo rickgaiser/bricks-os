@@ -12,7 +12,8 @@
 #include "pthread.h"
 
 
-extern void bwm();
+extern int bwm(int argc, char * argv[]);
+extern int srrTest(int argc, char * argv[]);
 
 
 // -----------------------------------------------------------------------------
@@ -60,13 +61,35 @@ bricks_main()
   CCPU::sti();
   std::cout<<"OK"<<std::endl;
 
-#ifndef NDS7
-  // Wait for user input
-  std::cout<<"   Press any key to start"<<std::endl;
-  std::cout<<"-=Bricks-OS Window Manager=-"<<std::endl;
-  char buffer[10];
-  while(::read(STDIN, buffer, 10) <= 0){}
-  bwm();
+#ifdef GBA
+  while(true)
+  {
+    // Wait for user input
+    std::cout<<"-=MENU=-"<<std::endl;
+    std::cout<<"L: Window Manager Test"<<std::endl;
+    std::cout<<"R: SRR Test"<<std::endl;
+    std::cout<<"--------"<<std::endl;
+
+    char buffer[10];
+    int iRetVal;
+    while(::read(STDIN, buffer, 10) <= 0){}
+    switch(buffer[0])
+    {
+      case '<':
+        iRetVal = bwm(0, 0);
+//        std::cout<<"Function returned: "<<iRetVal<<std::endl;
+        break;
+      case '>':
+        iRetVal = srrTest(0, 0);
+        std::cout<<"Function returned: "<<iRetVal<<std::endl;
+        break;
+      default:
+        std::cout<<"Invalid key pressed"<<std::endl;
+    }
+  }
+#endif
+#ifdef NDS9
+  bwm(0, 0);
 #endif
 
   // Halt current thread
