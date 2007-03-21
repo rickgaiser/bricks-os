@@ -1,6 +1,4 @@
-ifeq ($(TARGET),ps2)
-  DIRS = ps2
-endif
+DIRS = $(TARGET)
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU
