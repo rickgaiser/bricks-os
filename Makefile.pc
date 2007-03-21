@@ -1,0 +1,8 @@
+MAKEFLAGS	+=--no-print-directory -s
+
+
+all:
+	make -f Makefile all ARCH=i386 TARGET=pc
+
+clean:
+	make -f Makefile clean ARCH=i386 TARGET=pc
