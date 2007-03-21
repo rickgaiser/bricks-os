@@ -1,8 +1,10 @@
+include $(BRICKS_ROOT)/arch/$(ARCH)/config.$(TARGET)
+
+
 LIB             =kernel
 OBJS            =\
                 bricks \
                 fileio \
-                gl \
                 interrupt \
                 interruptManager \
                 memoryManager \
@@ -12,9 +14,16 @@ OBJS            =\
                 task \
                 timeValue \
                 video \
-                videoManager \
 
 #                taskManager \
                 timerManager \
+
+ifeq ($(CONFIG_FRAMEBUFFER),y)
+OBJS            += videoManager
+endif
+ifeq ($(CONFIG_GL),y)
+OBJS            += gl
+endif
+
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

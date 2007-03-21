@@ -1,0 +1,8 @@
+MAKEFLAGS	+=--no-print-directory -s
+
+
+all:
+	make -f Makefile all ARCH=powerpc TARGET=ngc
+
+clean:
+	make -f Makefile clean ARCH=powerpc TARGET=ngc

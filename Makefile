@@ -1,16 +1,22 @@
+include $(BRICKS_ROOT)/arch/$(ARCH)/config.$(TARGET)
+
+
 DIRS            =\
-                stl \
                 arch \
                 kernel \
-                bwm \
+                stl \
 
 LIBS            =\
                 arch \
-                stl \
                 kernel \
-                bwm \
+                stl \
 
 ELF             =Bricks
+
+ifeq ($(CONFIG_BWM),y)
+DIRS            += bwm
+LIBS            += bwm
+endif
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

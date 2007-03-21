@@ -2,6 +2,7 @@
 #define ASM_IRQ_H
 
 
+#include "inttypes.h"
 #include "asm/arch/irq.h"
 #include "asm/arch/registers.h"
 
