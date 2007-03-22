@@ -15,9 +15,6 @@ OBJS            =\
                 timeValue \
                 video \
 
-#                taskManager \
-                timerManager \
-
 ifeq ($(CONFIG_FRAMEBUFFER),y)
 OBJS            += videoManager
 endif
