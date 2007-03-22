@@ -1,6 +1,8 @@
 #include "bwm/bwm.h"
 #include "kernel/videoManager.h"
+#ifdef CONFIG_GL
 #include "GL/gl.h"
+#endif // CONFIG_GL
 #include "iostream"
 
 
@@ -36,6 +38,7 @@ testFill(CSurface * surface)
   }
 }
 
+#ifdef CONFIG_GL
 // -----------------------------------------------------------------------------
 void
 testGL(CSurface * surface)
@@ -103,6 +106,7 @@ testGL(CSurface * surface)
     surface->swap();
   }
 }
+#endif // CONFIG_GL
 
 // -----------------------------------------------------------------------------
 int
@@ -129,7 +133,9 @@ bwm(int argc, char * argv[])
             devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
 
             testFill(pVideoSurface);
+#ifdef CONFIG_GL
             testGL(pVideoSurface);
+#endif // CONFIG_GL
 
             delete pVideoSurface;
           }

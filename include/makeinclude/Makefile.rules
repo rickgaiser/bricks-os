@@ -21,12 +21,14 @@ ifndef LIB_PATH
 endif
 
 #----------------------------------------------------------------------------
+MY_DEFINITIONS  =$(addprefix -D,$(DEFINITIONS-y))
 MY_ELF          =$(addprefix $(ELF_PATH),$(addsuffix .elf,$(ELF)))
 MY_INCL_PATH    =$(addprefix -I,$(INCL_PATH))
 MY_LIB          =$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(LIB)))
 MY_LIBS         =$(addprefix -l,$(LIBS))
 MY_LIBS_PATH    =$(addprefix -L,$(LIBS_PATH))
 MY_OBJS         =$(addprefix $(VDIR),$(addsuffix .o,$(OBJS)))
+MY_OBJS         +=$(addprefix $(VDIR),$(addsuffix .o,$(OBJS-y)))
 
 #----------------------------------------------------------------------------
 MY_INCL_PATH    += \
@@ -44,12 +46,14 @@ MY_LIBS_PATH	+= \
 CFLAGS          =\
                 -O2 \
                 -Wall \
+                $(MY_DEFINITIONS) \
 
 CXXFLAGS        =\
                 -O2 \
                 -Wall \
                 -fno-rtti \
                 -fno-exceptions \
+                $(MY_DEFINITIONS) \
 
 #----------------------------------------------------------------------------
 include $(BRICKS_ROOT)/include/makeinclude/Makefile.rules.$(TARGET)

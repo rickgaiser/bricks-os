@@ -9,18 +9,20 @@ OBJS            =\
                 interruptManager \
                 memoryManager \
                 pthread \
-                srr \
-                srrTest \
                 task \
                 timeValue \
                 video \
 
-ifeq ($(CONFIG_FRAMEBUFFER),y)
-OBJS            += videoManager
-endif
-ifeq ($(CONFIG_GL),y)
-OBJS            += gl
-endif
+#OBJS-$(CONFIG_MULTITASKING)        += pthread task
+OBJS-$(CONFIG_FRAMEBUFFER)         += videoManager
+OBJS-$(CONFIG_GL)                  += gl
+OBJS-$(CONFIG_SRR)                 += srr srrTest
+
+DEFINITIONS-$(CONFIG_MULTITASKING) += CONFIG_MULTITASKING
+DEFINITIONS-$(CONFIG_FRAMEBUFFER)  += CONFIG_FRAMEBUFFER
+DEFINITIONS-$(CONFIG_GL)           += CONFIG_GL
+DEFINITIONS-$(CONFIG_BWM)          += CONFIG_BWM
+DEFINITIONS-$(CONFIG_SRR)          += CONFIG_SRR
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

@@ -6,3 +6,10 @@ CONFIG_SRR=y
 CONFIG_FRAMEBUFFER=y
 CONFIG_GL=y
 CONFIG_BWM=y
+
+# GBA/NDS specific configuration
+CONFIG_GBA_CONSOLE=y
+#CONFIG_GBA_KEYBOARD=y
+
+# NDS specific configuration
+CONFIG_NDS_IPC=y
