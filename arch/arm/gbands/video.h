@@ -6,15 +6,6 @@
 #include "inttypes.h"
 
 
-// The GBA has 6 display modes:
-//  - Mode0: 4 text backgrounds
-//  - Mode1: 2 text backgrounds + 1 rotating/scaling background
-//  - Mode2: 2 rotating/scaling backgrounds
-//  - Mode3: 1 240x160x16bpp bitmapped
-//  - Mode4: 2 240x160x8bpp paletted
-//  - Mode5: 2 160x128x16bpp bitmapped
-
-
 class CGBAVideo
  : public CAVideo
 {

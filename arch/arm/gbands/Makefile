@@ -20,13 +20,13 @@ OBJS            =\
 
 
 ifeq ($(TARGET),gba)
-OBJS            += keyboard video videoDevice
+OBJS            += font8x8 keyboard video videoDevice
 endif
 ifeq ($(TARGET),nds7)
 OBJS            += keyboard
 endif
 ifeq ($(TARGET),nds9)
-OBJS            += video videoDevice
+OBJS            += font8x8 video videoDevice
 endif
 
 

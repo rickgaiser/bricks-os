@@ -275,10 +275,10 @@ enum EDMAMODE
 #define SPRITE_PALETTE        ( (uint16_t*)0x05000200)
 #define BG_PALETTE_SUB        ( (uint16_t*)0x05000400)
 #define SPRITE_PALETTE_SUB    ( (uint16_t*)0x05000600)
-#define CHAR_BASE_BLOCK(n)       (((n)*0x4000)+0x6000000)
-#define CHAR_BASE_BLOCK_SUB(n)   (((n)*0x4000)+0x6200000)
-#define SCREEN_BASE_BLOCK(n)     (((n)*0x0800)+0x6000000)
-#define SCREEN_BASE_BLOCK_SUB(n) (((n)*0x0800)+0x6200000)
+#define CHAR_BASE_BLOCK(n)       ((void *)(((n)*0x4000)+0x6000000))
+#define CHAR_BASE_BLOCK_SUB(n)   ((void *)(((n)*0x4000)+0x6200000))
+#define SCREEN_BASE_BLOCK(n)     ((void *)(((n)*0x0800)+0x6000000))
+#define SCREEN_BASE_BLOCK_SUB(n) ((void *)(((n)*0x0800)+0x6200000))
 
 // Registers
 #ifdef GBA
