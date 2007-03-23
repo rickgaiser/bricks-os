@@ -1,7 +1,4 @@
 #include "ps2Video.h"
-
-//#include <stdio.h>
-//#include <tamtypes.h>
 #include <kernel.h>
 #include <debug.h>
 
@@ -31,7 +28,8 @@ CPS2Video::init()
 ssize_t
 CPS2Video::write(const void * buffer, size_t size, loff_t *)
 {
-  scr_printf("%s", (char *)buffer);
+  for(size_t i(0); i < size; i++)
+    scr_printf("%c", ((char *)buffer)[i]);
 
   return 0;
 }

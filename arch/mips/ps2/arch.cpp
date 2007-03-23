@@ -1,13 +1,18 @@
 #include "kernel/bricks.h"
+#include "kernel/task.h"
 #include "ps2Video.h"
 
-#ifdef CONFIG_MULTITASKING
-#include "kernel/task.h"
-#endif // CONFIG_MULTITASKING
+#ifdef CONFIG_FRAMEBUFFER
+#include "videoDevice.h"
+#endif // CONFIG_FRAMEBUFFER
 
 
 IFileIO          cDummy;
 CPS2Video        cVideo;
+
+#ifdef CONFIG_FRAMEBUFFER
+CPS2VideoDevice * pVideoDevice;
+#endif // CONFIG_FRAMEBUFFER
 
 
 // -----------------------------------------------------------------------------
@@ -22,6 +27,10 @@ main(int, char *[])
   // Set standard in/out for tasks
   CTask::setStandardOutput(&cVideo);
   CTask::setStandardInput(&cDummy);
+
+#ifdef CONFIG_FRAMEBUFFER
+  pVideoDevice = new CPS2VideoDevice;
+#endif // CONFIG_FRAMEBUFFER
 
 #ifdef CONFIG_MULTITASKING
   // Create task structure
