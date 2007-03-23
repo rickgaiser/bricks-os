@@ -18,6 +18,10 @@ LFLAGS          +=-mno-crt0 -T$(BRICKS_ROOT)/include/makeinclude/link.ps2 $(MY_L
 STARTUP_LIBS    =\
                 -lsupc++ \
                 -ldebug \
+                -lgraph \
+                -ldma \
+                -lpacket \
+                -lm \
                 -lc \
                 -lsyscall \
                 $(PS2SDK)/ee/lib/libkernel.a \
