@@ -1,7 +1,19 @@
+// Memory management, based on sample code from IBM:
+// http://www-128.ibm.com/developerworks/linux/library/l-memory/
+
 #include "kernel/memoryManager.h"
 
 
-const size_t iMinBlockSize(sizeof(SMemBlockHeader) + 1);
+struct mem_control_block
+{
+  bool is_available;
+  size_t size;
+};
+
+
+bool has_initialized(false);
+char * managed_memory_start;
+char * last_valid_address;
 
 
 // -----------------------------------------------------------------------------
@@ -19,112 +31,124 @@ operator delete(void * mem)
 }
 
 // -----------------------------------------------------------------------------
-int
-CMemoryManager::init()
+char *
+sbrk(int incr)
 {
-  for(int i(0) ; i < iHeapCount; i++)
+  static char * pHeapTop = (char *)heaps[0].pStart;
+  static char * pHeapEnd = (char *)heaps[0].pStart + heaps[0].iSize;
+  char * ret = (char *)-1;
+
+  if((pHeapTop + incr) <= pHeapEnd)
   {
-    SHeap * pHeap = &(heaps[i]);
-    SMemBlockHeader * pHeader = (SMemBlockHeader *)pHeap->pStart;
-
-    // Initialize the header
-    pHeader->bAllocated = false;
-    pHeader->iSize = pHeap->iSize;
-    pHeader->pPrev = 0;
-    pHeader->pNext = 0;
-
-    pHeap->pListHead = pHeader;
+    pHeapTop += incr;
+    ret = pHeapTop;
   }
 
-  return 0;    
-}
-
-// -----------------------------------------------------------------------------
-void *
-CMemoryManager::malloc(size_t size/*, SHeap * pHeap*/)
-{
-  SMemBlockHeader * pCurrent = heaps[0].pListHead; // pHeap->pListHead
-  
-  size += sizeof(SMemBlockHeader);
-  
-  // Locate free block
-  while(true)
-  {
-    if((pCurrent->bAllocated == false) && (pCurrent->iSize >= size))
-    {
-      // Block found
-      break;
-    }
-    else
-    {
-      // Advance to next block
-      pCurrent = pCurrent->pNext;
-      if(pCurrent == 0)
-        return 0;
-    }
-  }
-  
-  // Setup the found block
-  if((pCurrent->iSize - size) < iMinBlockSize)
-  {
-    // Use entire block
-    // Setup current block
-    pCurrent->bAllocated = true;
-  }
-  else
-  {
-    // Split block
-    // Initialize new block
-    SMemBlockHeader * pNew = (SMemBlockHeader *)(((int)pCurrent) + size);
-    pNew->bAllocated = false;
-    pNew->iSize = pCurrent->iSize - size;
-    pNew->pPrev = pCurrent;
-    pNew->pNext = pCurrent->pNext;
-    // Setup current block
-    pCurrent->bAllocated = true;
-    pCurrent->iSize = size;
-    pCurrent->pNext = pNew;
-  }
-
-  return (void *)(((int)pCurrent) + sizeof(SMemBlockHeader));
+  return ret;
 }
 
 // -----------------------------------------------------------------------------
 void
-CMemoryManager::free(void * block)
+kmalloc_init()
 {
-  if(block == 0)
-    return;
+  // grab the last valid address from the OS
+  last_valid_address = sbrk(0);
+  // we don't have any memory to manage yet, so
+  // just set the beginning to be last_valid_address
+  managed_memory_start = last_valid_address;
+  // Okay, we're initialized and ready to go
+  has_initialized = true;
+}
 
-  SMemBlockHeader * pBlock = (SMemBlockHeader *)block;
-
-  pBlock->bAllocated = false;
-  
-  // Merge with next block?
-  SMemBlockHeader * pNext = pBlock->pNext;
-  if(pNext != 0)
+// -----------------------------------------------------------------------------
+void *
+kmalloc(size_t numbytes)
+{
+  // Holds where we are looking in memory
+  char * current_location;
+  // This is the same as current_location, but cast to a
+  // memory_control_block
+  struct mem_control_block * current_location_mcb;
+  // This is the memory location we will return.  It will
+  // be set to 0 until we find something suitable
+  char * memory_location;
+  /* Initialize if we haven't already done so */
+  if(has_initialized == false)
+    kmalloc_init();
+  // The memory we search for has to include the memory
+  // control block, but the users of malloc don't need
+  // to know this, so we'll just add it in for them.
+  numbytes = numbytes + sizeof(struct mem_control_block);
+  // Set memory_location to 0 until we find a suitable
+  // location
+  memory_location = 0;
+  // Begin searching at the start of managed memory
+  current_location = managed_memory_start;
+  // Keep going until we have searched all allocated space
+  while(current_location != last_valid_address)
   {
-    if(pNext->bAllocated == false)
+    // current_location and current_location_mcb point
+    // to the same address.  However, current_location_mcb
+    // is of the correct type, so we can use it as a struct.
+    // current_location is a void pointer so we can use it
+    // to calculate addresses.
+    current_location_mcb = (struct mem_control_block *)current_location;
+    if(current_location_mcb->is_available == true)
     {
-      // Merge blocks
-      pBlock->iSize += pNext->iSize;
-      pBlock->pNext = pNext->pNext;
-      if(pNext->pNext != 0)
-        pNext->pNext->pPrev = pBlock;
+      if(current_location_mcb->size >= numbytes)
+      {
+        // Woohoo!  We've found an open,
+        // appropriately-size location.
+
+        // It is no longer available
+        current_location_mcb->is_available = false;
+        // We own it
+        memory_location = current_location;
+        // Leave the loop
+        break;
+      }
     }
+    // If we made it here, it's because the Current memory
+    // block not suitable; move to the next one
+    current_location = current_location + current_location_mcb->size;
   }
 
-  // Merge with previous block?
-  SMemBlockHeader * pPrev = pBlock->pNext;
-  if(pPrev != 0)
+  // If we still don't have a valid location, we'll
+  // have to ask the operating system for more memory
+  if(memory_location == 0)
   {
-    if(pPrev->bAllocated == false)
-    {
-      // Merge blocks
-      pPrev->iSize += pBlock->iSize;
-      pPrev->pNext = pBlock->pNext;
-      if(pBlock->pNext != 0)
-        pBlock->pNext->pPrev = pPrev;
-    }
+    // Move the program break numbytes further
+    sbrk(numbytes);
+    // The new memory will be where the last valid
+    // address left off
+    memory_location = last_valid_address;
+    // We'll move the last valid address forward
+    // numbytes
+    last_valid_address = last_valid_address + numbytes;
+    // We need to initialize the mem_control_block
+    current_location_mcb = (struct mem_control_block *)memory_location;
+    current_location_mcb->is_available = false;
+    current_location_mcb->size = numbytes;
   }
+  // Now, no matter what (well, except for error conditions),
+  // memory_location has the address of the memory, including
+  // the mem_control_block
+  // Move the pointer past the mem_control_block
+  memory_location = memory_location + sizeof(struct mem_control_block);
+  // Return the pointer
+  return memory_location;
+ }
+
+// -----------------------------------------------------------------------------
+void
+kfree(void * firstbyte)
+{
+  struct mem_control_block * mcb;
+  // Backup from the given pointer to find the
+  // mem_control_block
+  mcb = (struct mem_control_block *)((char *)firstbyte - sizeof(struct mem_control_block));
+  // Mark the block as being available
+  mcb->is_available = true;
+  // That's It!  We're done.
+  return;
 }

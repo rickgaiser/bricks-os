@@ -1,8 +1,11 @@
 #include "kernel/bricks.h"
-#include "kernel/memoryManager.h"
-#include "kernel/task.h"
 #include "asm/cpu.h"
 #include "asm/irq.h"
+
+#ifdef CONFIG_MULTITASKING
+#include "kernel/task.h"
+#include "timer.h"
+#endif // CONFIG_MULTITASKING
 
 #ifdef CONFIG_GBA_CONSOLE
 #include "video.h"
@@ -23,10 +26,6 @@
 #ifdef CONFIG_FRAMEBUFFER
 #include "videoDevice.h"
 #endif // CONFIG_FRAMEBUFFER
-
-#ifdef CONFIG_MULTITASKING
-#include "timer.h"
-#endif // CONFIG_MULTITASKING
 
 #include "iostream"
 
@@ -59,9 +58,6 @@ int
 main(int, char *[])
 {
   int iRetVal(0);
-
-  // Initialize the memory manager so we can use new/delete/malloc/free
-  CMemoryManager::init();
 
   if(cIRQ.init() == -1)
     iRetVal = -1;

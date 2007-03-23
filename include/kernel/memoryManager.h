@@ -5,37 +5,18 @@
 #include "stddef.h"
 
 
-#define kmalloc CMemoryManager::malloc
-#define kfree   CMemoryManager::free
-
-
-struct SMemBlockHeader
-{
-  bool bAllocated;
-  size_t iSize;
-
-  // List
-  SMemBlockHeader * pPrev;
-  SMemBlockHeader * pNext;
-};
-
 struct SHeap
 {
   void * pStart;
   size_t iSize;
-  SMemBlockHeader * pListHead;
 };
 
-class CMemoryManager
-{
-public:
-  static int init();
-  static void * malloc(size_t size/*, SHeap * heap*/);
-  static void free(void * block);
 
-private:
-  CMemoryManager(){}
-};
+char *sbrk(int incr);
+void * kmalloc(size_t size);
+void kfree(void * block);
+void * operator new(size_t size);
+void operator delete(void * mem);
 
 
 extern SHeap heaps[];
