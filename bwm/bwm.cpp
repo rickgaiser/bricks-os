@@ -60,7 +60,7 @@ testGL(CSurface * surface)
   gluPerspective(45.0f, (float)surface->width / (float)surface->height, 0.1f, 100.0f);
 
   // Show Pyramid for 1 full rotation around y axis
-  for(float fYRotTriangle(0.0f); fYRotTriangle <= 360.0f; fYRotTriangle += 2.0f)
+  for(float fYRotTriangle(0.0f); fYRotTriangle < 360.0f; fYRotTriangle += 2.0f)
   {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -132,11 +132,14 @@ bwm(int argc, char * argv[])
             CSurface * pVideoSurface;
             devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
 
-            testFill(pVideoSurface);
-#ifdef CONFIG_GL
-            testGL(pVideoSurface);
+            while(true)
+            {
+#ifndef CONFIG_GL
+              testFill(pVideoSurface);
+#else
+              testGL(pVideoSurface);
 #endif // CONFIG_GL
-
+            }
             delete pVideoSurface;
           }
         }
