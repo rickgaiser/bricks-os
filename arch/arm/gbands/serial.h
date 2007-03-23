@@ -2,6 +2,7 @@
 #define GBA_SERIAL_H
 
 
+#include "asm/arch/registers.h"
 #include "kernel/interrupt.h"
 #include "kernel/fs.h"
 #include "unistd.h"
@@ -15,7 +16,7 @@ public:
   CGBASerial();
   virtual ~CGBASerial();
 
-  virtual int init();
+  virtual int init(ESerialMode mode, bool master);
 
   // Inherited from IInterruptServiceRoutine
   virtual int isr(int irq);
@@ -24,6 +25,8 @@ public:
   virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);
 
 private:
+  ESerialMode eMode_;
+  bool bMaster_;
 };
 
 

@@ -222,52 +222,56 @@ enum EDMAMODE
 #define POWER_2D_SWAP         (1<<15)
 #endif // NDS9
 #ifdef GBA
-//
-#define SIO_MODE_MASK         0x3000 // Communication mode
-#define SIO_BAUD_RATE_MASK    0x0003 // Baud rate
-#define SIO_ID_NO_MASK        0x0030 // Communication ID
-//
-#define SIO_MODE_SHIFT        12
-#define SIO_BAUD_RATE_SHIFT   0
-#define SIO_ID_NO_SHIFT       4
-//
-#define SIO_8BIT_MODE         0x0000 // Normal 8-bit communication mode
-#define SIO_32BIT_MODE        0x1000 // Normal 32-bit communication mode
-#define SIO_MULTI_MODE        0x2000 // Multi-play communication mode
-#define SIO_UART_MODE         0x3000 // UART communication mode
-//
-#define SIO_SCK_OUT           0x0000 // Select external clock
-#define SIO_SCK_IN            0x0001 // Select internal clock
-#define SIO_IN_SCK_256K       0x0000 // Select internal clock 256KHz
-#define SIO_IN_SCK_2M         0x0002 //                  Select 2MHz
-#define SIO_ACK_RECV          0x0004 // Request transfer
-#define SIO_ACK_SEND          0x0008 // Enable transfer
-#define SIO_9600_BPS          0x0000 // Baud rate 9600 bps
-#define SIO_38400_BPS         0x0001 //           68400 bps
-#define SIO_57600_BPS         0x0002 //           57600 bps
-#define SIO_115200_BPS        0x0003 //           115200 bps
-#define SIO_MULTI_CONNECT     0x0004 // Multi-play communication connecting
-#define SIO_MULTI_DISCONNECT  0x0000 //                          Disconnect
-#define SIO_MULTI_PARENT      0x0008 // Multi-play communication  Connect master
-#define SIO_MULTI_CHILD       0x0000 //                           Connect slave
-#define SIO_MULTI_SI          0x0004 // Multi-play communication SI terminal
-#define SIO_MULTI_SD          0x0008 //                          SD terminal
-#define SIO_MULTI_BUSY        0x0080 // Multi-play communicating
-#define SIO_CTS_ENABLE        0x0004 // Enable UART send enable signal
-#define SIO_UART_7BIT         0x0000 // UART communication data length 7 bit
-#define SIO_UART_8BIT         0x0080 //                                8 bit
-#define SIO_ERROR             0x0040 // Detect error
+// "REG_SIOCNT" bits
+// Serial Clock in NORMAL mode
+enum ESerialClock
+{
+    SIO_NORMAL_CLK_EXTERNAL = 0x0000
+  , SIO_NORMAL_CLK_256KHZ =   0x0001
+  , SIO_NORMAL_CLK_2MHZ =     0x0003
+};
+// Baud Rate in MULTI & UART mode
+enum EBaudRate
+{
+    SIO_9600_BPS =            0x0000
+  , SIO_38400_BPS =           0x0001
+  , SIO_57600_BPS =           0x0002
+  , SIO_115200_BPS =          0x0003
+};
+// Communication mode
+enum ESerialMode
+{
+    SIO_8BIT_MODE =           0x0000 // Normal 8-bit communication mode
+  , SIO_32BIT_MODE =          0x1000 // Normal 32-bit communication mode
+  , SIO_MULTI_MODE =          0x2000 // Multi-play communication mode
+  , SIO_UART_MODE =           0x3000 // UART communication mode
+};
 #define SIO_START             0x0080 // Start transfer
-#define SIO_ENABLE            0x0080 // Enable SIO
-#define SIO_FIFO_ENABLE       0x0100 // Enable FIFO
-#define SIO_PARITY_ENABLE     0x0200 // Enable parity
-#define SIO_PARITY_EVEN       0x0000 // Even parity
-#define SIO_PARITY_ODD        0x0008 // Odd parity
-#define SIO_TRANS_ENABLE      0x0400 // Enable transmitter
-#define SIO_TRANS_DATA_FULL   0x0010 // Transmitted data full
-#define SIO_RECV_ENABLE       0x0800 // Enable receiver
-#define SIO_RECV_DATA_EMPTY   0x0020 // No data received
-#define SIO_IF_ENABLE         0x4000 // Enable interrupt request
+#define SIO_BUSY              0x0080 // Transfer in progress
+#define SIO_IRQ_ENABLE        0x4000
+// NORMAL mode specific
+#define SIO_NORMAL_SI         0x0004
+#define SIO_NORMAL_SO         0x0008
+#define SIO_NORMAL_ACK_RECV   0x0004
+#define SIO_NORMAL_ACK_SEND   0x0008
+// MULTI mode specific
+#define SIO_MULTI_CHILD       0x0004 // 1=child, 0=parent
+#define SIO_MULTI_CONNECTED   0x0008 // 1=connected, 0=error
+#define SIO_MULTI_ID_MASK     0x0030 // Mask for getting player id
+#define SIO_MULTI_ERROR       0x0040
+// UART mode specific
+#define SIO_UART_CTS_ENABLE   0x0004
+#define SIO_UART_PARITY_EVEN  0x0000
+#define SIO_UART_PARITY_ODD   0x0008
+#define SIO_UART_SEND_FULL    0x0010 // Send buffer full
+#define SIO_UART_RECV_EMPTY   0x0020 // Recv buffer empty
+#define SIO_UART_ERROR        0x0040
+#define SIO_UART_7BIT         0x0000
+#define SIO_UART_8BIT         0x0080
+#define SIO_UART_FIFO_ENABLE  0x0100
+#define SIO_UART_PARITY_ENABLE 0x0200
+#define SIO_UART_SEND_ENABLE  0x0400
+#define SIO_UART_RECV_ENABLE  0x0800
 #endif // GBA
 
 // Memory Locations
