@@ -2,7 +2,6 @@
 #include "GL/CMatrix.h"
 #include "GL/fixedPoint.h"
 
-#include "asm/arch/registers.h"
 #include "asm/arch/macros.h"
 
 typedef unsigned int wint_t;
@@ -55,14 +54,11 @@ public:
 
 public:
   // Edge x
-  GLint     x_[192];
-//  GLint   * x_;
+  GLint   * x_;
   // Edge depth (fp: 8.8)
-  zbuf_t    z_[192];
-//  zbuf_t  * z_;
+  zbuf_t  * z_;
   // Edge color (fp: 24.8)
-  SColor    c_[192];
-//  SColor  * c_;
+  SColor  * c_;
 };
 
 //-----------------------------------------------------------------------------
@@ -94,6 +90,8 @@ public:
 
   SPolygon  globalPolygon;
   GLint     iGlobalPolyVCount;
+  CEdge   * edge1;
+  CEdge   * edge2;
 
   // Viewport
   GLint     viewportXOffset;
@@ -127,6 +125,8 @@ CGLContext::CGLContext()
  , bCullBack(true)
  , matrixMode(GL_MODELVIEW)
  , iGlobalPolyVCount(0)
+ , edge1(0)
+ , edge2(0)
  , viewportXOffset(0)
  , viewportYOffset(0)
  , viewportWidth(0)
@@ -159,21 +159,17 @@ CGLContext::CGLContext()
 //-----------------------------------------------------------------------------
 CEdge::CEdge(uint32_t height)
 {
-/*
   x_ = new GLint[height];
   z_ = new zbuf_t[height];
   c_ = new SColor[height];
-*/
 }
 
 //-----------------------------------------------------------------------------
 CEdge::~CEdge()
 {
-/*
   delete x_;
   delete z_;
   delete c_;
-*/
 }
 
 //-----------------------------------------------------------------------------
@@ -486,21 +482,18 @@ plotPoly(SPolygon & poly)
   }
 
   // Create edge lists
-  CEdge edge1(context.viewportHeight);
-  CEdge edge2(context.viewportHeight);
+  context.edge1->add(vlo, vhi);
+  context.edge2->add(vlo, vmi);
+  context.edge2->add(vmi, vhi);
 
-  edge1.add(vlo, vhi);
-  edge2.add(vlo, vmi);
-  edge2.add(vmi, vhi);
-
-  CEdge * pEdgeLeft  = &edge1;
-  CEdge * pEdgeRight = &edge2;
+  CEdge * pEdgeLeft  = context.edge1;
+  CEdge * pEdgeRight = context.edge2;
   GLint my(vlo->sy+((vhi->sy-vlo->sy)/2));
-  if(edge1.x_[my] > edge2.x_[my])
+  if(context.edge1->x_[my] > context.edge2->x_[my])
   {
     // Swap
-    pEdgeLeft  = &edge2;
-    pEdgeRight = &edge1;
+    pEdgeLeft  = context.edge2;
+    pEdgeRight = context.edge1;
   }
 
   // Display triangle (horizontal lines forming the triangle)
@@ -760,6 +753,10 @@ glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
   if(context.zbuffer)
     delete context.zbuffer;
+  if(context.edge1)
+    delete context.edge1;
+  if(context.edge2)
+    delete context.edge2;
 
   context.viewportXOffset    = x;
   context.viewportYOffset    = y;
@@ -768,6 +765,8 @@ glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   context.viewportPixelCount = width * height;
   context.viewportByteCount  = width * height * 2;
   context.zbuffer            = new zbuf_t[width * height];
+  context.edge1              = new CEdge(context.viewportHeight);
+  context.edge2              = new CEdge(context.viewportHeight);
 
   // Calculate field of view scalars
   context.fpFieldofviewXScalar = m_fpfromf(static_cast<float>(width)  / tan(80)); // 5.67 == tan(80)
