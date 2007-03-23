@@ -6,3 +6,6 @@
 #CONFIG_FRAMEBUFFER=y
 #CONFIG_GL=y
 #CONFIG_BWM=y
+
+# Library related configuration
+#CONFIG_BUILTIN_MM=y

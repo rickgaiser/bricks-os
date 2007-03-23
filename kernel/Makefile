@@ -7,7 +7,6 @@ OBJS            =\
                 fileio \
                 interrupt \
                 interruptManager \
-                memoryManager \
                 pthread \
                 task \
                 timeValue \
@@ -17,6 +16,7 @@ OBJS            =\
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoManager
 OBJS-$(CONFIG_GL)                  += gl
 OBJS-$(CONFIG_SRR)                 += srr srrTest
+OBJS-$(CONFIG_BUILTIN_MM)          += memoryManager
 
 DEFINITIONS-$(CONFIG_MULTITASKING) += CONFIG_MULTITASKING
 DEFINITIONS-$(CONFIG_FRAMEBUFFER)  += CONFIG_FRAMEBUFFER
