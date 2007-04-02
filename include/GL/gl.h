@@ -74,10 +74,8 @@ void glSetSurface(CSurface * surface);
 void glBegin(GLenum mode);
 void glEnd();
 
-void glVertex3fp(GLint x, GLint y, GLint z);
 void glVertex3i(GLint x, GLint y, GLint z);
 void glVertex3f(GLfloat x, GLfloat y, GLfloat z);
-void glVertex3fpv(const GLint * v);
 void glVertex3iv(const GLint * v);
 void glVertex3fv(const GLfloat * v);
 

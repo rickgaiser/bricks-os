@@ -2,6 +2,8 @@
 #define FIXEDPOINT_H
 
 
+typedef short fxpoint16_t;
+typedef long fxpoint32_t;
 typedef long fxpoint_t;
 
 

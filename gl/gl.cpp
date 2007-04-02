@@ -1,9 +1,7 @@
 #include "GL/gl.h"
-#include "GL/CMatrix.h"
-#include "GL/fixedPoint.h"
-
+#include "CMatrix.h"
+#include "fixedPoint.h"
 #include "asm/arch/macros.h"
-
 typedef unsigned int wint_t;
 #include <math.h>
 
@@ -11,7 +9,7 @@ typedef unsigned int wint_t;
 #define FP_PRESICION_ZBUFFER    8 //  8.8
 #define FP_PRESICION_COLOR      8 // 24.8
 #define ZBUFFER_MAX_DEPTH       fpfromi(FP_PRESICION_ZBUFFER, (1 << (FP_PRESICION_ZBUFFER - 1)) - 1) // 2^7-1
-typedef short zbuf_t;
+typedef fxpoint16_t zbuf_t;
 
 
 //-----------------------------------------------------------------------------
@@ -179,10 +177,12 @@ CEdge::add(SVertex * vfrom, SVertex * vto)
   if(vto->sy != vfrom->sy)
   {
     GLint dy(vto->sy - vfrom->sy);
-    GLint x(fpfromi(16, vfrom->sx));
-    GLint z(vfrom->v[2]);
-    GLint mx((fpfromi(16, vto->sx  - vfrom->sx )) / dy);
-    GLint mz((vto->v[2] - vfrom->v[2]) / dy);
+
+    fxpoint_t x(fpfromi(16, vfrom->sx));
+    fxpoint_t mx((fpfromi(16, vto->sx  - vfrom->sx )) / dy);
+
+    zbuf_t z(vfrom->v[2]);
+    zbuf_t mz((vto->v[2] - vfrom->v[2]) / dy);
 
     switch(context.iShadeModel)
     {
@@ -202,16 +202,12 @@ CEdge::add(SVertex * vfrom, SVertex * vto)
       }
       case GL_SMOOTH:
       {
-        GLint x(fpfromi(16, vfrom->sx ));
-        GLint z(vfrom->v[2]);
-        GLint r(vfrom->c.r);
-        GLint g(vfrom->c.g);
-        GLint b(vfrom->c.b);
-        GLint mx((fpfromi(16, vto->sx  - vfrom->sx )) / dy);
-        GLint mz((vto->v[2] - vfrom->v[2]) / dy);
-        GLint mr((vto->c.r - vfrom->c.r) / dy);
-        GLint mg((vto->c.g - vfrom->c.g) / dy);
-        GLint mb((vto->c.b - vfrom->c.b) / dy);
+        fxpoint_t r(vfrom->c.r);
+        fxpoint_t g(vfrom->c.g);
+        fxpoint_t b(vfrom->c.b);
+        fxpoint_t mr((vto->c.r - vfrom->c.r) / dy);
+        fxpoint_t mg((vto->c.g - vfrom->c.g) / dy);
+        fxpoint_t mb((vto->c.b - vfrom->c.b) / dy);
 
         for(int y(vfrom->sy); y < vto->sy; y++)
         {
@@ -332,12 +328,12 @@ hline_s(CEdge & from, CEdge & to, GLint & y)
   if(from.x_[y] < to.x_[y])
   {
     GLint dx(to.x_[y] - from.x_[y]);
-    GLint mr((to.c_[y].r - from.c_[y].r) / dx);
-    GLint mg((to.c_[y].g - from.c_[y].g) / dx);
-    GLint mb((to.c_[y].b - from.c_[y].b) / dx);
-    GLint r(from.c_[y].r);
-    GLint g(from.c_[y].g);
-    GLint b(from.c_[y].b);
+    fxpoint_t mr((to.c_[y].r - from.c_[y].r) / dx);
+    fxpoint_t mg((to.c_[y].g - from.c_[y].g) / dx);
+    fxpoint_t mb((to.c_[y].b - from.c_[y].b) / dx);
+    fxpoint_t r(from.c_[y].r);
+    fxpoint_t g(from.c_[y].g);
+    fxpoint_t b(from.c_[y].b);
 
     unsigned long index((y * context.viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -364,15 +360,15 @@ hline_sd(CEdge & from, CEdge & to, GLint & y)
   if(from.x_[y] < to.x_[y])
   {
     GLint dx(to.x_[y] - from.x_[y]);
-    GLint mz((to.z_[y] - from.z_[y]) / dx);
-    GLint z(from.z_[y]);
+    zbuf_t mz((to.z_[y] - from.z_[y]) / dx);
+    zbuf_t z(from.z_[y]);
 
-    GLint mr((to.c_[y].r - from.c_[y].r) / dx);
-    GLint mg((to.c_[y].g - from.c_[y].g) / dx);
-    GLint mb((to.c_[y].b - from.c_[y].b) / dx);
-    GLint r(from.c_[y].r);
-    GLint g(from.c_[y].g);
-    GLint b(from.c_[y].b);
+    fxpoint_t mr((to.c_[y].r - from.c_[y].r) / dx);
+    fxpoint_t mg((to.c_[y].g - from.c_[y].g) / dx);
+    fxpoint_t mb((to.c_[y].b - from.c_[y].b) / dx);
+    fxpoint_t r(from.c_[y].r);
+    fxpoint_t g(from.c_[y].g);
+    fxpoint_t b(from.c_[y].b);
 
     unsigned long index((y * context.viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -554,31 +550,7 @@ glEnd()
 
 //-----------------------------------------------------------------------------
 void
-glVertex3fp(GLint x, GLint y, GLint z)
-{
-  GLint vtx[3] = {x, y, z};
-  glVertex3fpv(vtx);
-}
-
-//-----------------------------------------------------------------------------
-void
-glVertex3i(GLint x, GLint y, GLint z)
-{
-  GLint vtx[3] = {m_fpfromi(x), m_fpfromi(y), m_fpfromi(z)};
-  glVertex3fpv(vtx);
-}
-
-//-----------------------------------------------------------------------------
-void
-glVertex3f(GLfloat x, GLfloat y, GLfloat z)
-{
-  GLint vtx[3] = {m_fpfromf(x), m_fpfromf(y), m_fpfromf(z)};
-  glVertex3fpv(vtx);
-}
-
-//-----------------------------------------------------------------------------
-void
-glVertex3fpv(const GLint * v)
+glVertex3fpv(const fxpoint_t * v)
 {
   switch(context.currentMode)
   {
@@ -607,9 +579,33 @@ glVertex3fpv(const GLint * v)
 
 //-----------------------------------------------------------------------------
 void
+glVertex3fp(fxpoint_t x, fxpoint_t y, fxpoint_t z)
+{
+  fxpoint_t vtx[3] = {x, y, z};
+  glVertex3fpv(vtx);
+}
+
+//-----------------------------------------------------------------------------
+void
+glVertex3i(GLint x, GLint y, GLint z)
+{
+  fxpoint_t vtx[3] = {m_fpfromi(x), m_fpfromi(y), m_fpfromi(z)};
+  glVertex3fpv(vtx);
+}
+
+//-----------------------------------------------------------------------------
+void
+glVertex3f(GLfloat x, GLfloat y, GLfloat z)
+{
+  fxpoint_t vtx[3] = {m_fpfromf(x), m_fpfromf(y), m_fpfromf(z)};
+  glVertex3fpv(vtx);
+}
+
+//-----------------------------------------------------------------------------
+void
 glVertex3iv(const GLint * v)
 {
-  GLint vtx[3] = {m_fpfromi(v[0]), m_fpfromi(v[1]), m_fpfromi(v[2])};
+  fxpoint_t vtx[3] = {m_fpfromi(v[0]), m_fpfromi(v[1]), m_fpfromi(v[2])};
   glVertex3fpv(vtx);
 }
 
@@ -617,7 +613,7 @@ glVertex3iv(const GLint * v)
 void
 glVertex3fv(const GLfloat * v)
 {
-  GLint vtx[3] = {m_fpfromf(v[0]), m_fpfromf(v[1]), m_fpfromf(v[2])};
+  fxpoint_t vtx[3] = {m_fpfromf(v[0]), m_fpfromf(v[1]), m_fpfromf(v[2])};
   glVertex3fpv(vtx);
 }
 
@@ -655,8 +651,7 @@ glColor3f(GLfloat red, GLfloat green, GLfloat blue)
 void
 glNormal3i(GLint nx, GLint ny, GLint nz)
 {
-  GLint normal[3] = {m_fpfromi(nx), m_fpfromi(ny), m_fpfromi(nz)};
-  glNormal3iv(normal);
+//  fxpoint_t normal[3] = {m_fpfromi(nx), m_fpfromi(ny), m_fpfromi(nz)};
 }
 
 //-----------------------------------------------------------------------------
