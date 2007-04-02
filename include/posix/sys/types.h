@@ -9,6 +9,7 @@ extern "C" {
 
 typedef long long int loff_t;
 typedef long off_t;
+typedef unsigned int pid_t;
 typedef unsigned int size_t;
 typedef int ssize_t;
 

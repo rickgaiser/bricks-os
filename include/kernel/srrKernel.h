@@ -2,12 +2,9 @@
 #define KERNEL_SRRKERNEL_H
 
 
+#include "sys/types.h"
 #include "inttypes.h"
 #include "stddef.h"
-
-
-typedef uint32_t pid_t;
-typedef uint32_t off_t;
 
 
 // -----------------------------------------------------------------------------
