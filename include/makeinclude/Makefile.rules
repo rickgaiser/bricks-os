@@ -38,6 +38,7 @@ MY_INCL_PATH    += \
                 -I$(BRICKS_ROOT)/include/include-$(ARCH) \
                 -I$(BRICKS_ROOT)/include/posix \
                 -I$(BRICKS_ROOT)/include/stl \
+                -I$(BRICKS_ROOT)/include/GL \
 
 MY_LIBS_PATH	+= \
                 -L$(BRICKS_ROOT)/lib/$(TARGET) \

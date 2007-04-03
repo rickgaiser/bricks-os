@@ -1,7 +1,8 @@
 #include "bwm/bwm.h"
 #include "kernel/videoManager.h"
 #ifdef CONFIG_GL
-#include "GL/gl.h"
+#include "GLES/gl.h"
+#include "GLES/gl_extra.h"
 #endif // CONFIG_GL
 #include "iostream"
 
@@ -20,6 +21,50 @@ color_t clPanelLight(BxRGB(255, 255, 255));
 color_t clPanelShade1(BxRGB(64, 64, 64));
 color_t clPanelShade2(BxRGB(128, 128, 128));
 color_t clPanelFill(BxRGB(212, 208, 200));
+
+
+#ifdef CONFIG_GL
+GLfloat triangle[] =
+{
+  // Front
+   0.0f,  1.0f,  0.0f,
+  -1.0f, -1.0f,  1.0f,
+   1.0f, -1.0f,  1.0f,
+  // Right
+   0.0f,  1.0f,  0.0f,
+   1.0f, -1.0f,  1.0f,
+   1.0f, -1.0f, -1.0f,
+  // Back
+   0.0f,  1.0f,  0.0f,
+   1.0f, -1.0f, -1.0f,
+  -1.0f, -1.0f, -1.0f,
+  // Left
+   0.0f,  1.0f,  0.0f,
+  -1.0f, -1.0f, -1.0f,
+  -1.0f, -1.0f,  1.0f
+};
+GLint vertex_count(sizeof(triangle) / (3 * sizeof(GLfloat)));
+
+GLfloat colors[] =
+{
+  // Front
+  1.0f, 0.0f, 0.0f, 1.0f,
+  0.0f, 1.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 1.0f, 1.0f,
+  // Right
+  1.0f, 0.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 1.0f, 1.0f,
+  0.0f, 1.0f, 0.0f, 1.0f,
+  // Back
+  1.0f, 0.0f, 0.0f, 1.0f,
+  0.0f, 1.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 1.0f, 1.0f,
+  // Left
+  1.0f, 0.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 1.0f, 1.0f,
+  0.0f, 1.0f, 0.0f, 1.0f
+};
+#endif // CONFIG_GL
 
 
 // -----------------------------------------------------------------------------
@@ -59,6 +104,11 @@ testGL(CSurface * surface)
   glViewport(0, 0, surface->width, surface->height);
   gluPerspective(45.0f, (float)surface->width / (float)surface->height, 0.1f, 100.0f);
 
+  //glVertexPointer(3, GL_FLOAT, 0, triangle);
+  //glColorPointer(4, GL_FLOAT, 0, colors);
+  //glEnableClientState(GL_VERTEX_ARRAY);
+  //glEnableClientState(GL_COLOR_ARRAY);
+
   // Show Pyramid for 1 full rotation around y axis
   for(float fYRotTriangle(0.0f); fYRotTriangle < 360.0f; fYRotTriangle += 2.0f)
   {
@@ -69,35 +119,14 @@ testGL(CSurface * surface)
     glRotatef(fYRotTriangle, 0.0f, 1.0f, 0.0f);
 
     glBegin(GL_TRIANGLES);
-      // Front
-      glColor3ub(255,0,0);
-      glVertex3i(0,1,0);
-      glColor3ub(0,255,0);
-      glVertex3i(-1,-1,1);
-      glColor3ub(0,0,255);
-      glVertex3i(1,-1,1);
-      // Right
-      glColor3ub(255,0,0);
-      glVertex3i(0,1,0);
-      glColor3ub(0,0,255);
-      glVertex3i(1,-1,1);
-      glColor3ub(0,255,0);
-      glVertex3i(1,-1,-1);
-      // Back
-      glColor3ub(255,0,0);
-      glVertex3i(0,1,0);
-      glColor3ub(0,255,0);
-      glVertex3i(1,-1,-1);
-      glColor3ub(0,0,255);
-      glVertex3i(-1,-1,-1);
-      // Left
-      glColor3ub(255,0,0);
-      glVertex3i(0,1,0);
-      glColor3ub(0,0,255);
-      glVertex3i(-1,-1,-1);
-      glColor3ub(0,255,0);
-      glVertex3i(-1,-1,1);
+      for(GLint i(0); i < vertex_count; i++)
+      {
+        glColor3f(colors[i*4+0], colors[i*4+1], colors[i*4+2]);
+        glVertex3f(triangle[i*3+0], triangle[i*3+1], triangle[i*3+2]);
+      }
     glEnd();
+    //glDrawArrays(GL_TRIANGLES, 0, vertex_count);
+    //glFlush();
 
     // Display progress bar
     surface->fillRect(1, surface->height - 12, surface->width - 2, 10, clWhite);

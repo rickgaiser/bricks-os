@@ -2,14 +2,12 @@
 #define FIXEDPOINT_H
 
 
-typedef short fxpoint16_t;
-typedef long fxpoint32_t;
-typedef long fxpoint_t;
+#include "GLES/gl.h"
 
 
 //---------------------------------------------------------------------------
 #define fpfromi(c,a) ((a)<<(c))
-#define fpfromf(c,a) ((long)((a)*(1<<(c))))
+#define fpfromf(c,a) ((GLfixed)((a)*(1<<(c))))
 #define fptoi(c,a)   ((a)>>(c))
 #define fptof(c,a)   ((float)(a)/(1<<(c)))
 #define fpmul(c,a,b) (((a)*(b))>>(c))

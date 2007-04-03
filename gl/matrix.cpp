@@ -1,12 +1,12 @@
-#include "CMatrix.h"
+#include "matrix.h"
 #include "string.h"
 typedef unsigned int wint_t;
 #include <math.h>
 
 
 bool CMatrix::bInitialized_(false);
-fxpoint_t CMatrix::fpSin_[360];
-fxpoint_t CMatrix::fpCos_[360];
+GLfixed CMatrix::fpSin_[360];
+GLfixed CMatrix::fpCos_[360];
 
 
 //---------------------------------------------------------------------------
@@ -34,7 +34,7 @@ CMatrix::~CMatrix()
 void
 CMatrix::clear()
 {
-  memset(matrix, 0, sizeof(fxpoint_t) * 16);
+  memset(matrix, 0, sizeof(GLfixed) * 16);
 }
 
 //---------------------------------------------------------------------------
@@ -50,7 +50,7 @@ CMatrix::loadIdentity()
 
 //---------------------------------------------------------------------------
 void
-CMatrix::translate(fxpoint_t x, fxpoint_t y, fxpoint_t z)
+CMatrix::translate(GLfixed x, GLfixed y, GLfixed z)
 {
   CMatrix m;
   m.loadIdentity();
@@ -62,14 +62,14 @@ CMatrix::translate(fxpoint_t x, fxpoint_t y, fxpoint_t z)
 
 //---------------------------------------------------------------------------
 void
-CMatrix::translate(fxpoint_t * vec)
+CMatrix::translate(GLfixed * vec)
 {
   translate(vec[0], vec[1], vec[2]);
 }
 
 //---------------------------------------------------------------------------
 void
-CMatrix::scale(fxpoint_t x, fxpoint_t y, fxpoint_t z)
+CMatrix::scale(GLfixed x, GLfixed y, GLfixed z)
 {
   CMatrix m;
   m.loadIdentity();
@@ -81,19 +81,19 @@ CMatrix::scale(fxpoint_t x, fxpoint_t y, fxpoint_t z)
 
 //---------------------------------------------------------------------------
 void
-CMatrix::scale(fxpoint_t * vec)
+CMatrix::scale(GLfixed * vec)
 {
   scale(vec[0], vec[1], vec[2]);
 }
 
 //---------------------------------------------------------------------------
 void
-CMatrix::rotate(fxpoint_t angle, fxpoint_t x, fxpoint_t y, fxpoint_t z)
+CMatrix::rotate(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
   while(angle < 0)
     angle += m_fpfromi(360);
-  fxpoint_t iSin = fpSin_[m_fptoi(angle) % 360];
-  fxpoint_t iCos = fpCos_[m_fptoi(angle) % 360];
+  GLfixed iSin = fpSin_[m_fptoi(angle) % 360];
+  GLfixed iCos = fpCos_[m_fptoi(angle) % 360];
 
   long flags(((z != 0) << 2) | ((y != 0) << 1) | (x != 0));
   switch(flags)
@@ -165,7 +165,7 @@ CMatrix::rotate(fxpoint_t angle, fxpoint_t x, fxpoint_t y, fxpoint_t z)
 
 //---------------------------------------------------------------------------
 void
-CMatrix::rotate(fxpoint_t * angles)
+CMatrix::rotate(GLfixed * angles)
 {
   rotate(angles[0], angles[1], angles[2], angles[3]);
 }
@@ -173,11 +173,11 @@ CMatrix::rotate(fxpoint_t * angles)
 //---------------------------------------------------------------------------
 // NEW
 void
-CMatrix::transform(const fxpoint_t * from, fxpoint_t * to)
+CMatrix::transform(const GLfixed * from, GLfixed * to)
 {
-  fxpoint_t x(from[0]);
-  fxpoint_t y(from[1]);
-  fxpoint_t z(from[2]);
+  GLfixed x(from[0]);
+  GLfixed y(from[1]);
+  GLfixed z(from[2]);
   to[0] = m_fpmul(matrix[0][0], x) + m_fpmul(matrix[0][1], y) + m_fpmul(matrix[0][2], z) + matrix[0][3];
   to[1] = m_fpmul(matrix[1][0], x) + m_fpmul(matrix[1][1], y) + m_fpmul(matrix[1][2], z) + matrix[1][3];
   to[2] = m_fpmul(matrix[2][0], x) + m_fpmul(matrix[2][1], y) + m_fpmul(matrix[2][2], z) + matrix[2][3];
@@ -201,7 +201,7 @@ CMatrix::operator*(const CMatrix & m)
 CMatrix &
 CMatrix::operator*=(const CMatrix & m)
 {
-  fxpoint_t mtemp[4][4];
+  GLfixed mtemp[4][4];
 
   for(int iRow(0); iRow < 4; iRow++)
   {
@@ -214,7 +214,7 @@ CMatrix::operator*=(const CMatrix & m)
     }
   }
 
-  memcpy(matrix, mtemp, sizeof(fxpoint_t) * 16);
+  memcpy(matrix, mtemp, sizeof(GLfixed) * 16);
 
   return(*this);
 }
