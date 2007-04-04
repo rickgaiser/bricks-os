@@ -104,37 +104,9 @@ glSetSurface(CSurface * surface)
 // GL API
 //-----------------------------------------------------------------------------
 GL_API void
-GL_APIENTRY glBegin(GLenum mode)
+GL_APIENTRY glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
-  context.glBegin(mode);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glEnd()
-{
-  context.glEnd();
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glVertex3fpv(const GLfixed * v)
-{
-  context.glVertex3fpv(v);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glVertex3f(GLfloat x, GLfloat y, GLfloat z)
-{
-  context.glVertex3f(x, y, z);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glColor3f(GLfloat red, GLfloat green, GLfloat blue)
-{
-  context.glColor3f(red, green, blue);
+  context.glColor4f(red, green, blue, alpha);
 }
 
 //-----------------------------------------------------------------------------
@@ -181,13 +153,6 @@ GL_APIENTRY glClear(GLbitfield mask)
 
 //-----------------------------------------------------------------------------
 GL_API void
-GL_APIENTRY glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-  context.glViewport(x, y, width, height);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
 GL_APIENTRY glShadeModel(GLenum mode)
 {
   context.glShadeModel(mode);
@@ -202,6 +167,13 @@ GL_APIENTRY glEnable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 GL_API void
+GL_APIENTRY glEnableClientState(GLenum array)
+{
+  context.glEnable(array);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
 GL_APIENTRY glDisable(GLenum cap)
 {
   context.glDisable(cap);
@@ -209,23 +181,44 @@ GL_APIENTRY glDisable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 GL_API void
-GL_APIENTRY glLightModelfv(GLenum pname, const GLfloat * params)
-{
-  context.glLightModelfv(pname, params);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glLightfv(GLenum light, GLenum pname, const GLfloat * params)
-{
-  context.glLightfv(light, pname, params);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
 GL_APIENTRY glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
   context.glClearColor(red, green, blue, alpha);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+{
+  context.glColorPointer(size, type, stride, pointer);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glDrawArrays(GLenum mode, GLint first, GLsizei count)
+{
+  context.glDrawArrays(mode, first, count);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glFlush(void)
+{
+  context.glFlush();
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+{
+  context.glVertexPointer(size, type, stride, pointer);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
+{
+  context.glViewport(x, y, width, height);
 }
 
 //-----------------------------------------------------------------------------

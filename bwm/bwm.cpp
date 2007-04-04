@@ -1,6 +1,7 @@
 #include "bwm/bwm.h"
 #include "kernel/videoManager.h"
 #ifdef CONFIG_GL
+//#include "EGL/egl.h"
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 #endif // CONFIG_GL
@@ -88,6 +89,20 @@ testFill(CSurface * surface)
 void
 testGL(CSurface * surface)
 {
+  //EGLDisplay   egldisplay;
+  //EGLConfig    eglconfig = 0;
+  //EGLSurface   eglsurface;
+  //EGLContext   eglcontext;
+
+  //initialize EGL
+  //egldisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  //eglInitialize(egldisplay, 0, 0);
+  //eglBindAPI(EGL_OPENGL_ES_API);
+  //eglChooseConfig(egldisplay, s_configAttribs, &eglconfig, 1, &numconfigs);
+  //eglsurface = eglCreateWindowSurface(egldisplay, eglconfig, (EGLNativeDisplayType)surface, 0);
+  //eglcontext = eglCreateContext(egldisplay, eglconfig, 0, 0);
+  //eglMakeCurrent(egldisplay, eglsurface, eglsurface, eglcontext);
+
   // Set render surface
   glSetSurface(surface);
 
@@ -104,10 +119,10 @@ testGL(CSurface * surface)
   glViewport(0, 0, surface->width, surface->height);
   gluPerspective(45.0f, (float)surface->width / (float)surface->height, 0.1f, 100.0f);
 
-  //glVertexPointer(3, GL_FLOAT, 0, triangle);
-  //glColorPointer(4, GL_FLOAT, 0, colors);
-  //glEnableClientState(GL_VERTEX_ARRAY);
-  //glEnableClientState(GL_COLOR_ARRAY);
+  glVertexPointer(3, GL_FLOAT, 0, triangle);
+  glColorPointer(4, GL_FLOAT, 0, colors);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_COLOR_ARRAY);
 
   // Show Pyramid for 1 full rotation around y axis
   for(float fYRotTriangle(0.0f); fYRotTriangle < 360.0f; fYRotTriangle += 2.0f)
@@ -118,15 +133,8 @@ testGL(CSurface * surface)
     glTranslatef(0.0f, 0.0f, -3.0f);
     glRotatef(fYRotTriangle, 0.0f, 1.0f, 0.0f);
 
-    glBegin(GL_TRIANGLES);
-      for(GLint i(0); i < vertex_count; i++)
-      {
-        glColor3f(colors[i*4+0], colors[i*4+1], colors[i*4+2]);
-        glVertex3f(triangle[i*3+0], triangle[i*3+1], triangle[i*3+2]);
-      }
-    glEnd();
-    //glDrawArrays(GL_TRIANGLES, 0, vertex_count);
-    //glFlush();
+    glDrawArrays(GL_TRIANGLES, 0, vertex_count);
+    glFlush();
 
     // Display progress bar
     surface->fillRect(1, surface->height - 12, surface->width - 2, 10, clWhite);

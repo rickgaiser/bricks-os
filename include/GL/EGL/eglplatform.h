@@ -14,9 +14,9 @@
 #endif
 
 
-typedef int NativeDisplayType;
-typedef int NativePixmapType;
-typedef int NativeWindowType;
+typedef void * NativeDisplayType;
+typedef void * NativePixmapType;
+typedef void * NativeWindowType;
 
 /* EGL 1.2 types, renamed for consistency in EGL 1.3 */
 typedef NativeDisplayType EGLNativeDisplayType;
