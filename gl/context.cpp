@@ -12,13 +12,6 @@ typedef unsigned int wint_t;
 #define ZBUFFER_MAX_DEPTH fpfromi(FP_PRESICION_ZBUFFER, (1 << (FP_PRESICION_ZBUFFER - 1)) - 1) // 2^7-1
 #define RGB(r,g,b) (0x8000 | ((b << 7) & 0x7c00) | ((g << 2) & 0x03e0) | ((r >> 3) & 0x001f))
 
-#define c_fpfromi(i)   fpfromi(FP_PRESICION_COLOR,i)
-#define c_fptoi(i)     fptoi(FP_PRESICION_COLOR,i)
-#define c_fpfromf(i)   fpfromf(FP_PRESICION_COLOR,i)
-#define c_fptof(i)     fptof(FP_PRESICION_COLOR,i)
-#define c_fpmul(i1,i2) fpmul(FP_PRESICION_COLOR,i1,i2)
-#define c_fpdiv(i1,i2) fpdiv(FP_PRESICION_COLOR,i1,i2)
-
 
 //-----------------------------------------------------------------------------
 CContext::CContext()
@@ -28,6 +21,7 @@ CContext::CContext()
  , shadingModel_(GL_FLAT)
  , enableCapabilities_(0)
  , matrixMode_(GL_MODELVIEW)
+ , pCurrentMatrix_(&matrixModelView)
  , iGlobalPolyVCount(0)
  , edge1(0)
  , edge2(0)
@@ -58,6 +52,16 @@ CContext::~CContext()
 
 //-----------------------------------------------------------------------------
 void
+CContext::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+{
+  clClear.r = c_fpfromf(red  ) * 255;
+  clClear.g = c_fpfromf(green) * 255;
+  clClear.b = c_fpfromf(blue ) * 255;
+  clClear.a = c_fpfromf(alpha) * 255;
+}
+
+//-----------------------------------------------------------------------------
+void
 CContext::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
   clCurrent.r = c_fpfromf(red  ) * 255;
@@ -67,72 +71,24 @@ CContext::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 }
 
 //-----------------------------------------------------------------------------
-// Matrix Operations
-//-----------------------------------------------------------------------------
-void
-CContext::glMatrixMode(GLenum mode)
-{
-  matrixMode_ = mode;
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glLoadIdentity()
-{
-  switch(matrixMode_)
-  {
-    case GL_MODELVIEW:
-      matrixModelView.loadIdentity();
-      break;
-    case GL_PROJECTION:
-      matrixProjection.loadIdentity();
-      break;
-  };
-}
-
-//-----------------------------------------------------------------------------
 void
 CContext::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
-  switch(matrixMode_)
-  {
-    case GL_MODELVIEW:
-      matrixModelView.rotate(m_fpfromf(angle), m_fpfromf(x), m_fpfromf(y), m_fpfromf(z));
-      break;
-    case GL_PROJECTION:
-      matrixProjection.rotate(m_fpfromf(angle), m_fpfromf(x), m_fpfromf(y), m_fpfromf(z));
-      break;
-  };
+  pCurrentMatrix_->rotate(m_fpfromf(angle), m_fpfromf(x), m_fpfromf(y), m_fpfromf(z));
 }
 
 //-----------------------------------------------------------------------------
 void
 CContext::glScalef(GLfloat x, GLfloat y, GLfloat z)
 {
-  switch(matrixMode_)
-  {
-    case GL_MODELVIEW:
-      matrixModelView.scale(m_fpfromf(x), m_fpfromf(y), m_fpfromf(z));
-      break;
-    case GL_PROJECTION:
-      matrixProjection.scale(m_fpfromf(x), m_fpfromf(y), m_fpfromf(z));
-      break;
-  };
+  pCurrentMatrix_->scale(m_fpfromf(x), m_fpfromf(y), m_fpfromf(z));
 }
 
 //-----------------------------------------------------------------------------
 void
 CContext::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
-  switch(matrixMode_)
-  {
-    case GL_MODELVIEW:
-      matrixModelView.translate(m_fpfromf(x), m_fpfromf(y), m_fpfromf(-z));
-      break;
-    case GL_PROJECTION:
-      matrixProjection.translate(m_fpfromf(x), m_fpfromf(y), m_fpfromf(-z));
-      break;
-  };
+  pCurrentMatrix_->translate(m_fpfromf(x), m_fpfromf(y), m_fpfromf(-z));
 }
 
 //-----------------------------------------------------------------------------
@@ -150,33 +106,32 @@ CContext::glClear(GLbitfield mask)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glShadeModel(GLenum mode)
+CContext::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
-  shadingModel_ = mode;
+  clClear.r = red   * 255;
+  clClear.g = green * 255;
+  clClear.b = blue  * 255;
+  clClear.a = alpha * 255;
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::glEnable(GLenum cap)
+CContext::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 {
-  enableCapabilities_ |= cap;
+  clCurrent.r = c_fpfromi(red  );
+  clCurrent.g = c_fpfromi(green);
+  clCurrent.b = c_fpfromi(blue );
+  clCurrent.a = c_fpfromi(alpha);
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::glDisable(GLenum cap)
+CContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 {
-  enableCapabilities_ &= ~cap;
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
-{
-  clClear.r = c_fpfromf(red  ) * 255;
-  clClear.g = c_fpfromf(green) * 255;
-  clClear.b = c_fpfromf(blue ) * 255;
-  clClear.a = c_fpfromf(alpha) * 255;
+  clCurrent.r = red   * 255;
+  clCurrent.g = green * 255;
+  clCurrent.b = blue  * 255;
+  clCurrent.a = alpha * 255;
 }
 
 //-----------------------------------------------------------------------------
@@ -187,6 +142,13 @@ CContext::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *
   bufColor_.type    = type;
   bufColor_.stride  = stride;
   bufColor_.pointer = pointer;
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glDisable(GLenum cap)
+{
+  enableCapabilities_ &= ~cap;
 }
 
 //-----------------------------------------------------------------------------
@@ -226,8 +188,74 @@ CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 
 //-----------------------------------------------------------------------------
 void
+CContext::glEnable(GLenum cap)
+{
+  enableCapabilities_ |= cap;
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glEnableClientState(GLenum array)
+{
+  enableCapabilities_ |= array;
+}
+
+//-----------------------------------------------------------------------------
+void
 CContext::glFlush(void)
 {
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glLoadIdentity()
+{
+  pCurrentMatrix_->loadIdentity();
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glMatrixMode(GLenum mode)
+{
+  matrixMode_ = mode;
+
+  switch(mode)
+  {
+    case GL_MODELVIEW:
+      pCurrentMatrix_ = &matrixModelView;
+      break;
+    case GL_PROJECTION:
+      pCurrentMatrix_ = &matrixProjection;
+      break;
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
+{
+  pCurrentMatrix_->rotate(angle, x, y, z);
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glScalex(GLfixed x, GLfixed y, GLfixed z)
+{
+  pCurrentMatrix_->scale(x, y, z);
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glShadeModel(GLenum mode)
+{
+  shadingModel_ = mode;
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
+{
+  pCurrentMatrix_->translate(x, y, -z);
 }
 
 //-----------------------------------------------------------------------------
@@ -257,7 +285,7 @@ CContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportHeight     = height;
   viewportPixelCount = width * height;
   viewportByteCount  = width * height * 2;
-  zbuffer            = new zbuf_t[width * height];
+  zbuffer            = new fxp_zbuf_t[width * height];
   edge1              = new CEdge(viewportHeight);
   edge2              = new CEdge(viewportHeight);
 
@@ -296,7 +324,7 @@ CContext::hline(GLint x1, GLint x2, GLint y, SColor c)
 //-----------------------------------------------------------------------------
 // Horizontal Line Fill, with depth test
 void
-CContext::hline_d(GLint x1, GLint x2, GLint y, zbuf_t z1, zbuf_t z2, SColor c)
+CContext::hline_d(GLint x1, GLint x2, GLint y, fxp_zbuf_t z1, fxp_zbuf_t z2, SColor c)
 {
   // Check for invalid
   if(x1 == x2)
@@ -305,7 +333,7 @@ CContext::hline_d(GLint x1, GLint x2, GLint y, zbuf_t z1, zbuf_t z2, SColor c)
   {
     // Swap
     GLint  xtmp(x1);
-    zbuf_t ztmp(z1);
+    fxp_zbuf_t ztmp(z1);
 
     x1 = x2;
     x2 = xtmp;
@@ -314,8 +342,8 @@ CContext::hline_d(GLint x1, GLint x2, GLint y, zbuf_t z1, zbuf_t z2, SColor c)
     z2 = ztmp;
   }
 
-  zbuf_t z(z1);
-  zbuf_t mz((z2 - z1) / (x2 - x1));
+  fxp_zbuf_t z(z1);
+  fxp_zbuf_t mz((z2 - z1) / (x2 - x1));
 
   // Range check before loop, so the loop can be optimized for speed
   if(x1 < 0)
@@ -350,12 +378,12 @@ CContext::hline_s(CEdge & from, CEdge & to, GLint & y)
   if(from.x_[y] < to.x_[y])
   {
     GLint dx(to.x_[y] - from.x_[y]);
-    GLfixed mr((to.c_[y].r - from.c_[y].r) / dx);
-    GLfixed mg((to.c_[y].g - from.c_[y].g) / dx);
-    GLfixed mb((to.c_[y].b - from.c_[y].b) / dx);
-    GLfixed r(from.c_[y].r);
-    GLfixed g(from.c_[y].g);
-    GLfixed b(from.c_[y].b);
+    fxp_color_t mr((to.c_[y].r - from.c_[y].r) / dx);
+    fxp_color_t mg((to.c_[y].g - from.c_[y].g) / dx);
+    fxp_color_t mb((to.c_[y].b - from.c_[y].b) / dx);
+    fxp_color_t r(from.c_[y].r);
+    fxp_color_t g(from.c_[y].g);
+    fxp_color_t b(from.c_[y].b);
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -382,15 +410,15 @@ CContext::hline_sd(CEdge & from, CEdge & to, GLint & y)
   if(from.x_[y] < to.x_[y])
   {
     GLint dx(to.x_[y] - from.x_[y]);
-    zbuf_t mz((to.z_[y] - from.z_[y]) / dx);
-    zbuf_t z(from.z_[y]);
+    fxp_zbuf_t mz((to.z_[y] - from.z_[y]) / dx);
+    fxp_zbuf_t z(from.z_[y]);
 
-    GLfixed mr((to.c_[y].r - from.c_[y].r) / dx);
-    GLfixed mg((to.c_[y].g - from.c_[y].g) / dx);
-    GLfixed mb((to.c_[y].b - from.c_[y].b) / dx);
-    GLfixed r(from.c_[y].r);
-    GLfixed g(from.c_[y].g);
-    GLfixed b(from.c_[y].b);
+    fxp_color_t mr((to.c_[y].r - from.c_[y].r) / dx);
+    fxp_color_t mg((to.c_[y].g - from.c_[y].g) / dx);
+    fxp_color_t mb((to.c_[y].b - from.c_[y].b) / dx);
+    fxp_color_t r(from.c_[y].r);
+    fxp_color_t g(from.c_[y].g);
+    fxp_color_t b(from.c_[y].b);
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)

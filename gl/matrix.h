@@ -5,13 +5,13 @@
 #include "fixedPoint.h"
 
 
-#define MATRIX_PRECISION   10
+#define MATRIX_PRECISION   16
 #define m_fpfromi(i)   fpfromi(MATRIX_PRECISION,i)
 #define m_fptoi(i)     fptoi(MATRIX_PRECISION,i)
 #define m_fpfromf(i)   fpfromf(MATRIX_PRECISION,i)
 #define m_fptof(i)     fptof(MATRIX_PRECISION,i)
-#define m_fpmul(i1,i2) fpmul(MATRIX_PRECISION,i1,i2)
-#define m_fpdiv(i1,i2) fpdiv(MATRIX_PRECISION,i1,i2)
+#define m_fpmul(i1,i2) fpmul32(MATRIX_PRECISION,i1,i2)
+#define m_fpdiv(i1,i2) fpdiv32(MATRIX_PRECISION,i1,i2)
 
 
 class CMatrix

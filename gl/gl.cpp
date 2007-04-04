@@ -16,7 +16,7 @@ CContext context;
 CEdge::CEdge(uint32_t height)
 {
   x_ = new GLint[height];
-  z_ = new zbuf_t[height];
+  z_ = new fxp_zbuf_t[height];
   c_ = new SColor[height];
 }
 
@@ -39,8 +39,8 @@ CEdge::add(SVertex * vfrom, SVertex * vto)
     GLfixed x(fpfromi(16, vfrom->sx));
     GLfixed mx((fpfromi(16, vto->sx  - vfrom->sx )) / dy);
 
-    zbuf_t z(vfrom->v[2]);
-    zbuf_t mz((vto->v[2] - vfrom->v[2]) / dy);
+    fxp_zbuf_t z(vfrom->v[2]);
+    fxp_zbuf_t mz((vto->v[2] - vfrom->v[2]) / dy);
 
     switch(context.shadingModel_)
     {
@@ -104,23 +104,16 @@ glSetSurface(CSurface * surface)
 // GL API
 //-----------------------------------------------------------------------------
 GL_API void
+GL_APIENTRY glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+{
+  context.glClearColor(red, green, blue, alpha);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
 GL_APIENTRY glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
   context.glColor4f(red, green, blue, alpha);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glMatrixMode(GLenum mode)
-{
-  context.glMatrixMode(mode);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glLoadIdentity()
-{
-  context.glLoadIdentity();
 }
 
 //-----------------------------------------------------------------------------
@@ -153,9 +146,44 @@ GL_APIENTRY glClear(GLbitfield mask)
 
 //-----------------------------------------------------------------------------
 GL_API void
-GL_APIENTRY glShadeModel(GLenum mode)
+GL_APIENTRY glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
-  context.glShadeModel(mode);
+  context.glClearColorx(red, green, blue, alpha);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
+{
+  context.glColor4ub(red, green, blue, alpha);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
+{
+  context.glColor4x(red, green, blue, alpha);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+{
+  context.glColorPointer(size, type, stride, pointer);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glDisable(GLenum cap)
+{
+  context.glDisable(cap);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glDrawArrays(GLenum mode, GLint first, GLsizei count)
+{
+  context.glDrawArrays(mode, first, count);
 }
 
 //-----------------------------------------------------------------------------
@@ -169,35 +197,7 @@ GL_APIENTRY glEnable(GLenum cap)
 GL_API void
 GL_APIENTRY glEnableClientState(GLenum array)
 {
-  context.glEnable(array);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glDisable(GLenum cap)
-{
-  context.glDisable(cap);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
-{
-  context.glClearColor(red, green, blue, alpha);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
-{
-  context.glColorPointer(size, type, stride, pointer);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glDrawArrays(GLenum mode, GLint first, GLsizei count)
-{
-  context.glDrawArrays(mode, first, count);
+  context.glEnableClientState(array);
 }
 
 //-----------------------------------------------------------------------------
@@ -205,6 +205,48 @@ GL_API void
 GL_APIENTRY glFlush(void)
 {
   context.glFlush();
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glLoadIdentity()
+{
+  context.glLoadIdentity();
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glMatrixMode(GLenum mode)
+{
+  context.glMatrixMode(mode);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
+{
+  context.glRotatex(angle, x, y, z);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glScalex(GLfixed x, GLfixed y, GLfixed z)
+{
+  context.glScalex(x, y, z);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glShadeModel(GLenum mode)
+{
+  context.glShadeModel(mode);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glTranslatex(GLfixed x, GLfixed y, GLfixed z)
+{
+  context.glTranslatex(x, y, z);
 }
 
 //-----------------------------------------------------------------------------
