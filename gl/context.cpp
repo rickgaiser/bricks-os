@@ -22,6 +22,8 @@ CContext::CContext()
  , enableCapabilities_(0)
  , matrixMode_(GL_MODELVIEW)
  , pCurrentMatrix_(&matrixModelView)
+ , clearDepth_(m_fpfromi(1))
+ , depthFunction_(GL_LESS)
  , iGlobalPolyVCount(0)
  , edge1(0)
  , edge2(0)
@@ -58,6 +60,13 @@ CContext::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alp
   clClear.g = c_fpfromf(green) * 255;
   clClear.b = c_fpfromf(blue ) * 255;
   clClear.a = c_fpfromf(alpha) * 255;
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glClearDepthf(GLclampf depth)
+{
+  clearDepth_ = m_fpfromf(depth);
 }
 
 //-----------------------------------------------------------------------------
@@ -100,8 +109,8 @@ CContext::glClear(GLbitfield mask)
 
   if(mask & GL_COLOR_BUFFER_BIT)
     dmaFill16(color, renderSurface->p, iCount);
-  if((mask & GL_DEPTH_BUFFER_BIT) && (enableCapabilities_ & GL_DEPTH_TEST))
-    dmaFill16(ZBUFFER_MAX_DEPTH, zbuffer, iCount);
+  if(mask & GL_DEPTH_BUFFER_BIT)
+    dmaFill32(clearDepth_, zbuffer, iCount);
 }
 
 //-----------------------------------------------------------------------------
@@ -112,6 +121,13 @@ CContext::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx al
   clClear.g = green * 255;
   clClear.b = blue  * 255;
   clClear.a = alpha * 255;
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glClearDepthx(GLclampx depth)
+{
+  clearDepth_ = depth;
 }
 
 //-----------------------------------------------------------------------------
@@ -132,6 +148,34 @@ CContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
   clCurrent.g = green * 255;
   clCurrent.b = blue  * 255;
   clCurrent.a = alpha * 255;
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
+{
+  normal_[0] = m_fpfromf(nx);
+  normal_[1] = m_fpfromf(ny);
+  normal_[2] = m_fpfromf(nz);
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
+{
+  normal_[0] = nx;
+  normal_[1] = ny;
+  normal_[2] = nz;
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
+{
+  bufNormal_.size    = 0;
+  bufNormal_.type    = type;
+  bufNormal_.stride  = stride;
+  bufNormal_.pointer = pointer;
 }
 
 //-----------------------------------------------------------------------------
@@ -295,95 +339,34 @@ CContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 }
 
 //-----------------------------------------------------------------------------
-// Horizontal Line Fill
-void
-CContext::hline(GLint x1, GLint x2, GLint y, SColor c)
+inline bool
+validDepth(GLfixed z, GLfixed zbuf, GLenum zfunc)
 {
-  // Check for invalid
-  if(x1 == x2)
-    return;
-  else if(x1 > x2)
+  switch(zfunc)
   {
-    // Swap
-    GLint tmp(x1);
-    x1 = x2;
-    x2 = tmp;
-  }
-
-  // Range limit
-  if(x1 < 0)
-    x1 = 0;
-  if(x2 >= viewportWidth)
-    x2 = viewportWidth - 1;
-
-  short color = RGB(c_fptoi(c.r), c_fptoi(c.g), c_fptoi(c.b));
-
-  dmaFill16(color, &renderSurface->p[(y * viewportWidth) + x1], x2 - x1);
+    case GL_LESS:     return (z < zbuf);
+    case GL_EQUAL:    return (z == zbuf);
+    case GL_LEQUAL:   return (z <= zbuf);
+    case GL_GREATER:  return (z > zbuf);
+    case GL_NOTEQUAL: return (z != zbuf);
+    case GL_GEQUAL:   return (z >= zbuf);
+    case GL_ALWAYS:   return true;
+    case GL_NEVER:
+    default:          return false;
+  };
 }
 
 //-----------------------------------------------------------------------------
-// Horizontal Line Fill, with depth test
+// Horizontal Line Fill, depth test
 void
-CContext::hline_d(GLint x1, GLint x2, GLint y, fxp_zbuf_t z1, fxp_zbuf_t z2, SColor c)
-{
-  // Check for invalid
-  if(x1 == x2)
-    return;
-  else if(x1 > x2)
-  {
-    // Swap
-    GLint  xtmp(x1);
-    fxp_zbuf_t ztmp(z1);
-
-    x1 = x2;
-    x2 = xtmp;
-
-    z1 = z2;
-    z2 = ztmp;
-  }
-
-  fxp_zbuf_t z(z1);
-  fxp_zbuf_t mz((z2 - z1) / (x2 - x1));
-
-  // Range check before loop, so the loop can be optimized for speed
-  if(x1 < 0)
-  {
-    z += mz * (-x1);
-    x1 = 0;
-  }
-  if(x2 >= viewportWidth)
-  {
-    x2 = viewportWidth - 1;
-  }
-
-  short color = RGB(c_fptoi(c.r), c_fptoi(c.g), c_fptoi(c.b));
-  unsigned long index((y * viewportWidth) + x1);
-  for(GLint x(x1); x < x2; x++)
-  {
-    if(zbuffer[index] > z)
-    {
-      zbuffer[index] = z;
-      renderSurface->p[index] = color;
-    }
-    z += mz;
-    index++;
-  }
-}
-
-//-----------------------------------------------------------------------------
-// Horizontal Line Fill, smooth colors
-void
-CContext::hline_s(CEdge & from, CEdge & to, GLint & y)
+CContext::hline(CEdge & from, CEdge & to, GLint & y, SColor c)
 {
   if(from.x_[y] < to.x_[y])
   {
     GLint dx(to.x_[y] - from.x_[y]);
-    fxp_color_t mr((to.c_[y].r - from.c_[y].r) / dx);
-    fxp_color_t mg((to.c_[y].g - from.c_[y].g) / dx);
-    fxp_color_t mb((to.c_[y].b - from.c_[y].b) / dx);
-    fxp_color_t r(from.c_[y].r);
-    fxp_color_t g(from.c_[y].g);
-    fxp_color_t b(from.c_[y].b);
+    fxp_zbuf_t mz((to.z_[y] - from.z_[y]) / dx);
+    fxp_zbuf_t z(from.z_[y]);
+    short color(RGB(c_fptoi(c.r), c_fptoi(c.g), c_fptoi(c.b)));
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -392,11 +375,23 @@ CContext::hline_s(CEdge & from, CEdge & to, GLint & y)
         break;
 
       if(x >= 0)
-        renderSurface->p[index] = RGB(c_fptoi(r), c_fptoi(g), c_fptoi(b));
-
-      r += mr;
-      g += mg;
-      b += mb;
+      {
+        // Depth test pixel
+        if(enableCapabilities_ & GL_DEPTH_TEST)
+        {
+          if(validDepth(z, zbuffer[index], depthFunction_))
+          {
+            zbuffer[index] = z;
+            renderSurface->p[index] = color;
+          }
+          z += mz;
+        }
+        else
+        {
+          // No depth testing, always put pixel
+          renderSurface->p[index] = color;
+        }
+      }
       index++;
     }
   }
@@ -405,7 +400,7 @@ CContext::hline_s(CEdge & from, CEdge & to, GLint & y)
 //-----------------------------------------------------------------------------
 // Horizontal Line Fill, smooth colors, depth test
 void
-CContext::hline_sd(CEdge & from, CEdge & to, GLint & y)
+CContext::hline_s(CEdge & from, CEdge & to, GLint & y)
 {
   if(from.x_[y] < to.x_[y])
   {
@@ -428,16 +423,25 @@ CContext::hline_sd(CEdge & from, CEdge & to, GLint & y)
 
       if(x >= 0)
       {
-        if(zbuffer[index] > z)
+        // Depth test pixel
+        if(enableCapabilities_ & GL_DEPTH_TEST)
         {
-          zbuffer[index] = z;
+          if(validDepth(z, zbuffer[index], depthFunction_))
+          {
+            zbuffer[index] = z;
+            renderSurface->p[index] = RGB(c_fptoi(r), c_fptoi(g), c_fptoi(b));
+          }
+          z += mz;
+        }
+        else
+        {
+          // No depth testing, always put pixel
           renderSurface->p[index] = RGB(c_fptoi(r), c_fptoi(g), c_fptoi(b));
         }
       }
       r += mr;
       g += mg;
       b += mb;
-      z += mz;
       index++;
     }
   }
@@ -547,35 +551,15 @@ CContext::plotPoly(SPolygon & poly)
   {
     case GL_FLAT:
     {
-      if(enableCapabilities_ & GL_DEPTH_TEST)
-      {
-        // Flat shading with depth test
-        for(GLint y(vlo->sy); y < vhi->sy; y++)
-          hline_d(pEdgeLeft->x_[y], pEdgeRight->x_[y], y, pEdgeLeft->z_[y], pEdgeRight->z_[y], poly.v[2].c);
-        break;
-      }
-      else
-      {
-        // Flat shading without depth test
-        for(GLint y(vlo->sy); y < vhi->sy; y++)
-          hline(pEdgeLeft->x_[y], pEdgeRight->x_[y], y, poly.v[2].c);
-        break;
-      }
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hline(*pEdgeLeft, *pEdgeRight, y, poly.v[2].c);
+      break;
     }
     case GL_SMOOTH:
     {
-      if(enableCapabilities_ & GL_DEPTH_TEST)
-      {
-        for(GLint y(vlo->sy); y < vhi->sy; y++)
-          hline_sd(*pEdgeLeft, *pEdgeRight, y);
-        break;
-      }
-      else
-      {
-        for(GLint y(vlo->sy); y < vhi->sy; y++)
-          hline_s(*pEdgeLeft, *pEdgeRight, y);
-        break;
-      }
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hline_s(*pEdgeLeft, *pEdgeRight, y);
+      break;
     }
   }
 }

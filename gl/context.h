@@ -11,15 +11,14 @@
 
 
 // Z-buffer type:
-//  - 8.8 Fixed Point (mul/div in temporary 32 bit integer)
-typedef int16_t fxp_zbuf_t;
-#define FP_PRESICION_ZBUFFER    8
+typedef GLfixed fxp_zbuf_t;
+#define FP_PRESICION_ZBUFFER    16
 #define z_fpfromi(i)   fpfromi(FP_PRESICION_ZBUFFER,i)
 #define z_fptoi(i)     fptoi(FP_PRESICION_ZBUFFER,i)
 #define z_fpfromf(i)   fpfromf(FP_PRESICION_ZBUFFER,i)
 #define z_fptof(i)     fptof(FP_PRESICION_ZBUFFER,i)
-#define z_fpmul(i1,i2) fpmul16(FP_PRESICION_ZBUFFER,i1,i2)
-#define z_fpdiv(i1,i2) fpdiv16(FP_PRESICION_ZBUFFER,i1,i2)
+#define z_fpmul(i1,i2) fpmul32(FP_PRESICION_ZBUFFER,i1,i2)
+#define z_fpdiv(i1,i2) fpdiv32(FP_PRESICION_ZBUFFER,i1,i2)
 
 // Color type:
 //  - 8.8 Fixed Point (in 32 bit integer for fast mul/div)
@@ -98,7 +97,7 @@ public:
 
 //  void glAlphaFunc (GLenum func, GLclampf ref);
   void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-//  void glClearDepthf (GLclampf depth);
+  void glClearDepthf(GLclampf depth);
 //  void glClipPlanef (GLenum plane, const GLfloat *equation);
   void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 //  void glDepthRangef (GLclampf zNear, GLclampf zFar);
@@ -121,7 +120,7 @@ public:
 //  void glMaterialfv (GLenum face, GLenum pname, const GLfloat *params);
 //  void glMultMatrixf (const GLfloat *m);
 //  void glMultiTexCoord4f (GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
-//  void glNormal3f (GLfloat nx, GLfloat ny, GLfloat nz);
+  void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
 //  void glOrthof (GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
 //  void glPointParameterf (GLenum pname, GLfloat param);
 //  void glPointParameterfv (GLenum pname, const GLfloat *params);
@@ -144,14 +143,14 @@ public:
 //  void glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data);
   void glClear(GLbitfield mask);
   void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
-//  void glClearDepthx (GLclampx depth);
+  void glClearDepthx(GLclampx depth);
 //  void glClearStencil (GLint s);
 //  void glClientActiveTexture (GLenum texture);
 //  void glClipPlanex (GLenum plane, const GLfixed *equation);
   void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
   void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
 //  void glColorMask (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
-  void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+  void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
 //  void glCompressedTexImage2D (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
 //  void glCompressedTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data);
 //  void glCopyTexImage2D (GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
@@ -207,8 +206,8 @@ public:
   void glMatrixMode(GLenum mode);
 //  void glMultMatrixx (const GLfixed *m);
 //  void glMultiTexCoord4x (GLenum target, GLfixed s, GLfixed t, GLfixed r, GLfixed q);
-//  void glNormal3x (GLfixed nx, GLfixed ny, GLfixed nz);
-//  void glNormalPointer (GLenum type, GLsizei stride, const GLvoid *pointer);
+  void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
+  void glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer);
 //  void glOrthox (GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
 //  void glPixelStorei (GLenum pname, GLint param);
 //  void glPointParameterx (GLenum pname, GLfixed param);
@@ -239,14 +238,12 @@ public:
 //  void glTexParameterxv (GLenum target, GLenum pname, const GLfixed *params);
 //  void glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
   void glTranslatex(GLfixed x, GLfixed y, GLfixed z);
-  void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+  void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
   void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 private:
-  void hline(GLint x1, GLint x2, GLint y, SColor c);
-  void hline_d(GLint x1, GLint x2, GLint y, fxp_zbuf_t z1, fxp_zbuf_t z2, SColor c);
+  void hline(CEdge & from, CEdge & to, GLint & y, SColor c);
   void hline_s(CEdge & from, CEdge & to, GLint & y);
-  void hline_sd(CEdge & from, CEdge & to, GLint & y);
   void plotPoly(SPolygon & poly);
 
 public: // FIXME: should be private
@@ -266,10 +263,14 @@ public: // FIXME: should be private
   // Buffers
   SBufferPointer bufColor_;
   SBufferPointer bufVertex_;
+  SBufferPointer bufNormal_;
 
   // Colors/Lights
   SColor    clCurrent;
   SColor    clClear;
+  GLfixed   normal_[3];
+  GLfixed   clearDepth_;
+  GLenum    depthFunction_;
 
   SPolygon  globalPolygon;
   GLint     iGlobalPolyVCount;

@@ -111,9 +111,23 @@ GL_APIENTRY glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf a
 
 //-----------------------------------------------------------------------------
 GL_API void
+GL_APIENTRY glClearDepthf(GLclampf depth)
+{
+  context.glClearDepthf(depth);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
 GL_APIENTRY glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
   context.glColor4f(red, green, blue, alpha);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glNormal3f (GLfloat nx, GLfloat ny, GLfloat nz)
+{
+  context.glNormal3f(nx, ny, nz);
 }
 
 //-----------------------------------------------------------------------------
@@ -149,6 +163,13 @@ GL_API void
 GL_APIENTRY glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
   context.glClearColorx(red, green, blue, alpha);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glClearDepthx(GLclampx depth)
+{
+  context.glClearDepthx(depth);
 }
 
 //-----------------------------------------------------------------------------
@@ -219,6 +240,20 @@ GL_API void
 GL_APIENTRY glMatrixMode(GLenum mode)
 {
   context.glMatrixMode(mode);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
+{
+  context.glNormal3x(nx, ny, nz);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
+{
+  context.glNormalPointer(type, stride, pointer);
 }
 
 //-----------------------------------------------------------------------------
