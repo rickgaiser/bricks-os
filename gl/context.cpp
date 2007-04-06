@@ -3,28 +3,28 @@
 #include "fixedPoint.h"
 
 #include "asm/arch/macros.h"
+#include "stdlib.h"
 typedef unsigned int wint_t;
 #include <math.h>
 
 
 #define SCREENX(v) (m_fptoi(m_fpdiv(m_fpmul(v[0], fpFieldofviewXScalar), -v[2])) + (viewportWidth  >> 1))
 #define SCREENY(v) (m_fptoi(m_fpdiv(m_fpmul(v[1], fpFieldofviewYScalar), -v[2])) + (viewportHeight >> 1))
-#define ZBUFFER_MAX_DEPTH fpfromi(FP_PRESICION_ZBUFFER, (1 << (FP_PRESICION_ZBUFFER - 1)) - 1) // 2^7-1
-#define RGB(r,g,b) (0x8000 | ((b << 7) & 0x7c00) | ((g << 2) & 0x03e0) | ((r >> 3) & 0x001f))
+#define ZBUFFER_MAX_DEPTH z_fpfromi((1 << (FP_PRESICION_ZBUFFER - 1)) - 1)
+#define fpRGB(r,g,b) (0x8000 | (((b*255) >> 9) & 0x7c00) | (((g*255) >> 14) & 0x03e0) | (((r*255) >> 19) & 0x001f))
 
 
 //-----------------------------------------------------------------------------
 CContext::CContext()
  : renderSurface(0)
  , zbuffer(0)
- , beginMode_(GL_POINTS)
  , shadingModel_(GL_FLAT)
  , enableCapabilities_(0)
  , matrixMode_(GL_MODELVIEW)
  , pCurrentMatrix_(&matrixModelView)
+ , bLighting_(false)
  , clearDepth_(m_fpfromi(1))
  , depthFunction_(GL_LESS)
- , iGlobalPolyVCount(0)
  , edge1(0)
  , edge2(0)
  , viewportXOffset(0)
@@ -39,12 +39,32 @@ CContext::CContext()
   clCurrent.r = c_fpfromi(0);
   clCurrent.g = c_fpfromi(0);
   clCurrent.b = c_fpfromi(0);
-  clCurrent.a = c_fpfromi(255);
+  clCurrent.a = c_fpfromi(1);
 
   clClear.r = c_fpfromi(0);
   clClear.g = c_fpfromi(0);
   clClear.b = c_fpfromi(0);
-  clClear.a = c_fpfromi(255);
+  clClear.a = c_fpfromi(1);
+
+  for(int iLight(0); iLight < 8; iLight++)
+  {
+    lights_[iLight].ambient.r = c_fpfromf(0.0f);
+    lights_[iLight].ambient.g = c_fpfromf(0.0f);
+    lights_[iLight].ambient.b = c_fpfromf(0.0f);
+    lights_[iLight].ambient.a = c_fpfromf(1.0f);
+
+    lights_[iLight].diffuse.r = c_fpfromf(1.0f);
+    lights_[iLight].diffuse.g = c_fpfromf(1.0f);
+    lights_[iLight].diffuse.b = c_fpfromf(1.0f);
+    lights_[iLight].diffuse.a = c_fpfromf(1.0f);
+
+    lights_[iLight].specular.r = c_fpfromf(0.0f);
+    lights_[iLight].specular.g = c_fpfromf(0.0f);
+    lights_[iLight].specular.b = c_fpfromf(0.0f);
+    lights_[iLight].specular.a = c_fpfromf(1.0f);
+
+    lights_[iLight].enabled = false;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -56,27 +76,68 @@ CContext::~CContext()
 void
 CContext::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
-  clClear.r = c_fpfromf(red  ) * 255;
-  clClear.g = c_fpfromf(green) * 255;
-  clClear.b = c_fpfromf(blue ) * 255;
-  clClear.a = c_fpfromf(alpha) * 255;
+  clClear.r = c_fpfromf(red  );
+  clClear.g = c_fpfromf(green);
+  clClear.b = c_fpfromf(blue );
+  clClear.a = c_fpfromf(alpha);
 }
 
 //-----------------------------------------------------------------------------
 void
 CContext::glClearDepthf(GLclampf depth)
 {
-  clearDepth_ = m_fpfromf(depth);
+  clearDepth_ = z_fpmul(ZBUFFER_MAX_DEPTH, m_fpfromf(depth));
 }
 
 //-----------------------------------------------------------------------------
 void
 CContext::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
-  clCurrent.r = c_fpfromf(red  ) * 255;
-  clCurrent.g = c_fpfromf(green) * 255;
-  clCurrent.b = c_fpfromf(blue ) * 255;
-  clCurrent.a = c_fpfromf(alpha) * 255;
+  clCurrent.r = c_fpfromf(red  );
+  clCurrent.g = c_fpfromf(green);
+  clCurrent.b = c_fpfromf(blue );
+  clCurrent.a = c_fpfromf(alpha);
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glLightf(GLenum light, GLenum pname, GLfloat param)
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
+{
+  SLight * pLight = 0;
+  switch(light)
+  {
+    case GL_LIGHT0: pLight = &lights_[0]; break;
+    case GL_LIGHT1: pLight = &lights_[1]; break;
+    case GL_LIGHT2: pLight = &lights_[2]; break;
+    case GL_LIGHT3: pLight = &lights_[3]; break;
+    case GL_LIGHT4: pLight = &lights_[4]; break;
+    case GL_LIGHT5: pLight = &lights_[5]; break;
+    case GL_LIGHT6: pLight = &lights_[6]; break;
+    case GL_LIGHT7: pLight = &lights_[7]; break;
+    default:
+      return;
+  }
+
+  SColor * pColor = 0;
+  switch(pname)
+  {
+    case GL_AMBIENT:  pColor = &pLight->ambient; break;
+    case GL_DIFFUSE:  pColor = &pLight->diffuse; break;
+    case GL_SPECULAR: pColor = &pLight->specular; break;
+    default:
+      return;
+  }
+
+  pColor->r = c_fpfromf(params[0]);
+  pColor->g = c_fpfromf(params[1]);
+  pColor->b = c_fpfromf(params[2]);
+  pColor->a = c_fpfromf(params[3]);
 }
 
 //-----------------------------------------------------------------------------
@@ -84,6 +145,8 @@ void
 CContext::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
   pCurrentMatrix_->rotate(m_fpfromf(angle), m_fpfromf(x), m_fpfromf(y), m_fpfromf(z));
+  // FIXME
+  matrixRotation.rotate(m_fpfromf(angle), m_fpfromf(x), m_fpfromf(y), m_fpfromf(z));
 }
 
 //-----------------------------------------------------------------------------
@@ -104,7 +167,7 @@ CContext::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 void
 CContext::glClear(GLbitfield mask)
 {
-  unsigned short color(RGB(c_fptoi(clClear.r), c_fptoi(clClear.g), c_fptoi(clClear.b)));
+  unsigned short color(fpRGB(clClear.r, clClear.g, clClear.b));
   long iCount(viewportByteCount >> 1);
 
   if(mask & GL_COLOR_BUFFER_BIT)
@@ -117,10 +180,10 @@ CContext::glClear(GLbitfield mask)
 void
 CContext::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
-  clClear.r = red   * 255;
-  clClear.g = green * 255;
-  clClear.b = blue  * 255;
-  clClear.a = alpha * 255;
+  clClear.r = red;
+  clClear.g = green;
+  clClear.b = blue;
+  clClear.a = alpha;
 }
 
 //-----------------------------------------------------------------------------
@@ -134,20 +197,20 @@ CContext::glClearDepthx(GLclampx depth)
 void
 CContext::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 {
-  clCurrent.r = c_fpfromi(red  );
-  clCurrent.g = c_fpfromi(green);
-  clCurrent.b = c_fpfromi(blue );
-  clCurrent.a = c_fpfromi(alpha);
+  clCurrent.r = c_fpfromi(red  ) / 255;
+  clCurrent.g = c_fpfromi(green) / 255;
+  clCurrent.b = c_fpfromi(blue ) / 255;
+  clCurrent.a = c_fpfromi(alpha) / 255;
 }
 
 //-----------------------------------------------------------------------------
 void
 CContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 {
-  clCurrent.r = red   * 255;
-  clCurrent.g = green * 255;
-  clCurrent.b = blue  * 255;
-  clCurrent.a = alpha * 255;
+  clCurrent.r = red;
+  clCurrent.g = green;
+  clCurrent.b = blue;
+  clCurrent.a = alpha;
 }
 
 //-----------------------------------------------------------------------------
@@ -157,6 +220,11 @@ CContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
   normal_[0] = m_fpfromf(nx);
   normal_[1] = m_fpfromf(ny);
   normal_[2] = m_fpfromf(nz);
+
+  //if((enableCapabilities_ & GL_NORMALIZE) == GL_NORMALIZE)
+  //{
+  //  // FIXME: Normalize normal
+  //}
 }
 
 //-----------------------------------------------------------------------------
@@ -166,6 +234,11 @@ CContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
   normal_[0] = nx;
   normal_[1] = ny;
   normal_[2] = nz;
+
+  //if((enableCapabilities_ & GL_NORMALIZE) == GL_NORMALIZE)
+  //{
+  //  // FIXME: Normalize normal
+  //}
 }
 
 //-----------------------------------------------------------------------------
@@ -190,9 +263,29 @@ CContext::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *
 
 //-----------------------------------------------------------------------------
 void
+CContext::glDepthFunc(GLenum func)
+{
+  depthFunction_ = func;
+}
+
+//-----------------------------------------------------------------------------
+void
 CContext::glDisable(GLenum cap)
 {
-  enableCapabilities_ &= ~cap;
+  switch(cap)
+  {
+    case GL_LIGHTING: bLighting_ = false; break;
+    case GL_LIGHT0: lights_[0].enabled = false; break;
+    case GL_LIGHT1: lights_[1].enabled = false; break;
+    case GL_LIGHT2: lights_[2].enabled = false; break;
+    case GL_LIGHT3: lights_[3].enabled = false; break;
+    case GL_LIGHT4: lights_[4].enabled = false; break;
+    case GL_LIGHT5: lights_[5].enabled = false; break;
+    case GL_LIGHT6: lights_[6].enabled = false; break;
+    case GL_LIGHT7: lights_[7].enabled = false; break;
+    default:
+      enableCapabilities_ &= ~cap;
+  };
 }
 
 //-----------------------------------------------------------------------------
@@ -203,27 +296,136 @@ CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   {
     case GL_TRIANGLES:
     {
-      for(GLint i(first); i < count; i++)
-      {
-        // Store values
-        globalPolygon.v[iGlobalPolyVCount].v[0] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[i*3+0]);
-        globalPolygon.v[iGlobalPolyVCount].v[1] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[i*3+1]);
-        globalPolygon.v[iGlobalPolyVCount].v[2] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[i*3+2]);
-        globalPolygon.v[iGlobalPolyVCount].c.r  = c_fpfromf(((GLfloat *)bufColor_.pointer)[i*4+0]) * 255;
-        globalPolygon.v[iGlobalPolyVCount].c.g  = c_fpfromf(((GLfloat *)bufColor_.pointer)[i*4+1]) * 255;
-        globalPolygon.v[iGlobalPolyVCount].c.b  = c_fpfromf(((GLfloat *)bufColor_.pointer)[i*4+2]) * 255;
-        globalPolygon.v[iGlobalPolyVCount].c.a  = c_fpfromf(((GLfloat *)bufColor_.pointer)[i*4+3]) * 255;
+      SPolygon polygon;
+      SVertex  v[3];
+      GLint idxVertex(0);
+      GLint idxColor(0);
+      GLint idxNormal(0);
 
-        // Check for finished triangle
-        if(iGlobalPolyVCount == 2)
+      v[0].bProcessed = false;
+      v[1].bProcessed = false;
+      v[1].bProcessed = false;
+      polygon.v[0] = &v[0];
+      polygon.v[1] = &v[1];
+      polygon.v[2] = &v[2];
+
+      for(GLint i(0); i < count; i++)
+      {
+        // Vertices
+        // v[0]
+        v[0].v[0] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v[0].v[1] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v[0].v[2] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        // v[1]
+        v[1].v[0] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v[1].v[1] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v[1].v[2] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        // v[2]
+        v[2].v[0] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v[2].v[1] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v[2].v[2] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+
+        // Colors
+        // v[0]
+        v[0].oc.r  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+        v[0].oc.g  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+        v[0].oc.b  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+        v[0].oc.a  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+        if(shadingModel_ == GL_SMOOTH)
         {
-          plotPoly(globalPolygon);
-          iGlobalPolyVCount = 0;
+          // v[1]
+          v[1].oc.r  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v[1].oc.g  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v[1].oc.b  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v[1].oc.a  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          // v[2]
+          v[2].oc.r  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v[2].oc.g  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v[2].oc.b  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v[2].oc.a  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
         }
-        else
-        {
-          iGlobalPolyVCount++;
-        }
+
+        // Normal
+        //polygon.n[0] = normal_[0];
+        //polygon.n[1] = normal_[1];
+        //polygon.n[2] = normal_[2];
+        polygon.n[0] = c_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+        polygon.n[1] = c_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+        polygon.n[2] = c_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+
+        // Plot
+        plotPoly(polygon);
+      }
+      break;
+    }
+    case GL_TRIANGLE_STRIP:
+    {
+      break;
+    }
+    case GL_TRIANGLE_FAN:
+    {
+      SPolygon polygon;
+      SVertex  v[3];
+      GLint idxVertex(6);
+      GLint idxColor(8);
+      GLint idxNormal(0);
+
+      v[0].bProcessed = false;
+      v[1].bProcessed = false;
+      v[2].bProcessed = false;
+      polygon.v[0] = &v[0];
+      polygon.v[1] = &v[1];
+      polygon.v[2] = &v[2];
+
+      // Vertices
+      v[0].v[0] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[0]);
+      v[0].v[1] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[1]);
+      v[0].v[2] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[2]);
+      v[2].v[0] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[3]);
+      v[2].v[1] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[4]);
+      v[2].v[2] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[5]);
+      // Colors
+      v[0].oc.r  = c_fpfromf(((GLfloat *)bufColor_.pointer)[0]);
+      v[0].oc.g  = c_fpfromf(((GLfloat *)bufColor_.pointer)[1]);
+      v[0].oc.b  = c_fpfromf(((GLfloat *)bufColor_.pointer)[2]);
+      v[0].oc.a  = c_fpfromf(((GLfloat *)bufColor_.pointer)[3]);
+      if(shadingModel_ == GL_SMOOTH)
+      {
+        v[2].oc.r  = c_fpfromf(((GLfloat *)bufColor_.pointer)[4]);
+        v[2].oc.g  = c_fpfromf(((GLfloat *)bufColor_.pointer)[5]);
+        v[2].oc.b  = c_fpfromf(((GLfloat *)bufColor_.pointer)[6]);
+        v[2].oc.a  = c_fpfromf(((GLfloat *)bufColor_.pointer)[7]);
+      }
+
+      for(GLint i(0); i < count; i++)
+      {
+        // Swap v[1] with v[2]
+        SVertex * vtemp;
+        vtemp = polygon.v[1];
+        polygon.v[1] = polygon.v[2];
+        polygon.v[2] = vtemp;
+
+        vtemp->bProcessed = false;
+        // Vertices
+        vtemp->v[0] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        vtemp->v[1] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        vtemp->v[2] = m_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        // Colors
+        vtemp->oc.r  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+        vtemp->oc.g  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+        vtemp->oc.b  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+        vtemp->oc.a  = c_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+
+        // Normal
+        //polygon.n[0] = normal_[0];
+        //polygon.n[1] = normal_[1];
+        //polygon.n[2] = normal_[2];
+        polygon.n[0] = c_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+        polygon.n[1] = c_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+        polygon.n[2] = c_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+
+        // Plot
+        plotPoly(polygon);
       }
       break;
     }
@@ -234,7 +436,21 @@ CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 void
 CContext::glEnable(GLenum cap)
 {
-  enableCapabilities_ |= cap;
+  switch(cap)
+  {
+    case GL_LIGHTING: bLighting_ = true; break;
+    case GL_LIGHT0: lights_[0].enabled = true; break;
+    case GL_LIGHT1: lights_[1].enabled = true; break;
+    case GL_LIGHT2: lights_[2].enabled = true; break;
+    case GL_LIGHT3: lights_[3].enabled = true; break;
+    case GL_LIGHT4: lights_[4].enabled = true; break;
+    case GL_LIGHT5: lights_[5].enabled = true; break;
+    case GL_LIGHT6: lights_[6].enabled = true; break;
+    case GL_LIGHT7: lights_[7].enabled = true; break;
+    default:
+      enableCapabilities_ |= cap;
+  };
+
 }
 
 //-----------------------------------------------------------------------------
@@ -252,9 +468,52 @@ CContext::glFlush(void)
 
 //-----------------------------------------------------------------------------
 void
+CContext::glLightx(GLenum light, GLenum pname, GLfixed param)
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
+{
+  SLight * pLight = 0;
+  switch(light)
+  {
+    case GL_LIGHT0: pLight = &lights_[0]; break;
+    case GL_LIGHT1: pLight = &lights_[1]; break;
+    case GL_LIGHT2: pLight = &lights_[2]; break;
+    case GL_LIGHT3: pLight = &lights_[3]; break;
+    case GL_LIGHT4: pLight = &lights_[4]; break;
+    case GL_LIGHT5: pLight = &lights_[5]; break;
+    case GL_LIGHT6: pLight = &lights_[6]; break;
+    case GL_LIGHT7: pLight = &lights_[7]; break;
+    default:
+      return;
+  }
+
+  SColor * pColor = 0;
+  switch(pname)
+  {
+    case GL_AMBIENT:  pColor = &pLight->ambient; break;
+    case GL_DIFFUSE:  pColor = &pLight->diffuse; break;
+    case GL_SPECULAR: pColor = &pLight->specular; break;
+    default:
+      return;
+  }
+
+  pColor->r = params[0];
+  pColor->g = params[1];
+  pColor->b = params[2];
+  pColor->a = params[3];
+}
+
+//-----------------------------------------------------------------------------
+void
 CContext::glLoadIdentity()
 {
   pCurrentMatrix_->loadIdentity();
+  // FIXME
+  matrixRotation.loadIdentity();
 }
 
 //-----------------------------------------------------------------------------
@@ -279,6 +538,8 @@ void
 CContext::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
   pCurrentMatrix_->rotate(angle, x, y, z);
+  // FIXME
+  matrixRotation.rotate(angle, x, y, z);
 }
 
 //-----------------------------------------------------------------------------
@@ -366,7 +627,7 @@ CContext::hline(CEdge & from, CEdge & to, GLint & y, SColor c)
     GLint dx(to.x_[y] - from.x_[y]);
     fxp_zbuf_t mz((to.z_[y] - from.z_[y]) / dx);
     fxp_zbuf_t z(from.z_[y]);
-    short color(RGB(c_fptoi(c.r), c_fptoi(c.g), c_fptoi(c.b)));
+    short color(fpRGB(c.r, c.g, c.b));
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -377,7 +638,7 @@ CContext::hline(CEdge & from, CEdge & to, GLint & y, SColor c)
       if(x >= 0)
       {
         // Depth test pixel
-        if(enableCapabilities_ & GL_DEPTH_TEST)
+        if((enableCapabilities_ & GL_DEPTH_TEST) == GL_DEPTH_TEST)
         {
           if(validDepth(z, zbuffer[index], depthFunction_))
           {
@@ -424,19 +685,19 @@ CContext::hline_s(CEdge & from, CEdge & to, GLint & y)
       if(x >= 0)
       {
         // Depth test pixel
-        if(enableCapabilities_ & GL_DEPTH_TEST)
+        if((enableCapabilities_ & GL_DEPTH_TEST) == GL_DEPTH_TEST)
         {
           if(validDepth(z, zbuffer[index], depthFunction_))
           {
             zbuffer[index] = z;
-            renderSurface->p[index] = RGB(c_fptoi(r), c_fptoi(g), c_fptoi(b));
+            renderSurface->p[index] = fpRGB(r, g, b);
           }
           z += mz;
         }
         else
         {
           // No depth testing, always put pixel
-          renderSurface->p[index] = RGB(c_fptoi(r), c_fptoi(g), c_fptoi(b));
+          renderSurface->p[index] = fpRGB(r, g, b);
         }
       }
       r += mr;
@@ -451,63 +712,97 @@ CContext::hline_s(CEdge & from, CEdge & to, GLint & y)
 void
 CContext::plotPoly(SPolygon & poly)
 {
-  // ModelView Transformation
-  matrixModelView.transform(poly.v[0].v, poly.v[0].v);
-  matrixModelView.transform(poly.v[1].v, poly.v[1].v);
-  matrixModelView.transform(poly.v[2].v, poly.v[2].v);
+  // Normal Rotation
+  matrixRotation.transform(poly.n, poly.n);
+  GLfixed normal = -poly.n[2];
 
-  // Projection Transformation
-  matrixProjection.transform(poly.v[0].v, poly.v[0].v);
-  matrixProjection.transform(poly.v[1].v, poly.v[1].v);
-  matrixProjection.transform(poly.v[2].v, poly.v[2].v);
+  // Backface culling is easy when we have normals
+  if(bLighting_ == true)
+    if((enableCapabilities_ & GL_CULL_FACE) == GL_CULL_FACE)
+      if(normal < 0)
+        return;
 
-  // Perspective division, viewport transformation
-  poly.v[0].sx = SCREENX(poly.v[0].v);
-  poly.v[0].sy = SCREENY(poly.v[0].v);
-  poly.v[1].sx = SCREENX(poly.v[1].v);
-  poly.v[1].sy = SCREENY(poly.v[1].v);
-  poly.v[2].sx = SCREENX(poly.v[2].v);
-  poly.v[2].sy = SCREENY(poly.v[2].v);
-
-  // ----------------
-  // Backface culling
-  // ----------------
-  if(enableCapabilities_ & GL_CULL_FACE)
+  for(int i(0); i < 3; i++)
   {
-    bool bBackFace;
-    if((poly.v[1].sx != poly.v[0].sx) && (poly.v[2].sx != poly.v[0].sx))
+    if(poly.v[i]->bProcessed == false)
     {
-      bBackFace = ((((fpfromi(16, poly.v[1].sy - poly.v[0].sy) / (poly.v[1].sx - poly.v[0].sx)) -
-                     (fpfromi(16, poly.v[2].sy - poly.v[0].sy) / (poly.v[2].sx - poly.v[0].sx))) < 0) ^
-                     ((poly.v[0].sx <= poly.v[1].sx) == (poly.v[0].sx > poly.v[2].sx)));
-    }
-    else if((poly.v[2].sx != poly.v[1].sx) && (poly.v[0].sx != poly.v[1].sx))
-    {
-      bBackFace = ((((fpfromi(16, poly.v[2].sy - poly.v[1].sy) / (poly.v[2].sx - poly.v[1].sx)) -
-                     (fpfromi(16, poly.v[0].sy - poly.v[1].sy) / (poly.v[0].sx - poly.v[1].sx))) < 0) ^
-                     ((poly.v[1].sx <= poly.v[2].sx) == (poly.v[1].sx > poly.v[0].sx)));
-    }
-    else if((poly.v[0].sx != poly.v[2].sx) && (poly.v[1].sx != poly.v[2].sx))
-    {
-      bBackFace = ((((fpfromi(16, poly.v[0].sy - poly.v[2].sy) / (poly.v[0].sx - poly.v[2].sx)) -
-                     (fpfromi(16, poly.v[1].sy - poly.v[2].sy) / (poly.v[1].sx - poly.v[2].sx))) < 0) ^
-                     ((poly.v[2].sx <= poly.v[0].sx) == (poly.v[2].sx > poly.v[1].sx)));
-    }
-    else
-    {
-      // Triangle invisible
-      return;
-    }
+      // ModelView Transformation
+      matrixModelView.transform(poly.v[i]->v, poly.v[i]->v);
+      // Projection Transformation
+      matrixProjection.transform(poly.v[i]->v, poly.v[i]->v);
+      // Perspective division, viewport transformation
+      poly.v[i]->sx = SCREENX(poly.v[i]->v);
+      poly.v[i]->sy = SCREENY(poly.v[i]->v);
 
-    if(bBackFace == true)
-      return;
+      poly.v[i]->bProcessed = true;
+    }
+  }
+
+  // Backface culling, when no normals available
+  if(bLighting_ == false)
+  {
+    if((enableCapabilities_ & GL_CULL_FACE) == GL_CULL_FACE)
+    {
+      bool bBackFace;
+      if((poly.v[1]->sx != poly.v[0]->sx) && (poly.v[2]->sx != poly.v[0]->sx))
+      {
+        bBackFace = ((((fpfromi(16, poly.v[1]->sy - poly.v[0]->sy) / (poly.v[1]->sx - poly.v[0]->sx)) -
+                       (fpfromi(16, poly.v[2]->sy - poly.v[0]->sy) / (poly.v[2]->sx - poly.v[0]->sx))) < 0) ^
+                       ((poly.v[0]->sx <= poly.v[1]->sx) == (poly.v[0]->sx > poly.v[2]->sx)));
+      }
+      else if((poly.v[2]->sx != poly.v[1]->sx) && (poly.v[0]->sx != poly.v[1]->sx))
+      {
+        bBackFace = ((((fpfromi(16, poly.v[2]->sy - poly.v[1]->sy) / (poly.v[2]->sx - poly.v[1]->sx)) -
+                       (fpfromi(16, poly.v[0]->sy - poly.v[1]->sy) / (poly.v[0]->sx - poly.v[1]->sx))) < 0) ^
+                       ((poly.v[1]->sx <= poly.v[2]->sx) == (poly.v[1]->sx > poly.v[0]->sx)));
+      }
+      else if((poly.v[0]->sx != poly.v[2]->sx) && (poly.v[1]->sx != poly.v[2]->sx))
+      {
+        bBackFace = ((((fpfromi(16, poly.v[0]->sy - poly.v[2]->sy) / (poly.v[0]->sx - poly.v[2]->sx)) -
+                       (fpfromi(16, poly.v[1]->sy - poly.v[2]->sy) / (poly.v[1]->sx - poly.v[2]->sx))) < 0) ^
+                       ((poly.v[2]->sx <= poly.v[0]->sx) == (poly.v[2]->sx > poly.v[1]->sx)));
+      }
+      else
+      {
+        // Triangle invisible
+        return;
+      }
+
+      if(bBackFace == true)
+        return;
+    }
+  }
+
+  // Lighting
+  if(bLighting_ == true)
+  {
+    for(int iLight(0); iLight < 8; iLight++)
+    {
+      if(lights_[iLight].enabled == true)
+      {
+        SColor & ambient = lights_[iLight].ambient;
+        SColor & diffuse = lights_[iLight].diffuse;
+        poly.v[0]->cc.r = c_max(c_fpmul(poly.v[0]->oc.r, ambient.r) + c_fpmul(c_fpmul(poly.v[0]->oc.r, normal), diffuse.r));
+        poly.v[0]->cc.g = c_max(c_fpmul(poly.v[0]->oc.g, ambient.g) + c_fpmul(c_fpmul(poly.v[0]->oc.g, normal), diffuse.g));
+        poly.v[0]->cc.b = c_max(c_fpmul(poly.v[0]->oc.b, ambient.b) + c_fpmul(c_fpmul(poly.v[0]->oc.b, normal), diffuse.b));
+        if(shadingModel_ == GL_SMOOTH)
+        {
+          poly.v[1]->cc.r = c_max(c_fpmul(poly.v[1]->oc.r, ambient.r) + c_fpmul(c_fpmul(poly.v[1]->oc.r, normal), diffuse.r));
+          poly.v[1]->cc.g = c_max(c_fpmul(poly.v[1]->oc.g, ambient.g) + c_fpmul(c_fpmul(poly.v[1]->oc.g, normal), diffuse.g));
+          poly.v[1]->cc.b = c_max(c_fpmul(poly.v[1]->oc.b, ambient.b) + c_fpmul(c_fpmul(poly.v[1]->oc.b, normal), diffuse.b));
+          poly.v[2]->cc.r = c_max(c_fpmul(poly.v[2]->oc.r, ambient.r) + c_fpmul(c_fpmul(poly.v[2]->oc.r, normal), diffuse.r));
+          poly.v[2]->cc.g = c_max(c_fpmul(poly.v[2]->oc.g, ambient.g) + c_fpmul(c_fpmul(poly.v[2]->oc.g, normal), diffuse.g));
+          poly.v[2]->cc.b = c_max(c_fpmul(poly.v[2]->oc.b, ambient.b) + c_fpmul(c_fpmul(poly.v[2]->oc.b, normal), diffuse.b));
+        }
+      }
+    }
   }
 
   // Bubble sort the 3 vertexes
   SVertex * vtemp;
-  SVertex * vhi(&(poly.v[0]));
-  SVertex * vmi(&(poly.v[1]));
-  SVertex * vlo(&(poly.v[2]));
+  SVertex * vhi(poly.v[0]);
+  SVertex * vmi(poly.v[1]);
+  SVertex * vlo(poly.v[2]);
 
   // Swap bottom with middle?
   if(vlo->sy > vmi->sy)
@@ -552,7 +847,7 @@ CContext::plotPoly(SPolygon & poly)
     case GL_FLAT:
     {
       for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hline(*pEdgeLeft, *pEdgeRight, y, poly.v[2].c);
+        hline(*pEdgeLeft, *pEdgeRight, y, poly.v[2]->cc);
       break;
     }
     case GL_SMOOTH:

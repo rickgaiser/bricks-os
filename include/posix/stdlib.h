@@ -10,6 +10,7 @@ extern "C" {
 #include "stddef.h"
 
 
+int abs(int n){return (n > 0 ? n : -n);}
 void free(void *);
 void * malloc(size_t);
 

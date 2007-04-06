@@ -60,12 +60,12 @@ CEdge::add(SVertex * vfrom, SVertex * vto)
       }
       case GL_SMOOTH:
       {
-        GLfixed r(vfrom->c.r);
-        GLfixed g(vfrom->c.g);
-        GLfixed b(vfrom->c.b);
-        GLfixed mr((vto->c.r - vfrom->c.r) / dy);
-        GLfixed mg((vto->c.g - vfrom->c.g) / dy);
-        GLfixed mb((vto->c.b - vfrom->c.b) / dy);
+        GLfixed r(vfrom->cc.r);
+        GLfixed g(vfrom->cc.g);
+        GLfixed b(vfrom->cc.b);
+        GLfixed mr((vto->cc.r - vfrom->cc.r) / dy);
+        GLfixed mg((vto->cc.g - vfrom->cc.g) / dy);
+        GLfixed mb((vto->cc.b - vfrom->cc.b) / dy);
 
         for(int y(vfrom->sy); y < vto->sy; y++)
         {
@@ -121,6 +121,20 @@ GL_API void
 GL_APIENTRY glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
   context.glColor4f(red, green, blue, alpha);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glLightf(GLenum light, GLenum pname, GLfloat param)
+{
+  context.glLightf(light, pname, param);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glLightfv(GLenum light, GLenum pname, const GLfloat *params)
+{
+  context.glLightfv(light, pname, params);
 }
 
 //-----------------------------------------------------------------------------
@@ -195,6 +209,13 @@ GL_APIENTRY glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid
 
 //-----------------------------------------------------------------------------
 GL_API void
+GL_APIENTRY glDepthFunc(GLenum func)
+{
+  context.glDepthFunc(func);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
 GL_APIENTRY glDisable(GLenum cap)
 {
   context.glDisable(cap);
@@ -226,6 +247,20 @@ GL_API void
 GL_APIENTRY glFlush(void)
 {
   context.glFlush();
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glLightx(GLenum light, GLenum pname, GLfixed param)
+{
+  context.glLightx(light, pname, param);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glLightxv(GLenum light, GLenum pname, const GLfixed *params)
+{
+  context.glLightxv(light, pname, params);
 }
 
 //-----------------------------------------------------------------------------

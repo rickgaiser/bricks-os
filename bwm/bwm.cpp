@@ -25,45 +25,48 @@ color_t clPanelFill(BxRGB(212, 208, 200));
 
 
 #ifdef CONFIG_GL
-GLfloat triangle[] =
+const GLfloat lightAmbient[] = {0.5f, 0.5f, 0.5f, 1.0f};
+const GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+const GLfloat triangle[] =
 {
   // Front
    0.0f,  1.0f,  0.0f,
   -1.0f, -1.0f,  1.0f,
    1.0f, -1.0f,  1.0f,
   // Right
-   0.0f,  1.0f,  0.0f,
-   1.0f, -1.0f,  1.0f,
    1.0f, -1.0f, -1.0f,
   // Back
-   0.0f,  1.0f,  0.0f,
-   1.0f, -1.0f, -1.0f,
   -1.0f, -1.0f, -1.0f,
   // Left
-   0.0f,  1.0f,  0.0f,
-  -1.0f, -1.0f, -1.0f,
   -1.0f, -1.0f,  1.0f
 };
-GLint vertex_count(sizeof(triangle) / (3 * sizeof(GLfloat)));
+GLint triangle_count(4);
 
-GLfloat colors[] =
+const GLfloat colors[] =
 {
   // Front
   1.0f, 0.0f, 0.0f, 1.0f,
   0.0f, 1.0f, 0.0f, 1.0f,
   0.0f, 0.0f, 1.0f, 1.0f,
   // Right
-  1.0f, 0.0f, 0.0f, 1.0f,
-  0.0f, 0.0f, 1.0f, 1.0f,
   0.0f, 1.0f, 0.0f, 1.0f,
   // Back
-  1.0f, 0.0f, 0.0f, 1.0f,
-  0.0f, 1.0f, 0.0f, 1.0f,
   0.0f, 0.0f, 1.0f, 1.0f,
   // Left
-  1.0f, 0.0f, 0.0f, 1.0f,
-  0.0f, 0.0f, 1.0f, 1.0f,
   0.0f, 1.0f, 0.0f, 1.0f
+};
+
+const GLfloat normals[] =
+{
+  // Front
+  0.0f, 0.0f, 1.0f,
+  // Right
+  1.0f, 0.0f, 0.0f,
+  // Back
+  0.0f, 0.0f,-1.0f,
+  // Left
+  -1.0f, 0.0f, 0.0f
 };
 #endif // CONFIG_GL
 
@@ -109,7 +112,8 @@ testGL(CSurface * surface)
   // Initialize GL
   glClearColor(0.23f, 0.43f, 0.65f, 0.0f);
   glEnable(GL_DEPTH_TEST);
-//  glClearDepth(1.0);
+  glClearDepthf(1.0f);
+  glDepthFunc(GL_LEQUAL);
   glEnable(GL_CULL_FACE);
   glShadeModel(/*GL_FLAT*/GL_SMOOTH);
   glMatrixMode(GL_PROJECTION);
@@ -119,13 +123,20 @@ testGL(CSurface * surface)
   glViewport(0, 0, surface->width, surface->height);
   gluPerspective(45.0f, (float)surface->width / (float)surface->height, 0.1f, 100.0f);
 
+  glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+  glEnable(GL_LIGHT0);
+  glEnable(GL_LIGHTING);
+
   glVertexPointer(3, GL_FLOAT, 0, triangle);
   glColorPointer(4, GL_FLOAT, 0, colors);
+  glNormalPointer(GL_FLOAT, 0, normals);
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_COLOR_ARRAY);
+  glEnableClientState(GL_NORMAL_ARRAY);
 
   // Show Pyramid for 1 full rotation around y axis
-  for(float fYRotTriangle(0.0f); fYRotTriangle < 360.0f; fYRotTriangle += 2.0f)
+  for(float fYRotTriangle(0.0f); fYRotTriangle < 360.0f; fYRotTriangle += 12.0f)
   {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -133,7 +144,7 @@ testGL(CSurface * surface)
     glTranslatef(0.0f, 0.0f, -3.0f);
     glRotatef(fYRotTriangle, 0.0f, 1.0f, 0.0f);
 
-    glDrawArrays(GL_TRIANGLES, 0, vertex_count);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, triangle_count);
     glFlush();
 
     // Display progress bar
