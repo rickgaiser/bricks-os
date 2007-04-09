@@ -10,49 +10,117 @@
 #include "context.h"
 
 
-// Z-buffer type:
-typedef GLfixed fxp_zbuf_t;
-#define FP_PRESICION_ZBUFFER    16
-#define z_fpfromi(i)   fpfromi(FP_PRESICION_ZBUFFER,i)
-#define z_fptoi(i)     fptoi(FP_PRESICION_ZBUFFER,i)
-#define z_fpfromf(i)   fpfromf(FP_PRESICION_ZBUFFER,i)
-#define z_fptof(i)     fptof(FP_PRESICION_ZBUFFER,i)
-#define z_fpmul(i1,i2) fpmul32(FP_PRESICION_ZBUFFER,i1,i2)
-#define z_fpdiv(i1,i2) fpdiv32(FP_PRESICION_ZBUFFER,i1,i2)
-
-// Color type:
-typedef GLfixed fxp_color_t;
-#define FP_PRESICION_COLOR      16
-#define c_fpfromi(i)   fpfromi(FP_PRESICION_COLOR,i)
-#define c_fptoi(i)     fptoi(FP_PRESICION_COLOR,i)
-#define c_fpfromf(i)   fpfromf(FP_PRESICION_COLOR,i)
-#define c_fptof(i)     fptof(FP_PRESICION_COLOR,i)
-#define c_fpmul(i1,i2) fpmul32(FP_PRESICION_COLOR,i1,i2)
-#define c_fpdiv(i1,i2) fpdiv32(FP_PRESICION_COLOR,i1,i2)
-#define c_max(i)       (i < c_fpfromi(1) ? i : c_fpfromi(1))
+// GLfixed fixed point math:
+#define FP_PRESICION_GL 16
+#define gl_fpfromi(i)   fpfromi(FP_PRESICION_GL,i)
+#define gl_fptoi(i)     fptoi(FP_PRESICION_GL,i)
+#define gl_fpfromf(i)   fpfromf(FP_PRESICION_GL,i)
+#define gl_fptof(i)     fptof(FP_PRESICION_GL,i)
+#define gl_fpmul(i1,i2) fpmul32(FP_PRESICION_GL,i1,i2)
+#define gl_fpdiv(i1,i2) fpdiv32(FP_PRESICION_GL,i1,i2)
+#define gl_fpclamp(i)   (i < 0 ? 0 : (i > gl_fpfromi(1) ? gl_fpfromi(1) : i))
 
 
 //-----------------------------------------------------------------------------
-struct SColor
+typedef union
 {
-  fxp_color_t r;
-  fxp_color_t g;
-  fxp_color_t b;
-  fxp_color_t a;
-};
+  struct
+  {
+    GLfixed r, g, b, a;
+  };
+  GLfixed c[4];
+} SColor;
+
+//-----------------------------------------------------------------------------
+typedef union
+{
+  struct
+  {
+    GLfixed x, y;
+  };
+  GLfixed v[2];
+}SVector2, SVertex2;
+
+//-----------------------------------------------------------------------------
+typedef union
+{
+  struct
+  {
+    GLfixed x, y, z;
+  };
+  GLfixed v[3];
+}SVector3, SVertex3;
+
+//-----------------------------------------------------------------------------
+typedef union
+{
+  struct
+  {
+    GLfixed x, y, z, w;
+  };
+  GLfixed v[4];
+}SVector4, SVertex4;
 
 //-----------------------------------------------------------------------------
 struct SVertex
 {
-  // 3D Point (in space) x/y/z
-  GLfixed   v[3];
+  // Vertex itself
+  // Original
+  union
+  {
+    struct
+    {
+      GLfixed vx1, vy1, vz1;
+    };
+    GLfixed v1[3];
+  };
+  // Transformed
+  union
+  {
+    struct
+    {
+      GLfixed vx2, vy2, vz2;
+    };
+    GLfixed v2[3];
+  };
+
+  // Normal vector
+  // Original
+  union
+  {
+    struct
+    {
+      GLfixed nx1, ny1, nz1;
+    };
+    GLfixed n1[3];
+  };
+  // Transformed
+  union
+  {
+    struct
+    {
+      GLfixed nx2, ny2, nz2;
+    };
+    GLfixed n2[3];
+  };
+
   // 2D Point (on screen) x/y
-  GLint     sx;
-  GLint     sy;
-  // Color (can't be reused in fans/strips)
-  SColor    oc; // Original
-  SColor    cc; // Converted
-  // State
+  union
+  {
+    struct
+    {
+      GLint sx, sy;
+    };
+    GLint s[2];
+  };
+
+  // Color
+  // Original
+  SColor    c1;
+  // Lighted
+  SColor    c2;
+
+  // State: indicates if the xxx2 values have been created already
   bool      bProcessed;
 };
 
@@ -61,7 +129,6 @@ struct SVertex
 struct SPolygon
 {
   SVertex * v[3];
-  GLfixed n[3];
 };
 
 //-----------------------------------------------------------------------------
@@ -77,7 +144,7 @@ public:
   // Edge x
   GLint * x_;
   // Edge depth (fp: 8.8)
-  fxp_zbuf_t * z_;
+  GLfixed * z_;
   // Edge color (fp: 24.8)
   SColor * c_;
 };
@@ -113,8 +180,8 @@ public:
 //  void glClipPlanef(GLenum plane, const GLfloat *equation);
   void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 //  void glDepthRangef(GLclampf zNear, GLclampf zFar);
-//  void glFogf(GLenum pname, GLfloat param);
-//  void glFogfv(GLenum pname, const GLfloat *params);
+  void glFogf(GLenum pname, GLfloat param);
+  void glFogfv(GLenum pname, const GLfloat *params);
 //  void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
 //  void glGetClipPlanef(GLenum pname, GLfloat eqn[4]);
 //  void glGetFloatv(GLenum pname, GLfloat *params);
@@ -174,15 +241,15 @@ public:
 //  void glDepthMask(GLboolean flag);
 //  void glDepthRangex(GLclampx zNear, GLclampx zFar);
   void glDisable(GLenum cap);
-//  void glDisableClientState(GLenum array);
+  void glDisableClientState(GLenum array);
   void glDrawArrays(GLenum mode, GLint first, GLsizei count);
 //  void glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
   void glEnable(GLenum cap);
   void glEnableClientState(GLenum array);
 //  void glFinish(void);
   void glFlush(void);
-//  void glFogx(GLenum pname, GLfixed param);
-//  void glFogxv(GLenum pname, const GLfixed *params);
+  void glFogx(GLenum pname, GLfixed param);
+  void glFogxv(GLenum pname, const GLfixed *params);
 //  void glFrontFace(GLenum mode);
 //  void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
 //  void glGetBooleanv(GLenum pname, GLboolean *params);
@@ -260,10 +327,11 @@ private:
 
 public: // FIXME: should be private
   CSurface * renderSurface;
-  fxp_zbuf_t * zbuffer;
+  GLfixed * zbuffer;
 
   GLenum    shadingModel_;
-  GLenum    enableCapabilities_;
+  bool      bDepthTest_;
+  bool      bCullFace_;
 
   // Matrix
   GLenum    matrixMode_;
@@ -273,9 +341,12 @@ public: // FIXME: should be private
   CMatrix * pCurrentMatrix_;
 
   // Buffers
-  SBufferPointer bufColor_;
   SBufferPointer bufVertex_;
+  bool           bBufVertexEnabled_;
   SBufferPointer bufNormal_;
+  bool           bBufNormalEnabled_;
+  SBufferPointer bufColor_;
+  bool           bBufColorEnabled_;
 
   // Colors
   SColor    clCurrent;
@@ -287,6 +358,13 @@ public: // FIXME: should be private
 
   // Normals
   GLfixed   normal_[3];
+
+  // Fog
+  bool      fogEnabled_;
+  GLfixed   fogDensity_;
+  GLfixed   fogStart_;
+  GLfixed   fogEnd_;
+  SColor    fogColor_;
 
   // Depth
   GLfixed   clearDepth_;

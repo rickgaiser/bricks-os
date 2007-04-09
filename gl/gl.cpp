@@ -16,7 +16,7 @@ CContext context;
 CEdge::CEdge(uint32_t height)
 {
   x_ = new GLint[height];
-  z_ = new fxp_zbuf_t[height];
+  z_ = new GLfixed[height];
   c_ = new SColor[height];
 }
 
@@ -36,11 +36,11 @@ CEdge::add(SVertex * vfrom, SVertex * vto)
   {
     GLint dy(vto->sy - vfrom->sy);
 
-    GLfixed x(fpfromi(16, vfrom->sx));
-    GLfixed mx((fpfromi(16, vto->sx  - vfrom->sx )) / dy);
+    GLfixed x(gl_fpfromi(vfrom->sx));
+    GLfixed mx((gl_fpfromi(vto->sx  - vfrom->sx )) / dy);
 
-    fxp_zbuf_t z(vfrom->v[2]);
-    fxp_zbuf_t mz((vto->v[2] - vfrom->v[2]) / dy);
+    GLfixed z(vfrom->v2[2]);
+    GLfixed mz((vto->v2[2] - vfrom->v2[2]) / dy);
 
     switch(context.shadingModel_)
     {
@@ -50,7 +50,7 @@ CEdge::add(SVertex * vfrom, SVertex * vto)
         int yto   = (vto->sy >= context.viewportHeight) ? (context.viewportHeight - 1) : (vto->sy);
         for(int y(yfrom); y < yto; y++)
         {
-          x_[y] = fptoi(16, x);
+          x_[y] = gl_fptoi(x);
           z_[y] = z;
 
           x += mx;
@@ -60,12 +60,12 @@ CEdge::add(SVertex * vfrom, SVertex * vto)
       }
       case GL_SMOOTH:
       {
-        GLfixed r(vfrom->cc.r);
-        GLfixed g(vfrom->cc.g);
-        GLfixed b(vfrom->cc.b);
-        GLfixed mr((vto->cc.r - vfrom->cc.r) / dy);
-        GLfixed mg((vto->cc.g - vfrom->cc.g) / dy);
-        GLfixed mb((vto->cc.b - vfrom->cc.b) / dy);
+        GLfixed r(vfrom->c2.r);
+        GLfixed g(vfrom->c2.g);
+        GLfixed b(vfrom->c2.b);
+        GLfixed mr((vto->c2.r - vfrom->c2.r) / dy);
+        GLfixed mg((vto->c2.g - vfrom->c2.g) / dy);
+        GLfixed mb((vto->c2.b - vfrom->c2.b) / dy);
 
         for(int y(vfrom->sy); y < vto->sy; y++)
         {
@@ -74,7 +74,7 @@ CEdge::add(SVertex * vfrom, SVertex * vto)
 
           if(y >= 0)
           {
-            x_[y]   = fptoi(16, x);
+            x_[y]   = gl_fptoi(x);
             z_[y]   = z;
             c_[y].r = r;
             c_[y].g = g;
@@ -121,6 +121,20 @@ GL_API void
 GL_APIENTRY glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
   context.glColor4f(red, green, blue, alpha);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glFogf(GLenum pname, GLfloat param)
+{
+  context.glFogf(pname, param);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glFogfv(GLenum pname, const GLfloat * params)
+{
+  context.glFogfv(pname, params);
 }
 
 //-----------------------------------------------------------------------------
@@ -223,6 +237,13 @@ GL_APIENTRY glDisable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 GL_API void
+GL_APIENTRY glDisableClientState(GLenum array)
+{
+  context.glDisableClientState(array);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
 GL_APIENTRY glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
   context.glDrawArrays(mode, first, count);
@@ -247,6 +268,20 @@ GL_API void
 GL_APIENTRY glFlush(void)
 {
   context.glFlush();
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glFogx(GLenum pname, GLfixed param)
+{
+  context.glFogx(pname, param);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glFogxv(GLenum pname, const GLfixed * params)
+{
+  context.glFogxv(pname, params);
 }
 
 //-----------------------------------------------------------------------------
@@ -342,6 +377,6 @@ void
 gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
 {
   // Calculate field of view scalars
-  context.fpFieldofviewYScalar = m_fpfromf(context.viewportHeight / tan(fovy));
-  context.fpFieldofviewXScalar = m_fpmul(context.fpFieldofviewYScalar, m_fpfromf(aspect));
+  context.fpFieldofviewYScalar = gl_fpfromf(context.viewportHeight / tan(fovy));
+  context.fpFieldofviewXScalar = gl_fpmul(context.fpFieldofviewYScalar, gl_fpfromf(aspect));
 }

@@ -25,8 +25,9 @@ color_t clPanelFill(BxRGB(212, 208, 200));
 
 
 #ifdef CONFIG_GL
-const GLfloat lightAmbient[] = {0.5f, 0.5f, 0.5f, 1.0f};
+const GLfloat lightAmbient[] = {0.1f, 0.1f, 0.1f, 1.0f};
 const GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+const GLfloat fogColor[]     = {0.5f, 0.5f, 0.5f, 0.5f};
 
 const GLfloat triangle[] =
 {
@@ -35,10 +36,16 @@ const GLfloat triangle[] =
   -1.0f, -1.0f,  1.0f,
    1.0f, -1.0f,  1.0f,
   // Right
+   0.0f,  1.0f,  0.0f,
+   1.0f, -1.0f,  1.0f,
    1.0f, -1.0f, -1.0f,
   // Back
+   0.0f,  1.0f,  0.0f,
+   1.0f, -1.0f, -1.0f,
   -1.0f, -1.0f, -1.0f,
   // Left
+   0.0f,  1.0f,  0.0f,
+  -1.0f, -1.0f, -1.0f,
   -1.0f, -1.0f,  1.0f
 };
 GLint triangle_count(4);
@@ -50,10 +57,16 @@ const GLfloat colors[] =
   0.0f, 1.0f, 0.0f, 1.0f,
   0.0f, 0.0f, 1.0f, 1.0f,
   // Right
+  1.0f, 0.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 1.0f, 1.0f,
   0.0f, 1.0f, 0.0f, 1.0f,
   // Back
+  1.0f, 0.0f, 0.0f, 1.0f,
+  0.0f, 1.0f, 0.0f, 1.0f,
   0.0f, 0.0f, 1.0f, 1.0f,
   // Left
+  1.0f, 0.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 1.0f, 1.0f,
   0.0f, 1.0f, 0.0f, 1.0f
 };
 
@@ -61,11 +74,19 @@ const GLfloat normals[] =
 {
   // Front
   0.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 1.0f,
   // Right
+  1.0f, 0.0f, 0.0f,
+  1.0f, 0.0f, 0.0f,
   1.0f, 0.0f, 0.0f,
   // Back
   0.0f, 0.0f,-1.0f,
+  0.0f, 0.0f,-1.0f,
+  0.0f, 0.0f,-1.0f,
   // Left
+  -1.0f, 0.0f, 0.0f,
+  -1.0f, 0.0f, 0.0f,
   -1.0f, 0.0f, 0.0f
 };
 #endif // CONFIG_GL
@@ -110,23 +131,28 @@ testGL(CSurface * surface)
   glSetSurface(surface);
 
   // Initialize GL
-  glClearColor(0.23f, 0.43f, 0.65f, 0.0f);
+//  glClearColor(0.23f, 0.43f, 0.65f, 0.0f);
+  glClearColor(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
   glEnable(GL_DEPTH_TEST);
   glClearDepthf(1.0f);
   glDepthFunc(GL_LEQUAL);
   glEnable(GL_CULL_FACE);
   glShadeModel(/*GL_FLAT*/GL_SMOOTH);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
   glViewport(0, 0, surface->width, surface->height);
   gluPerspective(45.0f, (float)surface->width / (float)surface->height, 0.1f, 100.0f);
 
+  // Lighting
   glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
   glEnable(GL_LIGHT0);
   glEnable(GL_LIGHTING);
+
+  // Fog
+  glFogfv(GL_FOG_COLOR, fogColor);
+  glFogf(GL_FOG_DENSITY, 0.35f);
+  glFogf(GL_FOG_START, 1.0f);
+  glFogf(GL_FOG_END, 10.0f);
+  glEnable(GL_FOG);
 
   glVertexPointer(3, GL_FLOAT, 0, triangle);
   glColorPointer(4, GL_FLOAT, 0, colors);
@@ -135,16 +161,35 @@ testGL(CSurface * surface)
   glEnableClientState(GL_COLOR_ARRAY);
   glEnableClientState(GL_NORMAL_ARRAY);
 
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  // Move up a little
+  glTranslatef(0.0f, -2.0f, 0.0f);
+  // Look down a little
+  glRotatef(-30.0f, 1.0f, 0.0f, 0.0f);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
   // Show Pyramid for 1 full rotation around y axis
-  for(float fYRotTriangle(0.0f); fYRotTriangle < 360.0f; fYRotTriangle += 12.0f)
+  for(float fYRotTriangle(0.0f); fYRotTriangle < 360.0f; fYRotTriangle += 2.0f)
   {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -3.0f);
+    glTranslatef(0.0f, 0.0f, -4.0f);
     glRotatef(fYRotTriangle, 0.0f, 1.0f, 0.0f);
+    glDrawArrays(GL_TRIANGLES, 0, triangle_count);
 
-    glDrawArrays(GL_TRIANGLE_FAN, 0, triangle_count);
+    glLoadIdentity();
+    glTranslatef(-2.0f, 0.0f, -7.0f);
+    glRotatef(fYRotTriangle, 0.0f, 1.0f, 0.0f);
+    glDrawArrays(GL_TRIANGLES, 0, triangle_count);
+
+    glLoadIdentity();
+    glTranslatef(2.0f, 0.0f, -7.0f);
+    glRotatef(fYRotTriangle, 0.0f, 1.0f, 0.0f);
+    glDrawArrays(GL_TRIANGLES, 0, triangle_count);
+
     glFlush();
 
     // Display progress bar
