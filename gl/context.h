@@ -2,9 +2,11 @@
 #define GL_CONTEXT_H
 
 
+#include "EGL/egl.h"
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 
+#include "kernel/videoManager.h"
 #include "matrix.h"
 #include "fixedPoint.h"
 #include "context.h"
@@ -70,18 +72,18 @@ struct SVertex
   {
     struct
     {
-      GLfixed vx1, vy1, vz1;
+      GLfixed vx1, vy1, vz1, vw1;
     };
-    GLfixed v1[3];
+    GLfixed v1[4];
   };
   // Transformed
   union
   {
     struct
     {
-      GLfixed vx2, vy2, vz2;
+      GLfixed vx2, vy2, vz2, vw2;
     };
-    GLfixed v2[3];
+    GLfixed v2[4];
   };
 
   // Normal vector
@@ -90,18 +92,18 @@ struct SVertex
   {
     struct
     {
-      GLfixed nx1, ny1, nz1;
+      GLfixed nx1, ny1, nz1, nw1;
     };
-    GLfixed n1[3];
+    GLfixed n1[4];
   };
   // Transformed
   union
   {
     struct
     {
-      GLfixed nx2, ny2, nz2;
+      GLfixed nx2, ny2, nz2, nw2;
     };
-    GLfixed n2[3];
+    GLfixed n2[4];
   };
 
   // 2D Point (on screen) x/y
@@ -138,15 +140,17 @@ public:
   CEdge(uint32_t height);
   ~CEdge();
 
-  void add(SVertex * vfrom, SVertex * vto);
+  void add(SVertex * vfrom, SVertex * vto, GLenum shadingModel);
 
 public:
   // Edge x
   GLint * x_;
-  // Edge depth (fp: 8.8)
+  // Edge depth
   GLfixed * z_;
-  // Edge color (fp: 24.8)
+  // Edge color
   SColor * c_;
+
+  int32_t iHeight_;
 };
 
 //-----------------------------------------------------------------------------
@@ -171,8 +175,13 @@ struct SLight
 class CContext
 {
 public:
+  friend void gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar);
+
   CContext();
   virtual ~CContext();
+
+  void setSurface(CSurface * surface);
+  CSurface * getSurface();
 
 //  void glAlphaFunc(GLenum func, GLclampf ref);
   void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
@@ -234,7 +243,7 @@ public:
 //  void glCompressedTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data);
 //  void glCopyTexImage2D(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
 //  void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
-//  void glCullFace(GLenum mode);
+  void glCullFace(GLenum mode);
 //  void glDeleteBuffers(GLsizei n, const GLuint *buffers);
 //  void glDeleteTextures(GLsizei n, const GLuint *textures);
   void glDepthFunc(GLenum func);
@@ -325,18 +334,19 @@ private:
   void hline_s(CEdge & from, CEdge & to, GLint & y);
   void plotPoly(SPolygon & poly);
 
-public: // FIXME: should be private
+private:
   CSurface * renderSurface;
   GLfixed * zbuffer;
 
   GLenum    shadingModel_;
-  bool      bDepthTest_;
-  bool      bCullFace_;
+  bool      cullFaceEnabled_;
+  GLenum    cullFaceMode_;
 
   // Matrix
   GLenum    matrixMode_;
   CMatrix   matrixModelView;
   CMatrix   matrixProjection;
+  CMatrix   matrixPerspective;
   CMatrix   matrixRotation;
   CMatrix * pCurrentMatrix_;
 
@@ -353,11 +363,11 @@ public: // FIXME: should be private
   SColor    clClear;
 
   // Lighting
-  bool      bLighting_;
+  bool      lightingEnabled_;
   SLight    lights_[8];
 
   // Normals
-  GLfixed   normal_[3];
+  GLfixed   normal_[4];
 
   // Fog
   bool      fogEnabled_;
@@ -366,9 +376,10 @@ public: // FIXME: should be private
   GLfixed   fogEnd_;
   SColor    fogColor_;
 
-  // Depth
-  GLfixed   clearDepth_;
+  // Depth testing
+  bool      depthTestEnabled_;
   GLenum    depthFunction_;
+  GLfixed   depthClear_;
 
   CEdge   * edge1;
   CEdge   * edge2;
@@ -376,10 +387,10 @@ public: // FIXME: should be private
   // Viewport
   GLint     viewportXOffset;
   GLint     viewportYOffset;
-  GLsizei   viewportWidth;
-  GLsizei   viewportHeight;
   GLsizei   viewportPixelCount;
   GLsizei   viewportByteCount;
+  GLsizei   viewportWidth;
+  GLsizei   viewportHeight;
   GLfixed   fpFieldofviewXScalar;
   GLfixed   fpFieldofviewYScalar;
 };

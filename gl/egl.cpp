@@ -1,55 +1,77 @@
 #include "EGL/egl.h"
+#include "context.h"
 
 
-#define EGL_GET_DISPLAY(dpy)      \
-{                                 \
-  CDisplay * display = &cDisplay; \
-}
+#define EGL_GET_THREAD() \
+CEGLThread * thread = &cThread; \
+
+#define EGL_GET_DISPLAY(dpy) \
+CDisplay * display = &cDisplay; \
 
 #define EGL_IF_ERROR(COND, ERRORCODE, RETVAL) \
 if(COND)                                      \
 {                                             \
+  iError = ERRORCODE;                         \
   return RETVAL;                              \
 }
 
 #define EGL_RETURN(ERRORCODE, RETVAL) \
 {                                     \
+  iError = ERRORCODE;                 \
   return RETVAL;                      \
 }
 
-class CDummyDisplay
+class CEGLDisplay
 {
 public:
-  CDummyDisplay(){}
-  virtual ~CDummyDisplay(){}
+  CEGLDisplay(){}
+  virtual ~CEGLDisplay(){}
 };
 
-class CDummySurface
+class CEGLSurface
 {
 public:
-  CDummySurface(){}
-  virtual ~CDummySurface(){}
+  CEGLSurface(){}
+  virtual ~CEGLSurface(){}
+
+  CSurface * pNativeSurface_;
 };
 
-class CDummyContext
+class CEGLContext
 {
 public:
-  CDummyContext(){}
-  virtual ~CDummyContext(){}
+  CEGLContext() : pGLESContext_(0){}
+  virtual ~CEGLContext(){}
+
+  CContext * pGLESContext_;
 };
 
-CDummyDisplay cDisplay;
-CDummySurface cSurface;
-CDummyContext cContext;
+class CEGLThread
+{
+public:
+  CEGLThread() : pContext_(0), pSurface_(0){}
+  virtual ~CEGLThread(){}
+
+  CEGLContext * pContext_;
+  CEGLSurface * pSurface_;
+  EGLenum       api_;
+};
+
+
+CEGLDisplay cDisplay;
+CEGLSurface cSurface;
+CEGLThread  cThread;
+EGLint      iError(EGL_SUCCESS);
 
 
 //-----------------------------------------------------------------------------
 // EGL API
 //-----------------------------------------------------------------------------
-//EGLAPI EGLint
-//EGLAPIENTRY eglGetError(void)
-//{
-//}
+EGLAPI EGLint
+EGLAPIENTRY eglGetError(void)
+{
+  return iError;
+}
 
 //-----------------------------------------------------------------------------
 EGLAPI EGLDisplay
@@ -82,10 +104,35 @@ EGLAPIENTRY eglTerminate(EGLDisplay dpy)
 }
 
 //-----------------------------------------------------------------------------
-//EGLAPI const char *
-//EGLAPIENTRY eglQueryString(EGLDisplay dpy, EGLint name)
-//{
-//}
+EGLAPI const char *
+EGLAPIENTRY eglQueryString(EGLDisplay dpy, EGLint name)
+{
+  const char * ret(0);
+  static const char apis[] = "OpenGL_ES";
+  static const char extensions[] = "";
+  static const char vendor[] = "Bricks-OS";
+  static const char version[] = "1.2";
+
+  switch(name)
+  {
+  case EGL_CLIENT_APIS:
+    ret = apis;
+    break;
+  case EGL_EXTENSIONS:
+    ret = extensions;
+    break;
+  case EGL_VENDOR:
+    ret = vendor;
+    break;
+  case EGL_VERSION:
+    ret = version;
+    break;
+  default:
+    EGL_RETURN(EGL_BAD_PARAMETER, 0);
+  }
+
+  EGL_RETURN(EGL_SUCCESS, ret);
+}
 
 //-----------------------------------------------------------------------------
 //EGLAPI EGLBoolean
@@ -110,6 +157,8 @@ EGLAPIENTRY eglChooseConfig(EGLDisplay dpy, const EGLint * attrib_list, EGLConfi
 EGLAPI EGLSurface
 EGLAPIENTRY eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config, EGLNativeWindowType win, const EGLint * attrib_list)
 {
+  cSurface.pNativeSurface_ = (CSurface *)win;
+
   EGL_RETURN(EGL_SUCCESS, (EGLSurface)&cSurface);
 }
 
@@ -142,13 +191,16 @@ EGLAPIENTRY eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 EGLAPI EGLBoolean
 EGLAPIENTRY eglBindAPI(EGLenum api)
 {
-  if(api != EGL_OPENGL_ES_API)
+  EGL_GET_THREAD();
+
+  if(api == EGL_OPENGL_ES_API)
   {
-    EGL_RETURN(EGL_BAD_PARAMETER, EGL_FALSE);
+    thread->api_ = api;
+    EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
   }
   else
   {
-    EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
+    EGL_RETURN(EGL_BAD_PARAMETER, EGL_FALSE);
   }
 }
 
@@ -204,7 +256,10 @@ EGLAPIENTRY eglBindAPI(EGLenum api)
 EGLAPI EGLContext
 EGLAPIENTRY eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint * attrib_list)
 {
-  EGL_RETURN(EGL_SUCCESS, (EGLContext)&cContext);
+  CEGLContext * pNewContext = new CEGLContext;
+  pNewContext->pGLESContext_ = new CContext;
+
+  EGL_RETURN(EGL_SUCCESS, (EGLContext)pNewContext);
 }
 
 //-----------------------------------------------------------------------------
@@ -218,14 +273,24 @@ EGLAPIENTRY eglDestroyContext(EGLDisplay dpy, EGLContext ctx)
 EGLAPI EGLBoolean
 EGLAPIENTRY eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx)
 {
+  EGL_GET_THREAD();
+
+  thread->pContext_ = (CEGLContext *)ctx;
+  thread->pSurface_ = (CEGLSurface *)draw;
+
+  thread->pContext_->pGLESContext_->setSurface(thread->pSurface_->pNativeSurface_);
+
   EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
 }
 
 //-----------------------------------------------------------------------------
-//EGLAPI EGLContext
-//EGLAPIENTRY eglGetCurrentContext(void)
-//{
-//}
+EGLAPI EGLContext
+EGLAPIENTRY eglGetCurrentContext(void)
+{
+  EGL_GET_THREAD();
+
+  EGL_RETURN(EGL_SUCCESS, (EGLContext)thread->pContext_);
+}
 
 //-----------------------------------------------------------------------------
 //EGLAPI EGLSurface
@@ -275,3 +340,12 @@ EGLAPIENTRY eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 //(* EGLAPIENTRY eglGetProcAddress(const char * procname))(void)
 //{
 //}
+
+//-----------------------------------------------------------------------------
+void *
+eglGetCurrentOpenGLESContext()
+{
+  EGL_GET_THREAD();
+
+  return (void *)thread->pContext_->pGLESContext_;
+}

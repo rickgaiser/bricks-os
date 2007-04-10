@@ -2,7 +2,6 @@
 #define OPENGL_H
 
 
-#include "kernel/videoManager.h"
 #include "GLES/gl.h"
 
 
@@ -13,16 +12,6 @@ extern "C" {
 
 typedef double         GLdouble;
 
-
-void glSetSurface(CSurface * surface);
-
-// ------
-// GL API
-// ------
-GL_API void GL_APIENTRY glBegin(GLenum mode);
-GL_API void GL_APIENTRY glEnd();
-GL_API void GL_APIENTRY glVertex3f(GLfloat x, GLfloat y, GLfloat z);
-GL_API void GL_APIENTRY glColor3f(GLfloat red, GLfloat green, GLfloat blue);
 
 // -------
 // GLU API

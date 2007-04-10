@@ -19,25 +19,26 @@ CContext::CContext()
  : renderSurface(0)
  , zbuffer(0)
  , shadingModel_(GL_FLAT)
- , bDepthTest_(false)
- , bCullFace_(false)
+ , cullFaceEnabled_(false)
+ , cullFaceMode_(GL_BACK)
  , matrixMode_(GL_MODELVIEW)
  , pCurrentMatrix_(&matrixModelView)
  , bBufVertexEnabled_(false)
  , bBufNormalEnabled_(false)
  , bBufColorEnabled_(false)
- , bLighting_(false)
+ , lightingEnabled_(false)
  , fogEnabled_(false)
- , clearDepth_(gl_fpfromi(1))
+ , depthTestEnabled_(false)
  , depthFunction_(GL_LESS)
+ , depthClear_(ZBUFFER_MAX_DEPTH)
  , edge1(0)
  , edge2(0)
  , viewportXOffset(0)
  , viewportYOffset(0)
- , viewportWidth(0)
- , viewportHeight(0)
  , viewportPixelCount(0)
  , viewportByteCount(0)
+ , viewportWidth(0)
+ , viewportHeight(0)
  , fpFieldofviewXScalar(gl_fpfromf(1.0f))
  , fpFieldofviewYScalar(gl_fpfromf(1.0f))
 {
@@ -75,6 +76,20 @@ CContext::CContext()
 //-----------------------------------------------------------------------------
 CContext::~CContext()
 {
+}
+
+//-----------------------------------------------------------------------------
+void
+CContext::setSurface(CSurface * surface)
+{
+  renderSurface = surface;
+}
+
+//-----------------------------------------------------------------------------
+CSurface *
+CContext::getSurface()
+{
+  return renderSurface;
 }
 
 //-----------------------------------------------------------------------------
@@ -166,7 +181,7 @@ CContext::glClear(GLbitfield mask)
   if(mask & GL_COLOR_BUFFER_BIT)
     dmaFill16(color, renderSurface->p, iCount);
   if(mask & GL_DEPTH_BUFFER_BIT)
-    dmaFill32(clearDepth_, zbuffer, iCount);
+    dmaFill32(depthClear_, zbuffer, iCount);
 }
 
 //-----------------------------------------------------------------------------
@@ -183,7 +198,7 @@ CContext::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx al
 void
 CContext::glClearDepthx(GLclampx depth)
 {
-  clearDepth_ = gl_fpmul(ZBUFFER_MAX_DEPTH, depth);
+  depthClear_ = gl_fpmul(ZBUFFER_MAX_DEPTH, depth);
 }
 
 //-----------------------------------------------------------------------------
@@ -220,6 +235,7 @@ CContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
   normal_[0] = nx;
   normal_[1] = ny;
   normal_[2] = nz;
+  normal_[3] = gl_fpfromi(1);
 
   //if((enableCapabilities_ & GL_NORMALIZE) == GL_NORMALIZE)
   //{
@@ -249,6 +265,13 @@ CContext::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *
 
 //-----------------------------------------------------------------------------
 void
+CContext::glCullFace(GLenum mode)
+{
+  cullFaceMode_ = mode;
+}
+
+//-----------------------------------------------------------------------------
+void
 CContext::glDepthFunc(GLenum func)
 {
   depthFunction_ = func;
@@ -260,7 +283,7 @@ CContext::glDisable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_LIGHTING: bLighting_ = false; break;
+    case GL_LIGHTING: lightingEnabled_ = false; break;
     case GL_LIGHT0: lights_[0].enabled = false; break;
     case GL_LIGHT1: lights_[1].enabled = false; break;
     case GL_LIGHT2: lights_[2].enabled = false; break;
@@ -270,8 +293,8 @@ CContext::glDisable(GLenum cap)
     case GL_LIGHT6: lights_[6].enabled = false; break;
     case GL_LIGHT7: lights_[7].enabled = false; break;
 
-    case GL_DEPTH_TEST: bDepthTest_ = false; break;
-    case GL_CULL_FACE:  bCullFace_  = false; break;
+    case GL_DEPTH_TEST: depthTestEnabled_ = false; break;
+    case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
     case GL_FOG:        fogEnabled_ = false; break;
 
     default:
@@ -325,12 +348,15 @@ CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
         v[0].v1[0] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
         v[0].v1[1] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
         v[0].v1[2] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v[0].v1[3] = gl_fpfromi(1);
         v[1].v1[0] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
         v[1].v1[1] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
         v[1].v1[2] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v[1].v1[3] = gl_fpfromi(1);
         v[2].v1[0] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
         v[2].v1[1] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
         v[2].v1[2] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v[2].v1[3] = gl_fpfromi(1);
 
         // Normals
         if(bBufNormalEnabled_ == true)
@@ -339,19 +365,22 @@ CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
           v[0].n1[0] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
           v[0].n1[1] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
           v[0].n1[2] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+          v[0].n1[3] = gl_fpfromi(1);
           v[1].n1[0] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
           v[1].n1[1] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
           v[1].n1[2] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+          v[1].n1[3] = gl_fpfromi(1);
           v[2].n1[0] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
           v[2].n1[1] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
           v[2].n1[2] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+          v[2].n1[3] = gl_fpfromi(1);
         }
         else
         {
           // Use current normal
-          v[0].n1[0] = normal_[0]; v[0].n1[1] = normal_[1]; v[0].n1[2] = normal_[2];
-          v[1].n1[0] = normal_[0]; v[1].n1[1] = normal_[1]; v[1].n1[2] = normal_[2];
-          v[2].n1[0] = normal_[0]; v[2].n1[1] = normal_[1]; v[2].n1[2] = normal_[2];
+          v[0].n1[0] = normal_[0]; v[0].n1[1] = normal_[1]; v[0].n1[2] = normal_[2]; v[0].n1[3] = normal_[3];
+          v[1].n1[0] = normal_[0]; v[1].n1[1] = normal_[1]; v[1].n1[2] = normal_[2]; v[1].n1[3] = normal_[3];
+          v[2].n1[0] = normal_[0]; v[2].n1[1] = normal_[1]; v[2].n1[2] = normal_[2]; v[2].n1[3] = normal_[3];
         }
 
         // Colors
@@ -410,9 +439,11 @@ CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       v[0].v1[0] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[0]);
       v[0].v1[1] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[1]);
       v[0].v1[2] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[2]);
+      v[0].v1[3] = gl_fpfromi(1);
       v[2].v1[0] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[3]);
       v[2].v1[1] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[4]);
       v[2].v1[2] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[5]);
+      v[2].v1[3] = gl_fpfromi(1);
 
       // Normals
       if(bBufNormalEnabled_ == true)
@@ -421,16 +452,18 @@ CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
         v[0].n1[0] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[0]);
         v[0].n1[1] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[1]);
         v[0].n1[2] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[2]);
+        v[2].n1[3] = gl_fpfromi(1);
         v[2].n1[0] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[3]);
         v[2].n1[1] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[4]);
         v[2].n1[2] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[5]);
+        v[2].n1[3] = gl_fpfromi(1);
       }
       else
       {
         // Use current normal
-        v[0].n1[0] = normal_[0]; v[0].n1[1] = normal_[1]; v[0].n1[2] = normal_[2];
-        v[1].n1[0] = normal_[0]; v[1].n1[1] = normal_[1]; v[1].n1[2] = normal_[2];
-        v[2].n1[0] = normal_[0]; v[2].n1[1] = normal_[1]; v[2].n1[2] = normal_[2];
+        v[0].n1[0] = normal_[0]; v[0].n1[1] = normal_[1]; v[0].n1[2] = normal_[2]; v[0].n1[3] = normal_[3];
+        v[1].n1[0] = normal_[0]; v[1].n1[1] = normal_[1]; v[1].n1[2] = normal_[2]; v[1].n1[3] = normal_[3];
+        v[2].n1[0] = normal_[0]; v[2].n1[1] = normal_[1]; v[2].n1[2] = normal_[2]; v[2].n1[3] = normal_[3];
       }
 
       // Colors
@@ -459,7 +492,7 @@ CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 
       for(GLint i(0); i < count; i++)
       {
-        // Swap v1[1] with v1[2]
+        // Swap v[1] with v[2]
         SVertex * vtemp;
         vtemp = polygon.v[1];
         polygon.v[1] = polygon.v[2];
@@ -471,6 +504,7 @@ CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
         vtemp->v1[0] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
         vtemp->v1[1] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
         vtemp->v1[2] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        vtemp->v1[3] = gl_fpfromf(1);
 
         // Normals
         if(bBufNormalEnabled_ == true)
@@ -479,6 +513,7 @@ CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
           vtemp->n1[0] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
           vtemp->n1[1] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
           vtemp->n1[2] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+          vtemp->n1[3] = gl_fpfromi(1);
         }
 
         // Colors
@@ -504,7 +539,7 @@ CContext::glEnable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_LIGHTING: bLighting_ = true; break;
+    case GL_LIGHTING: lightingEnabled_ = true; break;
     case GL_LIGHT0: lights_[0].enabled = true; break;
     case GL_LIGHT1: lights_[1].enabled = true; break;
     case GL_LIGHT2: lights_[2].enabled = true; break;
@@ -514,8 +549,8 @@ CContext::glEnable(GLenum cap)
     case GL_LIGHT6: lights_[6].enabled = true; break;
     case GL_LIGHT7: lights_[7].enabled = true; break;
 
-    case GL_DEPTH_TEST: bDepthTest_ = true; break;
-    case GL_CULL_FACE:  bCullFace_  = true; break;
+    case GL_DEPTH_TEST: depthTestEnabled_ = true; break;
+    case GL_CULL_FACE:  cullFaceEnabled_  = true; break;
     case GL_FOG:        fogEnabled_ = true; break;
 
     default:
@@ -751,7 +786,7 @@ CContext::hline(CEdge & from, CEdge & to, GLint & y, SColor c)
       if(x >= 0)
       {
         // Depth test pixel
-        if(bDepthTest_ == true)
+        if(depthTestEnabled_ == true)
         {
           if(validDepth(z, zbuffer[index], depthFunction_))
           {
@@ -798,7 +833,7 @@ CContext::hline_s(CEdge & from, CEdge & to, GLint & y)
       if(x >= 0)
       {
         // Depth test pixel
-        if(bDepthTest_ == true)
+        if(depthTestEnabled_ == true)
         {
           if(validDepth(z, zbuffer[index], depthFunction_))
           {
@@ -834,6 +869,7 @@ CContext::plotPoly(SPolygon & poly)
       // Projection Transformation
       matrixProjection.transform(poly.v[i]->v2, poly.v[i]->v2);
       // Perspective division, viewport transformation
+      matrixPerspective.transform(poly.v[i]->v2, poly.v[i]->v2);
       poly.v[i]->sx = SCREENX(poly.v[i]->v2);
       poly.v[i]->sy = SCREENY(poly.v[i]->v2);
 
@@ -842,7 +878,7 @@ CContext::plotPoly(SPolygon & poly)
   }
 
   // Backface culling
-  if(bCullFace_ == true)
+  if(cullFaceEnabled_ == true)
   {
     bool bBackFace;
     if((poly.v[1]->sx != poly.v[0]->sx) && (poly.v[2]->sx != poly.v[0]->sx))
@@ -869,12 +905,24 @@ CContext::plotPoly(SPolygon & poly)
       return;
     }
 
-    if(bBackFace == true)
-      return;
+    switch(cullFaceMode_)
+    {
+      case GL_FRONT:
+        if(bBackFace == false)
+          return;
+        break;
+      case GL_BACK:
+        if(bBackFace == true)
+          return;
+        break;
+      case GL_FRONT_AND_BACK:
+      default:
+        return;
+    };
   }
 
   // Lighting
-  if(bLighting_ == true)
+  if(lightingEnabled_ == true)
   {
     // Normal Rotation
     matrixRotation.transform(poly.v[0]->n1, poly.v[0]->n2);
@@ -961,9 +1009,9 @@ CContext::plotPoly(SPolygon & poly)
   }
 
   // Create edge lists
-  edge1->add(vlo, vhi);
-  edge2->add(vlo, vmi);
-  edge2->add(vmi, vhi);
+  edge1->add(vlo, vhi, shadingModel_);
+  edge2->add(vlo, vmi, shadingModel_);
+  edge2->add(vmi, vhi, shadingModel_);
 
   CEdge * pEdgeLeft  = edge1;
   CEdge * pEdgeRight = edge2;

@@ -171,16 +171,17 @@ CMatrix::rotate(GLfixed * angles)
 }
 
 //---------------------------------------------------------------------------
-// NEW
 void
 CMatrix::transform(const GLfixed * from, GLfixed * to)
 {
   GLfixed x(from[0]);
   GLfixed y(from[1]);
   GLfixed z(from[2]);
-  to[0] = m_fpmul(matrix[0][0], x) + m_fpmul(matrix[0][1], y) + m_fpmul(matrix[0][2], z) + matrix[0][3];
-  to[1] = m_fpmul(matrix[1][0], x) + m_fpmul(matrix[1][1], y) + m_fpmul(matrix[1][2], z) + matrix[1][3];
-  to[2] = m_fpmul(matrix[2][0], x) + m_fpmul(matrix[2][1], y) + m_fpmul(matrix[2][2], z) + matrix[2][3];
+  GLfixed w(from[3]);
+  to[0] = m_fpmul(matrix[0][0], x) + m_fpmul(matrix[0][1], y) + m_fpmul(matrix[0][2], z) + m_fpmul(matrix[0][3], w);
+  to[1] = m_fpmul(matrix[1][0], x) + m_fpmul(matrix[1][1], y) + m_fpmul(matrix[1][2], z) + m_fpmul(matrix[1][3], w);
+  to[2] = m_fpmul(matrix[2][0], x) + m_fpmul(matrix[2][1], y) + m_fpmul(matrix[2][2], z) + m_fpmul(matrix[2][3], w);
+  to[3] = m_fpmul(matrix[3][0], x) + m_fpmul(matrix[3][1], y) + m_fpmul(matrix[3][2], z) + m_fpmul(matrix[3][3], w);
 }
 
 //---------------------------------------------------------------------------
@@ -195,7 +196,6 @@ CMatrix::operator*(const CMatrix & m)
 }
 
 //---------------------------------------------------------------------------
-// NEW
 // 64 x operator*
 // 48 x operator+
 CMatrix &

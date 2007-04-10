@@ -37,7 +37,7 @@ public:
   CMatrix   operator* (const CMatrix & m);
   CMatrix & operator*=(const CMatrix & m);
 
-private:
+public:
   GLfixed matrix[4][4];
   // [ROW][COLUMN]
   // 00, 01, 02, 03
@@ -45,6 +45,7 @@ private:
   // 20, 21, 22, 23
   // 30, 31, 32, 33
 
+private:
   static bool bInitialized_;
   static GLfixed fpSin_[360];
   static GLfixed fpCos_[360];

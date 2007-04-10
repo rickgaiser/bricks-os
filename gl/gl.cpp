@@ -1,3 +1,4 @@
+#include "EGL/egl.h"
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 
@@ -8,16 +9,24 @@ typedef unsigned int wint_t;
 #include <math.h>
 
 
-CContext context;
+extern void * eglGetCurrentOpenGLESContext();
+
+#define GLES_GET_CONTEXT(RETVAL) \
+CContext * context = (CContext *)eglGetCurrentOpenGLESContext(); \
+if(context == 0) \
+{ \
+  return RETVAL; \
+}
 
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CEdge::CEdge(uint32_t height)
+ : iHeight_(height)
 {
-  x_ = new GLint[height];
-  z_ = new GLfixed[height];
-  c_ = new SColor[height];
+  x_ = new GLint[iHeight_];
+  z_ = new GLfixed[iHeight_];
+  c_ = new SColor[iHeight_];
 }
 
 //-----------------------------------------------------------------------------
@@ -30,7 +39,7 @@ CEdge::~CEdge()
 
 //-----------------------------------------------------------------------------
 void
-CEdge::add(SVertex * vfrom, SVertex * vto)
+CEdge::add(SVertex * vfrom, SVertex * vto, GLenum shadingModel)
 {
   if(vto->sy != vfrom->sy)
   {
@@ -42,12 +51,12 @@ CEdge::add(SVertex * vfrom, SVertex * vto)
     GLfixed z(vfrom->v2[2]);
     GLfixed mz((vto->v2[2] - vfrom->v2[2]) / dy);
 
-    switch(context.shadingModel_)
+    switch(shadingModel)
     {
       case GL_FLAT:
       {
         int yfrom = (vfrom->sy < 0) ? 0 : (vfrom->sy);
-        int yto   = (vto->sy >= context.viewportHeight) ? (context.viewportHeight - 1) : (vto->sy);
+        int yto   = (vto->sy >= iHeight_) ? (iHeight_ - 1) : (vto->sy);
         for(int y(yfrom); y < yto; y++)
         {
           x_[y] = gl_fptoi(x);
@@ -69,7 +78,7 @@ CEdge::add(SVertex * vfrom, SVertex * vto)
 
         for(int y(vfrom->sy); y < vto->sy; y++)
         {
-          if(y >= context.viewportHeight)
+          if(y >= iHeight_)
             break;
 
           if(y >= 0)
@@ -94,278 +103,318 @@ CEdge::add(SVertex * vfrom, SVertex * vto)
 }
 
 //-----------------------------------------------------------------------------
-void
-glSetSurface(CSurface * surface)
-{
-  context.renderSurface = surface;
-}
-
-//-----------------------------------------------------------------------------
 // GL API
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
-  context.glClearColor(red, green, blue, alpha);
+  GLES_GET_CONTEXT();
+  context->glClearColor(red, green, blue, alpha);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glClearDepthf(GLclampf depth)
 {
-  context.glClearDepthf(depth);
+  GLES_GET_CONTEXT();
+  context->glClearDepthf(depth);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
-  context.glColor4f(red, green, blue, alpha);
+  GLES_GET_CONTEXT();
+  context->glColor4f(red, green, blue, alpha);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glFogf(GLenum pname, GLfloat param)
 {
-  context.glFogf(pname, param);
+  GLES_GET_CONTEXT();
+  context->glFogf(pname, param);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glFogfv(GLenum pname, const GLfloat * params)
 {
-  context.glFogfv(pname, params);
+  GLES_GET_CONTEXT();
+  context->glFogfv(pname, params);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glLightf(GLenum light, GLenum pname, GLfloat param)
 {
-  context.glLightf(light, pname, param);
+  GLES_GET_CONTEXT();
+  context->glLightf(light, pname, param);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glLightfv(GLenum light, GLenum pname, const GLfloat *params)
 {
-  context.glLightfv(light, pname, params);
+  GLES_GET_CONTEXT();
+  context->glLightfv(light, pname, params);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glNormal3f (GLfloat nx, GLfloat ny, GLfloat nz)
 {
-  context.glNormal3f(nx, ny, nz);
+  GLES_GET_CONTEXT();
+  context->glNormal3f(nx, ny, nz);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
-  context.glRotatef(angle, x, y, z);
+  GLES_GET_CONTEXT();
+  context->glRotatef(angle, x, y, z);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glScalef(GLfloat x, GLfloat y, GLfloat z)
 {
-  context.glScalef(x, y, z);
+  GLES_GET_CONTEXT();
+  context->glScalef(x, y, z);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
-  context.glTranslatef(x, y, z);
+  GLES_GET_CONTEXT();
+  context->glTranslatef(x, y, z);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glClear(GLbitfield mask)
 {
-  context.glClear(mask);
+  GLES_GET_CONTEXT();
+  context->glClear(mask);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
-  context.glClearColorx(red, green, blue, alpha);
+  GLES_GET_CONTEXT();
+  context->glClearColorx(red, green, blue, alpha);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glClearDepthx(GLclampx depth)
 {
-  context.glClearDepthx(depth);
+  GLES_GET_CONTEXT();
+  context->glClearDepthx(depth);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 {
-  context.glColor4ub(red, green, blue, alpha);
+  GLES_GET_CONTEXT();
+
+  context->glColor4ub(red, green, blue, alpha);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 {
-  context.glColor4x(red, green, blue, alpha);
+  GLES_GET_CONTEXT();
+  context->glColor4x(red, green, blue, alpha);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
-  context.glColorPointer(size, type, stride, pointer);
+  GLES_GET_CONTEXT();
+  context->glColorPointer(size, type, stride, pointer);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glCullFace(GLenum mode)
+{
+  GLES_GET_CONTEXT();
+  context->glCullFace(mode);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glDepthFunc(GLenum func)
 {
-  context.glDepthFunc(func);
+  GLES_GET_CONTEXT();
+  context->glDepthFunc(func);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glDisable(GLenum cap)
 {
-  context.glDisable(cap);
+  GLES_GET_CONTEXT();
+  context->glDisable(cap);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glDisableClientState(GLenum array)
 {
-  context.glDisableClientState(array);
+  GLES_GET_CONTEXT();
+  context->glDisableClientState(array);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
-  context.glDrawArrays(mode, first, count);
+  GLES_GET_CONTEXT();
+  context->glDrawArrays(mode, first, count);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glEnable(GLenum cap)
 {
-  context.glEnable(cap);
+  GLES_GET_CONTEXT();
+  context->glEnable(cap);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glEnableClientState(GLenum array)
 {
-  context.glEnableClientState(array);
+  GLES_GET_CONTEXT();
+  context->glEnableClientState(array);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glFlush(void)
 {
-  context.glFlush();
+  GLES_GET_CONTEXT();
+  context->glFlush();
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glFogx(GLenum pname, GLfixed param)
 {
-  context.glFogx(pname, param);
+  GLES_GET_CONTEXT();
+  context->glFogx(pname, param);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glFogxv(GLenum pname, const GLfixed * params)
 {
-  context.glFogxv(pname, params);
+  GLES_GET_CONTEXT();
+  context->glFogxv(pname, params);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glLightx(GLenum light, GLenum pname, GLfixed param)
 {
-  context.glLightx(light, pname, param);
+  GLES_GET_CONTEXT();
+  context->glLightx(light, pname, param);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glLightxv(GLenum light, GLenum pname, const GLfixed *params)
 {
-  context.glLightxv(light, pname, params);
+  GLES_GET_CONTEXT();
+  context->glLightxv(light, pname, params);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glLoadIdentity()
 {
-  context.glLoadIdentity();
+  GLES_GET_CONTEXT();
+  context->glLoadIdentity();
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glMatrixMode(GLenum mode)
 {
-  context.glMatrixMode(mode);
+  GLES_GET_CONTEXT();
+  context->glMatrixMode(mode);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 {
-  context.glNormal3x(nx, ny, nz);
+  GLES_GET_CONTEXT();
+  context->glNormal3x(nx, ny, nz);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 {
-  context.glNormalPointer(type, stride, pointer);
+  GLES_GET_CONTEXT();
+  context->glNormalPointer(type, stride, pointer);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
-  context.glRotatex(angle, x, y, z);
+  GLES_GET_CONTEXT();
+  context->glRotatex(angle, x, y, z);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glScalex(GLfixed x, GLfixed y, GLfixed z)
 {
-  context.glScalex(x, y, z);
+  GLES_GET_CONTEXT();
+  context->glScalex(x, y, z);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glShadeModel(GLenum mode)
 {
-  context.glShadeModel(mode);
+  GLES_GET_CONTEXT();
+  context->glShadeModel(mode);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
-  context.glTranslatex(x, y, z);
+  GLES_GET_CONTEXT();
+  context->glTranslatex(x, y, z);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
-  context.glVertexPointer(size, type, stride, pointer);
+  GLES_GET_CONTEXT();
+  context->glVertexPointer(size, type, stride, pointer);
 }
 
 //-----------------------------------------------------------------------------
 GL_API void
 GL_APIENTRY glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-  context.glViewport(x, y, width, height);
+  GLES_GET_CONTEXT();
+  context->glViewport(x, y, width, height);
 }
 
 //-----------------------------------------------------------------------------
@@ -376,7 +425,24 @@ GL_APIENTRY glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 void
 gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
 {
+  GLES_GET_CONTEXT();
   // Calculate field of view scalars
-  context.fpFieldofviewYScalar = gl_fpfromf(context.viewportHeight / tan(fovy));
-  context.fpFieldofviewXScalar = gl_fpmul(context.fpFieldofviewYScalar, gl_fpfromf(aspect));
+  context->fpFieldofviewYScalar = gl_fpfromf(context->viewportHeight / tan(fovy));
+  context->fpFieldofviewXScalar = gl_fpmul(context->fpFieldofviewYScalar, gl_fpfromf(aspect));
+
+//  GLdouble sine, cotangent, deltaZ;
+//  GLdouble radians = fovy / 2 * M_PI / 180;
+//  deltaZ = zFar - zNear;
+//  sine = sin(radians);
+//  if((deltaZ == 0) || (sine == 0) || (aspect == 0))
+//    return;
+//  cotangent = cos(radians) / sine;
+
+  context->matrixPerspective.loadIdentity();
+//  context->matrixPerspective.matrix[0][0] = gl_fpfromf(cotangent / aspect);
+//  context->matrixPerspective.matrix[1][1] = gl_fpfromf(cotangent);
+//  context->matrixPerspective.matrix[2][2] = gl_fpfromf(-(zFar + zNear) / deltaZ);
+//  context->matrixPerspective.matrix[2][3] = gl_fpfromi(-1);
+//  context->matrixPerspective.matrix[3][2] = gl_fpfromf(-2 * zNear * zFar / deltaZ);
+//  context->matrixPerspective.matrix[3][3] = gl_fpfromi(0);
 }

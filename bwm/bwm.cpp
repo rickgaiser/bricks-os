@@ -1,7 +1,7 @@
 #include "bwm/bwm.h"
 #include "kernel/videoManager.h"
 #ifdef CONFIG_GL
-//#include "EGL/egl.h"
+#include "EGL/egl.h"
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 #endif // CONFIG_GL
@@ -113,47 +113,48 @@ testFill(CSurface * surface)
 void
 testGL(CSurface * surface)
 {
-  //EGLDisplay   egldisplay;
-  //EGLConfig    eglconfig = 0;
-  //EGLSurface   eglsurface;
-  //EGLContext   eglcontext;
+  EGLDisplay   egldisplay;
+  EGLConfig    eglconfig = 0;
+  EGLSurface   eglsurface;
+  EGLContext   eglcontext;
 
-  //initialize EGL
-  //egldisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-  //eglInitialize(egldisplay, 0, 0);
-  //eglBindAPI(EGL_OPENGL_ES_API);
+  // Initialize EGL
+  egldisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  eglInitialize(egldisplay, 0, 0);
+  eglBindAPI(EGL_OPENGL_ES_API);
   //eglChooseConfig(egldisplay, s_configAttribs, &eglconfig, 1, &numconfigs);
-  //eglsurface = eglCreateWindowSurface(egldisplay, eglconfig, (EGLNativeDisplayType)surface, 0);
-  //eglcontext = eglCreateContext(egldisplay, eglconfig, 0, 0);
-  //eglMakeCurrent(egldisplay, eglsurface, eglsurface, eglcontext);
-
-  // Set render surface
-  glSetSurface(surface);
+  eglsurface = eglCreateWindowSurface(egldisplay, eglconfig, (EGLNativeDisplayType)surface, 0);
+  eglcontext = eglCreateContext(egldisplay, eglconfig, 0, 0);
+  eglMakeCurrent(egldisplay, eglsurface, eglsurface, eglcontext);
 
   // Initialize GL
+  // Background color
 //  glClearColor(0.23f, 0.43f, 0.65f, 0.0f);
   glClearColor(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
-  glEnable(GL_DEPTH_TEST);
+  // Depth test
   glClearDepthf(1.0f);
   glDepthFunc(GL_LEQUAL);
+  glEnable(GL_DEPTH_TEST);
+  // Backface culling
+  glCullFace(GL_BACK);
   glEnable(GL_CULL_FACE);
+  // Shade model
   glShadeModel(/*GL_FLAT*/GL_SMOOTH);
+  // Viewport & Perspective
   glViewport(0, 0, surface->width, surface->height);
   gluPerspective(45.0f, (float)surface->width / (float)surface->height, 0.1f, 100.0f);
-
   // Lighting
   glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
   glEnable(GL_LIGHT0);
   glEnable(GL_LIGHTING);
-
   // Fog
   glFogfv(GL_FOG_COLOR, fogColor);
   glFogf(GL_FOG_DENSITY, 0.35f);
   glFogf(GL_FOG_START, 1.0f);
   glFogf(GL_FOG_END, 10.0f);
   glEnable(GL_FOG);
-
+  // Pointers to data
   glVertexPointer(3, GL_FLOAT, 0, triangle);
   glColorPointer(4, GL_FLOAT, 0, colors);
   glNormalPointer(GL_FLOAT, 0, normals);
@@ -164,9 +165,9 @@ testGL(CSurface * surface)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   // Move up a little
-  glTranslatef(0.0f, -2.0f, 0.0f);
+  //glTranslatef(0.0f, -2.0f, 0.0f);
   // Look down a little
-  glRotatef(-30.0f, 1.0f, 0.0f, 0.0f);
+  //glRotatef(-30.0f, 1.0f, 0.0f, 0.0f);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
@@ -198,6 +199,10 @@ testGL(CSurface * surface)
 
     surface->swap();
   }
+
+  // Shutdown EGL
+  eglMakeCurrent(egldisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+  eglTerminate(egldisplay);
 }
 #endif // CONFIG_GL
 
