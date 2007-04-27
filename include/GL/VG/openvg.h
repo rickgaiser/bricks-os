@@ -417,6 +417,7 @@ typedef enum {
   VG_EXTENSIONS                               = 0x2303
 } VGStringID;
 
+#define OPENVG_STATIC_LIBRARY
 /* Function Prototypes */
 
 #if defined(OPENVG_STATIC_LIBRARY)
