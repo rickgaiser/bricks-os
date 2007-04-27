@@ -19,7 +19,7 @@ extern int bwm(int argc, char * argv[]);
 // -----------------------------------------------------------------------------
 // Thread passes STDIN to STDOUT
 void *
-pipeThread(void * arg)
+thread(void * arg)
 {
   std::cout<<"Threads...OK"<<std::endl;
 
@@ -37,8 +37,8 @@ bricks_main()
 
 #ifdef CONFIG_MULTITASKING
   // Create thread
-  pthread_t thrPipe;
-  if(pthread_create(&thrPipe, 0, pipeThread, 0) != 0)
+  pthread_t thr;
+  if(pthread_create(&thr, 0, thread, 0) != 0)
     std::cout<<"ERROR: Unable to create thread!"<<std::endl;
 #endif // CONFIG_MULTITASKING
 
@@ -48,11 +48,6 @@ bricks_main()
   std::cout<<"OK"<<std::endl;
 
 #ifdef CONFIG_BWM
-  // Wait for user input
-  std::cout<<"   Press any key to start"<<std::endl;
-  std::cout<<"-=Bricks-OS Window Manager=-"<<std::endl;
-  char buffer[10];
-  while(::read(STDIN, buffer, 10) <= 0){}
   bwm(0, 0);
 #endif // CONFIG_BWM
 

@@ -19,6 +19,7 @@ extern "C" {
 typedef __WCHAR_TYPE__ wchar_t;
 #endif
 
+typedef long ptrdiff_t;
 typedef unsigned int size_t;
 
 
