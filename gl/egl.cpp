@@ -256,7 +256,7 @@ EGLAPIENTRY eglBindAPI(EGLenum api)
 EGLAPI EGLContext
 EGLAPIENTRY eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint * attrib_list)
 {
-  CEGLContext * pNewContext = new CEGLContext;
+  CEGLContext * pNewContext  = new CEGLContext;
   pNewContext->pGLESContext_ = new CContext;
 
   EGL_RETURN(EGL_SUCCESS, (EGLContext)pNewContext);
@@ -343,7 +343,7 @@ EGLAPIENTRY eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 
 //-----------------------------------------------------------------------------
 void *
-eglGetCurrentOpenGLESContext()
+eglGetCurrentGLESContext()
 {
   EGL_GET_THREAD();
 

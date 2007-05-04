@@ -9,10 +9,10 @@ typedef unsigned int wint_t;
 #include <math.h>
 
 
-extern void * eglGetCurrentOpenGLESContext();
+extern void * eglGetCurrentGLESContext();
 
 #define GLES_GET_CONTEXT(RETVAL) \
-CContext * context = (CContext *)eglGetCurrentOpenGLESContext(); \
+CContext * context = (CContext *)eglGetCurrentGLESContext(); \
 if(context == 0) \
 { \
   return RETVAL; \
