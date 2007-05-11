@@ -224,7 +224,7 @@ bwm(int argc, char * argv[])
       {
         for(int iMode(0); iMode < iModeCount; iMode++)
         {
-          if((modes[iMode].format == pfR5G5B5) || (modes[iMode].format == pfA1R5G5B5))
+          if((modes[iMode].format == cfX1R5G5B5) || (modes[iMode].format == cfA1R5G5B5))
           {
             devices[iDev]->setMode(&modes[iMode]);
             CSurface * pVideoSurface;

@@ -32,7 +32,7 @@ CGBASurface::fillRect(int x, int y, int width, int height, color_t color)
 {
   for(int iY(y); iY < (y + height); iY++)
   {
-    dmaFill16(color | 0x8000, &p[iY * this->width + x], width);
+    dmaFill16(color | 0x8000, &((uint16_t *)p)[iY * this->width + x], width);
   }
 }
 
@@ -106,11 +106,11 @@ CGBAVideoDevice::listModes(const SVideoMode ** modes, int * modeCount)
   static const SVideoMode videoModes[] =
   {
 #ifdef GBA
-      {160, 128, 16, 2, pfR5G5B5}
-    , {240, 160, 16, 2, pfR5G5B5}
+      {160, 128, 16, 2, cfX1R5G5B5}
+    , {240, 160, 16, 2, cfX1R5G5B5}
 #endif // GBA
 #ifdef NDS9
-      {256, 192, 16, 2, pfA1R5G5B5}
+      {256, 192, 16, 2, cfA1R5G5B5}
 #endif // NDS9
   };
   static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
@@ -179,14 +179,14 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
       }
       pSurface->width  = pCurrentMode_->xres;
       pSurface->height = pCurrentMode_->yres;
-      pSurface->format = pfR5G5B5;
+      pSurface->format = cfX1R5G5B5;
       pSurface->pFront = (pixel_t *)0x6000000;
       pSurface->p      = pSurface->pBack;
 #endif // GBA
 #ifdef NDS9
       pSurface->width  = 256;
       pSurface->height = 192;
-      pSurface->format = pfA1R5G5B5;
+      pSurface->format = cfA1R5G5B5;
       pSurface->pFront = (pixel_t *)0x6000000;
       pSurface->pBack  = (pixel_t *)(0x06000000 + 256 * 256 * 2);
       pSurface->p      = pSurface->pBack;
@@ -200,10 +200,10 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
       pSurface->width  = 0;
       pSurface->height = 0;
 #ifdef GBA
-      pSurface->format = pfR5G5B5;
+      pSurface->format = cfX1R5G5B5;
 #endif // GBA
 #ifdef NDS9
-      pSurface->format = pfA1R5G5B5;
+      pSurface->format = cfA1R5G5B5;
 #endif // NDS9
       pSurface->p      = 0;
       pSurface->key    = false;

@@ -39,12 +39,65 @@ typedef pixel_t  color_t;
 
 
 //---------------------------------------------------------------------------
-enum EPixelFormat
+typedef struct _SColorValue
 {
-    pfR5G5B5
-  , pfA1R5G5B5
-  , pfA8R8G8B8
-};
+  float r;
+  float g;
+  float b;
+  float a;
+} SColorValue;
+
+//---------------------------------------------------------------------------
+typedef enum _EColorFormat
+{
+    cfUNKNOWN       = 0
+    // (A/X)RGB (32bit)
+  , cfR8G8B8        = 1
+  , cfA8R8G8B8      = 2
+  , cfX8R8G8B8      = 3
+    // (A/X)BGR (32bit)
+  , cfB8G8R8        = 4
+  , cfA8B8G8R8      = 5   // PS2
+  , cfX8B8G8R8      = 6
+    // (A/X)RGB (16bit)
+  , cfR5G6B5        = 7
+  , cfA1R5G5B5      = 8
+  , cfX1R5G5B5      = 9
+  , cfA4R4G4B4      = 10
+  , cfX4R4G4B4      = 11
+    // (A/X)BGR (16bit)
+  , cfB5G6R5        = 12
+  , cfA1B5G5R5      = 13  // NDS
+  , cfX1B5G5R5      = 14  // GBA
+  , cfA4B4G4R4      = 15
+  , cfX4B4G4R4      = 16
+} EColorFormat;
+
+//---------------------------------------------------------------------------
+typedef struct _SColorFormatOperations
+{
+  uint8_t  bitsPerPixel;
+  uint8_t  lossR;
+  uint8_t  lossG;
+  uint8_t  lossB;
+  uint8_t  lossA;
+  uint8_t  shiftR;
+  uint8_t  shiftG;
+  uint8_t  shiftB;
+  uint8_t  shiftA;
+  uint32_t maskR;
+  uint32_t maskG;
+  uint32_t maskB;
+  uint32_t maskA;
+} SColorFormatOperations;
+
+//---------------------------------------------------------------------------
+#define COLOR_TO_RGB(color, fmt, r, g, b)                    \
+{                                                            \
+  r = (((color & fmt->maskR) >> fmt->shiftR) << fmt->lossR); \
+  g = (((color & fmt->maskG) >> fmt->shiftG) << fmt->lossG); \
+  b = (((color & fmt->maskB) >> fmt->shiftB) << fmt->lossB); \
+}
 
 //---------------------------------------------------------------------------
 enum ESurfaceType
@@ -60,7 +113,7 @@ struct SVideoMode
   int yres;
   int bitsPerPixel;
   int bytesPerPixel;
-  EPixelFormat format;
+  EColorFormat format;
 };
 
 //---------------------------------------------------------------------------
@@ -86,17 +139,17 @@ public:
   uint32_t height;
 
   // Format
-  EPixelFormat format;
+  EColorFormat format;
   bool key;
   color_t clKey;
 
   // Data
-  pixel_t * p;
+  void * p;
 
 //protected:
   // Data
-  pixel_t * pFront;
-  pixel_t * pBack;
+  void * pFront;
+  void * pBack;
 };
 
 //---------------------------------------------------------------------------

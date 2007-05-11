@@ -791,14 +791,14 @@ CContext::hline(CEdge & from, CEdge & to, GLint & y, SColor c)
           if(validDepth(z, zbuffer[index], depthFunction_))
           {
             zbuffer[index] = z;
-            renderSurface->p[index] = color;
+            ((uint16_t *)renderSurface->p)[index] = color;
           }
           z += mz;
         }
         else
         {
           // No depth testing, always put pixel
-          renderSurface->p[index] = color;
+          ((uint16_t *)renderSurface->p)[index] = color;
         }
       }
       index++;
@@ -838,14 +838,14 @@ CContext::hline_s(CEdge & from, CEdge & to, GLint & y)
           if(validDepth(z, zbuffer[index], depthFunction_))
           {
             zbuffer[index] = z;
-            renderSurface->p[index] = fpRGB(r, g, b);
+            ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
           }
           z += mz;
         }
         else
         {
           // No depth testing, always put pixel
-          renderSurface->p[index] = fpRGB(r, g, b);
+          ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
         }
       }
       r += mr;
