@@ -1,8 +1,8 @@
-#ifndef SUPERCARD_H
-#define SUPERCARD_H
+#ifndef SUPERCARDDRIVER_H
+#define SUPERCARDDRIVER_H
 
 
-#include "kernel/fileManager.h"
+#include "kernel/fileSystem.h"
 #include "inttypes.h"
 
 
@@ -20,15 +20,14 @@ struct CF_REGISTERS
 };
 
 
-class CSuperCard
+class CSuperCardDriver
  : public IBlockDevice
 {
 public:
-  CSuperCard();
-  virtual ~CSuperCard();
+  CSuperCardDriver();
+  virtual ~CSuperCardDriver();
 
   virtual int init();
-  virtual bool removable();
   virtual bool inserted();
 
   virtual int read (uint32_t startSector, uint32_t sectorCount,       void * data);

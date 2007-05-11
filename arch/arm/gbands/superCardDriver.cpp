@@ -1,4 +1,4 @@
-#include "superCard.h"
+#include "superCardDriver.h"
 
 
 // Values for changing mode
@@ -50,18 +50,18 @@ const CF_REGISTERS _SCCF_Registers =
 
 
 // -----------------------------------------------------------------------------
-CSuperCard::CSuperCard()
+CSuperCardDriver::CSuperCardDriver()
 {
 }
 
 // -----------------------------------------------------------------------------
-CSuperCard::~CSuperCard()
+CSuperCardDriver::~CSuperCardDriver()
 {
 }
 
 // -----------------------------------------------------------------------------
 int
-CSuperCard::init()
+CSuperCardDriver::init()
 {
   changeMode(SC_MODE_MEDIA);
 
@@ -84,14 +84,7 @@ CSuperCard::init()
 
 // -----------------------------------------------------------------------------
 bool
-CSuperCard::removable()
-{
-  return true;
-}
-
-// -----------------------------------------------------------------------------
-bool
-CSuperCard::inserted()
+CSuperCardDriver::inserted()
 {
   // Change register, then check if value did change
   *(cfRegisters_.status) = CF_STS_INSERTED;
@@ -100,7 +93,7 @@ CSuperCard::inserted()
 
 // -----------------------------------------------------------------------------
 int
-CSuperCard::read(uint32_t startSector, uint32_t sectorCount, void * data)
+CSuperCardDriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
 {
   int i;
 
@@ -111,14 +104,14 @@ CSuperCard::read(uint32_t startSector, uint32_t sectorCount, void * data)
   while((*(cfRegisters_.command) & CF_STS_BUSY) && (i < CF_CARD_TIMEOUT))
     i++;
   if(i >= CF_CARD_TIMEOUT)
-    return false;
+    return 0;
 
   // Wait until card is ready for commands
   i = 0;
   while((!(*(cfRegisters_.status) & CF_STS_INSERTED)) && (i < CF_CARD_TIMEOUT))
     i++;
   if(i >= CF_CARD_TIMEOUT)
-    return false;
+    return 0;
 
   // Set number of sectors to read
   *(cfRegisters_.sectorCount) = (sectorCount < 256 ? sectorCount : 0);	// Read a maximum of 256 sectors, 0 means 256
@@ -132,14 +125,14 @@ CSuperCard::read(uint32_t startSector, uint32_t sectorCount, void * data)
   // Set command to read
   *(cfRegisters_.command) = CF_CMD_READ;
 
-  while(sectorCount--)
+  for(unsigned int iSector(0); iSector < sectorCount; iSector++)
   {
     // Wait until card is ready for reading
     i = 0;
     while(((*(cfRegisters_.status) & 0xff)!= CF_STS_READY) && (i < CF_CARD_TIMEOUT))
       i++;
     if(i >= CF_CARD_TIMEOUT)
-      return false;
+      return 0;
 
     // Read data
     i=256;
@@ -147,18 +140,19 @@ CSuperCard::read(uint32_t startSector, uint32_t sectorCount, void * data)
       *buff++ = *(cfRegisters_.data);
   }
 
-  return true;
+  return sectorCount;
 }
 
 // -----------------------------------------------------------------------------
 int
-CSuperCard::write(uint32_t startSector, uint32_t sectorCount, const void * data)
+CSuperCardDriver::write(uint32_t startSector, uint32_t sectorCount, const void * data)
 {
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
 void
-CSuperCard::changeMode(uint8_t mode)
+CSuperCardDriver::changeMode(uint8_t mode)
 {
   vuint16_t *unlockAddress = (vuint16_t *)0x09FFFFFE;
   *unlockAddress = 0xA55A;

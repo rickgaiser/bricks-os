@@ -4,8 +4,10 @@ include $(BRICKS_ROOT)/arch/$(ARCH)/config.$(TARGET)
 LIB             =arch
 OBJS            =\
                 arch \
+                dsCart \
                 irq \
                 isr \
+                superCardDriver \
                 support \
 
 

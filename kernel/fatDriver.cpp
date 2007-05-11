@@ -1,4 +1,4 @@
-#include "fat.h"
+#include "kernel/fatDriver.h"
 #include "iostream"
 
 
@@ -53,7 +53,7 @@ struct SBPB32
   char     BS_FilSysType[8];
 } __attribute__ ((__packed__));
 
-
+/*
 // -----------------------------------------------------------------------------
 CFAT::CFAT(IBlockDevice * pPartition)
  : pPartition_(pPartition)
@@ -145,30 +145,31 @@ CFAT::init()
 
   return 0;
 }
+*/
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-CFATFactory::CFATFactory()
+CFATDriver::CFATDriver()
 {
 }
 
 // -----------------------------------------------------------------------------
-CFATFactory::~CFATFactory()
+CFATDriver::~CFATDriver()
 {
 }
 
 // -----------------------------------------------------------------------------
 bool
-CFATFactory::check(IBlockDevice * partition)
+CFATDriver::init(IBlockDevice * device)
 {
   uint8_t data[512];
   bool bRetVal(false);
 
-  std::cout<<"CFATFactory::check"<<std::endl;
+  std::cout<<"CFATDriver::check"<<std::endl;
 
-  if(partition->read(0, 1, data) == true)
+  if(device->read(0, 1, data) == true)
   {
-    SBPB   * pBPB   = (SBPB   *)(&data[0]);
+//    SBPB   * pBPB   = (SBPB   *)(&data[0]);
     SBPB16 * pBPB16 = (SBPB16 *)(&data[36]);
     SBPB32 * pBPB32 = (SBPB32 *)(&data[36]);
 
@@ -192,11 +193,4 @@ CFATFactory::check(IBlockDevice * partition)
 
 
   return bRetVal;
-}
-
-// -----------------------------------------------------------------------------
-IFileSystemDriver *
-CFATFactory::newFileSystemDriver(IBlockDevice * partition)
-{
-  return new CFAT(partition);
 }

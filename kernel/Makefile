@@ -4,7 +4,10 @@ include $(BRICKS_ROOT)/arch/$(ARCH)/config.$(TARGET)
 LIB             =kernel
 OBJS            =\
                 bricks \
+                fatDriver \
                 fileio \
+                fileSystem \
+                ibmPartitionDriver \
                 interrupt \
                 interruptManager \
                 pthread \
