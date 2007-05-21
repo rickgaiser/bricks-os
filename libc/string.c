@@ -25,6 +25,24 @@ strlen(const char * s)
 }
 
 // -----------------------------------------------------------------------------
+char *
+strcpy(char * s1, const char * s2)
+{
+  // Copy string
+  while(*s2 != 0)
+  {
+    *s1 = *s2;
+    s1++;
+    s2++;
+  }
+
+  // Null terminate
+  *s1 = 0;
+
+  return s1;
+}
+
+// -----------------------------------------------------------------------------
 void *
 memset(void * data, int fill_char, size_t size)
 {
