@@ -2,10 +2,10 @@
 #define I386IRQ_H
 
 
-#include "kernel/archIRQ.h"
+#include "inttypes.h"
 
 
-#define IRQ_COUNT 16
+#define MAX_INTERRUPTS 16
 
 
 // -----------------------------------------------------------------------------
@@ -22,14 +22,19 @@ struct pt_regs
 };
 
 // -----------------------------------------------------------------------------
-class CI386IRQ
- : public IArchIRQ
+inline void
+taskInit(pt_regs * regs, void * pc, void * sp, void * svcsp, uint32_t arg1, uint32_t arg2)
+{
+}
+
+// -----------------------------------------------------------------------------
+class CIRQ
 {
 public:
-  CI386IRQ();
-  virtual ~CI386IRQ();
+  CIRQ();
+  virtual ~CIRQ();
 
-  virtual int init();
+  int init();
 
   char * getDeviceName();
 

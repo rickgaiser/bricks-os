@@ -2,7 +2,7 @@
 #define I386KEYBOARD_H
 
 
-#include "kernel/file.h"
+#include "kernel/fs.h"
 #include "kernel/interrupt.h"
 
 

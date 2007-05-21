@@ -39,7 +39,7 @@ CIBMPartitionDriver::~CIBMPartitionDriver()
 bool
 CIBMPartitionDriver::init(IBlockDevice * device)
 {
-  uint8_t data[512];
+  uint8_t * data = new uint8_t[512];
   int     iPartitionCount(0);
 
   if(device->read(0, 1, data) == true)

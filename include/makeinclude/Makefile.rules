@@ -52,6 +52,7 @@ CFLAGS          =\
 CXXFLAGS        =\
                 -O2 \
                 -Wall \
+                -fno-threadsafe-statics \
                 -fno-rtti \
                 -fno-exceptions \
                 $(MY_DEFINITIONS) \

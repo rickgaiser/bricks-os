@@ -1,5 +1,5 @@
 #include "kernel/interruptManager.h"
-#include "i386IRQ.h"
+#include "asm/irq.h"
 #include "hal.h"
 
 
@@ -14,12 +14,12 @@
 extern "C" void
 isr(pt_regs * regs)
 {
-  CInterruptManager::instance()->isr(regs->iIntNumber, regs);
+  CInterruptManager::isr(regs->iIntNumber, regs);
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-CI386IRQ::CI386IRQ()
+CIRQ::CIRQ()
  : iMaskMaster_(0xff)
  , iMaskSlave_ (0xff)
 {
@@ -27,15 +27,15 @@ CI386IRQ::CI386IRQ()
 }
 
 // -----------------------------------------------------------------------------
-CI386IRQ::~CI386IRQ()
+CIRQ::~CIRQ()
 {
-  for(int i(0); i != IRQ_COUNT; i++)
-    CInterruptManager::instance()->detach(i, this);
+  for(int i(0); i < MAX_INTERRUPTS; i++)
+    CInterruptManager::detach(i, this);
 }
 
 // -----------------------------------------------------------------------------
 int
-CI386IRQ::init()
+CIRQ::init()
 {
   // Initialize master PIC
   outb(0x11, PIC_MASTER_BASE);             // ICW1, ICW4 needed, Cascade mode, Call address interval of 8 bytes, Edge triggered mode
@@ -53,24 +53,24 @@ CI386IRQ::init()
 
   // Register objects (Processor Generated Interrupts)
   for(int i(0); i < 0x20; i++)
-    CInterruptManager::instance()->attach(i, this);
+    CInterruptManager::attach(i, this);
   // Register objects (IRQ 0x20 - 0x2f)
-  for(int i(0); i < IRQ_COUNT; i++)
-    CInterruptManager::instance()->attach(IRQ_BASE + i, this);
+  for(int i(0); i < MAX_INTERRUPTS; i++)
+    CInterruptManager::attach(IRQ_BASE + i, this);
 
   return(0);
 }
 
 // -----------------------------------------------------------------------------
 char *
-CI386IRQ::getDeviceName()
+CIRQ::getDeviceName()
 {
   return("i8259");
 }
 
 // -----------------------------------------------------------------------------
 void
-CI386IRQ::enable(unsigned int irq)
+CIRQ::enable(unsigned int irq)
 {
   irq -= IRQ_BASE;
 
@@ -89,7 +89,7 @@ CI386IRQ::enable(unsigned int irq)
 
 // -----------------------------------------------------------------------------
 void
-CI386IRQ::disable(unsigned int irq)
+CIRQ::disable(unsigned int irq)
 {
   irq -= IRQ_BASE;
 
@@ -108,7 +108,7 @@ CI386IRQ::disable(unsigned int irq)
 
 // -----------------------------------------------------------------------------
 void
-CI386IRQ::ack(unsigned int irq)
+CIRQ::ack(unsigned int irq)
 {
   irq -= IRQ_BASE;
 
@@ -122,6 +122,6 @@ CI386IRQ::ack(unsigned int irq)
 
 // -----------------------------------------------------------------------------
 void
-CI386IRQ::end(unsigned int irq)
+CIRQ::end(unsigned int irq)
 {
 }

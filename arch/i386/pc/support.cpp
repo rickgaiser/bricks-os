@@ -1,13 +1,13 @@
-#include "i386Arch.h"
-#include "kernel/arch.h"
 #include "kernel/bricks.h"
-#include "processor.h"
+#include "kernel/memoryManager.h"
+#include "asm/irq.h"
 
 
-CI386Arch   cArch;
-CProcessor  cProcessor;
-
-
+extern int main(int, char *[]);
+pt_regs * current_thread;
+SHeap heaps[] =
+{
+};
 void *__dso_handle;
 
 
@@ -56,13 +56,6 @@ __cxa_pure_virtual()
 }
 
 // -----------------------------------------------------------------------------
-// C++ support function
-void
-operator delete(void *)
-{
-}
-
-// -----------------------------------------------------------------------------
 extern "C"
 void
 _alloca()
@@ -70,28 +63,18 @@ _alloca()
 }
 
 // -----------------------------------------------------------------------------
-// main: entry point of OS.
 extern "C"
 int
-main(int, char *[])
+__main()
 {
   int iRetVal;
 
   _init();
 
-  arch::pArch      = &cArch;
-  arch::pProcessor = &cProcessor;
-  iRetVal = CBricks::instance()->main();
+  iRetVal = main(0, 0);
 
   __cxa_atexit();
 
-  return(iRetVal);
+  return iRetVal;
 }
 
-// -----------------------------------------------------------------------------
-extern "C"
-int
-__main()
-{
-  return(main(0, 0));
-}

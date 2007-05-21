@@ -8,4 +8,5 @@
 #CONFIG_BWM=y
 
 # Library related configuration
-#CONFIG_BUILTIN_MM=y
+CONFIG_BUILTIN_MM=y
+CONFIG_BUILTIN_LIBC=y

@@ -1,0 +1,24 @@
+#----------------------------------------------------------------------------
+# i386
+#----------------------------------------------------------------------------
+MY_INCL_PATH    +=\
+
+MY_LIBS_PATH    +=\
+
+#----------------------------------------------------------------------------
+CROSS_COMPILE	=
+CFLAGS		+=-m32 -nostdlib -nostdinc
+CXXFLAGS	+=-m32 -nostdlib -nostdinc -fno-builtin
+LFLAGS		+=-T $(BRICKS_ROOT)/include/makeinclude/link.i386 $(CXXFLAGS) $(MY_LIBS_PATH)
+
+#----------------------------------------------------------------------------
+# Create .elf file from MY_OBJS + MY_LIBS
+$(MY_ELF): $(MY_OBJS)
+	@echo [CC ] $@
+	$(CXX) $(LFLAGS) $^ $(MY_LIBS) -o $@
+
+#----------------------------------------------------------------------------
+# Create object file from .asm file
+$(VDIR)%.o: %.asm $(VDIR).creation_stamp
+	@echo [ASM] $<
+	nasm -f elf -o $@ $<

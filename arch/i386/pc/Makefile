@@ -3,11 +3,10 @@ OBJS            =\
                 entry \
                 isrWrapper \
                 support \
-                processor \
                 i386Arch \
                 i386Video \
                 i386Keyboard \
-                i386IRQ \
+                irq \
                 gdt \
                 idt \
 

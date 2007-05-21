@@ -86,7 +86,7 @@ CI386Keyboard::~CI386Keyboard()
 int
 CI386Keyboard::init()
 {
-  CInterruptManager::instance()->attach(0x21, this);
+  CInterruptManager::attach(0x21, this);
 
   updateLeds();
 
@@ -190,6 +190,8 @@ CI386Keyboard::isr(int irq)
     
   if((bDown_ == true) && (cChar != -1))
     std::cout<<cChar;
+
+  return 0;
 }
 
 // -----------------------------------------------------------------------------

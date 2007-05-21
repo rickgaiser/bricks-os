@@ -13,6 +13,11 @@ LIBS            =\
 
 ELF             =Bricks
 
+ifeq ($(CONFIG_BUILTIN_LIBC),y)
+DIRS            += libc
+LIBS            += c
+endif
+
 ifeq ($(CONFIG_GL),y)
 DIRS            += gl
 LIBS            += gl

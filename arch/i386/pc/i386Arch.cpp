@@ -1,38 +1,39 @@
-#include "i386Arch.h"
+#include "kernel/bricks.h"
+#include "kernel/task.h"
+#include "asm/irq.h"
+#include "i386Video.h"
+#include "i386Keyboard.h"
+#include "gdt.h"
+#include "idt.h"
 
 
-extern IFileIO * pKeyboard;
-extern IFileIO * pVideo;
+CIRQ             cIRQ;
+CI386Video       cVideo;
+CI386Keyboard    cKeyboard;
+CGDT             cGDT;
+CIDT             cIDT;
 
-
-// -----------------------------------------------------------------------------
-CI386Arch::CI386Arch()
-{
-  pVideo    = &cVideo_;
-  pKeyboard = &cKeyboard_;
-}
-
-// -----------------------------------------------------------------------------
-CI386Arch::~CI386Arch()
-{
-}
 
 // -----------------------------------------------------------------------------
 int
-CI386Arch::init()
+main(int, char *[])
 {
   int iRetVal(0);
 
-  if(cGDT_.init() == -1)
+  if(cGDT.init() == -1)
     iRetVal = -1;
-  if(cIDT_.init() == -1)
+  if(cIDT.init() == -1)
     iRetVal = -1;
-  if(cIRQ_.init() == -1)
+  if(cIRQ.init() == -1)
     iRetVal = -1;
-  if(cVideo_.init() == -1)
+  if(cVideo.init() == -1)
     iRetVal = -1;
-  if(cKeyboard_.init() == -1)
+  if(cKeyboard.init() == -1)
     iRetVal = -1;
 
-  return(iRetVal);
+  CTask::setStandardOutput(&cVideo);
+  CTask::setStandardInput(&cKeyboard);
+
+  return bricks_main();
 }
+
