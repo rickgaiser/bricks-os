@@ -1,8 +1,8 @@
 #include "kernel/bricks.h"
 #include "kernel/task.h"
 #include "asm/irq.h"
-#include "i386Video.h"
-#include "i386Keyboard.h"
+#include "video.h"
+#include "keyboard.h"
 #include "gdt.h"
 #include "idt.h"
 

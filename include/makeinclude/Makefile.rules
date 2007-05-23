@@ -47,11 +47,13 @@ MY_LIBS_PATH	+= \
 CFLAGS          =\
                 -O2 \
                 -Wall \
+		-fno-stack-protector \
                 $(MY_DEFINITIONS) \
 
 CXXFLAGS        =\
                 -O2 \
                 -Wall \
+		-fno-stack-protector \
                 -fno-threadsafe-statics \
                 -fno-rtti \
                 -fno-exceptions \

@@ -1,6 +1,7 @@
 #include "kernel/interruptManager.h"
 #include "asm/irq.h"
 #include "hal.h"
+#include "iostream"
 
 
 #define PIC_MASTER_BASE 0x20  // Base IO addr
@@ -14,6 +15,7 @@
 extern "C" void
 isr(pt_regs * regs)
 {
+  std::cout<<regs->iIntNumber;
   CInterruptManager::isr(regs->iIntNumber, regs);
 }
 
@@ -58,14 +60,14 @@ CIRQ::init()
   for(int i(0); i < MAX_INTERRUPTS; i++)
     CInterruptManager::attach(IRQ_BASE + i, this);
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
 char *
 CIRQ::getDeviceName()
 {
-  return("i8259");
+  return "i8259";
 }
 
 // -----------------------------------------------------------------------------

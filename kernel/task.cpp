@@ -4,11 +4,13 @@
 
 
 extern pt_regs * current_thread;
+
 uint32_t  CTask::iTaskCount_(0);
 CTask   * CTask::pCurrentTask_ = 0;
 CTask   * CTask::taskTable_[MAX_TASK_COUNT];
-IFileIO * CTask::pSTDIN_ = 0;
-IFileIO * CTask::pSTDOUT_ = 0;
+
+IFileIO * pSTDIN = 0;
+IFileIO * pSTDOUT = 0;
 
 extern "C" void schedule();
 
@@ -52,9 +54,9 @@ CTask::CTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[
  , pStack_(0)
  , pSvcStack_(0)
 {
-  pFiles_[0] = pSTDIN_;
-  pFiles_[1] = pSTDOUT_;
-  pFiles_[2] = pSTDOUT_;
+  pFiles_[0] = pSTDIN;
+  pFiles_[1] = pSTDOUT;
+  pFiles_[2] = pSTDOUT;
 
   for(int i(3); i < MAX_FILE_COUNT; i++)
     pFiles_[i] = 0;
@@ -124,14 +126,14 @@ CTask::addTask(CTask * pTask)
 
 // -----------------------------------------------------------------------------
 void
-CTask::setStandardInput(IFileIO * pSTDIN)
+CTask::setStandardInput(IFileIO * stdin)
 {
-  pSTDIN_ = pSTDIN;
+  pSTDIN = stdin;
 }
 
 // -----------------------------------------------------------------------------
 void
-CTask::setStandardOutput(IFileIO * pSTDOUT)
+CTask::setStandardOutput(IFileIO * stdout)
 {
-  pSTDOUT_ = pSTDOUT;
+  pSTDOUT = stdout;
 }

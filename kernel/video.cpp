@@ -19,9 +19,9 @@ CAVideo::~CAVideo()
 void
 CAVideo::cls()
 {
-  for(unsigned int y(0); y != iY_; y++)
+  for(unsigned int y(0); y < iY_; y++)
   {
-    for(unsigned int x(0); x != iX_; x++)
+    for(unsigned int x(0); x < iX_; x++)
     {
       put(x, y, ' ');
     }
@@ -32,7 +32,7 @@ CAVideo::cls()
 ssize_t
 CAVideo::write(const void * buffer, size_t size, loff_t *)
 {
-  for(size_t i(0); i != size; i++)
+  for(size_t i(0); i < size; i++)
   {
     this->put(((const char *)buffer)[i]);
   }

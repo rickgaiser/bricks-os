@@ -62,8 +62,8 @@ public:
   static uint32_t   iTaskCount_;
   static CTask    * pCurrentTask_;
   static CTask    * taskTable_[MAX_TASK_COUNT];
-  static IFileIO  * pSTDIN_;
-  static IFileIO  * pSTDOUT_;
+  //static IFileIO  * pSTDIN_;
+  //static IFileIO  * pSTDOUT_;
 
   IFileIO    * pFiles_[MAX_FILE_COUNT];
   SChannel   * pChannel_[MAX_CHANNEL_COUNT];

@@ -3,9 +3,9 @@ OBJS            =\
                 entry \
                 isrWrapper \
                 support \
-                i386Arch \
-                i386Video \
-                i386Keyboard \
+                arch \
+                video \
+                keyboard \
                 irq \
                 gdt \
                 idt \

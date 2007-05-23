@@ -1,4 +1,4 @@
-#include "i386Video.h"
+#include "video.h"
 
 
 // -----------------------------------------------------------------------------
@@ -20,7 +20,7 @@ CI386Video::init()
 {
   this->cls();
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -34,5 +34,5 @@ CI386Video::put(int iX, int iY, char c)
 char
 CI386Video::get(int iX, int iY)
 {
-  return(pVideo_[(iY * CHARS_PER_LINE + iX) * 2]);
+  return pVideo_[(iY * CHARS_PER_LINE + iX) * 2];
 }
