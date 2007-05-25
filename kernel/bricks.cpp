@@ -17,7 +17,6 @@ extern int bwm(int argc, char * argv[]);
 
 #ifdef CONFIG_MULTITASKING
 // -----------------------------------------------------------------------------
-// Thread passes STDIN to STDOUT
 void *
 thread(void * arg)
 {

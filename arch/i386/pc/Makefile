@@ -1,14 +1,14 @@
 LIB             =arch
 OBJS            =\
-                entry \
-                isrWrapper \
-                support \
                 arch \
-                video \
-                keyboard \
-                irq \
+                entry \
                 gdt \
                 idt \
+                irq \
+                isrWrapper \
+                keyboard \
+                support \
+                video \
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU
