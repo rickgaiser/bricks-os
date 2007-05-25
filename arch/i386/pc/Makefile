@@ -1,13 +1,14 @@
 LIB             =arch
 OBJS            =\
-                arch \
                 entry \
+                arch \
                 gdt \
                 idt \
                 irq \
                 isrWrapper \
                 keyboard \
                 support \
+                task \
                 video \
 
 

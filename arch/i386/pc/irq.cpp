@@ -1,4 +1,5 @@
 #include "kernel/interruptManager.h"
+#include "asm/cpu.h"
 #include "asm/irq.h"
 #include "hal.h"
 #include "iostream"
@@ -15,8 +16,86 @@
 extern "C" void
 isr(pt_regs * regs)
 {
-  std::cout<<regs->iIntNumber;
-  CInterruptManager::isr(regs->iIntNumber, regs);
+  const char * msg[] =
+  {
+    // (0x00 - 0x1f) IA-32 Reserved Interrupts
+    "Divide Error",
+    "RESERVED",
+    "NMI",
+    "Breakpoint",              // INT3 instruction
+    "Overflow",                // INTO instruction
+    "BOUND Range Exceeded",    // BOUND instruction
+    "Invalid Opcode",
+    "Device Not Available",    // No coprocessor
+    "Double Fault",
+    "Coprocessor Segment Overrun",
+    "Invalid TSS",
+    "Segment Not Present",
+    "Stack-Segment Fault",
+    "General Protection",
+    "Page Fault",
+    "RESERVED",
+    "x87 FPU Floating-Point Error",
+    "Alignment Check",
+    "Machine Check",
+    "SIMD Floating-Point Exception",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    // (0x20 - 0x2f) IRQ interrupts
+    "Timer (IRQ0)",
+    "Keyboard (IRQ1)",
+    "? (IRQ2)",
+    "? (IRQ3)",
+    "? (IRQ4)",
+    "? (IRQ5)",
+    "? (IRQ6)",
+    "? (IRQ7)",
+    "? (IRQ8)",
+    "? (IRQ9)",
+    "? (IRQ10)",
+    "? (IRQ11)",
+    "? (IRQ12)",
+    "? (IRQ13)",
+    "? (IRQ14)",
+    "? (IRQ15)",
+    // (0x30 - 0x30) Soft interrupts
+    "Syscall"
+  };
+  
+  if(regs->iIntNumber < 0x20)
+  {
+    // Handle CPU interrupts
+    std::cout<<"CPU Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<std::endl;
+    CCPU::halt();
+  }
+  else if(regs->iIntNumber < 0x30)
+  {
+    // Handle IRQs
+    //std::cout<<"IRQ Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<std::endl;
+    CInterruptManager::isr(regs->iIntNumber, regs);
+  }
+  else if(regs->iIntNumber < 0x31)
+  {
+    // Handle soft interrupts
+    std::cout<<"Soft Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<std::endl;
+    CCPU::halt();
+  }
+  else
+  {
+    // Handle unknown interrupts
+    std::cout<<"Unknown Interrupt("<<regs->iIntNumber<<")"<<std::endl;
+    CCPU::halt();
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -53,12 +132,9 @@ CIRQ::init()
   outb(0x01, PIC_SLAVE_BASE + 1);          // ICW4, 8086/8088 mode, Software handles EOI
   outb(iMaskSlave_, PIC_SLAVE_BASE + 1);   // Disable all interrupts
 
-  // Register objects (Processor Generated Interrupts)
-  for(int i(0); i < 0x20; i++)
+  // Register IRQ interruts (0x20 - 0x2f)
+  for(int i(0x20); i < 0x30; i++)
     CInterruptManager::attach(i, this);
-  // Register objects (IRQ 0x20 - 0x2f)
-  for(int i(0); i < MAX_INTERRUPTS; i++)
-    CInterruptManager::attach(IRQ_BASE + i, this);
 
   return 0;
 }

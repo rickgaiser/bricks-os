@@ -55,7 +55,6 @@ extern "C"
   void isr_0x2E_wrapper();
   void isr_0x2F_wrapper();
   void isr_0x30_wrapper();
-  void isr_0x31_wrapper();
 #ifdef __cplusplus
 }
 #endif

@@ -5,7 +5,7 @@
 #include "inttypes.h"
 
 
-#define MAX_INTERRUPTS 16
+#define MAX_INTERRUPTS 0x31
 
 
 // -----------------------------------------------------------------------------

@@ -63,5 +63,5 @@ multiboot_entry:
 	pushl	%eax
 
 	/* Now enter the C main function...  */
-	jmp	EXT_C(__main)
+	call	EXT_C(__main)
 

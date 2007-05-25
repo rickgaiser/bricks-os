@@ -1,10 +1,10 @@
 #include "kernel/bricks.h"
 #include "kernel/memoryManager.h"
 #include "asm/irq.h"
+#include "multiboot.h"
 
 
-extern int main(int, char *[]);
-pt_regs * current_thread;
+extern int main(unsigned long magic, multiboot_info_t * mbi);
 SHeap heaps[] =
 {
 };
@@ -65,13 +65,13 @@ _alloca()
 // -----------------------------------------------------------------------------
 extern "C"
 int
-__main()
+__main(unsigned long magic, multiboot_info_t * mbi)
 {
   int iRetVal;
 
   _init();
 
-  iRetVal = main(0, 0);
+  iRetVal = main(magic, mbi);
 
   __cxa_atexit();
 

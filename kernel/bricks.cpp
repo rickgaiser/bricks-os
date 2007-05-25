@@ -52,7 +52,10 @@ bricks_main()
 
   // Halt current thread
   // FIXME: Forever consuming CPU time now!
-  CCPU::halt();
+  while(true)
+  {
+    CCPU::halt();
+  }
 
   return 0;
 }
