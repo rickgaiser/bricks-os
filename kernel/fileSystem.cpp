@@ -1,9 +1,11 @@
 #include "kernel/fileSystem.h"
+#include "string.h"
 
 
 CFileSystem::blockdevicelist_t       CFileSystem::listBlockDevices_;
 CFileSystem::partitiondriverlist_t   CFileSystem::listPartitionDrivers_;
 CFileSystem::filesystemdriverlist_t  CFileSystem::listFileSystemDrivers_;
+CFileSystem::mountpointlist_t        CFileSystem::listMountPoints_;
 
 
 // -----------------------------------------------------------------------------
@@ -106,5 +108,33 @@ CFileSystem::addFileSystemDriver(IFileSystemDriver * driver)
 // -----------------------------------------------------------------------------
 void
 CFileSystem::remFileSystemDriver(IFileSystemDriver * driver)
+{
+}
+
+// -----------------------------------------------------------------------------
+void
+CFileSystem::mount(IMountPoint * point, const char * location)
+{
+  // Check if already mounted
+  // ...
+
+  CFileSystem::SMountPoint * pMP = new CFileSystem::SMountPoint;
+  pMP->location = new char[strlen(location)];
+  strcpy(pMP->location, location);
+  pMP->point = point;
+
+  // Add mount point to the list
+  listMountPoints_.push_back(pMP);
+}
+
+// -----------------------------------------------------------------------------
+void
+CFileSystem::unmount(IMountPoint * point)
+{
+}
+
+// -----------------------------------------------------------------------------
+void
+CFileSystem::unmount(const char * location)
 {
 }

@@ -1,4 +1,5 @@
 #include "dsCart.h"
+#include "superCardDriver.h"
 #include "iostream"
 
 
@@ -18,6 +19,10 @@ int
 CDSCart::init()
 {
   CInterruptManager::attach(13, this);
+
+  CSuperCardDriver * pDriver = new CSuperCardDriver();
+  pDriver->init();
+  CFileSystem::addBlockDevice(pDriver);
 
   return 0;
 }
