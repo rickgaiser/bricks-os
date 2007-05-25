@@ -18,12 +18,12 @@ k_channelCreate(SChannelCreate * args)
   // Locate empty channel in current task
   for(int iChannel(0); iChannel < MAX_CHANNEL_COUNT; iChannel++)
   {
-    if(CTask::pCurrentTask_->pChannel_[iChannel] == 0)
+    if(CTaskManager::pCurrentTask_->pChannel_[iChannel] == 0)
     {
       SChannel * chan = new SChannel;
       for(int iMsg(0); iMsg < MAX_MESSAGE_COUNT; iMsg++)
         chan->msg[iMsg].bUsed = false;
-      CTask::pCurrentTask_->pChannel_[iChannel] = chan;
+      CTaskManager::pCurrentTask_->pChannel_[iChannel] = chan;
 
       iRetVal = iChannel;
 
@@ -43,9 +43,9 @@ k_channelDestroy(SChannelDestroy * args)
 
   if((iChannelID >= 0) && (iChannelID < MAX_CHANNEL_COUNT))
   {
-    if(CTask::pCurrentTask_->pChannel_[iChannelID] != 0)
+    if(CTaskManager::pCurrentTask_->pChannel_[iChannelID] != 0)
     {
-      delete CTask::pCurrentTask_->pChannel_[iChannelID];
+      delete CTaskManager::pCurrentTask_->pChannel_[iChannelID];
       iRetVal = 0;
     }
   }

@@ -65,13 +65,13 @@ main(int, char *[])
 #ifdef CONFIG_GBA_CONSOLE
   if(cVideo.init() == -1)
     iRetVal = -1;
-  CTask::setStandardOutput(&cVideo);
+  CTaskManager::setStandardOutput(&cVideo);
 #endif // CONFIG_GBA_CONSOLE
 
 #ifdef CONFIG_GBA_KEYBOARD
   if(cKeyboard.init() == -1)
     iRetVal = -1;
-  CTask::setStandardInput(&cKeyboard);
+  CTaskManager::setStandardInput(&cKeyboard);
 #endif // CONFIG_GBA_KEYBOARD
 
 #ifdef CONFIG_GBA_SERIAL
@@ -83,10 +83,10 @@ main(int, char *[])
   if(cIPC.init() == -1)
     iRetVal = -1;
 #ifdef NDS7
-  CTask::setStandardOutput(&cIPC);
+  CTaskManager::setStandardOutput(&cIPC);
 #endif // NDS7
 #ifdef NDS9
-  CTask::setStandardInput(&cIPC);
+  CTaskManager::setStandardInput(&cIPC);
 #endif // NDS9
 #endif // CONFIG_NDS_IPC
 
@@ -96,9 +96,9 @@ main(int, char *[])
 
 #ifdef CONFIG_MULTITASKING
   // Create task structure
-  CTask * pTask = new CTask(0, 0, 0);
+  CTask * pTask = getNewTask(0, 0, 0);
   pTask->eState_ = TS_RUNNING;
-  CTask::addTask(pTask);
+  CTaskManager::addTask(pTask);
 
   setTimerFrequency(0, 100.0f);
   cIRQ.enable(3);

@@ -11,7 +11,7 @@ OBJS            =\
                 support \
 
 
-OBJS-$(CONFIG_MULTITASKING)        += timer
+OBJS-$(CONFIG_MULTITASKING)        += timer task
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
 OBJS-$(CONFIG_GBA_CONSOLE)         += font8x8 video
 OBJS-$(CONFIG_GBA_KEYBOARD)        += keyboard

@@ -2,13 +2,11 @@
 #define TASK_H
 
 
-#include "asm/irq.h"
 #include "kernel/fs.h"
 #include "inttypes.h"
 
 
 #define MAX_TASK_COUNT       10
-#define MAX_FILE_COUNT       10
 #define MAX_CHANNEL_COUNT    10
 #define MAX_CONNECTION_COUNT 10
 #define MAX_MESSAGE_COUNT    10
@@ -52,30 +50,48 @@ struct SConnection
 class CTask
 {
 public:
-  CTask(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
   virtual ~CTask();
 
+  // Message bus management
+  SChannel    * pChannel_[MAX_CHANNEL_COUNT];
+  SConnection * pConnection_[MAX_CONNECTION_COUNT];
+
+  // Task state
+  ETaskState    eState_;
+  uint32_t    * pStack_;
+  uint32_t    * pSvcStack_;
+
+  // Linked list
+  CTask       * prev;
+  CTask       * next;
+
+protected:
+  CTask(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
+};
+
+// -----------------------------------------------------------------------------
+class CTaskManager
+{
+public:
   static void addTask(CTask * pTask);
+  static void removeTask(CTask * pTask);
+  static bool schedule();
+
   static void setStandardInput(IFileIO * pSTDIN);
   static void setStandardOutput(IFileIO * pSTDOUT);
 
   static uint32_t   iTaskCount_;
   static CTask    * pCurrentTask_;
   static CTask    * taskTable_[MAX_TASK_COUNT];
-  //static IFileIO  * pSTDIN_;
-  //static IFileIO  * pSTDOUT_;
 
-  IFileIO    * pFiles_[MAX_FILE_COUNT];
-  SChannel   * pChannel_[MAX_CHANNEL_COUNT];
-  SConnection * pConnection_[MAX_CONNECTION_COUNT];
-  ETaskState   eState_;
-  pt_regs    * pTaskState_;
-  uint32_t   * pStack_;
-  uint32_t   * pSvcStack_;
-
-  CTask      * prev;
-  CTask      * next;
+private:
+  CTaskManager(){}
 };
+
+
+// -----------------------------------------------------------------------------
+// To be implemeted in arch
+extern CTask * getNewTask(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
 
 
 #endif

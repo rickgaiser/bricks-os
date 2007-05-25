@@ -41,18 +41,6 @@ struct pt_regs
 #define CPU_IRQ_DISABLE      0x00000080
 #define CPU_IRQ_ENABLE       0x00000000
 
-// -----------------------------------------------------------------------------
-inline void
-taskInit(pt_regs * regs, void * pc, void * sp, void * svcsp, uint32_t arg1, uint32_t arg2)
-{
-  regs->pc = reinterpret_cast<uint32_t>(pc);
-  regs->sp = reinterpret_cast<uint32_t>(sp);
-  regs->sp_svc = reinterpret_cast<uint32_t>(svcsp);
-  regs->r0 = arg1;
-  regs->r1 = arg2;
-  regs->lr = reinterpret_cast<uint32_t>(kill);
-  regs->cpsr = CPU_MODE_SYSTEM | CPU_MODE_THUMB;
-}
 
 // -----------------------------------------------------------------------------
 class CIRQ

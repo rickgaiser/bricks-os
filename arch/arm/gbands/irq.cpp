@@ -1,5 +1,6 @@
 #include "kernel/interruptManager.h"
 #include "kernel/task.h"
+#include "task.h"
 #include "asm/irq.h"
 #include "iostream"
 
@@ -9,24 +10,6 @@
 extern "C" void __isr();
 extern pt_regs * current_thread;
 
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-extern "C" void
-schedule()
-{
-//  std::cout<<'.';
-//  uint32_t * pRegs = (uint32_t *)current_thread;
-//  for(int i(13); i < 20; i++)
-//    std::cout<<pRegs[i]<<" - ";
-//  std::cout<<std::endl;
-
-  CTask::pCurrentTask_ = CTask::pCurrentTask_->next;
-  while(CTask::pCurrentTask_->eState_ != TS_RUNNING)
-    CTask::pCurrentTask_ = CTask::pCurrentTask_->next;
-
-  current_thread = CTask::pCurrentTask_->pTaskState_;
-}
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -46,7 +29,8 @@ isr(pt_regs * regs)
     // Acknowledge interrupt
     REG_IF |= (1 << 3);
     // Run scheduler
-    schedule();
+    if(CTaskManager::schedule() == true)
+      current_thread = dynamic_cast<CGBANDSTask *>(CTaskManager::pCurrentTask_)->pTaskState_;
   }
 
   // Handle other interrupts
