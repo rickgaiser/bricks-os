@@ -8,6 +8,11 @@ clean:
 	make -f Makefile clean ARCH=i386 TARGET=pc
 
 floppy:
+	sudo mount /dev/fd0
+	sudo cp bin/pc/Bricks.elf /media/floppy/boot/kernel/Bricks.elf
+	sudo umount /dev/fd0
+
+floppy-img:
 	sudo mount bin/pc/floppy.img bin/pc/floppy -o loop
 	sudo cp bin/pc/Bricks.elf bin/pc/floppy/boot/kernel/Bricks.elf
 	sudo umount bin/pc/floppy
