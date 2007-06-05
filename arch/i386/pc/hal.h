@@ -127,7 +127,8 @@ inline void setGDTR(SDescriptorTableReg * dtr){ __asm__ ("lgdt (%0)"::"r" (dtr))
 inline void setIDTR(SDescriptorTableReg * dtr){ __asm__ ("lidt (%0)"::"r" (dtr));}
 
 // Task Management
-inline void jmpTask (uint16_t selector)
+/*
+inline void jumpSelector(uint16_t selector)
 {
   static struct {
   unsigned eip : 32; // 32 bit
@@ -138,12 +139,9 @@ inline void jmpTask (uint16_t selector)
   // Jump to the task
   __asm__ __volatile__ ("ljmp *(%0)"::"m" (tss_link));
 }
-inline void callTask(uint16_t selector){ __asm__ ("call %0:0"::"r" (selector));}
-
-// System Calls
-inline void sysCall0(uint32_t function){ __asm__ ("int $0x30"::"a"(function));}
-//inline void sysCall1(uint32_t function, uint32_t arg1){ __asm__ ("int $0x30"::"a"(function),"b"(arg1));}
-#define sysCall1(function, arg1) __asm__("int $0x30"::"a"(function),"b"(arg1))
+*/
+inline void jumpSelector(uint16_t selector){ __asm__ __volatile__ ("ljmp  %0"::"m"(*(((char *)&selector)-4)):"memory");}
+inline void callSelector(uint16_t selector){ __asm__ __volatile__ ("lcall %0"::"m"(*(((char *)&selector)-4)):"memory");}
 
 // SEGMENT REGISTERS
 #define write_ds(sel) __asm__ ("movw %0, %%ds"::"r" (sel))

@@ -1,6 +1,7 @@
 #include "kernel/bricks.h"
 #include "kernel/task.h"
 #include "kernel/elf.h"
+#include "kernel/syscall.h"
 #include "asm/irq.h"
 #include "asm/cpu.h"
 #include "video.h"
@@ -41,7 +42,7 @@ ttt()
     sysCall1(0, hello);
     
     // Return to kernel
-    jmpTask(selTaskMain);
+    jumpSelector(selTaskMain);
   }
 }
 
@@ -71,7 +72,7 @@ testTask()
   
   // Jump to test task
   std::cout<<"Starting test task"<<std::endl;
-  jmpTask(selTaskTest);
+  jumpSelector(selTaskTest);
   std::cout<<"Test task returned"<<std::endl;
 }
 
