@@ -1,11 +1,15 @@
 #include "kernel/bricks.h"
 #include "kernel/task.h"
+#include "kernel/elf.h"
 #include "asm/irq.h"
+#include "asm/cpu.h"
 #include "video.h"
 #include "keyboard.h"
 #include "gdt.h"
 #include "idt.h"
+#include "hal.h"
 #include "multiboot.h"
+#include "string.h"
 #include "iostream"
 
 
@@ -15,6 +19,91 @@ CI386Keyboard    cKeyboard;
 CGDT             cGDT;
 CIDT             cIDT;
 
+STaskStateSegment taskMain;
+STaskStateSegment taskTest;
+selector_t        selTaskMain;
+selector_t        selTaskTest;
+uint8_t           stack_pl0[512];
+uint8_t           stack_pl3[512];
+
+
+// -----------------------------------------------------------------------------
+void
+ttt()
+{
+  static const char * hello = "Hello Kernel!\n";
+  
+  while(true)
+  {
+    std::cout<<"test test test"<<std::endl;
+    
+    // Test system call
+    sysCall1(0, hello);
+    
+    // Return to kernel
+    jmpTask(selTaskMain);
+  }
+}
+
+// -----------------------------------------------------------------------------
+void
+testTask()
+{
+  // Setup test task
+  memset(&taskTest, 0, sizeof(STaskStateSegment));
+  taskTest.esp0 = (uint32_t)&stack_pl0 + 512;
+  taskTest.ss0  = selDataSys;
+  taskTest.esp  = (uint32_t)&stack_pl3 + 512;
+  taskTest.eip  = (uint32_t)ttt;
+  taskTest.eflags = 0x200;
+  taskTest.es   = selDataUser;
+  taskTest.cs   = selCodeUser;
+  taskTest.ss   = selDataUser;
+  taskTest.ds   = selDataUser;
+  taskTest.fs   = selDataUser;
+  taskTest.gs   = selDataUser;
+  
+  selTaskMain = cGDT.createSegment(stTSS, 3, (uint32_t)&taskMain, sizeof(STaskStateSegment));
+  selTaskTest = cGDT.createSegment(stTSS, 0, (uint32_t)&taskTest, sizeof(STaskStateSegment));
+
+  // Set the current running tasks tss
+  setTR(selTaskMain);
+  
+  // Jump to test task
+  std::cout<<"Starting test task"<<std::endl;
+  jmpTask(selTaskTest);
+  std::cout<<"Test task returned"<<std::endl;
+}
+
+// -----------------------------------------------------------------------------
+int
+loadELF32(void * file)
+{
+  static const char magic[] = {0x7f, 0x45, 0x4c, 0x46, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  Elf32_Ehdr * hdr = (Elf32_Ehdr *)file;
+  
+  // Check header magic
+  for(int i(0); i < 16; i++)
+    if(magic[i] != hdr->e_ident[i])
+      return -1;
+  
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+int
+loadELF64(void * file)
+{
+  static const char magic[] = {0x7f, 0x45, 0x4c, 0x46, 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  Elf64_Ehdr * hdr = (Elf64_Ehdr *)file;
+  
+  // Check header magic
+  for(int i(0); i < 16; i++)
+    if(magic[i] != hdr->e_ident[i])
+      return -1;
+  
+  return 0;
+}
 
 // -----------------------------------------------------------------------------
 int
@@ -69,13 +158,24 @@ main(unsigned long magic, multiboot_info_t * mbi)
       std::cout<<"Modules: "<<(int)mbi->mods_count<<std::endl;
 
       module_t * mod = (module_t *) mbi->mods_addr;
-      for(unsigned int i(0); i < mbi->mods_count; i++)
+      for(unsigned int i(0); i < mbi->mods_count; i++, mod++)
       {
-        std::cout<<" - "<<(char *)mod->string<<std::endl;
+        std::cout<<" - "<<(char *)mod->string;
         
-        for(char * pMessage = (char *)mod->mod_start; pMessage < (char *)mod->mod_end; pMessage++)
-          std::cout<<*pMessage;
-	mod++;
+        if(loadELF32((void *)mod->mod_start) == 0)
+        {
+          std::cout<<" - ELF32 File"<<std::endl;
+        }
+        else if(loadELF64((void *)mod->mod_start) == 0)
+        {
+          std::cout<<" - ELF64 File"<<std::endl;
+        }
+        else
+        {
+          std::cout<<" - Unknown File: ";
+          for(char * pMessage = (char *)mod->mod_start; pMessage < (char *)mod->mod_end; pMessage++)
+            std::cout<<*pMessage;
+        }
       }
     }
 
@@ -106,16 +206,9 @@ main(unsigned long magic, multiboot_info_t * mbi)
     // Memory Map
     if(mbi->flags & (1<<6))
     {
-      memory_map_t *mmap;
-      
-      printf ("mmap_addr = 0x%x, mmap_length = 0x%x\n",
-	      (unsigned) mbi->mmap_addr, (unsigned) mbi->mmap_length);
-      for (mmap = (memory_map_t *) mbi->mmap_addr;
-	   (unsigned long) mmap < mbi->mmap_addr + mbi->mmap_length;
-	   mmap = (memory_map_t *) ((unsigned long) mmap
-				    + mmap->size + sizeof (mmap->size)))
-	printf (" size = 0x%x, base_addr = 0x%x%x,"
-		" length = 0x%x%x, type = 0x%x\n",
+      printf("mmap_addr = 0x%x, mmap_length = 0x%x\n", (unsigned) mbi->mmap_addr, (unsigned) mbi->mmap_length);
+      for(memory_map_t * mmap = (memory_map_t *) mbi->mmap_addr; (unsigned long) mmap < mbi->mmap_addr + mbi->mmap_length; mmap = (memory_map_t *) ((unsigned long) mmap + mmap->size + sizeof (mmap->size)))
+	printf(" size = 0x%x, base_addr = 0x%x%x, length = 0x%x%x, type = 0x%x\n",
 		(unsigned) mmap->size,
 		(unsigned) mmap->base_addr_high,
 		(unsigned) mmap->base_addr_low,
@@ -140,6 +233,8 @@ main(unsigned long magic, multiboot_info_t * mbi)
     }
     std::cout<<"Memory: "<<((unsigned int)pMem - 1024)/(1024*1024)<<"MiB"<<std::endl;
   }
+  
+  testTask();
 
   return bricks_main();
 }

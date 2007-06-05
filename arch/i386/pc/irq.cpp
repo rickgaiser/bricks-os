@@ -16,7 +16,7 @@
 extern "C" void
 isr(pt_regs * regs)
 {
-  const char * msg[] =
+  static const char * msg[] =
   {
     // (0x00 - 0x1f) IA-32 Reserved Interrupts
     "Divide Error",
@@ -72,30 +72,85 @@ isr(pt_regs * regs)
     "Syscall"
   };
   
-  if(regs->iIntNumber < 0x20)
+  switch(regs->iIntNumber)
   {
     // Handle CPU interrupts
-    std::cout<<"CPU Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<std::endl;
-    CCPU::halt();
-  }
-  else if(regs->iIntNumber < 0x30)
-  {
+    case 0x00:
+    case 0x01:
+    case 0x02:
+    case 0x03:
+    case 0x04:
+    case 0x05:
+    case 0x06:
+    case 0x07:
+    case 0x08:
+    case 0x09:
+    case 0x0a:
+    case 0x0b:
+    case 0x0c:
+    case 0x0d:
+    case 0x0e:
+    case 0x0f:
+    case 0x10:
+    case 0x11:
+    case 0x12:
+    case 0x13:
+    case 0x14:
+    case 0x15:
+    case 0x16:
+    case 0x17:
+    case 0x18:
+    case 0x19:
+    case 0x1a:
+    case 0x1b:
+    case 0x1c:
+    case 0x1d:
+    case 0x1e:
+    case 0x1f:
+      std::cout<<"CPU Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<std::endl;
+      CCPU::halt();
+      break;
+
     // Handle IRQs
-    //std::cout<<"IRQ Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<std::endl;
-    CInterruptManager::isr(regs->iIntNumber, regs);
-  }
-  else if(regs->iIntNumber < 0x31)
-  {
+    case 0x20:
+    case 0x21:
+    case 0x22:
+    case 0x23:
+    case 0x24:
+    case 0x25:
+    case 0x26:
+    case 0x27:
+    case 0x28:
+    case 0x29:
+    case 0x2a:
+    case 0x2b:
+    case 0x2c:
+    case 0x2d:
+    case 0x2e:
+    case 0x2f:
+      //std::cout<<"IRQ Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<std::endl;
+      CInterruptManager::isr(regs->iIntNumber, regs);
+      break;
+
     // Handle soft interrupts
-    std::cout<<"Soft Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<std::endl;
-    CCPU::halt();
-  }
-  else
-  {
+    case 0x30:
+    {
+      switch(regs->eax)
+      {
+        case 0:
+          std::cout<<(const char *)regs->ebx;
+          break;
+        default:
+          std::cout<<"System Call Interrupt (0x30), function ("<<regs->eax<<")"<<std::endl;
+      };
+      break;
+    }
+
     // Handle unknown interrupts
-    std::cout<<"Unknown Interrupt("<<regs->iIntNumber<<")"<<std::endl;
-    CCPU::halt();
-  }
+    default:
+      std::cout<<"Unknown Interrupt("<<regs->iIntNumber<<")"<<std::endl;
+      CCPU::halt();
+  };
 }
 
 // -----------------------------------------------------------------------------

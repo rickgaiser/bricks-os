@@ -6,46 +6,57 @@
 
 
 // 6th byte of a Descriptor
-#define TASK_GATE 0x85
-#define INT_GATE  0x8E
-#define TRAP_GATE 0x8F
-#define TYPE_TSS  0x89
-#define CODE      0x98      // Execute only
-#define CODER     0x9A      // Execute, Read
-#define DATA      0x92      // Read/Write, Expand-Up
-#define STACK     0x92      // Read/Write, Expand-up
+#define TASK_GATE      0x05
+#define INT_GATE       0x0E
+#define TRAP_GATE      0x0F
+#define TYPE_TSS       0x09
+#define CODE           0x08      // Execute only
+#define CODER          0x0A      // Execute, Read
+#define DATA           0x02      // Read/Write, Expand-Up
+#define STACK          0x02      // Read/Write, Expand-up
+
+#define SD_PRESENT     0x80
+#define SD_DPL0        0x00
+#define SD_DPL1        0x20
+#define SD_DPL2        0x40
+#define SD_DPL3        0x60
+#define SD_SYSTEM      0x00
+#define SD_CODE_DATA   0x10
+
 
 // Page Directory/Table Entry
-#define PDE       uint32_t
-#define PTE       uint32_t
+typedef uint32_t  PDE;
+typedef uint32_t  PTE;
 
-
-// (start) align structures to a byte boundary
-#pragma pack (push, 1)
-
-// Global Descriptor
+// Descriptor (for Global/Local Desctiptor Table (GDT/LDT))
 typedef struct
 {
-  uint16_t limit, base_l;
-  uint8_t  base_m, access, attribs, base_h;
-} SGlobalDescriptor;
+  uint16_t limit;
+  uint16_t base_l;
+  uint8_t  base_m;
+  uint8_t  access;
+  uint8_t  attribs;
+  uint8_t  base_h;
+} __attribute__ ((__packed__)) SGlobalDescriptor;
 
-// Interrupt Desciptor
+// Desciptor (for Interrupt Descriptor Table (IDT))
 typedef struct
 {
-  uint16_t offset_l, selector;
-  uint8_t  param_cnt, access;
+  uint16_t offset_l;
+  uint16_t selector;
+  uint8_t  param_cnt;
+  uint8_t  access;
   uint16_t offset_h;
-} SInterruptDescriptor;
+} __attribute__ ((__packed__)) SInterruptDescriptor;
 
-// Global Descriptor Table Register
-// Local Descriptor Table Register
-// Interrupt Descriptor Table Register
+// Global Descriptor Table Register    (GDTR)
+// Local Descriptor Table Register     (LDTR)
+// Interrupt Descriptor Table Register (IDTR)
 typedef struct
 {
   uint16_t limit;
   uint32_t base;
-} SDescriptorTableReg;
+} __attribute__ ((__packed__)) SDescriptorTableReg;
 
 // Task State Segment
 typedef struct
@@ -57,19 +68,27 @@ typedef struct
   uint16_t  ss1, res3;
   uint32_t  esp2;
   uint16_t  ss2, res4;
-  uint32_t  cr3, eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi;
-  uint16_t  es, res5,
-            cs, res6,
-            ss, res7,
-            ds, res8,
-            fs, res9,
-            gs, resA,
-            ldtr, resB;
-  uint16_t  trace, io_map_addr;
-} STaskStateSegment;
-
-// (end) align structures to a byte boundary
-#pragma pack (pop)
+  uint32_t  cr3;
+  uint32_t  eip;
+  uint32_t  eflags;
+  uint32_t  eax;
+  uint32_t  ecx;
+  uint32_t  edx;
+  uint32_t  ebx;
+  uint32_t  esp;
+  uint32_t  ebp;
+  uint32_t  esi;
+  uint32_t  edi;
+  uint16_t  es, res5;
+  uint16_t  cs, res6;
+  uint16_t  ss, res7;
+  uint16_t  ds, res8;
+  uint16_t  fs, res9;
+  uint16_t  gs, resA;
+  uint16_t  ldtr, resB;
+  uint16_t  trace;
+  uint16_t  io_map_addr;
+} __attribute__ ((__packed__)) STaskStateSegment;
 
 
 // I/O INSTRUCTIONS
@@ -98,13 +117,33 @@ inline void halt(){__asm__ ("hlt"::);}
 #define read_cr4() ({ uint32_t _v; __asm__ ("movl %%cr4, %%eax":"=a" (_v):); _v; })
 
 // MEMORY-MANAGEMENT REGISTERS
-#define load_tr(data)  __asm__ ("ltr   %0" ::"r" (data))
-#define load_ldt(data) __asm__ ("lltd  %0" ::"r" (data))
-#define load_gdt(gdtr) __asm__ ("lgdt (%0)"::"r" (gdtr))
-#define load_idt(idtr) __asm__ ("lidt (%0)"::"r" (idtr))
-//inline void load_ldt(SDescriptorTableReg * dtr){ __asm__ ("lldt  %0 "::"r" (dtr));}
-//inline void load_gdt(SDescriptorTableReg * dtr){ __asm__ ("lgdt (%0)"::"r" (dtr));}
-//inline void load_idt(SDescriptorTableReg * dtr){ __asm__ ("lidt (%0)"::"r" (dtr));}
+#define setTR(data)  __asm__ ("ltr   %0" ::"r" (data))
+#define setLDTR(data) __asm__ ("lltd  %0" ::"r" (data))
+//#define setGDTR(gdtr) __asm__ ("lgdt (%0)"::"r" (gdtr))
+//#define setIDTR(idtr) __asm__ ("lidt (%0)"::"r" (idtr))
+//inline void setTR(data){ __asm__ ("ltr   %0" ::"r" (data));}
+//inline void setLDTR(SDescriptorTableReg * dtr){ __asm__ ("lldt  %0 "::"r" (dtr));}
+inline void setGDTR(SDescriptorTableReg * dtr){ __asm__ ("lgdt (%0)"::"r" (dtr));}
+inline void setIDTR(SDescriptorTableReg * dtr){ __asm__ ("lidt (%0)"::"r" (dtr));}
+
+// Task Management
+inline void jmpTask (uint16_t selector)
+{
+  static struct {
+  unsigned eip : 32; // 32 bit
+  unsigned cs  : 16; // 16 bit
+  } __attribute__ ((packed)) tss_link = {0, 0};
+  // Set the TSS link
+  tss_link.cs = selector;
+  // Jump to the task
+  __asm__ __volatile__ ("ljmp *(%0)"::"m" (tss_link));
+}
+inline void callTask(uint16_t selector){ __asm__ ("call %0:0"::"r" (selector));}
+
+// System Calls
+inline void sysCall0(uint32_t function){ __asm__ ("int $0x30"::"a"(function));}
+//inline void sysCall1(uint32_t function, uint32_t arg1){ __asm__ ("int $0x30"::"a"(function),"b"(arg1));}
+#define sysCall1(function, arg1) __asm__("int $0x30"::"a"(function),"b"(arg1))
 
 // SEGMENT REGISTERS
 #define write_ds(sel) __asm__ ("movw %0, %%ds"::"r" (sel))

@@ -3,7 +3,11 @@
 #include "string.h"
 
 
-uint16_t selNull(0x00), selCodeSys(0x08), selDataSys(0x10);
+selector_t selNull    (0x00);
+selector_t selCodeSys (0x08 | 0);
+selector_t selDataSys (0x10 | 0);
+selector_t selCodeUser(0x18 | 3);
+selector_t selDataUser(0x20 | 3);
 
 
 // -----------------------------------------------------------------------------
@@ -22,14 +26,16 @@ CGDT::init()
 {
   memset(gd_, 0, sizeof(SGlobalDescriptor) * MAX_GLOBAL_DESCRIPTORS);
 
-  //selNull    = newGD(0,       0,    0,    0);  // 0x00
-  selCodeSys = newGD(0, 0xFFFFF, CODE, 0xC0);  // 0x08
-  selDataSys = newGD(0, 0xFFFFF, DATA, 0xC0);  // 0x10
+  //selNull     = createSegment(stNull, 0, 0,          0);
+  selCodeSys  = createSegment(stCode, 0, 0, 0xffffffff);
+  selDataSys  = createSegment(stData, 0, 0, 0xffffffff);
+  selCodeUser = createSegment(stCode, 3, 0, 0xffffffff);
+  selDataUser = createSegment(stData, 3, 0, 0xffffffff);
 
   // setting up the GDTR register
   gdtr_.base  = (uint32_t)&gd_[0];
   gdtr_.limit = (sizeof(SGlobalDescriptor) * MAX_GLOBAL_DESCRIPTORS) - 1;
-  load_gdt(&gdtr_);
+  setGDTR(&gdtr_);
   
   write_ds(selDataSys);
   write_ss(selDataSys);
@@ -37,30 +43,69 @@ CGDT::init()
   write_fs(selDataSys);
   write_gs(selDataSys);
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
-uint16_t
-CGDT::newGD(uint32_t base,
-            uint32_t limit,  
-            uint8_t  access,
-            uint8_t  attribs)
+selector_t
+CGDT::createSegment(ESegmentType type, unsigned int privilege, uint32_t base, uint32_t limit)
 {
-  int i;
+  int iIndex;
+  uint8_t access;
+  uint8_t attribs;
   
-  for(i = 1; i < MAX_GLOBAL_DESCRIPTORS; i++)
-    if(gd_[i].access == 0)
+  // Validate parameters
+  if(privilege > 3)
+    return 0;
+
+  // Find unused entry
+  for(iIndex = 1; iIndex < MAX_GLOBAL_DESCRIPTORS; iIndex++)
+    if(gd_[iIndex].access == 0)
       break;
-  if(gd_[i].access != 0)
+  if(gd_[iIndex].access != 0)
     return 0;
   
-  gd_[i].limit   = limit;
-  gd_[i].base_l  = base;
-  gd_[i].base_m  = base >> 16;
-  gd_[i].access  = access;
-  gd_[i].attribs = (attribs & 0xF0) | ((limit >> 16) & 0x0F);
-  gd_[i].base_h  = base >> 24;
+  switch(type)
+  {
+    case stCode:
+      access  = SD_PRESENT | (privilege << 5) | SD_CODE_DATA | CODE;
+      attribs = 0x40; // 32 bit code
+      break;
+    case stData:
+      access  = SD_PRESENT | (privilege << 5) | SD_CODE_DATA | DATA;
+      attribs = 0x40;
+      break;
+    case stStack:
+      access  = SD_PRESENT | (privilege << 5) | SD_CODE_DATA | STACK;
+      attribs = 0x00;
+      break;
+    case stTSS:
+      access  = SD_PRESENT | (privilege << 5) | SD_SYSTEM    | TYPE_TSS;
+      attribs = 0x00;
+      break;
+    default:
+      return 0;
+  };
   
-  return(i * 8);
+  // Check for large segments
+  if(limit > 0xfffff)
+  {
+    attribs |= 0x80;
+    limit >>= 12;
+  }
+  
+  gd_[iIndex].limit   = limit;
+  gd_[iIndex].base_l  = base;
+  gd_[iIndex].base_m  = base >> 16;
+  gd_[iIndex].access  = access;
+  gd_[iIndex].attribs = (attribs & 0xF0) | ((limit >> 16) & 0x0F);
+  gd_[iIndex].base_h  = base >> 24;
+  
+  return ((iIndex * 8) | privilege);
 }
+
+// -----------------------------------------------------------------------------
+//selector_t
+//createGate(ESegmentType type, unsigned int privilege, selector_t selector, uint32_t offset, unsigned int wordCount)
+//{
+//}
