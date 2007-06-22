@@ -88,7 +88,7 @@ const kernelFunction kfunctions[] =
 const unsigned int kfunctions_size(sizeof(kfunctions) / sizeof(kernelFunction));
 
 //---------------------------------------------------------------------------
-int
+extern "C" int
 k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize)
 {
   int iRetVal(-1);
@@ -126,7 +126,7 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
         bMsgReply = false;
 
         // Return received byte count
-        iRetVal = msg.iRetVal;;
+        iRetVal = msg.iRetVal;
         break;
       }
       default:
@@ -138,7 +138,7 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
 }
 
 //---------------------------------------------------------------------------
-int
+extern "C" int
 k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
 {
   int iRetVal(-1);
@@ -213,7 +213,7 @@ k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
 }
 
 //---------------------------------------------------------------------------
-int
+extern "C" int
 k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
 {
   int iRetVal(-1);

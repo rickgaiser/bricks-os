@@ -2,7 +2,7 @@
 #include "iostream"
 #include "pthread.h"
 
-
+/*
 //---------------------------------------------------------------------------
 void *
 server(void * arg)
@@ -52,4 +52,5 @@ srrTest(int argc, char * argv[])
   }
 
   return 0;
-}
+}*/
+

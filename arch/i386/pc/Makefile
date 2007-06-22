@@ -2,8 +2,7 @@ LIB             =arch
 OBJS            =\
                 entry \
                 arch \
-                gdt \
-                idt \
+                descriptor \
                 irq \
                 isrWrapper \
                 keyboard \

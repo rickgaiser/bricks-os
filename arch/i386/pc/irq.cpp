@@ -1,4 +1,5 @@
 #include "kernel/interruptManager.h"
+#include "kernel/srr.h"
 #include "asm/cpu.h"
 #include "asm/irq.h"
 #include "hal.h"
@@ -107,7 +108,7 @@ isr(pt_regs * regs)
     case 0x1d:
     case 0x1e:
     case 0x1f:
-      std::cout<<"CPU Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<std::endl;
+      std::cout<<"CPU Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<", addr: "<<regs->eip<<std::endl;
       CCPU::halt();
       break;
 
@@ -132,20 +133,47 @@ isr(pt_regs * regs)
       CInterruptManager::isr(regs->iIntNumber, regs);
       break;
 
-    // Handle soft interrupts
+    // Bricks System Calls
     case 0x30:
     {
       switch(regs->eax)
       {
-        case 0:
-          std::cout<<(const char *)regs->ebx;
+        case 1:
+          std::cout<<"msgSend"<<std::endl;
+          regs->eax = k_msgSend((int)regs->ebx, (const void *)regs->ecx, (int)regs->edx, (void *)regs->edi, (int)regs->esi);
+          break;
+        case 2:
+          std::cout<<"msgReceive"<<std::endl;
+          regs->eax = k_msgReceive((int)regs->ebx, (void *)regs->ecx, (int)regs->edx);
+          break;
+        case 3:
+          std::cout<<"msgReply"<<std::endl;
+          regs->eax = k_msgReply((int)regs->ebx, (int)regs->ecx, (const void *)regs->edx, (int)regs->edi);
           break;
         default:
-          std::cout<<"System Call Interrupt (0x30), function ("<<regs->eax<<")"<<std::endl;
+          std::cout<<"ERROR: Unknown int 0x30 System Call("<<regs->eax<<")"<<std::endl;
       };
       break;
     }
-
+    // Linux System Calls
+    case 0x80:
+    {
+      switch(regs->eax)
+      {
+        case 1:
+          // exit
+          // FIXME: Task should be terminated now
+          break;
+        case 4:
+          // write
+          std::cout<<(char *)regs->ecx;
+          break;
+        default:
+          std::cout<<"ERROR: Unknown int 0x80 System Call("<<regs->eax<<")"<<std::endl;
+      };
+      break;
+    }
+    
     // Handle unknown interrupts
     default:
       std::cout<<"Unknown Interrupt("<<regs->iIntNumber<<")"<<std::endl;

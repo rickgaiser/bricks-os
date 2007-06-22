@@ -20,13 +20,18 @@ enum EStaticConnectionID
 };
 
 
-// Messages
-int k_msgSend   (int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize);
-int k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize);
-int k_msgReply  (int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize);
-#define msgSend     k_msgSend
-#define msgReceive  k_msgReceive
-#define msgReply    k_msgReply
+//#ifdef CONFIG_SYSCALL
+#include "asm/syscall.h"
+//#else
+//#define msgSend     k_msgSend
+//#define msgReceive  k_msgReceive
+//#define msgReply    k_msgReply
+//#endif
+
+
+extern "C" int k_msgSend   (int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize);
+extern "C" int k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize);
+extern "C" int k_msgReply  (int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize);
 
 
 #endif

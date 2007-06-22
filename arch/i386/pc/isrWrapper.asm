@@ -129,3 +129,4 @@ WRAPPER 0x2E
 WRAPPER 0x2F
 ; Software generated interrupts
 WRAPPER 0x30
+WRAPPER 0x80
