@@ -1,0 +1,7 @@
+root		(cd)
+splashimage	/boot/grub/images/crystal-splash.xpm.gz
+timeout		3
+
+title		Bricks-OS
+kernel		/boot/kernel/Bricks.elf
+module		/boot/kernel/hello

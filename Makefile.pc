@@ -17,6 +17,10 @@ floppy-img:
 	sudo cp bin/pc/Bricks.elf bin/pc/floppy/boot/kernel/Bricks.elf
 	sudo umount bin/pc/floppy
 
+cdrom-img:
+	cp bin/pc/Bricks.elf bin/pc/cdrom/boot/kernel/Bricks.elf
+	mkisofs -R -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 -boot-info-table -o bin/pc/cdrom.iso bin/pc/cdrom
+
 grub:
 	sudo cp bin/pc/Bricks.elf /boot/Bricks.elf
 
