@@ -58,15 +58,13 @@ public:
 
   // Task state
   ETaskState    eState_;
-  uint32_t    * pStack_;
-  uint32_t    * pSvcStack_;
 
   // Linked list
   CTask       * prev;
   CTask       * next;
 
 protected:
-  CTask(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
+  CTask();
 };
 
 // -----------------------------------------------------------------------------

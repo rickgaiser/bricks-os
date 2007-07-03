@@ -11,21 +11,14 @@ IFileIO * pSTDOUT = 0;
 
 
 // -----------------------------------------------------------------------------
-CTask::CTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
+CTask::CTask()
  : eState_(TS_UNINITIALIZED)
- , pStack_(0)
- , pSvcStack_(0)
 {
   for(int i(0); i < MAX_CHANNEL_COUNT; i++)
     pChannel_[i] = 0;
 
   for(int i(0); i < MAX_CONNECTION_COUNT; i++)
     pConnection_[i] = 0;
-
-  if(stack != 0)
-    pStack_ = new uint32_t[stack];
-  if(svcstack != 0)
-    pSvcStack_ = new uint32_t[svcstack];
 
   prev = this;
   next = this;
@@ -34,10 +27,6 @@ CTask::CTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[
 // -----------------------------------------------------------------------------
 CTask::~CTask()
 {
-  if(pStack_ != 0)
-    delete pStack_;
-  if(pSvcStack_ != 0)
-    delete pSvcStack_;
 }
 
 // -----------------------------------------------------------------------------

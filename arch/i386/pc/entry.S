@@ -20,48 +20,29 @@
 	
 	.text
 
-	.globl	entry, _entry
+	.globl entry, multiboot_header
 entry:
-_entry:
-	jmp	multiboot_entry
+	jmp multiboot_entry
 
-	/* Align 32 bits boundary.  */
-	.align	4
-	
-	/* Multiboot header.  */
+	// Align 32 bits boundary.
+	.align 4
 multiboot_header:
-	/* magic */
-	.long	MULTIBOOT_HEADER_MAGIC
-	/* flags */
-	.long	MULTIBOOT_HEADER_FLAGS
-	/* checksum */
-	.long	-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
+	.long MULTIBOOT_HEADER_MAGIC // magic
+	.long MULTIBOOT_HEADER_FLAGS // flags
+	.long -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS) // checksum
 #ifndef __ELF__
-	/* header_addr */
-	.long	multiboot_header
-	/* load_addr */
-	.long	_start
-	/* load_end_addr */
-	.long	_edata
-	/* bss_end_addr */
-	.long	_end
-	/* entry_addr */
-	.long	multiboot_entry
-#endif /* ! __ELF__ */
+	.long multiboot_header // header_addr
+	.long _start           // load_addr
+	.long _edata           // load_end_addr
+	.long _end             // bss_end_addr
+	.long multiboot_entry  // entry_addr
+#endif // __ELF__
 
 multiboot_entry:
-	/* Initialize the stack pointer.  */
-	movl	$0x00101000, %esp
-
-	/* Reset EFLAGS.  */
-	pushl	$0
-	popf
-
-	/* Push the pointer to the Multiboot information structure.  */
-	pushl	%ebx
-	/* Push the magic value.  */
-	pushl	%eax
-
-	/* Now enter the C main function...  */
-	call	EXT_C(__main)
+	// Set stack pointer
+	movl $0x00101000, %esp
+	// call __main(unsigned long magic, multiboot_info_t * mbi)
+	pushl %ebx
+	pushl %eax
+	call EXT_C(__main)
 

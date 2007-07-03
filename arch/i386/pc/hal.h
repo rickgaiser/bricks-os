@@ -85,9 +85,35 @@ typedef struct
   uint32_t base;
 } __attribute__ ((__packed__)) SDescriptorTableReg;
 
+
+#define PG_PRESENT       0x001
+#define PG_WRITABLE      0x002
+#define PG_USER          0x004
+#define PG_WRITE_THROUGH 0x008
+#define PG_DISABLE_CACH  0x010
+#define PG_ACCESSED      0x020
+#define PG_DIRTY         0x040
+#define PG_LARGE_SIZE    0x080
+#define PG_GLOBAL        0x100
+
 // Page Directory/Table Entry
-typedef uint32_t  pde_t;
-typedef uint32_t  pte_t;
+typedef uint32_t  pde32_t;
+typedef uint32_t  pte32_t;
+
+// Page Directory/Table Entry with PAE enabled
+typedef uint64_t  pdpte64_t;
+typedef struct
+{
+  pdpte64_t entry[4];
+} __attribute__ ((aligned (32))) pdpt64_t;
+typedef uint64_t  pde64_t;
+typedef uint64_t  pte64_t;
+
+// CR0
+#define CR0_PG           0x80000000
+// CR4
+#define CR4_PSE          0x00000010
+#define CR4_PAE          0x00000020
 
 // Task State Segment
 typedef struct
@@ -183,10 +209,78 @@ inline void setGS(selector_t sel){ __asm__ ("movw %0, %%gs"::"r" (sel));}
 #define getGS() ({ word _v; __asm__ ("movw %%gs, %%ax":"=a" (_v):); _v; })
 
 // POINTER REGISTERS
-inline void setESP(void * addr){ __asm__ ("movl %0, %%esp"::"r" (addr));}
-inline void setEBP(void * addr){ __asm__ ("movl %0, %%ebp"::"r" (addr));}
+inline void setESP(uint32_t addr){ __asm__ ("movl %0, %%esp"::"r" (addr));}
+inline void setEBP(uint32_t addr){ __asm__ ("movl %0, %%ebp"::"r" (addr));}
 #define getESP() ({ uint32_t _v; __asm__ __volatile__ ("movl %%esp, %%eax":"=a" (_v):); _v; })
 #define getEBP() ({ uint32_t _v; __asm__ __volatile__ ("movl %%ebp, %%eax":"=a" (_v):); _v; })
+
+// CPUID Feature Information
+#define CPUID_FT_FPU      (1 <<  0)
+#define CPUID_FT_VME      (1 <<  1)
+#define CPUID_FT_DE       (1 <<  2)
+#define CPUID_FT_PSE      (1 <<  3)
+#define CPUID_FT_TSC      (1 <<  4)
+#define CPUID_FT_MSR      (1 <<  5)
+#define CPUID_FT_PAE      (1 <<  6)
+#define CPUID_FT_MCE      (1 <<  7)
+#define CPUID_FT_CX8      (1 <<  8)
+#define CPUID_FT_APIC     (1 <<  9)
+#define CPUID_FT_SEP      (1 << 11)
+#define CPUID_FT_MTRR     (1 << 12)
+#define CPUID_FT_PGE      (1 << 13)
+#define CPUID_FT_MCA      (1 << 14)
+#define CPUID_FT_MCOV     (1 << 15)
+#define CPUID_FT_PAT      (1 << 16)
+#define CPUID_FT_PSE_36   (1 << 17)
+#define CPUID_FT_PSN      (1 << 18)
+#define CPUID_FT_CFLSH    (1 << 19)
+#define CPUID_FT_DS       (1 << 21)
+#define CPUID_FT_ACPI     (1 << 22)
+#define CPUID_FT_MMX      (1 << 23)
+#define CPUID_FT_FXSR     (1 << 24)
+#define CPUID_FT_SSE      (1 << 25)
+#define CPUID_FT_SSE2     (1 << 26)
+#define CPUID_FT_SS       (1 << 27)
+#define CPUID_FT_HTT      (1 << 28)
+#define CPUID_FT_TM       (1 << 29)
+#define CPUID_FT_PBE      (1 << 31)
+// CPUID Extended Feature Information
+#define CPUID_EFT_SSE3    (1 <<  0)
+#define CPUID_EFT_MONITOR (1 <<  3)
+#define CPUID_EFT_DS_CPL  (1 <<  4)
+#define CPUID_EFT_VMX     (1 <<  5)
+#define CPUID_EFT_EST     (1 <<  7)
+#define CPUID_EFT_TM2     (1 <<  8)
+#define CPUID_EFT_SSSE3   (1 <<  9)
+#define CPUID_EFT_CNXT_ID (1 << 10)
+#define CPUID_EFT_CMPXCHG16B (1 << 13)
+#define CPUID_EFT_XTPR    (1 << 14)
+#define CPUID_EFT_PDCM    (1 << 16)
+// CPUID presence detection
+inline bool cpuidPresent()
+{
+  unsigned int f1, f2;
+
+  __asm__("pushfl\n\t"
+          "pushfl\n\t"
+          "popl %0\n\t"
+          "movl %0,%1\n\t"
+          "xorl %2,%0\n\t"
+          "pushl %0\n\t"
+          "popfl\n\t"
+          "pushfl\n\t"
+          "popl %0\n\t"
+          "popfl"
+          : "=&r" (f1), "=&r" (f2)
+          : "ir" (0x00200000));
+
+  return ((f1^f2) & 0x00200000) != 0;
+}
+// CPUID Function
+inline void cpuid(int op, uint32_t * eax, uint32_t * ebx, uint32_t * ecx, uint32_t * edx)
+{
+  __asm__("cpuid" : "=a" (*eax), "=b" (*ebx), "=c" (*ecx), "=d" (*edx) : "a" (op) : "cc");
+}
 
 
 #endif

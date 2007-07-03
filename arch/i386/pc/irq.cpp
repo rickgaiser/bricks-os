@@ -163,6 +163,8 @@ isr(pt_regs * regs)
         case 1:
           // exit
           // FIXME: Task should be terminated now
+          std::cout<<"exit"<<std::endl;
+          CCPU::halt();
           break;
         case 4:
           // write

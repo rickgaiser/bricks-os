@@ -60,10 +60,12 @@ extern CDescriptorTable cGDT;
 extern CDescriptorTable cIDT;
 
 extern selector_t selNull;
-extern selector_t selCodeSys;
-extern selector_t selDataSys;
+extern selector_t selCodeKernel;
+extern selector_t selDataKernel;
 extern selector_t selCodeUser;
 extern selector_t selDataUser;
+extern selector_t selCodeUserTmp;
+extern selector_t selDataUserTmp;
 
 
 #endif

@@ -2,6 +2,14 @@
 #include "unistd.h"
 
 
+const char charMinus('-');
+#define SIGNED_TO_UNSIGNED(i) \
+if(i < 0){ \
+  ::write(STDOUT, &charMinus, 1); \
+  i = -i; \
+}
+
+
 namespace std
 {
 
@@ -23,7 +31,7 @@ ostream::operator<<(const char *cp)
   for(iStrLen = 0; cp[iStrLen] != 0; iStrLen++){}
 
   ::write(STDOUT, cp, iStrLen);
-  return(*this); 
+  return *this;
 }
 
 // -----------------------------------------------------------------------------
@@ -31,27 +39,14 @@ ostream &
 ostream::operator<<(char c)
 {
   ::write(STDOUT, &c, 1);
-  return(*this);
+  return *this;
 }
 
 // -----------------------------------------------------------------------------
 ostream &
 ostream::operator<<(int i)
 {
-  return operator<<(static_cast<long>(i));
-}
-
-// -----------------------------------------------------------------------------
-ostream &
-ostream::operator<<(long i)
-{
-  if(i < 0)
-  {
-    char c('-');
-    ::write(STDOUT, &c, 1);
-    i = -i;
-  }
-
+  SIGNED_TO_UNSIGNED(i);
   return operator<<(static_cast<unsigned int>(i));
 }
 
@@ -64,16 +59,21 @@ ostream::operator<<(unsigned int i)
 
 // -----------------------------------------------------------------------------
 ostream &
+ostream::operator<<(long i)
+{
+  SIGNED_TO_UNSIGNED(i);
+  return operator<<(static_cast<unsigned long>(i));
+}
+
+// -----------------------------------------------------------------------------
+ostream &
 ostream::operator<<(unsigned long i)
 {
   bool bPrint(false);
 
-  for(int iWalker(1000000000); iWalker > 0; iWalker /= 10)
+  for(unsigned long iWalker(1000000000); iWalker > 0; i %= iWalker, iWalker /= 10)
   {
-    int iTemp;
-
-    iTemp = i / iWalker;
-    i     = i % iWalker;
+    unsigned long iTemp(i / iWalker);
 
     if(iTemp > 0)
       bPrint = true;
@@ -86,6 +86,22 @@ ostream::operator<<(unsigned long i)
   }
 
   return *this;
+}
+
+// -----------------------------------------------------------------------------
+ostream &
+ostream::operator<<(long long i)
+{
+  SIGNED_TO_UNSIGNED(i);
+  return operator<<(static_cast<unsigned long long>(i));
+}
+
+// -----------------------------------------------------------------------------
+ostream &
+ostream::operator<<(unsigned long long i)
+{
+  // FIXME
+  return operator<<(static_cast<unsigned long>(i));
 }
 
 
