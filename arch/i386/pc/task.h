@@ -15,9 +15,13 @@ class CPCTask
  : public CTask
 {
 public:
+  friend void init_task();
+
   CPCTask();
   virtual ~CPCTask();
   
+  void init();
+
   // Entry Point
   void * entry(){return pEntry_;}
   void entry(void * ip);
@@ -29,22 +33,24 @@ public:
   // Address Space
   CPCAddressSpace & aspace(){return cASpace_;}
   
-  void run();
+  virtual void run();
 
 private:
-  static void kill();  // Return function, kills the current task
+  bool bInitialized_;
 
-private:
   // Addess space
   CPCAddressSpace cASpace_;
   
   // Task state
-  STaskStateSegment * pTSS_;
+  STaskStateSegment tss_;
   selector_t selTSS_;
   
   void * pEntry_;
   void * pStack_;
 };
+
+
+extern CPCTask taskMain;
 
 
 #endif

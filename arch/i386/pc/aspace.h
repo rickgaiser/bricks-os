@@ -70,9 +70,6 @@
  */
 
 
-void init_paging();
-
-
 class CPCAddressSpace
 {
 public:

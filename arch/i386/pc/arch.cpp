@@ -21,6 +21,7 @@ CIRQ              cIRQ;
 CI386Video        cVideo;
 CI386Keyboard     cKeyboard;
 bool              bPAEEnabled;
+CPCTask           taskTest;
 
 
 // -----------------------------------------------------------------------------
@@ -59,7 +60,8 @@ loadELF32(void * file, CPCTask & task)
   
   // Set task entry point
   task.entry((void *)hdr->e_entry);
-  task.run();
+  task.eState_ = TS_READY;
+  CTaskManager::addTask(&task);
   
   return 0;
 }
@@ -283,16 +285,12 @@ main(unsigned long magic, multiboot_info_t * mbi)
     bPAEEnabled = false;
   }
   
-  // ------------
-  // Setup Paging
-  // ------------
-  init_paging();
-  std::cout<<"Paging Enabled!"<<std::endl;
-  
   // ---------------------
+  // Setup Paging
   // Setup Task Management
   // ---------------------
   init_task();
+  std::cout<<"Paging Enabled!"<<std::endl;
 
   /*
   // Boot device
@@ -320,7 +318,8 @@ main(unsigned long magic, multiboot_info_t * mbi)
       std::cout<<"Loading: "<<(char *)mod->string<<std::endl;
         
       // Try to load as elf32 file
-      CPCTask taskTest;
+      taskTest.init();
+      taskTest.aspace().addRange(taskMain.aspace(), 0, 0x00400000);  // Bottom 4MiB
       if(loadELF32((void *)mod->mod_start, taskTest) == 0)
         std::cout<<" - Done"<<std::endl;
       else
@@ -329,7 +328,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
   }
   
   // Enable Timer IRQ
-  //cIRQ.enable(0x20);
+  cIRQ.enable(0x20);
   
   iMemKernel = iMemTop - iMemReserved - (freePageCount() * 4096);
   std::cout<<"Memory size:     "<<iMemTop/1024<<"KiB"<<std::endl;

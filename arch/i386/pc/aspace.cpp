@@ -4,26 +4,7 @@
 
 
 extern bool bPAEEnabled;
-CPCAddressSpace asMain;
 
-
-// -----------------------------------------------------------------------------
-void
-init_paging()
-{
-  asMain.init();
-  asMain.identityMap(0, 0x00400000);  // Identity Map first 4MiB
-
-  // Enable PAE
-  if(bPAEEnabled == true)
-    setCR4(getCR4() | CR4_PAE);
-
-  // Load CR3
-  setCR3(asMain.cr3());
-
-  // Enable paging
-  setCR0(getCR0() | CR0_PG);
-}
 
 // -----------------------------------------------------------------------------
 CPCAddressSpace::CPCAddressSpace()
@@ -92,10 +73,6 @@ CPCAddressSpace::init()
 
       iCR3_ = (uint32_t)pPD_;
     }
-
-    // FIXME: should be top 1GiB
-    if(this != &asMain)
-      addRange(asMain, 0, 0x00400000);  // Bottom 4MiB
 
     bInitialized_ = true;
   }

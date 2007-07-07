@@ -5,47 +5,45 @@
 #include "iostream"
 
 
-STaskStateSegment tssTemp;
-STaskStateSegment taskMain;
-selector_t        selTaskMain;
-uint8_t           stack_pl0[512];
-uint8_t           stack_pl3[512];
+extern bool bPAEEnabled;
+
+CPCTask    taskMain;
+uint8_t    stack_pl0[512];
+uint8_t    stack_pl3[512];
 
 
 // -----------------------------------------------------------------------------
 void
 init_task()
 {
-  // Create descriptor for main TSS
-  selTaskMain = cGDT.createSegment(dtTSS, 3, (uint32_t)&taskMain, sizeof(STaskStateSegment));
+  taskMain.cASpace_.init();
+  taskMain.selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)&taskMain.tss_, sizeof(STaskStateSegment));
+  taskMain.bInitialized_ = true;
+  taskMain.cASpace_.identityMap(0, 0x00400000);  // Identity Map first 4MiB
+
+  // Enable PAE
+  if(bPAEEnabled == true)
+    setCR4(getCR4() | CR4_PAE);
+
+  // Load CR3
+  setCR3(taskMain.cASpace_.cr3());
+
+  // Enable paging
+  setCR0(getCR0() | CR0_PG);
+
   // Set the current running tasks TSS
-  setTR(selTaskMain);
+  setTR(taskMain.selTSS_);
+  
+  // Add task to taskmanagers list
+  taskMain.eState_ = TS_READY;
+  CTaskManager::addTask(&taskMain);
 }
 
 // -----------------------------------------------------------------------------
 CPCTask::CPCTask()
  : CTask()
+ , bInitialized_(false)
 {
-  cASpace_.init();
-
-  // Locate virtual memory for TSS
-  pTSS_ = &tssTemp;
-  memset(pTSS_, 0, sizeof(STaskStateSegment));
-  pTSS_->esp0 = (uint32_t)&stack_pl0 + 512;
-  pTSS_->ss0  = selDataKernel;
-  pTSS_->esp  = (uint32_t)&stack_pl3 + 512;
-  pTSS_->cr3  = cASpace_.cr3();
-  //pTSS_->eip  = (uint32_t)ip;
-  pTSS_->eflags = 0x200;
-  pTSS_->es   = selDataUserTmp;
-  pTSS_->cs   = selCodeUserTmp;
-  pTSS_->ss   = selDataUserTmp;
-  pTSS_->ds   = selDataUserTmp;
-  pTSS_->fs   = selDataUserTmp;
-  pTSS_->gs   = selDataUserTmp;
-  
-  // Create descriptor for TSS
-  selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)pTSS_, sizeof(STaskStateSegment));
 }
 
 // -----------------------------------------------------------------------------
@@ -55,10 +53,40 @@ CPCTask::~CPCTask()
 
 // -----------------------------------------------------------------------------
 void
+CPCTask::init()
+{
+  if(bInitialized_ == false)
+  {
+    cASpace_.init();
+
+    // Locate virtual memory for TSS
+    memset(&tss_, 0, sizeof(STaskStateSegment));
+    tss_.esp0 = (uint32_t)&stack_pl0 + 512;
+    tss_.ss0  = selDataKernel;
+    tss_.esp  = (uint32_t)&stack_pl3 + 512;
+    tss_.cr3  = cASpace_.cr3();
+    //tss_.eip  = (uint32_t)ip;
+    tss_.eflags = 0x200;
+    tss_.es   = selDataUserTmp;
+    tss_.cs   = selCodeUserTmp;
+    tss_.ss   = selDataUserTmp;
+    tss_.ds   = selDataUserTmp;
+    tss_.fs   = selDataUserTmp;
+    tss_.gs   = selDataUserTmp;
+  
+    // Create descriptor for TSS
+    selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)&tss_, sizeof(STaskStateSegment));
+
+    bInitialized_ = true;
+  }
+}
+
+// -----------------------------------------------------------------------------
+void
 CPCTask::entry(void * ip)
 {
   pEntry_ = ip;
-  pTSS_->eip  = (uint32_t)ip;
+  tss_.eip  = (uint32_t)ip;
 }
 /*
 // -----------------------------------------------------------------------------
@@ -66,7 +94,7 @@ void
 CPCTask::stack(void * sp)
 {
   pStack_ = sp;
-  pTSS_->esp = (uint32_t)sp;
+  tss_.esp = (uint32_t)sp;
 }
 */
 // -----------------------------------------------------------------------------
@@ -75,14 +103,6 @@ CPCTask::run()
 {
   // Jump to task
   jumpSelector(selTSS_);
-}
-
-// -----------------------------------------------------------------------------
-void
-CPCTask::kill()
-{
-  std::cout<<"suicide!"<<std::endl;
-  CTaskManager::removeTask(CTaskManager::pCurrentTask_);
 }
 
 // -----------------------------------------------------------------------------

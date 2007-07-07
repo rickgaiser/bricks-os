@@ -1,5 +1,6 @@
 #include "kernel/interruptManager.h"
 #include "kernel/srr.h"
+#include "kernel/task.h"
 #include "asm/cpu.h"
 #include "asm/irq.h"
 #include "hal.h"
@@ -17,6 +18,8 @@
 extern "C" void
 isr(pt_regs * regs)
 {
+  //std::cout<<">>isr"<<std::endl;
+
   static const char * msg[] =
   {
     // (0x00 - 0x1f) IA-32 Reserved Interrupts
@@ -113,7 +116,13 @@ isr(pt_regs * regs)
       break;
 
     // Handle IRQs
-    case 0x20:
+    case 0x20:  // Timer
+      // Run scheduler
+      if(CTaskManager::schedule() == true)
+        CTaskManager::pCurrentTask_->run();
+      // Ack interrupt (normally interrupt manager will do this)
+      outb(EOI_BYTE, PIC_MASTER_BASE);
+      break;
     case 0x21:
     case 0x22:
     case 0x23:
@@ -162,9 +171,8 @@ isr(pt_regs * regs)
       {
         case 1:
           // exit
-          // FIXME: Task should be terminated now
-          std::cout<<"exit"<<std::endl;
-          CCPU::halt();
+          CTaskManager::removeTask(CTaskManager::pCurrentTask_);
+          CTaskManager::pCurrentTask_->run();
           break;
         case 4:
           // write
@@ -181,6 +189,8 @@ isr(pt_regs * regs)
       std::cout<<"Unknown Interrupt("<<regs->iIntNumber<<")"<<std::endl;
       CCPU::halt();
   };
+
+  //std::cout<<"<<isr"<<std::endl;
 }
 
 // -----------------------------------------------------------------------------

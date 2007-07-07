@@ -51,6 +51,11 @@ class CTask
 {
 public:
   virtual ~CTask();
+  
+  // Switch tasks! Function can do two things:
+  //  - Setup stack so interrupt return will couse this task to run.
+  //  - Jump to task immediately.
+  virtual void run() = 0;
 
   // Message bus management
   SChannel    * pChannel_[MAX_CHANNEL_COUNT];

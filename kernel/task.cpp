@@ -1,4 +1,5 @@
 #include "kernel/task.h"
+#include "asm/cpu.h"
 #include "iostream"
 
 
@@ -34,7 +35,7 @@ CTask::~CTask()
 void
 CTaskManager::addTask(CTask * pTask)
 {
-  std::cout<<"CTaskManager::addTask"<<std::endl;
+  //std::cout<<"CTaskManager::addTask"<<std::endl;
 
   if(iTaskCount_ == 0)
   {
@@ -69,7 +70,7 @@ CTaskManager::addTask(CTask * pTask)
 void
 CTaskManager::removeTask(CTask * pTask)
 {
-  std::cout<<"CTaskManager::removeTask"<<std::endl;
+  //std::cout<<"CTaskManager::removeTask"<<std::endl;
 
   if(pTask != pTask->next)
   {
@@ -87,12 +88,12 @@ CTaskManager::removeTask(CTask * pTask)
     }
 
     // Delete task
-    delete pTask;
+    //delete pTask;
   }
   else
   {
     std::cout<<"ERROR: Can not kill last task"<<std::endl;
-    while(true){}
+    CCPU::halt();
   }
 }
 
@@ -103,9 +104,11 @@ CTaskManager::schedule()
   CTask * pPrevTask = CTaskManager::pCurrentTask_;
 
   // Locate the next running task
+  CTaskManager::pCurrentTask_->eState_ = TS_READY;
   CTaskManager::pCurrentTask_ = CTaskManager::pCurrentTask_->next;
-  while(CTaskManager::pCurrentTask_->eState_ != TS_RUNNING)
+  while(CTaskManager::pCurrentTask_->eState_ != TS_READY)
     CTaskManager::pCurrentTask_ = CTaskManager::pCurrentTask_->next;
+  CTaskManager::pCurrentTask_->eState_ = TS_RUNNING;
 
   return pPrevTask != CTaskManager::pCurrentTask_;
 }
