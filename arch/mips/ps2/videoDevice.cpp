@@ -24,8 +24,8 @@ CPS2Surface::swap(bool bForceCopy)
   graph_wait_vsync();
 
   // Write frame
-  graph_vram_write(0,             640, 256, GRAPH_PSM_16, &p[0],         640 * 256 * 2);
-  graph_vram_write(640 * 256 * 2, 640, 256, GRAPH_PSM_16, &p[256 * 640], 640 * 256 * 2);
+  graph_vram_write(0,             640, 256, GRAPH_PSM_16, &((uint16_t *)p)[0],         640 * 256 * 2);
+  graph_vram_write(640 * 256 * 2, 640, 256, GRAPH_PSM_16, &((uint16_t *)p)[256 * 640], 640 * 256 * 2);
 }
 
 //---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ CPS2VideoDevice::listModes(const SVideoMode ** modes, int * modeCount)
 {
   static const SVideoMode videoModes[] =
   {
-      {640, 512, 16, 2, pfR5G5B5}
+      {640, 512, 16, 2, cfX1R5G5B5}
   };
   static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
@@ -92,7 +92,7 @@ CPS2VideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
       pSurface->pBack  = new pixel_t[640*512];
       pSurface->width  = pCurrentMode_->xres;
       pSurface->height = pCurrentMode_->yres;
-      pSurface->format = pfR5G5B5;
+      pSurface->format = cfX1R5G5B5;
       pSurface->pFront = pSurface->pBack;  // Fail safe?
       pSurface->p      = pSurface->pBack;
       pSurface->key    = false;
@@ -103,7 +103,7 @@ CPS2VideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
     {
       pSurface->width  = 0;
       pSurface->height = 0;
-      pSurface->format = pfR5G5B5;
+      pSurface->format = cfX1R5G5B5;
       pSurface->p      = 0;
       pSurface->key    = false;
       pSurface->clKey  = 0;
