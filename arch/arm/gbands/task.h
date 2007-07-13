@@ -18,6 +18,8 @@ public:
   CGBANDSTask(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
   virtual ~CGBANDSTask();
 
+  virtual void run();
+
 private:
   static void kill();  // Return function, kills the current task
 

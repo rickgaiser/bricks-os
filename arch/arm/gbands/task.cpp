@@ -42,6 +42,14 @@ CGBANDSTask::~CGBANDSTask()
 
 // -----------------------------------------------------------------------------
 void
+CGBANDSTask::run()
+{
+  // Switch return stack to the stack of this task.
+  current_thread = pTaskState_;
+}
+
+// -----------------------------------------------------------------------------
+void
 CGBANDSTask::kill()
 {
   std::cout<<"suicide!"<<std::endl;

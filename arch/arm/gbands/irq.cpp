@@ -8,7 +8,6 @@
 
 // Assembler isr function calling our "C" isr function
 extern "C" void __isr();
-extern pt_regs * current_thread;
 
 
 // -----------------------------------------------------------------------------
@@ -30,7 +29,7 @@ isr(pt_regs * regs)
     REG_IF |= (1 << 3);
     // Run scheduler
     if(CTaskManager::schedule() == true)
-      current_thread = dynamic_cast<CGBANDSTask *>(CTaskManager::pCurrentTask_)->pTaskState_;
+      CTaskManager::pCurrentTask_->run();
   }
 
   // Handle other interrupts
