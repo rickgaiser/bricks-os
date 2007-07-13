@@ -1,4 +1,5 @@
 #include "kernel/bricks.h"
+#include "kernel/memoryManager.h"
 #include "asm/cpu.h"
 #include "asm/irq.h"
 
@@ -30,6 +31,18 @@
 #include "iostream"
 
 
+#ifdef GBA
+extern char __iheap_start, __iwram_top;
+extern char __eheap_start, __eheap_end;
+#endif // GBA
+#ifdef NDS7
+extern char _end, __iwram_top;
+#endif // NDS7
+#ifdef NDS9
+extern char _end, __eheap_end;
+#endif // NDS9
+
+
 CIRQ           cIRQ;
 
 #ifdef CONFIG_GBA_CONSOLE
@@ -58,6 +71,17 @@ int
 main(int, char *[])
 {
   int iRetVal(0);
+
+#ifdef GBA
+  //init_heap(&__iheap_start, &__iwram_top - &__iheap_start);
+  init_heap(&__eheap_start, (uint32_t)(&__eheap_end - &__eheap_start));
+#endif // GBA
+#ifdef NDS7
+  init_heap(&__iwram_top, (uint32_t)(&_end - &__iwram_top));
+#endif // NDS7
+#ifdef NDS9
+  init_heap(&__eheap_end, (uint32_t)(&_end - &__eheap_end));
+#endif // NDS9
 
   if(cIRQ.init() == -1)
     iRetVal = -1;

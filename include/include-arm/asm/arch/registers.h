@@ -7,8 +7,8 @@
 
 typedef void (*fnptr)();
 extern uint32_t __itcm_start;
-extern uint32_t __ewram_end;
-extern uint32_t __eheap_end;
+//extern uint32_t __ewram_end;
+//extern uint32_t __eheap_end;
 extern uint32_t __dtcm_start;
 extern uint32_t __dtcm_top;
 extern uint32_t __irq_flags;  // DTCM + 0x3ff8

@@ -1,4 +1,5 @@
 #include "kernel/bricks.h"
+#include "kernel/memoryManager.h"
 #include "kernel/task.h"
 #include "ps2Video.h"
 
@@ -6,6 +7,9 @@
 #include "videoDevice.h"
 #endif // CONFIG_FRAMEBUFFER
 
+
+extern char _end;
+extern char _heap_size;
 
 IFileIO          cDummy;
 CPS2Video        cVideo;
@@ -21,12 +25,15 @@ main(int, char *[])
 {
   int iRetVal(0);
 
+  // FIXME
+  init_heap(&_end, 4 * 1024 * 1024);
+
   if(cVideo.init() == -1)
     iRetVal = -1;
 
   // Set standard in/out for tasks
-  CTask::setStandardOutput(&cVideo);
-  CTask::setStandardInput(&cDummy);
+  CTaskManager::setStandardOutput(&cVideo);
+  CTaskManager::setStandardInput(&cDummy);
 
 #ifdef CONFIG_FRAMEBUFFER
   pVideoDevice = new CPS2VideoDevice;
