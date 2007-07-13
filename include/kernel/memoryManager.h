@@ -5,22 +5,13 @@
 #include "stddef.h"
 
 
-struct SHeap
-{
-  void * pStart;
-  size_t iSize;
-};
-
+void init_heap(void * start, size_t size);
 
 char *sbrk(int incr);
 void * kmalloc(size_t size);
 void kfree(void * block);
 void * operator new(size_t size);
 void operator delete(void * mem);
-
-
-extern SHeap heaps[];
-extern const int iHeapCount;
 
 
 #endif

@@ -4,6 +4,12 @@
 #include "kernel/memoryManager.h"
 
 
+struct SHeap
+{
+  void * pStart;
+  size_t iSize;
+};
+
 struct mem_control_block
 {
   bool is_available;
@@ -14,6 +20,8 @@ struct mem_control_block
 bool has_initialized(false);
 char * managed_memory_start;
 char * last_valid_address;
+SHeap heap;
+SHeap * heaps = &heap;
 
 
 // -----------------------------------------------------------------------------
@@ -42,6 +50,14 @@ void
 operator delete[](void * mem)
 {
   kfree(mem);
+}
+
+// -----------------------------------------------------------------------------
+void
+init_heap(void * start, size_t size)
+{
+  heap.pStart = start;
+  heap.iSize  = size;
 }
 
 // -----------------------------------------------------------------------------

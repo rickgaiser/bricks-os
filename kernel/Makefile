@@ -11,6 +11,7 @@ OBJS            =\
                 interrupt \
                 interruptManager \
                 pthread \
+                settings \
                 task \
                 timeValue \
                 video \

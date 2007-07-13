@@ -3,5 +3,9 @@ splashimage	/boot/grub/images/crystal-splash.xpm.gz
 timeout		3
 
 title		Bricks-OS
-kernel		/boot/kernel/Bricks.elf
+kernel		/boot/kernel/Bricks.elf PAE=AUTO APIC=AUTO
+module		/boot/kernel/hello
+
+title		Bricks-OS +PAE
+kernel		/boot/kernel/Bricks.elf PAE=ON APIC=AUTO
 module		/boot/kernel/hello

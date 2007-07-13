@@ -5,9 +5,6 @@
 
 
 extern int main(unsigned long magic, multiboot_info_t * mbi);
-SHeap heaps[] =
-{
-};
 void *__dso_handle;
 
 

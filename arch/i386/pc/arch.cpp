@@ -1,28 +1,43 @@
 #include "kernel/bricks.h"
-#include "kernel/task.h"
 #include "kernel/elf.h"
-#include "kernel/syscall.h"
+#include "kernel/memoryManager.h"
+#include "kernel/settings.h"
 #include "kernel/srr.h"
+#include "kernel/syscall.h"
+#include "kernel/task.h"
+
 #include "asm/irq.h"
 #include "asm/cpu.h"
+
+#include "apic.h"
+#include "cpuid.h"
 #include "video.h"
 #include "keyboard.h"
 #include "descriptor.h"
 #include "mmap.h"
 #include "multiboot.h"
 #include "task.h"
+
 #include "string.h"
 #include "iostream"
 
 
 extern char       start_text;
 extern char       end_bss;
+
 CIRQ              cIRQ;
 CI386Video        cVideo;
 CI386Keyboard     cKeyboard;
-bool              bPAEEnabled;
 CPCTask           taskTest;
 
+bool              bPAEEnabled;
+bool              bAPICEnabled;
+
+SSetting settings[] = {
+    {"PAE",  SET_AUTO}
+  , {"APIC", SET_AUTO}
+};
+CSettings cSettings(settings, sizeof(settings) / sizeof(SSetting));
 
 // -----------------------------------------------------------------------------
 int
@@ -66,16 +81,11 @@ loadELF32(void * file, CPCTask & task)
   return 0;
 }
 
-#define PAE_AUTO      0x00
-#define PAE_FORCE_ON  0x01
-#define PAE_FORCE_OFF 0x02
 // -----------------------------------------------------------------------------
 int
 main(unsigned long magic, multiboot_info_t * mbi)
 {
   int iRetVal(0);
-  uint32_t iCPUFeatures(0);
-  unsigned int iPAEPolicy(PAE_AUTO);
   unsigned char * pFirstFreeByte = 0;
   uint64_t iMemFree(0);
   uint64_t iMemTop(0);
@@ -93,6 +103,8 @@ main(unsigned long magic, multiboot_info_t * mbi)
   CTaskManager::setStandardOutput(&cVideo);
   CTaskManager::setStandardInput(&cKeyboard);
 
+  // ---------------------------------------
+  // Miltiboot loader and memorymap required
   if(magic == MULTIBOOT_BOOTLOADER_MAGIC)
   {
     if((mbi->flags & (1<<6)) == 0)
@@ -106,6 +118,10 @@ main(unsigned long magic, multiboot_info_t * mbi)
     std::cout<<"ERROR: Multiboot loader information not present"<<std::endl;
     CCPU::halt();
   }
+
+  // -----------------------------
+  // Initialize CPU identification
+  CPU::init();
 
   // --------------------------------
   // Setup Physical Memory Management
@@ -199,65 +215,26 @@ main(unsigned long magic, multiboot_info_t * mbi)
   init_gdt((SDescriptor *)pFirstFreeByte, 8192);
   pFirstFreeByte += sizeof(SDescriptor) * 8192;
   
-  // ---------
-  // Setup CPU
-  // ---------
-  if(cpuidPresent() == true)
-  {
-    uint32_t iCPUIDMax;
-    char vendorID[13];
-    
-    // Get CPU information
-    cpuid(0, &iCPUIDMax, (uint32_t *)&vendorID[0], (uint32_t *)&vendorID[8], (uint32_t *)&vendorID[4]);
-    vendorID[12] = 0;
-    
-    // Display information
-    //std::cout<<"CPU:"<<std::endl;
-    //std::cout<<" - Vendor ID: "<<vendorID<<std::endl;
-    
-    if(iCPUIDMax >= 1)
-    {
-      //static const char * sType[] = {
-      //    "Original OEM Processor"
-      //  , "Intel OverDrive Processor"
-      //  , "Dual Processor"
-      //  , "Intel Reserved"
-      //};
-      uint32_t iDummy;
-      uint32_t iVersion;
-      
-      //unsigned int iCPUType;
-      //unsigned int iCPUFamily;
-      //unsigned int iCPUModel;
-      //unsigned int iCPUStepping;
-
-      // Get CPU information
-      cpuid(1, &iVersion, &iDummy, &iDummy, &iCPUFeatures);
-      //iCPUType     = (iVersion & 0x00003000) >> 12;
-      //iCPUFamily   = (iVersion & 0x00000f00) >>  8;
-      //iCPUModel    = (iVersion & 0x000000f0) >>  4;
-      //iCPUStepping = (iVersion & 0x0000000f);
-
-      // Display information
-      //std::cout<<" - Type:      "<<sType[iCPUType]<<std::endl;
-      //std::cout<<" - Family:    "<<iCPUFamily<<std::endl;
-      //std::cout<<" - Model:     "<<iCPUModel<<std::endl;
-      //std::cout<<" - Stepping:  "<<iCPUStepping<<std::endl;
-    }
-  }
-  else
-  {
-    // CPUID instuction not available, has to be a 386 or an early 486
-    //std::cout<<"CPU: 386/486"<<std::endl;
-  }
+  // All static memory has been allocated now. At this point we create our heap for dynamic memory
+  // After this we can use new/delete/malloc/free
+  physAllocRange((uint64_t)pFirstFreeByte, 16 * 1024);
+  init_heap(pFirstFreeByte, 16 * 1024);
   
-  // Use PAE?
-  if(iCPUFeatures & CPUID_FT_PAE)
+  // ------------------------------------
+  // Parse settings from the command line
+  if(mbi->flags & (1<<2))
   {
-    // PAE can be enabled/disabled on the command line (if PAE is present)
-    switch(iPAEPolicy)
+    cSettings.parse((char *)mbi->cmdline);
+  }
+
+  // --------
+  // Use PAE?
+  if(CPU::hasPAE())
+  {
+    // PAE can be enabled/disabled on the command line (if present)
+    switch(cSettings.get("PAE"))
     {
-      case PAE_AUTO:
+      case SET_AUTO:
         // PAE will only be enabled if physical memory is located above the 4GiB limit
         // Note: Do we need PAE for page level data execution prevention?
         //       Why not use segment level data execution prevention?
@@ -266,15 +243,15 @@ main(unsigned long magic, multiboot_info_t * mbi)
         else
           bPAEEnabled = false;
         break;
-      case PAE_FORCE_ON:
+      case SET_ON:
         bPAEEnabled = true;
         break;
-      case PAE_FORCE_OFF:
+      case SET_OFF:
         bPAEEnabled = false;
         break;
     };
     
-    // Display PAE status
+    // Display status
     if(bPAEEnabled == true)
       std::cout<<"PAE enabled"<<std::endl;
     else
@@ -285,26 +262,42 @@ main(unsigned long magic, multiboot_info_t * mbi)
     bPAEEnabled = false;
   }
   
+  // ---------
+  // Use APIC?
+  if(CPU::hasAPIC())
+  {
+    // APIC can be enabled/disabled on the command line (if present)
+    switch(cSettings.get("APIC"))
+    {
+      case SET_AUTO:
+      case SET_ON:
+        bAPICEnabled = true;
+        break;
+      case SET_OFF:
+        bAPICEnabled = false;
+        break;
+    };
+    
+    // Display status
+    if(bAPICEnabled == true)
+      std::cout<<"APIC enabled"<<std::endl;
+    else
+      std::cout<<"APIC disabled"<<std::endl;
+  }
+  else
+  {
+    bAPICEnabled = false;
+  }
+  
+  //if(bAPICEnabled == true)
+  //  init_apic();
+
   // ---------------------
   // Setup Paging
   // Setup Task Management
   // ---------------------
   init_task();
   std::cout<<"Paging Enabled!"<<std::endl;
-
-  /*
-  // Boot device
-  if(mbi->flags & (1<<1))
-  {
-    //printf ("boot_device = 0x%x\n", (unsigned) mbi->boot_device);
-  }
-    
-  // Command line
-  if(mbi->flags & (1<<2))
-  {
-    std::cout<<"Command line: "<<(char *)mbi->cmdline<<std::endl;
-  }
-  */
 
   // ------------
   // Load modules

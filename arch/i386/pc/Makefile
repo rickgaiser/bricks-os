@@ -1,8 +1,10 @@
 LIB             =arch
 OBJS            =\
                 entry \
+                apic \
                 arch \
                 aspace \
+                cpuid \
                 descriptor \
                 irq \
                 isrWrapper \
