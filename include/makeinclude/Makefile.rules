@@ -40,21 +40,18 @@ MY_INCL_PATH    += \
                 -I$(BRICKS_ROOT)/include/stl \
                 -I$(BRICKS_ROOT)/include/GL \
 
-MY_LIBS_PATH	+= \
+MY_LIBS_PATH    += \
                 -L$(BRICKS_ROOT)/lib/$(TARGET) \
 
 #----------------------------------------------------------------------------
 CFLAGS          =\
                 -O2 \
                 -Wall \
-		-fno-stack-protector \
                 $(MY_DEFINITIONS) \
 
 CXXFLAGS        =\
                 -O2 \
                 -Wall \
-		-fno-stack-protector \
-                -fno-threadsafe-statics \
                 -fno-rtti \
                 -fno-exceptions \
                 $(MY_DEFINITIONS) \

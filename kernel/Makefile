@@ -10,13 +10,12 @@ OBJS            =\
                 ibmPartitionDriver \
                 interrupt \
                 interruptManager \
-                pthread \
                 settings \
                 task \
                 timeValue \
                 video \
 
-#OBJS-$(CONFIG_MULTITASKING)        += pthread task
+OBJS-$(CONFIG_MULTITASKING)        += pthread # task
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoManager
 OBJS-$(CONFIG_SRR)                 += srr srrTest
 OBJS-$(CONFIG_BUILTIN_MM)          += memoryManager
