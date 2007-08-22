@@ -22,19 +22,21 @@ Bricks-OS
 
 2 -  How to compile
 -------------------
-  Bricks-OS currently compiles using devkitPro (http://www.devkitpro.org/)
-  under windows. It should be able to compile under other operating systems as
-  well but this has not been tested.
   The "BRICKS_ROOT" environment variable is needed for Bricks-OS to compile.
   Pointing to the root directory of the Bricks-OS source.
-  The command line is as follows:
+  After the BRICKS_ROOT has been set, the following command line can be used
+  to build bricks:
     make -f Makefile.${TARGET} clean all
   
-  This will result in a binary located at:
-    $(BRICKS_ROOT)/bin/$(TARGET)/Bricks.elf
-
-  Example (for Gameboy Advance):
+  Examples:
     make -f Makefile.gba clean all
+    make -f Makefile.nds clean all
+    make -f Makefile.ngc clean all
+    make -f Makefile.ps2 clean all
+    make -f Makefile.pc  clean all
+
+  After succesfully building Bricks-OS the binary file will be located at:
+    $(BRICKS_ROOT)/bin/$(TARGET)/Bricks.elf
 
 3 - How to use
 --------------
@@ -45,11 +47,9 @@ Bricks-OS
 
 4 - Supported platforms
 -----------------------
-  Compiles on:
-   - Windows (using devkitPro (http://www.devkitpro.org/))
-  
   Compiles to:
-   - Gameboy Advance (gba)
-   - Nintendo DS (nds)
-   - Playstation2 (ps2)
-   - PC (i386)
+   - Gameboy Advance (gba)   (windows, using devkitPro)
+   - Nintendo DS (nds)       (windows, using devkitPro)
+   - Nintendo GameCube (ngc) (windows, using devkitPro)
+   - Playstation2 (ps2)      (windows, using ps2dev)
+   - i386 or later PC (pc)   (linux, using gcc)
