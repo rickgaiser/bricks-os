@@ -64,6 +64,10 @@ CTaskManager::addTask(CTask * pTask)
 
     iTaskCount_++;
   }
+  else
+  {
+    std::cout<<"CTaskManager::addTask: ERROR: Task list full"<<std::endl;
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -92,7 +96,7 @@ CTaskManager::removeTask(CTask * pTask)
   }
   else
   {
-    std::cout<<"ERROR: Can not kill last task"<<std::endl;
+    std::cout<<"CTaskManager::removeTask: ERROR: Can not kill last task"<<std::endl;
     CCPU::halt();
   }
 }
@@ -101,6 +105,8 @@ CTaskManager::removeTask(CTask * pTask)
 bool
 CTaskManager::schedule()
 {
+  //std::cout<<"CTaskManager::schedule"<<std::endl;
+
   CTask * pPrevTask = CTaskManager::pCurrentTask_;
 
   // Locate the next running task
