@@ -40,7 +40,10 @@ bool
 CIBMPartitionDriver::init(IBlockDevice * device)
 {
   uint8_t * data = new uint8_t[512];
-  int     iPartitionCount(0);
+  int iPartitionCount(0);
+  bool bRetVal(false);
+
+  std::cout<<"CIBMPartitionDriver::init"<<std::endl;
 
   if(device->read(0, 1, data) == true)
   {
@@ -52,10 +55,16 @@ CIBMPartitionDriver::init(IBlockDevice * device)
       {
         if((pTable->record[i].flag == 0x80) || (pTable->record[i].flag == 0x00))
         {
-          iPartitionCount++;
+          if(pTable->record[i].startSector > 0)
+          {
+            iPartitionCount++;
+            bRetVal = true;
 
-          // Add partition to file system
-          CFileSystem::addBlockDevice(new CPartition(device, pTable->record[i].startSector, pTable->record[i].sectorCount));
+            // Add partition to file system
+            CFileSystem::addBlockDevice(new CPartition(device, pTable->record[i].startSector, pTable->record[i].sectorCount));
+          }
+          else
+            std::cout<<" - ERROR: Invalid start sector"<<std::endl;
         }
       }
     }
@@ -67,5 +76,5 @@ CIBMPartitionDriver::init(IBlockDevice * device)
 
   std::cout<<iPartitionCount<<" valid partitions located"<<std::endl;
 
-  return 0;
+  return bRetVal;
 }

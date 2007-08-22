@@ -165,7 +165,7 @@ CFATDriver::init(IBlockDevice * device)
   uint8_t * data = new uint8_t[512];
   bool bRetVal(false);
 
-  std::cout<<"CFATDriver::check"<<std::endl;
+  std::cout<<"CFATDriver::init"<<std::endl;
 
   if(device->read(0, 1, data) == true)
   {

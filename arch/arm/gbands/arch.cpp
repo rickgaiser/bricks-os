@@ -28,6 +28,13 @@
 #include "videoDevice.h"
 #endif // CONFIG_FRAMEBUFFER
 
+#ifdef CONFIG_FILESYSTEM
+#include "kernel/fileSystem.h"
+#include "kernel/ibmPartitionDriver.h"
+#include "kernel/fatDriver.h"
+#include "superCardDriver.h"
+#endif // #ifdef CONFIG_FILESYSTEM
+
 #include "iostream"
 
 
@@ -127,6 +134,17 @@ main(int, char *[])
   setTimerFrequency(0, 100.0f);
   cIRQ.enable(3);
 #endif // CONFIG_MULTITASKING
+
+#ifdef CONFIG_FILESYSTEM
+  CIBMPartitionDriver ibmPartitionDriver;
+  CFATDriver fatDriver;
+  CSuperCardDriver scDriver;
+
+  CFileSystem::addPartitionDriver(&ibmPartitionDriver);
+  CFileSystem::addFileSystemDriver(&fatDriver);
+  scDriver.init();
+  CFileSystem::addBlockDevice(&scDriver);
+#endif // CONFIG_FILESYSTEM
 
   return bricks_main();
 }
