@@ -1,0 +1,9 @@
+INCL_PATH       +=\
+                $(BRICKS_ROOT)/kernel/include \
+                $(BRICKS_ROOT)/kernel/include/include-$(ARCH) \
+                $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET) \
+                $(BRICKS_ROOT)/kernel/include/posix \
+                $(BRICKS_ROOT)/kernel/include/stl \
+
+
+include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

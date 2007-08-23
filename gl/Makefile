@@ -1,6 +1,3 @@
-include $(BRICKS_ROOT)/arch/$(ARCH)/config.$(TARGET)
-
-
 LIB             =gl
 OBJS            =\
                 gl \

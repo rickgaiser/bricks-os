@@ -1,13 +1,11 @@
-include $(BRICKS_ROOT)/arch/$(ARCH)/config.$(TARGET)
+include $(BRICKS_ROOT)/kernel/arch/$(ARCH)/config.$(TARGET)
 
 
 LIB             =arch
 OBJS            =\
                 arch \
-                dsCart \
                 irq \
                 isr \
-                superCardDriver \
                 support \
 
 
@@ -24,4 +22,4 @@ DEFINITIONS-$(CONFIG_GBA_KEYBOARD) += CONFIG_GBA_KEYBOARD
 DEFINITIONS-$(CONFIG_GBA_SERIAL)   += CONFIG_GBA_SERIAL
 
 
-include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU
+include $(BRICKS_ROOT)/include/makeinclude/rules.kernel

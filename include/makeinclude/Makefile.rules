@@ -33,12 +33,7 @@ MY_OBJS         +=$(addprefix $(VDIR),$(addsuffix .o,$(OBJS-y)))
 #----------------------------------------------------------------------------
 MY_INCL_PATH    += \
                 -I. \
-                -I$(BRICKS_ROOT)/include \
-                -I$(BRICKS_ROOT)/include/include-$(ARCH)/include-$(TARGET) \
-                -I$(BRICKS_ROOT)/include/include-$(ARCH) \
-                -I$(BRICKS_ROOT)/include/posix \
-                -I$(BRICKS_ROOT)/include/stl \
-                -I$(BRICKS_ROOT)/include/GL \
+                -I./include \
 
 MY_LIBS_PATH    += \
                 -L$(BRICKS_ROOT)/lib/$(TARGET) \
