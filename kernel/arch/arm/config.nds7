@@ -2,11 +2,14 @@
 CONFIG_MULTITASKING=y
 CONFIG_SRR=y
 
+# File System
+#CONFIG_FILESYSTEM=y
+#CONFIG_FS_FAT=y
+#CONFIG_PD_IBM=y
+
 # Video related configuration
 #CONFIG_FRAMEBUFFER=y
 #CONFIG_GL=y
-#CONFIG_VG=y
-#CONFIG_BWM=y
 
 # Library related configuration
 CONFIG_BUILTIN_MM=y

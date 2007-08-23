@@ -10,8 +10,6 @@ CONFIG_SRR=y
 # Video related configuration
 #CONFIG_FRAMEBUFFER=y
 #CONFIG_GL=y
-#CONFIG_VG=y
-#CONFIG_BWM=y
 
 # Library related configuration
 CONFIG_BUILTIN_MM=y

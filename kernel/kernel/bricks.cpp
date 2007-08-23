@@ -10,11 +10,6 @@
 #include "pthread.h"
 
 
-#ifdef CONFIG_BWM
-extern int bwm(int argc, char * argv[]);
-#endif // CONFIG_BWM
-
-
 #ifdef CONFIG_MULTITASKING
 // -----------------------------------------------------------------------------
 void *
@@ -45,10 +40,6 @@ bricks_main()
   std::cout<<"Interrupts...";
   CCPU::sti();
   std::cout<<"OK"<<std::endl;
-
-#ifdef CONFIG_BWM
-  bwm(0, 0);
-#endif // CONFIG_BWM
 
   // Halt current thread
   // FIXME: Forever consuming CPU time now!
