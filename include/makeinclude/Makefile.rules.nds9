@@ -1,15 +1,43 @@
 #----------------------------------------------------------------------------
 # DS ARM9
 #----------------------------------------------------------------------------
-MY_INCL_PATH	+=\
+MY_INCL_PATH    +=\
 
-MY_LIBS_PATH	+=\
+MY_LIBS_PATH    +=\
 
 #----------------------------------------------------------------------------
 CROSS_COMPILE   =arm-eabi-
-CFLAGS          +=-mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork -falign-functions=32 -DNDS -DNDS9
-CXXFLAGS        +=-mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork -falign-functions=32 -DNDS -DNDS9
-LFLAGS          +=-mthumb -mthumb-interwork -specs=ds_arm9.specs $(MY_LIBS_PATH)
+CFLAGS          +=\
+                -nostdinc \
+                -mcpu=arm9tdmi \
+                -mtune=arm9tdmi \
+                -fomit-frame-pointer \
+                -ffast-math \
+                -mthumb \
+                -mthumb-interwork \
+                -falign-functions=32 \
+                -DNDS \
+                -DNDS9 \
+
+CXXFLAGS        +=\
+                -nostdinc \
+                -mcpu=arm9tdmi \
+                -mtune=arm9tdmi \
+                -fomit-frame-pointer \
+                -ffast-math \
+                -mthumb \
+                -mthumb-interwork \
+                -falign-functions=32 \
+                -DNDS \
+                -DNDS9 \
+
+LFLAGS          +=\
+                -mthumb \
+                -mthumb-interwork \
+                -specs=ds_arm9.specs \
+                $(MY_LIBS_PATH) \
+
+#                -nostdlib \
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS

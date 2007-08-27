@@ -7,9 +7,25 @@ MY_LIBS_PATH    +=\
 
 #----------------------------------------------------------------------------
 CROSS_COMPILE   =powerpc-gekko-
-CFLAGS          +=-mcpu=750 -meabi -mhard-float -DGEKKO
-CXXFLAGS        +=-mcpu=750 -meabi -mhard-float -DGEKKO
-LFLAGS          +=-mcpu=750 -meabi -mhard-float -DGEKKO -mogc  $(MY_LIBS_PATH)
+CFLAGS          +=\
+                -mcpu=750 \
+                -meabi \
+                -mhard-float \
+                -DGEKKO \
+
+CXXFLAGS        +=\
+                -mcpu=750 \
+                -meabi \
+                -mhard-float \
+                -DGEKKO \
+
+LFLAGS          +=\
+                -mcpu=750 \
+                -meabi \
+                -mhard-float \
+                -DGEKKO \
+                -mogc \
+                $(MY_LIBS_PATH) \
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS

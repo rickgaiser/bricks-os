@@ -3,16 +3,25 @@
 #----------------------------------------------------------------------------
 MY_INCL_PATH    +=\
                 -I$(PS2SDK)/ee/include \
-                -I$(PS2SDK)/common/include
+                -I$(PS2SDK)/common/include \
 
 MY_LIBS_PATH    +=\
                 -L$(PS2SDK)/ee/lib \
 
 #----------------------------------------------------------------------------
 CROSS_COMPILE   =ee-
-CFLAGS          +=-D_EE -G0
-CXXFLAGS        +=-D_EE -G0
-LFLAGS          +=-mno-crt0 -T$(BRICKS_ROOT)/include/makeinclude/link.ps2 $(MY_LIBS_PATH)
+CFLAGS          +=\
+                -D_EE \
+                -G0 \
+
+CXXFLAGS        +=\
+                -D_EE \
+                -G0 \
+
+LFLAGS          +=\
+                -mno-crt0 \
+                -T$(BRICKS_ROOT)/include/makeinclude/link.ps2 \
+                $(MY_LIBS_PATH) \
 
 #----------------------------------------------------------------------------
 STARTUP_LIBS    =\

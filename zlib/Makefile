@@ -15,4 +15,4 @@ OBJS            =\
                 zutil \
 
 
-include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU
+include $(BRICKS_ROOT)/include/makeinclude/rules.user

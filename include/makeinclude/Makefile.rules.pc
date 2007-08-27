@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------------
-# i386
+# PC
 #----------------------------------------------------------------------------
 MY_INCL_PATH    +=\
 
@@ -9,19 +9,21 @@ MY_LIBS_PATH    +=\
 CROSS_COMPILE   =
 CFLAGS          +=\
                 -m32 \
-                -nostdlib \
                 -nostdinc \
                 -fno-stack-protector \
 
 CXXFLAGS        +=\
                 -m32 \
-                -nostdlib \
                 -nostdinc \
                 -fno-builtin \
                 -fno-stack-protector \
                 -fno-threadsafe-statics \
 
-LFLAGS          +=-T $(BRICKS_ROOT)/include/makeinclude/link.i386 $(CXXFLAGS) $(MY_LIBS_PATH)
+LFLAGS          +=\
+                -T $(BRICKS_ROOT)/include/makeinclude/link.i386 \
+                -nostdlib \
+                $(CXXFLAGS) \
+                $(MY_LIBS_PATH) \
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS

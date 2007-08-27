@@ -7,9 +7,35 @@ MY_LIBS_PATH    +=\
 
 #----------------------------------------------------------------------------
 CROSS_COMPILE   =arm-eabi-
-CFLAGS          +=-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork -falign-functions=32 -DGBA
-CXXFLAGS        +=-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork -falign-functions=32 -DGBA
-LFLAGS          +=-mthumb -mthumb-interwork -specs=gba.specs $(MY_LIBS_PATH)
+CFLAGS          +=\
+                -nostdinc \
+                -mcpu=arm7tdmi \
+                -mtune=arm7tdmi \
+                -fomit-frame-pointer \
+                -ffast-math \
+                -mthumb \
+                -mthumb-interwork \
+                -falign-functions=32 \
+                -DGBA \
+
+CXXFLAGS        +=\
+                -nostdinc \
+                -mcpu=arm7tdmi \
+                -mtune=arm7tdmi \
+                -fomit-frame-pointer \
+                -ffast-math \
+                -mthumb \
+                -mthumb-interwork \
+                -falign-functions=32 \
+                -DGBA \
+
+LFLAGS          +=\
+                -mthumb \
+                -mthumb-interwork \
+                -specs=gba.specs \
+                $(MY_LIBS_PATH) \
+
+#                -nostdlib \
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS

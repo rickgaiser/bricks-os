@@ -1,7 +1,5 @@
 DIRS            =\
                 kernel \
-                zlib \
-                libpng \
 
 LIBS            =\
                 arch \
