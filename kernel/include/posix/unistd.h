@@ -21,12 +21,12 @@ typedef int ssize_t;
 
 
 //int brk(void * addr);
-int close(int iFD);
+//int close(int iFD);
 //void _exit(int iStatus);
-ssize_t read(int iFD, void * pBuf, size_t size);
+//ssize_t read(int iFD, void * pBuf, size_t size);
 //char * sbrk(intptr_t increment);
 //unsigned int sleep(unsigned int iSeconds);
-ssize_t write(int iFD, const void * pBuf, size_t size);
+//ssize_t write(int iFD, const void * pBuf, size_t size);
 
 
 #ifdef __cplusplus
