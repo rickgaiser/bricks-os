@@ -1,6 +1,6 @@
 #include "serial.h"
+#include "kernel/debug.h"
 #include "kernel/interruptManager.h"
-#include "iostream"
 
 
 // -----------------------------------------------------------------------------
@@ -57,18 +57,18 @@ CGBASerial::isr(int irq)
   {
     case SIO_8BIT_MODE:
     {
-      std::cout<<(char)REG_SIODATA8;
+      printk("%c", (char)REG_SIODATA8);
       break;
     }
     case SIO_32BIT_MODE:
     {
-      std::cout<<(char)REG_SIODATA32;
+      printk("%c", (char)REG_SIODATA32);
       break;
     }
     case SIO_UART_MODE:
     {
       if((REG_SIOCNT & SIO_UART_RECV_EMPTY) == false)
-        std::cout<<(char)REG_SIODATA8;
+        printk("%c", (char)REG_SIODATA8);
       break;
     }
     default:

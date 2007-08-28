@@ -1,14 +1,11 @@
+#include "kernel/debug.h"
 #include "kernel/task.h"
 #include "asm/cpu.h"
-#include "iostream"
 
 
 uint32_t  CTaskManager::iTaskCount_(0);
 CTask   * CTaskManager::pCurrentTask_ = 0;
 CTask   * CTaskManager::taskTable_[MAX_TASK_COUNT];
-
-IFileIO * pSTDIN = 0;
-IFileIO * pSTDOUT = 0;
 
 
 // -----------------------------------------------------------------------------
@@ -35,7 +32,7 @@ CTask::~CTask()
 void
 CTaskManager::addTask(CTask * pTask)
 {
-  //std::cout<<"CTaskManager::addTask"<<std::endl;
+  //printk("CTaskManager::addTask\n");
 
   if(iTaskCount_ == 0)
   {
@@ -66,7 +63,7 @@ CTaskManager::addTask(CTask * pTask)
   }
   else
   {
-    std::cout<<"CTaskManager::addTask: ERROR: Task list full"<<std::endl;
+    printk("CTaskManager::addTask: ERROR: Task list full\n");
   }
 }
 
@@ -74,7 +71,7 @@ CTaskManager::addTask(CTask * pTask)
 void
 CTaskManager::removeTask(CTask * pTask)
 {
-  //std::cout<<"CTaskManager::removeTask"<<std::endl;
+  //printk("CTaskManager::removeTask\n");
 
   if(pTask != pTask->next)
   {
@@ -96,7 +93,7 @@ CTaskManager::removeTask(CTask * pTask)
   }
   else
   {
-    std::cout<<"CTaskManager::removeTask: ERROR: Can not kill last task"<<std::endl;
+    printk("CTaskManager::removeTask: ERROR: Can not kill last task\n");
     CCPU::halt();
   }
 }
@@ -105,7 +102,7 @@ CTaskManager::removeTask(CTask * pTask)
 bool
 CTaskManager::schedule()
 {
-  //std::cout<<"CTaskManager::schedule"<<std::endl;
+  //printk("CTaskManager::schedule\n");
 
   CTask * pPrevTask = CTaskManager::pCurrentTask_;
 
@@ -117,18 +114,4 @@ CTaskManager::schedule()
   CTaskManager::pCurrentTask_->eState_ = TS_RUNNING;
 
   return pPrevTask != CTaskManager::pCurrentTask_;
-}
-
-// -----------------------------------------------------------------------------
-void
-CTaskManager::setStandardInput(IFileIO * stdin)
-{
-  pSTDIN = stdin;
-}
-
-// -----------------------------------------------------------------------------
-void
-CTaskManager::setStandardOutput(IFileIO * stdout)
-{
-  pSTDOUT = stdout;
 }

@@ -1,5 +1,4 @@
 #include "videoDevice.h"
-#include "iostream"
 #include <dma.h>
 #include <graph.h>
 

@@ -1,5 +1,5 @@
+#include "kernel/debug.h"
 #include "kernel/fatDriver.h"
-#include "iostream"
 
 
 //#define LE16(x)  (((x<<8)&0xff00)|((x>>8)&0x00ff))
@@ -104,43 +104,43 @@ CFAT::init()
 
         if(iClusterCount < 4085)
         {
-          std::cout<<" - FAT12 Detected"<<std::endl;
+          printk(" - FAT12 Detected\n");
           pBPB->BS_OEMName[7] = 0;
           pBPB16->BS_VolLab[10] = 0;
           pBPB16->BS_FilSysType[7] = 0;
-          std::cout<<" - OEM Name:       "<<pBPB->BS_OEMName<<std::endl;
-          std::cout<<" - Volume Label:   "<<pBPB16->BS_VolLab<<std::endl;
-          std::cout<<" - FS Type:        "<<pBPB16->BS_FilSysType<<std::endl;
+          printk(" - OEM Name:       %s\n", pBPB->BS_OEMName);
+          printk(" - Volume Label:   %s\n", pBPB16->BS_VolLab);
+          printk(" - FS Type:        %s\n", pBPB16->BS_FilSysType);
         }
         else if(iClusterCount < 65525)
         {
-          std::cout<<" - FAT16 Detected"<<std::endl;
+          printk(" - FAT16 Detected\n");
           pBPB->BS_OEMName[7] = 0;
           pBPB16->BS_VolLab[10] = 0;
           pBPB16->BS_FilSysType[7] = 0;
-          std::cout<<" - OEM Name:       "<<pBPB->BS_OEMName<<std::endl;
-          std::cout<<" - Volume Label:   "<<pBPB16->BS_VolLab<<std::endl;
-          std::cout<<" - FS Type:        "<<pBPB16->BS_FilSysType<<std::endl;
+          printk(" - OEM Name:       %s\n", pBPB->BS_OEMName);
+          printk(" - Volume Label:   %s\n", pBPB16->BS_VolLab);
+          printk(" - FS Type:        %s\n", pBPB16->BS_FilSysType);
         }
         else
         {
-          std::cout<<" - FAT32 Detected"<<std::endl;
+          printk(" - FAT32 Detected\n");
           pBPB->BS_OEMName[7] = 0;
           pBPB32->BS_VolLab[10] = 0;
           pBPB32->BS_FilSysType[7] = 0;
-          std::cout<<" - OEM Name:       "<<pBPB->BS_OEMName<<std::endl;
-          std::cout<<" - Volume Label:   "<<pBPB32->BS_VolLab<<std::endl;
-          std::cout<<" - FS Type:        "<<pBPB32->BS_FilSysType<<std::endl;
+          printk(" - OEM Name:       %s\n", pBPB->BS_OEMName);
+          printk(" - Volume Label:   %s\n", pBPB32->BS_VolLab);
+          printk(" - FS Type:        %s\n", pBPB32->BS_FilSysType);
         }
       }
       else
-        std::cout<<" - ERROR: Unable to locate boot sector"<<std::endl;
+        printk(" - ERROR: Unable to locate boot sector\n");
     }
     else
-      std::cout<<" - ERROR: Invalid boot signature"<<std::endl;
+      printk(" - ERROR: Invalid boot signature\n");
   }
   else
-    std::cout<<" - ERROR: Unable to read sector"<<std::endl;
+    printk(" - ERROR: Unable to read sector\n");
 
 
   return 0;
@@ -165,7 +165,7 @@ CFATDriver::init(IBlockDevice * device)
   uint8_t * data = new uint8_t[512];
   bool bRetVal(false);
 
-  std::cout<<"CFATDriver::init"<<std::endl;
+  printk("CFATDriver::init\n");
 
   if(device->read(0, 1, data) == true)
   {
@@ -183,13 +183,13 @@ CFATDriver::init(IBlockDevice * device)
         bRetVal = true;
       }
       else
-        std::cout<<" - ERROR: \"FAT\" string not found"<<std::endl;
+        printk(" - ERROR: \"FAT\" string not found\n");
     }
     else
-      std::cout<<" - ERROR: Invalid boot signature"<<std::endl;
+      printk(" - ERROR: Invalid boot signature\n");
   }
   else
-    std::cout<<" - ERROR: Unable to read sector"<<std::endl;
+    printk(" - ERROR: Unable to read sector\n");
 
 
   return bRetVal;

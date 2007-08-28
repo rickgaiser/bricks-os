@@ -1,4 +1,5 @@
 #include "kernel/bricks.h"
+#include "kernel/debug.h"
 #include "kernel/elf.h"
 #include "kernel/memoryManager.h"
 #include "kernel/settings.h"
@@ -19,7 +20,6 @@
 #include "task.h"
 
 #include "string.h"
-#include "iostream"
 
 
 extern char       start_text;
@@ -45,12 +45,12 @@ loadELF32(void * file, CPCTask & task)
 {
   static const char magic[] = {0x7f, 0x45, 0x4c, 0x46, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   Elf32_Ehdr * hdr = (Elf32_Ehdr *)file;
-  
+
   // Check header magic
   for(int i(0); i < 16; i++)
     if(magic[i] != hdr->e_ident[i])
       return -1;
-     
+
   // Load Sections
   for(int i(0); i < hdr->e_phnum; i++)
   {
@@ -58,26 +58,20 @@ loadELF32(void * file, CPCTask & task)
     switch(seg->p_type)
     {
       case SHT_PROGBITS:
-        std::cout<<" - "
-                 <<"vaddr: "<<seg->p_vaddr
-        //         <<", paddr: "<<seg->p_paddr
-                 <<", foff: "<<seg->p_offset
-                 <<", fsize: "<<seg->p_filesz
-                 <<", msize: "<<seg->p_memsz
-                 <<std::endl;
+        printk(" - vaddr: %d, foff: %d, fsize: %d, msize: %d\n", seg->p_vaddr, seg->p_offset, seg->p_filesz, seg->p_memsz);
         task.aspace().addSection((char *)seg->p_vaddr, (char *)file + seg->p_offset, seg->p_filesz);
         break;
       default:
-        std::cout<<"Unable to load segment type: "<<seg->p_type<<std::endl;
+        printk("Unable to load segment type: %d\n", seg->p_type);
         return -1;
-    };    
+    };
   }
-  
+
   // Set task entry point
   task.entry((void *)hdr->e_entry);
   task.eState_ = TS_READY;
   CTaskManager::addTask(&task);
-  
+
   return 0;
 }
 
@@ -100,8 +94,8 @@ main(unsigned long magic, multiboot_info_t * mbi)
   if(cKeyboard.init() == -1)
     iRetVal = -1;
 
-  CTaskManager::setStandardOutput(&cVideo);
-  CTaskManager::setStandardInput(&cKeyboard);
+  pDebug = &cVideo;
+  //CTaskManager::setStandardInput(&cKeyboard);
 
   // ---------------------------------------
   // Miltiboot loader and memorymap required
@@ -109,13 +103,13 @@ main(unsigned long magic, multiboot_info_t * mbi)
   {
     if((mbi->flags & (1<<6)) == 0)
     {
-      std::cout<<"ERROR: No multiboot memory map present"<<std::endl;
+      printk("ERROR: No multiboot memory map present\n");
       CCPU::halt();
     }
   }
   else
   {
-    std::cout<<"ERROR: Multiboot loader information not present"<<std::endl;
+    printk("ERROR: Multiboot loader information not present\n");
     CCPU::halt();
   }
 
@@ -131,10 +125,10 @@ main(unsigned long magic, multiboot_info_t * mbi)
   // 0x02 reserved, not available (e.g. system ROM, memory-mapped device)
   // 0x03 ACPI Reclaim Memory (usable by OS after reading ACPI tables) (60 KiB ?)
   // 0x04 ACPI NVS Memory (OS is required to save this memory between NVS sessions) (4 KiB ?)
-  //std::cout<<"Memory Map:"<<std::endl;
+  //printk("Memory Map:\n");
   for(memory_map_t * mmap = (memory_map_t *) mbi->mmap_addr; (unsigned long)mmap < mbi->mmap_addr + mbi->mmap_length; mmap = (memory_map_t *) ((unsigned long)mmap + mmap->size + sizeof (mmap->size)))
   {
-    //std::cout<<" - Type: "<<mmap->type<<", Addr: "<<mmap->base_addr_low<<", Size: "<<mmap->length_low<<std::endl;
+    //printk(" - Type: %d, Addr: %d, Size: %d\n", mmap->type, mmap->base_addr_low, mmap->length_low);
     // Determine top of memory
     // Determine free memory
     if(mmap->type == 1)
@@ -147,15 +141,15 @@ main(unsigned long magic, multiboot_info_t * mbi)
 
   if(iMemFree < (2 * 1024 * 1024))
   {
-    std::cout<<"ERROR: "<<iMemFree/1024<<"KiB free memory, need at least 2048KiB"<<std::endl;
+    printk("ERROR: %dKiB free memory, need at least 2048KiB\n", iMemFree/1024);
     CCPU::halt();
   }
 
   iMemReserved = iMemTop - iMemFree;
   iMemPageCount = iMemTop / 4096;
-  
+
   // Kernel location and size
-  //std::cout<<"Kernel: start: "<<(unsigned int)&start_text<<", size: "<<(unsigned int)&end_bss - (unsigned int)&start_text<<std::endl;
+  //printk("Kernel: start: %d, size: %d\n", (unsigned int)&start_text, (unsigned int)&end_bss - (unsigned int)&start_text);
   if((unsigned char *)&end_bss > pFirstFreeByte)
     pFirstFreeByte = (unsigned char *)&end_bss;
   // Module location and size
@@ -164,7 +158,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
     module_t * mod = (module_t *) mbi->mods_addr;
     for(unsigned int i(0); i < mbi->mods_count; i++, mod++)
     {
-      //std::cout<<"Module: start: "<<mod->mod_start<<", size: "<<mod->mod_end - mod->mod_start<<std::endl;
+      //printk("Module: start: %d, size: %d\n", mod->mod_start, mod->mod_end - mod->mod_start);
       if((unsigned char *)mod->mod_end > pFirstFreeByte)
         pFirstFreeByte = (unsigned char *)mod->mod_end;
     }
@@ -173,9 +167,9 @@ main(unsigned long magic, multiboot_info_t * mbi)
   // Create physical memory map, all pages will be initially marked used
   uint8_t * pMemoryMap = pFirstFreeByte;
   init_mmap(pMemoryMap, iMemPageCount);
-  //std::cout<<"MemMap: start: "<<(unsigned int)pFirstFreeByte<<", size: "<<iMemPageCount<<std::endl;
+  //printk("MemMap: start: %d, size: %d\n", (unsigned int)pFirstFreeByte, iMemPageCount);
   pFirstFreeByte += iMemPageCount;
-  
+
   // Free memory that multiboot/bios reports available
   for(memory_map_t * mmap = (memory_map_t *) mbi->mmap_addr; (unsigned long)mmap < mbi->mmap_addr + mbi->mmap_length; mmap = (memory_map_t *) ((unsigned long)mmap + mmap->size + sizeof (mmap->size)))
     if(mmap->type == 1)
@@ -194,13 +188,13 @@ main(unsigned long magic, multiboot_info_t * mbi)
   }
   // Allocate memory map
   physAllocRange((uint64_t)pMemoryMap, iMemPageCount);
-  
+
   // ----------------
   // Setup Interrupts
   // ----------------
   // Allocate & Create IDT (Max.: 8-Byte *  256 =  2-KiB)
   physAllocRange((uint64_t)pFirstFreeByte, sizeof(SDescriptor) *  256);
-  //std::cout<<"IDT   : start: "<<(unsigned int)pFirstFreeByte<<", size: "<<sizeof(SDescriptor) * 256<<std::endl;
+  //printk("IDT   : start: %d, size: %d\n", (unsigned int)pFirstFreeByte, sizeof(SDescriptor) * 256);
   init_idt((SDescriptor *)pFirstFreeByte,  256);
   pFirstFreeByte += sizeof(SDescriptor) *  256;
 
@@ -211,15 +205,15 @@ main(unsigned long magic, multiboot_info_t * mbi)
   pFirstFreeByte = (unsigned char *)PAGE_ALIGN_UP_4K(pFirstFreeByte);
   // Allocate & Create GDT (Max.: 8-Byte * 8192 = 64-KiB)
   physAllocRange((uint64_t)pFirstFreeByte, sizeof(SDescriptor) * 8192);
-  //std::cout<<"GDT   : start: "<<(unsigned int)pFirstFreeByte<<", size: "<<sizeof(SDescriptor) * 8192<<std::endl;
+  //printk("GDT   : start: %d, size: %d\n", (unsigned int)pFirstFreeByte, sizeof(SDescriptor) * 8192);
   init_gdt((SDescriptor *)pFirstFreeByte, 8192);
   pFirstFreeByte += sizeof(SDescriptor) * 8192;
-  
+
   // All static memory has been allocated now. At this point we create our heap for dynamic memory
   // After this we can use new/delete/malloc/free
   physAllocRange((uint64_t)pFirstFreeByte, 16 * 1024);
   init_heap(pFirstFreeByte, 16 * 1024);
-  
+
   // ------------------------------------
   // Parse settings from the command line
   if(mbi->flags & (1<<2))
@@ -250,18 +244,18 @@ main(unsigned long magic, multiboot_info_t * mbi)
         bPAEEnabled = false;
         break;
     };
-    
+
     // Display status
     if(bPAEEnabled == true)
-      std::cout<<"PAE enabled"<<std::endl;
+      printk("PAE enabled\n");
     else
-      std::cout<<"PAE disabled"<<std::endl;
+      printk("PAE disabled\n");
   }
   else
   {
     bPAEEnabled = false;
   }
-  
+
   // ---------
   // Use APIC?
   if(CPU::hasAPIC())
@@ -277,18 +271,18 @@ main(unsigned long magic, multiboot_info_t * mbi)
         bAPICEnabled = false;
         break;
     };
-    
+
     // Display status
     if(bAPICEnabled == true)
-      std::cout<<"APIC enabled"<<std::endl;
+      printk("APIC enabled\n");
     else
-      std::cout<<"APIC disabled"<<std::endl;
+      printk("APIC disabled\n");
   }
   else
   {
     bAPICEnabled = false;
   }
-  
+
   //if(bAPICEnabled == true)
   //  init_apic();
 
@@ -297,37 +291,37 @@ main(unsigned long magic, multiboot_info_t * mbi)
   // Setup Task Management
   // ---------------------
   init_task();
-  std::cout<<"Paging Enabled!"<<std::endl;
+  printk("Paging Enabled!\n");
 
   // ------------
   // Load modules
   // ------------
   if((mbi->flags & (1<<3)) && ((int)mbi->mods_count > 0))
   {
-    //std::cout<<"Found Modules: "<<(int)mbi->mods_count<<std::endl;
+    //printk("Found Modules: %d\n", (int)mbi->mods_count);
     module_t * mod = (module_t *) mbi->mods_addr;
     for(unsigned int i(0); i < mbi->mods_count; i++, mod++)
     {
-      std::cout<<"Loading: "<<(char *)mod->string<<std::endl;
-        
+      printk("Loading: %s\n", (char *)mod->string);
+
       // Try to load as elf32 file
       taskTest.init();
       taskTest.aspace().addRange(taskMain.aspace(), 0, 0x00400000);  // Bottom 4MiB
       if(loadELF32((void *)mod->mod_start, taskTest) == 0)
-        std::cout<<" - Done"<<std::endl;
+        printk(" - Done\n");
       else
-        std::cout<<" - Unknown File"<<std::endl;
+        printk(" - Unknown File\n");
     }
   }
-  
+
   // Enable Timer IRQ
   cIRQ.enable(0x20);
-  
+
   iMemKernel = iMemTop - iMemReserved - (freePageCount() * 4096);
-  std::cout<<"Memory size:     "<<iMemTop/1024<<"KiB"<<std::endl;
-  std::cout<<"Memory reserved: "<<iMemReserved/1024<<"KiB"<<std::endl;
-  std::cout<<"Memory kernel:   "<<iMemKernel/1024<<"KiB"<<std::endl;
-  std::cout<<"Memory free:     "<<freePageCount() * 4<<"KiB"<<std::endl;
+  printk("Memory size:     %dKiB\n", iMemTop/1024);
+  printk("Memory reserved: %dKiB\n", iMemReserved/1024);
+  printk("Memory kernel:   %dKiB\n", iMemKernel/1024);
+  printk("Memory free:     %dKiB\n", freePageCount() * 4);
 
   return bricks_main();
 }

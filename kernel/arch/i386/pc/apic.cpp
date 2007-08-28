@@ -2,7 +2,7 @@
 #include "cpuid.h"
 #include "hal.h"
 #include "task.h"
-#include "iostream"
+#include "kernel/debug.h"
 
 
 extern CPCTask taskMain;
@@ -15,10 +15,10 @@ init_apic()
   if(CPU::hasAPIC())
   {
     taskMain.aspace().identityMap((void *)(0xfee00000), 4 * 1024);  // Identity Map APIC
-    
-    std::cout<<"APIC:"<<std::endl;
-    std::cout<<" - ID:      "<<(*pApicID >> 24)<<std::endl;
-    std::cout<<" - Version: "<<(*pApicVersion & 0xff)<<std::endl;
+
+    printk("APIC:\n");
+    printk(" - ID:      %d\n", *pApicID >> 24);
+    printk(" - Version: %d\n", *pApicVersion & 0xff);
   }
 }
 

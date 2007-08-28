@@ -1,5 +1,5 @@
+#include "kernel/debug.h"
 #include "kernel/srr.h"
-#include "iostream"
 #include "pthread.h"
 
 /*
@@ -7,23 +7,23 @@
 void *
 server(void * arg)
 {
-  std::cout<<"SRR Server"<<std::endl;
+  printk("SRR Server\n");
 
   char recvBuffer[20];
   if(msgReceive(scTEST, recvBuffer, 20) >= 0)
   {
-    std::cout<<"server: "<<recvBuffer<<std::endl;
+    printk("server: %d\n", recvBuffer);
     if(msgReply(scTEST, 0, "SRV", 4) >= 0)
     {
     }
     else
     {
-      std::cout<<"server: msgReply error"<<std::endl;
+      printk("server: msgReply error\n");
     }
   }
   else
   {
-    std::cout<<"server: msgReceive error"<<std::endl;
+    printk("server: msgReceive error\n");
   }
 
   return 0;
@@ -33,24 +33,24 @@ server(void * arg)
 int
 srrTest(int argc, char * argv[])
 {
-  std::cout<<"SRR Client"<<std::endl;
+  printk("SRR Client\n");
 
   // Create server thread
   pthread_t thrServer;
   if(pthread_create(&thrServer, 0, server, 0) != 0)
-    std::cout<<"ERROR: Unable to create thread!"<<std::endl;
+    printk("ERROR: Unable to create thread!\n");
 
   // Send message to server
   char recvBuffer[20];
   if(msgSend(scTEST, "SRR", 4, recvBuffer, 20) >= 0)
   {
-    std::cout<<"client: "<<recvBuffer<<std::endl;
+    printk("client: %d\n", recvBuffer);
   }
   else
   {
-    std::cout<<"client: msgSend error"<<std::endl;
+    printk("client: msgSend error\n");
   }
 
   return 0;
-}*/
-
+}
+*/

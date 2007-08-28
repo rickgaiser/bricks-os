@@ -1,7 +1,7 @@
 #include "videoDevice.h"
 #include "asm/arch/registers.h"
 #include "asm/arch/macros.h"
-#include "iostream"
+#include "kernel/debug.h"
 
 
 volatile bool bSwap(false);
@@ -129,7 +129,7 @@ CGBAVideoDevice::getMode(SVideoMode ** mode)
 void
 CGBAVideoDevice::setMode(const SVideoMode * mode)
 {
-//  std::cout<<"Mode set to: "<<mode->xres<<"x"<<mode->yres<<"x"<<mode->bitsPerPixel<<std::endl;
+//  printk("Mode set to: %dx%dx%d\n", mode->xres, mode->yres, mode->bitsPerPixel);
 #ifdef GBA
   if(mode->xres == 240)
   {

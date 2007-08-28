@@ -1,10 +1,10 @@
+#include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "kernel/srr.h"
 #include "kernel/task.h"
 #include "asm/cpu.h"
 #include "asm/irq.h"
 #include "hal.h"
-#include "iostream"
 
 
 #define PIC_MASTER_BASE 0x20  // Base IO addr
@@ -18,7 +18,7 @@
 extern "C" void
 isr(pt_regs * regs)
 {
-  //std::cout<<">>isr"<<std::endl;
+  //printk(">>isr\n");
 
   static const char * msg[] =
   {
@@ -75,7 +75,7 @@ isr(pt_regs * regs)
     // (0x30 - 0x30) Soft interrupts
     "Syscall"
   };
-  
+
   switch(regs->iIntNumber)
   {
     // Handle CPU interrupts
@@ -111,7 +111,7 @@ isr(pt_regs * regs)
     case 0x1d:
     case 0x1e:
     case 0x1f:
-      std::cout<<"CPU Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<", addr: "<<regs->eip<<std::endl;
+      printk("CPU Interrupt(%d): %s, addr: %d\n", regs->iIntNumber, msg[regs->iIntNumber], regs->eip);
       CCPU::halt();
       break;
 
@@ -138,7 +138,7 @@ isr(pt_regs * regs)
     case 0x2d:
     case 0x2e:
     case 0x2f:
-      //std::cout<<"IRQ Interrupt("<<regs->iIntNumber<<"): "<<msg[regs->iIntNumber]<<std::endl;
+      //printk("IRQ Interrupt(%d): %s\n", regs->iIntNumber, msg[regs->iIntNumber]);
       CInterruptManager::isr(regs->iIntNumber, regs);
       break;
 
@@ -148,19 +148,19 @@ isr(pt_regs * regs)
       switch(regs->eax)
       {
         case 1:
-          std::cout<<"msgSend"<<std::endl;
+          printk("msgSend\n");
           regs->eax = k_msgSend((int)regs->ebx, (const void *)regs->ecx, (int)regs->edx, (void *)regs->edi, (int)regs->esi);
           break;
         case 2:
-          std::cout<<"msgReceive"<<std::endl;
+          printk("msgReceive\n");
           regs->eax = k_msgReceive((int)regs->ebx, (void *)regs->ecx, (int)regs->edx);
           break;
         case 3:
-          std::cout<<"msgReply"<<std::endl;
+          printk("msgReply\n");
           regs->eax = k_msgReply((int)regs->ebx, (int)regs->ecx, (const void *)regs->edx, (int)regs->edi);
           break;
         default:
-          std::cout<<"ERROR: Unknown int 0x30 System Call("<<regs->eax<<")"<<std::endl;
+          printk("ERROR: Unknown int 0x30 System Call(%d)\n", regs->eax);
       };
       break;
     }
@@ -176,21 +176,21 @@ isr(pt_regs * regs)
           break;
         case 4:
           // write
-          std::cout<<(char *)regs->ecx;
+          printk((char *)regs->ecx);;
           break;
         default:
-          std::cout<<"ERROR: Unknown int 0x80 System Call("<<regs->eax<<")"<<std::endl;
+          printk("ERROR: Unknown int 0x80 System Call(%d)\n", regs->eax);
       };
       break;
     }
-    
+
     // Handle unknown interrupts
     default:
-      std::cout<<"Unknown Interrupt("<<regs->iIntNumber<<")"<<std::endl;
+      printk("Unknown Interrupt(%d)\n", regs->iIntNumber);
       CCPU::halt();
   };
 
-  //std::cout<<"<<isr"<<std::endl;
+  //printk("<<isr\n");
 }
 
 // -----------------------------------------------------------------------------

@@ -1,9 +1,0 @@
-#ifndef IOSTREAM_H
-#define IOSTREAM_H
-
-
-#include "istream"
-#include "ostream"
-
-
-#endif

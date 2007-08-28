@@ -1,5 +1,5 @@
+#include "kernel/debug.h"
 #include "kernel/fileSystem.h"
-#include "iostream"
 #include "string.h"
 
 
@@ -49,7 +49,7 @@ CPartition::write(uint32_t startSector, uint32_t sectorCount, const void * data)
 void
 CFileSystem::addBlockDevice(IBlockDevice * device)
 {
-  std::cout<<"CFileSystem::addBlockDevice"<<std::endl;
+  printk("CFileSystem::addBlockDevice\n");
 
   // Check if device is already in the list
   // ...
@@ -72,14 +72,14 @@ CFileSystem::addBlockDevice(IBlockDevice * device)
 void
 CFileSystem::remBlockDevice(IBlockDevice * device)
 {
-  std::cout<<"CFileSystem::remBlockDevice"<<std::endl;
+  printk("CFileSystem::remBlockDevice\n");
 }
 
 // -----------------------------------------------------------------------------
 void
 CFileSystem::addPartitionDriver(IPartitionDriver * driver)
 {
-  std::cout<<"CFileSystem::addPartitionDriver"<<std::endl;
+  printk("CFileSystem::addPartitionDriver\n");
 
   // Check if driver is already in the list
   // ...
@@ -95,14 +95,14 @@ CFileSystem::addPartitionDriver(IPartitionDriver * driver)
 void
 CFileSystem::remPartitionDriver(IPartitionDriver * driver)
 {
-  std::cout<<"CFileSystem::remPartitionDriver"<<std::endl;
+  printk("CFileSystem::remPartitionDriver\n");
 }
 
 // -----------------------------------------------------------------------------
 void
 CFileSystem::addFileSystemDriver(IFileSystemDriver * driver)
 {
-  std::cout<<"CFileSystem::addFileSystemDriver"<<std::endl;
+  printk("CFileSystem::addFileSystemDriver\n");
 
   // Check if driver is already in the list
   // ...
@@ -118,14 +118,14 @@ CFileSystem::addFileSystemDriver(IFileSystemDriver * driver)
 void
 CFileSystem::remFileSystemDriver(IFileSystemDriver * driver)
 {
-  std::cout<<"CFileSystem::remFileSystemDriver"<<std::endl;
+  printk("CFileSystem::remFileSystemDriver\n");
 }
 
 // -----------------------------------------------------------------------------
 void
 CFileSystem::mount(IMountPoint * point, const char * location)
 {
-  std::cout<<"CFileSystem::mount"<<std::endl;
+  printk("CFileSystem::mount\n");
 
   // Check if already mounted
   // ...
@@ -143,12 +143,12 @@ CFileSystem::mount(IMountPoint * point, const char * location)
 void
 CFileSystem::unmount(IMountPoint * point)
 {
-  std::cout<<"CFileSystem::unmount"<<std::endl;
+  printk("CFileSystem::unmount\n");
 }
 
 // -----------------------------------------------------------------------------
 void
 CFileSystem::unmount(const char * location)
 {
-  std::cout<<"CFileSystem::unmount"<<std::endl;
+  printk("CFileSystem::unmount\n");
 }

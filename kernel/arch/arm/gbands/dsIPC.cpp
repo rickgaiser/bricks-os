@@ -1,6 +1,6 @@
 #include "dsIPC.h"
+#include "kernel/debug.h"
 #include "kernel/interruptManager.h"
-#include "iostream"
 #include "asm/arch/registers.h"
 
 
@@ -38,15 +38,15 @@ CDSIPC::init()
 int
 CDSIPC::isr(int irq)
 {
-//  std::cout<<"CDSIPC::isr"<<std::endl;
+//  printk("CDSIPC::isr\n");
 
   switch(irq)
   {
     case 16:
-      std::cout<<"CDSIPC::isr: IPC int received"<<std::endl;
+      printk("CDSIPC::isr: IPC int received\n");
       break;
     case 17:
-      std::cout<<"CDSIPC::isr: send buf empty int received"<<std::endl;
+      printk("CDSIPC::isr: send buf empty int received\n");
       break;
     case 18:
       while(!(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY))
@@ -56,7 +56,7 @@ CDSIPC::isr(int irq)
       }
       break;
     default:
-      std::cout<<"CDSIPC::isr: ERROR: unknown interrupt"<<std::endl;
+      printk("CDSIPC::isr: ERROR: unknown interrupt\n");
   }
 
   return 0;

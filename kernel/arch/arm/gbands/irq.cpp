@@ -1,8 +1,8 @@
+#include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "kernel/task.h"
 #include "task.h"
 #include "asm/irq.h"
-#include "iostream"
 
 
 
@@ -15,7 +15,7 @@ extern "C" void __isr();
 extern "C" void
 isr(pt_regs * regs)
 {
-//  std::cout<<"isr("<<(uint32_t)regs<<')'<<std::endl;
+//  printk("isr(%d)\n", (uint32_t)regs);
 
   // Find out who triggered the interrupt
   unsigned long iFlags(REG_IF & REG_IE);

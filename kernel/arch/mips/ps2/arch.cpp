@@ -11,7 +11,6 @@
 extern char _end;
 extern char _heap_size;
 
-IFileIO          cDummy;
 CPS2Video        cVideo;
 
 #ifdef CONFIG_FRAMEBUFFER
@@ -31,9 +30,7 @@ main(int, char *[])
   if(cVideo.init() == -1)
     iRetVal = -1;
 
-  // Set standard in/out for tasks
-  CTaskManager::setStandardOutput(&cVideo);
-  CTaskManager::setStandardInput(&cDummy);
+  pDebug = &cVideo;
 
 #ifdef CONFIG_FRAMEBUFFER
   pVideoDevice = new CPS2VideoDevice;

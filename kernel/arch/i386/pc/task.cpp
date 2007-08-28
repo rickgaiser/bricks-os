@@ -2,7 +2,6 @@
 #include "descriptor.h"
 #include "kernel/task.h"
 #include "string.h"
-#include "iostream"
 
 
 extern bool bPAEEnabled;
@@ -33,7 +32,7 @@ init_task()
 
   // Set the current running tasks TSS
   setTR(taskMain.selTSS_);
-  
+
   // Add task to taskmanagers list
   taskMain.eState_ = TS_READY;
   CTaskManager::addTask(&taskMain);
@@ -73,7 +72,7 @@ CPCTask::init()
     tss_.ds   = selDataUserTmp;
     tss_.fs   = selDataUserTmp;
     tss_.gs   = selDataUserTmp;
-  
+
     // Create descriptor for TSS
     selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)&tss_, sizeof(STaskStateSegment));
 

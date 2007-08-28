@@ -1,5 +1,5 @@
+#include "kernel/debug.h"
 #include "kernel/ibmPartitionDriver.h"
-#include "iostream"
 
 
 // -----------------------------------------------------------------------------
@@ -43,7 +43,7 @@ CIBMPartitionDriver::init(IBlockDevice * device)
   int iPartitionCount(0);
   bool bRetVal(false);
 
-  std::cout<<"CIBMPartitionDriver::init"<<std::endl;
+  printk("CIBMPartitionDriver::init\n");
 
   if(device->read(0, 1, data) == true)
   {
@@ -64,17 +64,17 @@ CIBMPartitionDriver::init(IBlockDevice * device)
             CFileSystem::addBlockDevice(new CPartition(device, pTable->record[i].startSector, pTable->record[i].sectorCount));
           }
           else
-            std::cout<<" - ERROR: Invalid start sector"<<std::endl;
+            printk(" - ERROR: Invalid start sector\n");
         }
       }
     }
     else
-      std::cout<<" - ERROR: Invalid boot signature"<<std::endl;
+      printk(" - ERROR: Invalid boot signature\n");
   }
   else
-    std::cout<<" - ERROR: Unable to read sector"<<std::endl;
+    printk(" - ERROR: Unable to read sector\n");
 
-  std::cout<<iPartitionCount<<" valid partitions located"<<std::endl;
+  printk("%d valid partitions located\n", iPartitionCount);
 
   return bRetVal;
 }

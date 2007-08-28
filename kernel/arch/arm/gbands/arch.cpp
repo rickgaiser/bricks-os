@@ -1,3 +1,4 @@
+#include "kernel/debug.h"
 #include "kernel/bricks.h"
 #include "kernel/memoryManager.h"
 #include "asm/cpu.h"
@@ -34,8 +35,6 @@
 #include "kernel/fatDriver.h"
 #include "superCardDriver.h"
 #endif // #ifdef CONFIG_FILESYSTEM
-
-#include "iostream"
 
 
 #ifdef GBA
@@ -96,13 +95,13 @@ main(int, char *[])
 #ifdef CONFIG_GBA_CONSOLE
   if(cVideo.init() == -1)
     iRetVal = -1;
-  CTaskManager::setStandardOutput(&cVideo);
+  pDebug = &cVideo;
 #endif // CONFIG_GBA_CONSOLE
 
 #ifdef CONFIG_GBA_KEYBOARD
   if(cKeyboard.init() == -1)
     iRetVal = -1;
-  CTaskManager::setStandardInput(&cKeyboard);
+  //CTaskManager::setStandardInput(&cKeyboard);
 #endif // CONFIG_GBA_KEYBOARD
 
 #ifdef CONFIG_GBA_SERIAL
@@ -114,10 +113,10 @@ main(int, char *[])
   if(cIPC.init() == -1)
     iRetVal = -1;
 #ifdef NDS7
-  CTaskManager::setStandardOutput(&cIPC);
+  pDebug = &cIPC;
 #endif // NDS7
 #ifdef NDS9
-  CTaskManager::setStandardInput(&cIPC);
+  //CTaskManager::setStandardInput(&cIPC);
 #endif // NDS9
 #endif // CONFIG_NDS_IPC
 

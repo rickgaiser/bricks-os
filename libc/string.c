@@ -18,7 +18,7 @@ strlen(const char * s)
 {
   int iLength = 0;
 
-  while(s[iLength] == 0)
+  while(s[iLength] != 0)
     iLength++;
 
   return iLength;

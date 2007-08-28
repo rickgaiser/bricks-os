@@ -1,7 +1,7 @@
 #include "cpuid.h"
 #include "hal.h"
 #include "string.h"
-#include "iostream"
+#include "kernel/debug.h"
 
 
 namespace CPU
@@ -75,8 +75,8 @@ void
 init()
 {
   uint32_t iDummy;
-  
-  std::cout<<"Processor:"<<std::endl;
+
+  printk("Processor:\n");
 
   // Check if CPUID is supported
   if(hasCPUID() == true)
@@ -85,7 +85,7 @@ init()
     // Get vendorID and max supported CPUID functions
     sVendorID[12] = 0;
     cpuid(0, &iCPUIDMax, (uint32_t *)&sVendorID[0], (uint32_t *)&sVendorID[8], (uint32_t *)&sVendorID[4]);
-    std::cout<<" - Vendor ID: "<<sVendorID<<std::endl;
+    printk(" - Vendor ID: %d\n", sVendorID);
     if(strcmp(sVendorID, "GenuineIntel") == 0)
       eVendorID = VID_INTEL;
     else if((strcmp(sVendorID, "AuthenticAMD") == 0) || (strcmp(sVendorID, "AMD ISBETTER" == 0)))
@@ -109,7 +109,7 @@ init()
     {
       uint32_t iCPUExFamily;
       uint32_t iCPUExModel;
-      
+
       // Get cpu info and features
       cpuid(1, &iCPUSignature, &iCPUInfo, &iCPUFeatures2, &iCPUFeatures1);
       // Parse cpu info
@@ -121,7 +121,7 @@ init()
       iCPUSteppingID = (iCPUSignature & 0x0000000f);
       // 8bit brand ID: NOTE: AMD Also has a 12bit brand ID
       iBrandID       = (iCPUInfo & 0x000000ff);
-      
+
       // Only Intel defines extended model info for family 6
       if((eVendorID == VID_INTEL) || (iCPUFamily == 0x06))
       {
@@ -132,15 +132,15 @@ init()
         iCPUModel += (iCPUExModel << 4);
         iCPUFamily += iCPUExFamily;
       }
-      
+
       // Only Intel defines a cpu type
       if(eVendorID == VID_INTEL)
-        std::cout<<" - Type:      "<<type[iCPUType]<<std::endl;
-      std::cout<<" - Family:    "<<iCPUFamily<<std::endl;
-      std::cout<<" - Model:     "<<iCPUModel<<std::endl;
-      std::cout<<" - Stepping:  "<<iCPUSteppingID<<std::endl;
+        printk(" - Type:      %s\n", type[iCPUType]);
+      printk(" - Family:    %d\n", iCPUFamily);
+      printk(" - Model:     %d\n", iCPUModel);
+      printk(" - Stepping:  %d\n", iCPUSteppingID);
     }
-    
+
     // Extended CPUID
     cpuid(0x80000000, &iCPUIDExMax, &iDummy, &iDummy, &iDummy);
 
@@ -157,24 +157,24 @@ init()
       cpuid(0x80000002, (uint32_t *)&brandString[ 0], (uint32_t *)&brandString[ 4], (uint32_t *)&brandString[ 8], (uint32_t *)&brandString[12]);
       cpuid(0x80000003, (uint32_t *)&brandString[16], (uint32_t *)&brandString[20], (uint32_t *)&brandString[24], (uint32_t *)&brandString[28]);
       cpuid(0x80000004, (uint32_t *)&brandString[32], (uint32_t *)&brandString[36], (uint32_t *)&brandString[40], (uint32_t *)&brandString[44]);
-      
+
       pBrandString = brandString;
       while(*pBrandString == ' ')
         pBrandString++;
-      
+
       if(pBrandString[0] != 0)
-        std::cout<<" - Brand:     "<<pBrandString<<std::endl;
+        printk(" - Brand:     %s\n", pBrandString);
     }
     else if(iBrandID != 0)
     {
       // Display Brand ID
-      std::cout<<" - Brand:     "<<iBrandID<<std::endl;
+      printk(" - Brand:     %d\n", iBrandID);
     }
   }
   else
   {
     // CPUID not supported, must be a 386 or an early 486
-    std::cout<<" - 386/486"<<std::endl;
+    printk(" - 386/486\n");
   }
 }
 

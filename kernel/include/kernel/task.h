@@ -51,7 +51,7 @@ class CTask
 {
 public:
   virtual ~CTask();
-  
+
   // Switch tasks! Function can do two things:
   //  - Setup stack so interrupt return will couse this task to run.
   //  - Jump to task immediately.
@@ -79,9 +79,6 @@ public:
   static void addTask(CTask * pTask);
   static void removeTask(CTask * pTask);
   static bool schedule();
-
-  static void setStandardInput(IFileIO * pSTDIN);
-  static void setStandardOutput(IFileIO * pSTDOUT);
 
   static uint32_t   iTaskCount_;
   static CTask    * pCurrentTask_;

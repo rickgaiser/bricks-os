@@ -1,6 +1,6 @@
 #include "dsCart.h"
 #include "superCardDriver.h"
-#include "iostream"
+#include "kernel/debug.h"
 
 
 // -----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ CDSCart::init()
 int
 CDSCart::isr(int irq)
 {
-  std::cout<<"CDSCart::isr: gba cart ejected"<<std::endl;
+  printk("CDSCart::isr: gba cart ejected\n");
 
   return 0;
 }

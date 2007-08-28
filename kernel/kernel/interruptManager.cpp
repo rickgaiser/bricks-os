@@ -1,6 +1,6 @@
+#include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "asm/cpu.h"
-#include "iostream"
 
 
 // -----------------------------------------------------------------------------
@@ -69,13 +69,13 @@ CInterruptManager::isr(unsigned int irq, pt_regs * regs)
     }
     else
     {
-      std::cout<<"CInterruptManager::isr: ERROR: Unhandled interrupt(int="<<(int)irq<<")"<<std::endl;
+      printk("CInterruptManager::isr: ERROR: Unhandled interrupt(int=%d)\n", (int)irq);
     }
     interrupt_[irq].hardware_->ack(irq);
   }
   else
   {
-    std::cout<<"CInterruptManager::isr: ERROR: Interrupt out of range(int="<<(int)irq<<")"<<std::endl;
+    printk("CInterruptManager::isr: ERROR: Interrupt out of range(int=%d)\n", (int)irq);
   }
 
   // Enable interrupt again and return

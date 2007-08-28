@@ -1,6 +1,6 @@
 #include "task.h"
+#include "kernel/debug.h"
 #include "kernel/task.h"
-#include "iostream"
 
 
 extern pt_regs * current_thread;
@@ -52,7 +52,7 @@ CGBANDSTask::run()
 void
 CGBANDSTask::kill()
 {
-  std::cout<<"suicide!"<<std::endl;
+  printk("suicide!\n");
   CTaskManager::removeTask(CTaskManager::pCurrentTask_);
 }
 

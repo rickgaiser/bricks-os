@@ -1,6 +1,6 @@
+#include "kernel/debug.h"
 #include "kernel/settings.h"
 #include "string.h"
-#include "iostream"
 
 
 // -----------------------------------------------------------------------------
@@ -19,15 +19,15 @@ CSettings::parse(const char * cmd)
     // Advande to next ' '
     while(*cmd != ' ' && *cmd != 0)
       cmd++;
-    
+
     // Advance to next non ' ' character
     while(*cmd == ' ' && *cmd != 0)
       cmd++;
-    
+
     // Validate character
     if(*cmd == 0)
       break;
-    
+
     // Compare argument to settings list
     bool bSettingFound(false);
     for(unsigned int idxSet(0); idxSet < iSize_; idxSet++)
@@ -35,19 +35,19 @@ CSettings::parse(const char * cmd)
       if(cmp(pSettings_[idxSet].name, cmd) == true)
       {
         bSettingFound = true;
-          
+
         // Advance to next '='
         while(*cmd != '=' && *cmd != 0)
           cmd++;
-    
+
         // Validate character
         if((cmd[0] == 0) || (cmd[1] == 0))
         {
-          std::cout<<" - "<<pSettings_[idxSet].name<<" has no value, use AUTO, ON or OFF"<<std::endl;
+          printk(" - %d has no value, use AUTO, ON or OFF\n", pSettings_[idxSet].name);
           break;
         }
         cmd++;
-          
+
         if(cmp(cmd, "AUTO") == true)
           pSettings_[idxSet].value = SET_AUTO;
         else if(cmp(cmd, "ON") == true)
@@ -55,13 +55,13 @@ CSettings::parse(const char * cmd)
         else if(cmp(cmd, "OFF") == true)
           pSettings_[idxSet].value = SET_OFF;
         else
-          std::cout<<" - "<<pSettings_[idxSet].name<<" = unknown, use AUTO, ON or OFF"<<std::endl;
+          printk(" - %d = unknown, use AUTO, ON or OFF\n", pSettings_[idxSet].name);
 
         break;
       }
     }
     if(bSettingFound == false)
-      std::cout<<"unknown setting "<<cmd<<std::endl;
+      printk("unknown setting %d\n", cmd);
   }
 }
 

@@ -1,8 +1,8 @@
 #include "keyboard.h"
+#include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "hal.h"
-#include "iostream"
-  
+
 
 char normal_keys[128] =
 {
@@ -23,7 +23,7 @@ char normal_keys[128] =
    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,  // 112-119
    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0    // 120-127
 };
-   
+
 char shift_keys[128] =
 {
    0 , 0 ,'!','@','#','$','%','^',  //   0-  7
@@ -43,7 +43,7 @@ char shift_keys[128] =
    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,  // 112-119
    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0    // 120-127
 };
-   
+
 char E0_keys[128] =
 {
    0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
@@ -187,9 +187,9 @@ CI386Keyboard::isr(int irq)
       }
     }
   }
-    
+
   if((bDown_ == true) && (cChar != -1))
-    std::cout<<cChar;
+    printk("%c", cChar);
 
   return 0;
 }

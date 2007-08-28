@@ -4,10 +4,9 @@ include $(BRICKS_ROOT)/kernel/arch/$(ARCH)/config.$(TARGET)
 LIB             =kernel
 OBJS            =\
                 bricks \
-                fileio \
+                debug \
                 interrupt \
                 interruptManager \
-                ostream \
                 settings \
                 string \
                 task \

@@ -1,7 +1,7 @@
+#include "kernel/debug.h"
 #include "kernel/srr.h"
 #include "kernel/srrKernel.h"
 #include "kernel/task.h"
-#include "iostream"
 
 
 volatile bool bMsgSend(false);
@@ -96,7 +96,7 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
   // Filter error IDs
   if(iConnectionID <= 0)
   {
-    std::cout<<"ERROR: Invalid iConnectionID: "<<iConnectionID<<std::endl;
+    printk("ERROR: Invalid iConnectionID: %d\n", iConnectionID);
   }
   else
   {
@@ -146,7 +146,7 @@ k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
   // Filter kernel and error IDs
   if(iChannelID <= 1)
   {
-    std::cout<<"ERROR: Invalid ChannelID: "<<iChannelID<<std::endl;
+    printk("ERROR: Invalid ChannelID: %d\n", iChannelID);
   }
   else
   {
@@ -221,7 +221,7 @@ k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
   // Filter kernel and error IDs
   if(iReceiveID <= 0)
   {
-    std::cout<<"ERROR: Invalid iReceiveID: "<<iReceiveID<<std::endl;
+    printk("ERROR: Invalid iReceiveID: %d\n", iReceiveID);
   }
   else
   {
