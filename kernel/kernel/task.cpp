@@ -79,17 +79,8 @@ CTaskManager::removeTask(CTask * pTask)
     pTask->prev->next = pTask->next;
     pTask->next->prev = pTask->prev;
 
-    // Prevent removing the current task
-    if(pTask == CTaskManager::pCurrentTask_)
-    {
-      // Set new current task to prev task
-      CTaskManager::pCurrentTask_ = pTask->prev;
-      // Reschedule so the next task will run
-      schedule();
-    }
-
-    // Delete task
-    //delete pTask;
+    // Flag task to be destroyed
+    pTask->eState_ = TS_DESTROY;
   }
   else
   {
@@ -106,12 +97,25 @@ CTaskManager::schedule()
 
   CTask * pPrevTask = CTaskManager::pCurrentTask_;
 
-  // Locate the next running task
-  CTaskManager::pCurrentTask_->eState_ = TS_READY;
-  CTaskManager::pCurrentTask_ = CTaskManager::pCurrentTask_->next;
-  while(CTaskManager::pCurrentTask_->eState_ != TS_READY)
+  // If the current task is running, put it on ready
+  if(CTaskManager::pCurrentTask_->eState_ == TS_RUNNING)
+    CTaskManager::pCurrentTask_->eState_ = TS_READY;
+
+  // Locate the next ready task
+  do
+  {
     CTaskManager::pCurrentTask_ = CTaskManager::pCurrentTask_->next;
-  CTaskManager::pCurrentTask_->eState_ = TS_RUNNING;
+  }
+  while((CTaskManager::pCurrentTask_ != pPrevTask) && (CTaskManager::pCurrentTask_->eState_ != TS_READY));
+
+  // Make it run if ready
+  if(CTaskManager::pCurrentTask_->eState_ == TS_READY)
+    CTaskManager::pCurrentTask_->eState_ = TS_RUNNING;
+  else
+  {
+    printk("CTaskManager::schedule: ERROR: No tasks to schedule\n");
+    CCPU::halt();
+  }
 
   return pPrevTask != CTaskManager::pCurrentTask_;
 }

@@ -15,7 +15,6 @@ CFLAGS          +=\
                 -ffast-math \
                 -mthumb \
                 -mthumb-interwork \
-                -falign-functions=32 \
                 -DGBA \
 
 CXXFLAGS        +=\
@@ -26,7 +25,6 @@ CXXFLAGS        +=\
                 -ffast-math \
                 -mthumb \
                 -mthumb-interwork \
-                -falign-functions=32 \
                 -DGBA \
 
 LFLAGS          +=\

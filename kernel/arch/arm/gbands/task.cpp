@@ -1,6 +1,7 @@
 #include "task.h"
 #include "kernel/debug.h"
 #include "kernel/task.h"
+#include "asm/cpu.h"
 
 
 extern pt_regs * current_thread;
@@ -52,8 +53,12 @@ CGBANDSTask::run()
 void
 CGBANDSTask::kill()
 {
-  printk("suicide!\n");
+  // Remove the current task from the list
   CTaskManager::removeTask(CTaskManager::pCurrentTask_);
+  // FIXME: We should reschedule now so the next task can run, but we can't
+  //        since we might not be called from an interrupt. So instead we
+  //        just wait to rescheduled and destroyed.
+  CCPU::halt();
 }
 
 // -----------------------------------------------------------------------------
