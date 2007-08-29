@@ -12,7 +12,7 @@ void
 printnk(void (*put)(char), unsigned long ul, int base)
 {
   char * p;
-  char * buf[(sizeof(long) * 8 / 3) + 1];
+  char   buf[(sizeof(long) * 8 / 3) + 1];
 
   p = buf;
 
