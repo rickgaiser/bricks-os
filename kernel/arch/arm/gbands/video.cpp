@@ -42,7 +42,9 @@ CGBAVideo::init()
   memcpy(BG_PALETTE, font8x8_pal, font8x8_pal_size);
   memcpy(SPRITE_PALETTE, font8x8_pal, font8x8_pal_size);
   // Set our text font
-  memcpy(CHAR_BASE_BLOCK(0), font8x8, font8x8_size);
+  // Somehow need to copy whole words per cycle, a byte gives strange results!
+  for(unsigned int i(0); i < font8x8_size/2; i++)
+    reinterpret_cast<uint16_t *>(CHAR_BASE_BLOCK(0))[i] = ((uint16_t *)font8x8)[i];
 
   this->cls();
 
