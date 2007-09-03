@@ -3,6 +3,9 @@ INCL_PATH       +=\
                 $(BRICKS_ROOT)/include/GL \
                 $(BRICKS_ROOT)/include/posix \
                 $(BRICKS_ROOT)/include/stl \
+                $(BRICKS_ROOT)/kernel/include \
+                $(BRICKS_ROOT)/kernel/include/include-$(ARCH) \
+                $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET) \
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU

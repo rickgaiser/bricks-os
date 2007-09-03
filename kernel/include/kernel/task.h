@@ -60,7 +60,7 @@ public:
 
   // Message bus management
   SChannel    * pChannel_[MAX_CHANNEL_COUNT];
-  SConnection * pConnection_[MAX_CONNECTION_COUNT];
+  SChannel    * pConnection_[MAX_CONNECTION_COUNT];
 
   // Task state
   ETaskState    eState_;

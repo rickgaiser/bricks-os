@@ -1,10 +1,9 @@
-#ifndef KERNEL_SRRKERNEL_H
-#define KERNEL_SRRKERNEL_H
+#ifndef SHARED_SRRCHANNEL_H
+#define SHARED_SRRCHANNEL_H
 
 
 #include "sys/types.h"
 #include "inttypes.h"
-#include "stddef.h"
 
 
 // -----------------------------------------------------------------------------
@@ -18,7 +17,7 @@ struct SKernelMessageHeader
   uint32_t iVersion;
   // ID of function to be called
   uint32_t iFunctionID;
-};
+} __attribute__ ((__packed__));
 
 // -----------------------------------------------------------------------------
 // MACRO for interface version
@@ -64,12 +63,12 @@ enum EKernelFunctionID
 struct SChannelCreate
 {
   unsigned iFlags;
-};
+} __attribute__ ((__packed__));
 
 struct SChannelDestroy
 {
   unsigned iChannelID;
-};
+} __attribute__ ((__packed__));
 
 struct SConnectAttach
 {
@@ -77,80 +76,80 @@ struct SConnectAttach
   pid_t iProcessID;
   int iChannelID;
   int iFlags;
-};
+} __attribute__ ((__packed__));
 
 struct SConnectDetach
 {
   int iConnectionID;
-};
+} __attribute__ ((__packed__));
 
 // Named channel structs
 struct SChannelCreateNamed
 {
   unsigned short iNameIndex;
   unsigned iFlags;
-};
+} __attribute__ ((__packed__));
 
 struct SChannelDestroyNamed
 {
   unsigned short iNameIndex;
-};
+} __attribute__ ((__packed__));
 
 struct SConnectAttachNamed
 {
   unsigned short iNameIndex;
   int iFlags;
-};
+} __attribute__ ((__packed__));
 
 struct SConnectDetachNamed
 {
   unsigned short iNameIndex;
-};
+} __attribute__ ((__packed__));
 
 // File structs
 struct SFileOpen
 {
   unsigned short iNameIndex;
   int iOFlags;
-};
+} __attribute__ ((__packed__));
 
 struct SFileClose
 {
   int iFD;
-};
+} __attribute__ ((__packed__));
 
 struct SFileRead
 {
   int iFD;
   size_t iSize;
   off_t iOffset;
-};
+} __attribute__ ((__packed__));
 
 struct SFileWrite
 {
   int iFD;
   size_t iSize;
   off_t iOffset;
-};
+} __attribute__ ((__packed__));
 
 struct SFileLseek
 {
   int iFD;
   off_t iOffset;
   int iWhence;
-};
+} __attribute__ ((__packed__));
 
 struct SFileIoctl
 {
   int iFD;
   int iRequest;
-};
+} __attribute__ ((__packed__));
 
 struct SFileFcntl
 {
   int iFD;
   int iCMD;
-};
+} __attribute__ ((__packed__));
 
 
 #endif

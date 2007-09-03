@@ -1,12 +1,9 @@
 #include "kernel/debug.h"
-#include "kernel/srr.h"
-#include "kernel/srrKernel.h"
+#include "kernel/srr_k.h"
+#include "kernel/srr_s.h"
+#include "kernel/srrChannel_k.h"
+#include "kernel/srrChannel_s.h"
 #include "kernel/task.h"
-
-
-volatile bool bMsgSend(false);
-volatile bool bMsgReply(false);
-SMessage msg;
 
 
 //---------------------------------------------------------------------------
@@ -14,6 +11,8 @@ int
 k_channelCreate(SChannelCreate * args)
 {
   int iRetVal(-1);
+
+  //printk("k_channelCreate\n");
 
   // Locate empty channel in current task
   for(int iChannel(0); iChannel < MAX_CHANNEL_COUNT; iChannel++)
@@ -25,10 +24,15 @@ k_channelCreate(SChannelCreate * args)
         chan->msg[iMsg].bUsed = false;
       CTaskManager::pCurrentTask_->pChannel_[iChannel] = chan;
 
-      iRetVal = iChannel;
+      iRetVal = iChannel + 2; // Channels 0&1 are reserved for error&kernel
 
       break;
     }
+  }
+
+  if(iRetVal == -1)
+  {
+    printk("k_channelCreate: Max channels reached!\n");
   }
 
   return iRetVal;
@@ -39,7 +43,10 @@ int
 k_channelDestroy(SChannelDestroy * args)
 {
   int iRetVal(-1);
-  int iChannelID(args->iChannelID);
+  int iChannelID(args->iChannelID - 2);
+
+  printk("k_channelDestroy: Not implemented\n");
+  while(true){}
 
   if((iChannelID >= 0) && (iChannelID < MAX_CHANNEL_COUNT))
   {
@@ -58,9 +65,46 @@ int
 k_connectAttach(SConnectAttach * args)
 {
   int iRetVal(-1);
+  int iChannelID(args->iChannelID - 2);
 
-  if(args->iProcessID < MAX_TASK_COUNT)
+  //printk("k_connectAttach\n");
+
+  if(args->iNodeID == 0)
   {
+    // Local node, find process
+    if((args->iProcessID < MAX_TASK_COUNT) && (CTaskManager::taskTable_[args->iProcessID] != 0))
+    {
+      // Process found, find channel
+      if((iChannelID < MAX_CHANNEL_COUNT) && (CTaskManager::taskTable_[args->iProcessID]->pChannel_[iChannelID] != 0))
+      {
+        // Channel found, find empty connection
+        for(int i(0); i < MAX_CONNECTION_COUNT; i++)
+        {
+          if(CTaskManager::pCurrentTask_->pConnection_[i] == 0)
+          {
+            CTaskManager::pCurrentTask_->pConnection_[i] = CTaskManager::taskTable_[args->iProcessID]->pChannel_[iChannelID];
+            iRetVal = i + 2;
+            break;
+          }
+        }
+        if(iRetVal == -1)
+        {
+          printk("k_connectAttach: Max connections reached!\n");
+        }
+      }
+      else
+      {
+        printk("k_connectAttach: Channel not found\n");
+      }
+    }
+    else
+    {
+      printk("k_connectAttach: Process not found\n");
+    }
+  }
+  else
+  {
+    printk("k_connectAttach: Remote nodes not supported\n");
   }
 
   return iRetVal;
@@ -72,73 +116,66 @@ k_connectDetach(SConnectDetach * args)
 {
   int iRetVal(-1);
 
+  panic("k_connectDetach: Not implemented\n");
+
   return iRetVal;
 }
 
 //---------------------------------------------------------------------------
-// Kernel function call table
-typedef int (*kernelFunction)(void * args);
-const kernelFunction kfunctions[] =
-{
-    (kernelFunction)k_channelCreate    // 0
-  , (kernelFunction)k_channelDestroy   // 1
-  , (kernelFunction)k_connectAttach    // 2
-  , (kernelFunction)k_connectDetach    // 3
-};
-const unsigned int kfunctions_size(sizeof(kfunctions) / sizeof(kernelFunction));
-
-//---------------------------------------------------------------------------
-extern "C" int
+int
 k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize)
 {
   int iRetVal(-1);
 
-  // Filter error IDs
+  // Filter error ID
   if(iConnectionID <= 0)
   {
-    printk("ERROR: Invalid iConnectionID: %d\n", iConnectionID);
+    printk("k_msgSend: Invalid connection id: %d\n", iConnectionID);
+  }
+  else if(iConnectionID == scKERNEL)
+  {
+    SKernelMessageHeader * pHeader = (SKernelMessageHeader *)pSndMsg;
+    if(pHeader->iHeaderSize != sizeof(SKernelMessageHeader))
+      panic("k_msgSend: Invalid header size");
+    if(pHeader->iVersion != INTERFACE_VERSION(1, 0))
+      panic("k_msgSend: Invalid header version");
+
+    switch(pHeader->iFunctionID)
+    {
+      case kfCHANNEL_CREATE:
+        iRetVal = k_channelCreate ((SChannelCreate *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+        break;
+      case kfCHANNEL_DESTROY:
+        iRetVal = k_channelDestroy((SChannelDestroy *)((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+        break;
+      case kfCHANNEL_ATTACH:
+        iRetVal = k_connectAttach ((SConnectAttach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+        break;
+      case kfCHANNEL_DETACH:
+        iRetVal = k_connectDetach ((SConnectDetach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+        break;
+      default:
+        printk("k_msgSend: Invalid function id: %d\n", pHeader->iFunctionID);
+    };
   }
   else
   {
-    switch(iConnectionID)
+    iConnectionID -= 2;
+    if((iConnectionID < MAX_CONNECTION_COUNT) && (CTaskManager::pCurrentTask_->pConnection_[iConnectionID] != 0))
     {
-      case scKERNEL:
-      {
-        SKernelMessageHeader * pHeader = (SKernelMessageHeader *)pSndMsg;
-
-        if(pHeader->iFunctionID < kfunctions_size)
-        {
-          iRetVal = kfunctions[pHeader->iFunctionID]((void *)((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
-        }
-      }
-      case scTEST:
-      {
-        // Create message
-        msg.pSndMsg  = pSndMsg;
-        msg.iSndSize = iSndSize;
-        msg.pRcvMsg  = pRcvMsg;
-        msg.iRcvSize = iRcvSize;
-        // Send message
-        bMsgSend = true;
-
-        // Wait for reply message
-        while(bMsgReply == false){}
-        bMsgReply = false;
-
-        // Return received byte count
-        iRetVal = msg.iRetVal;
-        break;
-      }
-      default:
-        ;
-    };
+      panic("k_msgSend: Not implemented\n");
+    }
+    else
+    {
+      printk("k_msgSend: Connection not found\n");
+    }
   }
 
   return iRetVal;
 }
 
 //---------------------------------------------------------------------------
-extern "C" int
+int
 k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
 {
   int iRetVal(-1);
@@ -146,138 +183,38 @@ k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
   // Filter kernel and error IDs
   if(iChannelID <= 1)
   {
-    printk("ERROR: Invalid ChannelID: %d\n", iChannelID);
+    printk("k_msgReceive: Invalid channel id: %d\n", iChannelID);
   }
   else
   {
-    switch(iChannelID)
+    iChannelID -= 2;
+    if((iChannelID < MAX_CHANNEL_COUNT) && (CTaskManager::pCurrentTask_->pChannel_[iChannelID] != 0))
     {
-      case scTEST:
-      {
-        // Wait for send message
-        while(bMsgSend == false){}
-        bMsgSend = false;
-
-        // Copy send message
-        int iSize = (iRcvSize > msg.iSndSize) ? msg.iSndSize : iRcvSize;
-        for(int i(0); i < iSize; i++)
-          ((char *)pRcvMsg)[i] = ((char *)msg.pSndMsg)[i];
-        // Return received byte count
-        iRetVal = iSize;
-        break;
-      }
-      default:
-      {
-        /*
-        if(iChannelID < 1)
-          return -1;
-        else
-        {
-          CProcess * pProcess = getProcess(iProcessID, true);
-          CChannel * pChannel = 0;
-
-          if(pProcess != 0)
-          {
-            // Locate channel
-            for(unsigned int iChannel(0); iChannel < pProcess->channels_.size(); iChannel++)
-            {
-              if(pProcess->channels_[iChannel].iChannelID_ == iChannelID)
-              {
-                pChannel = &(pProcess->channels_[iChannel]);
-                break;
-              }
-            }
-
-            if(pChannel != 0)
-            {
-              // Wait for message to be sent
-              pChannel->psem_.acquire();
-              // Get sent message
-              if(iRcvSize > pChannel->iDataSize_)
-                iRcvSize = pChannel->iDataSize_;
-              memcpy(pRcvMsg, pChannel->data_, iRcvSize);
-              // Delete local copy
-              delete pChannel->data_;
-
-              // FIXME: Should be the receive id of the sender
-              iRetVal = iChannelID;
-            }
-          }
-        }
-        */
-      }
-    };
+      panic("k_msgReceive: Not implemented\n");
+    }
+    else
+    {
+      printk("k_msgReceive: Channel not found\n");
+    }
   }
 
   return iRetVal;
 }
 
 //---------------------------------------------------------------------------
-extern "C" int
+int
 k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
 {
   int iRetVal(-1);
 
   // Filter kernel and error IDs
-  if(iReceiveID <= 0)
+  if(iReceiveID <= 1)
   {
-    printk("ERROR: Invalid iReceiveID: %d\n", iReceiveID);
+    printk("ERROR: Invalid receive id: %d\n", iReceiveID);
   }
   else
   {
-    switch(iReceiveID)
-    {
-      case scTEST:
-      {
-        // Copy reply message
-        int iSize = (iReplySize > msg.iRcvSize) ? msg.iRcvSize : iReplySize;
-        for(int i(0); i < iSize; i++)
-          ((char *)msg.pRcvMsg)[i] = ((char *)pReplyMsg)[i];
-        // Return replied byte count (to sender)
-        msg.iRetVal = iSize;
-        // Return replied byte count (to replyer)
-        iRetVal = iSize;
-
-        bMsgReply = true;
-        break;
-      }
-      default:
-      {
-        /*
-        if(iReceiveID >= 1)
-        {
-          CProcess * pProcess = getProcess(iProcessID, true);
-          CChannel * pChannel = 0;
-
-          if(pProcess != 0)
-          {
-            // Locate channel
-            for(unsigned int iChannel(0); iChannel < pProcess->channels_.size(); iChannel++)
-            {
-              if(pProcess->channels_[iChannel].iChannelID_ == iReceiveID)
-              {
-                pChannel = &(pProcess->channels_[iChannel]);
-                break;
-              }
-            }
-
-            if(pChannel != 0)
-            {
-              // Set reply data
-              pChannel->rdata_ = new unsigned char[iReplySize];
-              pChannel->iRDataSize_ = iReplySize;
-              memcpy(pChannel->rdata_, pReplyMsg, iReplySize);
-
-              // Notify sender
-              pChannel->csem_.release();
-
-              iRetVal = 0;
-            }
-          }
-        }
-        */
-      }
-    };
+    panic("k_msgReply: Not implemented\n");
   }
 
   return iRetVal;

@@ -15,7 +15,7 @@ OBJS            =\
 
 OBJS-$(CONFIG_MULTITASKING)        += pthread # task
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoManager
-OBJS-$(CONFIG_SRR)                 += srr srrTest
+OBJS-$(CONFIG_SRR)                 += srr
 OBJS-$(CONFIG_BUILTIN_MM)          += memoryManager
 
 OBJS-$(CONFIG_FILESYSTEM)          += fileSystem
