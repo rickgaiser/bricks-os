@@ -4,7 +4,9 @@
 #include "pthread.h"
 
 
-volatile int iCHID(0);
+volatile bool bServerRunning(false);
+int iChannelID;
+int iServerPID;
 
 
 //---------------------------------------------------------------------------
@@ -13,37 +15,29 @@ server(void * arg)
 {
   printk("server: Thread Running\n");
 
-  iCHID = channelCreate(0);
-  if(iCHID > 1)
+  iServerPID = 1;//getPID();
+  iChannelID = channelCreate(0);
+  bServerRunning = true;
+  if(iChannelID > 1)
   {
     int rcvid;
     char recvBuffer[20];
-    rcvid = msgReceive(iCHID, recvBuffer, 20);
-    if(rcvid > 0)
+    while(true)
     {
-      //printk("server: %s\n", recvBuffer);
-      printk("server: ");
-      printk(recvBuffer);
-      printk("\n");
-      if(msgReply(rcvid, 0, "SRV", 4) >= 0)
+      rcvid = msgReceive(iChannelID, recvBuffer, 20);
+      if(rcvid > 0)
       {
+        printk("server: %s\n", recvBuffer);
+        if(msgReply(rcvid, 0, "SRV", 4) < 0)
+          printk("server: msgReply error\n");
       }
       else
-      {
-        printk("server: msgReply error\n");
-      }
-    }
-    else
-    {
-      printk("server: msgReceive error\n");
+        printk("server: msgReceive error\n");
     }
   }
   else
-  {
      printk("server: Can't get channel\n");
-  }
 
-  while(true){}
   return 0;
 }
 
@@ -61,22 +55,18 @@ srrTest(int argc, char * argv[])
     return -1;
   }
 
-  //while(true){}
-  while(iCHID == 0){}
+  while(bServerRunning != true);
   // Connect to server
-  int iCID = channelConnectAttach(0, 1, iCHID, 0);
-  if(iCID > 1)
+  int iConnectID = channelConnectAttach(0, iServerPID, iChannelID, 0);
+  if(iConnectID > 1)
   {
     printk("client: connected\n");
 
     // Send message to server
     char recvBuffer[20];
-    if(msgSend(iCID, "SRR", 4, recvBuffer, 20) >= 0)
+    if(msgSend(iConnectID, "SRR", 4, recvBuffer, 20) >= 0)
     {
-      //printk("client: %s\n", recvBuffer);
-      printk("client: ");
-      printk(recvBuffer);
-      printk("\n");
+      printk("client: %s\n", recvBuffer);
     }
     else
     {

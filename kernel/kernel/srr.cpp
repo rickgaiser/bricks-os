@@ -4,6 +4,7 @@
 #include "kernel/srrChannel_k.h"
 #include "kernel/srrChannel_s.h"
 #include "kernel/task.h"
+#include "string.h"
 
 
 //---------------------------------------------------------------------------
@@ -20,8 +21,7 @@ k_channelCreate(SChannelCreate * args)
     if(CTaskManager::pCurrentTask_->pChannel_[iChannel] == 0)
     {
       SChannel * chan = new SChannel;
-      for(int iMsg(0); iMsg < MAX_MESSAGE_COUNT; iMsg++)
-        chan->msg[iMsg].bUsed = false;
+      chan->iState = CS_FREE;
       CTaskManager::pCurrentTask_->pChannel_[iChannel] = chan;
 
       iRetVal = iChannel + 2; // Channels 0&1 are reserved for error&kernel
@@ -163,7 +163,21 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
     iConnectionID -= 2;
     if((iConnectionID < MAX_CONNECTION_COUNT) && (CTaskManager::pCurrentTask_->pConnection_[iConnectionID] != 0))
     {
-      panic("k_msgSend: Not implemented\n");
+      SChannel * pChannel = CTaskManager::pCurrentTask_->pConnection_[iConnectionID];
+      // Wait for channel to become free
+      // FIXME: Busy waiting
+      while(pChannel->iState != CS_FREE);
+      pChannel->iState   = CS_USED;
+      pChannel->pSndMsg  = pSndMsg;
+      pChannel->iSndSize = iSndSize;
+      pChannel->pRcvMsg  = pRcvMsg;
+      pChannel->iRcvSize = iRcvSize;
+      pChannel->iState   = CS_MSG_SEND;
+      // Wait for message to be replied
+      // FIXME: Busy waiting
+      while(pChannel->iState != CS_MSG_REPLIED);
+      iRetVal = pChannel->iRetVal;
+      pChannel->iState   = CS_FREE;
     }
     else
     {
@@ -190,7 +204,15 @@ k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
     iChannelID -= 2;
     if((iChannelID < MAX_CHANNEL_COUNT) && (CTaskManager::pCurrentTask_->pChannel_[iChannelID] != 0))
     {
-      panic("k_msgReceive: Not implemented\n");
+      SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iChannelID];
+      // Wait for message to be sent
+      // FIXME: Busy waiting
+      while(pChannel->iState != CS_MSG_SEND);
+      if(pChannel->iSndSize < iRcvSize)
+        iRcvSize = pChannel->iSndSize;
+      memcpy(pRcvMsg, pChannel->pSndMsg, iRcvSize);
+      pChannel->iState = CS_MSG_RECEIVED;
+      iRetVal  = iChannelID + 2;
     }
     else
     {
@@ -214,7 +236,26 @@ k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
   }
   else
   {
-    panic("k_msgReply: Not implemented\n");
+    iReceiveID -= 2;
+    if((iReceiveID < MAX_CHANNEL_COUNT) && (CTaskManager::pCurrentTask_->pChannel_[iReceiveID] != 0))
+    {
+      SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iReceiveID];
+      // We can only reply a received message
+      if(pChannel->iState == CS_MSG_RECEIVED)
+      {
+        // Copy reply data
+        if(iReplySize < pChannel->iRcvSize)
+          iReplySize = pChannel->iRcvSize;
+        memcpy(pChannel->pRcvMsg, pReplyMsg, iReplySize);
+        pChannel->iRetVal = iStatus;
+        pChannel->iState = CS_MSG_REPLIED;
+        iRetVal = 0;
+      }
+    }
+    else
+    {
+      printk("k_msgReply: Receive id not found\n");
+    }
   }
 
   return iRetVal;

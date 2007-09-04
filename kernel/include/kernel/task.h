@@ -9,7 +9,6 @@
 #define MAX_TASK_COUNT       10
 #define MAX_CHANNEL_COUNT    10
 #define MAX_CONNECTION_COUNT 10
-#define MAX_MESSAGE_COUNT    10
 
 
 // -----------------------------------------------------------------------------
@@ -25,20 +24,24 @@ enum ETaskState
 };
 
 // -----------------------------------------------------------------------------
-struct SMessage
+enum EChannelState
 {
-  bool bUsed;
-  const void * pSndMsg;
-  int iSndSize;
-  void * pRcvMsg;
-  int iRcvSize;
-  int iRetVal;
+  CS_FREE,
+  CS_USED,
+  CS_MSG_SEND,
+  CS_MSG_RECEIVED,
+  CS_MSG_REPLIED
 };
 
 // -----------------------------------------------------------------------------
 struct SChannel
 {
-  SMessage msg[MAX_MESSAGE_COUNT];
+  volatile int iState;
+  const void * pSndMsg;
+  int iSndSize;
+  void * pRcvMsg;
+  int iRcvSize;
+  int iRetVal;
 };
 
 // -----------------------------------------------------------------------------

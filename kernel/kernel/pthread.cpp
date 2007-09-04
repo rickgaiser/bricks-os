@@ -8,7 +8,7 @@ extern "C" int
 pthread_create(pthread_t * thread, const pthread_attr_t * attr, void *(*start_routine)(void *), void * arg)
 {
   int iRetVal(-1);
-  CTask * pTask = getNewTask((void *)start_routine, 1024, 1024, (int)arg, 0);
+  CTask * pTask = getNewTask((void *)start_routine, 512, 512, (int)arg, 0);
   if(pTask != 0)
   {
     pTask->eState_ = TS_READY;
