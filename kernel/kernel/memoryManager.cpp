@@ -2,11 +2,14 @@
 // http://www-128.ibm.com/developerworks/linux/library/l-memory/
 
 #include "kernel/memoryManager.h"
+#include "kernel/debug.h"
 
 
 struct SHeap
 {
-  void * pStart;
+  char * pStart;
+  char * pCurrent;
+  char * pEnd;
   size_t iSize;
 };
 
@@ -20,8 +23,7 @@ struct mem_control_block
 bool has_initialized(false);
 char * managed_memory_start;
 char * last_valid_address;
-SHeap heap;
-SHeap * heaps = &heap;
+SHeap heap = {0, 0, 0, 0};
 
 
 // -----------------------------------------------------------------------------
@@ -56,22 +58,22 @@ operator delete[](void * mem)
 void
 init_heap(void * start, size_t size)
 {
-  heap.pStart = start;
-  heap.iSize  = size;
+  heap.pStart   = (char *)start;
+  heap.pCurrent = (char *)start;
+  heap.pEnd     = (char *)start + size;
+  heap.iSize    = size;
 }
 
 // -----------------------------------------------------------------------------
 char *
 sbrk(int incr)
 {
-  static char * pHeapTop = (char *)heaps[0].pStart;
-  static char * pHeapEnd = (char *)heaps[0].pStart + heaps[0].iSize;
-  char * ret = (char *)-1;
+  char * ret = 0;
 
-  if((pHeapTop + incr) <= pHeapEnd)
+  if((heap.pCurrent + incr) <= heap.pEnd)
   {
-    pHeapTop += incr;
-    ret = pHeapTop;
+    heap.pCurrent += incr;
+    ret = heap.pCurrent;
   }
 
   return ret;
@@ -148,26 +150,30 @@ kmalloc(size_t numbytes)
   if(memory_location == 0)
   {
     // Move the program break numbytes further
-    sbrk(numbytes);
-    // The new memory will be where the last valid
-    // address left off
-    memory_location = last_valid_address;
-    // We'll move the last valid address forward
-    // numbytes
-    last_valid_address = last_valid_address + numbytes;
-    // We need to initialize the mem_control_block
-    current_location_mcb = (struct mem_control_block *)memory_location;
-    current_location_mcb->is_available = false;
-    current_location_mcb->size = numbytes;
+    if(sbrk(numbytes) != 0)
+    {
+      // The new memory will be where the last valid
+      // address left off
+      memory_location = last_valid_address;
+      // We'll move the last valid address forward
+      // numbytes
+      last_valid_address = last_valid_address + numbytes;
+      // We need to initialize the mem_control_block
+      current_location_mcb = (struct mem_control_block *)memory_location;
+      current_location_mcb->is_available = false;
+      current_location_mcb->size = numbytes;
+    }
   }
-  // Now, no matter what (well, except for error conditions),
-  // memory_location has the address of the memory, including
-  // the mem_control_block
+
   // Move the pointer past the mem_control_block
-  memory_location = memory_location + sizeof(struct mem_control_block);
+  if(memory_location != 0)
+    memory_location = memory_location + sizeof(struct mem_control_block);
+  else
+    panic("Memory Error!\n");
+
   // Return the pointer
   return memory_location;
- }
+}
 
 // -----------------------------------------------------------------------------
 void
@@ -180,5 +186,4 @@ kfree(void * firstbyte)
   // Mark the block as being available
   mcb->is_available = true;
   // That's It!  We're done.
-  return;
 }
