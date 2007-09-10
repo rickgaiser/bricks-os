@@ -11,17 +11,35 @@ extern "C" void kill();
 
 
 //---------------------------------------------------------------------------
+// CPU modes      Banked regs       Used by
+//
+// System/User    -                 bios
+// FIQ            r8 -r14, sprs     -
+// Supervisor     r13-r14, sprs     apps
+// Abort          r13-r14, sprs     -
+// IRQ            r13-r14, sprs     interrupts
+
+//---------------------------------------------------------------------------
+// On interrupt:
+//  - CPU:  set lr_irq & spsr_irq, goto irq mode, goto bios irq handler
+//  - BIOS: push r0-r3, r12, lr onto (irq)stack
+//  - BIOS: set lr to bios return addr
+//  - jump to handler
+//#define sp r13
+//#define lr r14
+//#define pc r15
 struct pt_regs
 {
-  // r4-r11
+  // Tasks Registers
   uint32_t r4, r5, r6, r7, r8, r9, r10, r11;
-
-  // r0-r3, r12, r14
-  uint32_t r0, r1, r2, r3, r12, pc;
-
-  uint32_t cpsr;                      // value from spsr_irq
-  uint32_t spsr_svc, lr_svc, sp_svc;  // svc mode banked registers
-  uint32_t lr, sp;                    // system mode banked registers
+  // Tasks registers (saved by bios)
+  uint32_t r0, r1, r2, r3, r12, lr_irq/*r15/pc of task*/;
+  // IRQ state (banked regs), as we get called by bios
+  uint32_t spsr_irq/* cpsr of task*/;
+  // Supervisor state (banked regs), as the task was when it got interrupted
+  uint32_t spsr_svc, lr_svc, sp_svc/*r13*/;
+  // System/User state (banked regs), used by bios
+  uint32_t lr_sys, sp_sys;
 };
 
 #define CPU_MODE_USER        0x00000010

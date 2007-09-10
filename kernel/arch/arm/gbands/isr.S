@@ -1,3 +1,10 @@
+@
+@ r0 - r13: General Purpose Registers
+@ r13: Also used as stack pointer (SP)
+@ r14: Link Register (LR)
+@ r15: Program Counter (PC)
+@ SPSR: Saved Program Status Register, only available in privileged modes
+@
 .extern isr
 
 .global __isr
@@ -9,74 +16,85 @@
 .arm
 
 __isr:
-  @ Save task state
+  @ Load pointer to current task state in r0
   ldr r0, current_thread          @ load pointer
 
+  @ Save r4-r11, not saved by the bios
   stmia r0!, {r4-r11}             @ save registers still in the CPU
+
+  @ Get r0-r3,r12,r14 from stack, saved by the bios
   ldmfd sp!, {r4-r9}              @ pop registers pushed by BIOS
   stmia r0!, {r4-r9}              @ save registers pushed by BIOS
 
+  @ Save IRQ mode sprs
   mrs r5, spsr                    @ get the stored CPU state
   str r5, [r0], #4                @ store value for cpsr
 
-  @ r2, cpsr flags with CPU supervisor mode
-  @ r3, cpsr flags with CPU system mode
-  @ r4, cpsr flags with CPU IRQ mode
+  @ Prepare registers r2-r4 for changing the cpu mode
   mrs r4, cpsr                    @ get cpu flags
   bic r4, r4, #0x1f               @ clear state code
   orr r2, r4, #0x13               @ supervisor mode
   orr r3, r4, #0x1f               @ system mode
   orr r4, r4, #0x12               @ irq mode
 
-  msr cpsr, r2                    @ put CPU in supervisor mode
-  mrs r5, spsr                    @ store value of spsr_svc
+  @ Save supervisor mode spsr, lr & sp
+  msr cpsr, r2
+  mrs r5, spsr
   str r5, [r0], #4
-  str lr, [r0], #4                @ store lr_svc
-  str sp, [r0], #4                @ store sp_svc
-  msr cpsr, r3                    @ put CPU in system mode
-  str lr, [r0], #4                @ store lr
-  str sp, [r0], #4                @ store sp
+  str lr, [r0], #4
+  str sp, [r0], #4
 
-  msr cpsr, r4                    @ go back to IRQ mode for scheduling
+  @ Save system mode lr & sp
+  msr cpsr, r3
+  str lr, [r0], #4
+  str sp, [r0], #4
 
-  @ Call generic interrupt handler
-  push {r0-r1, lr}
+  @ Return back to IRQ mode for interrupt handling
+  msr cpsr, r4
+
+  @ Call generic interrupt handler, THUMB mode
+  push {lr}
     ldr lr, =isr_ret
     ldr r0, current_thread
     ldr r1, =isr
     bx r1
 isr_ret:
-  pop {r0-r1, lr}
+  pop {lr}                        @ lr still contains bios return addr
 
-  @ Restore task state
+  @ Load pointer to current task state in r0
   ldr r0, current_thread          @ load pointer
   add r0, r0, #80                 @ set pointer to end of registers block
 
-  @ r2, cpsr flags with CPU supervisor mode
-  @ r3, cpsr flags with CPU system mode
-  @ r4, cpsr flags with CPU IRQ mode
+  @ Prepare registers r2-r4 for changing the cpu mode
   mrs r4, cpsr                    @ get cpu flags
   bic r4, r4, #0x1f               @ clear state code
   orr r2, r4, #0x13               @ supervisor mode
   orr r3, r4, #0x1f               @ system mode
   orr r4, r4, #0x12               @ irq mode
 
-  msr cpsr, r3                    @ put CPU in system mode to get lr and sp
-  ldr sp, [r0, #-4]!              @ restore sp
-  ldr lr, [r0, #-4]!              @ restore lr
-  msr cpsr, r2                    @ put CPU in supervisor mode
-  ldr sp, [r0, #-4]!              @ restore sp_svc
-  ldr lr, [r0, #-4]!              @ restore lr_svc
-  ldr r5, [r0, #-4]!              @ restore spsr_svc
+  @ Restore system mode sp & lr
+  msr cpsr, r3
+  ldr sp, [r0, #-4]!
+  ldr lr, [r0, #-4]!
+
+  @ Restore supervisor mode sp, lr & sprs
+  msr cpsr, r2
+  ldr sp, [r0, #-4]!
+  ldr lr, [r0, #-4]!
+  ldr r5, [r0, #-4]!
   msr spsr, r5
-  msr cpsr, r4                    @ banked registers done, restore IRQ mode
 
-  ldr r5, [r0, #-4]!              @ get bits for CPSR
-  msr spsr, r5                    @ cpsr = spsr_irq when interrupt returns
+  @ Restore IRQ mode sprs, the tasks cprs
+  msr cpsr, r4
+  ldr r5, [r0, #-4]!
+  msr spsr, r5
 
-  ldmdb   r0!, {r4-r9}            @ load values for r0-r3, r12, r14
-  stmfd   sp!, {r4-r9}            @ push values; BIOS will restore for us
-  ldmdb   r0!, {r4-r11}           @ restore general registers
+  @ Push r0-r3,r12,r14 on the stack, BIOS will restore them
+  ldmdb   r0!, {r4-r9}
+  stmfd   sp!, {r4-r9}
+
+  @ Restore r4-r11
+  ldmdb   r0!, {r4-r11}
 
   @ Return to bios
   bx      lr

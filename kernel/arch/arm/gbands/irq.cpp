@@ -15,10 +15,11 @@ extern "C" void __isr();
 extern "C" void
 isr(pt_regs * regs)
 {
-//  printk("isr(%d)\n", (uint32_t)regs);
-
   // Find out who triggered the interrupt
   unsigned long iFlags(REG_IF & REG_IE);
+
+  //printk("isr(0x%x)\n", iFlags);
+  //printk(".");
 
   // Handle timer interrupt for scheduler
   if(iFlags & (1 << 3))
