@@ -2,8 +2,9 @@
 #define DSTIMER_H
 
 
-void setTimerFrequency(int timerId, float hz);
-void setInterval(int timerId, unsigned int ms);
+void setTimerFrequency(int timerId, float hz, bool reload = false);
+void setTimerInterval(int timerId, unsigned int us, bool reload = false);
+void resetTimer(int timerId);
 
 
 #endif
