@@ -63,7 +63,7 @@ void
 setTimerInterval(int timerId, unsigned int us, bool reload)
 {
   if(us != 0)
-    setFrequency(timerId, 1000000.0f / static_cast<float>(us), reload);
+    setTimerFrequency(timerId, 1000000.0f / static_cast<float>(us), reload);
 }
 
 // -----------------------------------------------------------------------------
@@ -72,6 +72,3 @@ resetTimer(int timerId)
 {
   REG_TM(timerId) = REG_TM(timerId);
 }
-
-
-};
