@@ -345,16 +345,21 @@ enum ESerialMode
 #define REG_DMAFILL(n)        (*((&REG_DMA0FILL)+n))
 #endif // NDS9
 #define REG_BRIGHTNESS        (*(vuint16_t*)0x0400006C)
+#define REG_TM0               (*(vuint32_t*)0x04000100)
 #define REG_TM0D              (*(vuint16_t*)0x04000100)
 #define REG_TM0CNT            (*(vuint16_t*)0x04000102) // See bits above
+#define REG_TM1               (*(vuint32_t*)0x04000104)
 #define REG_TM1D              (*(vuint16_t*)0x04000104)
 #define REG_TM1CNT            (*(vuint16_t*)0x04000106) // See bits above
+#define REG_TM2               (*(vuint32_t*)0x04000108)
 #define REG_TM2D              (*(vuint16_t*)0x04000108)
 #define REG_TM2CNT            (*(vuint16_t*)0x0400010A) // See bits above
+#define REG_TM3               (*(vuint32_t*)0x0400010C)
 #define REG_TM3D              (*(vuint16_t*)0x0400010C)
 #define REG_TM3CNT            (*(vuint16_t*)0x0400010E) // See bits above
-#define REG_TMCNT(n)          (*((&REG_TM0CNT)+(n*2)))
+#define REG_TM(n)             (*((&REG_TM0)+n))
 #define REG_TMD(n)            (*((&REG_TM0D)+(n*2)))
+#define REG_TMCNT(n)          (*((&REG_TM0CNT)+(n*2)))
 #ifdef GBA
 #define REG_SIODATA32         (*(vuint32_t*)0x04000120) // Data Send Register (R/W)
 #define REG_SIOMULTI0         (*(vuint16_t*)0x04000120) // SIO Multi-Player Data 0 (Parent) (R/W)
