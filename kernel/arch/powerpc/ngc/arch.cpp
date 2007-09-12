@@ -7,7 +7,7 @@ int
 main(int, char *[])
 {
   // Initialize the memory manager so we can use new/delete/malloc/free
-  CMemoryManager::init();
+  //init_heap(&__heap_start, (uint32_t)(&__heap_end - &__heap_start));
 
   return bricks_main();
 }

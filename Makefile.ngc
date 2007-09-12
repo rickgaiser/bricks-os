@@ -1,8 +1,14 @@
 MAKEFLAGS	+=--no-print-directory -s
 
 
-all:
-	make -f Makefile all ARCH=powerpc TARGET=ngc
+all: alldirs bin/ngc/Bricks.dol
 
 clean:
 	make -f Makefile clean ARCH=powerpc TARGET=ngc
+
+bin/ngc/Bricks.dol: bin/ngc/Bricks.elf
+	@echo [DOL] $@
+	powerpc-gekko-objcopy -O binary $< $@
+
+alldirs:
+	make -f Makefile all ARCH=powerpc TARGET=ngc
