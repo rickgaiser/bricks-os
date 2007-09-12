@@ -1,4 +1,5 @@
 #include "kernel/bricks.h"
+#include "kernel/debug.h"
 #include "kernel/memoryManager.h"
 #include "kernel/task.h"
 #include "ps2Video.h"
@@ -38,9 +39,9 @@ main(int, char *[])
 
 #ifdef CONFIG_MULTITASKING
   // Create task structure
-  CTask * pTask = new CTask(0, 0, 0);
+  CTask * pTask = getNewTask(0, 0, 0);
   pTask->eState_ = TS_RUNNING;
-  CTask::addTask(pTask);
+  CTaskManager::addTask(pTask);
 #endif // CONFIG_MULTITASKING
 
   return bricks_main();
