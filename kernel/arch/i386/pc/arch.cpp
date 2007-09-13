@@ -103,14 +103,12 @@ main(unsigned long magic, multiboot_info_t * mbi)
   {
     if((mbi->flags & (1<<6)) == 0)
     {
-      printk("ERROR: No multiboot memory map present\n");
-      CCPU::halt();
+      panic("ERROR: No multiboot memory map present\n");
     }
   }
   else
   {
-    printk("ERROR: Multiboot loader information not present\n");
-    CCPU::halt();
+    panic("ERROR: Multiboot loader information not present\n");
   }
 
   // -----------------------------
@@ -141,8 +139,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
 
   if(iMemFree < (2 * 1024 * 1024))
   {
-    printk("ERROR: %dKiB free memory, need at least 2048KiB\n", iMemFree/1024);
-    CCPU::halt();
+    panic("ERROR: %dKiB free memory, need at least 2048KiB\n", iMemFree/1024);
   }
 
   iMemReserved = iMemTop - iMemFree;

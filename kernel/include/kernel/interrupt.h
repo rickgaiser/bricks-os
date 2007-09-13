@@ -9,8 +9,6 @@
 
 
 //---------------------------------------------------------------------------
-// Observer pattern: observer
-//---------------------------------------------------------------------------
 class IInterruptServiceRoutine
 {
 public:
@@ -19,8 +17,6 @@ public:
   virtual int isr(int irq) = 0;
 };
 
-//---------------------------------------------------------------------------
-// Observer pattern: subject
 //---------------------------------------------------------------------------
 class CInterrupt
 {
@@ -35,7 +31,7 @@ public:
 
   virtual int  handle(int isr);
 
-  CIRQ                     * hardware_;
+  CIRQ * hardware_;
 
 private:
   IInterruptServiceRoutine * observers_[MAX_OBSERVERS];

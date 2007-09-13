@@ -43,9 +43,10 @@ pthread_mutex_getprioceiling(const pthread_mutex_t * mutex, int *)
 extern "C" int
 pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr)
 {
-  CCPU::cli();
+  unsigned long flags = local_save_flags();
+  local_irq_disable();
   mutex->iLock = 0;
-  CCPU::sti();
+  local_irq_restore(flags);
 
   return 0;
 }
@@ -54,15 +55,17 @@ pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr)
 extern "C" int
 pthread_mutex_lock(pthread_mutex_t * mutex)
 {
+  unsigned long flags = local_save_flags();
+
   while(true)
   {
-    CCPU::cli();
+    local_irq_disable();
     if(mutex->iLock == 0)
       break;
-    CCPU::sti();
+    local_irq_restore(flags);
   }
   mutex->iLock = 1;
-  CCPU::sti();
+  local_irq_restore(flags);
 
   return 0;
 }
@@ -78,14 +81,15 @@ extern "C" int
 pthread_mutex_trylock(pthread_mutex_t * mutex)
 {
   int iRetVal(-1);
+  unsigned long flags = local_save_flags();
 
-  CCPU::cli();
+  local_irq_disable();
   if(mutex->iLock == 0)
   {
     mutex->iLock = 1;
     iRetVal = 0;
   }
-  CCPU::sti();
+  local_irq_restore(flags);
 
   return iRetVal;
 }
@@ -95,14 +99,15 @@ extern "C" int
 pthread_mutex_unlock(pthread_mutex_t * mutex)
 {
   int iRetVal(-1);
+  unsigned long flags = local_save_flags();
 
-  CCPU::cli();
+  local_irq_disable();
   if(mutex->iLock == 1)
   {
     mutex->iLock = 0;
     iRetVal = 0;
   }
-  CCPU::sti();
+  local_irq_restore(flags);
 
   return iRetVal;
 }

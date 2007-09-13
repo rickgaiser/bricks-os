@@ -156,11 +156,6 @@ inline void outd(unsigned long  data, unsigned short addr){__asm__ ("outb %%eax,
 #define inw(port) ({ uint16_t _v; __asm__ __volatile__ ("inw %%dx, %%ax":"=a" (_v):"d" (port)); _v; })
 #define ind(port) ({ uint32_t _v; __asm__ __volatile__ ("inl %%dx,%%eax":"=a" (_v):"d" (port)); _v; })
 
-// PROCESSOR INSTRUCTIONS
-inline void sti(){__asm__ ("sti"::);}
-inline void cli(){__asm__ ("cli"::);}
-inline void halt(){__asm__ ("hlt"::);}
-
 // CONTROL REGISTERS
 inline void setCR0(uint32_t data){ __asm__ ("movl %0, %%cr0"::"r" (data));}
 inline void setCR1(uint32_t data){ __asm__ ("movl %0, %%cr1"::"r" (data));}

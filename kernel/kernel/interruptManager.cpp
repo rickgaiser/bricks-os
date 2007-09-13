@@ -58,8 +58,11 @@ CInterruptManager::detach(unsigned int irq, CIRQ * irqhardware)
 unsigned int
 CInterruptManager::isr(unsigned int irq, pt_regs * regs)
 {
+  unsigned long flags;
+
   // First disable interrupts
-  CCPU::cli();
+  flags = local_save_flags();
+  local_irq_disable();
 
   if(irq < MAX_INTERRUPTS)
   {
@@ -78,8 +81,8 @@ CInterruptManager::isr(unsigned int irq, pt_regs * regs)
     printk("CInterruptManager::isr: ERROR: Interrupt out of range(int=%d)\n", (int)irq);
   }
 
-  // Enable interrupt again and return
-  CCPU::sti();
+  // Restore interrupt and return
+  local_irq_restore(flags);
 
   return 0;
 }

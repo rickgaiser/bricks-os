@@ -10,6 +10,7 @@ void *
 thread(void * arg)
 {
   printk("Threads...OK\n");
+  ::halt();
 
   return 0;
 }
@@ -32,14 +33,14 @@ bricks_main()
 
   // Enable interrupts
   printk("Interrupts...\n");
-  CCPU::sti();
+  local_irq_enable();
   printk("Interrupts...OK\n");
 
   // Halt current thread
   // FIXME: Forever consuming CPU time now!
   while(true)
   {
-    CCPU::halt();
+    ::halt();
   }
 
   return 0;

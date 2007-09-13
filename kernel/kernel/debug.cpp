@@ -161,6 +161,6 @@ panic(const char * fmt, ...)
 
   pDebug->write("\nSystem Halted", 15);
 
-  CCPU::cli();
-  CCPU::halt();
+  local_irq_disable();
+  ::halt();
 }

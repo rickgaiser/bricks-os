@@ -111,8 +111,7 @@ isr(pt_regs * regs)
     case 0x1d:
     case 0x1e:
     case 0x1f:
-      printk("CPU Interrupt(%d): %s, addr: %d\n", regs->iIntNumber, msg[regs->iIntNumber], regs->eip);
-      CCPU::halt();
+      panic("CPU Interrupt(%d): %s, addr: %d\n", regs->iIntNumber, msg[regs->iIntNumber], regs->eip);
       break;
 
     // Handle IRQs
@@ -186,8 +185,7 @@ isr(pt_regs * regs)
 
     // Handle unknown interrupts
     default:
-      printk("Unknown Interrupt(%d)\n", regs->iIntNumber);
-      CCPU::halt();
+      panic("Unknown Interrupt(%d)\n", regs->iIntNumber);
   };
 
   //printk("<<isr\n");

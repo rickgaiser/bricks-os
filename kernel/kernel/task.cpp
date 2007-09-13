@@ -84,8 +84,7 @@ CTaskManager::removeTask(CTask * pTask)
   }
   else
   {
-    printk("CTaskManager::removeTask: ERROR: Can not kill last task\n");
-    CCPU::halt();
+    panic("CTaskManager::removeTask: ERROR: Can not kill last task\n");
   }
 }
 
@@ -113,8 +112,7 @@ CTaskManager::schedule()
     CTaskManager::pCurrentTask_->eState_ = TS_RUNNING;
   else
   {
-    printk("CTaskManager::schedule: ERROR: No tasks to schedule\n");
-    CCPU::halt();
+    panic("CTaskManager::schedule: ERROR: No tasks to schedule\n");
   }
 
   return pPrevTask != CTaskManager::pCurrentTask_;
