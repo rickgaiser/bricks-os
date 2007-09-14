@@ -3,10 +3,10 @@
 
 
 #include "kernel/fs.h"
+#include "kernel/queue.h"
 #include "inttypes.h"
 
 
-#define MAX_TASK_COUNT       10
 #define MAX_CHANNEL_COUNT    10
 #define MAX_CONNECTION_COUNT 10
 
@@ -17,6 +17,7 @@ enum ETaskState
   TS_UNINITIALIZED,
   TS_READY,
   TS_RUNNING,
+  TS_WAITING,
   TS_DESTROY,
   TS_SEND_BLOCKED,
   TS_RECEIVE_BLOCKED,
@@ -61,21 +62,20 @@ public:
   //  - Jump to task immediately.
   virtual void run() = 0;
 
-  // Message bus management
-  SChannel    * pChannel_[MAX_CHANNEL_COUNT];
-  SChannel    * pConnection_[MAX_CONNECTION_COUNT];
+  SChannel * pChannel_[MAX_CHANNEL_COUNT];           // Tasks Channels
+  SChannel * pConnection_[MAX_CONNECTION_COUNT];     // Tasks Connections
 
-  // Task state
-  ETaskState    eState_;
+  ETaskState eState_;                                // Current task state
+  uint32_t iTimeout_;                                // Timeout in us
 
-  // Linked list
-  CTask       * prev;
-  CTask       * next;
+  TAILQ_ENTRY(CTask) task_queue;                     // All tasks queue
+  TAILQ_ENTRY(CTask) state_queue;                    // Queue for current tasks state
 
 protected:
   CTask();
 };
 
+TAILQ_HEAD(STaskQueue, CTask);
 // -----------------------------------------------------------------------------
 class CTaskManager
 {
@@ -84,9 +84,9 @@ public:
   static void removeTask(CTask * pTask);
   static bool schedule();
 
-  static uint32_t   iTaskCount_;
-  static CTask    * pCurrentTask_;
-  static CTask    * taskTable_[MAX_TASK_COUNT];
+  static CTask * pCurrentTask_;
+  static STaskQueue task_queue;  // All tasks queue
+  static STaskQueue run_queue;   // Runnable tasks
 
 private:
   CTaskManager(){}

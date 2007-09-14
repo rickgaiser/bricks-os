@@ -3,7 +3,6 @@
 #include "kernel/elf.h"
 #include "kernel/memoryManager.h"
 #include "kernel/settings.h"
-#include "kernel/srr.h"
 #include "kernel/syscall.h"
 #include "kernel/task.h"
 

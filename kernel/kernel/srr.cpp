@@ -65,10 +65,10 @@ int
 k_connectAttach(SConnectAttach * args)
 {
   int iRetVal(-1);
+/*
   int iChannelID(args->iChannelID - 2);
 
   //printk("k_connectAttach\n");
-
   if(args->iNodeID == 0)
   {
     // Local node, find process
@@ -106,7 +106,7 @@ k_connectAttach(SConnectAttach * args)
   {
     printk("k_connectAttach: Remote nodes not supported\n");
   }
-
+*/
   return iRetVal;
 }
 

@@ -3,23 +3,21 @@
 #include "asm/cpu.h"
 
 
-uint32_t  CTaskManager::iTaskCount_(0);
-CTask   * CTaskManager::pCurrentTask_ = 0;
-CTask   * CTaskManager::taskTable_[MAX_TASK_COUNT];
+CTask      * CTaskManager::pCurrentTask_ = 0;
+STaskQueue   CTaskManager::task_queue  = TAILQ_HEAD_INITIALIZER(CTaskManager::task_queue);
+STaskQueue   CTaskManager::run_queue   = TAILQ_HEAD_INITIALIZER(CTaskManager::run_queue);
 
 
 // -----------------------------------------------------------------------------
 CTask::CTask()
  : eState_(TS_UNINITIALIZED)
+ , iTimeout_(0)
 {
   for(int i(0); i < MAX_CHANNEL_COUNT; i++)
     pChannel_[i] = 0;
 
   for(int i(0); i < MAX_CONNECTION_COUNT; i++)
     pConnection_[i] = 0;
-
-  prev = this;
-  next = this;
 }
 
 // -----------------------------------------------------------------------------
@@ -34,37 +32,14 @@ CTaskManager::addTask(CTask * pTask)
 {
   //printk("CTaskManager::addTask\n");
 
-  if(iTaskCount_ == 0)
-  {
-    for(int iTask(0); iTask < MAX_TASK_COUNT; iTask++)
-      taskTable_[iTask] = 0;
+  // Insert in the run queue (only if not already running)
+  if(pCurrentTask_ == 0)
     pCurrentTask_ = pTask;
-    taskTable_[0] = pTask;
-    iTaskCount_++;
-  }
-  else if(iTaskCount_ < MAX_TASK_COUNT)
-  {
-    pTask->next = pCurrentTask_->next;
-    pTask->prev = pCurrentTask_;
-
-    pCurrentTask_->next->prev = pTask;
-    pCurrentTask_->next = pTask;
-
-    for(int iTask(0); iTask < MAX_TASK_COUNT; iTask++)
-    {
-      if(taskTable_[iTask] == 0)
-      {
-        taskTable_[iTask] = pTask;
-        break;
-      }
-    }
-
-    iTaskCount_++;
-  }
   else
-  {
-    printk("CTaskManager::addTask: ERROR: Task list full\n");
-  }
+    TAILQ_INSERT_TAIL(&run_queue, pTask, state_queue);
+
+  // Insert in the "all tasks" queue
+  TAILQ_INSERT_TAIL(&task_queue, pTask, task_queue);
 }
 
 // -----------------------------------------------------------------------------
@@ -73,18 +48,25 @@ CTaskManager::removeTask(CTask * pTask)
 {
   //printk("CTaskManager::removeTask\n");
 
-  if(pTask != pTask->next)
-  {
-    // Remove current task from list
-    pTask->prev->next = pTask->next;
-    pTask->next->prev = pTask->prev;
+  // Remove from "all tasks" queue
+  TAILQ_REMOVE(&task_queue, pTask, task_queue);
+  // Remove from run queue
+  if(pTask != pCurrentTask_)
+    TAILQ_REMOVE(&run_queue, pTask, state_queue);
+}
 
-    // Flag task to be destroyed
-    pTask->eState_ = TS_DESTROY;
-  }
-  else
+// -----------------------------------------------------------------------------
+void
+k_usleep(unsigned long usec)
+{
+  if(usec > 0)
   {
-    panic("CTaskManager::removeTask: ERROR: Can not kill last task\n");
+    CTaskManager::pCurrentTask_->eState_   = TS_WAITING;
+    CTaskManager::pCurrentTask_->iTimeout_ = usec;
+    // Place back into the run queue
+    TAILQ_INSERT_TAIL(&CTaskManager::run_queue, CTaskManager::pCurrentTask_, state_queue);
+    // Schedule next task
+    CTaskManager::schedule();
   }
 }
 
@@ -94,26 +76,47 @@ CTaskManager::schedule()
 {
   //printk("CTaskManager::schedule\n");
 
-  CTask * pPrevTask = CTaskManager::pCurrentTask_;
+  CTask * pPrevTask = pCurrentTask_;
+  CTask * pTask;
 
-  // If the current task is running, put it on ready
-  if(CTaskManager::pCurrentTask_->eState_ == TS_RUNNING)
-    CTaskManager::pCurrentTask_->eState_ = TS_READY;
-
-  // Locate the next ready task
-  do
+  // If the current task is running, put it on ready at the end of the queue
+  if(pCurrentTask_->eState_ == TS_RUNNING)
   {
-    CTaskManager::pCurrentTask_ = CTaskManager::pCurrentTask_->next;
-  }
-  while((CTaskManager::pCurrentTask_ != pPrevTask) && (CTaskManager::pCurrentTask_->eState_ != TS_READY));
-
-  // Make it run if ready
-  if(CTaskManager::pCurrentTask_->eState_ == TS_READY)
-    CTaskManager::pCurrentTask_->eState_ = TS_RUNNING;
-  else
-  {
-    panic("CTaskManager::schedule: ERROR: No tasks to schedule\n");
+    pCurrentTask_->eState_ = TS_READY;
+    TAILQ_INSERT_TAIL(&run_queue, pCurrentTask_, state_queue);
   }
 
-  return pPrevTask != CTaskManager::pCurrentTask_;
+  // Wake up sleaping tasks if timeout exeeded
+  TAILQ_FOREACH(pTask, &run_queue, state_queue)
+  {
+    if(pTask->iTimeout_ > 0)
+    {
+      pTask->iTimeout_--;
+
+      if(pTask->iTimeout_ == 0)
+      {
+        // Wake up task
+        pTask->eState_ = TS_READY;
+      }
+    }
+  }
+
+  // Locate the first task in the run queue
+  TAILQ_FOREACH(pTask, &run_queue, state_queue)
+  {
+    if(pCurrentTask_->eState_ == TS_READY)
+    {
+      // Remove from the run queue
+      pCurrentTask_ = pTask;
+      pCurrentTask_->eState_ = TS_RUNNING;
+      TAILQ_REMOVE(&run_queue, pCurrentTask_, state_queue);
+      break;
+    }
+  }
+
+  // Make sure we have a task
+  if(pCurrentTask_ == 0)
+    panic("CTaskManager::schedule: ERROR: No task to run\n");
+
+  return pPrevTask != pCurrentTask_;
 }
