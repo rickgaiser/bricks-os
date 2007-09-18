@@ -62,10 +62,11 @@ public:
   //  - Jump to task immediately.
   virtual void run() = 0;
 
+  void state(ETaskState state);
+
   SChannel * pChannel_[MAX_CHANNEL_COUNT];           // Tasks Channels
   SChannel * pConnection_[MAX_CONNECTION_COUNT];     // Tasks Connections
 
-  ETaskState eState_;                                // Current task state
   uint32_t iTimeout_;                                // Timeout in us
   pid_t iPID_;
 
@@ -74,6 +75,9 @@ public:
 
 protected:
   CTask();
+
+private:
+  ETaskState eState_;                                // Current task state
 };
 
 TAILQ_HEAD(STaskQueue, CTask);
@@ -81,14 +85,14 @@ TAILQ_HEAD(STaskQueue, CTask);
 class CTaskManager
 {
 public:
-  static void addTask(CTask * pTask);
-  static void removeTask(CTask * pTask);
   static bool schedule();
 
   static CTask * pCurrentTask_;
-  static STaskQueue task_queue;  // All tasks queue
-  static STaskQueue run_queue;   // Runnable tasks
+  static STaskQueue task_queue;    // All tasks
+  static STaskQueue ready_queue;   // Ready to run tasks
+  static STaskQueue timer_queue;   // Sleeping on timer tasks
   static uint32_t iPIDCount_;
+  static useconds_t iCurrentTime_;
 
 private:
   CTaskManager(){}

@@ -68,8 +68,7 @@ loadELF32(void * file, CPCTask & task)
 
   // Set task entry point
   task.entry((void *)hdr->e_entry);
-  task.eState_ = TS_READY;
-  CTaskManager::addTask(&task);
+  task.state(TS_READY);
 
   return 0;
 }

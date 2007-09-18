@@ -72,7 +72,7 @@ k_channelConnectAttach(SConnectAttach * args)
   //printk("k_connectAttach\n");
   if(args->iNodeID == 0)
   {
-    TAILQ_FOREACH(pTask, &CTaskManager::run_queue, state_queue)
+    TAILQ_FOREACH(pTask, &CTaskManager::ready_queue, state_queue)
     {
       if(pTask->iPID_ == args->iProcessID)
       {

@@ -32,8 +32,7 @@ init_task()
   setTR(taskMain.selTSS_);
 
   // Add task to taskmanagers list
-  taskMain.eState_ = TS_RUNNING;
-  CTaskManager::addTask(&taskMain);
+  taskMain.state(TS_RUNNING);
 }
 
 // -----------------------------------------------------------------------------
@@ -112,7 +111,7 @@ CTask *
 getNewTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
 {
   CPCTask * pt = new CPCTask();
-  
+
   pt->init();
   pt->entry(entry);
   if(stack != 0)
@@ -123,7 +122,7 @@ getNewTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
     pt->stack0(new uint8_t[svcstack] + svcstack);
   else
     pt->stack0(new uint8_t[512] + 512);
-  pt->aspace().addRange(taskMain.aspace(), 0, 0x00400000);  // Identity map bottom 4MiB 
+  pt->aspace().addRange(taskMain.aspace(), 0, 0x00400000);  // Identity map bottom 4MiB
 
   return pt;
 }
