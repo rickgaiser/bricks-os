@@ -62,57 +62,57 @@ k_channelDestroy(SChannelDestroy * args)
 
 //---------------------------------------------------------------------------
 int
-k_connectAttach(SConnectAttach * args)
+k_channelConnectAttach(SConnectAttach * args)
 {
   int iRetVal(-1);
-/*
+  CTask * pTask;
+
   int iChannelID(args->iChannelID - 2);
 
   //printk("k_connectAttach\n");
   if(args->iNodeID == 0)
   {
-    // Local node, find process
-    if((args->iProcessID < MAX_TASK_COUNT) && (CTaskManager::taskTable_[args->iProcessID] != 0))
+    TAILQ_FOREACH(pTask, &CTaskManager::run_queue, state_queue)
     {
-      // Process found, find channel
-      if((iChannelID < MAX_CHANNEL_COUNT) && (CTaskManager::taskTable_[args->iProcessID]->pChannel_[iChannelID] != 0))
+      if(pTask->iPID_ == args->iProcessID)
       {
-        // Channel found, find empty connection
-        for(int i(0); i < MAX_CONNECTION_COUNT; i++)
+        // Process found, find channel
+        if((iChannelID < MAX_CHANNEL_COUNT) && (pTask->pChannel_[iChannelID] != 0))
         {
-          if(CTaskManager::pCurrentTask_->pConnection_[i] == 0)
+          // Channel found, find empty connection
+          for(int i(0); i < MAX_CONNECTION_COUNT; i++)
           {
-            CTaskManager::pCurrentTask_->pConnection_[i] = CTaskManager::taskTable_[args->iProcessID]->pChannel_[iChannelID];
-            iRetVal = i + 2;
-            break;
+            if(CTaskManager::pCurrentTask_->pConnection_[i] == 0)
+            {
+              CTaskManager::pCurrentTask_->pConnection_[i] = pTask->pChannel_[iChannelID];
+              iRetVal = i + 2;
+              break;
+            }
+          }
+          if(iRetVal == -1)
+          {
+            printk("k_connectAttach: Max connections reached!\n");
           }
         }
-        if(iRetVal == -1)
+        else
         {
-          printk("k_connectAttach: Max connections reached!\n");
+          printk("k_connectAttach: Channel not found\n");
         }
+        break;
       }
-      else
-      {
-        printk("k_connectAttach: Channel not found\n");
-      }
-    }
-    else
-    {
-      printk("k_connectAttach: Process not found\n");
     }
   }
   else
   {
     printk("k_connectAttach: Remote nodes not supported\n");
   }
-*/
+
   return iRetVal;
 }
 
 //---------------------------------------------------------------------------
 int
-k_connectDetach(SConnectDetach * args)
+k_channelConnectDetach(SConnectDetach * args)
 {
   int iRetVal(-1);
 
@@ -143,16 +143,16 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
     switch(pHeader->iFunctionID)
     {
       case kfCHANNEL_CREATE:
-        iRetVal = k_channelCreate ((SChannelCreate *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+        iRetVal = k_channelCreate       ((SChannelCreate *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
         break;
       case kfCHANNEL_DESTROY:
-        iRetVal = k_channelDestroy((SChannelDestroy *)((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+        iRetVal = k_channelDestroy      ((SChannelDestroy *)((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
         break;
       case kfCHANNEL_ATTACH:
-        iRetVal = k_connectAttach ((SConnectAttach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+        iRetVal = k_channelConnectAttach((SConnectAttach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
         break;
       case kfCHANNEL_DETACH:
-        iRetVal = k_connectDetach ((SConnectDetach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+        iRetVal = k_channelConnectDetach((SConnectDetach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
         break;
       default:
         printk("k_msgSend: Invalid function id: %d\n", pHeader->iFunctionID);

@@ -7,8 +7,6 @@
 extern bool bPAEEnabled;
 
 CPCTask    taskMain;
-uint8_t    stack_pl0[512];
-uint8_t    stack_pl3[512];
 
 
 // -----------------------------------------------------------------------------
@@ -34,7 +32,7 @@ init_task()
   setTR(taskMain.selTSS_);
 
   // Add task to taskmanagers list
-  taskMain.eState_ = TS_READY;
+  taskMain.eState_ = TS_RUNNING;
   CTaskManager::addTask(&taskMain);
 }
 
@@ -60,9 +58,9 @@ CPCTask::init()
 
     // Locate virtual memory for TSS
     memset(&tss_, 0, sizeof(STaskStateSegment));
-    tss_.esp0 = (uint32_t)&stack_pl0 + 512;
+    //tss_.esp0 = (uint32_t)&stack_pl0 + 512;
     tss_.ss0  = selDataKernel;
-    tss_.esp  = (uint32_t)&stack_pl3 + 512;
+    //tss_.esp  = (uint32_t)&stack_pl3 + 512;
     tss_.cr3  = cASpace_.cr3();
     //tss_.eip  = (uint32_t)ip;
     tss_.eflags = 0x200;
@@ -84,18 +82,23 @@ CPCTask::init()
 void
 CPCTask::entry(void * ip)
 {
-  pEntry_ = ip;
   tss_.eip  = (uint32_t)ip;
 }
-/*
+
 // -----------------------------------------------------------------------------
 void
 CPCTask::stack(void * sp)
 {
-  pStack_ = sp;
   tss_.esp = (uint32_t)sp;
 }
-*/
+
+// -----------------------------------------------------------------------------
+void
+CPCTask::stack0(void * sp)
+{
+  tss_.esp0 = (uint32_t)sp;
+}
+
 // -----------------------------------------------------------------------------
 void
 CPCTask::run()
@@ -108,5 +111,19 @@ CPCTask::run()
 CTask *
 getNewTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
 {
-  return new CPCTask();
+  CPCTask * pt = new CPCTask();
+  
+  pt->init();
+  pt->entry(entry);
+  if(stack != 0)
+    pt->stack(new uint8_t[stack] + stack);
+  else
+    pt->stack(new uint8_t[512] + 512);
+  if(svcstack != 0)
+    pt->stack0(new uint8_t[svcstack] + svcstack);
+  else
+    pt->stack0(new uint8_t[512] + 512);
+  pt->aspace().addRange(taskMain.aspace(), 0, 0x00400000);  // Identity map bottom 4MiB 
+
+  return pt;
 }

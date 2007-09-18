@@ -4,14 +4,16 @@
 
 
 CTask      * CTaskManager::pCurrentTask_ = 0;
-STaskQueue   CTaskManager::task_queue  = TAILQ_HEAD_INITIALIZER(CTaskManager::task_queue);
-STaskQueue   CTaskManager::run_queue   = TAILQ_HEAD_INITIALIZER(CTaskManager::run_queue);
+STaskQueue   CTaskManager::task_queue    = TAILQ_HEAD_INITIALIZER(CTaskManager::task_queue);
+STaskQueue   CTaskManager::run_queue     = TAILQ_HEAD_INITIALIZER(CTaskManager::run_queue);
+uint32_t     CTaskManager::iPIDCount_    = 1;
 
 
 // -----------------------------------------------------------------------------
 CTask::CTask()
  : eState_(TS_UNINITIALIZED)
  , iTimeout_(0)
+ , iPID_(CTaskManager::iPIDCount_++)
 {
   for(int i(0); i < MAX_CHANNEL_COUNT; i++)
     pChannel_[i] = 0;
@@ -53,21 +55,6 @@ CTaskManager::removeTask(CTask * pTask)
   // Remove from run queue
   if(pTask != pCurrentTask_)
     TAILQ_REMOVE(&run_queue, pTask, state_queue);
-}
-
-// -----------------------------------------------------------------------------
-void
-k_usleep(unsigned long usec)
-{
-  if(usec > 0)
-  {
-    CTaskManager::pCurrentTask_->eState_   = TS_WAITING;
-    CTaskManager::pCurrentTask_->iTimeout_ = usec;
-    // Place back into the run queue
-    TAILQ_INSERT_TAIL(&CTaskManager::run_queue, CTaskManager::pCurrentTask_, state_queue);
-    // Schedule next task
-    CTaskManager::schedule();
-  }
 }
 
 // -----------------------------------------------------------------------------
@@ -119,4 +106,30 @@ CTaskManager::schedule()
     panic("CTaskManager::schedule: ERROR: No task to run\n");
 
   return pPrevTask != pCurrentTask_;
+}
+
+// -----------------------------------------------------------------------------
+extern "C" pid_t
+k_getpid(void)
+{
+  return CTaskManager::pCurrentTask_->iPID_;
+}
+
+// -----------------------------------------------------------------------------
+int
+k_usleep(useconds_t useconds)
+{
+  if(useconds > 0)
+  {
+    CTaskManager::pCurrentTask_->eState_   = TS_WAITING;
+    CTaskManager::pCurrentTask_->iTimeout_ = useconds;
+    // Place back into the run queue
+    TAILQ_INSERT_TAIL(&CTaskManager::run_queue, CTaskManager::pCurrentTask_, state_queue);
+    // Schedule next task
+    CTaskManager::schedule();
+
+    return 0;
+  }
+
+  return -1;
 }

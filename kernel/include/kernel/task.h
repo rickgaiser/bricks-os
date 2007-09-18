@@ -67,6 +67,7 @@ public:
 
   ETaskState eState_;                                // Current task state
   uint32_t iTimeout_;                                // Timeout in us
+  pid_t iPID_;
 
   TAILQ_ENTRY(CTask) task_queue;                     // All tasks queue
   TAILQ_ENTRY(CTask) state_queue;                    // Queue for current tasks state
@@ -87,10 +88,15 @@ public:
   static CTask * pCurrentTask_;
   static STaskQueue task_queue;  // All tasks queue
   static STaskQueue run_queue;   // Runnable tasks
+  static uint32_t iPIDCount_;
 
 private:
   CTaskManager(){}
 };
+
+
+extern "C" pid_t   k_getpid(void);
+extern "C" int     k_usleep(useconds_t useconds);
 
 
 // -----------------------------------------------------------------------------

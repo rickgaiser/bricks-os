@@ -2,7 +2,7 @@
 #define USER_SRRCHANNEL_H
 
 
-#ifdef DIRECT_ACCESS_CHANNEL
+#ifdef DIRECT_ACCESS_KERNEL
   #include "kernel/srrChannel_k.h"
 
   // Channels

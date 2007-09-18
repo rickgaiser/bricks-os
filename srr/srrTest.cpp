@@ -1,6 +1,7 @@
 #include "kernel/debug.h"
 #include "kernel/srr.h"
 #include "kernel/srrChannel.h"
+#include "unistd.h"
 #include "pthread.h"
 
 
@@ -15,13 +16,16 @@ server(void * arg)
 {
   printk("server: Thread Running\n");
 
-  iServerPID = 1;//getPID();
+  iServerPID = getpid();
   iChannelID = channelCreate(0);
   bServerRunning = true;
   if(iChannelID > 1)
   {
     int rcvid;
     char recvBuffer[20];
+
+    printk("server: Ready\n");
+
     while(true)
     {
       rcvid = msgReceive(iChannelID, recvBuffer, 20);
@@ -60,7 +64,7 @@ srrTest(int argc, char * argv[])
   int iConnectID = channelConnectAttach(0, iServerPID, iChannelID, 0);
   if(iConnectID > 1)
   {
-    printk("client: connected\n");
+    printk("client: Connected\n");
 
     // Send message to server
     char recvBuffer[20];

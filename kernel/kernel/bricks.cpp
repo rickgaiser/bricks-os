@@ -4,6 +4,9 @@
 #include "pthread.h"
 
 
+extern int srrTest(int argc, char * argv[]);
+
+
 #ifdef CONFIG_MULTITASKING
 // -----------------------------------------------------------------------------
 void *
@@ -35,6 +38,9 @@ bricks_main()
   printk("Interrupts...\n");
   local_irq_enable();
   printk("Interrupts...OK\n");
+
+  // Execute application
+  srrTest(0, 0);
 
   // Halt current thread
   // FIXME: Forever consuming CPU time now!

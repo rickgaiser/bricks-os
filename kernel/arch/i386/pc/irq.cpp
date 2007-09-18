@@ -18,7 +18,7 @@
 extern "C" void
 isr(pt_regs * regs)
 {
-  //printk(">>isr\n");
+  //printk("isr 0x%x\n", regs->iIntNumber);
 
   static const char * msg[] =
   {
@@ -118,9 +118,17 @@ isr(pt_regs * regs)
     case 0x20:  // Timer
       // Run scheduler
       if(CTaskManager::schedule() == true)
+      {
+        // Ack interrupt (normally interrupt manager will do this)
+        outb(EOI_BYTE, PIC_MASTER_BASE);
+        // Load return stack or jump to TSS
         CTaskManager::pCurrentTask_->run();
-      // Ack interrupt (normally interrupt manager will do this)
-      outb(EOI_BYTE, PIC_MASTER_BASE);
+      }
+      else
+      {
+        // Ack interrupt (normally interrupt manager will do this)
+        outb(EOI_BYTE, PIC_MASTER_BASE);
+      }
       break;
     case 0x21:
     case 0x22:
@@ -187,8 +195,6 @@ isr(pt_regs * regs)
     default:
       panic("Unknown Interrupt(%d)\n", regs->iIntNumber);
   };
-
-  //printk("<<isr\n");
 }
 
 // -----------------------------------------------------------------------------
