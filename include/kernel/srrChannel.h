@@ -2,6 +2,11 @@
 #define USER_SRRCHANNEL_H
 
 
+// FIXME
+#ifndef DIRECT_ACCESS_KERNEL
+  #define DIRECT_ACCESS_KERNEL
+#endif
+
 #ifdef DIRECT_ACCESS_KERNEL
   #include "kernel/srrChannel_k.h"
 

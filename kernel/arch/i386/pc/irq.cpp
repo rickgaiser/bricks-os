@@ -178,8 +178,9 @@ isr(pt_regs * regs)
       {
         case 1:
           // exit
-          CTaskManager::removeTask(CTaskManager::pCurrentTask_);
-          CTaskManager::pCurrentTask_->run();
+          CTaskManager::pCurrentTask_->state(TS_DESTROY);
+          if(CTaskManager::schedule() == true)
+            CTaskManager::pCurrentTask_->run();
           break;
         case 4:
           // write

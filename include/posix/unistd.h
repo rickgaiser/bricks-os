@@ -13,6 +13,10 @@
 #define STDOUT  1
 #define STDERR  2
 
+// FIXME
+#ifndef DIRECT_ACCESS_KERNEL
+  #define DIRECT_ACCESS_KERNEL
+#endif
 
 #ifdef DIRECT_ACCESS_KERNEL
   #include "kernel/task.h"
