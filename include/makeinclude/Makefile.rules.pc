@@ -20,7 +20,7 @@ CXXFLAGS        +=\
                 -fno-threadsafe-statics \
 
 LFLAGS          +=\
-                -T $(BRICKS_ROOT)/include/makeinclude/link.i386 \
+                -T $(BRICKS_ROOT)/include/makeinclude/link.pc \
                 -nostdlib \
                 $(CXXFLAGS) \
                 $(MY_LIBS_PATH) \

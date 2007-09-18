@@ -34,7 +34,7 @@ CXXFLAGS        +=\
 LFLAGS          +=\
                 -mthumb \
                 -mthumb-interwork \
-                -specs=ds_arm9.specs \
+                -specs=$(BRICKS_ROOT)/include/makeinclude/ds_arm9.specs \
                 $(MY_LIBS_PATH) \
 
 #                -nostdlib \

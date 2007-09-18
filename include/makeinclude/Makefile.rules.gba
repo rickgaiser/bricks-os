@@ -30,7 +30,7 @@ CXXFLAGS        +=\
 LFLAGS          +=\
                 -mthumb \
                 -mthumb-interwork \
-                -specs=gba.specs \
+                -specs=$(BRICKS_ROOT)/include/makeinclude/gba.specs \
                 $(MY_LIBS_PATH) \
 
 #                -nostdlib \
