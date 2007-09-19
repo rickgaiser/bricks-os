@@ -75,17 +75,14 @@ class CPCAddressSpace
 public:
   CPCAddressSpace();
   virtual ~CPCAddressSpace();
-  
-  void init();
+
   void identityMap(void * start, uint32_t length);
   void addSection(void * to_addr, void * from_addr, uint32_t length);
   void addRange(const CPCAddressSpace & as, void * start, unsigned int length);
-  
+
   uint32_t cr3();
-  
+
 private:
-  bool bInitialized_;
-  
   // Page Directory Pointer (Table)
   union {
     pde32_t * pPD_;  // Without PAE (pointer to physical addr)

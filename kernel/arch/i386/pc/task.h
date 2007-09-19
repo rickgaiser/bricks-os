@@ -11,20 +11,14 @@
 void init_task();
 
 
-class CPCTask
- : public CTask
+class CPCThread
+ : public CThread
 {
 public:
   friend void init_task();
 
-  CPCTask();
-  virtual ~CPCTask();
-
-  void init();
-
-  void entry(void * ip);
-  void stack(void * sp);
-  void stack0(void * sp);
+  CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
+  virtual ~CPCThread();
 
   // Address Space
   CPCAddressSpace & aspace(){return cASpace_;}
@@ -32,8 +26,6 @@ public:
   virtual void run();
 
 private:
-  bool bInitialized_;
-
   // Addess space
   CPCAddressSpace cASpace_;
 
@@ -41,9 +33,6 @@ private:
   STaskStateSegment tss_;
   selector_t selTSS_;
 };
-
-
-extern CPCTask taskMain;
 
 
 #endif

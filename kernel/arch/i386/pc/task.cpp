@@ -6,62 +6,61 @@
 
 extern bool bPAEEnabled;
 
-CPCTask    taskMain;
+
+CTask      * pMainTask;
+CPCThread  * pMainThread;
 
 
 // -----------------------------------------------------------------------------
 void
 init_task()
 {
-  taskMain.cASpace_.init();
-  taskMain.selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)&taskMain.tss_, sizeof(STaskStateSegment));
-  taskMain.bInitialized_ = true;
-  taskMain.cASpace_.identityMap(0, 0x00400000);  // Identity Map first 4MiB
+  pMainTask   = new CTask(0, 0, 0);
+  pMainThread = pMainTask->thr_;
+
+  pMainThread->cASpace_.init();
+  pMainThread->selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)&pMainThread->tss_, sizeof(STaskStateSegment));
+  pMainThread->cASpace_.identityMap(0, 0x00400000);  // Identity Map first 4MiB
 
   // Enable PAE
   if(bPAEEnabled == true)
     setCR4(getCR4() | CR4_PAE);
 
   // Load CR3
-  setCR3(taskMain.cASpace_.cr3());
+  setCR3(pMainThread->cASpace_.cr3());
 
   // Enable paging
   setCR0(getCR0() | CR0_PG);
 
   // Set the current running tasks TSS
-  setTR(taskMain.selTSS_);
+  setTR(pMainThread->selTSS_);
 
   // Add task to taskmanagers list
-  taskMain.state(TS_RUNNING);
+  pMainThread->state(TS_RUNNING);
 }
 
 // -----------------------------------------------------------------------------
-CPCTask::CPCTask()
- : CTask()
- , bInitialized_(false)
+CPCThread::CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
+ : CThread(task)
 {
-}
-
-// -----------------------------------------------------------------------------
-CPCTask::~CPCTask()
-{
-}
-
-// -----------------------------------------------------------------------------
-void
-CPCTask::init()
-{
-  if(bInitialized_ == false)
+  // Main thread?
+  if(entry != NULL)
   {
     cASpace_.init();
 
     // Locate virtual memory for TSS
     memset(&tss_, 0, sizeof(STaskStateSegment));
-    //tss_.esp0 = (uint32_t)&stack_pl0 + 512;
+    if(svcstack != 0)
+      tss_.esp0 = new uint8_t[svcstack] + svcstack);
+    else
+      tss_.esp0 = new uint8_t[512] + 512);
     tss_.ss0  = selDataKernel;
-    //tss_.esp  = (uint32_t)&stack_pl3 + 512;
+    if(stack != 0)
+      tss_.esp  = new uint8_t[stack] + stack);
+    else
+      tss_.esp  = new uint8_t[512] + 512);
     tss_.cr3  = cASpace_.cr3();
-    //tss_.eip  = (uint32_t)ip;
+    tss_.eip  = (uint32_t)entry;
     tss_.eflags = 0x200;
     tss_.es   = selDataUserTmp;
     tss_.cs   = selCodeUserTmp;
@@ -72,57 +71,29 @@ CPCTask::init()
 
     // Create descriptor for TSS
     selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)&tss_, sizeof(STaskStateSegment));
-
-    bInitialized_ = true;
+    // Identity map bottom 4MiB
+    aspace().addRange(pMainThread->aspace(), 0, 0x00400000);
   }
 }
 
 // -----------------------------------------------------------------------------
-void
-CPCTask::entry(void * ip)
+CPCThread::~CPCThread()
 {
-  tss_.eip  = (uint32_t)ip;
 }
 
 // -----------------------------------------------------------------------------
 void
-CPCTask::stack(void * sp)
-{
-  tss_.esp = (uint32_t)sp;
-}
-
-// -----------------------------------------------------------------------------
-void
-CPCTask::stack0(void * sp)
-{
-  tss_.esp0 = (uint32_t)sp;
-}
-
-// -----------------------------------------------------------------------------
-void
-CPCTask::run()
+CPCThread::run()
 {
   // Jump to task
   jumpSelector(selTSS_);
 }
 
 // -----------------------------------------------------------------------------
-CTask *
-getNewTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
+CThread *
+getNewThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
 {
-  CPCTask * pt = new CPCTask();
-
-  pt->init();
-  pt->entry(entry);
-  if(stack != 0)
-    pt->stack(new uint8_t[stack] + stack);
-  else
-    pt->stack(new uint8_t[512] + 512);
-  if(svcstack != 0)
-    pt->stack0(new uint8_t[svcstack] + svcstack);
-  else
-    pt->stack0(new uint8_t[512] + 512);
-  pt->aspace().addRange(taskMain.aspace(), 0, 0x00400000);  // Identity map bottom 4MiB
+  CPCThread * pt = new CPCThread(task, entry, stack, svcstack, argc, argv);
 
   return pt;
 }

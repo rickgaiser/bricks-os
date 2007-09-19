@@ -27,7 +27,7 @@ extern char       end_bss;
 CIRQ              cIRQ;
 CI386Video        cVideo;
 CI386Keyboard     cKeyboard;
-CPCTask           taskTest;
+//CPCTask           taskTest;
 
 bool              bPAEEnabled;
 bool              bAPICEnabled;
@@ -37,7 +37,7 @@ SSetting settings[] = {
   , {"APIC", SET_AUTO}
 };
 CSettings cSettings(settings, sizeof(settings) / sizeof(SSetting));
-
+/*
 // -----------------------------------------------------------------------------
 int
 loadELF32(void * file, CPCTask & task)
@@ -72,7 +72,7 @@ loadELF32(void * file, CPCTask & task)
 
   return 0;
 }
-
+*/
 // -----------------------------------------------------------------------------
 int
 main(unsigned long magic, multiboot_info_t * mbi)
@@ -287,7 +287,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
   // ---------------------
   init_task();
   printk("Paging Enabled!\n");
-
+/*
   // ------------
   // Load modules
   // ------------
@@ -308,7 +308,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
         printk(" - Unknown File\n");
     }
   }
-
+*/
 #ifdef CONFIG_MULTITASKING
   // Enable Timer IRQ
   cIRQ.enable(0x20);
