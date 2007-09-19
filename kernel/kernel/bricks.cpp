@@ -13,7 +13,7 @@ void *
 thread(void * arg)
 {
   printk("Threads...OK\n");
-  ::halt();
+  while(1);
 
   return 0;
 }
