@@ -18,7 +18,7 @@ k_channelCreate(SChannelCreate * args)
   // Locate empty channel in current task
   for(int iChannel(0); iChannel < MAX_CHANNEL_COUNT; iChannel++)
   {
-    if(CTaskManager::pCurrentTask_->pChannel_[iChannel] == 0)
+    if(CTaskManager::pCurrentTask_->pChannel_[iChannel] == NULL)
     {
       SChannel * chan = new SChannel;
       chan->iState = CS_FREE;
@@ -45,16 +45,14 @@ k_channelDestroy(SChannelDestroy * args)
   int iRetVal(-1);
   int iChannelID(args->iChannelID - 2);
 
-  printk("k_channelDestroy: Not implemented\n");
-  while(true){}
-
-  if((iChannelID >= 0) && (iChannelID < MAX_CHANNEL_COUNT))
+  if((iChannelID >= 0) &&
+     (iChannelID < MAX_CHANNEL_COUNT) &&
+     (CTaskManager::pCurrentTask_->pChannel_[iChannelID] != NULL))
   {
-    if(CTaskManager::pCurrentTask_->pChannel_[iChannelID] != 0)
-    {
-      delete CTaskManager::pCurrentTask_->pChannel_[iChannelID];
-      iRetVal = 0;
-    }
+    // Channel valid, remove it
+    delete CTaskManager::pCurrentTask_->pChannel_[iChannelID];
+    CTaskManager::pCurrentTask_->pChannel_[iChannelID] = NULL;
+    iRetVal = 0;
   }
 
   return iRetVal;
@@ -65,11 +63,11 @@ int
 k_channelConnectAttach(SConnectAttach * args)
 {
   int iRetVal(-1);
+  int iChannelID(args->iChannelID - 2);
   CTask * pTask;
 
-  int iChannelID(args->iChannelID - 2);
+  printk("k_channelConnectAttach\n");
 
-  //printk("k_connectAttach\n");
   if(args->iNodeID == 0)
   {
     TAILQ_FOREACH(pTask, &CTaskManager::task_queue, task_qe)
@@ -77,12 +75,12 @@ k_channelConnectAttach(SConnectAttach * args)
       if(pTask->iPID_ == args->iProcessID)
       {
         // Process found, find channel
-        if((iChannelID < MAX_CHANNEL_COUNT) && (pTask->pChannel_[iChannelID] != 0))
+        if((iChannelID < MAX_CHANNEL_COUNT) && (pTask->pChannel_[iChannelID] != NULL))
         {
           // Channel found, find empty connection
           for(int i(0); i < MAX_CONNECTION_COUNT; i++)
           {
-            if(CTaskManager::pCurrentTask_->pConnection_[i] == 0)
+            if(CTaskManager::pCurrentTask_->pConnection_[i] == NULL)
             {
               CTaskManager::pCurrentTask_->pConnection_[i] = pTask->pChannel_[iChannelID];
               iRetVal = i + 2;
@@ -115,8 +113,20 @@ int
 k_channelConnectDetach(SConnectDetach * args)
 {
   int iRetVal(-1);
-
-  panic("k_connectDetach: Not implemented\n");
+  int iConnectionID(args->iConnectionID - 2);
+  
+  if((iConnectionID >= 0) &&
+     (iConnectionID < MAX_CONNECTION_COUNT) &&
+     (CTaskManager::pCurrentTask_->pConnection_[iConnectionID] != NULL))
+  {
+    // Connection valid, remove it
+    CTaskManager::pCurrentTask_->pConnection_[iConnectionID] = NULL;
+    iRetVal = 0;
+  }
+  else
+  {
+    printk("k_channelConnectDetach: Invalid connection id: %d\n", args->iConnectionID);
+  }
 
   return iRetVal;
 }
@@ -161,7 +171,7 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
   else
   {
     iConnectionID -= 2;
-    if((iConnectionID < MAX_CONNECTION_COUNT) && (CTaskManager::pCurrentTask_->pConnection_[iConnectionID] != 0))
+    if((iConnectionID < MAX_CONNECTION_COUNT) && (CTaskManager::pCurrentTask_->pConnection_[iConnectionID] != NULL))
     {
       SChannel * pChannel = CTaskManager::pCurrentTask_->pConnection_[iConnectionID];
       // Wait for channel to become free
@@ -202,7 +212,7 @@ k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
   else
   {
     iChannelID -= 2;
-    if((iChannelID < MAX_CHANNEL_COUNT) && (CTaskManager::pCurrentTask_->pChannel_[iChannelID] != 0))
+    if((iChannelID < MAX_CHANNEL_COUNT) && (CTaskManager::pCurrentTask_->pChannel_[iChannelID] != NULL))
     {
       SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iChannelID];
       // Wait for message to be sent
@@ -237,7 +247,7 @@ k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
   else
   {
     iReceiveID -= 2;
-    if((iReceiveID < MAX_CHANNEL_COUNT) && (CTaskManager::pCurrentTask_->pChannel_[iReceiveID] != 0))
+    if((iReceiveID < MAX_CHANNEL_COUNT) && (CTaskManager::pCurrentTask_->pChannel_[iReceiveID] != NULL))
     {
       SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iReceiveID];
       // We can only reply a received message

@@ -5,7 +5,7 @@
 #include "kernel/debug.h"
 
 
-extern CPCTask taskMain;
+extern CPCThread * pMainThread;
 uint32_t * pApicID = (uint32_t *)(0xfee00020);
 uint32_t * pApicVersion = (uint32_t *)(0xfee00030);
 
@@ -14,7 +14,7 @@ init_apic()
 {
   if(CPU::hasAPIC())
   {
-    taskMain.aspace().identityMap((void *)(0xfee00000), 4 * 1024);  // Identity Map APIC
+    pMainThread->aspace().identityMap((void *)(0xfee00000), 4 * 1024);  // Identity Map APIC
 
     printk("APIC:\n");
     printk(" - ID:      %d\n", *pApicID >> 24);

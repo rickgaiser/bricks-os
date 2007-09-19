@@ -16,9 +16,8 @@ void
 init_task()
 {
   pMainTask   = new CTask(0, 0, 0);
-  pMainThread = pMainTask->thr_;
+  pMainThread = (CPCThread *)pMainTask->thr_;
 
-  pMainThread->cASpace_.init();
   pMainThread->selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)&pMainThread->tss_, sizeof(STaskStateSegment));
   pMainThread->cASpace_.identityMap(0, 0x00400000);  // Identity Map first 4MiB
 
@@ -46,19 +45,17 @@ CPCThread::CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, 
   // Main thread?
   if(entry != NULL)
   {
-    cASpace_.init();
-
     // Locate virtual memory for TSS
     memset(&tss_, 0, sizeof(STaskStateSegment));
     if(svcstack != 0)
-      tss_.esp0 = new uint8_t[svcstack] + svcstack);
+      tss_.esp0 = (uint32_t)(new uint8_t[svcstack] + svcstack);
     else
-      tss_.esp0 = new uint8_t[512] + 512);
+      tss_.esp0 = (uint32_t)(new uint8_t[512] + 512);
     tss_.ss0  = selDataKernel;
     if(stack != 0)
-      tss_.esp  = new uint8_t[stack] + stack);
+      tss_.esp  = (uint32_t)(new uint8_t[stack] + stack);
     else
-      tss_.esp  = new uint8_t[512] + 512);
+      tss_.esp  = (uint32_t)(new uint8_t[512] + 512);
     tss_.cr3  = cASpace_.cr3();
     tss_.eip  = (uint32_t)entry;
     tss_.eflags = 0x200;

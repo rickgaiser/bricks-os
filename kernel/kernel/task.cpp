@@ -94,7 +94,7 @@ CThread::state(EThreadState state)
         break;
       }
     default:
-      printk("pThread::state: Warning: unhandled state\n");
+      printk("CThread::state: Warning: unhandled state\n");
     };
   }
 }
@@ -157,9 +157,9 @@ CTaskManager::schedule()
   }
 
   // Locate the first task in the ready queue
-  TAILQ_FOREACH(pCurrentThread_, &ready_queue, state_qe)
+  TAILQ_FOREACH(pThread, &ready_queue, state_qe)
   {
-    pCurrentThread_->state(TS_RUNNING);
+    pThread->state(TS_RUNNING);
     break;
   }
 
