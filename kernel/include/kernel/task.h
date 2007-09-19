@@ -12,7 +12,7 @@
 
 
 // -----------------------------------------------------------------------------
-enum ETaskState
+enum EThreadState
 {
   TS_UNINITIALIZED,
   TS_READY,
@@ -51,36 +51,60 @@ struct SConnection
   SChannel * channel;
 };
 
+class CTask;
+class CThread;
+TAILQ_HEAD(STaskQueue, CTask);
+TAILQ_HEAD(SThreadQueue, CThread);
 // -----------------------------------------------------------------------------
-class CTask
+class CThread
 {
 public:
-  virtual ~CTask();
+  virtual ~CThread();
 
   // Switch tasks! Function can do two things:
   //  - Setup stack so interrupt return will couse this task to run.
   //  - Jump to task immediately.
   virtual void run() = 0;
 
-  void state(ETaskState state);
+  void state(EThreadState state);
+
+  CThread * createChild(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
+
+  uint32_t iTimeout_;                                // Timeout in us
+
+  TAILQ_ENTRY(CThread) thread_qe;                    // All threads queue entry
+  TAILQ_ENTRY(CThread) state_qe;                     // Queue entry for current thread state
+
+  // Tree structure of threads
+  CTask * pTask_;
+  CThread * pParent_;
+  SThreadQueue children_queue;                       // Threads children queue
+  TAILQ_ENTRY(CThread) children_qe;                  // Threads children queue entry
+
+protected:
+  CThread(CTask * task);
+
+private:
+  EThreadState eState_;
+};
+
+// -----------------------------------------------------------------------------
+class CTask
+{
+public:
+  CTask(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
+  virtual ~CTask();
+
+  CThread * thr_;
 
   SChannel * pChannel_[MAX_CHANNEL_COUNT];           // Tasks Channels
   SChannel * pConnection_[MAX_CONNECTION_COUNT];     // Tasks Connections
 
-  uint32_t iTimeout_;                                // Timeout in us
   pid_t iPID_;
 
-  TAILQ_ENTRY(CTask) task_queue;                     // All tasks queue
-  TAILQ_ENTRY(CTask) state_queue;                    // Queue for current tasks state
-
-protected:
-  CTask();
-
-private:
-  ETaskState eState_;                                // Current task state
+  TAILQ_ENTRY(CTask) task_qe;                        // All tasks queue
 };
 
-TAILQ_HEAD(STaskQueue, CTask);
 // -----------------------------------------------------------------------------
 class CTaskManager
 {
@@ -88,9 +112,11 @@ public:
   static bool schedule();
 
   static CTask * pCurrentTask_;
-  static STaskQueue task_queue;    // All tasks
-  static STaskQueue ready_queue;   // Ready to run tasks
-  static STaskQueue timer_queue;   // Sleeping on timer tasks
+  static CThread * pCurrentThread_;
+  static STaskQueue task_queue;        // All tasks
+  static SThreadQueue thread_queue;    // All threads
+  static SThreadQueue ready_queue;     // Ready to run threads
+  static SThreadQueue timer_queue;     // Sleeping on timer threads
   static uint32_t iPIDCount_;
   static useconds_t iCurrentTime_;
 
@@ -101,11 +127,6 @@ private:
 
 extern "C" pid_t   k_getpid(void);
 extern "C" int     k_usleep(useconds_t useconds);
-
-
-// -----------------------------------------------------------------------------
-// To be implemeted in arch
-extern CTask * getNewTask(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
 
 
 #endif

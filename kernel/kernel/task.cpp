@@ -4,34 +4,42 @@
 #include "string.h"
 
 
-CTask      * CTaskManager::pCurrentTask_ = 0;
-STaskQueue   CTaskManager::task_queue    = TAILQ_HEAD_INITIALIZER(CTaskManager::task_queue);
-STaskQueue   CTaskManager::ready_queue   = TAILQ_HEAD_INITIALIZER(CTaskManager::ready_queue);
-STaskQueue   CTaskManager::timer_queue   = TAILQ_HEAD_INITIALIZER(CTaskManager::timer_queue);
-uint32_t     CTaskManager::iPIDCount_    = 1;
-useconds_t   CTaskManager::iCurrentTime_ = 0;
+CTask        * CTaskManager::pCurrentTask_ = 0;
+CThread      * CTaskManager::pCurrentThread_ = 0;
+STaskQueue     CTaskManager::task_queue    = TAILQ_HEAD_INITIALIZER(CTaskManager::task_queue);
+SThreadQueue   CTaskManager::thread_queue  = TAILQ_HEAD_INITIALIZER(CTaskManager::thread_queue);
+SThreadQueue   CTaskManager::ready_queue   = TAILQ_HEAD_INITIALIZER(CTaskManager::ready_queue);
+SThreadQueue   CTaskManager::timer_queue   = TAILQ_HEAD_INITIALIZER(CTaskManager::timer_queue);
+uint32_t       CTaskManager::iPIDCount_    = 1;
+useconds_t     CTaskManager::iCurrentTime_ = 0;
+
 
 // -----------------------------------------------------------------------------
-CTask::CTask()
+// To be implemeted in arch
+extern CThread * getNewThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
+
+
+// -----------------------------------------------------------------------------
+CThread::CThread(CTask * task)
  : iTimeout_(0)
- , iPID_(CTaskManager::iPIDCount_++)
+ , pTask_(task)
+ , pParent_(0)
  , eState_(TS_UNINITIALIZED)
 {
-  memset(pChannel_,    0, sizeof(pChannel_));
-  memset(pConnection_, 0, sizeof(pConnection_));
+  TAILQ_INIT(&children_queue);
 
-  // Insert in the "all tasks" queue
-  TAILQ_INSERT_TAIL(&CTaskManager::task_queue, this, task_queue);
+  // Insert in the "all threads" queue
+  TAILQ_INSERT_TAIL(&CTaskManager::thread_queue, this, thread_qe);
 }
 
 // -----------------------------------------------------------------------------
-CTask::~CTask()
+CThread::~CThread()
 {
 }
 
 // -----------------------------------------------------------------------------
 void
-CTask::state(ETaskState state)
+CThread::state(EThreadState state)
 {
   // State change?
   if(eState_ != state)
@@ -40,13 +48,14 @@ CTask::state(ETaskState state)
     switch(eState_)
     {
     case TS_READY:
-      TAILQ_REMOVE(&CTaskManager::ready_queue, this, state_queue);
+      TAILQ_REMOVE(&CTaskManager::ready_queue, this, state_qe);
       break;
     case TS_RUNNING:
-      CTaskManager::pCurrentTask_ = NULL;
+      CTaskManager::pCurrentTask_   = NULL;
+      CTaskManager::pCurrentThread_ = NULL;
       break;
     case TS_WAITING:
-      TAILQ_REMOVE(&CTaskManager::timer_queue, this, state_queue);
+      TAILQ_REMOVE(&CTaskManager::timer_queue, this, state_qe);
       break;
     default:
       ;
@@ -58,73 +67,107 @@ CTask::state(ETaskState state)
     switch(eState_)
     {
     case TS_READY:
-      TAILQ_INSERT_TAIL(&CTaskManager::ready_queue, this, state_queue);
+      TAILQ_INSERT_TAIL(&CTaskManager::ready_queue, this, state_qe);
       break;
     case TS_RUNNING:
-      if(CTaskManager::pCurrentTask_ != NULL)
-        CTaskManager::pCurrentTask_->state(TS_READY);
-      CTaskManager::pCurrentTask_ = this;
+      if(CTaskManager::pCurrentThread_ != NULL)
+        CTaskManager::pCurrentThread_->state(TS_READY);
+      CTaskManager::pCurrentTask_   = this->pTask_;
+      CTaskManager::pCurrentThread_ = this;
       break;
     case TS_WAITING:
       {
-        CTask * pTask;
+        CThread * pThread;
 
         // Place task in timer queue
-        TAILQ_FOREACH(pTask, &CTaskManager::timer_queue, state_queue)
+        TAILQ_FOREACH(pThread, &CTaskManager::timer_queue, state_qe)
         {
-          if(this->iTimeout_ < pTask->iTimeout_)
+          if(this->iTimeout_ < pThread->iTimeout_)
           {
-            TAILQ_INSERT_BEFORE(pTask, this, state_queue);
+            TAILQ_INSERT_BEFORE(pThread, this, state_qe);
             break;
           }
         }
         // Place at end if no later one found
-        if(pTask == NULL)
-          TAILQ_INSERT_TAIL(&CTaskManager::timer_queue, this, state_queue);
+        if(pThread == NULL)
+          TAILQ_INSERT_TAIL(&CTaskManager::timer_queue, this, state_qe);
         break;
       }
     default:
-      printk("CTask::state: Warning: unhandled state\n");
+      printk("pThread::state: Warning: unhandled state\n");
     };
   }
 }
 
+// -----------------------------------------------------------------------------
+CThread *
+CThread::createChild(void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
+{
+  CThread * pThread;
+
+  pThread = getNewThread(pTask_, entry, stack, svcstack, argc, argv);
+  if(pThread != NULL)
+    TAILQ_INSERT_TAIL(&children_queue, pThread, children_qe);
+
+  return pThread;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+CTask::CTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
+ : iPID_(CTaskManager::iPIDCount_++)
+{
+  thr_ = getNewThread(this, entry, stack, svcstack, argc, argv);
+
+  memset(pChannel_,    0, sizeof(pChannel_));
+  memset(pConnection_, 0, sizeof(pConnection_));
+
+  // Insert in the "all tasks" queue
+  TAILQ_INSERT_TAIL(&CTaskManager::task_queue, this, task_qe);
+}
+
+// -----------------------------------------------------------------------------
+CTask::~CTask()
+{
+}
+
+// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 bool
 CTaskManager::schedule()
 {
   //printk("CTaskManager::schedule\n");
 
-  CTask * pPrevTask = pCurrentTask_;
-  CTask * pTask;
+  CThread * pPrevThread = pCurrentThread_;
+  CThread * pThread;
 
   // FIXME!
   iCurrentTime_++;
   // Wake up sleaping tasks if timeout exeeded
-  TAILQ_FOREACH(pTask, &timer_queue, state_queue)
+  TAILQ_FOREACH(pThread, &timer_queue, state_qe)
   {
     // We can leave the loop if a not timed out task is found since the list
     // is sorted.
-    if(iCurrentTime_ < pTask->iTimeout_)
+    if(iCurrentTime_ < pThread->iTimeout_)
       break;
 
     // Time out! Task is ready to run!
-    pTask->iTimeout_ = 0;
-    pTask->state(TS_READY);
+    pThread->iTimeout_ = 0;
+    pThread->state(TS_READY);
   }
 
   // Locate the first task in the ready queue
-  TAILQ_FOREACH(pTask, &ready_queue, state_queue)
+  TAILQ_FOREACH(pCurrentThread_, &ready_queue, state_qe)
   {
-    pTask->state(TS_RUNNING);
+    pCurrentThread_->state(TS_RUNNING);
     break;
   }
 
   // Make sure we have a task
-  if(pCurrentTask_ == NULL)
+  if(pCurrentThread_ == NULL)
     panic("CTaskManager::schedule: ERROR: No task to run\n");
 
-  return pPrevTask != pCurrentTask_;
+  return pPrevThread != pCurrentThread_;
 }
 
 // -----------------------------------------------------------------------------
@@ -141,8 +184,8 @@ k_usleep(useconds_t useconds)
   if(useconds > 0)
   {
     // Set timeout
-    CTaskManager::pCurrentTask_->iTimeout_ = CTaskManager::iCurrentTime_ + useconds;
-    CTaskManager::pCurrentTask_->state(TS_WAITING);
+    CTaskManager::pCurrentThread_->iTimeout_ = CTaskManager::iCurrentTime_ + useconds;
+    CTaskManager::pCurrentThread_->state(TS_WAITING);
 
     // Schedule next task
     // FIXME: We can schedule the task, but since our context is unknown we

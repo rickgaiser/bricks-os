@@ -30,7 +30,7 @@ isr(pt_regs * regs)
     REG_IF |= (1 << 3);
     // Run scheduler
     if(CTaskManager::schedule() == true)
-      CTaskManager::pCurrentTask_->run();
+      CTaskManager::pCurrentThread_->run();
   }
 
   // Handle other interrupts

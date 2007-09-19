@@ -126,8 +126,8 @@ main(int, char *[])
 
 #ifdef CONFIG_MULTITASKING
   // Create task structure
-  CTask * pTask = getNewTask(0, 0, 0);
-  pTask->state(TS_RUNNING);
+  CTask * pTask = new CTask(0, 0, 0);
+  pTask->thr_->state(TS_RUNNING);
 
   setTimerFrequency(0, 100.0f);
   cIRQ.enable(3);

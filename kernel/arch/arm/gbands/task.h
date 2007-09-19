@@ -8,17 +8,17 @@
 struct pt_regs;
 
 
-class CGBANDSTask
- : public CTask
+class CGBANDSThread
+ : public CThread
 {
 public:
-  CGBANDSTask(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
-  virtual ~CGBANDSTask();
+  CGBANDSThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
+  virtual ~CGBANDSThread();
 
   virtual void run();
 
 private:
-  pt_regs  * pTaskState_;
+  pt_regs  * pThreadState_;
   uint32_t * pStack_;
   uint32_t * pSvcStack_;
 };

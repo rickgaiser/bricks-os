@@ -8,11 +8,12 @@ extern "C" int
 pthread_create(pthread_t * thread, const pthread_attr_t * attr, void *(*start_routine)(void *), void * arg)
 {
   int iRetVal(-1);
-  CTask * pTask = getNewTask((void *)start_routine, 512, 512, (int)arg, 0);
-  if(pTask != 0)
+
+  CThread * pThread = CTaskManager::pCurrentThread_->createChild((void *)start_routine, 512, 512, (int)arg, 0);
+  if(pThread != 0)
   {
-    pTask->state(TS_READY);
-    thread->pThread = pTask;
+    pThread->state(TS_READY);
+    thread->pThread = pThread;
     iRetVal = 0;
   }
 
