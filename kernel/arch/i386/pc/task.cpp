@@ -80,7 +80,7 @@ CPCThread::~CPCThread()
 
 // -----------------------------------------------------------------------------
 void
-CPCThread::run()
+CPCThread::runJump()
 {
   // Jump to task
   jumpSelector(selTSS_);

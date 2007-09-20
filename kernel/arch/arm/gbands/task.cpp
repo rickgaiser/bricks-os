@@ -48,7 +48,7 @@ CGBANDSThread::~CGBANDSThread()
 
 // -----------------------------------------------------------------------------
 void
-CGBANDSThread::run()
+CGBANDSThread::runReturn()
 {
   // Switch return stack to the stack of this task.
   current_thread = pThreadState_;

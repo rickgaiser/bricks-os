@@ -15,7 +15,12 @@ public:
   CGBANDSThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
   virtual ~CGBANDSThread();
 
-  virtual void run();
+  // Task switch #1: Jump to task immediately.
+  //  - Used from caller context
+  //virtual void runJump();
+  // Task switch #2: Setup stack so interrupt return will couse this task to run.
+  //  - Used from interrupt context
+  virtual void runReturn();
 
 private:
   pt_regs  * pThreadState_;

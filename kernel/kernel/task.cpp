@@ -39,6 +39,20 @@ CThread::~CThread()
 
 // -----------------------------------------------------------------------------
 void
+CThread::runJump()
+{
+  panic("CThread::runJump: Can't jump to task!\n");
+}
+
+// -----------------------------------------------------------------------------
+void
+CThread::runReturn()
+{
+  panic("CThread::runReturn: Can't return to task!\n");
+}
+
+// -----------------------------------------------------------------------------
+void
 CThread::state(EThreadState state)
 {
   // State change?
