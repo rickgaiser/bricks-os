@@ -171,6 +171,19 @@ CTaskManager::schedule()
 }
 
 // -----------------------------------------------------------------------------
+CTask *
+CTaskManager::getTaskFromPID(pid_t pid)
+{
+  CTask * pTask;
+
+  TAILQ_FOREACH(pTask, &task_queue, task_qe)
+    if(pTask->iPID_ == pid)
+      return pTask;
+
+  return NULL;
+}
+
+// -----------------------------------------------------------------------------
 extern "C" pid_t
 k_getpid(void)
 {

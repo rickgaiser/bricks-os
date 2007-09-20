@@ -54,6 +54,10 @@ k_channelDestroy(SChannelDestroy * args)
     CTaskManager::pCurrentTask_->pChannel_[iChannelID] = NULL;
     iRetVal = 0;
   }
+  else
+  {
+    printk("k_channelDestroy: Invalid channel id: %d\n", args->iChannelID);
+  }
 
   return iRetVal;
 }
@@ -66,38 +70,41 @@ k_channelConnectAttach(SConnectAttach * args)
   int iChannelID(args->iChannelID - 2);
   CTask * pTask;
 
-  printk("k_channelConnectAttach\n");
+  //printk("k_channelConnectAttach\n");
 
   if(args->iNodeID == 0)
   {
-    TAILQ_FOREACH(pTask, &CTaskManager::task_queue, task_qe)
+    pTask = CTaskManager::getTaskFromPID(args->iProcessID);
+    if(pTask != NULL)
     {
-      if(pTask->iPID_ == args->iProcessID)
+      // Process found, find channel
+      if((iChannelID >= 0) &&
+         (iChannelID < MAX_CHANNEL_COUNT) &&
+         (pTask->pChannel_[iChannelID] != NULL))
       {
-        // Process found, find channel
-        if((iChannelID < MAX_CHANNEL_COUNT) && (pTask->pChannel_[iChannelID] != NULL))
+        // Channel found, find empty connection
+        for(int i(0); i < MAX_CONNECTION_COUNT; i++)
         {
-          // Channel found, find empty connection
-          for(int i(0); i < MAX_CONNECTION_COUNT; i++)
+          if(CTaskManager::pCurrentTask_->pConnection_[i] == NULL)
           {
-            if(CTaskManager::pCurrentTask_->pConnection_[i] == NULL)
-            {
-              CTaskManager::pCurrentTask_->pConnection_[i] = pTask->pChannel_[iChannelID];
-              iRetVal = i + 2;
-              break;
-            }
-          }
-          if(iRetVal == -1)
-          {
-            printk("k_connectAttach: Max connections reached!\n");
+            CTaskManager::pCurrentTask_->pConnection_[i] = pTask->pChannel_[iChannelID];
+            iRetVal = i + 2;
+            break;
           }
         }
-        else
+        if(iRetVal == -1)
         {
-          printk("k_connectAttach: Channel not found\n");
+          printk("k_connectAttach: Max connections reached!\n");
         }
-        break;
       }
+      else
+      {
+        printk("k_connectAttach: Channel id not found: %d\n", args->iChannelID);
+      }
+    }
+    else
+    {
+      printk("k_connectAttach: Process id not found: %d\n", args->iProcessID);
     }
   }
   else
@@ -114,7 +121,7 @@ k_channelConnectDetach(SConnectDetach * args)
 {
   int iRetVal(-1);
   int iConnectionID(args->iConnectionID - 2);
-  
+
   if((iConnectionID >= 0) &&
      (iConnectionID < MAX_CONNECTION_COUNT) &&
      (CTaskManager::pCurrentTask_->pConnection_[iConnectionID] != NULL))
@@ -125,7 +132,7 @@ k_channelConnectDetach(SConnectDetach * args)
   }
   else
   {
-    printk("k_channelConnectDetach: Invalid connection id: %d\n", args->iConnectionID);
+    printk("k_channelConnectDetach: Connection id not found: %d\n", args->iConnectionID);
   }
 
   return iRetVal;
@@ -145,33 +152,39 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
   else if(iConnectionID == scKERNEL)
   {
     SKernelMessageHeader * pHeader = (SKernelMessageHeader *)pSndMsg;
-    if(pHeader->iHeaderSize != sizeof(SKernelMessageHeader))
-      panic("k_msgSend: Invalid header size");
-    if(pHeader->iVersion != INTERFACE_VERSION(1, 0))
-      panic("k_msgSend: Invalid header version");
 
-    switch(pHeader->iFunctionID)
+    if((pHeader->iHeaderSize == sizeof(SKernelMessageHeader)) &&
+       (pHeader->iVersion == INTERFACE_VERSION(1, 0)))
     {
-      case kfCHANNEL_CREATE:
-        iRetVal = k_channelCreate       ((SChannelCreate *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
-        break;
-      case kfCHANNEL_DESTROY:
-        iRetVal = k_channelDestroy      ((SChannelDestroy *)((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
-        break;
-      case kfCHANNEL_ATTACH:
-        iRetVal = k_channelConnectAttach((SConnectAttach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
-        break;
-      case kfCHANNEL_DETACH:
-        iRetVal = k_channelConnectDetach((SConnectDetach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
-        break;
-      default:
-        printk("k_msgSend: Invalid function id: %d\n", pHeader->iFunctionID);
-    };
+      switch(pHeader->iFunctionID)
+      {
+        case kfCHANNEL_CREATE:
+          iRetVal = k_channelCreate       ((SChannelCreate *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+          break;
+        case kfCHANNEL_DESTROY:
+          iRetVal = k_channelDestroy      ((SChannelDestroy *)((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+          break;
+        case kfCHANNEL_ATTACH:
+          iRetVal = k_channelConnectAttach((SConnectAttach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+          break;
+        case kfCHANNEL_DETACH:
+          iRetVal = k_channelConnectDetach((SConnectDetach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
+          break;
+        default:
+          printk("k_msgSend: Invalid function id: %d\n", pHeader->iFunctionID);
+      };
+    }
+    else
+    {
+      printk("k_msgSend: Invalid kernel header\n");
+    }
   }
   else
   {
     iConnectionID -= 2;
-    if((iConnectionID < MAX_CONNECTION_COUNT) && (CTaskManager::pCurrentTask_->pConnection_[iConnectionID] != NULL))
+    if((iConnectionID >= 0) &&
+       (iConnectionID < MAX_CONNECTION_COUNT) &&
+       (CTaskManager::pCurrentTask_->pConnection_[iConnectionID] != NULL))
     {
       SChannel * pChannel = CTaskManager::pCurrentTask_->pConnection_[iConnectionID];
       // Wait for channel to become free
@@ -191,7 +204,7 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
     }
     else
     {
-      printk("k_msgSend: Connection not found\n");
+      printk("k_msgSend: Invalid connection id: %d\n", iConnectionID + 2);
     }
   }
 
@@ -212,7 +225,9 @@ k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
   else
   {
     iChannelID -= 2;
-    if((iChannelID < MAX_CHANNEL_COUNT) && (CTaskManager::pCurrentTask_->pChannel_[iChannelID] != NULL))
+    if((iChannelID >= 0) &&
+       (iChannelID < MAX_CHANNEL_COUNT) &&
+       (CTaskManager::pCurrentTask_->pChannel_[iChannelID] != NULL))
     {
       SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iChannelID];
       // Wait for message to be sent
@@ -226,7 +241,7 @@ k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
     }
     else
     {
-      printk("k_msgReceive: Channel not found\n");
+      printk("k_msgReceive: Invalid channel id: %d\n", iChannelID + 2);
     }
   }
 
@@ -247,7 +262,9 @@ k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
   else
   {
     iReceiveID -= 2;
-    if((iReceiveID < MAX_CHANNEL_COUNT) && (CTaskManager::pCurrentTask_->pChannel_[iReceiveID] != NULL))
+    if((iReceiveID >= 0) &&
+       (iReceiveID < MAX_CHANNEL_COUNT) &&
+       (CTaskManager::pCurrentTask_->pChannel_[iReceiveID] != NULL))
     {
       SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iReceiveID];
       // We can only reply a received message
@@ -261,10 +278,14 @@ k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
         pChannel->iState = CS_MSG_REPLIED;
         iRetVal = 0;
       }
+      else
+      {
+        printk("k_msgReply: No message received, can't reply\n");
+      }
     }
     else
     {
-      printk("k_msgReply: Receive id not found\n");
+      printk("k_msgReply: Invalid receive id: %d\n", iReceiveID + 2);
     }
   }
 

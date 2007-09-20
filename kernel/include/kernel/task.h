@@ -110,6 +110,7 @@ class CTaskManager
 {
 public:
   static bool schedule();
+  static CTask * getTaskFromPID(pid_t pid);
 
   static CTask * pCurrentTask_;
   static CThread * pCurrentThread_;
