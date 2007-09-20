@@ -11,6 +11,7 @@ SThreadQueue   CTaskManager::thread_queue  = TAILQ_HEAD_INITIALIZER(CTaskManager
 SThreadQueue   CTaskManager::ready_queue   = TAILQ_HEAD_INITIALIZER(CTaskManager::ready_queue);
 SThreadQueue   CTaskManager::timer_queue   = TAILQ_HEAD_INITIALIZER(CTaskManager::timer_queue);
 SThreadQueue   CTaskManager::wait_queue    = TAILQ_HEAD_INITIALIZER(CTaskManager::wait_queue);
+SThreadQueue   CTaskManager::dead_queue    = TAILQ_HEAD_INITIALIZER(CTaskManager::dead_queue);
 uint32_t       CTaskManager::iPIDCount_    = 1;
 useconds_t     CTaskManager::iCurrentTime_ = 0;
 
@@ -38,6 +39,8 @@ CThread::CThread(CTask * task)
 // -----------------------------------------------------------------------------
 CThread::~CThread()
 {
+  // Remove from the "all threads" queue
+  TAILQ_REMOVE(&CTaskManager::thread_queue, this, thread_qe);
 }
 
 // -----------------------------------------------------------------------------
@@ -84,6 +87,9 @@ CThread::state(EThreadState state)
         this->pWaitObj_ = NULL;
         TAILQ_REMOVE(&CTaskManager::wait_queue, this, wait_qe);
       }
+      break;
+    case TS_DEAD:
+      TAILQ_REMOVE(&CTaskManager::dead_queue, this, state_qe);
       break;
     default:
       ;
@@ -132,6 +138,16 @@ CThread::state(EThreadState state)
 
         break;
       }
+    case TS_DEAD:
+      TAILQ_INSERT_TAIL(&CTaskManager::dead_queue, this, state_qe);
+      break;
+    case TS_DESTROY:
+      // FIXME:
+      //  - Free used resources?
+      //  - notify connected threads/tasks?
+      //  - free memory?
+      //  - Do it here, in destructor or in removeDestroyed?
+      break;
     default:
       printk("CThread::state: Warning: unhandled state\n");
     };
@@ -172,13 +188,12 @@ CTask::~CTask()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool
-CTaskManager::schedule()
+void
+CTaskManager::updateSleepers()
 {
-  //printk("CTaskManager::schedule\n");
-
-  CThread * pPrevThread = pCurrentThread_;
   CThread * pThread;
+
+  //printk("CTaskManager::updateSleepers\n");
 
   // FIXME!
   iCurrentTime_++;
@@ -197,11 +212,37 @@ CTaskManager::schedule()
       pThread->iWaitReturn_ = 0;
     pThread->state(TS_READY);
   }
+}
+
+// -----------------------------------------------------------------------------
+void
+CTaskManager::removeDestroyed()
+{
+  CThread * pThread;
+  CThread * pSafe;
+
+  //printk("CTaskManager::removeDestroyed\n");
+
+  // Wake up sleaping tasks if timeout exeeded
+  TAILQ_FOREACH_SAFE(pThread, &dead_queue, state_qe, pSafe)
+  {
+    pThread->state(TS_DESTROY);
+  }
+}
+
+// -----------------------------------------------------------------------------
+bool
+CTaskManager::schedule()
+{
+  CThread * pPrevThread = pCurrentThread_;
+
+  //printk("CTaskManager::schedule\n");
 
   // Run the first task in the ready queue
   if(TAILQ_FIRST(&ready_queue) != NULL)
     TAILQ_FIRST(&ready_queue)->state(TS_RUNNING);
-  else
+
+  if(pCurrentThread_ == NULL)
     panic("CTaskManager::schedule: ERROR: No task to run\n");
 
   return pPrevThread != pCurrentThread_;

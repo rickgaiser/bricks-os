@@ -18,6 +18,7 @@ enum EThreadState
   TS_READY,
   TS_RUNNING,
   TS_WAITING,
+  TS_DEAD,
   TS_DESTROY,
   TS_SEND_BLOCKED,
   TS_RECEIVE_BLOCKED,
@@ -114,6 +115,8 @@ public:
 class CTaskManager
 {
 public:
+  static void updateSleepers();
+  static void removeDestroyed();
   static bool schedule();
   static CTask * getTaskFromPID(pid_t pid);
 
@@ -124,6 +127,7 @@ public:
   static SThreadQueue ready_queue;     // Ready to run threads
   static SThreadQueue timer_queue;     // Sleeping on timer threads
   static SThreadQueue wait_queue;      // Sleeping on objects
+  static SThreadQueue dead_queue;      // Ready to be destroyed
   static uint32_t iPIDCount_;
   static useconds_t iCurrentTime_;
 

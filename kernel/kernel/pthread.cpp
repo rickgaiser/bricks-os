@@ -24,6 +24,12 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr, void *(*start_ro
 extern "C" void
 pthread_exit(void * status)
 {
+  // Change tasks state
+  CTaskManager::pCurrentThread_->state(TS_DEAD);
+  // Schedule next thread
+  // FIXME: Busy waiting for timer interrupt. We should reschedule but we can't
+  // since we don't know if we should jump or stack return to the next task.
+  while(1);
 }
 
 // -----------------------------------------------------------------------------

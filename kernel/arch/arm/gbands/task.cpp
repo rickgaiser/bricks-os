@@ -60,7 +60,7 @@ kill_thread()
 {
   printk("kill_thread\n");
   // Remove the current task from the list
-  CTaskManager::pCurrentThread_->state(TS_DESTROY);
+  CTaskManager::pCurrentThread_->state(TS_DEAD);
   // FIXME: We should reschedule now so the next task can run, but we can't
   //        since we might not be called from an interrupt. So instead we
   //        just wait to rescheduled and destroyed.

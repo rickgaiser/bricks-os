@@ -116,7 +116,9 @@ isr(pt_regs * regs)
 
     // Handle IRQs
     case 0x20:  // Timer
-      // Run scheduler
+      // Task/Thread stuff
+      CTaskManager::updateSleepers();
+      CTaskManager::removeDestroyed();
       if(CTaskManager::schedule() == true)
       {
         // Ack interrupt (normally interrupt manager will do this)

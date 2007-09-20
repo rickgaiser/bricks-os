@@ -28,7 +28,9 @@ isr(pt_regs * regs)
     iFlags &= ~(1 << 3);
     // Acknowledge interrupt
     REG_IF |= (1 << 3);
-    // Run scheduler
+    // Task/Thread stuff
+    CTaskManager::updateSleepers();
+    CTaskManager::removeDestroyed();
     if(CTaskManager::schedule() == true)
       CTaskManager::pCurrentThread_->runReturn();
   }
