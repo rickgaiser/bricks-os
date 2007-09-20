@@ -10,6 +10,7 @@ STaskQueue     CTaskManager::task_queue    = TAILQ_HEAD_INITIALIZER(CTaskManager
 SThreadQueue   CTaskManager::thread_queue  = TAILQ_HEAD_INITIALIZER(CTaskManager::thread_queue);
 SThreadQueue   CTaskManager::ready_queue   = TAILQ_HEAD_INITIALIZER(CTaskManager::ready_queue);
 SThreadQueue   CTaskManager::timer_queue   = TAILQ_HEAD_INITIALIZER(CTaskManager::timer_queue);
+SThreadQueue   CTaskManager::wait_queue    = TAILQ_HEAD_INITIALIZER(CTaskManager::wait_queue);
 uint32_t       CTaskManager::iPIDCount_    = 1;
 useconds_t     CTaskManager::iCurrentTime_ = 0;
 
@@ -22,8 +23,10 @@ extern CThread * getNewThread(CTask * task, void * entry, size_t stack, size_t s
 // -----------------------------------------------------------------------------
 CThread::CThread(CTask * task)
  : iTimeout_(0)
+ , pWaitObj_(NULL)
+ , iWaitReturn_(0)
  , pTask_(task)
- , pParent_(0)
+ , pParent_(NULL)
  , eState_(TS_UNINITIALIZED)
 {
   TAILQ_INIT(&children_queue);
@@ -69,7 +72,18 @@ CThread::state(EThreadState state)
       CTaskManager::pCurrentThread_ = NULL;
       break;
     case TS_WAITING:
-      TAILQ_REMOVE(&CTaskManager::timer_queue, this, state_qe);
+      // Remove from timer queue
+      if(this->iTimeout_ > 0)
+      {
+        this->iTimeout_ = 0;
+        TAILQ_REMOVE(&CTaskManager::timer_queue, this, state_qe);
+      }
+      // Remove from wait queue
+      if(this->pWaitObj_ != NULL)
+      {
+        this->pWaitObj_ = NULL;
+        TAILQ_REMOVE(&CTaskManager::wait_queue, this, wait_qe);
+      }
       break;
     default:
       ;
@@ -93,18 +107,29 @@ CThread::state(EThreadState state)
       {
         CThread * pThread;
 
-        // Place task in timer queue
-        TAILQ_FOREACH(pThread, &CTaskManager::timer_queue, state_qe)
+        if((this->iTimeout_ <= 0) && (this->pWaitObj_ == NULL))
+          panic("CThread::state: What are we waiting for???\n");
+
+        // Place task in sorted timer queue, if timeout present
+        if(this->iTimeout_ > 0)
         {
-          if(this->iTimeout_ < pThread->iTimeout_)
+          TAILQ_FOREACH(pThread, &CTaskManager::timer_queue, state_qe)
           {
-            TAILQ_INSERT_BEFORE(pThread, this, state_qe);
-            break;
+            if(this->iTimeout_ < pThread->iTimeout_)
+            {
+              TAILQ_INSERT_BEFORE(pThread, this, state_qe);
+              break;
+            }
           }
+          // Place at end if no later one found
+          if(pThread == NULL)
+            TAILQ_INSERT_TAIL(&CTaskManager::timer_queue, this, state_qe);
         }
-        // Place at end if no later one found
-        if(pThread == NULL)
-          TAILQ_INSERT_TAIL(&CTaskManager::timer_queue, this, state_qe);
+
+        // Place task in object wait queue, if object present
+        if(this->pWaitObj_ != NULL)
+          TAILQ_INSERT_TAIL(&CTaskManager::wait_queue, this, wait_qe);
+
         break;
       }
     default:
@@ -166,19 +191,17 @@ CTaskManager::schedule()
       break;
 
     // Time out! Task is ready to run!
-    pThread->iTimeout_ = 0;
+    if(pThread->pWaitObj_ != NULL)
+      pThread->iWaitReturn_ = -1;
+    else
+      pThread->iWaitReturn_ = 0;
     pThread->state(TS_READY);
   }
 
-  // Locate the first task in the ready queue
-  TAILQ_FOREACH(pThread, &ready_queue, state_qe)
-  {
-    pThread->state(TS_RUNNING);
-    break;
-  }
-
-  // Make sure we have a task
-  if(pCurrentThread_ == NULL)
+  // Run the first task in the ready queue
+  if(TAILQ_FIRST(&ready_queue) != NULL)
+    TAILQ_FIRST(&ready_queue)->state(TS_RUNNING);
+  else
     panic("CTaskManager::schedule: ERROR: No task to run\n");
 
   return pPrevThread != pCurrentThread_;
@@ -198,6 +221,31 @@ CTaskManager::getTaskFromPID(pid_t pid)
 }
 
 // -----------------------------------------------------------------------------
+int
+getwait_wait(void * obj, useconds_t useconds)
+{
+  // Set timeout if present
+  if(useconds > 0)
+    CTaskManager::pCurrentThread_->iTimeout_ = CTaskManager::iCurrentTime_ + useconds;
+  else
+    CTaskManager::pCurrentThread_->iTimeout_ = 0;
+
+  // Set wait object
+  CTaskManager::pCurrentThread_->pWaitObj_ = obj;
+
+  // change thread state
+  CTaskManager::pCurrentThread_->state(TS_WAITING);
+
+  // Schedule next thread
+  CTaskManager::schedule();
+
+  // Run next thread
+  CTaskManager::pCurrentThread_->runJump();
+
+  return CTaskManager::pCurrentThread_->iWaitReturn_;
+}
+
+// -----------------------------------------------------------------------------
 extern "C" pid_t
 k_getpid(void)
 {
@@ -208,19 +256,5 @@ k_getpid(void)
 int
 k_usleep(useconds_t useconds)
 {
-  if(useconds > 0)
-  {
-    // Set timeout
-    CTaskManager::pCurrentThread_->iTimeout_ = CTaskManager::iCurrentTime_ + useconds;
-    CTaskManager::pCurrentThread_->state(TS_WAITING);
-
-    // Schedule next task
-    // FIXME: We can schedule the task, but since our context is unknown we
-    //        can't run it.
-    //CTaskManager::schedule();
-
-    return 0;
-  }
-
-  return -1;
+  return getwait_wait(NULL, useconds);
 }

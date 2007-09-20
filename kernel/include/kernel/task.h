@@ -73,9 +73,12 @@ public:
   CThread * createChild(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
 
   uint32_t iTimeout_;                                // Timeout in us
+  void * pWaitObj_;                                  // Object we're waiting on
+  int iWaitReturn_;                                  // Return value when waiting
 
   TAILQ_ENTRY(CThread) thread_qe;                    // All threads queue entry
-  TAILQ_ENTRY(CThread) state_qe;                     // Queue entry for current thread state
+  TAILQ_ENTRY(CThread) state_qe;                     // Thread state queue entry
+  TAILQ_ENTRY(CThread) wait_qe;                      // Thread wait queue entry
 
   // Tree structure of threads
   CTask * pTask_;
@@ -120,6 +123,7 @@ public:
   static SThreadQueue thread_queue;    // All threads
   static SThreadQueue ready_queue;     // Ready to run threads
   static SThreadQueue timer_queue;     // Sleeping on timer threads
+  static SThreadQueue wait_queue;      // Sleeping on objects
   static uint32_t iPIDCount_;
   static useconds_t iCurrentTime_;
 
