@@ -136,6 +136,9 @@ private:
 };
 
 
+int genwait_wait(void * obj, useconds_t useconds);
+int genwait_wake(void * obj, int maxcount);
+
 extern "C" pid_t   k_getpid(void);
 extern "C" int     k_usleep(useconds_t useconds);
 

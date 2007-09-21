@@ -263,8 +263,10 @@ CTaskManager::getTaskFromPID(pid_t pid)
 
 // -----------------------------------------------------------------------------
 int
-getwait_wait(void * obj, useconds_t useconds)
+genwait_wait(void * obj, useconds_t useconds)
 {
+  //printk("genwait_wait %dus\n", useconds);
+
   // Set timeout if present
   if(useconds > 0)
     CTaskManager::pCurrentThread_->iTimeout_ = CTaskManager::iCurrentTime_ + useconds;
@@ -287,6 +289,34 @@ getwait_wait(void * obj, useconds_t useconds)
 }
 
 // -----------------------------------------------------------------------------
+int
+genwait_wake(void * obj, int maxcount)
+{
+  int count(0);
+  CThread * pThread;
+  CThread * pSafe;
+
+  //printk("genwait_wake %d\n", count);
+
+  // Wake up sleaping tasks if timeout exeeded
+  TAILQ_FOREACH_SAFE(pThread, &CTaskManager::wait_queue, wait_qe, pSafe)
+  {
+    if(pThread->pWaitObj_ == obj)
+    {
+      pThread->iWaitReturn_ = 0;
+      pThread->state(TS_READY);
+      if(maxcount > 0)
+      {
+        count++;
+        if(count >= maxcount)
+          break;
+      }
+    }
+  }
+  return count;
+}
+
+// -----------------------------------------------------------------------------
 extern "C" pid_t
 k_getpid(void)
 {
@@ -297,5 +327,5 @@ k_getpid(void)
 int
 k_usleep(useconds_t useconds)
 {
-  return getwait_wait(NULL, useconds);
+  return genwait_wait(NULL, useconds);
 }
