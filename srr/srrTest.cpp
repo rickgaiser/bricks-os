@@ -5,7 +5,7 @@
 #include "pthread.h"
 
 
-volatile bool bServerRunning(false);
+pthread_mutex_t mut_run = PTHREAD_MUTEX_INITIALIZER;
 int iChannelID;
 int iServerPID;
 
@@ -24,7 +24,9 @@ server(void * arg)
     char recvBuffer[20];
 
     printk("server: Ready\n");
-    bServerRunning = true;
+
+    // Notify client we're ready
+    pthread_mutex_unlock(&mut_run);
 
     rcvid = msgReceive(iChannelID, recvBuffer, 20);
     if(rcvid > 0)
@@ -54,11 +56,16 @@ srrTest(int argc, char * argv[])
 
   printk("SRR Client\n");
 
+  // Lock mutex before creating the thread
+  pthread_mutex_lock(&mut_run);
+
   // Create server thread
   pthread_t thrServer;
   if(pthread_create(&thrServer, 0, server, 0) == 0)
   {
-    while(bServerRunning != true);
+    // Wait for server to free mutex
+    pthread_mutex_lock(&mut_run);
+
     // Connect to server
     int iConnectID = channelConnectAttach(0, iServerPID, iChannelID, 0);
     if(iConnectID > 1)
@@ -74,6 +81,8 @@ srrTest(int argc, char * argv[])
       }
       else
         printk("client: msgSend error\n");
+
+      channelConnectDetach(iConnectID);
     }
     else
       printk("client: Unable to connect\n");
