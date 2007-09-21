@@ -2,7 +2,7 @@
 #define ACE_THREAD_MANAGER_H
 
 
-#include "ace/Thread.h"
+#include "ace/config.h"
 
 
 class ACE_Thread_Manager

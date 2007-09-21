@@ -4,7 +4,7 @@
 
 //#include "ace/Service_Object.h"
 #include "ace/Thread_Manager.h"
-#include <stddef.h>
+#include "pthread.h"
 
 
 class ACE_Task_Base
@@ -24,7 +24,7 @@ public:
   static ACE_THR_FUNC_RETURN svc_run(void *);
 
 private:
-  size_t thr_count_;
+  pthread_t thr_;
   ACE_Thread_Manager * thr_mgr_;
 };
 

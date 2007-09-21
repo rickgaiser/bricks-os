@@ -1,10 +1,12 @@
 DIRS            =\
                 kernel \
+                libtace \
                 srr \
 
 LIBS            =\
                 arch \
                 kernel \
+                tace \
                 srr \
 
 ELF             =Bricks
