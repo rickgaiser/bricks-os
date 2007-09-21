@@ -7,18 +7,6 @@
 extern int srrTest(int argc, char * argv[]);
 
 
-#ifdef CONFIG_MULTITASKING
-// -----------------------------------------------------------------------------
-void *
-thread(void * arg)
-{
-  printk("Threads...OK\n");
-  while(1);
-
-  return 0;
-}
-#endif // CONFIG_MULTITASKING
-
 // -----------------------------------------------------------------------------
 int
 bricks_main()
@@ -26,13 +14,6 @@ bricks_main()
   // Welcome user :-)
   printk("Bricks-OS\n");
   printk("=========\n");
-
-#ifdef CONFIG_MULTITASKING
-  // Create thread
-  pthread_t thr;
-  if(pthread_create(&thr, 0, thread, 0) != 0)
-    printk("ERROR: Unable to create thread!\n");
-#endif // CONFIG_MULTITASKING
 
   // Enable interrupts
   printk("Interrupts...\n");
