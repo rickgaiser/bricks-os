@@ -2,6 +2,7 @@
 #include "descriptor.h"
 #include "kernel/task.h"
 #include "string.h"
+#include "asm/arch/config.h"
 
 
 extern bool bPAEEnabled;
@@ -59,12 +60,21 @@ CPCThread::CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, 
     tss_.cr3  = cASpace_.cr3();
     tss_.eip  = (uint32_t)entry;
     tss_.eflags = 0x200;
+#ifdef CONFIG_DIRECT_ACCESS_KERNEL
+    tss_.es   = selDataKernel;
+    tss_.cs   = selCodeKernel;
+    tss_.ss   = selDataKernel;
+    tss_.ds   = selDataKernel;
+    tss_.fs   = selDataKernel;
+    tss_.gs   = selDataKernel;
+#else
     tss_.es   = selDataUserTmp;
     tss_.cs   = selCodeUserTmp;
     tss_.ss   = selDataUserTmp;
     tss_.ds   = selDataUserTmp;
     tss_.fs   = selDataUserTmp;
     tss_.gs   = selDataUserTmp;
+#endif
 
     // Create descriptor for TSS
     selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)&tss_, sizeof(STaskStateSegment));

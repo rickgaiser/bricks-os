@@ -1,11 +1,15 @@
-# Task related configuration
-#CONFIG_MULTITASKING=y
-#CONFIG_SRR=y
+# Kernel interface
+CONFIG_DIRECT_ACCESS_KERNEL=y
+CONFIG_DIRECT_ACCESS_KERNEL_FUNC=y
 
-# Video related configuration
+# File System
+#CONFIG_FILESYSTEM=y
+#CONFIG_FS_FAT=y
+#CONFIG_PD_IBM=y
+
+# Video configuration
 #CONFIG_FRAMEBUFFER=y
 #CONFIG_GL=y
-#CONFIG_BWM=y
 
-# Library related configuration
+# Library configuration
 #CONFIG_BUILTIN_MM=y

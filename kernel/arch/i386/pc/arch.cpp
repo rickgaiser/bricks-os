@@ -309,10 +309,9 @@ main(unsigned long magic, multiboot_info_t * mbi)
     }
   }
 */
-#ifdef CONFIG_MULTITASKING
+
   // Enable Timer IRQ
   cIRQ.enable(0x20);
-#endif // CONFIG_MULTITASKING
 
   iMemKernel = iMemTop - iMemReserved - (freePageCount() * 4096);
   printk("Memory size:     %dKiB\n", iMemTop/1024);

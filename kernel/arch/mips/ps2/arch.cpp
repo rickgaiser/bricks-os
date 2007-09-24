@@ -2,6 +2,7 @@
 #include "kernel/debug.h"
 #include "kernel/memoryManager.h"
 #include "kernel/task.h"
+#include "asm/arch/config.h"
 #include "ps2Video.h"
 
 #ifdef CONFIG_FRAMEBUFFER
@@ -37,11 +38,9 @@ main(int, char *[])
   pVideoDevice = new CPS2VideoDevice;
 #endif // CONFIG_FRAMEBUFFER
 
-#ifdef CONFIG_MULTITASKING
   // Create task structure
   CTask * pTask = getNewTask(0, 0, 0);
   pTask->state(TS_RUNNING);
-#endif // CONFIG_MULTITASKING
 
   return bricks_main();
 }

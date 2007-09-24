@@ -14,12 +14,8 @@ OBJS            =\
                 keyboard \
                 mmap \
                 support \
+                task \
                 video \
-
-
-OBJS-$(CONFIG_MULTITASKING)        += task
-
-DEFINITIONS-$(CONFIG_MULTITASKING) += CONFIG_MULTITASKING
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel

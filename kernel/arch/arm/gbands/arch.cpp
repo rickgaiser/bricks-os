@@ -1,13 +1,11 @@
-#include "kernel/debug.h"
 #include "kernel/bricks.h"
+#include "kernel/debug.h"
 #include "kernel/memoryManager.h"
+#include "kernel/task.h"
+#include "asm/arch/config.h"
 #include "asm/cpu.h"
 #include "asm/irq.h"
-
-#ifdef CONFIG_MULTITASKING
-#include "kernel/task.h"
 #include "timer.h"
-#endif // CONFIG_MULTITASKING
 
 #ifdef CONFIG_GBA_CONSOLE
 #include "video.h"
@@ -124,14 +122,12 @@ main(int, char *[])
   pVideoDevice = new CGBAVideoDevice;
 #endif // CONFIG_FRAMEBUFFER
 
-#ifdef CONFIG_MULTITASKING
   // Create task structure
   CTask * pTask = new CTask(0, 0, 0);
   pTask->thr_->state(TS_RUNNING);
 
   setTimerFrequency(0, 100.0f);
   cIRQ.enable(3);
-#endif // CONFIG_MULTITASKING
 
 #ifdef CONFIG_FILESYSTEM
   CIBMPartitionDriver ibmPartitionDriver;
