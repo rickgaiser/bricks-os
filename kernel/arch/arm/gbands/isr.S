@@ -7,14 +7,154 @@
 @
 .extern isr
 
+.global local_save_flags
+.global local_irq_restore
+.global local_irq_disable
+.global local_irq_enable
+.global runJump
 .global __isr
 .global current_thread
 
-.align 4
-@.code 32
-.data
-.arm
+  .align 4
+  .data
 
+current_thread:     .word 0x0               @ pointer to thread that is running
+
+
+@ -----------------------------------------------------------------------------
+@ unsigned long local_save_flags(void);
+@ -----------------------------------------------------------------------------
+  .text
+  .code 16
+  .thumb_func
+local_save_flags:
+  ldr     r2, =local_save_flagsARM
+  bx      r2
+  .data
+  .code 32
+local_save_flagsARM:
+  mrs r0, cpsr
+  bx lr
+
+@ -----------------------------------------------------------------------------
+@ void local_irq_restore(unsigned long flags);
+@  - r0 = flags
+@ -----------------------------------------------------------------------------
+  .text
+  .code 16
+  .thumb_func
+local_irq_restore:
+  ldr     r2, =local_irq_restoreARM
+  bx      r2
+  .data
+  .code 32
+local_irq_restoreARM:
+  msr cpsr, r0
+  bx lr
+
+@ -----------------------------------------------------------------------------
+@ void local_irq_disable(void);
+@ -----------------------------------------------------------------------------
+  .text
+  .code 16
+  .thumb_func
+local_irq_disable:
+  ldr     r2, =local_irq_disableARM
+  bx      r2
+  .data
+  .code 32
+local_irq_disableARM:
+  mrs r0, cpsr
+  orr r0, r0, #0xc0
+  msr cpsr, r0
+  bx lr
+
+@ -----------------------------------------------------------------------------
+@ void local_irq_enable(void);
+@ -----------------------------------------------------------------------------
+  .text
+  .code 16
+  .thumb_func
+local_irq_enable:
+  ldr     r2, =local_irq_enableARM
+  bx      r2
+  .data
+  .code 32
+local_irq_enableARM:
+  mrs r0, cpsr
+  bic r0, r0, #0xc0
+  msr cpsr, r0
+  bx lr
+
+@ -----------------------------------------------------------------------------
+@ void runJump(pt_regs * old_thread, pt_regs * new_thread);
+@  - context: THUMB, SYSTEM mode (IRQ mode?)
+@  - r0 = old_thread / current_thread
+@  - r1 = new_thread
+@ -----------------------------------------------------------------------------
+  .text
+  .code 16
+  .thumb_func
+runJump:
+  ldr     r2, =runJumpARM
+  bx      r2
+  .data
+  .code 32
+runJumpARM:
+@  b       runJumpReturn
+
+  stmia   r0!, {r4-r11}           @ Save r4-r11
+  stmia   r0!, {r0-r3,r12}        @ Save r0-r3,r12
+  ldr     r2, =runJumpReturn0     @ Task will continue at runJumpReturn
+  stmia   r0!, {r2}               @ Save pc
+  mrs     r4, cpsr                @ get cprs
+  str     r4, [r0], #4            @ save as sprs_irq
+
+  @ Prepare registers r2-r4 for changing the cpu mode
+  bic     r4, r4, #0x1f           @ clear state code
+  orr     r2, r4, #0x13           @ supervisor mode
+  orr     r3, r4, #0x1f           @ system mode
+  orr     r4, r4, #0x12           @ irq mode
+
+  @ Save supervisor mode spsr, lr & sp
+  msr     cpsr, r2
+  mrs     r5, spsr
+  str     r5, [r0], #4
+  str     lr, [r0], #4
+  str     sp, [r0], #4
+
+  @ Save system mode lr & sp
+  msr     cpsr, r3
+  str     lr, [r0], #4
+  str     sp, [r0], #4
+
+  msr     cpsr, r4                @ Return back to IRQ mode
+  str     r1, current_thread      @ Make new_thread the new current_thread
+  mov     r2, #0x250              @ Push BIOS return addr to the stack
+  push    {r2}
+  b       isr_ret
+
+  nop
+  nop
+  nop
+  nop
+runJumpReturn0:
+  nop
+  nop
+  nop
+  nop
+runJumpReturn:
+  bx      lr
+
+
+@ ---------------------------------------------------------------------------
+@ Upon interrupt the GBA bios is called first:
+@   push r0-r3,r12,r14  ; Push to SP_irq
+@   call __irq
+@   pop  r0-r3,r12,r14  ; Pop from SP_irq
+@   ret
+@ -----------------------------------------------------------------------------
+  .code 32
 __isr:
   @ Load pointer to current task state in r0
   ldr r0, current_thread          @ load pointer
@@ -99,9 +239,6 @@ isr_ret:
   @ Return to bios
   bx      lr
 
-.align 4
-.data
 
-current_thread:     .word 0x0               @ pointer to thread that is running
-
-.pool
+  .pool
+  .end

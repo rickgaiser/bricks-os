@@ -144,5 +144,9 @@ main(int, char *[])
   CFileSystem::addBlockDevice(&scDriver);
 #endif // CONFIG_FILESYSTEM
 
+  // Let CPU flag control interrupt state
+  local_irq_disable();  // Disable in cpu interrupt enable flag
+  REG_IME = 1;          // Enable REG_IME interrupt enable flag
+
   return bricks_main();
 }

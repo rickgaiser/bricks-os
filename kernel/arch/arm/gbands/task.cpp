@@ -6,6 +6,7 @@
 
 extern pt_regs * current_thread;   // Return state for the current thread, only valid in interrupt
 extern "C" void kill_thread();     // Return function for thread, kills the current thread
+extern "C" void runJump(pt_regs * old_thread, pt_regs * new_thread);
 
 
 // -----------------------------------------------------------------------------
@@ -19,17 +20,13 @@ CGBANDSThread::CGBANDSThread(CTask * task, void * entry, size_t stack, size_t sv
   if(svcstack != 0)
     pSvcStack_ = new uint32_t[svcstack];
 
-  pThreadState_->lr_irq   = reinterpret_cast<uint32_t>(entry);  // BIOS return addr, task entry
-  pThreadState_->sp_svc   = reinterpret_cast<uint32_t>(pStack_) + stack;  // Task stack
-  pThreadState_->r0       = argc;
-  pThreadState_->r1       = reinterpret_cast<uint32_t>(argv);
-  pThreadState_->lr_svc   = reinterpret_cast<uint32_t>(kill_thread);  // Task return addr
-  pThreadState_->spsr_irq = CPU_MODE_SUPERVISOR | CPU_MODE_THUMB;  // Initial task state
-
-  // System/User mode (used by bios syscalls)
-  pThreadState_->sp_sys   = reinterpret_cast<uint32_t>(pSvcStack_) + svcstack;
-  //pThreadState_->lr_sys   = 0;
-  //pThreadState_->sp_sys   = 0;
+  pThreadState_->pc     = reinterpret_cast<uint32_t>(entry) + 8;
+  pThreadState_->sp     = reinterpret_cast<uint32_t>(pStack_) + stack;
+  pThreadState_->sp_svc = reinterpret_cast<uint32_t>(pSvcStack_) + svcstack;
+  pThreadState_->r0     = argc;
+  pThreadState_->r1     = reinterpret_cast<uint32_t>(argv);
+  pThreadState_->lr     = reinterpret_cast<uint32_t>(kill);
+  pThreadState_->cpsr   = CPU_MODE_SYSTEM | CPU_MODE_THUMB;
 
   if(current_thread == 0)
     current_thread = pThreadState_;
@@ -44,6 +41,14 @@ CGBANDSThread::~CGBANDSThread()
     delete pStack_;
   if(pSvcStack_ != 0)
     delete pSvcStack_;
+}
+
+// -----------------------------------------------------------------------------
+void
+CGBANDSThread::runJump()
+{
+  // Store state in "current_thread" and jump to "pThreadState_"
+  ::runJump(current_thread, pThreadState_);
 }
 
 // -----------------------------------------------------------------------------

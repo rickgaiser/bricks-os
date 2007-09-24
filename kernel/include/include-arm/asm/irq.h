@@ -33,13 +33,13 @@ struct pt_regs
   // Tasks Registers
   uint32_t r4, r5, r6, r7, r8, r9, r10, r11;
   // Tasks registers (saved by bios)
-  uint32_t r0, r1, r2, r3, r12, lr_irq/*r15/pc of task*/;
+  uint32_t r0, r1, r2, r3, r12, pc;
   // IRQ state (banked regs), as we get called by bios
-  uint32_t spsr_irq/* cpsr of task*/;
+  uint32_t cpsr;
   // Supervisor state (banked regs), as the task was when it got interrupted
-  uint32_t spsr_svc, lr_svc, sp_svc/*r13*/;
+  uint32_t spsr_svc, lr_svc, sp_svc;
   // System/User state (banked regs), used by bios
-  uint32_t lr_sys, sp_sys;
+  uint32_t lr, sp;
 };
 
 #define CPU_MODE_USER        0x00000010

@@ -17,7 +17,7 @@ public:
 
   // Task switch #1: Jump to task immediately.
   //  - Used from caller context
-  //virtual void runJump();
+  virtual void runJump();
   // Task switch #2: Setup stack so interrupt return will couse this task to run.
   //  - Used from interrupt context
   virtual void runReturn();
