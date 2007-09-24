@@ -4,12 +4,15 @@
 #include "kernel/srrChannel_k.h"
 #include "kernel/srrChannel_s.h"
 #include "kernel/task.h"
+#include "kernel/pthread_k.h"
+#include "kernel/syscall.h"
+#include "asm/cpu.h"
 #include "string.h"
 
 
 //---------------------------------------------------------------------------
 int
-k_channelCreate(SChannelCreate * args)
+k_channelCreate(unsigned iFlags)
 {
   int iRetVal(-1);
 
@@ -40,10 +43,11 @@ k_channelCreate(SChannelCreate * args)
 
 //---------------------------------------------------------------------------
 int
-k_channelDestroy(SChannelDestroy * args)
+k_channelDestroy(int iChannelID)
 {
   int iRetVal(-1);
-  int iChannelID(args->iChannelID - 2);
+
+  iChannelID -= 2;
 
   if((iChannelID >= 0) &&
      (iChannelID < MAX_CHANNEL_COUNT) &&
@@ -56,7 +60,7 @@ k_channelDestroy(SChannelDestroy * args)
   }
   else
   {
-    printk("k_channelDestroy: Invalid channel id: %d\n", args->iChannelID);
+    printk("k_channelDestroy: Invalid channel id: %d\n", iChannelID + 2);
   }
 
   return iRetVal;
@@ -64,17 +68,18 @@ k_channelDestroy(SChannelDestroy * args)
 
 //---------------------------------------------------------------------------
 int
-k_channelConnectAttach(SConnectAttach * args)
+k_channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int iFlags)
 {
   int iRetVal(-1);
-  int iChannelID(args->iChannelID - 2);
   CTask * pTask;
 
   //printk("k_channelConnectAttach\n");
 
-  if(args->iNodeID == 0)
+  iChannelID -= 2;
+
+  if(iNodeID == 0)
   {
-    pTask = CTaskManager::getTaskFromPID(args->iProcessID);
+    pTask = CTaskManager::getTaskFromPID(iProcessID);
     if(pTask != NULL)
     {
       // Process found, find channel
@@ -99,12 +104,12 @@ k_channelConnectAttach(SConnectAttach * args)
       }
       else
       {
-        printk("k_connectAttach: Channel id not found: %d\n", args->iChannelID);
+        printk("k_connectAttach: Channel id not found: %d\n", iChannelID + 2);
       }
     }
     else
     {
-      printk("k_connectAttach: Process id not found: %d\n", args->iProcessID);
+      printk("k_connectAttach: Process id not found: %d\n", iProcessID);
     }
   }
   else
@@ -117,10 +122,10 @@ k_channelConnectAttach(SConnectAttach * args)
 
 //---------------------------------------------------------------------------
 int
-k_channelConnectDetach(SConnectDetach * args)
+k_channelConnectDetach(int iConnectionID)
 {
   int iRetVal(-1);
-  int iConnectionID(args->iConnectionID - 2);
+  iConnectionID -= 2;
 
   if((iConnectionID >= 0) &&
      (iConnectionID < MAX_CONNECTION_COUNT) &&
@@ -132,7 +137,7 @@ k_channelConnectDetach(SConnectDetach * args)
   }
   else
   {
-    printk("k_channelConnectDetach: Connection id not found: %d\n", args->iConnectionID);
+    printk("k_channelConnectDetach: Connection id not found: %d\n", iConnectionID + 2);
   }
 
   return iRetVal;
@@ -158,25 +163,30 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
     {
       switch(pHeader->iFunctionID)
       {
-        case kfCHANNEL_CREATE:
-          iRetVal = k_channelCreate       ((SChannelCreate *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
-          break;
-        case kfCHANNEL_DESTROY:
-          iRetVal = k_channelDestroy      ((SChannelDestroy *)((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
-          break;
-        case kfCHANNEL_ATTACH:
-          iRetVal = k_channelConnectAttach((SConnectAttach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
-          break;
-        case kfCHANNEL_DETACH:
-          iRetVal = k_channelConnectDetach((SConnectDetach *) ((unsigned char *)pSndMsg + sizeof(SKernelMessageHeader)));
-          break;
+        unwrapfunc1(channelCreate,          pSndMsg, unsigned, iFlags);
+        unwrapfunc1(channelDestroy,         pSndMsg, int, iChannelID);
+        unwrapfunc4(channelConnectAttach,   pSndMsg, uint32_t, iNodeID, pid_t, iProcessID, int, iChannelID, int, iFlags);
+        unwrapfunc1(channelConnectDetach,   pSndMsg, int, iConnectionID);
+        unwrapfunc4(pthread_create,         pSndMsg, pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
+//        unwrapfunc1(pthread_exit,           pSndMsg, void *, status);
+        unwrapfunc2(pthread_cond_init,      pSndMsg, pthread_cond_t *, cond, const pthread_condattr_t *, attr);
+        unwrapfunc1(pthread_cond_destroy,   pSndMsg, pthread_cond_t *, cond);
+        unwrapfunc2(pthread_cond_wait,      pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex);
+        unwrapfunc3(pthread_cond_timedwait, pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex, const struct timespec *, ts);
+        unwrapfunc1(pthread_cond_signal,    pSndMsg, pthread_cond_t *, cond);
+        unwrapfunc1(pthread_cond_broadcast, pSndMsg, pthread_cond_t *, cond);
+        unwrapfunc2(pthread_mutex_init,     pSndMsg, pthread_mutex_t *, mutex, const pthread_mutexattr_t *, attr);
+        unwrapfunc1(pthread_mutex_destroy,  pSndMsg, pthread_mutex_t *, mutex);
+        unwrapfunc1(pthread_mutex_lock,     pSndMsg, pthread_mutex_t *, mutex);
+        unwrapfunc1(pthread_mutex_trylock,  pSndMsg, pthread_mutex_t *, mutex);
+        unwrapfunc1(pthread_mutex_unlock,   pSndMsg, pthread_mutex_t *, mutex);
         default:
           printk("k_msgSend: Invalid function id: %d\n", pHeader->iFunctionID);
       };
     }
     else
     {
-      printk("k_msgSend: Invalid kernel header\n");
+      printk("k_msgSend: Invalid kernel header(0x%x, %d, %d, 0x%x)\n", pHeader, pHeader->iHeaderSize, iSndSize, pHeader->iVersion);
     }
   }
   else
@@ -188,7 +198,8 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
     {
       SChannel * pChannel = CTaskManager::pCurrentTask_->pConnection_[iConnectionID];
       // Wait for channel to become free
-      // FIXME: Busy waiting
+      // FIXME: Busy waiting, need to enable interrupt to prevent crash
+      local_irq_enable();
       while(pChannel->iState != CS_FREE);
       pChannel->iState   = CS_USED;
       pChannel->pSndMsg  = pSndMsg;
@@ -231,7 +242,8 @@ k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
     {
       SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iChannelID];
       // Wait for message to be sent
-      // FIXME: Busy waiting
+      // FIXME: Busy waiting, need to enable interrupt to prevent crash
+      local_irq_enable();
       while(pChannel->iState != CS_MSG_SEND);
       if(pChannel->iSndSize < iRcvSize)
         iRcvSize = pChannel->iSndSize;

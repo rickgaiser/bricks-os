@@ -10,8 +10,8 @@ OBJS            =\
                 srrTest \
 
 
-ifneq ($(DIRECT_ACCESS_CHANNEL),y)
-OBJS            += srrChannel
+ifneq ($(CONFIG_DIRECT_ACCESS_KERNEL_FUNC),y)
+OBJS            += srrChannel pthread
 endif
 
 

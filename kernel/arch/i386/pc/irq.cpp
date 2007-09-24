@@ -157,16 +157,13 @@ isr(pt_regs * regs)
       switch(regs->eax)
       {
         case 1:
-          printk("msgSend\n");
-          regs->eax = k_msgSend((int)regs->ebx, (const void *)regs->ecx, (int)regs->edx, (void *)regs->edi, (int)regs->esi);
+          regs->eax = k_msgSend((int)regs->ebx, (const void *)regs->ecx, (int)regs->edx, (void *)regs->esi, (int)regs->edi);
           break;
         case 2:
-          printk("msgReceive\n");
           regs->eax = k_msgReceive((int)regs->ebx, (void *)regs->ecx, (int)regs->edx);
           break;
         case 3:
-          printk("msgReply\n");
-          regs->eax = k_msgReply((int)regs->ebx, (int)regs->ecx, (const void *)regs->edx, (int)regs->edi);
+          regs->eax = k_msgReply((int)regs->ebx, (int)regs->ecx, (const void *)regs->edx, (int)regs->esi);
           break;
         default:
           printk("ERROR: Unknown int 0x30 System Call(%d)\n", regs->eax);
@@ -186,7 +183,7 @@ isr(pt_regs * regs)
           break;
         case 4:
           // write
-          printk((char *)regs->ecx);;
+          printk((char *)regs->ecx);
           break;
         default:
           printk("ERROR: Unknown int 0x80 System Call(%d)\n", regs->eax);

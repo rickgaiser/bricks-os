@@ -6,8 +6,8 @@
 // -----------------------------------------------------------------------------
 // Threads
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_create(pthread_t * thread, const pthread_attr_t * attr, void *(*start_routine)(void *), void * arg)
+int
+k_pthread_create(pthread_t * thread, const pthread_attr_t * attr, void *(*start_routine)(void *), void * arg)
 {
   int iRetVal(-1);
 
@@ -23,8 +23,8 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr, void *(*start_ro
 }
 
 // -----------------------------------------------------------------------------
-extern "C" void
-pthread_exit(void * status)
+void
+k_pthread_exit(void * status)
 {
   // Change tasks state
   CTaskManager::pCurrentThread_->state(TS_DEAD);
@@ -37,8 +37,8 @@ pthread_exit(void * status)
 // -----------------------------------------------------------------------------
 // Condition
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * attr)
+int
+k_pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * attr)
 {
   cond->iLock = 1;
 
@@ -46,20 +46,20 @@ pthread_cond_init(pthread_cond_t * cond, const pthread_condattr_t * attr)
 }
 
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_cond_destroy(pthread_cond_t * cond)
+int
+k_pthread_cond_destroy(pthread_cond_t * cond)
 {
   return 0;
 }
 
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
+int
+k_pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 {
   unsigned long flags = local_save_flags();
 
   // Unlock the thing we're waiting for
-  pthread_mutex_unlock(mutex);
+  k_pthread_mutex_unlock(mutex);
 
   // Wait for condition
   local_irq_disable();
@@ -69,19 +69,19 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
   local_irq_restore(flags);
 
   // Lock it again so we can use it
-  pthread_mutex_lock(mutex);
+  k_pthread_mutex_lock(mutex);
 
   return 0;
 }
 
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const struct timespec * ts)
+int
+k_pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const struct timespec * ts)
 {
   unsigned long flags = local_save_flags();
 
   // Unlock the thing we're waiting for
-  pthread_mutex_unlock(mutex);
+  k_pthread_mutex_unlock(mutex);
 
   // Wait for condition
   local_irq_disable();
@@ -91,14 +91,14 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex, const str
   local_irq_restore(flags);
 
   // Lock it again so we can use it
-  pthread_mutex_lock(mutex);
+  k_pthread_mutex_lock(mutex);
 
   return 0;
 }
 
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_cond_signal(pthread_cond_t * cond)
+int
+k_pthread_cond_signal(pthread_cond_t * cond)
 {
   int iRetVal(-1);
   unsigned long flags = local_save_flags();
@@ -116,8 +116,8 @@ pthread_cond_signal(pthread_cond_t * cond)
 }
 
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_cond_broadcast(pthread_cond_t * cond)
+int
+k_pthread_cond_broadcast(pthread_cond_t * cond)
 {
   int iRetVal(-1);
   unsigned long flags = local_save_flags();
@@ -137,8 +137,8 @@ pthread_cond_broadcast(pthread_cond_t * cond)
 // -----------------------------------------------------------------------------
 // Mutex
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr)
+int
+k_pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr)
 {
   mutex->iLock = 0;
 
@@ -146,15 +146,15 @@ pthread_mutex_init(pthread_mutex_t * mutex, const pthread_mutexattr_t * attr)
 }
 
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_mutex_destroy(pthread_mutex_t * mutex)
+int
+k_pthread_mutex_destroy(pthread_mutex_t * mutex)
 {
   return 0;
 }
 
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_mutex_lock(pthread_mutex_t * mutex)
+int
+k_pthread_mutex_lock(pthread_mutex_t * mutex)
 {
   unsigned long flags = local_save_flags();
 
@@ -168,8 +168,8 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 }
 
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_mutex_trylock(pthread_mutex_t * mutex)
+int
+k_pthread_mutex_trylock(pthread_mutex_t * mutex)
 {
   int iRetVal(-1);
   unsigned long flags = local_save_flags();
@@ -186,8 +186,8 @@ pthread_mutex_trylock(pthread_mutex_t * mutex)
 }
 
 // -----------------------------------------------------------------------------
-extern "C" int
-pthread_mutex_unlock(pthread_mutex_t * mutex)
+int
+k_pthread_mutex_unlock(pthread_mutex_t * mutex)
 {
   int iRetVal(-1);
   unsigned long flags = local_save_flags();
