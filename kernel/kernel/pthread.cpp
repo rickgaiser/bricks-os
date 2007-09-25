@@ -1,4 +1,5 @@
 #include "pthread.h"
+#include "kernel/debug.h"
 #include "kernel/task.h"
 #include "asm/cpu.h"
 
@@ -29,9 +30,9 @@ k_pthread_exit(void * status)
   // Change tasks state
   CTaskManager::pCurrentThread_->state(TS_DEAD);
   // Schedule next thread
-  // FIXME: Busy waiting for timer interrupt. We should reschedule but we can't
-  // since we don't know if we should jump or stack return to the next task.
-  while(1);
+  CTaskManager::schedule();
+  // Jump to next task
+  CTaskManager::pCurrentThread_->runJump();
 }
 
 // -----------------------------------------------------------------------------

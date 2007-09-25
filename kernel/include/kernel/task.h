@@ -38,7 +38,9 @@ enum EChannelState
 // -----------------------------------------------------------------------------
 struct SChannel
 {
-  volatile int iState;
+  pthread_mutex_t mutex;       // The big channel lock
+  pthread_cond_t stateCond;    // State change condition
+  int iState;
   const void * pSndMsg;
   int iSndSize;
   void * pRcvMsg;

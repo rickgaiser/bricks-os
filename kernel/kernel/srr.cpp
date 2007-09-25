@@ -72,20 +72,27 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
     {
       SChannel * pChannel = CTaskManager::pCurrentTask_->pConnection_[iConnectionID];
       // Wait for channel to become free
-      // FIXME: Busy waiting, need to enable interrupt to prevent crash
-      local_irq_enable();
-      while(pChannel->iState != CS_FREE);
-      pChannel->iState   = CS_USED;
+      k_pthread_mutex_lock(&pChannel->mutex);
+      while(pChannel->iState != CS_FREE)
+        k_pthread_cond_wait(&pChannel->stateCond, &pChannel->mutex);
+      // Fill channel
       pChannel->pSndMsg  = pSndMsg;
       pChannel->iSndSize = iSndSize;
       pChannel->pRcvMsg  = pRcvMsg;
       pChannel->iRcvSize = iRcvSize;
       pChannel->iState   = CS_MSG_SEND;
+      // Notify others of changed channel state
+      k_pthread_cond_broadcast(&pChannel->stateCond);
       // Wait for message to be replied
-      // FIXME: Busy waiting
+      do
+        k_pthread_cond_wait(&pChannel->stateCond, &pChannel->mutex);
       while(pChannel->iState != CS_MSG_REPLIED);
       iRetVal = pChannel->iRetVal;
       pChannel->iState   = CS_FREE;
+      // Notify others of changed channel state
+      k_pthread_cond_broadcast(&pChannel->stateCond);
+      // Unlock channel
+      k_pthread_mutex_unlock(&pChannel->mutex);
     }
     else
     {
@@ -116,13 +123,18 @@ k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
     {
       SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iChannelID];
       // Wait for message to be sent
-      // FIXME: Busy waiting, need to enable interrupt to prevent crash
-      local_irq_enable();
-      while(pChannel->iState != CS_MSG_SEND);
+      k_pthread_mutex_lock(&pChannel->mutex);
+      while(pChannel->iState != CS_MSG_SEND)
+        k_pthread_cond_wait(&pChannel->stateCond, &pChannel->mutex);
       if(pChannel->iSndSize < iRcvSize)
         iRcvSize = pChannel->iSndSize;
       memcpy(pRcvMsg, pChannel->pSndMsg, iRcvSize);
       pChannel->iState = CS_MSG_RECEIVED;
+      // Notify others of changed channel state
+      k_pthread_cond_broadcast(&pChannel->stateCond);
+      // Unlock channel
+      k_pthread_mutex_unlock(&pChannel->mutex);
+
       iRetVal  = iChannelID + 2;
     }
     else
@@ -153,7 +165,9 @@ k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
        (CTaskManager::pCurrentTask_->pChannel_[iReceiveID] != NULL))
     {
       SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iReceiveID];
+
       // We can only reply a received message
+      k_pthread_mutex_lock(&pChannel->mutex);
       if(pChannel->iState == CS_MSG_RECEIVED)
       {
         // Copy reply data
@@ -162,10 +176,15 @@ k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
         memcpy(pChannel->pRcvMsg, pReplyMsg, iReplySize);
         pChannel->iRetVal = iStatus;
         pChannel->iState = CS_MSG_REPLIED;
+        // Notify others of changed channel state
+        k_pthread_cond_broadcast(&pChannel->stateCond);
+        // Unlock channel
+        k_pthread_mutex_unlock(&pChannel->mutex);
         iRetVal = 0;
       }
       else
       {
+        k_pthread_mutex_unlock(&pChannel->mutex);
         printk("k_msgReply: No message received, can't reply\n");
       }
     }
