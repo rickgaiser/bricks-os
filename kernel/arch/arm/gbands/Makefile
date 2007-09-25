@@ -6,7 +6,6 @@ OBJS            =\
                 arch \
                 irq \
                 isr \
-                support \
                 task \
                 timer \
 
