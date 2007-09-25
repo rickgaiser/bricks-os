@@ -7,11 +7,21 @@
 #include "inttypes.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 // Channels
-declareSysCallKernel1(int, channelCreate, unsigned, iFlags);
-declareSysCallKernel1(int, channelDestroy, int, iChannelID);
-declareSysCallKernel4(int, channelConnectAttach, uint32_t, iNodeID, pid_t, iProcessID, int, iChannelID, int, iFlags);
-declareSysCallKernel1(int, channelConnectDetach, int, iConnectionID);
+declareSysCallKernel1r(int, channelCreate, unsigned, iFlags);
+declareSysCallKernel1r(int, channelDestroy, int, iChannelID);
+declareSysCallKernel4r(int, channelConnectAttach, uint32_t, iNodeID, pid_t, iProcessID, int, iChannelID, int, iFlags);
+declareSysCallKernel1r(int, channelConnectDetach, int, iConnectionID);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

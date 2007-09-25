@@ -10,6 +10,7 @@ OBJS            =\
                 pthread \
                 settings \
                 srr \
+                srrChannel \
                 string \
                 task \
                 timeValue \

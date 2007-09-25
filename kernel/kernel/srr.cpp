@@ -1,147 +1,13 @@
 #include "kernel/debug.h"
 #include "kernel/srr_k.h"
-#include "kernel/srr_s.h"
 #include "kernel/srrChannel_k.h"
-#include "kernel/srrChannel_s.h"
 #include "kernel/task.h"
 #include "kernel/pthread_k.h"
 #include "kernel/syscall.h"
 #include "asm/cpu.h"
+#include "asm/arch/config.h"
 #include "string.h"
 
-
-//---------------------------------------------------------------------------
-int
-k_channelCreate(unsigned iFlags)
-{
-  int iRetVal(-1);
-
-  //printk("k_channelCreate\n");
-
-  // Locate empty channel in current task
-  for(int iChannel(0); iChannel < MAX_CHANNEL_COUNT; iChannel++)
-  {
-    if(CTaskManager::pCurrentTask_->pChannel_[iChannel] == NULL)
-    {
-      SChannel * chan = new SChannel;
-      chan->iState = CS_FREE;
-      CTaskManager::pCurrentTask_->pChannel_[iChannel] = chan;
-
-      iRetVal = iChannel + 2; // Channels 0&1 are reserved for error&kernel
-
-      break;
-    }
-  }
-
-  if(iRetVal == -1)
-  {
-    printk("k_channelCreate: Max channels reached!\n");
-  }
-
-  return iRetVal;
-}
-
-//---------------------------------------------------------------------------
-int
-k_channelDestroy(int iChannelID)
-{
-  int iRetVal(-1);
-
-  iChannelID -= 2;
-
-  if((iChannelID >= 0) &&
-     (iChannelID < MAX_CHANNEL_COUNT) &&
-     (CTaskManager::pCurrentTask_->pChannel_[iChannelID] != NULL))
-  {
-    // Channel valid, remove it
-    delete CTaskManager::pCurrentTask_->pChannel_[iChannelID];
-    CTaskManager::pCurrentTask_->pChannel_[iChannelID] = NULL;
-    iRetVal = 0;
-  }
-  else
-  {
-    printk("k_channelDestroy: Invalid channel id: %d\n", iChannelID + 2);
-  }
-
-  return iRetVal;
-}
-
-//---------------------------------------------------------------------------
-int
-k_channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int iFlags)
-{
-  int iRetVal(-1);
-  CTask * pTask;
-
-  //printk("k_channelConnectAttach\n");
-
-  iChannelID -= 2;
-
-  if(iNodeID == 0)
-  {
-    pTask = CTaskManager::getTaskFromPID(iProcessID);
-    if(pTask != NULL)
-    {
-      // Process found, find channel
-      if((iChannelID >= 0) &&
-         (iChannelID < MAX_CHANNEL_COUNT) &&
-         (pTask->pChannel_[iChannelID] != NULL))
-      {
-        // Channel found, find empty connection
-        for(int i(0); i < MAX_CONNECTION_COUNT; i++)
-        {
-          if(CTaskManager::pCurrentTask_->pConnection_[i] == NULL)
-          {
-            CTaskManager::pCurrentTask_->pConnection_[i] = pTask->pChannel_[iChannelID];
-            iRetVal = i + 2;
-            break;
-          }
-        }
-        if(iRetVal == -1)
-        {
-          printk("k_connectAttach: Max connections reached!\n");
-        }
-      }
-      else
-      {
-        printk("k_connectAttach: Channel id not found: %d\n", iChannelID + 2);
-      }
-    }
-    else
-    {
-      printk("k_connectAttach: Process id not found: %d\n", iProcessID);
-    }
-  }
-  else
-  {
-    printk("k_connectAttach: Remote nodes not supported\n");
-  }
-
-  return iRetVal;
-}
-
-//---------------------------------------------------------------------------
-int
-k_channelConnectDetach(int iConnectionID)
-{
-  int iRetVal(-1);
-  iConnectionID -= 2;
-
-  if((iConnectionID >= 0) &&
-     (iConnectionID < MAX_CONNECTION_COUNT) &&
-     (CTaskManager::pCurrentTask_->pConnection_[iConnectionID] != NULL))
-  {
-    // Connection valid, remove it
-    CTaskManager::pCurrentTask_->pConnection_[iConnectionID] = NULL;
-    iRetVal = 0;
-  }
-  else
-  {
-    printk("k_channelConnectDetach: Connection id not found: %d\n", iConnectionID + 2);
-  }
-
-  return iRetVal;
-}
 
 //---------------------------------------------------------------------------
 int
@@ -149,6 +15,7 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
 {
   int iRetVal(-1);
 
+#ifndef CONFIG_DIRECT_ACCESS_KERNEL_FUNC
   // Filter error ID
   if(iConnectionID <= 0)
   {
@@ -163,23 +30,23 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
     {
       switch(pHeader->iFunctionID)
       {
-        unwrapfunc1(channelCreate,          pSndMsg, unsigned, iFlags);
-        unwrapfunc1(channelDestroy,         pSndMsg, int, iChannelID);
-        unwrapfunc4(channelConnectAttach,   pSndMsg, uint32_t, iNodeID, pid_t, iProcessID, int, iChannelID, int, iFlags);
-        unwrapfunc1(channelConnectDetach,   pSndMsg, int, iConnectionID);
-        unwrapfunc4(pthread_create,         pSndMsg, pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
-//        unwrapfunc1(pthread_exit,           pSndMsg, void *, status);
-        unwrapfunc2(pthread_cond_init,      pSndMsg, pthread_cond_t *, cond, const pthread_condattr_t *, attr);
-        unwrapfunc1(pthread_cond_destroy,   pSndMsg, pthread_cond_t *, cond);
-        unwrapfunc2(pthread_cond_wait,      pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex);
-        unwrapfunc3(pthread_cond_timedwait, pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex, const struct timespec *, ts);
-        unwrapfunc1(pthread_cond_signal,    pSndMsg, pthread_cond_t *, cond);
-        unwrapfunc1(pthread_cond_broadcast, pSndMsg, pthread_cond_t *, cond);
-        unwrapfunc2(pthread_mutex_init,     pSndMsg, pthread_mutex_t *, mutex, const pthread_mutexattr_t *, attr);
-        unwrapfunc1(pthread_mutex_destroy,  pSndMsg, pthread_mutex_t *, mutex);
-        unwrapfunc1(pthread_mutex_lock,     pSndMsg, pthread_mutex_t *, mutex);
-        unwrapfunc1(pthread_mutex_trylock,  pSndMsg, pthread_mutex_t *, mutex);
-        unwrapfunc1(pthread_mutex_unlock,   pSndMsg, pthread_mutex_t *, mutex);
+        unwrapfunc1r(channelCreate,          pSndMsg, unsigned, iFlags);
+        unwrapfunc1r(channelDestroy,         pSndMsg, int, iChannelID);
+        unwrapfunc4r(channelConnectAttach,   pSndMsg, uint32_t, iNodeID, pid_t, iProcessID, int, iChannelID, int, iFlags);
+        unwrapfunc1r(channelConnectDetach,   pSndMsg, int, iConnectionID);
+        unwrapfunc4r(pthread_create,         pSndMsg, pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
+        unwrapfunc1 (pthread_exit,           pSndMsg, void *, status);
+        unwrapfunc2r(pthread_cond_init,      pSndMsg, pthread_cond_t *, cond, const pthread_condattr_t *, attr);
+        unwrapfunc1r(pthread_cond_destroy,   pSndMsg, pthread_cond_t *, cond);
+        unwrapfunc2r(pthread_cond_wait,      pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex);
+        unwrapfunc3r(pthread_cond_timedwait, pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex, const struct timespec *, ts);
+        unwrapfunc1r(pthread_cond_signal,    pSndMsg, pthread_cond_t *, cond);
+        unwrapfunc1r(pthread_cond_broadcast, pSndMsg, pthread_cond_t *, cond);
+        unwrapfunc2r(pthread_mutex_init,     pSndMsg, pthread_mutex_t *, mutex, const pthread_mutexattr_t *, attr);
+        unwrapfunc1r(pthread_mutex_destroy,  pSndMsg, pthread_mutex_t *, mutex);
+        unwrapfunc1r(pthread_mutex_lock,     pSndMsg, pthread_mutex_t *, mutex);
+        unwrapfunc1r(pthread_mutex_trylock,  pSndMsg, pthread_mutex_t *, mutex);
+        unwrapfunc1r(pthread_mutex_unlock,   pSndMsg, pthread_mutex_t *, mutex);
         default:
           printk("k_msgSend: Invalid function id: %d\n", pHeader->iFunctionID);
       };
@@ -189,6 +56,13 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
       printk("k_msgSend: Invalid kernel header(0x%x, %d, %d, 0x%x)\n", pHeader, pHeader->iHeaderSize, iSndSize, pHeader->iVersion);
     }
   }
+#else
+  // Filter error ID
+  if(iConnectionID <= 1)
+  {
+    printk("k_msgSend: Invalid connection id: %d\n", iConnectionID);
+  }
+#endif // CONFIG_DIRECT_ACCESS_KERNEL_FUNC
   else
   {
     iConnectionID -= 2;

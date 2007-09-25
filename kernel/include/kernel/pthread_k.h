@@ -37,21 +37,21 @@
 typedef void *(*pthread_func_entry)(void *);
 
 // Threads
-declareSysCallKernel4(int,  pthread_create,         pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
-declareSysCallKernel1(void, pthread_exit,           void *, status);
+declareSysCallKernel4r(int,  pthread_create,         pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
+declareSysCallKernel1 (      pthread_exit,           void *, status);
 // Condition
-declareSysCallKernel2(int,  pthread_cond_init,      pthread_cond_t *, cond, const pthread_condattr_t *, attr);
-declareSysCallKernel1(int,  pthread_cond_destroy,   pthread_cond_t *, cond);
-declareSysCallKernel2(int,  pthread_cond_wait,      pthread_cond_t *, cond, pthread_mutex_t *, mutex);
-declareSysCallKernel3(int,  pthread_cond_timedwait, pthread_cond_t *, cond, pthread_mutex_t *, mutex, const struct timespec *, ts);
-declareSysCallKernel1(int,  pthread_cond_signal,    pthread_cond_t *, cond);
-declareSysCallKernel1(int,  pthread_cond_broadcast, pthread_cond_t *, cond);
+declareSysCallKernel2r(int,  pthread_cond_init,      pthread_cond_t *, cond, const pthread_condattr_t *, attr);
+declareSysCallKernel1r(int,  pthread_cond_destroy,   pthread_cond_t *, cond);
+declareSysCallKernel2r(int,  pthread_cond_wait,      pthread_cond_t *, cond, pthread_mutex_t *, mutex);
+declareSysCallKernel3r(int,  pthread_cond_timedwait, pthread_cond_t *, cond, pthread_mutex_t *, mutex, const struct timespec *, ts);
+declareSysCallKernel1r(int,  pthread_cond_signal,    pthread_cond_t *, cond);
+declareSysCallKernel1r(int,  pthread_cond_broadcast, pthread_cond_t *, cond);
 // Mutex
-declareSysCallKernel2(int,  pthread_mutex_init,     pthread_mutex_t *, mutex, const pthread_mutexattr_t *, attr);
-declareSysCallKernel1(int,  pthread_mutex_destroy,  pthread_mutex_t *, mutex);
-declareSysCallKernel1(int,  pthread_mutex_lock,     pthread_mutex_t *, mutex);
-declareSysCallKernel1(int,  pthread_mutex_trylock,  pthread_mutex_t *, mutex);
-declareSysCallKernel1(int,  pthread_mutex_unlock,   pthread_mutex_t *, mutex);
+declareSysCallKernel2r(int,  pthread_mutex_init,     pthread_mutex_t *, mutex, const pthread_mutexattr_t *, attr);
+declareSysCallKernel1r(int,  pthread_mutex_destroy,  pthread_mutex_t *, mutex);
+declareSysCallKernel1r(int,  pthread_mutex_lock,     pthread_mutex_t *, mutex);
+declareSysCallKernel1r(int,  pthread_mutex_trylock,  pthread_mutex_t *, mutex);
+declareSysCallKernel1r(int,  pthread_mutex_unlock,   pthread_mutex_t *, mutex);
 
 
 #endif
