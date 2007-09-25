@@ -13,7 +13,6 @@
 extern char _end;
 extern char _heap_size;
 
-CPS2Video        cVideo;
 
 #ifdef CONFIG_FRAMEBUFFER
 CPS2VideoDevice * pVideoDevice;
@@ -24,23 +23,18 @@ CPS2VideoDevice * pVideoDevice;
 int
 main(int, char *[])
 {
-  int iRetVal(0);
-
   // FIXME
   init_heap(&_end, 4 * 1024 * 1024);
 
-  if(cVideo.init() == -1)
-    iRetVal = -1;
-
-  pDebug = &cVideo;
+  pDebug = new CPS2Video;
 
 #ifdef CONFIG_FRAMEBUFFER
   pVideoDevice = new CPS2VideoDevice;
 #endif // CONFIG_FRAMEBUFFER
 
   // Create task structure
-  CTask * pTask = getNewTask(0, 0, 0);
-  pTask->state(TS_RUNNING);
+  CTask * pTask = new CTask(0, 0, 0);
+  pTask->thr_->state(TS_RUNNING);
 
   return bricks_main();
 }
