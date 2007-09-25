@@ -19,6 +19,7 @@
   .data
 
 current_thread:     .word 0x0               @ pointer to thread that is running
+bios_return:        .word 0x0
 
 
 @ -----------------------------------------------------------------------------
@@ -105,7 +106,7 @@ runJumpARM:
 
   stmia   r0!, {r4-r11}           @ Save r4-r11
   stmia   r0!, {r0-r3,r12}        @ Save r0-r3,r12
-  ldr     r2, =runJumpReturn0     @ Task will continue at runJumpReturn
+  ldr     r2, =runJumpReturn      @ Task will continue at runJumpReturn
   stmia   r0!, {r2}               @ Save pc
   mrs     r4, cpsr                @ get cprs
   str     r4, [r0], #4            @ save as sprs_irq
@@ -130,18 +131,10 @@ runJumpARM:
 
   msr     cpsr, r4                @ Return back to IRQ mode
   str     r1, current_thread      @ Make new_thread the new current_thread
-  mov     r2, #0x250              @ Push BIOS return addr to the stack
+  ldr     r2, bios_return         @ Push BIOS return addr to the stack
   push    {r2}
   b       isr_ret
 
-  nop
-  nop
-  nop
-  nop
-runJumpReturn0:
-  nop
-  nop
-  nop
   nop
 runJumpReturn:
   bx      lr
@@ -156,6 +149,9 @@ runJumpReturn:
 @ -----------------------------------------------------------------------------
   .code 32
 __isr:
+  @ Save bios return address so we can start jumping tasks :-)
+  str lr, bios_return
+
   @ Load pointer to current task state in r0
   ldr r0, current_thread          @ load pointer
 

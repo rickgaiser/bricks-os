@@ -81,10 +81,10 @@ main(int, char *[])
   init_heap(&__eheap_start, (uint32_t)(&__eheap_end - &__eheap_start));
 #endif // GBA
 #ifdef NDS7
-  init_heap(&__iwram_top, (uint32_t)(&_end - &__iwram_top));
+  init_heap(&_end, (uint32_t)(&__iwram_top - &_end));
 #endif // NDS7
 #ifdef NDS9
-  init_heap(&__eheap_end, (uint32_t)(&_end - &__eheap_end));
+  init_heap(&_end, (uint32_t)(&__eheap_end - &_end));
 #endif // NDS9
 
   if(cIRQ.init() == -1)
