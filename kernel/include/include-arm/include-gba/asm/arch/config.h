@@ -4,7 +4,7 @@
 
 // Kernel interface
 #define CONFIG_DIRECT_ACCESS_KERNEL
-//#define CONFIG_DIRECT_ACCESS_KERNEL_FUNC
+#define CONFIG_DIRECT_ACCESS_KERNEL_FUNC
 
 // File System
 #undef  CONFIG_FILESYSTEM
