@@ -1,4 +1,4 @@
-include $(BRICKS_ROOT)/kernel/arch/$(ARCH)/config.$(TARGET)
+include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch/config.make
 
 
 LIB             =arch
