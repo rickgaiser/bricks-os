@@ -103,7 +103,7 @@ main(int, char *[])
 #endif // CONFIG_GBA_KEYBOARD
 
 #ifdef CONFIG_GBA_SERIAL
-  if(cSerial.init() == -1)
+  if(cSerial.init(SIO_32BIT_MODE) == -1)
     iRetVal = -1;
 #endif // CONFIG_GBA_SERIAL
 

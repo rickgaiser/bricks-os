@@ -129,12 +129,12 @@ enum EDMAMODE
 #define DMA_ENABLE            (1<<31)
 #define DMA_BUSY              (1<<31)
 // "REG_TMxCNT" bits
-#define TIMER_SPEED_0         0x0000  // CPU
-#define TIMER_SPEED_1         0x0001  // CPU /   64
-#define TIMER_SPEED_2         0x0002  // CPU /  256
-#define TIMER_SPEED_3         0x0003  // CPU / 1024
-#define TIMER_IRQ             0x0040
-#define TIMER_ENABLE          0x0080
+#define TIMER_SPEED_0         (0<<0)  // CPU
+#define TIMER_SPEED_1         (1<<0)  // CPU /   64
+#define TIMER_SPEED_2         (2<<0)  // CPU /  256
+#define TIMER_SPEED_3         (3<<0)  // CPU / 1024
+#define TIMER_IRQ             (1<<6)
+#define TIMER_ENABLE          (1<<7)
 // "REG_KEYS" & "REG_KEYCNT" bits
 #define KEY_A                 (1<<0)
 #define KEY_B                 (1<<1)
@@ -156,7 +156,7 @@ enum EDMAMODE
 // "REG_KEYCNT" bits
 #define KEY_CNT_IRQ           (1<<14)
 #define KEY_CNT_AND           (1<<15)
-#define KEY_CNT_OR            (0)
+#define KEY_CNT_OR            (0<<15)
 // "REG_IPC_SYNC" bits
 #define IPC_SYNC_IRQ_ENABLE   (1<<14)
 #define IPC_SYNC_IRQ_REQUEST  (1<<13)
@@ -204,10 +204,10 @@ enum EDMAMODE
 #endif // NDS
 // "REG_VRAM_x_CR" bits
 #define VRAM_ENABLE           (1<<7)
-#define VRAM_TYPE_LCD         0
-#define VRAM_TYPE_MAIN_BG     1
-#define VRAM_TYPE_MAIN_SPRITE 2
-#define VRAM_TYPE_TEXTURE     3
+#define VRAM_TYPE_LCD         (0<<0)
+#define VRAM_TYPE_MAIN_BG     (1<<0)
+#define VRAM_TYPE_MAIN_SPRITE (2<<0)
+#define VRAM_TYPE_TEXTURE     (3<<0)
 // "REG_POWCNT" bits
 #ifdef NDS7
 #define POWER_SOUND           (1<<0)
@@ -226,52 +226,50 @@ enum EDMAMODE
 // Serial Clock in NORMAL mode
 enum ESerialClock
 {
-    SIO_NORMAL_CLK_EXTERNAL = 0x0000
-  , SIO_NORMAL_CLK_256KHZ =   0x0001
-  , SIO_NORMAL_CLK_2MHZ =     0x0003
+    SIO_NORMAL_CLK_EXTERNAL = (0<<0)
+  , SIO_NORMAL_CLK_256KHZ =   (1<<0)
+  , SIO_NORMAL_CLK_2MHZ =     (3<<0)
 };
 // Baud Rate in MULTI & UART mode
 enum EBaudRate
 {
-    SIO_9600_BPS =            0x0000
-  , SIO_38400_BPS =           0x0001
-  , SIO_57600_BPS =           0x0002
-  , SIO_115200_BPS =          0x0003
+    SIO_9600_BPS =            (0<<0)
+  , SIO_38400_BPS =           (1<<0)
+  , SIO_57600_BPS =           (2<<0)
+  , SIO_115200_BPS =          (3<<0)
 };
 // Communication mode
 enum ESerialMode
 {
-    SIO_8BIT_MODE =           0x0000 // Normal 8-bit communication mode
-  , SIO_32BIT_MODE =          0x1000 // Normal 32-bit communication mode
-  , SIO_MULTI_MODE =          0x2000 // Multi-play communication mode
-  , SIO_UART_MODE =           0x3000 // UART communication mode
+    SIO_8BIT_MODE =           (0<<12) // Normal 8-bit communication mode
+  , SIO_32BIT_MODE =          (1<<12) // Normal 32-bit communication mode
+  , SIO_MULTI_MODE =          (2<<12) // Multi-play communication mode
+  , SIO_UART_MODE =           (3<<12) // UART communication mode
 };
-#define SIO_START             0x0080 // Start transfer
-#define SIO_BUSY              0x0080 // Transfer in progress
-#define SIO_IRQ_ENABLE        0x4000
+#define SIO_START             (1<<7) // Start transfer
+#define SIO_BUSY              (1<<7) // Transfer in progress
+#define SIO_IRQ_ENABLE        (1<<14)
 // NORMAL mode specific
-#define SIO_NORMAL_SI         0x0004
-#define SIO_NORMAL_SO         0x0008
-#define SIO_NORMAL_ACK_RECV   0x0004
-#define SIO_NORMAL_ACK_SEND   0x0008
+#define SIO_NORMAL_SI         (1<<2)
+#define SIO_NORMAL_SO         (1<<3)
 // MULTI mode specific
-#define SIO_MULTI_CHILD       0x0004 // 1=child, 0=parent
-#define SIO_MULTI_CONNECTED   0x0008 // 1=connected, 0=error
+#define SIO_MULTI_CHILD       (1<<2) // 1=child, 0=parent
+#define SIO_MULTI_CONNECTED   (1<<3) // 1=connected, 0=error
 #define SIO_MULTI_ID_MASK     0x0030 // Mask for getting player id
-#define SIO_MULTI_ERROR       0x0040
+#define SIO_MULTI_ERROR       (1<<6)
 // UART mode specific
-#define SIO_UART_CTS_ENABLE   0x0004
-#define SIO_UART_PARITY_EVEN  0x0000
-#define SIO_UART_PARITY_ODD   0x0008
-#define SIO_UART_SEND_FULL    0x0010 // Send buffer full
-#define SIO_UART_RECV_EMPTY   0x0020 // Recv buffer empty
-#define SIO_UART_ERROR        0x0040
-#define SIO_UART_7BIT         0x0000
-#define SIO_UART_8BIT         0x0080
-#define SIO_UART_FIFO_ENABLE  0x0100
-#define SIO_UART_PARITY_ENABLE 0x0200
-#define SIO_UART_SEND_ENABLE  0x0400
-#define SIO_UART_RECV_ENABLE  0x0800
+#define SIO_UART_CTS_ENABLE   (1<<2)
+#define SIO_UART_PARITY_EVEN  (0<<3)
+#define SIO_UART_PARITY_ODD   (1<<3)
+#define SIO_UART_SEND_FULL    (1<<4) // Send buffer full
+#define SIO_UART_RECV_EMPTY   (1<<5) // Recv buffer empty
+#define SIO_UART_ERROR        (1<<6)
+#define SIO_UART_7BIT         (0<<7)
+#define SIO_UART_8BIT         (1<<7)
+#define SIO_UART_FIFO_ENABLE  (1<<8)
+#define SIO_UART_PARITY_ENABLE (1<<9)
+#define SIO_UART_SEND_ENABLE  (1<<10)
+#define SIO_UART_RECV_ENABLE  (1<<11)
 #endif // GBA
 
 // Memory Locations

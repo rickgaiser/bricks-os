@@ -16,7 +16,7 @@ public:
   CGBASerial();
   virtual ~CGBASerial();
 
-  virtual int init(ESerialMode mode, bool master);
+  virtual int init(ESerialMode mode);
 
   // Inherited from IInterruptServiceRoutine
   virtual int isr(int irq);

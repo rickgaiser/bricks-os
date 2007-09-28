@@ -15,10 +15,9 @@ CGBASerial::~CGBASerial()
 
 // -----------------------------------------------------------------------------
 int
-CGBASerial::init(ESerialMode mode, bool master)
+CGBASerial::init(ESerialMode mode)
 {
   eMode_ = mode;
-  bMaster_ = master;
 
   switch(eMode_)
   {
@@ -26,12 +25,25 @@ CGBASerial::init(ESerialMode mode, bool master)
     case SIO_32BIT_MODE:
     {
       REG_RCNT = 0;
+      REG_SIOCNT = SIO_8BIT_MODE | SIO_NORMAL_CLK_EXTERNAL;
+      REG_SIOCNT = SIO_8BIT_MODE | SIO_NORMAL_CLK_EXTERNAL | SIO_START;
+      bMaster_ = ((REG_SIOCNT & SIO_NORMAL_SI) == 0);
+
       if(bMaster_ == true)
-        REG_SIOCNT = eMode_ | SIO_IRQ_ENABLE | SIO_NORMAL_CLK_256KHZ;
+      {
+        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE |  SIO_NORMAL_CLK_256KHZ | SIO_NORMAL_SO;
+        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE |  SIO_NORMAL_CLK_256KHZ | SIO_NORMAL_SO | SIO_START;
+        for(volatile int i(0); i < 100000; i++);
+        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE |  SIO_NORMAL_CLK_256KHZ;
+        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE |  SIO_NORMAL_CLK_256KHZ | SIO_START;
+        printk("master\n");
+      }
       else
-        REG_SIOCNT = eMode_ | SIO_IRQ_ENABLE | SIO_NORMAL_CLK_EXTERNAL;
-      REG_SIOCNT |= SIO_START;
-      break;
+      {
+        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE | SIO_NORMAL_CLK_EXTERNAL;
+        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE | SIO_NORMAL_CLK_EXTERNAL | SIO_START;
+        printk("slave\n");
+      }
     }
     case SIO_UART_MODE:
     {
@@ -53,27 +65,26 @@ CGBASerial::init(ESerialMode mode, bool master)
 int
 CGBASerial::isr(int irq)
 {
+  uint8_t data('s');
+
+  // Receive data
   switch(eMode_)
   {
     case SIO_8BIT_MODE:
-    {
-      printk("%c", (char)REG_SIODATA8);
+      data = REG_SIODATA8;
       break;
-    }
     case SIO_32BIT_MODE:
-    {
-      printk("%c", (char)REG_SIODATA32);
+      data = REG_SIODATA32;
       break;
-    }
     case SIO_UART_MODE:
-    {
       if((REG_SIOCNT & SIO_UART_RECV_EMPTY) == false)
-        printk("%c", (char)REG_SIODATA8);
+        data = REG_SIODATA8;
       break;
-    }
     default:
       ;
   };
+
+  printk("%c", data);
 
   return 0;
 }
@@ -83,42 +94,44 @@ ssize_t
 CGBASerial::write(const void * buffer, size_t size, loff_t *)
 {
   ssize_t iRetVal(0);
-  const unsigned char * pData = static_cast<const unsigned char *>(buffer);
+  int timeout;
 
   for(size_t i(0); i < size; i++)
   {
     switch(eMode_)
     {
       case SIO_8BIT_MODE:
-      {
-        // Wait for ACK (ready to send data)
-        while(REG_SIOCNT & SIO_NORMAL_ACK_RECV){}
-        // Place data to be sent
-        REG_SIODATA8 = pData[i];
-        // Set start flag
-        REG_SIOCNT |= SIO_START;
-        // Wait for transfer to complete
-        while(REG_SIOCNT & SIO_BUSY){}
-        iRetVal++;
-        break;
-      }
       case SIO_32BIT_MODE:
       {
-        // Wait for ACK (ready to send data)
-        while(REG_SIOCNT & SIO_NORMAL_ACK_RECV){}
         // Place data to be sent
-        REG_SIODATA32 = pData[i];
+        if(eMode_ == SIO_8BIT_MODE)
+          REG_SIODATA8  = ((const unsigned char *)buffer)[i];
+        else
+          REG_SIODATA32 = ((const unsigned char *)buffer)[i];
+
+        // Wait for slave to be ready (SI == 0)
+        for(timeout = 10000; (timeout > 0) && (REG_SIOCNT & SIO_NORMAL_SI); timeout--);
+        if(timeout == 0)
+        {
+          printk("Timeout waiting for slave to be ready\n");
+          return -1;
+        }
+
         // Set start flag
         REG_SIOCNT |= SIO_START;
-        // Wait for transfer to complete
-        while(REG_SIOCNT & SIO_BUSY){}
-        iRetVal++;
-        break;
+
+        // Wait for start bit to become zero (transmission complete)
+        for(timeout = 10000; (timeout > 0) && (REG_SIOCNT & SIO_START); timeout--);
+        if(timeout == 0)
+        {
+          printk("Timeout waiting for slave to be ready\n");
+          return -1;
+        }
       }
       case SIO_UART_MODE:
       {
         while(REG_SIOCNT & SIO_UART_SEND_FULL){}
-        REG_SIODATA8 = pData[i];
+        REG_SIODATA8 = ((const unsigned char *)buffer)[i];
         iRetVal++;
         break;
       }
