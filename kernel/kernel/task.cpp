@@ -195,8 +195,8 @@ CTaskManager::updateSleepers()
 
   //printk("CTaskManager::updateSleepers\n");
 
-  // FIXME!
-  iCurrentTime_++;
+  // FIXME! This only works with 100Hz scheduler (10000us/10ms interval)
+  iCurrentTime_ += 10000;
   // Wake up sleaping tasks if timeout exeeded
   TAILQ_FOREACH(pThread, &timer_queue, state_qe)
   {
@@ -317,10 +317,17 @@ genwait_wake(void * obj, int maxcount)
 }
 
 // -----------------------------------------------------------------------------
-extern "C" pid_t
+pid_t
 k_getpid(void)
 {
   return CTaskManager::pCurrentTask_->iPID_;
+}
+
+// -----------------------------------------------------------------------------
+unsigned int
+k_sleep(unsigned int iSeconds)
+{
+  return genwait_wait(NULL, iSeconds * 1000000);
 }
 
 // -----------------------------------------------------------------------------

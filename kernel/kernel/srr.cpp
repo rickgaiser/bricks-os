@@ -34,6 +34,7 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
         unwrapfunc1r(channelDestroy,         pSndMsg, int, iChannelID);
         unwrapfunc4r(channelConnectAttach,   pSndMsg, uint32_t, iNodeID, pid_t, iProcessID, int, iChannelID, int, iFlags);
         unwrapfunc1r(channelConnectDetach,   pSndMsg, int, iConnectionID);
+
         unwrapfunc4r(pthread_create,         pSndMsg, pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
         unwrapfunc1 (pthread_exit,           pSndMsg, void *, status);
         unwrapfunc2r(pthread_cond_init,      pSndMsg, pthread_cond_t *, cond, const pthread_condattr_t *, attr);
@@ -47,6 +48,17 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
         unwrapfunc1r(pthread_mutex_lock,     pSndMsg, pthread_mutex_t *, mutex);
         unwrapfunc1r(pthread_mutex_trylock,  pSndMsg, pthread_mutex_t *, mutex);
         unwrapfunc1r(pthread_mutex_unlock,   pSndMsg, pthread_mutex_t *, mutex);
+
+        //unwrapfunc1r(brk,                    pSndMsg, void *, addr);
+        //unwrapfunc1r(close,                  pSndMsg, int, iFD);
+        //unwrapfunc1 (_exit,                  pSndMsg, int, iStatus);
+        unwrapfunc0r(getpid);
+        //unwrapfunc3r(read,                   pSndMsg, int, iFD, void *, pBuf, size_t, size);
+        //unwrapfunc1r(sbrk,                   pSndMsg, intptr_t, increment);
+        unwrapfunc1r(sleep,                  pSndMsg, unsigned int, iSeconds);
+        unwrapfunc1r(usleep,                 pSndMsg, useconds_t, useconds);
+        //unwrapfunc3r(write,                  pSndMsg, int, iFD, const void *, pBuf, size_t, size);
+
         default:
           printk("k_msgSend: Invalid function id: %d\n", pHeader->iFunctionID);
       };

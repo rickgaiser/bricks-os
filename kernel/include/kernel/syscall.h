@@ -88,6 +88,15 @@ struct SKernelMessageHeader
 #define __NR_pthread_mutex_lock         15
 #define __NR_pthread_mutex_trylock      16
 #define __NR_pthread_mutex_unlock       17
+//#define __NR_brk                        18
+//#define __NR_close                      19
+//#define __NR__exit                      20
+#define __NR_getpid                     21
+//#define __NR_read                       22
+//#define __NR_sbrk                       23
+#define __NR_sleep                      24
+#define __NR_usleep                     25
+//#define __NR_write                      26
 
 //---------------------------------------------------------------------------
 #define sysCallUser1(name,type1,arg1) \
@@ -97,7 +106,7 @@ void name(type1 arg1) \
   { \
     SKernelMessageHeader hdr; \
     type1 arg1; \
-  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}, 0}; \
+  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}}; \
   msg.arg1 = arg1; \
   msgSend(scKERNEL, &msg, sizeof(SMsg), 0, 0); \
 }
@@ -110,7 +119,7 @@ type name() \
   static struct SMsg \
   { \
     SKernelMessageHeader hdr; \
-  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}, 0}; \
+  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}}; \
   iRetVal = msgSend(scKERNEL, &msg, sizeof(SMsg), 0, 0); \
   return (type)(iRetVal); \
 }
@@ -124,7 +133,7 @@ type name(type1 arg1) \
   { \
     SKernelMessageHeader hdr; \
     type1 arg1; \
-  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}, 0}; \
+  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}}; \
   msg.arg1 = arg1; \
   iRetVal = msgSend(scKERNEL, &msg, sizeof(SMsg), 0, 0); \
   return (type)(iRetVal); \
@@ -140,7 +149,7 @@ type name(type1 arg1, type2 arg2) \
     SKernelMessageHeader hdr; \
     type1 arg1; \
     type2 arg2; \
-  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}, 0}; \
+  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}}; \
   msg.arg1 = arg1; \
   msg.arg2 = arg2; \
   iRetVal = msgSend(scKERNEL, &msg, sizeof(SMsg), 0, 0); \
@@ -158,7 +167,7 @@ type name(type1 arg1, type2 arg2, type3 arg3) \
     type1 arg1; \
     type2 arg2; \
     type3 arg3; \
-  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}, 0}; \
+  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}}; \
   msg.arg1 = arg1; \
   msg.arg2 = arg2; \
   msg.arg3 = arg3; \
@@ -178,7 +187,7 @@ type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4) \
     type2 arg2; \
     type3 arg3; \
     type4 arg4; \
-  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}, 0}; \
+  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}}; \
   msg.arg1 = arg1; \
   msg.arg2 = arg2; \
   msg.arg3 = arg3; \
@@ -200,7 +209,7 @@ type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4) \
     type3 arg3; \
     type4 arg4; \
     type5 arg5; \
-  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}, 0}; \
+  } __attribute__ ((__packed__)) msg = {{sizeof(SKernelMessageHeader), INTERFACE_VERSION(1,0), __NR_##name}}; \
   msg.arg1 = arg1; \
   msg.arg2 = arg2; \
   msg.arg3 = arg3; \

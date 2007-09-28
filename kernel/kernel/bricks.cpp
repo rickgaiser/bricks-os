@@ -4,7 +4,7 @@
 #include "pthread.h"
 
 
-extern int srrTest(int argc, char * argv[]);
+extern int appMain(int argc, char * argv[]);
 
 
 // -----------------------------------------------------------------------------
@@ -21,7 +21,7 @@ bricks_main()
   printk("Interrupts...OK\n");
 
   // Execute application
-  srrTest(0, 0);
+  appMain(0, 0);
 
   // Halt current thread
   // FIXME: Forever consuming CPU time now!
