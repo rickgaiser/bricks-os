@@ -21,18 +21,18 @@ CGBASurface::~CGBASurface()
 
 //---------------------------------------------------------------------------
 void
-CGBASurface::fill(color_t color)
+CGBASurface::fill()
 {
-  dmaFill16(color | 0x8000, p, width * height);
+  dmaFill16(fillColor_ | 0x8000, p, width_ * height_);
 }
 
 //---------------------------------------------------------------------------
 void
-CGBASurface::fillRect(int x, int y, int width, int height, color_t color)
+CGBASurface::fillRect(int x, int y, int width, int height)
 {
   for(int iY(y); iY < (y + height); iY++)
   {
-    dmaFill16(color | 0x8000, &((uint16_t *)p)[iY * this->width + x], width);
+    dmaFill16(fillColor_ | 0x8000, &((uint16_t *)p)[iY * width_ + x], width);
   }
 }
 
@@ -44,16 +44,16 @@ CGBASurface::swap(bool bForceCopy)
   {
     if(bForceCopy == true)
     {
-      dmaCopy(pBack, pFront, (width*height) << 1);
+      dmaCopy(pBack, pFront, (width_*height_) << 1);
     }
     else
     {
 #ifdef GBA
-      if(width == 240)
+      if(width_ == 240)
       {
-        dmaCopy(pBack, pFront, (width*height) << 1);
+        dmaCopy(pBack, pFront, (width_*height_) << 1);
       }
-      else if(width == 160)
+      else if(width_ == 160)
       {
 #endif // GBA
         bSwap = true;
@@ -177,15 +177,15 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
       {
         pSurface->pBack  = (pixel_t *)0x600A000;
       }
-      pSurface->width  = pCurrentMode_->xres;
-      pSurface->height = pCurrentMode_->yres;
+      pSurface->width_ = pCurrentMode_->xres;
+      pSurface->height_= pCurrentMode_->yres;
       pSurface->format = cfX1R5G5B5;
       pSurface->pFront = (pixel_t *)0x6000000;
       pSurface->p      = pSurface->pBack;
 #endif // GBA
 #ifdef NDS9
-      pSurface->width  = 256;
-      pSurface->height = 192;
+      pSurface->width_ = 256;
+      pSurface->height_= 192;
       pSurface->format = cfA1R5G5B5;
       pSurface->pFront = (pixel_t *)0x6000000;
       pSurface->pBack  = (pixel_t *)(0x06000000 + 256 * 256 * 2);
@@ -197,8 +197,8 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
     }
     case stOFFSCREEN:
     {
-      pSurface->width  = 0;
-      pSurface->height = 0;
+      pSurface->width_ = 0;
+      pSurface->height_= 0;
 #ifdef GBA
       pSurface->format = cfX1R5G5B5;
 #endif // GBA

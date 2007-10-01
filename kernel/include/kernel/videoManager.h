@@ -123,33 +123,49 @@ public:
   CSurface();
   virtual ~CSurface();
 
-  // Fill entire surface
-  virtual void fill(color_t color);
-  // Fill rect on surface
-  virtual void fillRect(int x, int y, int width, int height, color_t color);
+  // Geometry
+  virtual uint32_t width();
+  virtual uint32_t height();
+
+  // Color
+  virtual void     setColor(color_t color);
+  virtual color_t  getColor();
+
+  // Fill Color
+  virtual void     setFillColor(color_t color);
+  virtual color_t  getFillColor();
+
+  // Drawing
+  virtual void     setPixel(int x, int y);
+  virtual void     fill();
+  virtual void     fillRect(int x, int y, int width, int height);
+  virtual void     drawLine(int x1, int y1, int x2, int y2);
+  virtual void     drawRect(int x, int y, int width, int height);
   // Copy another surface onto this surface
 //  void copy(int dstx, int dsty, const CSurface & src);
   // Copy part of the surface to another part of the surface
 //  void copyRect(int srcx, int srcy, int dstx, int dsty, int width, int height);
   // Swap back buffer to front buffer, only if back buffer exists
-  virtual void swap(bool bForceCopy = false);
-
-  // Geometry
-  uint32_t width;
-  uint32_t height;
+  virtual void     swap(bool bForceCopy = false);
 
   // Format
   EColorFormat format;
   bool key;
   color_t clKey;
 
-  // Data
-  void * p;
-
 //protected:
   // Data
+  void * p;
   void * pFront;
   void * pBack;
+
+  // Geometry
+  uint32_t width_;
+  uint32_t height_;
+
+  // Colors
+  color_t color_;
+  color_t fillColor_;
 };
 
 //---------------------------------------------------------------------------

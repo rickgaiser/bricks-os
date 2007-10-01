@@ -1,11 +1,11 @@
 #include "bwm/bwm.h"
+#include "kernel/debug.h"
 #include "kernel/videoManager.h"
 #ifdef CONFIG_GL
 #include "EGL/egl.h"
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 #endif // CONFIG_GL
-#include "iostream"
 
 
 // Default desktop color
@@ -92,19 +92,105 @@ const GLfloat normals[] =
 #endif // CONFIG_GL
 
 
+#define RAND_A 9301
+#define RAND_C 49297
+#define RAND_M 233280
+static uint32_t seed(0x12345678);
+
+// -----------------------------------------------------------------------------
+float
+crap_rand()
+{
+  seed = (seed*RAND_A+RAND_C) % RAND_M;
+  return((float)seed / (float)RAND_M);
+}
+
 // -----------------------------------------------------------------------------
 void
 testFill(CSurface * surface)
 {
+/*
   for(int i(0); i < 0x001f; i++)
   {
     // Fill entire screen with one color
-    surface->fill(i);
+    surface->setFillColor(i);
+    surface->fill();
     // Display progress bar
-    surface->fillRect(1, surface->height - 12, surface->width - 2, 10, clWhite);
-    surface->fillRect(3, surface->height - 10, ((surface->width - 6) * i) / 0x001f, 6, clBlack);
+    surface->setFillColor(clWhite);
+    surface->fillRect(2, surface->height() - 12, surface->width() - 4, 10);
+    surface->setFillColor(clBlack);
+    surface->fillRect(3, surface->height() - 10, ((surface->width() - 6) * i) / 0x001f, 6);
     // Swap back and front buffer, placing the rendered image on screen
     surface->swap();
+  }
+*/
+
+  // Pixel test
+  surface->setFillColor(clBlack);
+  surface->fill();
+  for(int i(0); i < 0x00FF; i++)
+  {
+    surface->setColor(BxRGB((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255)));
+    surface->setPixel(
+      (int)(crap_rand() * surface->width()),
+      (int)(crap_rand() * surface->height()));
+
+    surface->swap(true);
+  }
+
+  // Line test
+  surface->setFillColor(clBlack);
+  surface->fill();
+  for(int i(0); i < 0x00FF; i++)
+  {
+    surface->setColor(BxRGB((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255)));
+    surface->drawLine(
+      (int)(crap_rand() * surface->width()),
+      (int)(crap_rand() * surface->height()),
+      (int)(crap_rand() * surface->width()),
+      (int)(crap_rand() * surface->height()));
+
+    surface->swap(true);
+  }
+
+  // Rect test
+  surface->setFillColor(clBlack);
+  surface->fill();
+  for(int i(0); i < 0x00FF; i++)
+  {
+    int x1 = (int)(crap_rand() * surface->width());
+    int y1 = (int)(crap_rand() * surface->height());
+    int x2 = (int)(crap_rand() * surface->width());
+    int y2 = (int)(crap_rand() * surface->height());
+    int x  = x1 < x2 ? x1 : x2;
+    int y  = y1 < y2 ? y1 : y2;
+    int w  = x1 < x2 ? (x2-x1) : (x1-x2);
+    int h  = y1 < y2 ? (y2-y1) : (y1-y2);
+
+    surface->setColor(BxRGB((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255)));
+    surface->drawRect(x, y, w, h);
+
+    surface->swap(true);
+  }
+
+  // Filled Rect test
+  surface->setFillColor(clBlack);
+  surface->fill();
+  for(int i(0); i < 0x00FF; i++)
+  {
+    int x1 = (int)(crap_rand() * surface->width());
+    int y1 = (int)(crap_rand() * surface->height());
+    int x2 = (int)(crap_rand() * surface->width());
+    int y2 = (int)(crap_rand() * surface->height());
+    int x  = x1 < x2 ? x1 : x2;
+    int y  = y1 < y2 ? y1 : y2;
+    int w  = x1 < x2 ? (x2-x1) : (x1-x2);
+    int h  = y1 < y2 ? (y2-y1) : (y1-y2);
+
+    surface->setFillColor(BxRGB((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255)));
+    surface->fillRect(x, y, w, h);
+
+    surface->swap(true);
   }
 }
 
@@ -244,13 +330,13 @@ bwm(int argc, char * argv[])
       }
       else
       {
-        std::cout<<"ERROR: Device has no modes!"<<std::endl;
+        printk("ERROR: Device has no modes!\n");
       }
     }
   }
   else
   {
-    std::cout<<"ERROR: No video devices!"<<std::endl;
+    printk("ERROR: No video devices!\n");
   }
 
   return 0;

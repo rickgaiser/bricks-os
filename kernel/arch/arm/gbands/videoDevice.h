@@ -15,9 +15,9 @@ public:
   virtual ~CGBASurface();
 
   // Fill entire surface
-  virtual void fill(color_t color);
+  virtual void fill();
   // Fill rect on surface
-  virtual void fillRect(int x, int y, int width, int height, color_t color);
+  virtual void fillRect(int x, int y, int width, int height);
   // Swap back buffer to front buffer, only if back buffer exists
   virtual void swap(bool bForceCopy = false);
 };
