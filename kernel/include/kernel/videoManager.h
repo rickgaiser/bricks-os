@@ -128,12 +128,8 @@ public:
   virtual uint32_t height();
 
   // Color
-  virtual void     setColor(color_t color);
-  virtual color_t  getColor();
-
-  // Fill Color
-  virtual void     setFillColor(color_t color);
-  virtual color_t  getFillColor();
+  virtual void     setColor(uint8_t r, uint8_t g, uint8_t b);
+  virtual void     setFillColor(uint8_t r, uint8_t g, uint8_t b);
 
   // Drawing
   virtual void     setPixel(int x, int y);
@@ -148,11 +144,6 @@ public:
   // Swap back buffer to front buffer, only if back buffer exists
   virtual void     swap(bool bForceCopy = false);
 
-  // Format
-  EColorFormat format;
-  bool key;
-  color_t clKey;
-
 //protected:
   // Data
   void * p;
@@ -164,6 +155,7 @@ public:
   uint32_t height_;
 
   // Colors
+  EColorFormat format;
   color_t color_;
   color_t fillColor_;
 };

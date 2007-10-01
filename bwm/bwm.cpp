@@ -126,37 +126,37 @@ testFill(CSurface * surface)
 */
 
   // Pixel test
-  surface->setFillColor(clBlack);
+  surface->setFillColor(0, 0, 0);
   surface->fill();
-  for(int i(0); i < 0x00FF; i++)
+  for(int i(0); i < 0x0FFF; i++)
   {
-    surface->setColor(BxRGB((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255)));
+    surface->setColor((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255));
     surface->setPixel(
       (int)(crap_rand() * surface->width()),
       (int)(crap_rand() * surface->height()));
 
-    surface->swap(true);
+//    surface->swap(true);
   }
 
   // Line test
-  surface->setFillColor(clBlack);
+  surface->setFillColor(0, 0, 0);
   surface->fill();
-  for(int i(0); i < 0x00FF; i++)
+  for(int i(0); i < 0x0FFF; i++)
   {
-    surface->setColor(BxRGB((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255)));
+    surface->setColor((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255));
     surface->drawLine(
       (int)(crap_rand() * surface->width()),
       (int)(crap_rand() * surface->height()),
       (int)(crap_rand() * surface->width()),
       (int)(crap_rand() * surface->height()));
 
-    surface->swap(true);
+//    surface->swap(true);
   }
 
   // Rect test
-  surface->setFillColor(clBlack);
+  surface->setFillColor(0, 0, 0);
   surface->fill();
-  for(int i(0); i < 0x00FF; i++)
+  for(int i(0); i < 0x0FFF; i++)
   {
     int x1 = (int)(crap_rand() * surface->width());
     int y1 = (int)(crap_rand() * surface->height());
@@ -167,16 +167,16 @@ testFill(CSurface * surface)
     int w  = x1 < x2 ? (x2-x1) : (x1-x2);
     int h  = y1 < y2 ? (y2-y1) : (y1-y2);
 
-    surface->setColor(BxRGB((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255)));
+    surface->setColor((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255));
     surface->drawRect(x, y, w, h);
 
-    surface->swap(true);
+//    surface->swap(true);
   }
 
   // Filled Rect test
-  surface->setFillColor(clBlack);
+  surface->setFillColor(0, 0, 0);
   surface->fill();
-  for(int i(0); i < 0x00FF; i++)
+  for(int i(0); i < 0x0FFF; i++)
   {
     int x1 = (int)(crap_rand() * surface->width());
     int y1 = (int)(crap_rand() * surface->height());
@@ -187,10 +187,10 @@ testFill(CSurface * surface)
     int w  = x1 < x2 ? (x2-x1) : (x1-x2);
     int h  = y1 < y2 ? (y2-y1) : (y1-y2);
 
-    surface->setFillColor(BxRGB((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255)));
+    surface->setFillColor((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255));
     surface->fillRect(x, y, w, h);
 
-    surface->swap(true);
+//    surface->swap(true);
   }
 }
 
@@ -310,7 +310,7 @@ bwm(int argc, char * argv[])
       {
         for(int iMode(0); iMode < iModeCount; iMode++)
         {
-          if((modes[iMode].format == cfX1R5G5B5) || (modes[iMode].format == cfA1R5G5B5))
+//          if((modes[iMode].format == cfX1R5G5B5) || (modes[iMode].format == cfA1R5G5B5))
           {
             devices[iDev]->setMode(&modes[iMode]);
             CSurface * pVideoSurface;

@@ -38,30 +38,16 @@ CSurface::height()
 
 //---------------------------------------------------------------------------
 void
-CSurface::setColor(color_t color)
+CSurface::setColor(uint8_t r, uint8_t g, uint8_t b)
 {
-  color_ = color;
-}
-
-//---------------------------------------------------------------------------
-color_t
-CSurface::getColor()
-{
-  return color_;
+  color_ = BxRGB(r,g,b);
 }
 
 //---------------------------------------------------------------------------
 void
-CSurface::setFillColor(color_t color)
+CSurface::setFillColor(uint8_t r, uint8_t g, uint8_t b)
 {
-  fillColor_ = color;
-}
-
-//---------------------------------------------------------------------------
-color_t
-CSurface::getFillColor()
-{
-  return fillColor_;
+  fillColor_ = BxRGB(r,g,b);
 }
 
 //---------------------------------------------------------------------------

@@ -1,14 +1,15 @@
-include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch/config.make
-
-
 LIB             =arch
 OBJS            =\
                 arch \
-                ps2Video \
+                courier_new \
+                dma_asm \
+                fixed_tc \
+                gs \
+                gs_asm \
+                g2 \
+                ps2_asm \
                 task \
-
-
-OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
+                videoDevice \
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel
