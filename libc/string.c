@@ -43,6 +43,28 @@ strcpy(char * s1, const char * s2)
 }
 
 // -----------------------------------------------------------------------------
+char *
+strncpy(char * s1, const char * s2, size_t n)
+{
+  // Copy n-1 so we can NULL terminate the string
+  n--;
+
+  // Copy string
+  while((*s2 != 0) && (n != 0))
+  {
+    *s1 = *s2;
+    s1++;
+    s2++;
+    n--;
+  }
+
+  // Null terminate
+  *s1 = 0;
+
+  return s1;
+}
+
+// -----------------------------------------------------------------------------
 void *
 memset(void * data, int fill_char, size_t size)
 {
