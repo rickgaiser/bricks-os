@@ -4,7 +4,6 @@
 //---------------------------------------------------------------------------
 #include "ps2.h"
 #include "gs.h"
-#include "g2.h"
 #include "gif.h"
 #include "dma.h"
 

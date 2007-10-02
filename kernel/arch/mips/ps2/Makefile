@@ -6,7 +6,6 @@ OBJS            =\
                 fixed_tc \
                 gs \
                 gs_asm \
-                g2 \
                 ps2_asm \
                 task \
                 videoDevice \
