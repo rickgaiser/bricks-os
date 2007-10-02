@@ -162,60 +162,46 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
 void
 CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
 {
-  CSurface * pSurface = new CGBASurface;
-
   switch(type)
   {
     case stSCREEN:
     {
-#ifdef GBA
-      if(pCurrentMode_->xres == 240)
-      {
-        pSurface->pBack  = new pixel_t[240*160];
-      }
-      else if(pCurrentMode_->xres == 160)
-      {
-        pSurface->pBack  = (pixel_t *)0x600A000;
-      }
+      CSurface * pSurface = new CGBASurface;
       pSurface->width_ = pCurrentMode_->xres;
       pSurface->height_= pCurrentMode_->yres;
-      pSurface->format = cfX1R5G5B5;
-      pSurface->pFront = (pixel_t *)0x6000000;
-      pSurface->p      = pSurface->pBack;
+      pSurface->format_= pCurrentMode_->format;
+      pSurface->pFront = (uint16_t *)0x6000000;
+#ifdef GBA
+//      if(pCurrentMode_->xres == 240)
+//      {
+//        pSurface->pBack  = new uint16_t[240*160];
+//      }
+//      else if(pCurrentMode_->xres == 160)
+//      {
+//        pSurface->pBack  = (uint16_t *)0x600A000;
+//      }
 #endif // GBA
 #ifdef NDS9
-      pSurface->width_ = 256;
-      pSurface->height_= 192;
-      pSurface->format = cfA1R5G5B5;
-      pSurface->pFront = (pixel_t *)0x6000000;
-      pSurface->pBack  = (pixel_t *)(0x06000000 + 256 * 256 * 2);
-      pSurface->p      = pSurface->pBack;
+      pSurface->pBack  = (uint16_t *)(0x06000000 + 256 * 256 * 2);
 #endif // NDS9
-      pSurface->key    = false;
-      pSurface->clKey  = 0;
+//      pSurface->p      = pSurface->pBack;
+      pSurface->p      = pSurface->pFront;
+      *surface = pSurface;
       break;
     }
     case stOFFSCREEN:
     {
+      CSurface * pSurface = new CGBASurface;
       pSurface->width_ = 0;
       pSurface->height_= 0;
-#ifdef GBA
-      pSurface->format = cfX1R5G5B5;
-#endif // GBA
-#ifdef NDS9
-      pSurface->format = cfA1R5G5B5;
-#endif // NDS9
+      pSurface->format_= pCurrentMode_->format;
       pSurface->p      = 0;
-      pSurface->key    = false;
-      pSurface->clKey  = 0;
+      *surface = pSurface;
       break;
     }
     default:
     {
-      delete pSurface;
-      pSurface = 0;
+      *surface = 0;
     }
   };
-
-  *surface = pSurface;
 }

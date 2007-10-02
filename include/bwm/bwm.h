@@ -5,6 +5,15 @@
 #include "kernel/videoManager.h"
 
 
+// Standard colors
+extern color_t clBlack;
+extern color_t clDGray;
+extern color_t clGray;
+extern color_t clLGray;
+extern color_t clWhite;
+extern color_t clRed;
+extern color_t clGreen;
+extern color_t clBlue;
 // Default desktop color
 extern color_t clDesktop;
 // Window title-bar colors

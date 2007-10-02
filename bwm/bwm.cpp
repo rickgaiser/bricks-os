@@ -7,22 +7,31 @@
 #include "GLES/gl_extra.h"
 #endif // CONFIG_GL
 
-
+/*
+// Standard colors
+color_t clBlack           (BxRGB(  0,   0,   0));
+color_t clDGray           (BxRGB( 64,  64,  64));
+color_t clGray            (BxRGB(128, 128, 128));
+color_t clLGray           (BxRGB(192, 192, 192));
+color_t clWhite           (BxRGB(255, 255, 255));
+color_t clRed             (BxRGB(255,   0,   0));
+color_t clGreen           (BxRGB(  0, 255,   0));
+color_t clBlue            (BxRGB(  0,   0, 255));
 // Default desktop color
-color_t clDesktop(BxRGB(58, 110, 165));
+color_t clDesktop         (BxRGB( 58, 110, 165));
 // Window title-bar colors
-color_t clActiveWindowL(BxRGB(10, 36, 106));
-color_t clActiveWindowR(BxRGB(166, 202, 240));
-color_t clActiveWindow(clActiveWindowL);
-color_t clInActiveWindowL(BxRGB(128, 128, 128));
-color_t clInActiveWindowR(BxRGB(192, 192, 192));
-color_t clInActiveWindow(clInActiveWindowL);
+color_t clActiveWindowL   (BxRGB( 10,  36, 106));
+color_t clActiveWindowR   (BxRGB(166, 202, 240));
+color_t clActiveWindow    (clActiveWindowL);
+color_t clInActiveWindowL (BxRGB(128, 128, 128));
+color_t clInActiveWindowR (BxRGB(192, 192, 192));
+color_t clInActiveWindow  (clInActiveWindowL);
 // Panel colors
-color_t clPanelLight(BxRGB(255, 255, 255));
-color_t clPanelShade1(BxRGB(64, 64, 64));
-color_t clPanelShade2(BxRGB(128, 128, 128));
-color_t clPanelFill(BxRGB(212, 208, 200));
-
+color_t clPanelLight      (BxRGB(255, 255, 255));
+color_t clPanelShade1     (BxRGB( 64,  64,  64));
+color_t clPanelShade2     (BxRGB(128, 128, 128));
+color_t clPanelFill       (BxRGB(212, 208, 200));
+*/
 
 #ifdef CONFIG_GL
 const GLfloat lightAmbient[] = {0.1f, 0.1f, 0.1f, 1.0f};
@@ -128,7 +137,7 @@ testFill(CSurface * surface)
   // Pixel test
   surface->setFillColor(0, 0, 0);
   surface->fill();
-  for(int i(0); i < 0x0FFF; i++)
+  for(int i(0); i < 0x00FF; i++)
   {
     surface->setColor((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255));
     surface->setPixel(
@@ -141,7 +150,7 @@ testFill(CSurface * surface)
   // Line test
   surface->setFillColor(0, 0, 0);
   surface->fill();
-  for(int i(0); i < 0x0FFF; i++)
+  for(int i(0); i < 0x00FF; i++)
   {
     surface->setColor((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255));
     surface->drawLine(
@@ -156,7 +165,7 @@ testFill(CSurface * surface)
   // Rect test
   surface->setFillColor(0, 0, 0);
   surface->fill();
-  for(int i(0); i < 0x0FFF; i++)
+  for(int i(0); i < 0x00FF; i++)
   {
     int x1 = (int)(crap_rand() * surface->width());
     int y1 = (int)(crap_rand() * surface->height());
@@ -176,7 +185,7 @@ testFill(CSurface * surface)
   // Filled Rect test
   surface->setFillColor(0, 0, 0);
   surface->fill();
-  for(int i(0); i < 0x0FFF; i++)
+  for(int i(0); i < 0x00FF; i++)
   {
     int x1 = (int)(crap_rand() * surface->width());
     int y1 = (int)(crap_rand() * surface->height());
