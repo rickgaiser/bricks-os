@@ -8,7 +8,7 @@ CONFIG_DIRECT_ACCESS_KERNEL_FUNC=y
 #CONFIG_PD_IBM=y
 
 # Video configuration
-#CONFIG_FRAMEBUFFER=y
+CONFIG_FRAMEBUFFER=y
 #CONFIG_GL=y
 
 # Library configuration
