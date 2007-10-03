@@ -288,16 +288,16 @@ CPS2Surface::swap(bool sync)
 void
 CPS2Surface::waitHSync()
 {
-  REG_CSR = REG_CSR & 4;
-  while(!(REG_CSR & 4));
+  REG_GS_CSR = REG_GS_CSR & 4;
+  while(!(REG_GS_CSR & 4));
 }
 
 //---------------------------------------------------------------------------
 void
 CPS2Surface::waitVSync()
 {
-  REG_CSR = REG_CSR & 8;
-  while(!(REG_CSR & 8));
+  REG_GS_CSR = REG_GS_CSR & 8;
+  while(!(REG_GS_CSR & 8));
 }
 
 //---------------------------------------------------------------------------

@@ -18,7 +18,7 @@
 // CSR Register
 //---------------------------------------------------------------------------
 #define GS_SET_CSR(SIGNAL,FINISH,HSINT,VSINT,EDWINT,FLUSH,RESET,NFIELD,FIELD,FIFO,REV,ID) \
-  REG_CSR = \
+  REG_GS_CSR = \
   ((uint64_t)(SIGNAL) << 0)  | \
   ((uint64_t)(FINISH) << 1)  | \
   ((uint64_t)(HSINT)  << 2)  | \
@@ -33,13 +33,13 @@
   ((uint64_t)(ID)     << 24)
 
 #define GS_RESET() \
-  REG_CSR = ((uint64_t)(1) << 9)
+  REG_GS_CSR = ((uint64_t)(1) << 9)
 
 //---------------------------------------------------------------------------
 // PMODE Register
 //---------------------------------------------------------------------------
 #define GS_SET_PMODE(EN1,EN2,MMOD,AMOD,SLBG,ALP) \
-  REG_PMODE = \
+  REG_GS_PMODE = \
   ((uint64_t)(EN1)  << 0) | \
   ((uint64_t)(EN2)  << 1) | \
   ((uint64_t)(001)  << 2) | \
@@ -52,7 +52,7 @@
 // SMODE2 Register
 //---------------------------------------------------------------------------
 #define GS_SET_SMODE2(INT,FFMD,DPMS) \
-  REG_SMODE2 = \
+  REG_GS_SMODE2 = \
   ((uint64_t)(INT)  << 0) | \
   ((uint64_t)(FFMD) << 1) | \
   ((uint64_t)(DPMS) << 2)
@@ -61,7 +61,7 @@
 // DISPFP1 Register
 //---------------------------------------------------------------------------
 #define GS_SET_DISPFB1(FBP,FBW,PSM,DBX,DBY) \
-  REG_DISPFB1 = \
+  REG_GS_DISPFB1 = \
   ((uint64_t)(FBP) << 0)  | \
   ((uint64_t)(FBW) << 9)  | \
   ((uint64_t)(PSM) << 15) | \
@@ -72,7 +72,7 @@
 // DISPLAY1 Register
 //---------------------------------------------------------------------------
 #define GS_SET_DISPLAY1(DX,DY,MAGH,MAGV,DW,DH) \
-  REG_DISPLAY1 = \
+  REG_GS_DISPLAY1 = \
   ((uint64_t)(DX)   <<  0) | \
   ((uint64_t)(DY)   << 12) | \
   ((uint64_t)(MAGH) << 23) | \
@@ -84,7 +84,7 @@
 // DISPFP2 Register
 //---------------------------------------------------------------------------
 #define GS_SET_DISPFB2(FBP,FBW,PSM,DBX,DBY) \
-  REG_DISPFB2 = \
+  REG_GS_DISPFB2 = \
   ((uint64_t)(FBP) <<  0) | \
   ((uint64_t)(FBW) <<  9) | \
   ((uint64_t)(PSM) << 15) | \
@@ -95,7 +95,7 @@
 // DISPLAY2 Register
 //---------------------------------------------------------------------------
 #define GS_SET_DISPLAY2(DX,DY,MAGH,MAGV,DW,DH) \
-  REG_DISPLAY2 = \
+  REG_GS_DISPLAY2 = \
   ((uint64_t)(DX)   <<  0) | \
   ((uint64_t)(DY)   << 12) | \
   ((uint64_t)(MAGH) << 23) | \
@@ -107,7 +107,7 @@
 // BGCOLOR Register
 //---------------------------------------------------------------------------
 #define GS_SET_BGCOLOR(R,G,B) \
-  REG_BGCOLOR = \
+  REG_GS_BGCOLOR = \
   ((uint64_t)(R) <<  0) | \
   ((uint64_t)(G) <<  8) | \
   ((uint64_t)(B) << 16)
