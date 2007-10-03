@@ -124,13 +124,14 @@ testFill(CSurface * surface)
     // Fill entire screen with one color
     surface->setFillColor(i);
     surface->fill();
+
     // Display progress bar
     surface->setFillColor(clWhite);
     surface->fillRect(2, surface->height() - 12, surface->width() - 4, 10);
     surface->setFillColor(clBlack);
     surface->fillRect(3, surface->height() - 10, ((surface->width() - 6) * i) / 0x001f, 6);
-    // Swap back and front buffer, placing the rendered image on screen
-    surface->swap();
+
+    surface->waitVSync();
   }
 */
 
@@ -144,7 +145,7 @@ testFill(CSurface * surface)
       (int)(crap_rand() * surface->width()),
       (int)(crap_rand() * surface->height()));
 
-//    surface->swap(true);
+    surface->waitVSync();
   }
 
   // Line test
@@ -159,7 +160,7 @@ testFill(CSurface * surface)
       (int)(crap_rand() * surface->width()),
       (int)(crap_rand() * surface->height()));
 
-//    surface->swap(true);
+    surface->waitVSync();
   }
 
   // Rect test
@@ -179,7 +180,7 @@ testFill(CSurface * surface)
     surface->setColor((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255));
     surface->drawRect(x, y, w, h);
 
-//    surface->swap(true);
+    surface->waitVSync();
   }
 
   // Filled Rect test
@@ -199,7 +200,7 @@ testFill(CSurface * surface)
     surface->setFillColor((uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255), (uint8_t)(crap_rand()*255));
     surface->fillRect(x, y, w, h);
 
-//    surface->swap(true);
+    surface->waitVSync();
   }
 }
 

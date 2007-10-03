@@ -8,6 +8,11 @@
 //---------------------------------------------------------------------------
 // Main color type: cfA8R8G8B8
 typedef uint32_t color_t;
+#define BxColor(r,g,b,a) ((a<<24)|(r<<16)|(g<<8)|(b))
+#define BxColor_GetA(c)  ((c&0xff000000)>>24)
+#define BxColor_GetR(c)  ((c&0x00ff0000)>>16)
+#define BxColor_GetG(c)  ((c&0x0000ff00)>>8)
+#define BxColor_GetB(c)  ((c&0x000000ff))
 
 //---------------------------------------------------------------------------
 enum EColorFormat
@@ -77,8 +82,14 @@ public:
 //  void copy(int dstx, int dsty, const CSurface & src);
   // Copy part of the surface to another part of the surface
 //  void copyRect(int srcx, int srcy, int dstx, int dsty, int width, int height);
+
   // Swap back buffer to front buffer, only if back buffer exists
-  virtual void     swap(bool bForceCopy = false);
+  virtual void     swap(bool sync = false);
+
+  // Wait for Horizontal Synchronization
+  virtual void     waitHSync();
+  // Wait for Vertical Synchronization
+  virtual void     waitVSync();
 
 //protected:
   // Data

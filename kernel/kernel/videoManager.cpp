@@ -228,11 +228,29 @@ CSurface::copyRect(int srcx, int srcy, int dstx, int dsty, int width, int height
 
 //---------------------------------------------------------------------------
 void
-CSurface::swap(bool bForceCopy)
+CSurface::swap(bool sync)
 {
-  // "bForceCopy" can be ignored, we always copy
   if(pBack != 0)
+  {
+    if(sync == true)
+      waitVSync();
+
     memcpy(pFront, pBack, width_ * height_ * (colorFormatOps[format_].bitsPerPixel / 8));
+  }
+}
+
+//---------------------------------------------------------------------------
+void
+CSurface::waitHSync()
+{
+  // No HSync
+}
+
+//---------------------------------------------------------------------------
+void
+CSurface::waitVSync()
+{
+  // No VSync
 }
 
 //---------------------------------------------------------------------------

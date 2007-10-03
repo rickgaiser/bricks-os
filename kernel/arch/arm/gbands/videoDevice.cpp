@@ -38,34 +38,42 @@ CGBASurface::fillRect(int x, int y, int width, int height)
 
 //---------------------------------------------------------------------------
 void
-CGBASurface::swap(bool bForceCopy)
+CGBASurface::swap(bool sync)
 {
   if(pBack != 0)
   {
-    if(bForceCopy == true)
+    if(sync == true)
+      waitVSync();
+
+#ifdef GBA
+    if(width_ == 240)
     {
       dmaCopy(pBack, pFront, (width_*height_) << 1);
     }
-    else
+    else if(width_ == 160)
     {
-#ifdef GBA
-      if(width_ == 240)
-      {
-        dmaCopy(pBack, pFront, (width_*height_) << 1);
-      }
-      else if(width_ == 160)
-      {
+      REG_DISPCNT ^= 0x0010;
 #endif // GBA
-        bSwap = true;
-        while(bSwap == true){}
-        p = pFront;
-        pFront = pBack;
-        pBack = p;
+#ifdef NDS9
+      REG_BG3CNT ^= ((128 / 16) << 8);
+#endif // NDS9
+      p = pFront;
+      pFront = pBack;
+      pBack = p;
 #ifdef GBA
-      }
-#endif // GBA
     }
+#endif // GBA
   }
+}
+
+//---------------------------------------------------------------------------
+void
+CGBASurface::waitVSync()
+{
+  // Wait for VSync interrupt
+  // FIXME: Busy waiting!
+  bSwap = true;
+  while(bSwap == true){}
 }
 
 //---------------------------------------------------------------------------
@@ -85,16 +93,9 @@ CGBAVideoDevice::~CGBAVideoDevice()
 int
 CGBAVideoDevice::isr(int irq)
 {
+  // Notify swap function that we have vertical sync
   if(bSwap == true)
-  {
-#ifdef GBA
-    REG_DISPCNT ^= 0x0010;
-#endif // GBA
-#ifdef NDS9
-    REG_BG3CNT ^= ((128 / 16) << 8);
-#endif // NDS9
     bSwap = false;
-  }
 
   return 0;
 }
@@ -173,18 +174,15 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
       pSurface->pFront = (uint16_t *)0x6000000;
 #ifdef GBA
 //      if(pCurrentMode_->xres == 240)
-//      {
 //        pSurface->pBack  = new uint16_t[240*160];
-//      }
 //      else if(pCurrentMode_->xres == 160)
-//      {
 //        pSurface->pBack  = (uint16_t *)0x600A000;
-//      }
 #endif // GBA
 #ifdef NDS9
-      pSurface->pBack  = (uint16_t *)(0x06000000 + 256 * 256 * 2);
+//      pSurface->pBack  = (uint16_t *)0x06020000;
 #endif // NDS9
 //      pSurface->p      = pSurface->pBack;
+      pSurface->pBack  = 0;
       pSurface->p      = pSurface->pFront;
       *surface = pSurface;
       break;
