@@ -1,12 +1,11 @@
 LIB             =arch
 OBJS            =\
                 arch \
+                bios \
                 courier_new \
                 dma_asm \
                 fixed_tc \
                 gs \
-                gs_asm \
-                ps2_asm \
                 task \
                 videoDevice \
 

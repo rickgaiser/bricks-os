@@ -36,7 +36,7 @@ public:
   virtual ~CPS2Surface();
 
   // Inherited from IFileIO
-  virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);
+  virtual ssize_t  write(const void * buffer, size_t size, loff_t * = 0);
 
   virtual void     setColor(uint8_t r, uint8_t g, uint8_t b);
   virtual void     setFillColor(uint8_t r, uint8_t g, uint8_t b);
@@ -48,7 +48,12 @@ public:
   virtual void     drawRect(int x, int y, int width, int height);
 
   // Swap back buffer to front buffer, only if back buffer exists
-  virtual void swap(bool bForceCopy = false);
+  virtual void     swap(bool sync = false);
+
+  // Wait for Horizontal Synchronization
+  virtual void     waitHSync();
+  // Wait for Vertical Synchronization
+  virtual void     waitVSync();
 
 private:
   void setMode(g2_video_mode mode);
