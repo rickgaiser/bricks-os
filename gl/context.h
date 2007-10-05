@@ -31,7 +31,7 @@ typedef union
     GLfixed r, g, b, a;
   };
   GLfixed c[4];
-} SColor;
+} SColorFx;
 
 //-----------------------------------------------------------------------------
 typedef union
@@ -118,9 +118,9 @@ struct SVertex
 
   // Color
   // Original
-  SColor    c1;
+  SColorFx  c1;
   // Lighted
-  SColor    c2;
+  SColorFx  c2;
 
   // State: indicates if the xxx2 values have been created already
   bool      bProcessed;
@@ -148,7 +148,7 @@ public:
   // Edge depth
   GLfixed * z_;
   // Edge color
-  SColor * c_;
+  SColorFx * c_;
 
   int32_t iHeight_;
 };
@@ -165,9 +165,9 @@ struct SBufferPointer
 //-----------------------------------------------------------------------------
 struct SLight
 {
-  SColor diffuse;
-  SColor ambient;
-  SColor specular;
+  SColorFx diffuse;
+  SColorFx ambient;
+  SColorFx specular;
   bool enabled;
 };
 
@@ -330,7 +330,7 @@ public:
   void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 private:
-  void hline(CEdge & from, CEdge & to, GLint & y, SColor c);
+  void hline(CEdge & from, CEdge & to, GLint & y, SColorFx c);
   void hline_s(CEdge & from, CEdge & to, GLint & y);
   void plotPoly(SPolygon & poly);
 
@@ -359,8 +359,8 @@ private:
   bool           bBufColorEnabled_;
 
   // Colors
-  SColor    clCurrent;
-  SColor    clClear;
+  SColorFx  clCurrent;
+  SColorFx  clClear;
 
   // Lighting
   bool      lightingEnabled_;
@@ -374,7 +374,7 @@ private:
   GLfixed   fogDensity_;
   GLfixed   fogStart_;
   GLfixed   fogEnd_;
-  SColor    fogColor_;
+  SColorFx  fogColor_;
 
   // Depth testing
   bool      depthTestEnabled_;

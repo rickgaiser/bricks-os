@@ -262,7 +262,7 @@ CAVideoDevice::setMode(const SVideoMode * mode)
 
 //---------------------------------------------------------------------------
 void
-CAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
+CAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble)
 {
   *surface = 0;
 }

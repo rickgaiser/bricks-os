@@ -94,7 +94,7 @@ public:
   virtual void getMode(SVideoMode ** mode);
   virtual void setMode(const SVideoMode * mode);
 
-  virtual void getSurface(CSurface ** surface, ESurfaceType type);
+  virtual void getSurface(CSurface ** surface, ESurfaceType type, bool bDouble);
 
 private:
   const SVideoMode * pCurrentMode_;

@@ -788,7 +788,7 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
 
 //---------------------------------------------------------------------------
 void
-CPS2VideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
+CPS2VideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble)
 {
   CSurface * pSurface = new CPS2Surface;
 /*

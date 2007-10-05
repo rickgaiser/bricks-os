@@ -15,9 +15,9 @@ public:
   virtual ~CGBASurface();
 
   // Fill entire surface
-  virtual void fill();
+  virtual void     fill();
   // Fill rect on surface
-  virtual void fillRect(int x, int y, int width, int height);
+  virtual void     fillRect(int x, int y, int width, int height);
 
   // Swap back buffer to front buffer, only if back buffer exists
   virtual void     swap(bool sync = false);
@@ -42,7 +42,7 @@ public:
   virtual void getMode(SVideoMode ** mode);
   virtual void setMode(const SVideoMode * mode);
 
-  virtual void getSurface(CSurface ** surface, ESurfaceType type);
+  virtual void getSurface(CSurface ** surface, ESurfaceType type, bool bDouble);
 
 private:
   const SVideoMode * pCurrentMode_;

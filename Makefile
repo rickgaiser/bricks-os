@@ -16,8 +16,12 @@ ELF             =Bricks
 
 
 ifeq ($(CONFIG_FRAMEBUFFER),y)
-DIRS            += bwm
-LIBS            += bwm
+  DIRS            += bwm
+  LIBS            += bwm
+  ifeq ($(CONFIG_GL),y)
+    DIRS            += gl
+    LIBS            += gl
+  endif
 endif
 
 

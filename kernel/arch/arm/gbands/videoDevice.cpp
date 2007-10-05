@@ -161,7 +161,7 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
 
 //---------------------------------------------------------------------------
 void
-CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
+CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble)
 {
   switch(type)
   {
@@ -172,18 +172,26 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
       pSurface->height_= pCurrentMode_->yres;
       pSurface->format_= pCurrentMode_->format;
       pSurface->pFront = (uint16_t *)0x6000000;
+      if(bDouble == true)
+      {
+        // Allocate back buffer
 #ifdef GBA
-//      if(pCurrentMode_->xres == 240)
-//        pSurface->pBack  = new uint16_t[240*160];
-//      else if(pCurrentMode_->xres == 160)
-//        pSurface->pBack  = (uint16_t *)0x600A000;
+        if(pCurrentMode_->xres == 240)
+          pSurface->pBack  = new uint16_t[240*160];
+        else if(pCurrentMode_->xres == 160)
+          pSurface->pBack  = (uint16_t *)0x600A000;
 #endif // GBA
 #ifdef NDS9
-//      pSurface->pBack  = (uint16_t *)0x06020000;
+        pSurface->pBack  = (uint16_t *)0x06020000;
 #endif // NDS9
-//      pSurface->p      = pSurface->pBack;
-      pSurface->pBack  = 0;
-      pSurface->p      = pSurface->pFront;
+        // Draw to back buffer
+        pSurface->p      = pSurface->pBack;
+      }
+      else
+      {
+        pSurface->pBack  = 0;
+        pSurface->p      = pSurface->pFront;
+      }
       *surface = pSurface;
       break;
     }

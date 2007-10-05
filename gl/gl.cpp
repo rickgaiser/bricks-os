@@ -26,7 +26,7 @@ CEdge::CEdge(uint32_t height)
 {
   x_ = new GLint[iHeight_];
   z_ = new GLfixed[iHeight_];
-  c_ = new SColor[iHeight_];
+  c_ = new SColorFx[iHeight_];
 }
 
 //-----------------------------------------------------------------------------

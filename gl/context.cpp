@@ -639,7 +639,7 @@ CContext::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
       return;
   }
 
-  SColor * pColor = 0;
+  SColorFx * pColor = 0;
   switch(pname)
   {
     case GL_AMBIENT:  pColor = &pLight->ambient; break;
@@ -768,7 +768,7 @@ validDepth(GLfixed z, GLfixed zbuf, GLenum zfunc)
 //-----------------------------------------------------------------------------
 // Horizontal Line Fill, flat colors
 void
-CContext::hline(CEdge & from, CEdge & to, GLint & y, SColor c)
+CContext::hline(CEdge & from, CEdge & to, GLint & y, SColorFx c)
 {
   if(from.x_[y] < to.x_[y])
   {
@@ -935,8 +935,8 @@ CContext::plotPoly(SPolygon & poly)
     {
       if(lights_[iLight].enabled == true)
       {
-        SColor & ambient = lights_[iLight].ambient;
-        SColor & diffuse = lights_[iLight].diffuse;
+        SColorFx & ambient = lights_[iLight].ambient;
+        SColorFx & diffuse = lights_[iLight].diffuse;
 
         poly.v[0]->c2.r = gl_fpclamp(gl_fpmul(poly.v[0]->c1.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[0]->c1.r, normal[0]), diffuse.r));
         poly.v[0]->c2.g = gl_fpclamp(gl_fpmul(poly.v[0]->c1.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[0]->c1.g, normal[0]), diffuse.g));

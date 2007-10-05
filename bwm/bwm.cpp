@@ -1,4 +1,5 @@
 #include "bwm/bwm.h"
+#include "asm/arch/config.h"
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
 #ifdef CONFIG_GL
@@ -237,8 +238,8 @@ testGL(CSurface * surface)
   // Shade model
   glShadeModel(/*GL_FLAT*/GL_SMOOTH);
   // Viewport & Perspective
-  glViewport(0, 0, surface->width, surface->height);
-  gluPerspective(45.0f, (float)surface->width / (float)surface->height, 0.1f, 100.0f);
+  glViewport(0, 0, surface->width(), surface->height());
+  gluPerspective(45.0f, (float)surface->width() / (float)surface->height(), 0.1f, 100.0f);
   // Lighting
   glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
@@ -290,10 +291,12 @@ testGL(CSurface * surface)
     glFlush();
 
     // Display progress bar
-    surface->fillRect(1, surface->height - 12, surface->width - 2, 10, clWhite);
-    surface->fillRect(3, surface->height - 10, ((surface->width - 6) * static_cast<int>(fYRotTriangle)) / 360, 6, clBlack);
+    surface->setFillColor(255, 255, 255);
+    surface->fillRect(1, surface->height() - 12, surface->width() - 2, 10);
+    surface->setFillColor(0, 0, 0);
+    surface->fillRect(3, surface->height() - 10, ((surface->width() - 6) * static_cast<int>(fYRotTriangle)) / 360, 6);
 
-    surface->swap();
+    surface->swap(true);
   }
 
   // Shutdown EGL
@@ -318,22 +321,19 @@ bwm(int argc, char * argv[])
       devices[iDev]->listModes(&modes, &iModeCount);
       if(iModeCount > 0)
       {
-        for(int iMode(0); iMode < iModeCount; iMode++)
+        while(true)
         {
-//          if((modes[iMode].format == cfX1R5G5B5) || (modes[iMode].format == cfA1R5G5B5))
+          for(int iMode(0); iMode < iModeCount; iMode++)
           {
             devices[iDev]->setMode(&modes[iMode]);
             CSurface * pVideoSurface;
-            devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
-
-            while(true)
-            {
-#ifndef CONFIG_GL
-              testFill(pVideoSurface);
+#ifdef CONFIG_GL
+            devices[iDev]->getSurface(&pVideoSurface, stSCREEN, true);
+            testGL(pVideoSurface);
 #else
-              testGL(pVideoSurface);
+            devices[iDev]->getSurface(&pVideoSurface, stSCREEN, false);
+            testFill(pVideoSurface);
 #endif // CONFIG_GL
-            }
             delete pVideoSurface;
           }
         }
