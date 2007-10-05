@@ -38,9 +38,6 @@ public:
   // Inherited from IFileIO
   virtual ssize_t  write(const void * buffer, size_t size, loff_t * = 0);
 
-  virtual void     setColor(uint8_t r, uint8_t g, uint8_t b);
-  virtual void     setFillColor(uint8_t r, uint8_t g, uint8_t b);
-
   virtual void     setPixel(int x, int y);
   virtual void     fill();
   virtual void     fillRect(int x, int y, int width, int height);

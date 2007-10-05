@@ -168,20 +168,6 @@ CPS2Surface::write(const void * data, size_t size, loff_t *)
 
 //---------------------------------------------------------------------------
 void
-CPS2Surface::setColor(uint8_t r, uint8_t g, uint8_t b)
-{
-  CSurface::setColor(r, g, b);
-}
-
-//---------------------------------------------------------------------------
-void
-CPS2Surface::setFillColor(uint8_t r, uint8_t g, uint8_t b)
-{
-  CSurface::setFillColor(r, g, b);
-}
-
-//---------------------------------------------------------------------------
-void
 CPS2Surface::setPixel(int x, int y)
 {
   x += gs_origin_x;
@@ -191,7 +177,7 @@ CPS2Surface::setPixel(int x, int y)
 
   GIF_TAG_AD(gs_dma_buf, 4, 1, 0, 0, 0);
   GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(BxColor_GetR(color_), BxColor_GetG(color_), BxColor_GetB(color_), 0x80, 0));
+  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
   // The XYZ coordinates are actually floating point numbers between
   // 0 and 4096 represented as unsigned integers where the lowest order
   // four bits are the fractional point. That's why all coordinates are
@@ -219,7 +205,7 @@ CPS2Surface::fillRect(int x, int y, int width, int height)
 
   GIF_TAG_AD(gs_dma_buf, 4, 1, 0, 0, 0);
   GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(BxColor_GetR(fillColor_), BxColor_GetG(fillColor_), BxColor_GetB(fillColor_), 0x80, 0));
+  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(fillColor_.r, fillColor_.g, fillColor_.b, 0x80, 0));
   GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x<<4, y<<4, 0));
   // It looks like the default operation for the SPRITE primitive is to
   // not draw the right and bottom 'lines' of the rectangle refined by
@@ -242,7 +228,7 @@ CPS2Surface::drawLine(int x1, int y1, int x2, int y2)
 
   GIF_TAG_AD(gs_dma_buf, 4, 1, 0, 0, 0);
   GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(BxColor_GetR(color_), BxColor_GetG(color_), BxColor_GetB(color_), 0x80, 0));
+  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
   GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x1<<4, y1<<4, 0));
   GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x2<<4, y2<<4, 0));
 
@@ -260,7 +246,7 @@ CPS2Surface::drawRect(int x, int y, int width, int height)
 
   GIF_TAG_AD(gs_dma_buf, 7, 1, 0, 0, 0);
   GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(BxColor_GetR(color_), BxColor_GetG(color_), BxColor_GetB(color_), 0x80, 0));
+  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
   GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x<<4, y<<4, 0));
   GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x+width<<4, y<<4, 0));
   GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x+width<<4, y+height<<4, 0));

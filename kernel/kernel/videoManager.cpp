@@ -4,43 +4,6 @@
 
 
 //---------------------------------------------------------------------------
-struct SColorFormatOperations
-{
-  uint8_t  bitsPerPixel;
-  uint8_t  lossA;
-  uint8_t  lossR;
-  uint8_t  lossG;
-  uint8_t  lossB;
-  uint8_t  shiftA;
-  uint8_t  shiftR;
-  uint8_t  shiftG;
-  uint8_t  shiftB;
-  uint32_t maskA;
-  uint32_t maskR;
-  uint32_t maskG;
-  uint32_t maskB;
-};
-
-//---------------------------------------------------------------------------
-#define BxRGB(fmt,r,g,b)                                     \
-  ((r >> fmt.lossR) << fmt.shiftR) |                         \
-  ((g >> fmt.lossG) << fmt.shiftG) |                         \
-  ((b >> fmt.lossB) << fmt.shiftB);
-#define BxRGBA(fmt,r,g,b,a)                                  \
-  ((r >> fmt.lossR) << fmt.shiftR) |                         \
-  ((g >> fmt.lossG) << fmt.shiftG) |                         \
-  ((b >> fmt.lossB) << fmt.shiftB) |                         \
-  ((a >> fmt.lossA) << fmt.shiftA);
-/*
-#define COLOR_TO_RGB(color, fmt, r, g, b)                    \
-{                                                            \
-  r = (((color & fmt.maskR) >> fmt.shiftR) << fmt.lossR);    \
-  g = (((color & fmt.maskG) >> fmt.shiftG) << fmt.lossG);    \
-  b = (((color & fmt.maskB) >> fmt.shiftB) << fmt.lossB);    \
-}
-*/
-
-//---------------------------------------------------------------------------
 #define SET_PIXEL(x,y,c) \
 { \
   switch(colorFormatOps[format_].bitsPerPixel) \
@@ -63,25 +26,25 @@ const SColorFormatOperations colorFormatOps[] =
 {
     {32, 8, 8, 8, 8, 0, 0, 0, 0, 0x00000000, 0x00000000, 0x00000000, 0x00000000}  // cfUNKNOWN
     // (A/X)RGB (32bit)
-  , {32, 8, 0, 0, 0, 0,16, 8, 0, 0x00000000, 0x00ff0000, 0x0000ff00, 0x000000ff}  // cfR8G8B8
-  , {32, 0, 0, 0, 0,24,16, 8, 0, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff}  // cfA8R8G8B8
-  , {32, 0, 0, 0, 0,24,16, 8, 0, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff}  // cfX8R8G8B8
+  , {32, 0, 0, 0, 8,16, 8, 0, 0, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000}  // cfR8G8B8
+  , {32, 0, 0, 0, 0,16, 8, 0,24, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000}  // cfA8R8G8B8
+  , {32, 0, 0, 0, 0,16, 8, 0,24, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000}  // cfX8R8G8B8
     // (A/X)BGR (32bit)
-  , {32, 8, 0, 0, 0, 0, 0, 8,16, 0x00000000, 0x00ff0000, 0x0000ff00, 0x000000ff}  // cfB8G8R8
-  , {32, 0, 0, 0, 0,24, 0, 8,16, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff}  // cfA8B8G8R8
-  , {32, 0, 0, 0, 0,24, 0, 8,16, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff}  // cfX8B8G8R8
+  , {32, 0, 0, 0, 8, 0, 8,16,0,  0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000}  // cfB8G8R8
+  , {32, 0, 0, 0, 0, 0, 8,16,24, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000}  // cfA8B8G8R8
+  , {32, 0, 0, 0, 0, 0, 8,16,24, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000}  // cfX8B8G8R8
     // (A/X)RGB (16bit)
-  , {16, 8, 3, 2, 3, 0,11, 5, 0,     0x0000,     0xf800,     0x07e0,     0x001f}  // cfR5G6B5
-  , {16, 7, 3, 3, 3,15,10, 5, 0,     0x8000,     0x7c00,     0x03e0,     0x001f}  // cfA1R5G5B5
-  , {16, 7, 3, 3, 3,15,10, 5, 0,     0x8000,     0x7c00,     0x03e0,     0x001f}  // cfX1R5G5B5
-  , {16, 4, 4, 4, 4,12, 8, 4, 0,     0xf000,     0x0f00,     0x00f0,     0x000f}  // cfA4R4G4B4
-  , {16, 4, 4, 4, 4,12, 8, 4, 0,     0xf000,     0x0f00,     0x00f0,     0x000f}  // cfX4R4G4B4
+  , {16, 3, 2, 3, 8,11, 5, 0, 0,     0xf800,     0x07e0,     0x001f,     0x0000}  // cfR5G6B5
+  , {16, 3, 3, 3, 7,10, 5, 0,15,     0x7c00,     0x03e0,     0x001f,     0x8000}  // cfA1R5G5B5
+  , {16, 3, 3, 3, 7,10, 5, 0,15,     0x7c00,     0x03e0,     0x001f,     0x8000}  // cfX1R5G5B5
+  , {16, 4, 4, 4, 4, 8, 4, 0,12,     0x0f00,     0x00f0,     0x000f,     0xf000}  // cfA4R4G4B4
+  , {16, 4, 4, 4, 4, 8, 4, 0,12,     0x0f00,     0x00f0,     0x000f,     0xf000}  // cfX4R4G4B4
     // (A/X)BGR (16bit)
-  , {16, 8, 3, 2, 3, 0, 0, 5,11,     0x0000,     0x001f,     0x07e0,     0xf800}  // cfB5G6R5
-  , {16, 7, 3, 3, 3,15, 0, 5,10,     0x8000,     0x001f,     0x03e0,     0x7c00}  // cfA1B5G5R5 // NDS
-  , {16, 7, 3, 3, 3,15, 0, 5,10,     0x8000,     0x001f,     0x03e0,     0x7c00}  // cfX1B5G5R5 // GBA
-  , {16, 4, 4, 4, 4,12, 0, 4, 8,     0xf000,     0x000f,     0x00f0,     0x0f00}  // cfA4B4G4R4
-  , {16, 4, 4, 4, 4,12, 0, 4, 8,     0xf000,     0x000f,     0x00f0,     0x0f00}  // cfX4B4G4R4
+  , {16, 3, 2, 3, 8, 0, 5,11, 0,     0x001f,     0x07e0,     0xf800,     0x0000}  // cfB5G6R5
+  , {16, 3, 3, 3, 7, 0, 5,10,15,     0x001f,     0x03e0,     0x7c00,     0x8000}  // cfA1B5G5R5 // NDS
+  , {16, 3, 3, 3, 7, 0, 5,10,15,     0x001f,     0x03e0,     0x7c00,     0x8000}  // cfX1B5G5R5 // GBA
+  , {16, 4, 4, 4, 4, 0, 4, 8,12,     0x000f,     0x00f0,     0x0f00,     0xf000}  // cfA4B4G4R4
+  , {16, 4, 4, 4, 4, 0, 4, 8,12,     0x000f,     0x00f0,     0x0f00,     0xf000}  // cfX4B4G4R4
 };
 
 
@@ -91,9 +54,9 @@ CSurface::CSurface()
  : p(0)
  , pFront(0)
  , pBack(0)
- , color_(0)
- , fillColor_(0)
 {
+  setColor(0, 0, 0);
+  setFillColor(0, 0, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -119,21 +82,31 @@ CSurface::height()
 void
 CSurface::setColor(uint8_t r, uint8_t g, uint8_t b)
 {
-  color_ = BxRGB(colorFormatOps[format_], r, g, b);
+  color_.r = r;
+  color_.g = g;
+  color_.b = b;
+  color_.a = 255;
+
+  fmtColor_ = BxColorFormat_FromRGB(format_, r, g, b);
 }
 
 //---------------------------------------------------------------------------
 void
 CSurface::setFillColor(uint8_t r, uint8_t g, uint8_t b)
 {
-  fillColor_ = BxRGB(colorFormatOps[format_], r, g, b);
+  fillColor_.r = r;
+  fillColor_.g = g;
+  fillColor_.b = b;
+  fillColor_.a = 255;
+
+  fmtFillColor_ = BxColorFormat_FromRGB(format_, r, g, b);
 }
 
 //---------------------------------------------------------------------------
 void
 CSurface::setPixel(int x, int y)
 {
-  SET_PIXEL(x, y, color_);
+  SET_PIXEL(x, y, fmtColor_);
 }
 
 //---------------------------------------------------------------------------
@@ -150,7 +123,7 @@ CSurface::fillRect(int x, int y, int width, int height)
   for(int iY(y); iY < (y + height); iY++)
   {
     for(int iX(x); iX < (x + width); iX++)
-      SET_PIXEL(iX, iY, fillColor_);
+      SET_PIXEL(iX, iY, fmtFillColor_);
   }
 }
 
@@ -166,7 +139,7 @@ CSurface::drawLine(int x1, int y1, int x2, int y2)
     {
       for(int x(x1); x <= x2; x++)
       {
-        SET_PIXEL(x, (int)currenty, color_);
+        SET_PIXEL(x, (int)currenty, fmtColor_);
         currenty += slopey;
       }
     }
@@ -174,7 +147,7 @@ CSurface::drawLine(int x1, int y1, int x2, int y2)
     {
       for(int x(x2); x <= x1; x++)
       {
-        SET_PIXEL(x, (int)currenty, color_);
+        SET_PIXEL(x, (int)currenty, fmtColor_);
         currenty += slopey;
       }
     }
@@ -187,7 +160,7 @@ CSurface::drawLine(int x1, int y1, int x2, int y2)
     {
       for(int y(y1); y <= y2; y++)
       {
-        SET_PIXEL((int)currentx, y, color_);
+        SET_PIXEL((int)currentx, y, fmtColor_);
         currentx += slopex;
       }
     }
@@ -195,7 +168,7 @@ CSurface::drawLine(int x1, int y1, int x2, int y2)
     {
       for(int y(y2); y <= y1; y++)
       {
-        SET_PIXEL((int)currentx, y, color_);
+        SET_PIXEL((int)currentx, y, fmtColor_);
         currentx += slopex;
       }
     }

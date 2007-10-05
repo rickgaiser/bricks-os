@@ -6,13 +6,32 @@
 
 
 //---------------------------------------------------------------------------
-// Main color type: cfA8R8G8B8
+// Main color format type, can hold any color <= 32 bits
 typedef uint32_t color_t;
-#define BxColor(r,g,b,a) ((a<<24)|(r<<16)|(g<<8)|(b))
-#define BxColor_GetA(c)  ((c&0xff000000)>>24)
-#define BxColor_GetR(c)  ((c&0x00ff0000)>>16)
-#define BxColor_GetG(c)  ((c&0x0000ff00)>>8)
-#define BxColor_GetB(c)  ((c&0x000000ff))
+// Color struct
+struct SColor
+{
+  uint8_t r, g, b, a;
+};
+
+//---------------------------------------------------------------------------
+struct SColorFormatOperations
+{
+  uint8_t  bitsPerPixel;
+  uint8_t  lossR;
+  uint8_t  lossG;
+  uint8_t  lossB;
+  uint8_t  lossA;
+  uint8_t  shiftR;
+  uint8_t  shiftG;
+  uint8_t  shiftB;
+  uint8_t  shiftA;
+  uint32_t maskR;
+  uint32_t maskG;
+  uint32_t maskB;
+  uint32_t maskA;
+};
+extern const SColorFormatOperations colorFormatOps[];
 
 //---------------------------------------------------------------------------
 enum EColorFormat
@@ -39,6 +58,27 @@ enum EColorFormat
   , cfA4B4G4R4      = 15
   , cfX4B4G4R4      = 16
 };
+
+//---------------------------------------------------------------------------
+// Create color formats
+#define BxColorFormat_FromRGB(fmt,r,g,b) \
+  ((r >> colorFormatOps[fmt].lossR) << colorFormatOps[fmt].shiftR) | \
+  ((g >> colorFormatOps[fmt].lossG) << colorFormatOps[fmt].shiftG) | \
+  ((b >> colorFormatOps[fmt].lossB) << colorFormatOps[fmt].shiftB);
+#define BxColorFormat_FromRGBA(fmt,r,g,b,a) \
+  ((r >> colorFormatOps[fmt].lossR) << colorFormatOps[fmt].shiftR) | \
+  ((g >> colorFormatOps[fmt].lossG) << colorFormatOps[fmt].shiftG) | \
+  ((b >> colorFormatOps[fmt].lossB) << colorFormatOps[fmt].shiftB) | \
+  ((a >> colorFormatOps[fmt].lossA) << colorFormatOps[fmt].shiftA);
+// Get colors from color formats
+#define BxColorFormat_GetR(fmt,color) \
+  (((color & colorFormatOps[fmt].maskR) >> colorFormatOps[fmt].shiftR) << colorFormatOps[fmt].lossR);
+#define BxColorFormat_GetG(fmt,color) \
+  (((color & colorFormatOps[fmt].maskG) >> colorFormatOps[fmt].shiftG) << colorFormatOps[fmt].lossG);
+#define BxColorFormat_GetB(fmt,color) \
+  (((color & colorFormatOps[fmt].maskB) >> colorFormatOps[fmt].shiftB) << colorFormatOps[fmt].lossB);
+#define BxColorFormat_GetA(fmt,color) \
+  (((color & colorFormatOps[fmt].maskA) >> colorFormatOps[fmt].shiftA) << colorFormatOps[fmt].lossA);
 
 //---------------------------------------------------------------------------
 enum ESurfaceType
@@ -102,9 +142,13 @@ public:
   uint32_t height_;
 
   // Colors
+  SColor color_;
+  SColor fillColor_;
+
+  // Surface format colors
   EColorFormat format_;
-  color_t color_;
-  color_t fillColor_;
+  color_t fmtColor_;
+  color_t fmtFillColor_;
 };
 
 //---------------------------------------------------------------------------

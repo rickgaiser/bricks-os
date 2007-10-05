@@ -23,7 +23,7 @@ CGBASurface::~CGBASurface()
 void
 CGBASurface::fill()
 {
-  dmaFill16(fillColor_ | 0x8000, p, width_ * height_);
+  dmaFill16(fmtFillColor_ | 0x8000, p, width_ * height_);
 }
 
 //---------------------------------------------------------------------------
@@ -32,7 +32,7 @@ CGBASurface::fillRect(int x, int y, int width, int height)
 {
   for(int iY(y); iY < (y + height); iY++)
   {
-    dmaFill16(fillColor_ | 0x8000, &((uint16_t *)p)[iY * width_ + x], width);
+    dmaFill16(fmtFillColor_ | 0x8000, &((uint16_t *)p)[iY * width_ + x], width);
   }
 }
 
