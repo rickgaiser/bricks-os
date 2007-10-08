@@ -1,5 +1,6 @@
 #include "EGL/egl.h"
 #include "context.h"
+#include "stddef.h"
 
 
 #define EGL_GET_THREAD() \
@@ -266,6 +267,9 @@ EGLAPIENTRY eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_
 EGLAPI EGLBoolean
 EGLAPIENTRY eglDestroyContext(EGLDisplay dpy, EGLContext ctx)
 {
+  delete ((CEGLContext *)ctx)->pGLESContext_;
+  delete ((CEGLContext *)ctx);
+
   EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
 }
 
@@ -278,7 +282,13 @@ EGLAPIENTRY eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGL
   thread->pContext_ = (CEGLContext *)ctx;
   thread->pSurface_ = (CEGLSurface *)draw;
 
-  ((CGLESFxContext *)thread->pContext_->pGLESContext_)->setSurface(thread->pSurface_->pNativeSurface_);
+  if(((CGLESFxContext *)thread->pContext_ != NULL) &&
+     ((CGLESFxContext *)thread->pContext_->pGLESContext_ != NULL) &&
+     (thread->pSurface_ != NULL) &&
+     (thread->pSurface_->pNativeSurface_ != NULL))
+  {
+    ((CGLESFxContext *)thread->pContext_->pGLESContext_)->setSurface(thread->pSurface_->pNativeSurface_);
+  }
 
   EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
 }

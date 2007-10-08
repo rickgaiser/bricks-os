@@ -301,6 +301,7 @@ testGL(CSurface * surface)
 
   // Shutdown EGL
   eglMakeCurrent(egldisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+  eglDestroyContext(egldisplay, eglcontext);
   eglTerminate(egldisplay);
 }
 #endif // CONFIG_GL
