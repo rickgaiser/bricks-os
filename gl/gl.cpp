@@ -12,7 +12,7 @@ typedef unsigned int wint_t;
 extern void * eglGetCurrentGLESContext();
 
 #define GLES_GET_CONTEXT(RETVAL) \
-CContext * context = (CContext *)eglGetCurrentGLESContext(); \
+IGLESContext * context = (IGLESContext *)eglGetCurrentGLESContext(); \
 if(context == 0) \
 { \
   return RETVAL; \
@@ -426,9 +426,11 @@ void
 gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
 {
   GLES_GET_CONTEXT();
+  CGLESFxContext * pContext = (CGLESFxContext *)context;
+
   // Calculate field of view scalars
-  context->fpFieldofviewYScalar = gl_fpfromf(context->viewportHeight / tan(fovy));
-  context->fpFieldofviewXScalar = gl_fpmul(context->fpFieldofviewYScalar, gl_fpfromf(aspect));
+  pContext->fpFieldofviewYScalar = gl_fpfromf(pContext->viewportHeight / tan(fovy));
+  pContext->fpFieldofviewXScalar = gl_fpmul(pContext->fpFieldofviewYScalar, gl_fpfromf(aspect));
 
 //  GLdouble sine, cotangent, deltaZ;
 //  GLdouble radians = fovy / 2 * M_PI / 180;
@@ -438,7 +440,7 @@ gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
 //    return;
 //  cotangent = cos(radians) / sine;
 
-  context->matrixPerspective.loadIdentity();
+  pContext->matrixPerspective.loadIdentity();
 //  context->matrixPerspective.matrix[0][0] = gl_fpfromf(cotangent / aspect);
 //  context->matrixPerspective.matrix[1][1] = gl_fpfromf(cotangent);
 //  context->matrixPerspective.matrix[2][2] = gl_fpfromf(-(zFar + zNear) / deltaZ);

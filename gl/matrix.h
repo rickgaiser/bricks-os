@@ -14,11 +14,50 @@
 #define m_fpdiv(i1,i2) fpdiv32(MATRIX_PRECISION,i1,i2)
 
 
-class CMatrix
+//---------------------------------------------------------------------------
+class CMatrixF
 {
 public:
-  CMatrix();
-  virtual ~CMatrix();
+  CMatrixF();
+  virtual ~CMatrixF();
+
+  void clear();
+  void loadIdentity();
+
+  void translate(GLfloat x, GLfloat y, GLfloat z);
+  void translate(GLfloat * vec);
+
+  void scale    (GLfloat x, GLfloat y, GLfloat z);
+  void scale    (GLfloat * vec);
+
+  void rotate   (GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
+  void rotate   (GLfloat * angles);
+
+  void transform(const GLfloat * from, GLfloat * to);
+
+  CMatrixF   operator* (const CMatrixF & m);
+  CMatrixF & operator*=(const CMatrixF & m);
+
+public:
+  GLfloat matrix[4][4];
+  // [ROW][COLUMN]
+  // 00, 01, 02, 03
+  // 10, 11, 12, 13
+  // 20, 21, 22, 23
+  // 30, 31, 32, 33
+
+private:
+  static bool bInitialized_;
+  static GLfloat fpSin_[360];
+  static GLfloat fpCos_[360];
+};
+
+//---------------------------------------------------------------------------
+class CMatrixFx
+{
+public:
+  CMatrixFx();
+  virtual ~CMatrixFx();
 
   void clear();
   void loadIdentity();
@@ -34,8 +73,8 @@ public:
 
   void transform(const GLfixed * from, GLfixed * to);
 
-  CMatrix   operator* (const CMatrix & m);
-  CMatrix & operator*=(const CMatrix & m);
+  CMatrixFx   operator* (const CMatrixFx & m);
+  CMatrixFx & operator*=(const CMatrixFx & m);
 
 public:
   GLfixed matrix[4][4];

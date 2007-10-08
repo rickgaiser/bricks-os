@@ -15,7 +15,184 @@ typedef unsigned int wint_t;
 
 
 //-----------------------------------------------------------------------------
-CContext::CContext()
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+{
+  glClearColorx(gl_fpfromf(red), gl_fpfromf(green), gl_fpfromf(blue), gl_fpfromf(alpha));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glClearDepthf(GLclampf depth)
+{
+  glClearDepthx(gl_fpfromf(depth));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
+{
+  glColor4x(gl_fpfromf(red), gl_fpfromf(green), gl_fpfromf(blue), gl_fpfromf(alpha));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glFogf(GLenum pname, GLfloat param)
+{
+  glFogx(pname, gl_fpfromf(param));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glFogfv(GLenum pname, const GLfloat * params)
+{
+  GLfixed xparams[] = {gl_fpfromf(params[0])
+                     , gl_fpfromf(params[1])
+                     , gl_fpfromf(params[2])
+                     , gl_fpfromf(params[3])};
+
+  glFogxv(pname, xparams);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glLightf(GLenum light, GLenum pname, GLfloat param)
+{
+  glLightx(light, pname, gl_fpfromf(param));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
+{
+  GLfixed xparams[] = {gl_fpfromf(params[0])
+                     , gl_fpfromf(params[1])
+                     , gl_fpfromf(params[2])
+                     , gl_fpfromf(params[3])};
+
+  glLightxv(light, pname, xparams);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
+{
+  glNormal3x(gl_fpfromf(nx), gl_fpfromf(ny), gl_fpfromf(nz));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
+{
+  glRotatex(gl_fpfromf(angle), gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glScalef(GLfloat x, GLfloat y, GLfloat z)
+{
+  glScalex(gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
+{
+  glTranslatex(gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
+{
+  glClearColor(gl_fptof(red), gl_fptof(green), gl_fptof(blue), gl_fptof(alpha));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glClearDepthx(GLclampx depth)
+{
+  glClearDepthf(gl_fptof(depth));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
+{
+  glColor4f(gl_fptof(red), gl_fptof(green), gl_fptof(blue), gl_fptof(alpha));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glFogx(GLenum pname, GLfixed param)
+{
+  glFogf(pname, gl_fptof(param));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glFogxv(GLenum pname, const GLfixed *params)
+{
+  GLfloat fparams[] = {gl_fptof(params[0])
+                     , gl_fptof(params[1])
+                     , gl_fptof(params[2])
+                     , gl_fptof(params[3])};
+
+  glFogfv(pname, fparams);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glLightx(GLenum light, GLenum pname, GLfixed param)
+{
+  glLightf(light, pname, gl_fptof(param));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
+{
+  GLfloat fparams[] = {gl_fptof(params[0])
+                     , gl_fptof(params[1])
+                     , gl_fptof(params[2])
+                     , gl_fptof(params[3])};
+
+  glLightfv(light, pname, fparams);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
+{
+  glNormal3f(gl_fptof(nx), gl_fptof(ny), gl_fptof(nz));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
+{
+  glRotatef(gl_fptof(angle), gl_fptof(x), gl_fptof(y), gl_fptof(z));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glScalex(GLfixed x, GLfixed y, GLfixed z)
+{
+  glScalef(gl_fptof(x), gl_fptof(y), gl_fptof(z));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
+{
+  glTranslatef(gl_fptof(x), gl_fptof(y), gl_fptof(z));
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+CGLESFxContext::CGLESFxContext()
  : renderSurface(0)
  , zbuffer(0)
  , shadingModel_(GL_FLAT)
@@ -74,106 +251,27 @@ CContext::CContext()
 }
 
 //-----------------------------------------------------------------------------
-CContext::~CContext()
+CGLESFxContext::~CGLESFxContext()
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::setSurface(CSurface * surface)
+CGLESFxContext::setSurface(CSurface * surface)
 {
   renderSurface = surface;
 }
 
 //-----------------------------------------------------------------------------
 CSurface *
-CContext::getSurface()
+CGLESFxContext::getSurface()
 {
   return renderSurface;
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
-{
-  glClearColorx(gl_fpfromf(red), gl_fpfromf(green), gl_fpfromf(blue), gl_fpfromf(alpha));
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glClearDepthf(GLclampf depth)
-{
-  glClearDepthx(gl_fpfromf(depth));
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
-{
-  glColor4x(gl_fpfromf(red), gl_fpfromf(green), gl_fpfromf(blue), gl_fpfromf(alpha));
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glFogf(GLenum pname, GLfloat param)
-{
-  glFogx(pname, gl_fpfromf(param));
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glFogfv(GLenum pname, const GLfloat * params)
-{
-  GLfixed xparams[] = {gl_fpfromf(params[0])
-                     , gl_fpfromf(params[1])
-                     , gl_fpfromf(params[2])
-                     , gl_fpfromf(params[3])};
-
-  glFogxv(pname, xparams);
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glLightf(GLenum light, GLenum pname, GLfloat param)
-{
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
-{
-  GLfixed xparams[] = {gl_fpfromf(params[0])
-                     , gl_fpfromf(params[1])
-                     , gl_fpfromf(params[2])
-                     , gl_fpfromf(params[3])};
-
-  glLightxv(light, pname, xparams);
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
-{
-  glRotatex(gl_fpfromf(angle), gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glScalef(GLfloat x, GLfloat y, GLfloat z)
-{
-  glScalex(gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
-{
-  glTranslatex(gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glClear(GLbitfield mask)
+CGLESFxContext::glClear(GLbitfield mask)
 {
   unsigned short color(fpRGB(clClear.r, clClear.g, clClear.b));
   long iCount(viewportByteCount >> 1);
@@ -186,7 +284,7 @@ CContext::glClear(GLbitfield mask)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
+CGLESFxContext::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
   clClear.r = red;
   clClear.g = green;
@@ -196,14 +294,14 @@ CContext::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx al
 
 //-----------------------------------------------------------------------------
 void
-CContext::glClearDepthx(GLclampx depth)
+CGLESFxContext::glClearDepthx(GLclampx depth)
 {
   depthClear_ = gl_fpmul(ZBUFFER_MAX_DEPTH, depth);
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
+CGLESFxContext::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 {
   clCurrent.r = gl_fpfromi(red  ) / 255;
   clCurrent.g = gl_fpfromi(green) / 255;
@@ -213,7 +311,7 @@ CContext::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
+CGLESFxContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 {
   clCurrent.r = red;
   clCurrent.g = green;
@@ -223,14 +321,7 @@ CContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
-{
-  glNormal3x(gl_fpfromf(nx), gl_fpfromf(ny), gl_fpfromf(nz));
-}
-
-//-----------------------------------------------------------------------------
-void
-CContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
+CGLESFxContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 {
   normal_[0] = nx;
   normal_[1] = ny;
@@ -245,7 +336,7 @@ CContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
+CGLESFxContext::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 {
   bufNormal_.size    = 0;
   bufNormal_.type    = type;
@@ -255,7 +346,7 @@ CContext::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+CGLESFxContext::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
   bufColor_.size    = size;
   bufColor_.type    = type;
@@ -265,21 +356,21 @@ CContext::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *
 
 //-----------------------------------------------------------------------------
 void
-CContext::glCullFace(GLenum mode)
+CGLESFxContext::glCullFace(GLenum mode)
 {
   cullFaceMode_ = mode;
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::glDepthFunc(GLenum func)
+CGLESFxContext::glDepthFunc(GLenum func)
 {
   depthFunction_ = func;
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::glDisable(GLenum cap)
+CGLESFxContext::glDisable(GLenum cap)
 {
   switch(cap)
   {
@@ -304,7 +395,7 @@ CContext::glDisable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glDisableClientState(GLenum array)
+CGLESFxContext::glDisableClientState(GLenum array)
 {
   switch(array)
   {
@@ -319,7 +410,7 @@ CContext::glDisableClientState(GLenum array)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
+CGLESFxContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
   if(bBufVertexEnabled_ == false)
     return;
@@ -535,7 +626,7 @@ CContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glEnable(GLenum cap)
+CGLESFxContext::glEnable(GLenum cap)
 {
   switch(cap)
   {
@@ -560,7 +651,7 @@ CContext::glEnable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glEnableClientState(GLenum array)
+CGLESFxContext::glEnableClientState(GLenum array)
 {
   switch(array)
   {
@@ -575,13 +666,13 @@ CContext::glEnableClientState(GLenum array)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glFlush(void)
+CGLESFxContext::glFlush(void)
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::glFogx(GLenum pname, GLfixed param)
+CGLESFxContext::glFogx(GLenum pname, GLfixed param)
 {
   switch(pname)
   {
@@ -601,7 +692,7 @@ CContext::glFogx(GLenum pname, GLfixed param)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glFogxv(GLenum pname, const GLfixed * params)
+CGLESFxContext::glFogxv(GLenum pname, const GLfixed * params)
 {
   switch(pname)
   {
@@ -616,13 +707,13 @@ CContext::glFogxv(GLenum pname, const GLfixed * params)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glLightx(GLenum light, GLenum pname, GLfixed param)
+CGLESFxContext::glLightx(GLenum light, GLenum pname, GLfixed param)
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
+CGLESFxContext::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
 {
   SLight * pLight = 0;
   switch(light)
@@ -657,7 +748,7 @@ CContext::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glLoadIdentity()
+CGLESFxContext::glLoadIdentity()
 {
   pCurrentMatrix_->loadIdentity();
   // FIXME
@@ -666,7 +757,7 @@ CContext::glLoadIdentity()
 
 //-----------------------------------------------------------------------------
 void
-CContext::glMatrixMode(GLenum mode)
+CGLESFxContext::glMatrixMode(GLenum mode)
 {
   matrixMode_ = mode;
 
@@ -683,7 +774,7 @@ CContext::glMatrixMode(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
+CGLESFxContext::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
   pCurrentMatrix_->rotate(angle, x, y, z);
   // FIXME
@@ -692,28 +783,28 @@ CContext::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 
 //-----------------------------------------------------------------------------
 void
-CContext::glScalex(GLfixed x, GLfixed y, GLfixed z)
+CGLESFxContext::glScalex(GLfixed x, GLfixed y, GLfixed z)
 {
   pCurrentMatrix_->scale(x, y, z);
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::glShadeModel(GLenum mode)
+CGLESFxContext::glShadeModel(GLenum mode)
 {
   shadingModel_ = mode;
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
+CGLESFxContext::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
   pCurrentMatrix_->translate(x, y, -z);
 }
 
 //-----------------------------------------------------------------------------
 void
-CContext::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+CGLESFxContext::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
   bufVertex_.size    = size;
   bufVertex_.type    = type;
@@ -723,7 +814,7 @@ CContext::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid 
 
 //-----------------------------------------------------------------------------
 void
-CContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
+CGLESFxContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
   if(zbuffer)
     delete zbuffer;
@@ -768,7 +859,7 @@ validDepth(GLfixed z, GLfixed zbuf, GLenum zfunc)
 //-----------------------------------------------------------------------------
 // Horizontal Line Fill, flat colors
 void
-CContext::hline(CEdge & from, CEdge & to, GLint & y, SColorFx c)
+CGLESFxContext::hline(CEdge & from, CEdge & to, GLint & y, SColorFx c)
 {
   if(from.x_[y] < to.x_[y])
   {
@@ -809,7 +900,7 @@ CContext::hline(CEdge & from, CEdge & to, GLint & y, SColorFx c)
 //-----------------------------------------------------------------------------
 // Horizontal Line Fill, smooth colors
 void
-CContext::hline_s(CEdge & from, CEdge & to, GLint & y)
+CGLESFxContext::hline_s(CEdge & from, CEdge & to, GLint & y)
 {
   if(from.x_[y] < to.x_[y])
   {
@@ -858,7 +949,7 @@ CContext::hline_s(CEdge & from, CEdge & to, GLint & y)
 
 //-----------------------------------------------------------------------------
 void
-CContext::plotPoly(SPolygon & poly)
+CGLESFxContext::plotPoly(SPolygon & poly)
 {
   for(int i(0); i < 3; i++)
   {

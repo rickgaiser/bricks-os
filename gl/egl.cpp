@@ -43,7 +43,7 @@ public:
   CEGLContext() : pGLESContext_(0){}
   virtual ~CEGLContext(){}
 
-  CContext * pGLESContext_;
+  IGLESContext * pGLESContext_;
 };
 
 class CEGLThread
@@ -257,7 +257,7 @@ EGLAPI EGLContext
 EGLAPIENTRY eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint * attrib_list)
 {
   CEGLContext * pNewContext  = new CEGLContext;
-  pNewContext->pGLESContext_ = new CContext;
+  pNewContext->pGLESContext_ = new CGLESFxContext;
 
   EGL_RETURN(EGL_SUCCESS, (EGLContext)pNewContext);
 }
@@ -278,7 +278,7 @@ EGLAPIENTRY eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGL
   thread->pContext_ = (CEGLContext *)ctx;
   thread->pSurface_ = (CEGLSurface *)draw;
 
-  thread->pContext_->pGLESContext_->setSurface(thread->pSurface_->pNativeSurface_);
+  ((CGLESFxContext *)thread->pContext_->pGLESContext_)->setSurface(thread->pSurface_->pNativeSurface_);
 
   EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
 }
