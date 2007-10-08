@@ -29,17 +29,17 @@ typedef struct
 
 vmode_t vmodes[] =
 {
-   {PAL, 256, 256, 0, 32, 10}  // PAL_256_512_32
+   {PAL, 256, 256, 0, 32, 10}  // PAL_256_256_32
   ,{PAL, 320, 256, 0, 32, 8}   // PAL_320_256_32
   ,{PAL, 384, 256, 0, 32, 7}   // PAL_384_256_32
   ,{PAL, 512, 256, 0, 32, 5}   // PAL_512_256_32
   ,{PAL, 640, 256, 0, 32, 4}   // PAL_640_256_32
 
-  ,{NTSC, 256, 224, 0, 32, 10} // PAL_256_512_32
-  ,{NTSC, 320, 224, 0, 32, 8}  // PAL_320_256_32
-  ,{NTSC, 384, 224, 0, 32, 7}  // PAL_384_256_32
-  ,{NTSC, 512, 224, 0, 32, 5}  // PAL_512_256_32
-  ,{NTSC, 640, 224, 0, 32, 4}  // PAL_640_256_32
+  ,{NTSC, 256, 224, 0, 32, 10} // NTSC_256_224_32
+  ,{NTSC, 320, 224, 0, 32, 8}  // NTSC_320_224_32
+  ,{NTSC, 384, 224, 0, 32, 7}  // NTSC_384_224_32
+  ,{NTSC, 512, 224, 0, 32, 5}  // NTSC_512_224_32
+  ,{NTSC, 640, 224, 0, 32, 4}  // NTSC_640_224_32
 };
 
 //---------------------------------------------------------------------------
@@ -83,30 +83,6 @@ CPS2Surface::CPS2Surface()
  , iCurrentX_(0)
  , iCurrentY_(0)
 {
-//  setMode(PAL_256_256_32);
-//  setMode(PAL_320_256_32);
-//  setMode(PAL_384_256_32);
-  setMode(PAL_512_256_32);
-//  setMode(PAL_640_256_32);
-
-  // Clear frame 0
-  g2_set_active_frame(0);
-  setFillColor(0, 0, 0);
-  fillRect(0, 0, width_, height_);
-
-  // Show frame 0
-  g2_set_visible_frame(0);
-
-  // Clear frame 1
-//  g2_set_active_frame(1);
-//  setFillColor(0, 0, 0);
-//  fillRect(0, 0, width_, height_);
-
-  // Set font
-  g2_set_font(courier_new, 256, 128, fixed_tc);
-  g2_set_font_spacing(0);
-  g2_set_font_mag(1);
-
   for(int y(0); y < TEXT_HEIGHT; y++)
     pBuffer_[y][0] = 0;
 }
@@ -114,6 +90,7 @@ CPS2Surface::CPS2Surface()
 //---------------------------------------------------------------------------
 CPS2Surface::~CPS2Surface()
 {
+  delete (uint32_t *)pBack;
   GS_RESET();
 }
 
@@ -136,7 +113,9 @@ CPS2Surface::write(const void * data, size_t size, loff_t *)
           iCurrentY_ = TEXT_HEIGHT - 1;
           for(int y(0); y < TEXT_HEIGHT-1; y++)
             strcpy(pBuffer_[y], pBuffer_[y+1]);
+          pBuffer_[iCurrentY_][0] = 0;
         }
+        break;
       }
       default:
       {
@@ -145,11 +124,11 @@ CPS2Surface::write(const void * data, size_t size, loff_t *)
           pBuffer_[iCurrentY_][iCurrentX_] = *((const char *)data);
           iCurrentX_++;
           pBuffer_[iCurrentY_][iCurrentX_] = 0;
-          ((const char *)data)++;
-          size--;
         }
       }
     };
+    ((const char *)data)++;
+    size--;
   }
 
   // Clear screen
@@ -260,14 +239,16 @@ CPS2Surface::drawRect(int x, int y, unsigned int width, unsigned int height)
 void
 CPS2Surface::swap(bool sync)
 {
-//  if(pBack != 0)
-//  {
+  if(pBack != 0)
+  {
     if(sync == true)
       waitVSync();
 
-    g2_set_visible_frame(1 - g2_get_visible_frame());
-    g2_set_active_frame(1 - g2_get_active_frame());
-//  }
+      g2_put_image(0, 0, width_, height_, (uint32_t *)pBack);
+
+//    g2_set_visible_frame(1 - g2_get_visible_frame());
+//    g2_set_active_frame(1 - g2_get_active_frame());
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -752,7 +733,16 @@ CPS2VideoDevice::listModes(const SVideoMode ** modes, int * modeCount)
 {
   static const SVideoMode videoModes[] =
   {
-    {512, 256, 32, 4, cfA8B8G8R8}
+     {256, 256, 32, 4, cfA8B8G8R8}
+    ,{320, 256, 32, 4, cfA8B8G8R8}
+    ,{384, 256, 32, 4, cfA8B8G8R8}
+    ,{512, 256, 32, 4, cfA8B8G8R8}
+    ,{640, 256, 32, 4, cfA8B8G8R8}
+    ,{256, 224, 32, 4, cfA8B8G8R8}
+    ,{320, 224, 32, 4, cfA8B8G8R8}
+    ,{384, 224, 32, 4, cfA8B8G8R8}
+    ,{512, 224, 32, 4, cfA8B8G8R8}
+    ,{640, 224, 32, 4, cfA8B8G8R8}
   };
   static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
@@ -771,57 +761,49 @@ void
 CPS2VideoDevice::setMode(const SVideoMode * mode)
 {
   pCurrentMode_ = mode;
-/*
-  dma_initialize();
-  graph_initialize();
-  graph_set_mode(GRAPH_MODE_AUTO, GRAPH_PSM_16, GRAPH_PSM_16); // 640x512
-  // Set the display buffer.
-  graph_set_displaybuffer(0);
-  // Set the draw buffer.
-  graph_set_drawbuffer(0);
-  // Set the zbuffer.
-  graph_set_zbuffer(graph_get_width() * graph_get_height() * (graph_get_bpp() >> 3));
-  // Clear the screen.
-  graph_set_clearbuffer(0, 64, 0);
-*/
 }
 
 //---------------------------------------------------------------------------
 void
 CPS2VideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble)
 {
-  CSurface * pSurface = new CPS2Surface;
-/*
+  CPS2Surface * pSurface = 0;
+
   switch(type)
   {
     case stSCREEN:
     {
-      pSurface->pBack  = new pixel_t[640*512];
-      pSurface->width  = pCurrentMode_->xres;
-      pSurface->height = pCurrentMode_->yres;
-      pSurface->format = cfX1R5G5B5;
-      pSurface->pFront = pSurface->pBack;  // Fail safe?
-      pSurface->p      = pSurface->pBack;
-      pSurface->key    = false;
-      pSurface->clKey  = 0;
-      break;
-    }
-    case stOFFSCREEN:
-    {
-      pSurface->width  = 0;
-      pSurface->height = 0;
-      pSurface->format = cfX1R5G5B5;
-      pSurface->p      = 0;
-      pSurface->key    = false;
-      pSurface->clKey  = 0;
-      break;
+      for(int i(0); i < 10; i++)
+      {
+        if((pCurrentMode_->xres == vmodes[i].width) && (pCurrentMode_->yres == vmodes[i].height))
+        {
+          pSurface = new CPS2Surface;
+          pSurface->setMode((g2_video_mode)i);
+          pSurface->format_= pCurrentMode_->format;
+          pSurface->pBack  = new uint32_t[pCurrentMode_->xres * pCurrentMode_->yres];
+          pSurface->pFront = pSurface->pBack;  // Fail safe?
+          pSurface->p      = pSurface->pBack;
+
+          // Set active/Visible frame
+          pSurface->g2_set_active_frame(0);
+          pSurface->g2_set_visible_frame(0);
+
+          // Clear screen
+          pSurface->setFillColor(0, 0, 0);
+          pSurface->fill();
+
+          // Set font
+          pSurface->g2_set_font(courier_new, 256, 128, fixed_tc);
+          pSurface->g2_set_font_spacing(0);
+          pSurface->g2_set_font_mag(1);
+
+          break;
+        }
+      }
     }
     default:
-    {
-      delete pSurface;
-      pSurface = 0;
-    }
+      ;
   };
-*/
+
   *surface = pSurface;
 }

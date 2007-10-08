@@ -26,12 +26,15 @@ typedef enum
   ,NTSC_640_224_32
 } g2_video_mode;
 
+class CPS2VideoDevice;
 //---------------------------------------------------------------------------
 class CPS2Surface
  : public CSurface
  , public IFileIO
 {
 public:
+  friend class CPS2VideoDevice;
+
   CPS2Surface();
   virtual ~CPS2Surface();
 
