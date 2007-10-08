@@ -20,6 +20,32 @@
 }
 
 //---------------------------------------------------------------------------
+#define VISIBLE_POINT(x,y) ((x >= 0) && (x < (int)width_) && (y >= 0) && (y < (int)height_))
+
+//---------------------------------------------------------------------------
+#define VISIBLE_RECT(x,y,w,h) ((x < (int)width_) && ((x+w) >= 0) && (y < (int)height_) && ((y+h) >= 0))
+
+//---------------------------------------------------------------------------
+#define CLIP_POINT(x,y) \
+{ \
+  if(x < 0) x = 0; \
+  if(y < 0) y = 0; \
+  else if((unsigned int)x >= width_)  x = width_ - 1; \
+  else if((unsigned int)y >= height_) y = height_ -1; \
+}
+
+//---------------------------------------------------------------------------
+// Make sure the rect is visible first, using 'VISIBLE(x,y,w,h);'
+// Otherwise this macro makes no sense
+#define CLIP_RECT(x,y,w,h) \
+{ \
+  if(x < 0) {x = 0; width -= x;} \
+  if(y < 0) {y = 0; height -= y;} \
+  if((x+w) > width_) {w = width_ - x;} \
+  if((y+h) > height_) {h = height_ - y;} \
+}
+
+//---------------------------------------------------------------------------
 CVideoManager videoManager;
 
 const SColorFormatOperations colorFormatOps[] =
@@ -106,6 +132,14 @@ CSurface::setFillColor(uint8_t r, uint8_t g, uint8_t b)
 void
 CSurface::setPixel(int x, int y)
 {
+  if(VISIBLE_POINT(x, y))
+    setPixel_i(x, y);
+}
+
+//---------------------------------------------------------------------------
+void
+CSurface::setPixel_i(int x, int y)
+{
   SET_PIXEL(x, y, fmtColor_);
 }
 
@@ -113,16 +147,27 @@ CSurface::setPixel(int x, int y)
 void
 CSurface::fill()
 {
-  fillRect(0, 0, width_, height_);
+  fillRect_i(0, 0, width_, height_);
 }
 
 //---------------------------------------------------------------------------
 void
-CSurface::fillRect(int x, int y, int width, int height)
+CSurface::fillRect(int x, int y, unsigned int width, unsigned int height)
 {
-  for(int iY(y); iY < (y + height); iY++)
+  if(VISIBLE_RECT(x, y, width, height))
   {
-    for(int iX(x); iX < (x + width); iX++)
+    CLIP_RECT(x, y, width, height);
+    fillRect_i(x, y, width, height);
+  }
+}
+
+//---------------------------------------------------------------------------
+void
+CSurface::fillRect_i(int x, int y, unsigned int width, unsigned int height)
+{
+  for(unsigned int iY(y); iY < (y + height); iY++)
+  {
+    for(unsigned int iX(x); iX < (x + width); iX++)
       SET_PIXEL(iX, iY, fmtFillColor_);
   }
 }
@@ -131,25 +176,29 @@ CSurface::fillRect(int x, int y, int width, int height)
 void
 CSurface::drawLine(int x1, int y1, int x2, int y2)
 {
+  // FIXME: Are we visible?
+  CLIP_POINT(x1, y1);
+  CLIP_POINT(x2, y2);
+
+  // order: Smallest x first
+  if(x1 <= x2)
+    drawLine_i(x1, y1, x2, y2);
+  else
+    drawLine_i(x1, y1, x2, y2);
+}
+
+//---------------------------------------------------------------------------
+void
+CSurface::drawLine_i(int x1, int y1, int x2, int y2)
+{
   if(abs(x2 - x1) >= abs(y2 - y1))
   {
     float currenty = y1;
     float slopey = (float)(y2 - y1) / (float)(x2 - x1);
-    if(x1 < x2)
+    for(int x(x1); x <= x2; x++)
     {
-      for(int x(x1); x <= x2; x++)
-      {
-        SET_PIXEL(x, (int)currenty, fmtColor_);
-        currenty += slopey;
-      }
-    }
-    else
-    {
-      for(int x(x2); x <= x1; x++)
-      {
-        SET_PIXEL(x, (int)currenty, fmtColor_);
-        currenty += slopey;
-      }
+      SET_PIXEL(x, (int)currenty, fmtColor_);
+      currenty += slopey;
     }
   }
   else
@@ -177,7 +226,18 @@ CSurface::drawLine(int x1, int y1, int x2, int y2)
 
 //---------------------------------------------------------------------------
 void
-CSurface::drawRect(int x, int y, int width, int height)
+CSurface::drawRect(int x, int y, unsigned int width, unsigned int height)
+{
+  if(VISIBLE_RECT(x, y, width, height))
+  {
+    CLIP_RECT(x, y, width, height);
+    drawRect_i(x, y, width, height);
+  }
+}
+
+//---------------------------------------------------------------------------
+void
+CSurface::drawRect_i(int x, int y, unsigned int width, unsigned int height)
 {
   drawLine(x,         y,          x + width, y);
   drawLine(x + width, y + 1,      x + width, y + height - 1);

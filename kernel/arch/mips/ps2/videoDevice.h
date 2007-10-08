@@ -40,9 +40,9 @@ public:
 
   virtual void     setPixel(int x, int y);
   virtual void     fill();
-  virtual void     fillRect(int x, int y, int width, int height);
+  virtual void     fillRect(int x, int y, unsigned int width, unsigned int height);
   virtual void     drawLine(int x1, int y1, int x2, int y2);
-  virtual void     drawRect(int x, int y, int width, int height);
+  virtual void     drawRect(int x, int y, unsigned int width, unsigned int height);
 
   // Swap back buffer to front buffer, only if back buffer exists
   virtual void     swap(bool sync = false);

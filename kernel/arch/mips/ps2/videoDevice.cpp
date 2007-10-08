@@ -196,7 +196,7 @@ CPS2Surface::fill()
 
 //---------------------------------------------------------------------------
 void
-CPS2Surface::fillRect(int x, int y, int width, int height)
+CPS2Surface::fillRect(int x, int y, unsigned int width, unsigned int height)
 {
   x += gs_origin_x;
   y += gs_origin_y;
@@ -237,7 +237,7 @@ CPS2Surface::drawLine(int x1, int y1, int x2, int y2)
 
 //---------------------------------------------------------------------------
 void
-CPS2Surface::drawRect(int x, int y, int width, int height)
+CPS2Surface::drawRect(int x, int y, unsigned int width, unsigned int height)
 {
   x += gs_origin_x;
   y += gs_origin_y;

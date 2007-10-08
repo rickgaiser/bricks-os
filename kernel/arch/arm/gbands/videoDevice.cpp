@@ -28,9 +28,9 @@ CGBASurface::fill()
 
 //---------------------------------------------------------------------------
 void
-CGBASurface::fillRect(int x, int y, int width, int height)
+CGBASurface::fillRect_i(int x, int y, unsigned int width, unsigned int height)
 {
-  for(int iY(y); iY < (y + height); iY++)
+  for(unsigned int iY(y); iY < (y + height); iY++)
   {
     dmaFill16(fmtFillColor_ | 0x8000, &((uint16_t *)p)[iY * width_ + x], width);
   }

@@ -16,14 +16,16 @@ public:
 
   // Fill entire surface
   virtual void     fill();
-  // Fill rect on surface
-  virtual void     fillRect(int x, int y, int width, int height);
 
   // Swap back buffer to front buffer, only if back buffer exists
   virtual void     swap(bool sync = false);
 
   // Wait for Vertical Synchronization
   virtual void     waitVSync();
+
+protected:
+  // Fill rect on surface
+  virtual void     fillRect_i(int x, int y, unsigned int width, unsigned int height);
 };
 
 //---------------------------------------------------------------------------

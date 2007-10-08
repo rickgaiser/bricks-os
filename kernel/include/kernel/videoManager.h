@@ -115,9 +115,9 @@ public:
   // Drawing
   virtual void     setPixel(int x, int y);
   virtual void     fill();
-  virtual void     fillRect(int x, int y, int width, int height);
+  virtual void     fillRect(int x, int y, unsigned int width, unsigned int height);
   virtual void     drawLine(int x1, int y1, int x2, int y2);
-  virtual void     drawRect(int x, int y, int width, int height);
+  virtual void     drawRect(int x, int y, unsigned int width, unsigned int height);
   // Copy another surface onto this surface
 //  void copy(int dstx, int dsty, const CSurface & src);
   // Copy part of the surface to another part of the surface
@@ -131,15 +131,22 @@ public:
   // Wait for Vertical Synchronization
   virtual void     waitVSync();
 
+protected:
+  virtual void     setPixel_i(int x, int y);
+  virtual void     fillRect_i(int x, int y, unsigned int width, unsigned int height);
+  virtual void     drawLine_i(int x1, int y1, int x2, int y2);
+  virtual void     drawRect_i(int x, int y, unsigned int width, unsigned int height);
+
 //protected:
+public:
   // Data
   void * p;
   void * pFront;
   void * pBack;
 
   // Geometry
-  uint32_t width_;
-  uint32_t height_;
+  unsigned int width_;
+  unsigned int height_;
 
   // Colors
   SColor color_;
