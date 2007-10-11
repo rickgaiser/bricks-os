@@ -13,12 +13,6 @@ extern "C" {
 typedef double         GLdouble;
 
 
-// -------
-// GLU API
-// -------
-void gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar);
-
-
 #ifdef __cplusplus
 }
 #endif

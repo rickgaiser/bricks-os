@@ -1,6 +1,8 @@
 #include "EGL/egl.h"
 #include "context.h"
 #include "stddef.h"
+#include "softGLFx.h"
+#include "softGLF.h"
 
 
 #define EGL_GET_THREAD() \
@@ -258,7 +260,7 @@ EGLAPI EGLContext
 EGLAPIENTRY eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint * attrib_list)
 {
   CEGLContext * pNewContext  = new CEGLContext;
-  pNewContext->pGLESContext_ = new CGLESFxContext;
+  pNewContext->pGLESContext_ = new CSoftGLESFixed;
 
   EGL_RETURN(EGL_SUCCESS, (EGLContext)pNewContext);
 }
@@ -282,12 +284,12 @@ EGLAPIENTRY eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGL
   thread->pContext_ = (CEGLContext *)ctx;
   thread->pSurface_ = (CEGLSurface *)draw;
 
-  if(((CGLESFxContext *)thread->pContext_ != NULL) &&
-     ((CGLESFxContext *)thread->pContext_->pGLESContext_ != NULL) &&
+  if(((CSoftGLESFixed *)thread->pContext_ != NULL) &&
+     ((CSoftGLESFixed *)thread->pContext_->pGLESContext_ != NULL) &&
      (thread->pSurface_ != NULL) &&
      (thread->pSurface_->pNativeSurface_ != NULL))
   {
-    ((CGLESFxContext *)thread->pContext_->pGLESContext_)->setSurface(thread->pSurface_->pNativeSurface_);
+    ((CSoftGLESFixed *)thread->pContext_->pGLESContext_)->setSurface(thread->pSurface_->pNativeSurface_);
   }
 
   EGL_RETURN(EGL_SUCCESS, EGL_TRUE);

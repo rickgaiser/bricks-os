@@ -239,7 +239,7 @@ testGL(CSurface * surface)
   glShadeModel(/*GL_FLAT*/GL_SMOOTH);
   // Viewport & Perspective
   glViewport(0, 0, surface->width(), surface->height());
-  gluPerspective(45.0f, (float)surface->width() / (float)surface->height(), 0.1f, 100.0f);
+  //gluPerspective(45.0f, (float)surface->width() / (float)surface->height(), 0.1f, 100.0f);
   // Lighting
   glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);

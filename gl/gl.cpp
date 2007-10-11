@@ -2,11 +2,7 @@
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 
-#include "fixedPoint.h"
 #include "context.h"
-
-typedef unsigned int wint_t;
-#include <math.h>
 
 
 extern void * eglGetCurrentGLESContext();
@@ -18,89 +14,6 @@ if(context == 0) \
   return RETVAL; \
 }
 
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-CEdge::CEdge(uint32_t height)
- : iHeight_(height)
-{
-  x_ = new GLint[iHeight_];
-  z_ = new GLfixed[iHeight_];
-  c_ = new SColorFx[iHeight_];
-}
-
-//-----------------------------------------------------------------------------
-CEdge::~CEdge()
-{
-  delete x_;
-  delete z_;
-  delete c_;
-}
-
-//-----------------------------------------------------------------------------
-void
-CEdge::add(SVertex * vfrom, SVertex * vto, GLenum shadingModel)
-{
-  if(vto->sy != vfrom->sy)
-  {
-    GLint dy(vto->sy - vfrom->sy);
-
-    GLfixed x(gl_fpfromi(vfrom->sx));
-    GLfixed mx((gl_fpfromi(vto->sx  - vfrom->sx )) / dy);
-
-    GLfixed z(vfrom->v2[2]);
-    GLfixed mz((vto->v2[2] - vfrom->v2[2]) / dy);
-
-    switch(shadingModel)
-    {
-      case GL_FLAT:
-      {
-        int yfrom = (vfrom->sy < 0) ? 0 : (vfrom->sy);
-        int yto   = (vto->sy >= iHeight_) ? (iHeight_ - 1) : (vto->sy);
-        for(int y(yfrom); y < yto; y++)
-        {
-          x_[y] = gl_fptoi(x);
-          z_[y] = z;
-
-          x += mx;
-          z += mz;
-        }
-        break;
-      }
-      case GL_SMOOTH:
-      {
-        GLfixed r(vfrom->c2.r);
-        GLfixed g(vfrom->c2.g);
-        GLfixed b(vfrom->c2.b);
-        GLfixed mr((vto->c2.r - vfrom->c2.r) / dy);
-        GLfixed mg((vto->c2.g - vfrom->c2.g) / dy);
-        GLfixed mb((vto->c2.b - vfrom->c2.b) / dy);
-
-        for(int y(vfrom->sy); y < vto->sy; y++)
-        {
-          if(y >= iHeight_)
-            break;
-
-          if(y >= 0)
-          {
-            x_[y]   = gl_fptoi(x);
-            z_[y]   = z;
-            c_[y].r = r;
-            c_[y].g = g;
-            c_[y].b = b;
-          }
-
-          x += mx;
-          z += mz;
-          r += mr;
-          g += mg;
-          b += mb;
-        }
-      }
-      break;
-    }
-  }
-}
 
 //-----------------------------------------------------------------------------
 // GL API
@@ -221,7 +134,6 @@ GL_API void
 GL_APIENTRY glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 {
   GLES_GET_CONTEXT();
-
   context->glColor4ub(red, green, blue, alpha);
 }
 
@@ -415,36 +327,4 @@ GL_APIENTRY glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
   GLES_GET_CONTEXT();
   context->glViewport(x, y, width, height);
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-// GLU API
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-void
-gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
-{
-  GLES_GET_CONTEXT();
-  CGLESFxContext * pContext = (CGLESFxContext *)context;
-
-  // Calculate field of view scalars
-  pContext->fpFieldofviewYScalar = gl_fpfromf(pContext->viewportHeight / tan(fovy));
-  pContext->fpFieldofviewXScalar = gl_fpmul(pContext->fpFieldofviewYScalar, gl_fpfromf(aspect));
-
-//  GLdouble sine, cotangent, deltaZ;
-//  GLdouble radians = fovy / 2 * M_PI / 180;
-//  deltaZ = zFar - zNear;
-//  sine = sin(radians);
-//  if((deltaZ == 0) || (sine == 0) || (aspect == 0))
-//    return;
-//  cotangent = cos(radians) / sine;
-
-  pContext->matrixPerspective.loadIdentity();
-//  context->matrixPerspective.matrix[0][0] = gl_fpfromf(cotangent / aspect);
-//  context->matrixPerspective.matrix[1][1] = gl_fpfromf(cotangent);
-//  context->matrixPerspective.matrix[2][2] = gl_fpfromf(-(zFar + zNear) / deltaZ);
-//  context->matrixPerspective.matrix[2][3] = gl_fpfromi(-1);
-//  context->matrixPerspective.matrix[3][2] = gl_fpfromf(-2 * zNear * zFar / deltaZ);
-//  context->matrixPerspective.matrix[3][3] = gl_fpfromi(0);
 }

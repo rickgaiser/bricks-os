@@ -28,5 +28,15 @@
 #define fpdiv32(c,a,b)     ((((int64_t)a)<<(c))/(b))
 #define fpmul32to64(c,a,b) (((int64_t)a)*((int64_t)b))
 
+// Macro's for OpenGL (16.16)
+#define FP_PRESICION_GL 16
+#define gl_fpfromi(i)   fpfromi(FP_PRESICION_GL,i)
+#define gl_fptoi(i)     fptoi(FP_PRESICION_GL,i)
+#define gl_fpfromf(i)   fpfromf(FP_PRESICION_GL,i)
+#define gl_fptof(i)     fptof(FP_PRESICION_GL,i)
+#define gl_fpmul(i1,i2) fpmul32(FP_PRESICION_GL,i1,i2)
+#define gl_fpdiv(i1,i2) fpdiv32(FP_PRESICION_GL,i1,i2)
+#define gl_fpclamp(i)   (i < 0 ? 0 : (i > gl_fpfromi(1) ? gl_fpfromi(1) : i))
+
 
 #endif
