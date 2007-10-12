@@ -18,89 +18,6 @@ typedef unsigned int wint_t;
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-CEdgeF::CEdgeF(uint32_t height)
- : iHeight_(height)
-{
-  x_ = new GLint[iHeight_];
-  z_ = new GLfloat[iHeight_];
-  c_ = new SColorF[iHeight_];
-}
-
-//-----------------------------------------------------------------------------
-CEdgeF::~CEdgeF()
-{
-  delete x_;
-  delete z_;
-  delete c_;
-}
-
-//-----------------------------------------------------------------------------
-void
-CEdgeF::add(SVertexF * vfrom, SVertexF * vto, GLenum shadingModel)
-{
-  if(vto->sy != vfrom->sy)
-  {
-    GLfloat dy(vto->sy - vfrom->sy);
-
-    GLfloat x(vfrom->sx);
-    GLfloat mx((vto->sx  - vfrom->sx) / dy);
-
-    GLfloat z(vfrom->v2[2]);
-    GLfloat mz((vto->v2[2] - vfrom->v2[2]) / dy);
-
-    switch(shadingModel)
-    {
-      case GL_FLAT:
-      {
-        int yfrom = (vfrom->sy < 0) ? 0 : (vfrom->sy);
-        int yto   = (vto->sy >= iHeight_) ? (iHeight_ - 1) : (vto->sy);
-        for(int y(yfrom); y < yto; y++)
-        {
-          x_[y] = (GLint)x;
-          z_[y] = z;
-
-          x += mx;
-          z += mz;
-        }
-        break;
-      }
-      case GL_SMOOTH:
-      {
-        GLfloat r(vfrom->c2.r);
-        GLfloat g(vfrom->c2.g);
-        GLfloat b(vfrom->c2.b);
-        GLfloat mr((vto->c2.r - vfrom->c2.r) / dy);
-        GLfloat mg((vto->c2.g - vfrom->c2.g) / dy);
-        GLfloat mb((vto->c2.b - vfrom->c2.b) / dy);
-
-        for(int y(vfrom->sy); y < vto->sy; y++)
-        {
-          if(y >= iHeight_)
-            break;
-
-          if(y >= 0)
-          {
-            x_[y]   = (GLint)x;
-            z_[y]   = z;
-            c_[y].r = r;
-            c_[y].g = g;
-            c_[y].b = b;
-          }
-
-          x += mx;
-          z += mz;
-          r += mr;
-          g += mg;
-          b += mb;
-        }
-      }
-      break;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
 CSoftGLESFloat::CSoftGLESFloat()
  : renderSurface(0)
  , zbuffer(0)
@@ -169,13 +86,6 @@ void
 CSoftGLESFloat::setSurface(CSurface * surface)
 {
   renderSurface = surface;
-}
-
-//-----------------------------------------------------------------------------
-CSurface *
-CSoftGLESFloat::getSurface()
-{
-  return renderSurface;
 }
 
 //-----------------------------------------------------------------------------
@@ -1021,9 +931,36 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
   }
 
   // Create edge lists
-  edge1->add(vlo, vhi, shadingModel_);
-  edge2->add(vlo, vmi, shadingModel_);
-  edge2->add(vmi, vhi, shadingModel_);
+  if(depthTestEnabled_ == true)
+  {
+    if(shadingModel_ == GL_SMOOTH)
+    {
+      edge1->addZC(vlo->sx, vlo->sy, vlo->v2[2], vlo->c2, vhi->sx, vhi->sy, vhi->v2[2], vhi->c2);
+      edge2->addZC(vlo->sx, vlo->sy, vlo->v2[2], vlo->c2, vmi->sx, vmi->sy, vmi->v2[2], vmi->c2);
+      edge2->addZC(vmi->sx, vmi->sy, vmi->v2[2], vmi->c2, vhi->sx, vhi->sy, vhi->v2[2], vhi->c2);
+    }
+    else
+    {
+      edge1->addZ(vlo->sx, vlo->sy, vlo->v2[2], vhi->sx, vhi->sy, vhi->v2[2]);
+      edge2->addZ(vlo->sx, vlo->sy, vlo->v2[2], vmi->sx, vmi->sy, vmi->v2[2]);
+      edge2->addZ(vmi->sx, vmi->sy, vmi->v2[2], vhi->sx, vhi->sy, vhi->v2[2]);
+    }
+  }
+  else
+  {
+    if(shadingModel_ == GL_SMOOTH)
+    {
+      edge1->addC(vlo->sx, vlo->sy, vlo->c2, vhi->sx, vhi->sy, vhi->c2);
+      edge2->addC(vlo->sx, vlo->sy, vlo->c2, vmi->sx, vmi->sy, vmi->c2);
+      edge2->addC(vmi->sx, vmi->sy, vmi->c2, vhi->sx, vhi->sy, vhi->c2);
+    }
+    else
+    {
+      edge1->add(vlo->sx, vlo->sy, vhi->sx, vhi->sy);
+      edge2->add(vlo->sx, vlo->sy, vmi->sx, vmi->sy);
+      edge2->add(vmi->sx, vmi->sy, vhi->sx, vhi->sy);
+    }
+  }
 
   CEdgeF * pEdgeLeft  = edge1;
   CEdgeF * pEdgeRight = edge2;

@@ -5,7 +5,28 @@
 #include "EGL/egl.h"
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
+#include "kernel/videoManager.h"
 
+
+//-----------------------------------------------------------------------------
+typedef union
+{
+  struct
+  {
+    GLfloat r, g, b, a;
+  };
+  GLfloat c[4];
+} SColorF;
+
+//-----------------------------------------------------------------------------
+typedef union
+{
+  struct
+  {
+    GLfixed r, g, b, a;
+  };
+  GLfixed c[4];
+} SColorFx;
 
 //-----------------------------------------------------------------------------
 struct SBufferPointer
@@ -21,6 +42,8 @@ class IGLESContext
 {
 public:
   virtual ~IGLESContext(){}
+
+  virtual void setSurface(CSurface * surface) = 0;
 
 //  virtual void glAlphaFunc(GLenum func, GLclampf ref) = 0;
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) = 0;

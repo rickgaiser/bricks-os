@@ -10,17 +10,8 @@
 
 #include "kernel/videoManager.h"
 #include "matrix.h"
+#include "edge.h"
 
-
-//-----------------------------------------------------------------------------
-typedef union
-{
-  struct
-  {
-    GLfloat r, g, b, a;
-  };
-  GLfloat c[4];
-} SColorF;
 
 //-----------------------------------------------------------------------------
 typedef union
@@ -123,26 +114,6 @@ struct SPolygonF
 };
 
 //-----------------------------------------------------------------------------
-class CEdgeF
-{
-public:
-  CEdgeF(uint32_t height);
-  ~CEdgeF();
-
-  void add(SVertexF * vfrom, SVertexF * vto, GLenum shadingModel);
-
-public:
-  // Edge x
-  GLint * x_;
-  // Edge depth
-  GLfloat * z_;
-  // Edge color
-  SColorF * c_;
-
-  int32_t iHeight_;
-};
-
-//-----------------------------------------------------------------------------
 struct SLightF
 {
   SColorF diffuse;
@@ -159,8 +130,7 @@ public:
   CSoftGLESFloat();
   virtual ~CSoftGLESFloat();
 
-  void setSurface(CSurface * surface);
-  CSurface * getSurface();
+  virtual void setSurface(CSurface * surface);
 
   virtual void glClear(GLbitfield mask);
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);

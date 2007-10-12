@@ -1,6 +1,7 @@
 LIB             =gl
 OBJS            =\
                 context \
+                edge \
                 egl \
                 gl \
                 matrix \

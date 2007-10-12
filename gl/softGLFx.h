@@ -10,18 +10,9 @@
 
 #include "kernel/videoManager.h"
 #include "matrix.h"
+#include "edge.h"
 #include "fixedPoint.h"
 
-
-//-----------------------------------------------------------------------------
-typedef union
-{
-  struct
-  {
-    GLfixed r, g, b, a;
-  };
-  GLfixed c[4];
-} SColorFx;
 
 //-----------------------------------------------------------------------------
 typedef union
@@ -124,26 +115,6 @@ struct SPolygonFx
 };
 
 //-----------------------------------------------------------------------------
-class CEdgeFx
-{
-public:
-  CEdgeFx(uint32_t height);
-  ~CEdgeFx();
-
-  void add(SVertexFx * vfrom, SVertexFx * vto, GLenum shadingModel);
-
-public:
-  // Edge x
-  GLint * x_;
-  // Edge depth
-  GLfixed * z_;
-  // Edge color
-  SColorFx * c_;
-
-  int32_t iHeight_;
-};
-
-//-----------------------------------------------------------------------------
 struct SLightFx
 {
   SColorFx diffuse;
@@ -160,8 +131,7 @@ public:
   CSoftGLESFixed();
   virtual ~CSoftGLESFixed();
 
-  void setSurface(CSurface * surface);
-  CSurface * getSurface();
+  virtual void setSurface(CSurface * surface);
 
   virtual void glClear(GLbitfield mask);
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);

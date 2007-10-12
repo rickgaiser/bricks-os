@@ -43,7 +43,7 @@ public:
 class CEGLContext
 {
 public:
-  CEGLContext() : pGLESContext_(0){}
+  CEGLContext() : pGLESContext_(NULL){}
   virtual ~CEGLContext(){}
 
   IGLESContext * pGLESContext_;
@@ -52,7 +52,7 @@ public:
 class CEGLThread
 {
 public:
-  CEGLThread() : pContext_(0), pSurface_(0){}
+  CEGLThread() : pContext_(NULL), pSurface_(NULL){}
   virtual ~CEGLThread(){}
 
   CEGLContext * pContext_;
@@ -284,12 +284,12 @@ EGLAPIENTRY eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGL
   thread->pContext_ = (CEGLContext *)ctx;
   thread->pSurface_ = (CEGLSurface *)draw;
 
-  if(((CSoftGLESFixed *)thread->pContext_ != NULL) &&
-     ((CSoftGLESFixed *)thread->pContext_->pGLESContext_ != NULL) &&
+  if((thread->pContext_ != NULL) &&
+     (thread->pContext_->pGLESContext_ != NULL) &&
      (thread->pSurface_ != NULL) &&
      (thread->pSurface_->pNativeSurface_ != NULL))
   {
-    ((CSoftGLESFixed *)thread->pContext_->pGLESContext_)->setSurface(thread->pSurface_->pNativeSurface_);
+    thread->pContext_->pGLESContext_->setSurface(thread->pSurface_->pNativeSurface_);
   }
 
   EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
