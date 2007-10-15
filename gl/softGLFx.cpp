@@ -2,7 +2,6 @@
 #include "matrix.h"
 #include "fixedPoint.h"
 
-#include "asm/arch/macros.h"
 #include "stdlib.h"
 typedef unsigned int wint_t;
 #include <math.h>
@@ -97,17 +96,15 @@ CSoftGLESFixed::glClear(GLbitfield mask)
 
   if(mask & GL_COLOR_BUFFER_BIT)
   {
-    unsigned short color(fpRGB(clClear.r, clClear.g, clClear.b));
+    color_t color(fpRGB(clClear.r, clClear.g, clClear.b));
 
     for(int i(0); i < iCount; i++)
       ((uint16_t *)renderSurface->p)[i] = color;
-    //dmaFill16(color, renderSurface->p, iCount);
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
     for(int i(0); i < iCount; i++)
       zbuffer[i] = depthClear_ * 100;
-    //dmaFill32(depthClear_ * 100, zbuffer, iCount);
   }
 }
 
@@ -698,7 +695,7 @@ CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c)
     GLint dx(to.x_[y] - from.x_[y]);
     GLfixed mz((to.z_[y] - from.z_[y]) / dx);
     GLfixed z(from.z_[y]);
-    short color(fpRGB(c.r, c.g, c.b));
+    color_t color(fpRGB(c.r, c.g, c.b));
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -711,18 +708,12 @@ CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c)
         // Depth test pixel
         if(depthTestEnabled_ == true)
         {
-          if(validDepth(z, zbuffer[index], depthFunction_))
-          {
-            zbuffer[index] = z;
-            ((uint16_t *)renderSurface->p)[index] = color;
-          }
+          if(validDepth(z, zbuffer[index], depthFunction_) == false)
+            continue;
+          zbuffer[index] = z;
           z += mz;
         }
-        else
-        {
-          // No depth testing, always put pixel
-          ((uint16_t *)renderSurface->p)[index] = color;
-        }
+        ((uint16_t *)renderSurface->p)[index] = color;
       }
       index++;
     }
@@ -758,18 +749,12 @@ CSoftGLESFixed::hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y)
         // Depth test pixel
         if(depthTestEnabled_ == true)
         {
-          if(validDepth(z, zbuffer[index], depthFunction_))
-          {
-            zbuffer[index] = z;
-            ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
-          }
+          if(validDepth(z, zbuffer[index], depthFunction_) == false)
+            continue;
+          zbuffer[index] = z;
           z += mz;
         }
-        else
-        {
-          // No depth testing, always put pixel
-          ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
-        }
+        ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
       }
       r += mr;
       g += mg;
@@ -903,6 +888,13 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
     }
   }
 
+  rasterPoly(poly);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFixed::rasterPoly(SPolygonFx & poly)
+{
   // Bubble sort the 3 vertexes
   SVertexFx * vtemp;
   SVertexFx * vhi(poly.v[0]);

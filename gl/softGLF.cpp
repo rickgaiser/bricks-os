@@ -2,7 +2,6 @@
 #include "matrix.h"
 #include "fixedPoint.h"
 
-#include "asm/arch/macros.h"
 #include "stdlib.h"
 typedef unsigned int wint_t;
 #include <math.h>
@@ -10,10 +9,6 @@ typedef unsigned int wint_t;
 
 #define SCREENX(v) ((int)((v[0] * fpFieldofviewXScalar) / -v[2]) + (viewportWidth  >> 1))
 #define SCREENY(v) ((int)((v[1] * fpFieldofviewYScalar) / -v[2]) + (viewportHeight >> 1))
-#define fpRGB(r,g,b) (0x8000 | \
-                      (((unsigned int)(b*255) << 7) & 0x7c00) | \
-                      (((unsigned int)(g*255) << 2) & 0x03e0) | \
-                      (((unsigned int)(r*255) >> 3) & 0x001f))
 
 
 //-----------------------------------------------------------------------------
@@ -96,17 +91,15 @@ CSoftGLESFloat::glClear(GLbitfield mask)
 
   if(mask & GL_COLOR_BUFFER_BIT)
   {
-    unsigned short color(fpRGB(clClear.r, clClear.g, clClear.b));
+    color_t color = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(clClear.r * 255), (uint8_t)(clClear.g * 255), (uint8_t)(clClear.b * 255), 255);
 
     for(int i(0); i < iCount; i++)
-      ((uint16_t *)renderSurface->p)[i] = color;
-    //dmaFill16(color, renderSurface->p, iCount);
+      ((uint32_t *)renderSurface->p)[i] = color;
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
     for(int i(0); i < iCount; i++)
       zbuffer[i] = depthClear_ * 100.0f;
-    //dmaFill32(depthClear_ * 100.0f, zbuffer, iCount);
   }
 }
 
@@ -697,7 +690,7 @@ CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c)
     GLint dx(to.x_[y] - from.x_[y]);
     GLfloat mz((to.z_[y] - from.z_[y]) / dx);
     GLfloat z(from.z_[y]);
-    short color(fpRGB(c.r, c.g, c.b));
+    color_t color = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255), 255);
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -710,18 +703,12 @@ CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c)
         // Depth test pixel
         if(depthTestEnabled_ == true)
         {
-          if(validDepth(z, zbuffer[index], depthFunction_))
-          {
-            zbuffer[index] = z;
-            ((uint16_t *)renderSurface->p)[index] = color;
-          }
+          if(validDepth(z, zbuffer[index], depthFunction_) == false)
+            continue;
+          zbuffer[index] = z;
           z += mz;
         }
-        else
-        {
-          // No depth testing, always put pixel
-          ((uint16_t *)renderSurface->p)[index] = color;
-        }
+        ((uint32_t *)renderSurface->p)[index] = color;
       }
       index++;
     }
@@ -757,18 +744,12 @@ CSoftGLESFloat::hline_s(CEdgeF & from, CEdgeF & to, GLint & y)
         // Depth test pixel
         if(depthTestEnabled_ == true)
         {
-          if(validDepth(z, zbuffer[index], depthFunction_))
-          {
-            zbuffer[index] = z;
-            ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
-          }
+          if(validDepth(z, zbuffer[index], depthFunction_) == false)
+            continue;
+          zbuffer[index] = z;
           z += mz;
         }
-        else
-        {
-          // No depth testing, always put pixel
-          ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
-        }
+        ((uint32_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), 255);
       }
       r += mr;
       g += mg;
@@ -902,6 +883,13 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
     }
   }
 
+  rasterPoly(poly);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterPoly(SPolygonF & poly)
+{
   // Bubble sort the 3 vertexes
   SVertexF * vtemp;
   SVertexF * vhi(poly.v[0]);

@@ -162,12 +162,13 @@ public:
   virtual void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
-private:
-  void hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c);
-  void hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y);
-  void plotPoly(SPolygonFx & poly);
+protected:
+  virtual void hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c);
+  virtual void hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y);
+  virtual void plotPoly(SPolygonFx & poly);
+  virtual void rasterPoly(SPolygonFx & poly);
 
-private:
+protected:
   CSurface  * renderSurface;
   GLfixed   * zbuffer;
 

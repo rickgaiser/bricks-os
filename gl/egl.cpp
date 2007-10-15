@@ -5,6 +5,9 @@
 #include "softGLF.h"
 
 
+extern IGLESContext * getGLESContext();
+
+
 #define EGL_GET_THREAD() \
 CEGLThread * thread = &cThread; \
 
@@ -260,7 +263,7 @@ EGLAPI EGLContext
 EGLAPIENTRY eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint * attrib_list)
 {
   CEGLContext * pNewContext  = new CEGLContext;
-  pNewContext->pGLESContext_ = new CSoftGLESFixed;
+  pNewContext->pGLESContext_ = getGLESContext();
 
   EGL_RETURN(EGL_SUCCESS, (EGLContext)pNewContext);
 }

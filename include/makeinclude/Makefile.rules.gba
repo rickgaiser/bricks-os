@@ -8,7 +8,6 @@ MY_LIBS_PATH    +=\
 #----------------------------------------------------------------------------
 CROSS_COMPILE   =arm-eabi-
 CFLAGS          +=\
-                -nostdinc \
                 -mcpu=arm7tdmi \
                 -mtune=arm7tdmi \
                 -fomit-frame-pointer \
@@ -18,7 +17,6 @@ CFLAGS          +=\
                 -DGBA \
 
 CXXFLAGS        +=\
-                -nostdinc \
                 -mcpu=arm7tdmi \
                 -mtune=arm7tdmi \
                 -fomit-frame-pointer \
