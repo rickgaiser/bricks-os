@@ -65,8 +65,8 @@ static uint8_t    g2_visible_frame;             // Identifies the frame buffer t
 static uint8_t    g2_active_frame;              // Identifies the frame buffer to direct drawing to
 
 static uint32_t   gs_mem_current;               // points to current GS memory allocation point
-static uint16_t   gs_origin_x;                  // used for mapping Primitive to Window coordinate systems
-static uint16_t   gs_origin_y;
+ uint16_t   gs_origin_x;                  // used for mapping Primitive to Window coordinate systems
+ uint16_t   gs_origin_y;
 
 //---------------------------------------------------------------------------
 DECLARE_GS_PACKET(gs_dma_buf,50);
@@ -153,14 +153,10 @@ CPS2Surface::setPixel(int x, int y)
   y += gs_origin_y;
 
   BEGIN_GS_PACKET(gs_dma_buf);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
-  GIF_TAG_AD(gs_dma_buf, 4, 1, 0, 0, 0);
   GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
   GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  // The XYZ coordinates are actually floating point numbers between
-  // 0 and 4096 represented as unsigned integers where the lowest order
-  // four bits are the fractional point. That's why all coordinates are
-  // shifted left 4 bits.
   GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x<<4, y<<4, 0));
 
   SEND_GS_PACKET(gs_dma_buf);
@@ -181,14 +177,11 @@ CPS2Surface::fillRect(int x, int y, unsigned int width, unsigned int height)
   y += gs_origin_y;
 
   BEGIN_GS_PACKET(gs_dma_buf);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
-  GIF_TAG_AD(gs_dma_buf, 4, 1, 0, 0, 0);
   GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
   GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(fillColor_.r, fillColor_.g, fillColor_.b, 0x80, 0));
   GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x<<4, y<<4, 0));
-  // It looks like the default operation for the SPRITE primitive is to
-  // not draw the right and bottom 'lines' of the rectangle refined by
-  // the parameters. Add +1 to change this.
   GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2((x+width+1)<<4, (y+height+1)<<4, 0));
 
   SEND_GS_PACKET(gs_dma_buf);
@@ -204,8 +197,8 @@ CPS2Surface::drawLine(int x1, int y1, int x2, int y2)
   y2 += gs_origin_y;
 
   BEGIN_GS_PACKET(gs_dma_buf);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
-  GIF_TAG_AD(gs_dma_buf, 4, 1, 0, 0, 0);
   GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
   GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
   GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x1<<4, y1<<4, 0));
@@ -222,8 +215,8 @@ CPS2Surface::drawRect(int x, int y, unsigned int width, unsigned int height)
   y += gs_origin_y;
 
   BEGIN_GS_PACKET(gs_dma_buf);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
-  GIF_TAG_AD(gs_dma_buf, 7, 1, 0, 0, 0);
   GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
   GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
   GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x<<4, y<<4, 0));
@@ -244,7 +237,7 @@ CPS2Surface::swap(bool sync)
     if(sync == true)
       waitVSync();
 
-      g2_put_image(0, 0, width_, height_, (uint32_t *)pBack);
+    g2_put_image(0, 0, width_, height_, (uint32_t *)pBack);
 
 //    g2_set_visible_frame(1 - g2_get_visible_frame());
 //    g2_set_active_frame(1 - g2_get_active_frame());
@@ -363,7 +356,7 @@ CPS2Surface::setMode(g2_video_mode mode)
 
 
   BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 6, 1, 0, 0, 0);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
   // Use drawing parameters from PRIM register
   GIF_DATA_AD(gs_dma_buf, prmodecont, 1);
@@ -447,7 +440,7 @@ CPS2Surface::g2_put_image(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
   gs_load_texture(0, 0, w, h, (uint32_t)data, g2_texbuf_addr, width_+1);
 
   BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 6, 1, 0, 0, 0);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
   // Setup the Texture Buffer register. Note the width and height! They
   // must both be a power of 2.
@@ -520,7 +513,7 @@ CPS2Surface::g2_out_text(uint16_t x, uint16_t y, char *str)
 
     // Draw a sprite with current character mapped onto it
     BEGIN_GS_PACKET(gs_dma_buf);
-    GIF_TAG_AD(gs_dma_buf, 6, 1, 0, 0, 0);
+    GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
     GIF_DATA_AD(gs_dma_buf, tex0_1,
       GS_TEX0(
@@ -582,7 +575,7 @@ CPS2Surface::g2_set_font_color(uint8_t red, uint8_t green, uint8_t blue)
   y1 = g2_fontbuf_h + gs_origin_y;
 
   BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 6, 1, 0, 0, 0);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
   // Restore the frame buffer to the current active frame buffer.
   GIF_DATA_AD(gs_dma_buf, frame_1,
@@ -659,7 +652,7 @@ void
 CPS2Surface::g2_set_active_frame(uint8_t frame)
 {
   BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 1, 0, 0, 0);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
   GIF_DATA_AD(gs_dma_buf, frame_1,
     GS_FRAME(
@@ -698,7 +691,7 @@ CPS2Surface::g2_set_viewport(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 
   BEGIN_GS_PACKET(gs_dma_buf);
 
-  GIF_TAG_AD(gs_dma_buf, 1, 1, 0, 0, 0);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
   GIF_DATA_AD(gs_dma_buf, scissor_1, GS_SCISSOR(x0, x1, y0, y1));
 

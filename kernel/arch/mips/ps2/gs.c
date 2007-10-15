@@ -24,7 +24,7 @@ gs_load_texture(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t data_ad
   uint32_t qtotal;              // total number of qwords of data to transfer
 
   BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 4, 1, 0, 0, 0);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
   GIF_DATA_AD(gs_dma_buf, bitbltbuf,
     GS_BITBLTBUF(0, 0, 0,
       dest_adr/256,             // frame buffer address
@@ -66,7 +66,7 @@ gs_load_texture(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t data_ad
 
   // Access the TEXFLUSH register with anything to flush the texture
   BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 1, 0, 0, 0);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
   GIF_DATA_AD(gs_dma_buf, texflush, 0x42);
   SEND_GS_PACKET(gs_dma_buf);
 }

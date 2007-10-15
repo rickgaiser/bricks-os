@@ -178,6 +178,22 @@
 #define PRIM_TRI_FAN            5
 #define PRIM_SPRITE             6
 
+#define SHADE_FLAT		        0
+#define SHADE_GOURAUD	        1
+
+#define TEXTURES_OFF            0
+#define TEXTURES_ON             1
+
+#define FOG_OFF                 0
+#define FOG_ON                  1
+
+#define ALPHABLEND_OFF          0
+#define ALPHABLEND_ON           1
+
+#define ALIASING_OFF            0
+#define ALIASING_ON             1
+
+
 #define GS_PRIM(PRI,IIP,TME,FGE,ABE,AA1,FST,CTXT,FIX) \
   (((uint64_t)(PRI)  <<  0) | \
    ((uint64_t)(IIP)  <<  3) | \

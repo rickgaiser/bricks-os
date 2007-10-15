@@ -5,6 +5,7 @@ OBJS            =\
                 courier_new \
                 dma_asm \
                 fixed_tc \
+                glesContext \
                 gs \
                 task \
                 videoDevice \

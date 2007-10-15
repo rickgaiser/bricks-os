@@ -21,7 +21,7 @@ main(int, char *[])
   init_heap(&_end, 4 * 1024 * 1024);
 
   pVideoDevice = new CPS2VideoDevice;
-  pDebug = new CPS2Surface;
+  //pDebug = new CPS2Surface;
 
   // Create task structure
   CTask * pTask = new CTask(0, 0, 0);
