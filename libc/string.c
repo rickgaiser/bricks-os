@@ -2,6 +2,22 @@
 #include "inttypes.h"
 
 
+#define RAND_A     9301
+#define RAND_C    49297
+
+
+uint32_t seed = 0x12345678;
+
+
+// -----------------------------------------------------------------------------
+int
+rand(void)
+{
+  seed = (seed*RAND_A+RAND_C) % RAND_MAX;
+
+  return seed;
+}
+
 // -----------------------------------------------------------------------------
 int
 strcmp(const char * s1, const char * s2)
