@@ -4,6 +4,80 @@
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+CAGLESBuffers::CAGLESBuffers()
+ : bBufVertexEnabled_(false)
+ , bBufNormalEnabled_(false)
+ , bBufColorEnabled_(false)
+{
+}
+
+//-----------------------------------------------------------------------------
+CAGLESBuffers::~CAGLESBuffers()
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESBuffers::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+{
+  bufColor_.size    = size;
+  bufColor_.type    = type;
+  bufColor_.stride  = stride;
+  bufColor_.pointer = pointer;
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESBuffers::glDisableClientState(GLenum array)
+{
+  switch(array)
+  {
+    case GL_VERTEX_ARRAY: bBufVertexEnabled_ = false; break;
+    case GL_NORMAL_ARRAY: bBufNormalEnabled_ = false; break;
+    case GL_COLOR_ARRAY:  bBufColorEnabled_  = false; break;
+
+    default:
+      ; // Not supported
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESBuffers::glEnableClientState(GLenum array)
+{
+  switch(array)
+  {
+    case GL_VERTEX_ARRAY: bBufVertexEnabled_ = true; break;
+    case GL_NORMAL_ARRAY: bBufNormalEnabled_ = true; break;
+    case GL_COLOR_ARRAY:  bBufColorEnabled_  = true; break;
+
+    default:
+      ; // Not supported
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESBuffers::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
+{
+  bufNormal_.size    = 0;
+  bufNormal_.type    = type;
+  bufNormal_.stride  = stride;
+  bufNormal_.pointer = pointer;
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESBuffers::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+{
+  bufVertex_.size    = size;
+  bufVertex_.type    = type;
+  bufVertex_.stride  = stride;
+  bufVertex_.pointer = pointer;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void
 CAGLESFloatToFxContext::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {

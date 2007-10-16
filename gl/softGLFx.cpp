@@ -18,7 +18,8 @@ typedef unsigned int wint_t;
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CSoftGLESFixed::CSoftGLESFixed()
- : renderSurface(0)
+ : CAGLESBuffers()
+ , renderSurface(0)
  , zbuffer(0)
  , shadingModel_(GL_FLAT)
  , cullFaceEnabled_(false)
@@ -26,9 +27,6 @@ CSoftGLESFixed::CSoftGLESFixed()
  , cullFaceMode_(GL_BACK)
  , matrixMode_(GL_MODELVIEW)
  , pCurrentMatrix_(&matrixModelView)
- , bBufVertexEnabled_(false)
- , bBufNormalEnabled_(false)
- , bBufColorEnabled_(false)
  , lightingEnabled_(false)
  , fogEnabled_(false)
  , depthTestEnabled_(false)
@@ -165,26 +163,6 @@ CSoftGLESFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFixed::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
-{
-  bufNormal_.size    = 0;
-  bufNormal_.type    = type;
-  bufNormal_.stride  = stride;
-  bufNormal_.pointer = pointer;
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
-{
-  bufColor_.size    = size;
-  bufColor_.type    = type;
-  bufColor_.stride  = stride;
-  bufColor_.pointer = pointer;
-}
-
-//-----------------------------------------------------------------------------
-void
 CSoftGLESFixed::glCullFace(GLenum mode)
 {
   cullFaceMode_ = mode;
@@ -217,21 +195,6 @@ CSoftGLESFixed::glDisable(GLenum cap)
     case GL_DEPTH_TEST: depthTestEnabled_ = false; break;
     case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
     case GL_FOG:        fogEnabled_ = false; break;
-
-    default:
-      ; // Not supported
-  };
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::glDisableClientState(GLenum array)
-{
-  switch(array)
-  {
-    case GL_VERTEX_ARRAY: bBufVertexEnabled_ = false; break;
-    case GL_NORMAL_ARRAY: bBufNormalEnabled_ = false; break;
-    case GL_COLOR_ARRAY:  bBufColorEnabled_  = false; break;
 
     default:
       ; // Not supported
@@ -481,21 +444,6 @@ CSoftGLESFixed::glEnable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFixed::glEnableClientState(GLenum array)
-{
-  switch(array)
-  {
-    case GL_VERTEX_ARRAY: bBufVertexEnabled_ = true; break;
-    case GL_NORMAL_ARRAY: bBufNormalEnabled_ = true; break;
-    case GL_COLOR_ARRAY:  bBufColorEnabled_  = true; break;
-
-    default:
-      ; // Not supported
-  };
-}
-
-//-----------------------------------------------------------------------------
-void
 CSoftGLESFixed::glFlush(void)
 {
 }
@@ -623,16 +571,6 @@ void
 CSoftGLESFixed::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
   pCurrentMatrix_->translate(x, y, -z);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
-{
-  bufVertex_.size    = size;
-  bufVertex_.type    = type;
-  bufVertex_.stride  = stride;
-  bufVertex_.pointer = pointer;
 }
 
 //-----------------------------------------------------------------------------

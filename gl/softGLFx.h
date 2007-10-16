@@ -126,6 +126,7 @@ struct SLightFx
 //-----------------------------------------------------------------------------
 class CSoftGLESFixed
  : public CAGLESFloatToFxContext
+ , public CAGLESBuffers
 {
 public:
   CSoftGLESFixed();
@@ -138,14 +139,11 @@ public:
   virtual void glClearDepthx(GLclampx depth);
   virtual void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
   virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
-  virtual void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
   virtual void glCullFace(GLenum mode);
   virtual void glDepthFunc(GLenum func);
   virtual void glDisable(GLenum cap);
-  virtual void glDisableClientState(GLenum array);
   virtual void glDrawArrays(GLenum mode, GLint first, GLsizei count);
   virtual void glEnable(GLenum cap);
-  virtual void glEnableClientState(GLenum array);
   virtual void glFlush(void);
   virtual void glFogx(GLenum pname, GLfixed param);
   virtual void glFogxv(GLenum pname, const GLfixed *params);
@@ -154,12 +152,10 @@ public:
   virtual void glLoadIdentity(void);
   virtual void glMatrixMode(GLenum mode);
   virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
-  virtual void glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer);
   virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
   virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);
   virtual void glShadeModel(GLenum mode);
   virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z);
-  virtual void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
@@ -187,14 +183,6 @@ protected:
   CMatrixFx   matrixPerspective;
   CMatrixFx   matrixRotation;
   CMatrixFx * pCurrentMatrix_;
-
-  // Buffers
-  SBufferPointer bufVertex_;
-  bool        bBufVertexEnabled_;
-  SBufferPointer bufNormal_;
-  bool        bBufNormalEnabled_;
-  SBufferPointer bufColor_;
-  bool        bBufColorEnabled_;
 
   // Colors
   SColorFx    clCurrent;

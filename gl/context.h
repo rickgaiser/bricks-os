@@ -193,8 +193,31 @@ public:
 };
 
 //-----------------------------------------------------------------------------
+class CAGLESBuffers
+ : public virtual IGLESContext
+{
+public:
+  CAGLESBuffers();
+  virtual ~CAGLESBuffers();
+
+  virtual void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
+  virtual void glDisableClientState(GLenum array);
+  virtual void glEnableClientState(GLenum array);
+  virtual void glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer);
+  virtual void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
+
+protected:
+  bool bBufVertexEnabled_;
+  bool bBufNormalEnabled_;
+  bool bBufColorEnabled_;
+  SBufferPointer bufVertex_;
+  SBufferPointer bufNormal_;
+  SBufferPointer bufColor_;
+};
+
+//-----------------------------------------------------------------------------
 class CAGLESFloatToFxContext
- : public IGLESContext
+ : public virtual IGLESContext
 {
 public:
   virtual ~CAGLESFloatToFxContext(){}
@@ -214,7 +237,7 @@ public:
 
 //-----------------------------------------------------------------------------
 class CAGLESFxToFloatContext
- : public IGLESContext
+ : public virtual IGLESContext
 {
 public:
   virtual ~CAGLESFxToFloatContext(){}
