@@ -2,11 +2,10 @@
 #include "asm/arch/macros.h"
 
 
-  // NOTE: We are off by 1 here, but it's much faster this way
 #define fpRGB(r,g,b) (0x8000 | \
-                      (((b-1)>> 1) & 0x7c00) | \
-                      (((g-1)>> 6) & 0x03e0) | \
-                      (((r-1)>>11) & 0x001f))
+                      (((b*255) >>  9) & 0x7c00) | \
+                      (((g*255) >> 14) & 0x03e0) | \
+                      (((r*255) >> 19) & 0x001f))
 
 
 //-----------------------------------------------------------------------------
@@ -33,7 +32,7 @@ CGBAGLESContext::glClear(GLbitfield mask)
     dmaFill16(color, renderSurface->p, iCount);
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
-    dmaFill32(depthClear_ * 100, zbuffer, iCount);
+    dmaFill32(0xffffffff, zbuffer, iCount);
 }
 
 //-----------------------------------------------------------------------------

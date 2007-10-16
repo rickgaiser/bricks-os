@@ -162,6 +162,7 @@ public:
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
+  virtual bool testAndSetDepth(GLfloat z, uint32_t index);
   virtual void hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c);
   virtual void hline_s(CEdgeF & from, CEdgeF & to, GLint & y);
   virtual void plotPoly(SPolygonF & poly);
@@ -169,7 +170,7 @@ protected:
 
 protected:
   CSurface  * renderSurface;
-  GLfloat   * zbuffer;
+  uint32_t  * zbuffer;
 
   GLenum      shadingModel_;
 

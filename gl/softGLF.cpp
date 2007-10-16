@@ -100,8 +100,11 @@ CSoftGLESFloat::glClear(GLbitfield mask)
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
+    //uint32_t zvalue = depthClear_ * 0xffffffff;
+    uint32_t zvalue = 0xffffffff;
+
     for(int i(0); i < iCount; i++)
-      zbuffer[i] = depthClear_ * 100.0f;
+      zbuffer[i] = zvalue;
   }
 }
 
@@ -646,7 +649,7 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportHeight     = height;
   viewportPixelCount = width * height;
   viewportByteCount  = width * height * 2;
-  zbuffer            = new GLfloat[width * height];
+  zbuffer            = new uint32_t[width * height];
   edge1              = new CEdgeF(viewportHeight);
   edge2              = new CEdgeF(viewportHeight);
 
@@ -659,21 +662,33 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 }
 
 //-----------------------------------------------------------------------------
-inline bool
-validDepth(GLfloat z, GLfloat zbuf, GLenum zfunc)
+bool
+CSoftGLESFloat::testAndSetDepth(GLfloat z, uint32_t index)
 {
-  switch(zfunc)
+  bool bValid(false);
+
+  if((z >= 0.1f) && (z <= 100.0f))
   {
-    case GL_LESS:     return (z < zbuf);
-    case GL_EQUAL:    return (z == zbuf);
-    case GL_LEQUAL:   return (z <= zbuf);
-    case GL_GREATER:  return (z > zbuf);
-    case GL_NOTEQUAL: return (z != zbuf);
-    case GL_GEQUAL:   return (z >= zbuf);
-    case GL_ALWAYS:   return true;
-    case GL_NEVER:
-    default:          return false;
-  };
+    uint32_t zval = gl_fpfromf(z);
+
+    switch(depthFunction_)
+    {
+      case GL_LESS:     bValid = (zval <  zbuffer[index]); break;
+      case GL_EQUAL:    bValid = (zval == zbuffer[index]); break;
+      case GL_LEQUAL:   bValid = (zval <= zbuffer[index]); break;
+      case GL_GREATER:  bValid = (zval >  zbuffer[index]); break;
+      case GL_NOTEQUAL: bValid = (zval != zbuffer[index]); break;
+      case GL_GEQUAL:   bValid = (zval >= zbuffer[index]); break;
+      case GL_ALWAYS:   bValid = true;                     break;
+      case GL_NEVER:
+      default:          bValid = false;
+    };
+
+    if(bValid == true)
+      zbuffer[index] = zval;
+  }
+
+  return bValid;
 }
 
 //-----------------------------------------------------------------------------
@@ -699,9 +714,11 @@ CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c)
         // Depth test pixel
         if(depthTestEnabled_ == true)
         {
-          if(validDepth(z, zbuffer[index], depthFunction_) == false)
+          if(testAndSetDepth(z, index) == false)
+          {
+            z += mz;
             continue;
-          zbuffer[index] = z;
+          }
           z += mz;
         }
         ((uint32_t *)renderSurface->p)[index] = color;
@@ -740,9 +757,11 @@ CSoftGLESFloat::hline_s(CEdgeF & from, CEdgeF & to, GLint & y)
         // Depth test pixel
         if(depthTestEnabled_ == true)
         {
-          if(validDepth(z, zbuffer[index], depthFunction_) == false)
+          if(testAndSetDepth(z, index) == false)
+          {
+            z += mz;
             continue;
-          zbuffer[index] = z;
+          }
           z += mz;
         }
         ((uint32_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), 255);

@@ -9,7 +9,6 @@ typedef unsigned int wint_t;
 
 #define SCREENX(v) (gl_fptoi(gl_fpdiv(gl_fpmul(v[0], fpFieldofviewXScalar), -v[2])) + (viewportWidth  >> 1))
 #define SCREENY(v) (gl_fptoi(gl_fpdiv(gl_fpmul(v[1], fpFieldofviewYScalar), -v[2])) + (viewportHeight >> 1))
-#define ZBUFFER_MAX_DEPTH gl_fpfromi((1 << (FP_PRESICION_GL - 1)) - 1)
 #define fpRGB(r,g,b) (0x8000 | \
                       (((b*255) >>  9) & 0x7c00) | \
                       (((g*255) >> 14) & 0x03e0) | \
@@ -104,8 +103,11 @@ CSoftGLESFixed::glClear(GLbitfield mask)
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
+    //uint32_t zvalue = depthClear_ * 0xffffffff;
+    uint32_t zvalue = 0xffffffff;
+
     for(int i(0); i < iCount; i++)
-      zbuffer[i] = depthClear_ * 100;
+      zbuffer[i] = zvalue;
   }
 }
 
@@ -650,7 +652,7 @@ CSoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportHeight     = height;
   viewportPixelCount = width * height;
   viewportByteCount  = width * height * 2;
-  zbuffer            = new GLfixed[width * height];
+  zbuffer            = new uint32_t[width * height];
   edge1              = new CEdgeFx(viewportHeight);
   edge2              = new CEdgeFx(viewportHeight);
 
@@ -663,21 +665,33 @@ CSoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 }
 
 //-----------------------------------------------------------------------------
-inline bool
-validDepth(GLfixed z, GLfixed zbuf, GLenum zfunc)
+bool
+CSoftGLESFixed::testAndSetDepth(GLfixed z, uint32_t index)
 {
-  switch(zfunc)
+  bool bValid(false);
+
+  if((z >= gl_fpfromf(0.1f)) && (z <= gl_fpfromf(100.0f)))
   {
-    case GL_LESS:     return (z < zbuf);
-    case GL_EQUAL:    return (z == zbuf);
-    case GL_LEQUAL:   return (z <= zbuf);
-    case GL_GREATER:  return (z > zbuf);
-    case GL_NOTEQUAL: return (z != zbuf);
-    case GL_GEQUAL:   return (z >= zbuf);
-    case GL_ALWAYS:   return true;
-    case GL_NEVER:
-    default:          return false;
-  };
+    uint32_t zval = z;
+
+    switch(depthFunction_)
+    {
+      case GL_LESS:     bValid = (zval <  zbuffer[index]); break;
+      case GL_EQUAL:    bValid = (zval == zbuffer[index]); break;
+      case GL_LEQUAL:   bValid = (zval <= zbuffer[index]); break;
+      case GL_GREATER:  bValid = (zval >  zbuffer[index]); break;
+      case GL_NOTEQUAL: bValid = (zval != zbuffer[index]); break;
+      case GL_GEQUAL:   bValid = (zval >= zbuffer[index]); break;
+      case GL_ALWAYS:   bValid = true;                     break;
+      case GL_NEVER:
+      default:          bValid = false;
+    };
+
+    if(bValid == true)
+      zbuffer[index] = zval;
+  }
+
+  return bValid;
 }
 
 //-----------------------------------------------------------------------------
@@ -703,9 +717,11 @@ CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c)
         // Depth test pixel
         if(depthTestEnabled_ == true)
         {
-          if(validDepth(z, zbuffer[index], depthFunction_) == false)
+          if(testAndSetDepth(z, index) == false)
+          {
+            z += mz;
             continue;
-          zbuffer[index] = z;
+          }
           z += mz;
         }
         ((uint16_t *)renderSurface->p)[index] = color;
@@ -744,9 +760,11 @@ CSoftGLESFixed::hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y)
         // Depth test pixel
         if(depthTestEnabled_ == true)
         {
-          if(validDepth(z, zbuffer[index], depthFunction_) == false)
+          if(testAndSetDepth(z, index) == false)
+          {
+            z += mz;
             continue;
-          zbuffer[index] = z;
+          }
           z += mz;
         }
         ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
