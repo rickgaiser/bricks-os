@@ -23,6 +23,7 @@ CSoftGLESFixed::CSoftGLESFixed()
  , zbuffer(0)
  , shadingModel_(GL_FLAT)
  , cullFaceEnabled_(false)
+ , bCullBack_(true)
  , cullFaceMode_(GL_BACK)
  , matrixMode_(GL_MODELVIEW)
  , pCurrentMatrix_(&matrixModelView)
@@ -185,6 +186,7 @@ void
 CSoftGLESFixed::glCullFace(GLenum mode)
 {
   cullFaceMode_ = mode;
+  bCullBack_ = (cullFaceMode_ == GL_BACK);
 }
 
 //-----------------------------------------------------------------------------
@@ -456,19 +458,19 @@ CSoftGLESFixed::glEnable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_LIGHTING: lightingEnabled_ = true; break;
-    case GL_LIGHT0: lights_[0].enabled = true; break;
-    case GL_LIGHT1: lights_[1].enabled = true; break;
-    case GL_LIGHT2: lights_[2].enabled = true; break;
-    case GL_LIGHT3: lights_[3].enabled = true; break;
-    case GL_LIGHT4: lights_[4].enabled = true; break;
-    case GL_LIGHT5: lights_[5].enabled = true; break;
-    case GL_LIGHT6: lights_[6].enabled = true; break;
-    case GL_LIGHT7: lights_[7].enabled = true; break;
+    case GL_LIGHTING:   lightingEnabled_   = true; break;
+    case GL_LIGHT0:     lights_[0].enabled = true; break;
+    case GL_LIGHT1:     lights_[1].enabled = true; break;
+    case GL_LIGHT2:     lights_[2].enabled = true; break;
+    case GL_LIGHT3:     lights_[3].enabled = true; break;
+    case GL_LIGHT4:     lights_[4].enabled = true; break;
+    case GL_LIGHT5:     lights_[5].enabled = true; break;
+    case GL_LIGHT6:     lights_[6].enabled = true; break;
+    case GL_LIGHT7:     lights_[7].enabled = true; break;
 
-    case GL_DEPTH_TEST: depthTestEnabled_ = true; break;
-    case GL_CULL_FACE:  cullFaceEnabled_  = true; break;
-    case GL_FOG:        fogEnabled_ = true; break;
+    case GL_DEPTH_TEST: depthTestEnabled_  = true; break;
+    case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
+    case GL_FOG:        fogEnabled_        = true; break;
 
     default:
       ; // Not supported
@@ -502,17 +504,10 @@ CSoftGLESFixed::glFogx(GLenum pname, GLfixed param)
 {
   switch(pname)
   {
-    case GL_FOG_DENSITY:
-      fogDensity_ = param;
-      break;
-    case GL_FOG_START:
-      fogStart_ = param;
-      break;
-    case GL_FOG_END:
-      fogEnd_ = param;
-      break;
-    case GL_FOG_MODE:
-      break;
+    case GL_FOG_DENSITY: fogDensity_ = param; break;
+    case GL_FOG_START:   fogStart_   = param; break;
+    case GL_FOG_END:     fogEnd_     = param; break;
+    case GL_FOG_MODE:                         break;
   };
 }
 
@@ -577,8 +572,10 @@ void
 CSoftGLESFixed::glLoadIdentity()
 {
   pCurrentMatrix_->loadIdentity();
+
   // FIXME
-  matrixRotation.loadIdentity();
+  if(lightingEnabled_ == true)
+    matrixRotation.loadIdentity();
 }
 
 //-----------------------------------------------------------------------------
@@ -589,12 +586,8 @@ CSoftGLESFixed::glMatrixMode(GLenum mode)
 
   switch(mode)
   {
-    case GL_MODELVIEW:
-      pCurrentMatrix_ = &matrixModelView;
-      break;
-    case GL_PROJECTION:
-      pCurrentMatrix_ = &matrixProjection;
-      break;
+    case GL_MODELVIEW:  pCurrentMatrix_ = &matrixModelView;  break;
+    case GL_PROJECTION: pCurrentMatrix_ = &matrixProjection; break;
   };
 }
 
@@ -603,8 +596,10 @@ void
 CSoftGLESFixed::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
   pCurrentMatrix_->rotate(angle, x, y, z);
+
   // FIXME
-  matrixRotation.rotate(angle, x, y, z);
+  if(lightingEnabled_ == true)
+    matrixRotation.rotate(angle, x, y, z);
 }
 
 //-----------------------------------------------------------------------------
@@ -788,45 +783,28 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
   // Backface culling
   if(cullFaceEnabled_ == true)
   {
-    bool bBackFace;
+    // Always invisible when culling both front and back
+    if(cullFaceMode_ == GL_FRONT_AND_BACK)
+      return;
+
+    // Figure out if we need to cull
     if((poly.v[1]->sx != poly.v[0]->sx) && (poly.v[2]->sx != poly.v[0]->sx))
     {
-      bBackFace = ((((gl_fpfromi(poly.v[1]->sy - poly.v[0]->sy) / (poly.v[1]->sx - poly.v[0]->sx)) -
-                     (gl_fpfromi(poly.v[2]->sy - poly.v[0]->sy) / (poly.v[2]->sx - poly.v[0]->sx))) < 0) ^
-                     ((poly.v[0]->sx <= poly.v[1]->sx) == (poly.v[0]->sx > poly.v[2]->sx)));
+      if(((((gl_fpfromi(poly.v[1]->sy - poly.v[0]->sy) / (poly.v[1]->sx - poly.v[0]->sx)) - (gl_fpfromi(poly.v[2]->sy - poly.v[0]->sy) / (poly.v[2]->sx - poly.v[0]->sx))) < 0) ^ ((poly.v[0]->sx <= poly.v[1]->sx) == (poly.v[0]->sx > poly.v[2]->sx))) == bCullBack_)
+        return;
     }
     else if((poly.v[2]->sx != poly.v[1]->sx) && (poly.v[0]->sx != poly.v[1]->sx))
     {
-      bBackFace = ((((gl_fpfromi(poly.v[2]->sy - poly.v[1]->sy) / (poly.v[2]->sx - poly.v[1]->sx)) -
-                     (gl_fpfromi(poly.v[0]->sy - poly.v[1]->sy) / (poly.v[0]->sx - poly.v[1]->sx))) < 0) ^
-                     ((poly.v[1]->sx <= poly.v[2]->sx) == (poly.v[1]->sx > poly.v[0]->sx)));
+      if(((((gl_fpfromi(poly.v[2]->sy - poly.v[1]->sy) / (poly.v[2]->sx - poly.v[1]->sx)) - (gl_fpfromi(poly.v[0]->sy - poly.v[1]->sy) / (poly.v[0]->sx - poly.v[1]->sx))) < 0) ^ ((poly.v[1]->sx <= poly.v[2]->sx) == (poly.v[1]->sx > poly.v[0]->sx))) == bCullBack_)
+        return;
     }
     else if((poly.v[0]->sx != poly.v[2]->sx) && (poly.v[1]->sx != poly.v[2]->sx))
     {
-      bBackFace = ((((gl_fpfromi(poly.v[0]->sy - poly.v[2]->sy) / (poly.v[0]->sx - poly.v[2]->sx)) -
-                     (gl_fpfromi(poly.v[1]->sy - poly.v[2]->sy) / (poly.v[1]->sx - poly.v[2]->sx))) < 0) ^
-                     ((poly.v[2]->sx <= poly.v[0]->sx) == (poly.v[2]->sx > poly.v[1]->sx)));
+      if(((((gl_fpfromi(poly.v[0]->sy - poly.v[2]->sy) / (poly.v[0]->sx - poly.v[2]->sx)) - (gl_fpfromi(poly.v[1]->sy - poly.v[2]->sy) / (poly.v[1]->sx - poly.v[2]->sx))) < 0) ^ ((poly.v[2]->sx <= poly.v[0]->sx) == (poly.v[2]->sx > poly.v[1]->sx))) == bCullBack_)
+        return;
     }
     else
-    {
-      // Triangle invisible
-      return;
-    }
-
-    switch(cullFaceMode_)
-    {
-      case GL_FRONT:
-        if(bBackFace == false)
-          return;
-        break;
-      case GL_BACK:
-        if(bBackFace == true)
-          return;
-        break;
-      case GL_FRONT_AND_BACK:
-      default:
-        return;
-    };
+      return; // Triangle invisible
   }
 
   // Lighting

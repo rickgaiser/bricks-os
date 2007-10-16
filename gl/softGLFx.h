@@ -173,7 +173,10 @@ protected:
   GLfixed   * zbuffer;
 
   GLenum      shadingModel_;
+
+  // Backface culling
   bool        cullFaceEnabled_;
+  bool        bCullBack_;
   GLenum      cullFaceMode_;
 
   // Matrix
