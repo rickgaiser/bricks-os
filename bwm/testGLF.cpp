@@ -127,12 +127,12 @@ testGLF(CSurface * surface)
     glDrawArrays(GL_TRIANGLES, 0, triangle_count);
 
     glLoadIdentity();
-    glTranslatef(-2.0f, 0.0f, -7.0f);
+    glTranslatef(-2.0f, 0.0f, -8.0f);
     glRotatef(yrot, 0.0f, 1.0f, 0.0f);
     glDrawArrays(GL_TRIANGLES, 0, triangle_count);
 
     glLoadIdentity();
-    glTranslatef(2.0f, 0.0f, -7.0f);
+    glTranslatef(2.0f, 0.0f, -8.0f);
     glRotatef(yrot, 0.0f, 1.0f, 0.0f);
     glDrawArrays(GL_TRIANGLES, 0, triangle_count);
 

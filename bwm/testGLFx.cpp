@@ -128,12 +128,12 @@ testGLFx(CSurface * surface)
     glDrawArrays(GL_TRIANGLES, 0, triangle_count);
 
     glLoadIdentity();
-    glTranslatex(gl_fpfromi(-2), gl_fpfromi(0), gl_fpfromi(-7));
+    glTranslatex(gl_fpfromi(-2), gl_fpfromi(0), gl_fpfromi(-8));
     glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
     glDrawArrays(GL_TRIANGLES, 0, triangle_count);
 
     glLoadIdentity();
-    glTranslatex(gl_fpfromi(2), gl_fpfromi(0), gl_fpfromi(-7));
+    glTranslatex(gl_fpfromi(2), gl_fpfromi(0), gl_fpfromi(-8));
     glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
     glDrawArrays(GL_TRIANGLES, 0, triangle_count);
 
