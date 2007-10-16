@@ -714,18 +714,11 @@ CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c)
 
       if(x >= 0)
       {
-        // Depth test pixel
-        if(depthTestEnabled_ == true)
-        {
-          if(testAndSetDepth(z, index) == false)
-          {
-            z += mz;
-            continue;
-          }
-          z += mz;
-        }
-        ((uint16_t *)renderSurface->p)[index] = color;
+        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
+          ((uint16_t *)renderSurface->p)[index] = color;
       }
+      if(depthTestEnabled_ == true)
+        z += mz;
       index++;
     }
   }
@@ -757,18 +750,11 @@ CSoftGLESFixed::hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y)
 
       if(x >= 0)
       {
-        // Depth test pixel
-        if(depthTestEnabled_ == true)
-        {
-          if(testAndSetDepth(z, index) == false)
-          {
-            z += mz;
-            continue;
-          }
-          z += mz;
-        }
-        ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
+        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
+          ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
       }
+      if(depthTestEnabled_ == true)
+        z += mz;
       r += mr;
       g += mg;
       b += mb;

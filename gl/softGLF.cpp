@@ -711,18 +711,11 @@ CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c)
 
       if(x >= 0)
       {
-        // Depth test pixel
-        if(depthTestEnabled_ == true)
-        {
-          if(testAndSetDepth(z, index) == false)
-          {
-            z += mz;
-            continue;
-          }
-          z += mz;
-        }
-        ((uint32_t *)renderSurface->p)[index] = color;
+        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
+          ((uint32_t *)renderSurface->p)[index] = color;
       }
+      if(depthTestEnabled_ == true)
+        z += mz;
       index++;
     }
   }
@@ -754,18 +747,11 @@ CSoftGLESFloat::hline_s(CEdgeF & from, CEdgeF & to, GLint & y)
 
       if(x >= 0)
       {
-        // Depth test pixel
-        if(depthTestEnabled_ == true)
-        {
-          if(testAndSetDepth(z, index) == false)
-          {
-            z += mz;
-            continue;
-          }
-          z += mz;
-        }
-        ((uint32_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), 255);
+        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
+          ((uint32_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), 255);
       }
+      if(depthTestEnabled_ == true)
+        z += mz;
       r += mr;
       g += mg;
       b += mb;
