@@ -16,6 +16,10 @@ typedef unsigned int wint_t;
 CSoftGLESFloat::CSoftGLESFloat()
  : CAGLESBuffers()
  , renderSurface(0)
+ , depthTestEnabled_(false)
+ , depthFunction_(GL_LESS)
+ , depthClear_(1.0f)
+ , zClearValue_(0xffffffff)
  , zbuffer(0)
  , shadingModel_(GL_FLAT)
  , cullFaceEnabled_(false)
@@ -25,9 +29,6 @@ CSoftGLESFloat::CSoftGLESFloat()
  , pCurrentMatrix_(&matrixModelView)
  , lightingEnabled_(false)
  , fogEnabled_(false)
- , depthTestEnabled_(false)
- , depthFunction_(GL_LESS)
- , depthClear_(1.0f)
  , edge1(0)
  , edge2(0)
  , viewportXOffset(0)
@@ -68,6 +69,11 @@ CSoftGLESFloat::CSoftGLESFloat()
 
     lights_[iLight].enabled = false;
   }
+
+  zFar_  = 100.0f;
+  zNear_ =   2.0f;
+  zA_    = zFar_ / (zFar_ - zNear_);
+  zB_    = (zFar_ * zNear_) / (zNear_ - zFar_);
 }
 
 //-----------------------------------------------------------------------------
@@ -97,11 +103,8 @@ CSoftGLESFloat::glClear(GLbitfield mask)
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    //uint32_t zvalue = depthClear_ * 0xffffffff;
-    uint32_t zvalue = 0xffffffff;
-
     for(int i(0); i < iCount; i++)
-      zbuffer[i] = zvalue;
+      zbuffer[i] = zClearValue_;
   }
 }
 
@@ -120,6 +123,7 @@ void
 CSoftGLESFloat::glClearDepthf(GLclampf depth)
 {
   depthClear_ = clampf(depth);
+  zClearValue_ = (uint32_t)(depthClear_ * 0xffffffff);
 }
 
 //-----------------------------------------------------------------------------
@@ -604,9 +608,9 @@ CSoftGLESFloat::testAndSetDepth(GLfloat z, uint32_t index)
 {
   bool bValid(false);
 
-  if((z >= 0.1f) && (z <= 100.0f))
+  if((z >= zNear_) && (z <= zFar_))
   {
-    uint32_t zval = gl_fpfromf(z);
+    uint32_t zval = (uint32_t)((zA_ + (zB_ / z)) * 0xffffffff);
 
     switch(depthFunction_)
     {

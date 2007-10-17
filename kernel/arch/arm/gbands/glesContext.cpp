@@ -32,7 +32,10 @@ CGBAGLESContext::glClear(GLbitfield mask)
     dmaFill16(color, renderSurface->p, iCount);
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
-    dmaFill32(0xffffffff, zbuffer, iCount);
+  {
+    dmaFill16(zClearValue_, zbuffer, iCount);
+    //dmaFill32(zClearValue_, zbuffer, iCount);
+  }
 }
 
 //-----------------------------------------------------------------------------

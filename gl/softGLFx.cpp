@@ -20,6 +20,10 @@ typedef unsigned int wint_t;
 CSoftGLESFixed::CSoftGLESFixed()
  : CAGLESBuffers()
  , renderSurface(0)
+ , depthTestEnabled_(false)
+ , depthFunction_(GL_LESS)
+ , depthClear_(gl_fpfromi(1))
+ , zClearValue_(0xffff)
  , zbuffer(0)
  , shadingModel_(GL_FLAT)
  , cullFaceEnabled_(false)
@@ -29,9 +33,6 @@ CSoftGLESFixed::CSoftGLESFixed()
  , pCurrentMatrix_(&matrixModelView)
  , lightingEnabled_(false)
  , fogEnabled_(false)
- , depthTestEnabled_(false)
- , depthFunction_(GL_LESS)
- , depthClear_(gl_fpfromi(1))
  , edge1(0)
  , edge2(0)
  , viewportXOffset(0)
@@ -72,6 +73,23 @@ CSoftGLESFixed::CSoftGLESFixed()
 
     lights_[iLight].enabled = false;
   }
+
+  zFar_  = gl_fpfromi(100);
+  zNear_ = gl_fpfromi(2);
+  zLoss_ = 0;
+
+  GLfixed zmax = zFar_ - zNear_;
+  uint16_t newz = zmax;
+  if(newz != zmax)
+  {
+    // We need to lose some depth precision :-(
+    for(zLoss_ = 1; zLoss_ < 32; zLoss_++)
+    {
+      newz = zmax >> zLoss_;
+      if(newz == (zmax >> zLoss_))
+        break;
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -101,11 +119,8 @@ CSoftGLESFixed::glClear(GLbitfield mask)
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    //uint32_t zvalue = depthClear_ * 0xffffffff;
-    uint32_t zvalue = 0xffffffff;
-
     for(int i(0); i < iCount; i++)
-      zbuffer[i] = zvalue;
+      zbuffer[i] = zClearValue_;
   }
 }
 
@@ -124,6 +139,7 @@ void
 CSoftGLESFixed::glClearDepthx(GLclampx depth)
 {
   depthClear_ = clampfx(depth);
+  zClearValue_ = gl_fptoi(depthClear_ * 0xffff);
 }
 
 //-----------------------------------------------------------------------------
@@ -590,7 +606,7 @@ CSoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportHeight     = height;
   viewportPixelCount = width * height;
   viewportByteCount  = width * height * 2;
-  zbuffer            = new uint32_t[width * height];
+  zbuffer            = new uint16_t[width * height];
   edge1              = new CEdgeFx(viewportHeight);
   edge2              = new CEdgeFx(viewportHeight);
 
@@ -608,9 +624,10 @@ CSoftGLESFixed::testAndSetDepth(GLfixed z, uint32_t index)
 {
   bool bValid(false);
 
-  if((z >= gl_fpfromf(0.1f)) && (z <= gl_fpfromf(100.0f)))
+  if((z >= zNear_) && (z <= zFar_))
   {
-    uint32_t zval = z;
+    //uint32_t zval = z;
+    uint16_t zval = z >> zLoss_;
 
     switch(depthFunction_)
     {

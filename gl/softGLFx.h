@@ -167,7 +167,16 @@ protected:
 
 protected:
   CSurface  * renderSurface;
-  uint32_t  * zbuffer;
+
+  // Depth testing
+  bool        depthTestEnabled_;
+  GLenum      depthFunction_;
+  GLfixed     depthClear_;
+  uint16_t    zClearValue_;
+  uint16_t  * zbuffer;
+  GLfixed     zFar_;
+  GLfixed     zNear_;
+  GLfixed     zLoss_;
 
   GLenum      shadingModel_;
 
@@ -201,11 +210,6 @@ protected:
   GLfixed     fogStart_;
   GLfixed     fogEnd_;
   SColorFx    fogColor_;
-
-  // Depth testing
-  bool        depthTestEnabled_;
-  GLenum      depthFunction_;
-  GLfixed     depthClear_;
 
   CEdgeFx   * edge1;
   CEdgeFx   * edge2;
