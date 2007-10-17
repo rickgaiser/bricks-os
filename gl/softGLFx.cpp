@@ -113,17 +113,17 @@ CSoftGLESFixed::glClear(GLbitfield mask)
 void
 CSoftGLESFixed::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
-  clClear.r = red;
-  clClear.g = green;
-  clClear.b = blue;
-  clClear.a = alpha;
+  clClear.r = clampfx(red);
+  clClear.g = clampfx(green);
+  clClear.b = clampfx(blue);
+  clClear.a = clampfx(alpha);
 }
 
 //-----------------------------------------------------------------------------
 void
 CSoftGLESFixed::glClearDepthx(GLclampx depth)
 {
-  depthClear_ = depth;
+  depthClear_ = clampfx(depth);
 }
 
 //-----------------------------------------------------------------------------
@@ -766,19 +766,19 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
         SColorFx & ambient = lights_[iLight].ambient;
         SColorFx & diffuse = lights_[iLight].diffuse;
 
-        poly.v[0]->c2.r = gl_fpclamp(gl_fpmul(poly.v[0]->c1.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[0]->c1.r, normal[0]), diffuse.r));
-        poly.v[0]->c2.g = gl_fpclamp(gl_fpmul(poly.v[0]->c1.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[0]->c1.g, normal[0]), diffuse.g));
-        poly.v[0]->c2.b = gl_fpclamp(gl_fpmul(poly.v[0]->c1.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[0]->c1.b, normal[0]), diffuse.b));
+        poly.v[0]->c2.r = clampfx(gl_fpmul(poly.v[0]->c1.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[0]->c1.r, normal[0]), diffuse.r));
+        poly.v[0]->c2.g = clampfx(gl_fpmul(poly.v[0]->c1.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[0]->c1.g, normal[0]), diffuse.g));
+        poly.v[0]->c2.b = clampfx(gl_fpmul(poly.v[0]->c1.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[0]->c1.b, normal[0]), diffuse.b));
 
         if(shadingModel_ == GL_SMOOTH)
         {
-          poly.v[1]->c2.r = gl_fpclamp(gl_fpmul(poly.v[1]->c1.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[1]->c1.r, normal[1]), diffuse.r));
-          poly.v[1]->c2.g = gl_fpclamp(gl_fpmul(poly.v[1]->c1.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[1]->c1.g, normal[1]), diffuse.g));
-          poly.v[1]->c2.b = gl_fpclamp(gl_fpmul(poly.v[1]->c1.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[1]->c1.b, normal[1]), diffuse.b));
+          poly.v[1]->c2.r = clampfx(gl_fpmul(poly.v[1]->c1.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[1]->c1.r, normal[1]), diffuse.r));
+          poly.v[1]->c2.g = clampfx(gl_fpmul(poly.v[1]->c1.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[1]->c1.g, normal[1]), diffuse.g));
+          poly.v[1]->c2.b = clampfx(gl_fpmul(poly.v[1]->c1.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[1]->c1.b, normal[1]), diffuse.b));
 
-          poly.v[2]->c2.r = gl_fpclamp(gl_fpmul(poly.v[2]->c1.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[2]->c1.r, normal[2]), diffuse.r));
-          poly.v[2]->c2.g = gl_fpclamp(gl_fpmul(poly.v[2]->c1.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[2]->c1.g, normal[2]), diffuse.g));
-          poly.v[2]->c2.b = gl_fpclamp(gl_fpmul(poly.v[2]->c1.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[2]->c1.b, normal[2]), diffuse.b));
+          poly.v[2]->c2.r = clampfx(gl_fpmul(poly.v[2]->c1.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[2]->c1.r, normal[2]), diffuse.r));
+          poly.v[2]->c2.g = clampfx(gl_fpmul(poly.v[2]->c1.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[2]->c1.g, normal[2]), diffuse.g));
+          poly.v[2]->c2.b = clampfx(gl_fpmul(poly.v[2]->c1.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[2]->c1.b, normal[2]), diffuse.b));
         }
       }
     }
@@ -800,11 +800,11 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
   {
     for(int i(0); i < 3; i++)
     {
-      GLfixed partFog   = gl_fpclamp(gl_fpdiv(abs(poly.v[i]->v2[2]) - fogStart_, fogEnd_ - fogStart_));
+      GLfixed partFog   = clampfx(gl_fpdiv(abs(poly.v[i]->v2[2]) - fogStart_, fogEnd_ - fogStart_));
       GLfixed partColor = gl_fpfromi(1) - partFog;
-      poly.v[i]->c2.r = gl_fpclamp(gl_fpmul(poly.v[i]->c2.r, partColor) + gl_fpmul(fogColor_.r, partFog));
-      poly.v[i]->c2.g = gl_fpclamp(gl_fpmul(poly.v[i]->c2.g, partColor) + gl_fpmul(fogColor_.g, partFog));
-      poly.v[i]->c2.b = gl_fpclamp(gl_fpmul(poly.v[i]->c2.b, partColor) + gl_fpmul(fogColor_.b, partFog));
+      poly.v[i]->c2.r = clampfx(gl_fpmul(poly.v[i]->c2.r, partColor) + gl_fpmul(fogColor_.r, partFog));
+      poly.v[i]->c2.g = clampfx(gl_fpmul(poly.v[i]->c2.g, partColor) + gl_fpmul(fogColor_.g, partFog));
+      poly.v[i]->c2.b = clampfx(gl_fpmul(poly.v[i]->c2.b, partColor) + gl_fpmul(fogColor_.b, partFog));
     }
   }
 

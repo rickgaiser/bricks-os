@@ -36,7 +36,6 @@
 #define gl_fptof(i)     fptof(FP_PRESICION_GL,i)
 #define gl_fpmul(i1,i2) fpmul32(FP_PRESICION_GL,i1,i2)
 #define gl_fpdiv(i1,i2) fpdiv32(FP_PRESICION_GL,i1,i2)
-#define gl_fpclamp(i)   (i < 0 ? 0 : (i > gl_fpfromi(1) ? gl_fpfromi(1) : i))
 
 
 #endif

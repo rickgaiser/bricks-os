@@ -6,6 +6,11 @@
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 #include "kernel/videoManager.h"
+#include "fixedPoint.h"
+
+
+#define clampf(f)    (f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f))
+#define clampfx(i)   (i < 0 ? 0 : (i > gl_fpfromi(1) ? gl_fpfromi(1) : i))
 
 
 //-----------------------------------------------------------------------------

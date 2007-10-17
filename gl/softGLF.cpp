@@ -9,7 +9,6 @@ typedef unsigned int wint_t;
 
 #define SCREENX(v) ((int)((v[0] * fpFieldofviewXScalar) / -v[2]) + (viewportWidth  >> 1))
 #define SCREENY(v) ((int)((v[1] * fpFieldofviewYScalar) / -v[2]) + (viewportHeight >> 1))
-#define clamp(f)   (f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f))
 
 
 //-----------------------------------------------------------------------------
@@ -110,17 +109,17 @@ CSoftGLESFloat::glClear(GLbitfield mask)
 void
 CSoftGLESFloat::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
-  clClear.r = red;
-  clClear.g = green;
-  clClear.b = blue;
-  clClear.a = alpha;
+  clClear.r = clampf(red);
+  clClear.g = clampf(green);
+  clClear.b = clampf(blue);
+  clClear.a = clampf(alpha);
 }
 
 //-----------------------------------------------------------------------------
 void
 CSoftGLESFloat::glClearDepthf(GLclampf depth)
 {
-  depthClear_ = depth;
+  depthClear_ = clampf(depth);
 }
 
 //-----------------------------------------------------------------------------
@@ -763,19 +762,19 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
         SColorF & ambient = lights_[iLight].ambient;
         SColorF & diffuse = lights_[iLight].diffuse;
 
-        poly.v[0]->c2.r = clamp((poly.v[0]->c1.r * ambient.r) + ((poly.v[0]->c1.r * normal[0]) * diffuse.r));
-        poly.v[0]->c2.g = clamp((poly.v[0]->c1.g * ambient.g) + ((poly.v[0]->c1.g * normal[0]) * diffuse.g));
-        poly.v[0]->c2.b = clamp((poly.v[0]->c1.b * ambient.b) + ((poly.v[0]->c1.b * normal[0]) * diffuse.b));
+        poly.v[0]->c2.r = clampf((poly.v[0]->c1.r * ambient.r) + ((poly.v[0]->c1.r * normal[0]) * diffuse.r));
+        poly.v[0]->c2.g = clampf((poly.v[0]->c1.g * ambient.g) + ((poly.v[0]->c1.g * normal[0]) * diffuse.g));
+        poly.v[0]->c2.b = clampf((poly.v[0]->c1.b * ambient.b) + ((poly.v[0]->c1.b * normal[0]) * diffuse.b));
 
         if(shadingModel_ == GL_SMOOTH)
         {
-          poly.v[1]->c2.r = clamp((poly.v[1]->c1.r * ambient.r) + ((poly.v[1]->c1.r * normal[1]) * diffuse.r));
-          poly.v[1]->c2.g = clamp((poly.v[1]->c1.g * ambient.g) + ((poly.v[1]->c1.g * normal[1]) * diffuse.g));
-          poly.v[1]->c2.b = clamp((poly.v[1]->c1.b * ambient.b) + ((poly.v[1]->c1.b * normal[1]) * diffuse.b));
+          poly.v[1]->c2.r = clampf((poly.v[1]->c1.r * ambient.r) + ((poly.v[1]->c1.r * normal[1]) * diffuse.r));
+          poly.v[1]->c2.g = clampf((poly.v[1]->c1.g * ambient.g) + ((poly.v[1]->c1.g * normal[1]) * diffuse.g));
+          poly.v[1]->c2.b = clampf((poly.v[1]->c1.b * ambient.b) + ((poly.v[1]->c1.b * normal[1]) * diffuse.b));
 
-          poly.v[2]->c2.r = clamp((poly.v[2]->c1.r * ambient.r) + ((poly.v[2]->c1.r * normal[2]) * diffuse.r));
-          poly.v[2]->c2.g = clamp((poly.v[2]->c1.g * ambient.g) + ((poly.v[2]->c1.g * normal[2]) * diffuse.g));
-          poly.v[2]->c2.b = clamp((poly.v[2]->c1.b * ambient.b) + ((poly.v[2]->c1.b * normal[2]) * diffuse.b));
+          poly.v[2]->c2.r = clampf((poly.v[2]->c1.r * ambient.r) + ((poly.v[2]->c1.r * normal[2]) * diffuse.r));
+          poly.v[2]->c2.g = clampf((poly.v[2]->c1.g * ambient.g) + ((poly.v[2]->c1.g * normal[2]) * diffuse.g));
+          poly.v[2]->c2.b = clampf((poly.v[2]->c1.b * ambient.b) + ((poly.v[2]->c1.b * normal[2]) * diffuse.b));
         }
       }
     }
@@ -797,11 +796,11 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
   {
     for(int i(0); i < 3; i++)
     {
-      GLfloat partFog   = clamp((abs(poly.v[i]->v2[2]) - fogStart_) / (fogEnd_ - fogStart_));
+      GLfloat partFog   = clampf((abs(poly.v[i]->v2[2]) - fogStart_) / (fogEnd_ - fogStart_));
       GLfloat partColor = 1.0f - partFog;
-      poly.v[i]->c2.r = clamp((poly.v[i]->c2.r * partColor) + (fogColor_.r * partFog));
-      poly.v[i]->c2.g = clamp((poly.v[i]->c2.g * partColor) + (fogColor_.g * partFog));
-      poly.v[i]->c2.b = clamp((poly.v[i]->c2.b * partColor) + (fogColor_.b * partFog));
+      poly.v[i]->c2.r = clampf((poly.v[i]->c2.r * partColor) + (fogColor_.r * partFog));
+      poly.v[i]->c2.g = clampf((poly.v[i]->c2.g * partColor) + (fogColor_.g * partFog));
+      poly.v[i]->c2.b = clampf((poly.v[i]->c2.b * partColor) + (fogColor_.b * partFog));
     }
   }
 
