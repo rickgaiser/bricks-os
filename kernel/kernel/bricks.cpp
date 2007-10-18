@@ -1,10 +1,14 @@
 #include "kernel/bricks.h"
 #include "kernel/debug.h"
+#include "asm/arch/config.h"
 #include "asm/cpu.h"
 #include "pthread.h"
 
 
-extern int appMain(int argc, char * argv[]);
+//extern int appMain(int argc, char * argv[]);
+#ifdef CONFIG_FRAMEBUFFER
+extern int bwm(int argc, char * argv[]);
+#endif // CONFIG_FRAMEBUFFER
 
 
 // -----------------------------------------------------------------------------
@@ -21,7 +25,10 @@ bricks_main()
   printk("Interrupts...OK\n");
 
   // Execute application
-  appMain(0, 0);
+  //appMain(0, 0);
+#ifdef CONFIG_FRAMEBUFFER
+  bwm(0, 0);
+#endif // CONFIG_FRAMEBUFFER
 
   // Halt current thread
   // FIXME: Forever consuming CPU time now!

@@ -4,7 +4,6 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 LIB             =arch
 OBJS            =\
                 arch \
-                glesContext \
                 irq \
                 isr \
                 task \
@@ -12,6 +11,7 @@ OBJS            =\
 
 
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
+OBJS-$(CONFIG_GL)                  += glesContext
 OBJS-$(CONFIG_GBA_CONSOLE)         += font8x8 video
 OBJS-$(CONFIG_GBA_KEYBOARD)        += keyboard
 OBJS-$(CONFIG_GBA_SERIAL)          += serial
