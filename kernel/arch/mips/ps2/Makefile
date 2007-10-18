@@ -1,3 +1,6 @@
+include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch/config.make
+
+
 LIB             =arch
 OBJS            =\
                 arch \
@@ -5,10 +8,12 @@ OBJS            =\
                 courier_new \
                 dma_asm \
                 fixed_tc \
-                glesContext \
                 gs \
                 task \
-                videoDevice \
+
+
+OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
+OBJS-$(CONFIG_GL)                  += glesContext
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel
