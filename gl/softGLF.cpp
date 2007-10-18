@@ -203,217 +203,216 @@ CSoftGLESFloat::glDisable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
+CSoftGLESFloat::addVertexToTriangle(SVertexF & v)
+{
+  static SPolygonF polygon;
+  static SVertexF vertices[3];
+  static bool bInitialized(false);
+  if(bInitialized == false)
+  {
+    polygon.v[0] = &vertices[0];
+    polygon.v[1] = &vertices[1];
+    polygon.v[2] = &vertices[2];
+    bInitialized = true;
+  }
+
+  polygon.v[iVCount_]->bProcessed = false;
+  // Copy vertex
+  polygon.v[iVCount_]->v1[0] = v.v1[0];
+  polygon.v[iVCount_]->v1[1] = v.v1[1];
+  polygon.v[iVCount_]->v1[2] = v.v1[2];
+  polygon.v[iVCount_]->v1[3] = v.v1[3];
+  polygon.v[iVCount_]->n1[0] = v.n1[0];
+  polygon.v[iVCount_]->n1[1] = v.n1[1];
+  polygon.v[iVCount_]->n1[2] = v.n1[2];
+  polygon.v[iVCount_]->n1[3] = v.n1[3];
+  polygon.v[iVCount_]->c1    = v.c1;
+
+  if(iVCount_ == 2)
+    plotPoly(polygon);
+
+  iVCount_ = (iVCount_ + 1) % 3;
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::addVertexToTriangleStrip(SVertexF & v)
+{
+  static SPolygonF polygon;
+  static SVertexF vertices[3];
+  static bool bInitialized(false);
+  static bool bFlipFlop(true);
+  if(bInitialized == false)
+  {
+    polygon.v[0] = &vertices[0];
+    polygon.v[1] = &vertices[1];
+    polygon.v[2] = &vertices[2];
+    bInitialized = true;
+  }
+
+  polygon.v[iVCount_]->bProcessed = false;
+  // Copy vertex
+  polygon.v[iVCount_]->v1[0] = v.v1[0];
+  polygon.v[iVCount_]->v1[1] = v.v1[1];
+  polygon.v[iVCount_]->v1[2] = v.v1[2];
+  polygon.v[iVCount_]->v1[3] = v.v1[3];
+  polygon.v[iVCount_]->n1[0] = v.n1[0];
+  polygon.v[iVCount_]->n1[1] = v.n1[1];
+  polygon.v[iVCount_]->n1[2] = v.n1[2];
+  polygon.v[iVCount_]->n1[3] = v.n1[3];
+  polygon.v[iVCount_]->c1    = v.c1;
+
+  if(iVCount_ == 2)
+  {
+    plotPoly(polygon);
+
+    if(bFlipFlop == true)
+    {
+      SVertexF * pTemp = polygon.v[0];
+      polygon.v[0] = polygon.v[2];
+      polygon.v[2] = pTemp;
+    }
+    else
+    {
+      SVertexF * pTemp = polygon.v[1];
+      polygon.v[1] = polygon.v[2];
+      polygon.v[2] = pTemp;
+    }
+  }
+  else
+    iVCount_++;
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::addVertexToTriangleFan(SVertexF & v)
+{
+  static SPolygonF polygon;
+  static SVertexF vertices[3];
+  static bool bInitialized(false);
+  if(bInitialized == false)
+  {
+    polygon.v[0] = &vertices[0];
+    polygon.v[1] = &vertices[1];
+    polygon.v[2] = &vertices[2];
+    bInitialized = true;
+  }
+
+  polygon.v[iVCount_]->bProcessed = false;
+  // Copy vertex
+  polygon.v[iVCount_]->v1[0] = v.v1[0];
+  polygon.v[iVCount_]->v1[1] = v.v1[1];
+  polygon.v[iVCount_]->v1[2] = v.v1[2];
+  polygon.v[iVCount_]->v1[3] = v.v1[3];
+  polygon.v[iVCount_]->n1[0] = v.n1[0];
+  polygon.v[iVCount_]->n1[1] = v.n1[1];
+  polygon.v[iVCount_]->n1[2] = v.n1[2];
+  polygon.v[iVCount_]->n1[3] = v.n1[3];
+  polygon.v[iVCount_]->c1    = v.c1;
+
+  if(iVCount_ == 2)
+  {
+    plotPoly(polygon);
+
+    // Swap 3rd and 2nd vertex
+    if(polygon.v[1] == &vertices[1])
+    {
+      polygon.v[1] = &vertices[2];
+      polygon.v[2] = &vertices[1];
+    }
+    else
+    {
+      polygon.v[1] = &vertices[1];
+      polygon.v[2] = &vertices[2];
+    }
+  }
+  else
+    iVCount_++;
+}
+
+//-----------------------------------------------------------------------------
+void
 CSoftGLESFloat::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
   if(bBufVertexEnabled_ == false)
     return;
 
-  switch(mode)
+  GLint idxVertex(first * bufVertex_.size);
+  GLint idxColor (first * bufColor_.size);
+  GLint idxNormal(first * bufNormal_.size);
+
+  SVertexF v;
+  v.bProcessed = false;
+
+  // Reset vertex count for strips/fans/...
+  iVCount_ = 0;
+
+  // Process all vertices
+  for(GLint i(0); i < count; i++)
   {
-    case GL_TRIANGLES:
+    // Vertex
+    switch(bufVertex_.type)
     {
-      SPolygonF polygon;
-      SVertexF  v[3];
-      GLint idxVertex(0);
-      GLint idxColor(0);
-      GLint idxNormal(0);
+      case GL_FLOAT:
+        v.v1[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v1[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v1[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v1[3] = 1.0f;
+        break;
+      case GL_FIXED:
+        v.v1[0] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v1[1] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v1[2] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v1[3] = 1.0f;
+        break;
+    };
 
-      polygon.v[0] = &v[0];
-      polygon.v[1] = &v[1];
-      polygon.v[2] = &v[2];
-
-      for(GLint i(0); i < count; i++)
-      {
-        v[0].bProcessed = false;
-        v[1].bProcessed = false;
-        v[2].bProcessed = false;
-
-        // Vertices
-        v[0].v1[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v[0].v1[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v[0].v1[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v[0].v1[3] = 1.0f;
-        v[1].v1[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v[1].v1[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v[1].v1[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v[1].v1[3] = 1.0f;
-        v[2].v1[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v[2].v1[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v[2].v1[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v[2].v1[3] = 1.0f;
-
-        // Normals
-        if(bBufNormalEnabled_ == true)
-        {
-          // Use normals from array
-          v[0].n1[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v[0].n1[1] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v[0].n1[2] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v[0].n1[3] = 1.0f;
-          v[1].n1[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v[1].n1[1] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v[1].n1[2] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v[1].n1[3] = 1.0f;
-          v[2].n1[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v[2].n1[1] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v[2].n1[2] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v[2].n1[3] = 1.0f;
-        }
-        else
-        {
-          // Use current normal
-          v[0].n1[0] = normal_[0]; v[0].n1[1] = normal_[1]; v[0].n1[2] = normal_[2]; v[0].n1[3] = normal_[3];
-          v[1].n1[0] = normal_[0]; v[1].n1[1] = normal_[1]; v[1].n1[2] = normal_[2]; v[1].n1[3] = normal_[3];
-          v[2].n1[0] = normal_[0]; v[2].n1[1] = normal_[1]; v[2].n1[2] = normal_[2]; v[2].n1[3] = normal_[3];
-        }
-
-        // Colors
-        if(bBufColorEnabled_ == true)
-        {
-          // Use colors from array
-          v[0].c1.r  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v[0].c1.g  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v[0].c1.b  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v[0].c1.a  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          if(shadingModel_ == GL_SMOOTH)
-          {
-            v[1].c1.r  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v[1].c1.g  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v[1].c1.b  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v[1].c1.a  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v[2].c1.r  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v[2].c1.g  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v[2].c1.b  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v[2].c1.a  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          }
-        }
-        else
-        {
-          // Use current color
-          v[0].c1 = clCurrent;
-          v[1].c1 = clCurrent;
-          v[2].c1 = clCurrent;
-        }
-
-        // Plot
-        plotPoly(polygon);
-      }
-      break;
-    }
-    case GL_TRIANGLE_STRIP:
+    // Normal
+    if(bBufNormalEnabled_ == true)
     {
-      break;
+      switch(bufColor_.type)
+      {
+        case GL_FLOAT:
+          v.n1[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n1[1] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n1[2] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n1[3] = 1.0f;
+          break;
+        case GL_FIXED:
+          v.n1[0] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n1[1] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n1[2] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n1[3] = 1.0f;
+          break;
+      };
     }
-    case GL_TRIANGLE_FAN:
+
+    // Color
+    if(bBufColorEnabled_ == true)
     {
-      SPolygonF polygon;
-      SVertexF  v[3];
-      GLint idxVertex(6);
-      GLint idxColor(8);
-      GLint idxNormal(6);
-
-      v[0].bProcessed = false;
-      v[1].bProcessed = false;
-      v[2].bProcessed = false;
-      polygon.v[0] = &v[0];
-      polygon.v[1] = &v[1];
-      polygon.v[2] = &v[2];
-
-      // Vertices
-      v[0].v1[0] = ((GLfloat *)bufVertex_.pointer)[0];
-      v[0].v1[1] = ((GLfloat *)bufVertex_.pointer)[1];
-      v[0].v1[2] = ((GLfloat *)bufVertex_.pointer)[2];
-      v[0].v1[3] = 1.0f;
-      v[2].v1[0] = ((GLfloat *)bufVertex_.pointer)[3];
-      v[2].v1[1] = ((GLfloat *)bufVertex_.pointer)[4];
-      v[2].v1[2] = ((GLfloat *)bufVertex_.pointer)[5];
-      v[2].v1[3] = 1.0f;
-
-      // Normals
-      if(bBufNormalEnabled_ == true)
+      switch(bufColor_.type)
       {
-        // Use normals from array
-        v[0].n1[0] = ((GLfloat *)bufNormal_.pointer)[0];
-        v[0].n1[1] = ((GLfloat *)bufNormal_.pointer)[1];
-        v[0].n1[2] = ((GLfloat *)bufNormal_.pointer)[2];
-        v[2].n1[3] = 1.0f;
-        v[2].n1[0] = ((GLfloat *)bufNormal_.pointer)[3];
-        v[2].n1[1] = ((GLfloat *)bufNormal_.pointer)[4];
-        v[2].n1[2] = ((GLfloat *)bufNormal_.pointer)[5];
-        v[2].n1[3] = 1.0f;
-      }
-      else
-      {
-        // Use current normal
-        v[0].n1[0] = normal_[0]; v[0].n1[1] = normal_[1]; v[0].n1[2] = normal_[2]; v[0].n1[3] = normal_[3];
-        v[1].n1[0] = normal_[0]; v[1].n1[1] = normal_[1]; v[1].n1[2] = normal_[2]; v[1].n1[3] = normal_[3];
-        v[2].n1[0] = normal_[0]; v[2].n1[1] = normal_[1]; v[2].n1[2] = normal_[2]; v[2].n1[3] = normal_[3];
-      }
-
-      // Colors
-      if(bBufColorEnabled_ == true)
-      {
-        // Use colors from array
-        v[0].c1.r  = ((GLfloat *)bufColor_.pointer)[0];
-        v[0].c1.g  = ((GLfloat *)bufColor_.pointer)[1];
-        v[0].c1.b  = ((GLfloat *)bufColor_.pointer)[2];
-        v[0].c1.a  = ((GLfloat *)bufColor_.pointer)[3];
-        if(shadingModel_ == GL_SMOOTH)
-        {
-          v[2].c1.r  = ((GLfloat *)bufColor_.pointer)[4];
-          v[2].c1.g  = ((GLfloat *)bufColor_.pointer)[5];
-          v[2].c1.b  = ((GLfloat *)bufColor_.pointer)[6];
-          v[2].c1.a  = ((GLfloat *)bufColor_.pointer)[7];
-        }
-      }
-      else
-      {
-        // Use current color
-        v[0].c1 = clCurrent;
-        v[1].c1 = clCurrent;
-        v[2].c1 = clCurrent;
-      }
-
-      for(GLint i(0); i < count; i++)
-      {
-        // Swap v[1] with v[2]
-        SVertexF * vtemp;
-        vtemp = polygon.v[1];
-        polygon.v[1] = polygon.v[2];
-        polygon.v[2] = vtemp;
-
-        vtemp->bProcessed = false;
-
-        // Vertices
-        vtemp->v1[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        vtemp->v1[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        vtemp->v1[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        vtemp->v1[3] = 1.0f;
-
-        // Normals
-        if(bBufNormalEnabled_ == true)
-        {
-          // Normal
-          vtemp->n1[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          vtemp->n1[1] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          vtemp->n1[2] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          vtemp->n1[3] = 1.0f;
-        }
-
-        // Colors
-        if(bBufColorEnabled_ == true)
-        {
-          vtemp->c1.r  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          vtemp->c1.g  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          vtemp->c1.b  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          vtemp->c1.a  = ((GLfloat *)bufColor_.pointer)[idxColor++];
-        }
-
-        // Plot
-        plotPoly(polygon);
-      }
-      break;
+        case GL_FLOAT:
+          v.c1.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.c1.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.c1.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.c1.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          break;
+        case GL_FIXED:
+          v.c1.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.c1.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.c1.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.c1.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          break;
+      };
     }
+
+    switch(mode)
+    {
+      case GL_TRIANGLES:      addVertexToTriangle(v);      break;
+      case GL_TRIANGLE_STRIP: addVertexToTriangleStrip(v); break;
+      case GL_TRIANGLE_FAN:   addVertexToTriangleFan(v);   break;
+    };
   }
 }
 
@@ -606,30 +605,23 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 bool
 CSoftGLESFloat::testAndSetDepth(GLfloat z, uint32_t index)
 {
-  bool bValid(false);
-
   if((z >= zNear_) && (z <= zFar_))
   {
     uint32_t zval = (uint32_t)((zA_ + (zB_ / z)) * 0xffffffff);
 
     switch(depthFunction_)
     {
-      case GL_LESS:     bValid = (zval <  zbuffer[index]); break;
-      case GL_EQUAL:    bValid = (zval == zbuffer[index]); break;
-      case GL_LEQUAL:   bValid = (zval <= zbuffer[index]); break;
-      case GL_GREATER:  bValid = (zval >  zbuffer[index]); break;
-      case GL_NOTEQUAL: bValid = (zval != zbuffer[index]); break;
-      case GL_GEQUAL:   bValid = (zval >= zbuffer[index]); break;
-      case GL_ALWAYS:   bValid = true;                     break;
-      case GL_NEVER:
-      default:          bValid = false;
+      case GL_LESS:     if(zval <  zbuffer[index]){zbuffer[index] = zval; return true;} break;
+      case GL_EQUAL:    if(zval == zbuffer[index]){zbuffer[index] = zval; return true;} break;
+      case GL_LEQUAL:   if(zval <= zbuffer[index]){zbuffer[index] = zval; return true;} break;
+      case GL_GREATER:  if(zval >  zbuffer[index]){zbuffer[index] = zval; return true;} break;
+      case GL_NOTEQUAL: if(zval != zbuffer[index]){zbuffer[index] = zval; return true;} break;
+      case GL_GEQUAL:   if(zval >= zbuffer[index]){zbuffer[index] = zval; return true;} break;
+      case GL_ALWAYS:                              zbuffer[index] = zval; return true;  break;
+      case GL_NEVER:                                                      return false; break;
     };
-
-    if(bValid == true)
-      zbuffer[index] = zval;
   }
-
-  return bValid;
+  return false;
 }
 
 //-----------------------------------------------------------------------------

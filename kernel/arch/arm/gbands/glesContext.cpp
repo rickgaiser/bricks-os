@@ -28,13 +28,18 @@ CGBAGLESContext::glClear(GLbitfield mask)
 
   if(mask & GL_COLOR_BUFFER_BIT)
   {
-    unsigned short color(fpRGB(clClear.r, clClear.g, clClear.b));
-    dmaFill16(color, renderSurface->p, iCount);
+    //uint16_t color = fpRGB(clClear.r, clClear.g, clClear.b;
+    //dmaFill16(color, renderSurface->p, iCount);
+
+    uint32_t color = (fpRGB(clClear.r, clClear.g, clClear.b) << 16) | fpRGB(clClear.r, clClear.g, clClear.b);
+    dmaFill32(color, renderSurface->p, iCount>>1);
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    dmaFill16(zClearValue_, zbuffer, iCount);
-    //dmaFill32(zClearValue_, zbuffer, iCount);
+    //dmaFill16(zClearValue_, zbuffer, iCount);
+
+    uint32_t z = (zClearValue_ << 16) | zClearValue_;
+    dmaFill32(z, zbuffer, iCount>>1);
   }
 }
 

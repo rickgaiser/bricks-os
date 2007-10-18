@@ -60,7 +60,7 @@ CAGLESBuffers::glEnableClientState(GLenum array)
 void
 CAGLESBuffers::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 {
-  bufNormal_.size    = 0;
+  bufNormal_.size    = 3;  // x,y,z
   bufNormal_.type    = type;
   bufNormal_.stride  = stride;
   bufNormal_.pointer = pointer;

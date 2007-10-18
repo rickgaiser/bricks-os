@@ -162,11 +162,15 @@ protected:
   virtual bool testAndSetDepth(GLfixed z, uint32_t index);
   virtual void hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c);
   virtual void hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y);
+  virtual void addVertexToTriangle(SVertexFx & v);
+  virtual void addVertexToTriangleStrip(SVertexFx & v);
+  virtual void addVertexToTriangleFan(SVertexFx & v);
   virtual void plotPoly(SPolygonFx & poly);
   virtual void rasterPoly(SPolygonFx & poly);
 
 protected:
   CSurface  * renderSurface;
+  GLint       iVCount_;
 
   // Depth testing
   bool        depthTestEnabled_;
