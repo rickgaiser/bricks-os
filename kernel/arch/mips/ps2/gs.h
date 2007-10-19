@@ -11,6 +11,28 @@
 #include "asm/arch/registers.h"
 
 
+// int_mode
+#define NON_INTERLACED          0
+#define INTERLACED              1
+// mode
+#define PAL                     3
+#define NTSC                    2
+
+// field_mode
+#define FIELD                   0
+#define FRAME                   1
+
+#define GRAPH_PSM_32            0x00    // 32 bits per pixel.
+#define GRAPH_PSM_24            0x01    // 24 bits per pixel.
+#define GRAPH_PSM_16            0x02    // 16 bits per pixel.
+#define GRAPH_PSM_16S           0x0A    // 16 bits per pixel.
+#define GRAPH_PSM_8             0x13    // 8 bits per pixel, palettized.
+#define GRAPH_PSM_4             0x14    // 4 bits per pixel, palettized.
+#define GRAPH_PSM_8H            0x1B    // 8 bits per pixel, palettized.
+#define GRAPH_PSM_4HH           0x24    // 4 bits per pixel, palettized.
+#define GRAPH_PSM_4HL           0x2C    // 4 bits per pixel, palettized.
+
+
 //---------------------------------------------------------------------------
 // Privileged Register Macros
 //---------------------------------------------------------------------------
@@ -58,10 +80,37 @@
   ((uint64_t)(DPMS) << 2)
 
 //---------------------------------------------------------------------------
-// DISPFP1 Register
+// DISPLAY Registers
 //---------------------------------------------------------------------------
-#define GS_SET_DISPFB1(FBP,FBW,PSM,DBX,DBY) \
-  REG_GS_DISPFB1 = \
+// DX   - x pos in display area (VCK units)
+// DY   - y pos in display area (raster units)
+// MAGH - magnification in h direction
+// MAGV - magnification in v direction
+// DW   - display area width - 1 (VCK units)
+// DH   - display area height - 1 (pixel units)
+//---------------------------------------------------------------------------
+#define GS_SET_DISPLAY(DX,DY,MAGH,MAGV,DW,DH) \
+  ((uint64_t)(DX)   <<  0) | \
+  ((uint64_t)(DY)   << 12) | \
+  ((uint64_t)(MAGH) << 23) | \
+  ((uint64_t)(MAGV) << 27) | \
+  ((uint64_t)(DW)   << 32) | \
+  ((uint64_t)(DH)   << 44)
+
+//---------------------------------------------------------------------------
+#define GS_SET_DISPLAY1(DX,DY,MAGH,MAGV,DW,DH) \
+  REG_GS_DISPLAY1 = \
+  GS_SET_DISPLAY(DX,DY,MAGH,MAGV,DW,DH)
+
+//---------------------------------------------------------------------------
+#define GS_SET_DISPLAY2(DX,DY,MAGH,MAGV,DW,DH) \
+  REG_GS_DISPLAY2 = \
+  GS_SET_DISPLAY(DX,DY,MAGH,MAGV,DW,DH)
+
+//---------------------------------------------------------------------------
+// DISPFP Registers
+//---------------------------------------------------------------------------
+#define GS_SET_DISPFB(FBP,FBW,PSM,DBX,DBY) \
   ((uint64_t)(FBP) << 0)  | \
   ((uint64_t)(FBW) << 9)  | \
   ((uint64_t)(PSM) << 15) | \
@@ -69,39 +118,16 @@
   ((uint64_t)(DBY) << 43)
 
 //---------------------------------------------------------------------------
-// DISPLAY1 Register
-//---------------------------------------------------------------------------
-#define GS_SET_DISPLAY1(DX,DY,MAGH,MAGV,DW,DH) \
-  REG_GS_DISPLAY1 = \
-  ((uint64_t)(DX)   <<  0) | \
-  ((uint64_t)(DY)   << 12) | \
-  ((uint64_t)(MAGH) << 23) | \
-  ((uint64_t)(MAGV) << 27) | \
-  ((uint64_t)(DW)   << 32) | \
-  ((uint64_t)(DH)   << 44)
+#define GS_SET_DISPFB1(FBP,FBW,PSM,DBX,DBY) \
+  REG_GS_DISPFB1 = \
+  GS_SET_DISPFB(FBP,FBW,PSM,DBX,DBY)
 
 //---------------------------------------------------------------------------
 // DISPFP2 Register
 //---------------------------------------------------------------------------
 #define GS_SET_DISPFB2(FBP,FBW,PSM,DBX,DBY) \
   REG_GS_DISPFB2 = \
-  ((uint64_t)(FBP) <<  0) | \
-  ((uint64_t)(FBW) <<  9) | \
-  ((uint64_t)(PSM) << 15) | \
-  ((uint64_t)(DBX) << 32) | \
-  ((uint64_t)(DBY) << 43)
-
-//---------------------------------------------------------------------------
-// DISPLAY2 Register
-//---------------------------------------------------------------------------
-#define GS_SET_DISPLAY2(DX,DY,MAGH,MAGV,DW,DH) \
-  REG_GS_DISPLAY2 = \
-  ((uint64_t)(DX)   <<  0) | \
-  ((uint64_t)(DY)   << 12) | \
-  ((uint64_t)(MAGH) << 23) | \
-  ((uint64_t)(MAGV) << 27) | \
-  ((uint64_t)(DW)   << 32) | \
-  ((uint64_t)(DH)   << 44)
+  GS_SET_DISPFB(FBP,FBW,PSM,DBX,DBY)
 
 //---------------------------------------------------------------------------
 // BGCOLOR Register
@@ -390,6 +416,9 @@
 //---------------------------------------------------------------------------
 // ZBUF_x Register
 //---------------------------------------------------------------------------
+#define ZMSK_ENABLE		0
+#define ZMSK_DISABLE	1
+
 #define GS_ZBUF(ZBP,PSM,ZMSK) \
   (((uint64_t)(ZBP)  <<  0) | \
    ((uint64_t)(PSM)  << 24) | \

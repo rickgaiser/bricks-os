@@ -13,7 +13,7 @@
 
 // Video configuration
 #define CONFIG_FRAMEBUFFER
-#undef  CONFIG_GL
+#define CONFIG_GL
 
 // Library configuration
 #define CONFIG_BUILTIN_MM

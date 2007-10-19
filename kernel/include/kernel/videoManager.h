@@ -90,10 +90,9 @@ enum ESurfaceType
 //---------------------------------------------------------------------------
 struct SVideoMode
 {
-  int xres;
-  int yres;
-  int bitsPerPixel;
-  int bytesPerPixel;
+  int width;
+  int height;
+  int bpp;
   EColorFormat format;
 };
 

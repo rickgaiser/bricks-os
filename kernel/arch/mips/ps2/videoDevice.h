@@ -11,20 +11,17 @@
 
 
 //---------------------------------------------------------------------------
-typedef enum
+struct ps2_vmode_t
 {
-   PAL_256_256_32=0
-  ,PAL_320_256_32
-  ,PAL_384_256_32
-  ,PAL_512_256_32
-  ,PAL_640_256_32
+  uint16_t mode;
+  uint16_t width;
+  uint16_t height;
+  uint16_t psm;
+  uint16_t interlace;
+  uint16_t bpp;
+  uint64_t display;
+};
 
-  ,NTSC_256_224_32
-  ,NTSC_320_224_32
-  ,NTSC_384_224_32
-  ,NTSC_512_224_32
-  ,NTSC_640_224_32
-} g2_video_mode;
 
 class CPS2VideoDevice;
 //---------------------------------------------------------------------------
@@ -56,7 +53,7 @@ public:
   virtual void     waitVSync();
 
 private:
-  void setMode(g2_video_mode mode);
+  void setMode(ps2_vmode_t * mode);
 
   void g2_put_image(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t *data);
 
@@ -67,6 +64,11 @@ private:
   void g2_set_active_frame(uint8_t frame);
   uint8_t g2_get_visible_frame(void);
   uint8_t g2_get_active_frame(void);
+
+  void g2_set_visible_field(uint8_t field);
+  void g2_set_active_field(uint8_t field);
+  uint8_t g2_get_visible_field(void);
+  uint8_t g2_get_active_field(void);
 
   void g2_wait_vsync(void);
   void g2_wait_hsync(void);

@@ -6,44 +6,109 @@
 #include "string.h"
 
 
-// int_mode
-#define NON_INTERLACED          0
-#define INTERLACED              1
-// ntsc_pal
-#define NTSC                    2
-#define PAL                     3
-// field_mode
-#define FRAME                   1
-#define FIELD                   2
-
 //---------------------------------------------------------------------------
-typedef struct
+ps2_vmode_t vmodes[] =
 {
-  uint16_t ntsc_pal;
-  uint16_t width;
-  uint16_t height;
-  uint16_t psm;
-  uint16_t bpp;
-  uint16_t magh;
-} vmode_t __attribute__((aligned(16)));
-
-vmode_t vmodes[] =
-{
-   {PAL, 256, 256, 0, 32, 10}  // PAL_256_256_32
-  ,{PAL, 320, 256, 0, 32, 8}   // PAL_320_256_32
-  ,{PAL, 384, 256, 0, 32, 7}   // PAL_384_256_32
-  ,{PAL, 512, 256, 0, 32, 5}   // PAL_512_256_32
-  ,{PAL, 640, 256, 0, 32, 4}   // PAL_640_256_32
-
-  ,{NTSC, 256, 224, 0, 32, 10} // NTSC_256_224_32
-  ,{NTSC, 320, 224, 0, 32, 8}  // NTSC_320_224_32
-  ,{NTSC, 384, 224, 0, 32, 7}  // NTSC_384_224_32
-  ,{NTSC, 512, 224, 0, 32, 5}  // NTSC_512_224_32
-  ,{NTSC, 640, 224, 0, 32, 4}  // NTSC_640_224_32
+  // PAL
+  {0x03,  640,  256, GRAPH_PSM_16, NON_INTERLACED, 16, GS_SET_DISPLAY(652, 36, 3, 0, 2559,  255)},
+  {0x03,  640,  256, GRAPH_PSM_24, NON_INTERLACED, 24, GS_SET_DISPLAY(652, 36, 3, 0, 2559,  255)},
+  {0x03,  640,  256, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(652, 36, 3, 0, 2559,  255)},
+  {0x03,  640,  512, GRAPH_PSM_16, INTERLACED,     16, GS_SET_DISPLAY(652, 72, 3, 0, 2559,  511)},
+  {0x03,  640,  512, GRAPH_PSM_24, INTERLACED,     24, GS_SET_DISPLAY(652, 72, 3, 0, 2559,  511)},
+  {0x03,  640,  512, GRAPH_PSM_32, INTERLACED,     32, GS_SET_DISPLAY(652, 72, 3, 0, 2559,  511)},
+  // NTSC
+  {0x02,  640,  224, GRAPH_PSM_16, NON_INTERLACED, 16, GS_SET_DISPLAY(632, 25, 3, 0, 2559,  223)},
+  {0x02,  640,  224, GRAPH_PSM_24, NON_INTERLACED, 24, GS_SET_DISPLAY(632, 25, 3, 0, 2559,  223)},
+  {0x02,  640,  224, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(632, 25, 3, 0, 2559,  223)},
+  {0x02,  640,  448, GRAPH_PSM_16, INTERLACED,     16, GS_SET_DISPLAY(632, 50, 3, 0, 2559,  447)},
+  {0x02,  640,  448, GRAPH_PSM_24, INTERLACED,     24, GS_SET_DISPLAY(632, 50, 3, 0, 2559,  447)},
+  {0x02,  640,  448, GRAPH_PSM_32, INTERLACED,     32, GS_SET_DISPLAY(632, 50, 3, 0, 2559,  447)},
+  
+  // EDTV
+  {0x50,  720,  480, GRAPH_PSM_16, NON_INTERLACED, 16, GS_SET_DISPLAY(232, 35, 1, 0, 1439,  479)},
+  {0x50,  720,  480, GRAPH_PSM_24, NON_INTERLACED, 24, GS_SET_DISPLAY(232, 35, 1, 0, 1439,  479)},
+  {0x50,  720,  480, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(232, 35, 1, 0, 1439,  479)},
+  // HDTV
+  {0x52, 1280,  720, GRAPH_PSM_16, NON_INTERLACED, 16, GS_SET_DISPLAY(302, 24, 0, 0, 1279,  719)},
+  {0x52, 1280,  720, GRAPH_PSM_24, NON_INTERLACED, 24, GS_SET_DISPLAY(302, 24, 0, 0, 1279,  719)},
+  {0x52, 1280,  720, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(302, 24, 0, 0, 1279,  719)},
+  {0x51, 1920, 1080, GRAPH_PSM_16, INTERLACED,     16, GS_SET_DISPLAY(238, 40, 0, 0, 1919, 1079)},
+  
+  // VGA
+  {0x1A,  640,  480, GRAPH_PSM_16, NON_INTERLACED, 16, GS_SET_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 60Hz
+  {0x1A,  640,  480, GRAPH_PSM_24, NON_INTERLACED, 24, GS_SET_DISPLAY(276, 34, 1, 0, 1279,  479)},
+  {0x1A,  640,  480, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(276, 34, 1, 0, 1279,  479)},
+//  {0x1B,  640,  480, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 72Hz
+//  {0x1C,  640,  480, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 75Hz
+//  {0x1D,  640,  480, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 85Hz
+  // SVGA
+//  {0x2A,  800,  600, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 56Hz
+  {0x2B,  800,  600, GRAPH_PSM_16, NON_INTERLACED, 16, GS_SET_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 60Hz
+  {0x2B,  800,  600, GRAPH_PSM_24, NON_INTERLACED, 24, GS_SET_DISPLAY(420, 26, 1, 0, 1599,  599)},
+  {0x2B,  800,  600, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(420, 26, 1, 0, 1599,  599)},
+//  {0x2C,  800,  600, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 72Hz
+//  {0x2D,  800,  600, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 75Hz
+//  {0x2E,  800,  600, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 85Hz
+  // XGA
+  {0x3B, 1024,  768, GRAPH_PSM_16, NON_INTERLACED, 16, GS_SET_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 60Hz
+  {0x3B, 1024,  768, GRAPH_PSM_24, NON_INTERLACED, 24, GS_SET_DISPLAY(580, 34, 1, 0, 2047,  767)},
+  {0x3B, 1024,  768, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(580, 34, 1, 0, 2047,  767)},
+//  {0x3C, 1024,  768, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 70Hz
+//  {0x3D, 1024,  768, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 75Hz
+//  {0x3E, 1024,  768, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 85Hz
+  // SXGA
+  {0x4A, 1280, 1024, GRAPH_PSM_16, NON_INTERLACED, 16, GS_SET_DISPLAY(348, 40, 0, 0, 1279, 1023)}, // 60Hz
+//  {0x4B, 1280, 1024, GRAPH_PSM_16, NON_INTERLACED, 16, GS_SET_DISPLAY(348, 40, 0, 0, 1279, 1023)}, // 75Hz
 };
+const uint32_t vmode_count(sizeof(vmodes) / sizeof(ps2_vmode_t));
 
 //---------------------------------------------------------------------------
-static vmode_t  * cur_mode;
+static const SVideoMode videoModes[] =
+{
+  // PAL
+//  { 640,  256, 16, cfA1R5G5B5}, //  320Kb
+//  { 640,  256, 24, cfB8G8R8},   //  480Kb
+//  { 640,  256, 32, cfA8B8G8R8}, //  640Kb
+//  { 640,  512, 16, cfA1R5G5B5}, //  640Kb
+//  { 640,  512, 24, cfB8G8R8},   //  960Kb
+  { 640,  512, 32, cfA8B8G8R8}, // 1280Kb
+  // NTSC
+//  { 640,  224, 16, cfA1R5G5B5}, //  280Kb
+//  { 640,  224, 24, cfB8G8R8},   //  420Kb
+//  { 640,  224, 32, cfA8B8G8R8}, //  560Kb
+//  { 640,  448, 16, cfA1R5G5B5}, //  560Kb
+//  { 640,  448, 24, cfB8G8R8},   //  840Kb
+  { 640,  448, 32, cfA8B8G8R8}, // 1120Kb
+
+  // EDTV
+//  { 720,  480, 16, cfA1R5G5B5}, //  675Kb
+//  { 720,  480, 24, cfB8G8R8},   // 1012Kb
+//  { 720,  480, 32, cfA8B8G8R8}, // 1350Kb
+  // HDTV
+//  {1280,  720, 16, cfA1R5G5B5}, // 1800Kb
+//  {1280,  720, 24, cfB8G8R8},   // 2700Kb
+//  {1280,  720, 32, cfA8B8G8R8}, // 3600Kb
+//  {1920, 1080, 16, cfA1R5G5B5}, // 4050Kb
+
+  // VGA
+//  { 640,  480, 16, cfA1R5G5B5},
+//  { 640,  480, 24, cfB8G8R8},
+//  { 640,  480, 32, cfA8B8G8R8},
+  // SVGA
+//  { 800,  600, 16, cfA1R5G5B5},
+//  { 800,  600, 24, cfB8G8R8},
+//  { 800,  600, 32, cfA8B8G8R8},
+  // XGA
+//  {1024,  768, 16, cfA1R5G5B5},
+//  {1024,  768, 24, cfB8G8R8},
+//  {1024,  768, 32, cfA8B8G8R8},
+  // SXGA
+//  {1280, 1024, 16, cfA1R5G5B5},
+};
+static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
+
+//---------------------------------------------------------------------------
+static ps2_vmode_t * cur_mode;
 
 static uint16_t   g2_view_x0=0;                 // current viewport coordinates
 static uint16_t   g2_view_x1=1;
@@ -64,7 +129,7 @@ static uint16_t   g2_font_mag      = 1;         // magnification factor
 static uint8_t    g2_visible_frame;             // Identifies the frame buffer to display
 static uint8_t    g2_active_frame;              // Identifies the frame buffer to direct drawing to
 
-static uint32_t   gs_mem_current;               // points to current GS memory allocation point
+ uint32_t   gs_mem_current;               // points to current GS memory allocation point
  uint16_t   gs_origin_x;                  // used for mapping Primitive to Window coordinate systems
  uint16_t   gs_origin_y;
 
@@ -90,7 +155,9 @@ CPS2Surface::CPS2Surface()
 //---------------------------------------------------------------------------
 CPS2Surface::~CPS2Surface()
 {
-  delete (uint32_t *)pBack;
+  if(pBack != NULL)
+    delete (uint32_t *)pBack;
+
   GS_RESET();
 }
 
@@ -232,15 +299,25 @@ CPS2Surface::drawRect(int x, int y, unsigned int width, unsigned int height)
 void
 CPS2Surface::swap(bool sync)
 {
-  if(pBack != 0)
+//  if(pBack != 0)
   {
     if(sync == true)
       waitVSync();
 
-    g2_put_image(0, 0, width_, height_, (uint32_t *)pBack);
+//    g2_put_image(0, 0, width_, height_, (uint32_t *)pBack);
 
-//    g2_set_visible_frame(1 - g2_get_visible_frame());
-//    g2_set_active_frame(1 - g2_get_active_frame());
+//    if(cur_mode->interlace == NON_INTERLACED)
+//    {
+      // Swap frames
+      //g2_set_visible_frame(1 - g2_get_visible_frame());
+      //g2_set_active_frame(1 - g2_get_active_frame());
+//    }
+//    else
+//    {
+      // Swap fields
+      //g2_set_visible_field(1 - g2_get_visible_field());
+      //g2_set_active_field(1 - g2_get_active_field());
+//    }
   }
 }
 
@@ -262,15 +339,12 @@ CPS2Surface::waitVSync()
 
 //---------------------------------------------------------------------------
 void
-CPS2Surface::setMode(g2_video_mode mode)
+CPS2Surface::setMode(ps2_vmode_t * mode)
 {
-  vmode_t * v;
+  cur_mode = mode;
 
-  v = &(vmodes[mode]);
-  cur_mode = v;
-
-  width_  = v->width - 1;
-  height_ = v->height - 1;
+  width_  = cur_mode->width;
+  height_ = cur_mode->height;
 
   g2_view_x0 = 0;
   g2_view_y0 = 0;
@@ -280,10 +354,20 @@ CPS2Surface::setMode(g2_video_mode mode)
   gs_origin_x = 1024;
   gs_origin_y = 1024;
 
-  gs_mem_current = 0;		// nothing allocated yet
+  g2_visible_frame = 0; // display frame 0
+  g2_active_frame  = 0; // draw to frame 0
 
-  g2_visible_frame = 0;	// display frame 0
-  g2_active_frame  = 0;	// draw to frame 0
+  // Create memory map
+  gs_mem_current = 0;
+  // Allocate first frame
+  g2_frame_addr[0] = gs_mem_current;
+  gs_mem_current += cur_mode->width * cur_mode->height * (cur_mode->bpp/8);
+  // Allocate second frame is progressive
+  if(cur_mode->interlace == NON_INTERLACED)
+  {
+    g2_frame_addr[1] = gs_mem_current;
+    gs_mem_current += cur_mode->width * cur_mode->height * (cur_mode->bpp/8);
+  }
 
   // - Initialize the DMA.
   // - Writes a 0 to most of the DMA registers.
@@ -309,88 +393,38 @@ CPS2Surface::setMode(g2_video_mode mode)
   //   like it should only set the SMODE2 register, but if I remove this syscall
   //   and set the SMODE2 register myself, it donesn't work. What else does
   //   syscall 0x02 do?
-  setGsCrt(NON_INTERLACED, v->ntsc_pal, FRAME);
+  setGsCrt(cur_mode->interlace, cur_mode->mode, FIELD);
 
   // - I havn't attempted to understand what the Alpha parameters can do. They
   //   have been blindly copied from the 3stars demo (although they don't seem
   //   do have any impact in this simple 2D code.
   GS_SET_PMODE(
-      0,		// ReadCircuit1 OFF
-      1,		// ReadCircuit2 ON
-      1,		// Use ALP register for Alpha Blending
-      1,		// Alpha Value of ReadCircuit2 for output selection
-      0,		// Blend Alpha with the output of ReadCircuit2
-      0xFF	// Alpha Value = 1.0
-  );
-/*
-  // - Non needed if we use gs_set_crt()
-  GS_SET_SMODE2(
-      0,		// Non-Interlaced mode
-      1,		// FRAME mode (read every line)
-      0		// VESA DPMS Mode = ON		??? please explain ???
-  );
-*/
-  GS_SET_DISPFB2(
-      0,				// Frame Buffer base pointer = 0 (Address/8192)
-      v->width/64,	// Buffer Width (Pixels/64)
-      v->psm,			// Pixel Storage Format
-      0,				// Upper Left X in Buffer = 0
-      0				// Upper Left Y in Buffer = 0
+      1,        // ReadCircuit1 OFF
+      1,        // ReadCircuit2 ON
+      1,        // Use ALP register for Alpha Blending
+      1,        // Alpha Value of ReadCircuit2 for output selection
+      0,        // Blend Alpha with the output of ReadCircuit2
+      0xFF  // Alpha Value = 1.0
   );
 
-  // Why doesn't (0, 0) equal the very top-left of the TV?
-  GS_SET_DISPLAY2(
-      656,		// X position in the display area (in VCK units)
-      36,			// Y position in the display area (in Raster units)
-      v->magh-1,	// Horizontal Magnification - 1
-      0,						// Vertical Magnification = 1x
-      v->width*v->magh-1,		// Display area width  - 1 (in VCK units) (Width*HMag-1)
-      v->height-1				// Display area height - 1 (in pixels)	  (Height-1)
-  );
+  g2_set_visible_frame(0);
 
-  GS_SET_BGCOLOR(
-      0,	// RED
-      0,	// GREEN
-      0	// BLUE
-  );
+  REG_GS_DISPLAY1 = cur_mode->display;
+  REG_GS_DISPLAY2 = cur_mode->display;
 
 
   BEGIN_GS_PACKET(gs_dma_buf);
   GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-
   // Use drawing parameters from PRIM register
   GIF_DATA_AD(gs_dma_buf, prmodecont, 1);
-
   // Setup frame buffers. Point to 0 initially.
-  GIF_DATA_AD(gs_dma_buf, frame_1,
-      GS_FRAME(
-          0,					// FrameBuffer base pointer = 0 (Address/8192)
-          v->width/64,		// Frame buffer width (Pixels/64)
-          v->psm,				// Pixel Storage Format
-          0));
-
-  // Save address and advance GS memory pointer by buffer size (in bytes)
-  // Do this for both frame buffers.
-  g2_frame_addr[0] = gs_mem_current;
-  gs_mem_current += v->width * v->height * (v->bpp/8);
-
-  g2_frame_addr[1] = gs_mem_current;
-  gs_mem_current += v->width * v->height * (v->bpp/8);
-
+  GIF_DATA_AD(gs_dma_buf, frame_1, GS_FRAME(0, cur_mode->width >> 6, cur_mode->psm, 0));
   // Displacement between Primitive and Window coordinate systems.
-  GIF_DATA_AD(gs_dma_buf, xyoffset_1,
-      GS_XYOFFSET(
-          gs_origin_x<<4,
-          gs_origin_y<<4));
-
+  GIF_DATA_AD(gs_dma_buf, xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
   // Clip to frame buffer.
-  GIF_DATA_AD(gs_dma_buf, scissor_1,
-      GS_SCISSOR(
-          0,
-          width_,
-          0,
-          height_));
+  GIF_DATA_AD(gs_dma_buf, scissor_1, GS_SCISSOR(0, width_, 0, height_));
 
+/*
   // Create a single 256x128 font buffer
   g2_fontbuf_addr = gs_mem_current;
   gs_mem_current += g2_fontbuf_w * g2_fontbuf_h * (v->bpp/8);
@@ -404,10 +438,10 @@ CPS2Surface::setMode(g2_video_mode mode)
   // Setup test_1 register to allow transparent texture regions where A=0
   GIF_DATA_AD(gs_dma_buf, test_1,
       GS_TEST(
-          1,						// Alpha Test ON
-          ATST_NOTEQUAL, 0x00,	// Reject pixels with A=0
-          AFAIL_KEEP,				// Don't update frame or Z buffers
-          0, 0, 0, 0));			// No Destination Alpha or Z-Buffer Tests
+          1,                        // Alpha Test ON
+          ATST_NOTEQUAL, 0x00,  // Reject pixels with A=0
+          AFAIL_KEEP,               // Don't update frame or Z buffers
+          0, 0, 0, 0));         // No Destination Alpha or Z-Buffer Tests
 
   // Setup the ALPHA_1 register to correctly blend edges of
   // pre-antialiased fonts using Alpha Blending stage.
@@ -415,11 +449,12 @@ CPS2Surface::setMode(g2_video_mode mode)
   //   PIXEL=(SRC-FRAME)*SRC_ALPHA>>7+FRAME
   GIF_DATA_AD(gs_dma_buf, alpha_1,
       GS_ALPHA(
-          0,			// A - source
-          1, 			// B - frame buffer
-          0,			// C - alpha from source
-          1, 			// D - frame buffer
-          0));		// FIX - not needed
+          0,            // A - source
+          1,            // B - frame buffer
+          0,            // C - alpha from source
+          1,            // D - frame buffer
+          0));      // FIX - not needed
+*/
 
   SEND_GS_PACKET(gs_dma_buf);
 }
@@ -636,14 +671,8 @@ CPS2Surface::g2_get_font_mag(void)
 void
 CPS2Surface::g2_set_visible_frame(uint8_t frame)
 {
-  GS_SET_DISPFB2(
-    g2_frame_addr[frame]/8192,  // Frame Buffer base pointer = Address/8192
-    cur_mode->width/64,         // Buffer Width (Pixels/64)
-    cur_mode->psm,              // Pixel Storage Format
-    0,                          // Upper Left X in Buffer = 0
-    0                           // Upper Left Y in Buffer = 0
-  );
-
+  REG_GS_DISPFB1  = GS_SET_DISPFB(g2_frame_addr[frame] >> 13, width_ >> 6, cur_mode->psm, 0, 0);
+  REG_GS_DISPFB2  = GS_SET_DISPFB(g2_frame_addr[frame] >> 13, width_ >> 6, cur_mode->psm, 0, 0);
   g2_visible_frame = frame;
 }
 
@@ -654,12 +683,7 @@ CPS2Surface::g2_set_active_frame(uint8_t frame)
   BEGIN_GS_PACKET(gs_dma_buf);
   GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
-  GIF_DATA_AD(gs_dma_buf, frame_1,
-    GS_FRAME(
-      g2_frame_addr[frame]/8192,        // FrameBuffer base pointer = Address/8192
-      cur_mode->width/64,               // Frame buffer width (Pixels/64)
-      cur_mode->psm,                    // Pixel Storage Format
-      0));
+  GIF_DATA_AD(gs_dma_buf, frame_1, GS_FRAME(g2_frame_addr[frame] >> 13, width_ >> 6, cur_mode->psm, 0));
 
   SEND_GS_PACKET(gs_dma_buf);
 
@@ -670,14 +694,67 @@ CPS2Surface::g2_set_active_frame(uint8_t frame)
 uint8_t
 CPS2Surface::g2_get_visible_frame(void)
 {
-  return(g2_visible_frame);
+  return g2_visible_frame;
 }
 
 //---------------------------------------------------------------------------
 uint8_t
 CPS2Surface::g2_get_active_frame(void)
 {
-  return(g2_active_frame);
+  return g2_active_frame;
+}
+
+//---------------------------------------------------------------------------
+void
+CPS2Surface::g2_set_visible_field(uint8_t field)
+{
+//  REG_GS_DISPFB1  = GS_SET_DISPFB(g2_frame_addr[frame] >> 13, width_ >> 6, cur_mode->psm, 0, 0);
+//  REG_GS_DISPFB2  = GS_SET_DISPFB(g2_frame_addr[frame] >> 13, width_ >> 6, cur_mode->psm, 0, 0);
+//  g2_visible_field = field;
+}
+
+//---------------------------------------------------------------------------
+void
+CPS2Surface::g2_set_active_field(uint8_t field)
+{
+  BEGIN_GS_PACKET(gs_dma_buf);
+  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
+
+  // If the field is odd...
+  if(field == 1)
+  {
+    GIF_DATA_AD(gs_dma_buf, scanmsk, 2);
+  }
+  else if(field == 0)
+  {
+    GIF_DATA_AD(gs_dma_buf, scanmsk, 3);
+  }
+  else
+  {
+    GIF_DATA_AD(gs_dma_buf, scanmsk, 0);
+  }
+
+  SEND_GS_PACKET(gs_dma_buf);
+}
+
+//---------------------------------------------------------------------------
+uint8_t
+CPS2Surface::g2_get_visible_field(void)
+{
+  if(REG_GS_CSR & (1 << 13))
+    return 1; // Odd
+  else
+    return 0; // Even
+}
+
+//---------------------------------------------------------------------------
+uint8_t
+CPS2Surface::g2_get_active_field(void)
+{
+  if(REG_GS_CSR & (1 << 13))
+    return 0; // Even
+  else
+    return 1; // Odd
 }
 
 //---------------------------------------------------------------------------
@@ -724,21 +801,6 @@ CPS2VideoDevice::~CPS2VideoDevice()
 void
 CPS2VideoDevice::listModes(const SVideoMode ** modes, int * modeCount)
 {
-  static const SVideoMode videoModes[] =
-  {
-     {256, 256, 32, 4, cfA8B8G8R8}
-    ,{320, 256, 32, 4, cfA8B8G8R8}
-    ,{384, 256, 32, 4, cfA8B8G8R8}
-    ,{512, 256, 32, 4, cfA8B8G8R8}
-    ,{640, 256, 32, 4, cfA8B8G8R8}
-    ,{256, 224, 32, 4, cfA8B8G8R8}
-    ,{320, 224, 32, 4, cfA8B8G8R8}
-    ,{384, 224, 32, 4, cfA8B8G8R8}
-    ,{512, 224, 32, 4, cfA8B8G8R8}
-    ,{640, 224, 32, 4, cfA8B8G8R8}
-  };
-  static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
-
   *modes = videoModes;
   *modeCount = videoModeCount;
 }
@@ -766,14 +828,16 @@ CPS2VideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble
   {
     case stSCREEN:
     {
-      for(int i(0); i < 10; i++)
+      for(uint32_t i(0); i < vmode_count; i++)
       {
-        if((pCurrentMode_->xres == vmodes[i].width) && (pCurrentMode_->yres == vmodes[i].height))
+        if((pCurrentMode_->width  == vmodes[i].width) &&
+           (pCurrentMode_->height == vmodes[i].height) &&
+           (pCurrentMode_->bpp    == vmodes[i].bpp))
         {
           pSurface = new CPS2Surface;
-          pSurface->setMode((g2_video_mode)i);
+          pSurface->setMode(&vmodes[i]);
           pSurface->format_= pCurrentMode_->format;
-          pSurface->pBack  = new uint32_t[pCurrentMode_->xres * pCurrentMode_->yres];
+          pSurface->pBack  = 0;//new uint32_t[pCurrentMode_->xres * pCurrentMode_->yres];
           pSurface->pFront = pSurface->pBack;  // Fail safe?
           pSurface->p      = pSurface->pBack;
 

@@ -6,6 +6,18 @@
 
 volatile bool bSwap(false);
 
+static const SVideoMode videoModes[] =
+{
+#ifdef GBA
+    {160, 128, 16, cfX1R5G5B5}
+  , {240, 160, 16, cfX1R5G5B5}
+#endif // GBA
+#ifdef NDS9
+    {256, 192, 16, cfA1R5G5B5}
+#endif // NDS9
+};
+static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
+
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -104,18 +116,6 @@ CGBAVideoDevice::isr(int irq)
 void
 CGBAVideoDevice::listModes(const SVideoMode ** modes, int * modeCount)
 {
-  static const SVideoMode videoModes[] =
-  {
-#ifdef GBA
-      {160, 128, 16, 2, cfX1R5G5B5}
-    , {240, 160, 16, 2, cfX1R5G5B5}
-#endif // GBA
-#ifdef NDS9
-      {256, 192, 16, 2, cfA1R5G5B5}
-#endif // NDS9
-  };
-  static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
-
   *modes = videoModes;
   *modeCount = videoModeCount;
 }
@@ -132,11 +132,11 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
 {
 //  printk("Mode set to: %dx%dx%d\n", mode->xres, mode->yres, mode->bitsPerPixel);
 #ifdef GBA
-  if(mode->xres == 240)
+  if(mode->width == 240)
   {
     REG_DISPCNT   = MODE_3 | BG2_ENABLE;
   }
-  else if(mode->xres == 160)
+  else if(mode->width == 160)
   {
     REG_DISPCNT   = MODE_5 | BG2_ENABLE;
   }
@@ -168,17 +168,17 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble
     case stSCREEN:
     {
       CSurface * pSurface = new CGBASurface;
-      pSurface->width_ = pCurrentMode_->xres;
-      pSurface->height_= pCurrentMode_->yres;
+      pSurface->width_ = pCurrentMode_->width;
+      pSurface->height_= pCurrentMode_->height;
       pSurface->format_= pCurrentMode_->format;
       pSurface->pFront = (uint16_t *)0x6000000;
       if(bDouble == true)
       {
         // Allocate back buffer
 #ifdef GBA
-        if(pCurrentMode_->xres == 240)
+        if(pCurrentMode_->width == 240)
           pSurface->pBack  = new uint16_t[240*160];
-        else if(pCurrentMode_->xres == 160)
+        else if(pCurrentMode_->width == 160)
           pSurface->pBack  = (uint16_t *)0x600A000;
 #endif // GBA
 #ifdef NDS9
