@@ -61,24 +61,22 @@ enum EColorFormat
 
 //---------------------------------------------------------------------------
 // Create color formats
-#define BxColorFormat_FromRGB(fmt,r,g,b) \
-  ((r >> colorFormatOps[fmt].lossR) << colorFormatOps[fmt].shiftR) | \
-  ((g >> colorFormatOps[fmt].lossG) << colorFormatOps[fmt].shiftG) | \
-  ((b >> colorFormatOps[fmt].lossB) << colorFormatOps[fmt].shiftB);
 #define BxColorFormat_FromRGBA(fmt,r,g,b,a) \
   ((r >> colorFormatOps[fmt].lossR) << colorFormatOps[fmt].shiftR) | \
   ((g >> colorFormatOps[fmt].lossG) << colorFormatOps[fmt].shiftG) | \
   ((b >> colorFormatOps[fmt].lossB) << colorFormatOps[fmt].shiftB) | \
-  ((a >> colorFormatOps[fmt].lossA) << colorFormatOps[fmt].shiftA);
+  ((a >> colorFormatOps[fmt].lossA) << colorFormatOps[fmt].shiftA)
+#define BxColorFormat_FromRGB(fmt,r,g,b) \
+  BxColorFormat_FromRGBA(fmt,r,g,b,255)
 // Get colors from color formats
 #define BxColorFormat_GetR(fmt,color) \
-  (((color & colorFormatOps[fmt].maskR) >> colorFormatOps[fmt].shiftR) << colorFormatOps[fmt].lossR);
+  (((color & colorFormatOps[fmt].maskR) >> colorFormatOps[fmt].shiftR) << colorFormatOps[fmt].lossR)
 #define BxColorFormat_GetG(fmt,color) \
-  (((color & colorFormatOps[fmt].maskG) >> colorFormatOps[fmt].shiftG) << colorFormatOps[fmt].lossG);
+  (((color & colorFormatOps[fmt].maskG) >> colorFormatOps[fmt].shiftG) << colorFormatOps[fmt].lossG)
 #define BxColorFormat_GetB(fmt,color) \
-  (((color & colorFormatOps[fmt].maskB) >> colorFormatOps[fmt].shiftB) << colorFormatOps[fmt].lossB);
+  (((color & colorFormatOps[fmt].maskB) >> colorFormatOps[fmt].shiftB) << colorFormatOps[fmt].lossB)
 #define BxColorFormat_GetA(fmt,color) \
-  (((color & colorFormatOps[fmt].maskA) >> colorFormatOps[fmt].shiftA) << colorFormatOps[fmt].lossA);
+  (((color & colorFormatOps[fmt].maskA) >> colorFormatOps[fmt].shiftA) << colorFormatOps[fmt].lossA)
 
 //---------------------------------------------------------------------------
 enum ESurfaceType

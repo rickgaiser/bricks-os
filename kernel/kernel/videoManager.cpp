@@ -184,42 +184,38 @@ CSurface::drawLine(int x1, int y1, int x2, int y2)
   if(x1 <= x2)
     drawLine_i(x1, y1, x2, y2);
   else
-    drawLine_i(x1, y1, x2, y2);
+    drawLine_i(x2, y2, x1, y1);
 }
 
 //---------------------------------------------------------------------------
 void
 CSurface::drawLine_i(int x1, int y1, int x2, int y2)
 {
-  if(abs(x2 - x1) >= abs(y2 - y1))
+  float dx = (x2-x1);
+  float dy = (y2-y1);
+
+  if(dx >= abs(dy))
   {
-    float currenty = y1;
-    float slopey = (float)(y2 - y1) / (float)(x2 - x1);
-    for(int x(x1); x <= x2; x++)
+    float currenty = y1 + 0.5f;
+    float slopey   = dy / dx;
+
+    for(; x1 <= x2; x1++)
     {
-      SET_PIXEL(x, (int)currenty, fmtColor_);
+      SET_PIXEL(x1, (int)currenty, fmtColor_);
       currenty += slopey;
     }
   }
   else
   {
-    float currentx = x1;
-    float slopex = (float)(x2 - x1) / (float)(y2 - y1);
-    if(y1 < y2)
+    float currentx = x1 + 0.5f;
+    float slopex   = dx / dy;
+    int ystart = (y1 <= y2) ? y1 : y2;
+    int yend   = (y1 <= y2) ? y2 : y1;
+
+    for(; ystart <= yend; ystart++)
     {
-      for(int y(y1); y <= y2; y++)
-      {
-        SET_PIXEL((int)currentx, y, fmtColor_);
-        currentx += slopex;
-      }
-    }
-    else
-    {
-      for(int y(y2); y <= y1; y++)
-      {
-        SET_PIXEL((int)currentx, y, fmtColor_);
-        currentx += slopex;
-      }
+      SET_PIXEL((int)currentx, ystart, fmtColor_);
+      currentx += slopex;
     }
   }
 }
