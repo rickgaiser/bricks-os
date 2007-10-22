@@ -101,10 +101,12 @@ testGLF(CSurface * surface)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+  GLfloat fRatio = (float)surface->height() / (float)surface->width();
+  glFrustumf(0.5f, -0.5f, -0.5f * fRatio, 0.5f * fRatio, 0.5f, 100.0f);
   // Move up a little
-  glTranslatef(0.0f, -2.0f, 0.0f);
+  //glTranslatef(0.0f, -2.0f, 0.0f);
   // Look down a little
-  glRotatef(-30.0f, 1.0f, 0.0f, 0.0f);
+  //glRotatef(-30.0f, 1.0f, 0.0f, 0.0f);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
@@ -114,7 +116,7 @@ testGLF(CSurface * surface)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -5.0f);
+    glTranslatef(0.0f, 0.0f, -6.0f);
     glRotatef(yrot, 0.0f, 1.0f, 0.0f);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, square_vcount);
     glDrawArrays(GL_TRIANGLE_FAN, square_vcount, pyramid_vcount);

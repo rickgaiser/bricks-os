@@ -59,6 +59,14 @@ GL_APIENTRY glFogfv(GLenum pname, const GLfloat * params)
 
 //-----------------------------------------------------------------------------
 GL_API void
+GL_APIENTRY glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+{
+  GLES_GET_CONTEXT();
+  context->glFrustumf(left, right, bottom, top, zNear, zFar);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
 GL_APIENTRY glLightf(GLenum light, GLenum pname, GLfloat param)
 {
   GLES_GET_CONTEXT();
@@ -231,6 +239,14 @@ GL_APIENTRY glFogxv(GLenum pname, const GLfixed * params)
 {
   GLES_GET_CONTEXT();
   context->glFogxv(pname, params);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
+{
+  GLES_GET_CONTEXT();
+  context->glFrustumx(left, right, bottom, top, zNear, zFar);
 }
 
 //-----------------------------------------------------------------------------

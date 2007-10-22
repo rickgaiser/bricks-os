@@ -7,10 +7,6 @@ typedef unsigned int wint_t;
 #include <math.h>
 
 
-#define SCREENX(v) ((int)((v[0] * fpFieldofviewXScalar) / -v[2]) + (viewportWidth  >> 1))
-#define SCREENY(v) ((int)((v[1] * fpFieldofviewYScalar) / -v[2]) + (viewportHeight >> 1))
-
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CSoftGLESFloat::CSoftGLESFloat()
@@ -477,6 +473,35 @@ CSoftGLESFloat::glFogfv(GLenum pname, const GLfloat * params)
 
 //-----------------------------------------------------------------------------
 void
+CSoftGLESFloat::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+{
+  CMatrixF m;
+
+  m.matrix[0][0] = (2.0f * zNear) / (right - left);
+  m.matrix[0][1] = 0.0f;
+  m.matrix[0][2] = (right + left) / (right - left);
+  m.matrix[0][3] = 0.0f;
+
+  m.matrix[1][0] = 0.0f;
+  m.matrix[1][1] = (2.0f * zNear) / (top - bottom);
+  m.matrix[1][2] = (top + bottom) / (top - bottom);
+  m.matrix[1][3] = 0.0f;
+
+  m.matrix[2][0] = 0.0f;
+  m.matrix[2][1] = 0.0f;
+  m.matrix[2][2] = -((zFar + zNear) / (zFar - zNear));
+  m.matrix[2][3] = -((2.0f * zFar * zNear) / (zFar - zNear));
+
+  m.matrix[3][0] = 0.0f;
+  m.matrix[3][1] = 0.0f;
+  m.matrix[3][2] = -1.0f;
+  m.matrix[3][3] = 0.0f;
+
+  (*pCurrentMatrix_) *= m;
+}
+
+//-----------------------------------------------------------------------------
+void
 CSoftGLESFloat::glLightf(GLenum light, GLenum pname, GLfloat param)
 {
 }
@@ -569,7 +594,7 @@ CSoftGLESFloat::glShadeModel(GLenum mode)
 void
 CSoftGLESFloat::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
-  pCurrentMatrix_->translate(x, y, -z);
+  pCurrentMatrix_->translate(x, y, z);
 }
 
 //-----------------------------------------------------------------------------
@@ -703,12 +728,16 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
     {
       // ModelView Transformation
       matrixModelView.transform(poly.v[i]->v1, poly.v[i]->v2);
+
       // Projection Transformation
       matrixProjection.transform(poly.v[i]->v2, poly.v[i]->v2);
-      // Perspective division, viewport transformation
+
+      // Eye coordinates to clipping coordinates
       matrixPerspective.transform(poly.v[i]->v2, poly.v[i]->v2);
-      poly.v[i]->sx = SCREENX(poly.v[i]->v2);
-      poly.v[i]->sy = SCREENY(poly.v[i]->v2);
+
+      // Get normalized device coordinates
+      poly.v[i]->sx = (GLint)(((poly.v[i]->v2[0] / -poly.v[i]->v2[3]) + 0.5f) * viewportWidth);
+      poly.v[i]->sy = (GLint)(((poly.v[i]->v2[1] / -poly.v[i]->v2[3]) + 0.5f) * viewportHeight);
 
       poly.v[i]->bProcessed = true;
     }
@@ -840,15 +869,15 @@ CSoftGLESFloat::rasterPoly(SPolygonF & poly)
   {
     if(shadingModel_ == GL_SMOOTH)
     {
-      edge1->addZC(vlo->sx, vlo->sy, vlo->v2[2], vlo->c2, vhi->sx, vhi->sy, vhi->v2[2], vhi->c2);
-      edge2->addZC(vlo->sx, vlo->sy, vlo->v2[2], vlo->c2, vmi->sx, vmi->sy, vmi->v2[2], vmi->c2);
-      edge2->addZC(vmi->sx, vmi->sy, vmi->v2[2], vmi->c2, vhi->sx, vhi->sy, vhi->v2[2], vhi->c2);
+      edge1->addZC(vlo->sx, vlo->sy, vlo->v2[3], vlo->c2, vhi->sx, vhi->sy, vhi->v2[3], vhi->c2);
+      edge2->addZC(vlo->sx, vlo->sy, vlo->v2[3], vlo->c2, vmi->sx, vmi->sy, vmi->v2[3], vmi->c2);
+      edge2->addZC(vmi->sx, vmi->sy, vmi->v2[3], vmi->c2, vhi->sx, vhi->sy, vhi->v2[3], vhi->c2);
     }
     else
     {
-      edge1->addZ(vlo->sx, vlo->sy, vlo->v2[2], vhi->sx, vhi->sy, vhi->v2[2]);
-      edge2->addZ(vlo->sx, vlo->sy, vlo->v2[2], vmi->sx, vmi->sy, vmi->v2[2]);
-      edge2->addZ(vmi->sx, vmi->sy, vmi->v2[2], vhi->sx, vhi->sy, vhi->v2[2]);
+      edge1->addZ(vlo->sx, vlo->sy, vlo->v2[3], vhi->sx, vhi->sy, vhi->v2[3]);
+      edge2->addZ(vlo->sx, vlo->sy, vlo->v2[3], vmi->sx, vmi->sy, vmi->v2[3]);
+      edge2->addZ(vmi->sx, vmi->sy, vmi->v2[3], vhi->sx, vhi->sy, vhi->v2[3]);
     }
   }
   else

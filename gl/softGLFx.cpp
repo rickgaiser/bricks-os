@@ -7,8 +7,6 @@ typedef unsigned int wint_t;
 #include <math.h>
 
 
-#define SCREENX(v) (gl_fptoi(gl_fpdiv(gl_fpmul(v[0], fpFieldofviewXScalar), -v[2])) + (viewportWidth  >> 1))
-#define SCREENY(v) (gl_fptoi(gl_fpdiv(gl_fpmul(v[1], fpFieldofviewYScalar), -v[2])) + (viewportHeight >> 1))
 #define fpRGB(r,g,b) (0x8000 | \
                       (((b*255) >>  9) & 0x7c00) | \
                       (((g*255) >> 14) & 0x03e0) | \
@@ -494,6 +492,35 @@ CSoftGLESFixed::glFogxv(GLenum pname, const GLfixed * params)
 
 //-----------------------------------------------------------------------------
 void
+CSoftGLESFixed::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
+{
+  CMatrixFx m;
+
+  m.matrix[0][0] = gl_fpdiv((zNear << 1), (right - left));
+  m.matrix[0][1] = gl_fpfromi(0);
+  m.matrix[0][2] = gl_fpdiv((right + left), (right - left));
+  m.matrix[0][3] = gl_fpfromi(0);
+
+  m.matrix[1][0] = gl_fpfromi(0);
+  m.matrix[1][1] = gl_fpdiv((zNear << 1), (top - bottom));
+  m.matrix[1][2] = gl_fpdiv((top + bottom), (top - bottom));
+  m.matrix[1][3] = gl_fpfromi(0);
+
+  m.matrix[2][0] = gl_fpfromi(0);
+  m.matrix[2][1] = gl_fpfromi(0);
+  m.matrix[2][2] = -gl_fpdiv((zFar + zNear), (zFar - zNear));
+  m.matrix[2][3] = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear));
+
+  m.matrix[3][0] = gl_fpfromi(0);
+  m.matrix[3][1] = gl_fpfromi(0);
+  m.matrix[3][2] = gl_fpfromi(-1);
+  m.matrix[3][3] = gl_fpfromi(0);
+
+  (*pCurrentMatrix_) *= m;
+}
+
+//-----------------------------------------------------------------------------
+void
 CSoftGLESFixed::glLightx(GLenum light, GLenum pname, GLfixed param)
 {
 }
@@ -586,7 +613,7 @@ CSoftGLESFixed::glShadeModel(GLenum mode)
 void
 CSoftGLESFixed::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
-  pCurrentMatrix_->translate(x, y, -z);
+  pCurrentMatrix_->translate(x, y, z);
 }
 
 //-----------------------------------------------------------------------------
@@ -721,12 +748,16 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
     {
       // ModelView Transformation
       matrixModelView.transform(poly.v[i]->v1, poly.v[i]->v2);
+
       // Projection Transformation
       matrixProjection.transform(poly.v[i]->v2, poly.v[i]->v2);
-      // Perspective division, viewport transformation
+
+      // Eye coordinates to clipping coordinates
       matrixPerspective.transform(poly.v[i]->v2, poly.v[i]->v2);
-      poly.v[i]->sx = SCREENX(poly.v[i]->v2);
-      poly.v[i]->sy = SCREENY(poly.v[i]->v2);
+
+      // Get normalized device coordinates
+      poly.v[i]->sx = gl_fptoi((gl_fpdiv(poly.v[i]->v2[0], -poly.v[i]->v2[3]) + gl_fpfromf(0.5f)) * viewportWidth);
+      poly.v[i]->sy = gl_fptoi((gl_fpdiv(poly.v[i]->v2[1], -poly.v[i]->v2[3]) + gl_fpfromf(0.5f)) * viewportHeight);
 
       poly.v[i]->bProcessed = true;
     }
@@ -858,15 +889,15 @@ CSoftGLESFixed::rasterPoly(SPolygonFx & poly)
   {
     if(shadingModel_ == GL_SMOOTH)
     {
-      edge1->addZC(vlo->sx, vlo->sy, vlo->v2[2], vlo->c2, vhi->sx, vhi->sy, vhi->v2[2], vhi->c2);
-      edge2->addZC(vlo->sx, vlo->sy, vlo->v2[2], vlo->c2, vmi->sx, vmi->sy, vmi->v2[2], vmi->c2);
-      edge2->addZC(vmi->sx, vmi->sy, vmi->v2[2], vmi->c2, vhi->sx, vhi->sy, vhi->v2[2], vhi->c2);
+      edge1->addZC(vlo->sx, vlo->sy, vlo->v2[3], vlo->c2, vhi->sx, vhi->sy, vhi->v2[3], vhi->c2);
+      edge2->addZC(vlo->sx, vlo->sy, vlo->v2[3], vlo->c2, vmi->sx, vmi->sy, vmi->v2[3], vmi->c2);
+      edge2->addZC(vmi->sx, vmi->sy, vmi->v2[3], vmi->c2, vhi->sx, vhi->sy, vhi->v2[3], vhi->c2);
     }
     else
     {
-      edge1->addZ(vlo->sx, vlo->sy, vlo->v2[2], vhi->sx, vhi->sy, vhi->v2[2]);
-      edge2->addZ(vlo->sx, vlo->sy, vlo->v2[2], vmi->sx, vmi->sy, vmi->v2[2]);
-      edge2->addZ(vmi->sx, vmi->sy, vmi->v2[2], vhi->sx, vhi->sy, vhi->v2[2]);
+      edge1->addZ(vlo->sx, vlo->sy, vlo->v2[3], vhi->sx, vhi->sy, vhi->v2[3]);
+      edge2->addZ(vlo->sx, vlo->sy, vlo->v2[3], vmi->sx, vmi->sy, vmi->v2[3]);
+      edge2->addZ(vmi->sx, vmi->sy, vmi->v2[3], vhi->sx, vhi->sy, vhi->v2[3]);
     }
   }
   else

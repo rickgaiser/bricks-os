@@ -102,10 +102,12 @@ testGLFx(CSurface * surface)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+  GLfloat fRatio = (float)surface->height() / (float)surface->width();
+  glFrustumx(gl_fpfromf(0.5f), gl_fpfromf(-0.5f), gl_fpfromf(-0.5f * fRatio), gl_fpfromf(0.5f * fRatio), gl_fpfromf(0.5f), gl_fpfromf(100.0f));
   // Move up a little
-  glTranslatex(gl_fpfromi(0), gl_fpfromi(-2), gl_fpfromi(0));
+  //glTranslatex(gl_fpfromi(0), gl_fpfromi(-2), gl_fpfromi(0));
   // Look down a little
-  glRotatex(gl_fpfromi(-30), gl_fpfromi(1), gl_fpfromi(0), gl_fpfromi(0));
+  //glRotatex(gl_fpfromi(-30), gl_fpfromi(1), gl_fpfromi(0), gl_fpfromi(0));
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
@@ -115,7 +117,7 @@ testGLFx(CSurface * surface)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glLoadIdentity();
-    glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-5));
+    glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
     glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
     glDrawArrays(GL_TRIANGLE_STRIP, 0, square_vcount);
     glDrawArrays(GL_TRIANGLE_FAN, square_vcount, pyramid_vcount);

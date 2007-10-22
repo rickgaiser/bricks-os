@@ -146,6 +146,7 @@ public:
   virtual void glFlush(void);
   virtual void glFogf(GLenum pname, GLfloat param);
   virtual void glFogfv(GLenum pname, const GLfloat *params);
+  virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
   virtual void glLightf(GLenum light, GLenum pname, GLfloat param);
   virtual void glLightfv(GLenum light, GLenum pname, const GLfloat * params);
   virtual void glLoadIdentity(void);

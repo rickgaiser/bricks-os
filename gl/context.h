@@ -58,7 +58,7 @@ public:
 //  virtual void glDepthRangef(GLclampf zNear, GLclampf zFar) = 0;
   virtual void glFogf(GLenum pname, GLfloat param) = 0;
   virtual void glFogfv(GLenum pname, const GLfloat *params) = 0;
-//  virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar) = 0;
+  virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar) = 0;
 //  virtual void glGetClipPlanef(GLenum pname, GLfloat eqn[4]) = 0;
 //  virtual void glGetFloatv(GLenum pname, GLfloat *params) = 0;
 //  virtual void glGetLightfv(GLenum light, GLenum pname, GLfloat *params) = 0;
@@ -127,7 +127,7 @@ public:
   virtual void glFogx(GLenum pname, GLfixed param) = 0;
   virtual void glFogxv(GLenum pname, const GLfixed *params) = 0;
 //  virtual void glFrontFace(GLenum mode) = 0;
-//  virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar) = 0;
+  virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar) = 0;
 //  virtual void glGetBooleanv(GLenum pname, GLboolean *params) = 0;
 //  virtual void glGetBufferParameteriv(GLenum target, GLenum pname, GLint *params) = 0;
 //  virtual void glGetClipPlanex(GLenum pname, GLfixed eqn[4]) = 0;
@@ -232,6 +232,7 @@ public:
   virtual void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
   virtual void glFogf(GLenum pname, GLfloat param);
   virtual void glFogfv(GLenum pname, const GLfloat *params);
+  virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
   virtual void glLightf(GLenum light, GLenum pname, GLfloat param);
   virtual void glLightfv(GLenum light, GLenum pname, const GLfloat * params);
   virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
@@ -252,6 +253,7 @@ public:
   virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
   virtual void glFogx(GLenum pname, GLfixed param);
   virtual void glFogxv(GLenum pname, const GLfixed *params);
+  virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
   virtual void glLightx(GLenum light, GLenum pname, GLfixed param);
   virtual void glLightxv(GLenum light, GLenum pname, const GLfixed * params);
   virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);

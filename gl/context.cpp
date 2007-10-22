@@ -119,6 +119,13 @@ CAGLESFloatToFxContext::glFogfv(GLenum pname, const GLfloat * params)
 
 //-----------------------------------------------------------------------------
 void
+CAGLESFloatToFxContext::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+{
+  glFrustumx(gl_fpfromf(left), gl_fpfromf(right), gl_fpfromf(bottom), gl_fpfromf(top), gl_fpfromf(zNear), gl_fpfromf(zFar));
+}
+
+//-----------------------------------------------------------------------------
+void
 CAGLESFloatToFxContext::glLightf(GLenum light, GLenum pname, GLfloat param)
 {
   glLightx(light, pname, gl_fpfromf(param));
@@ -203,6 +210,13 @@ CAGLESFxToFloatContext::glFogxv(GLenum pname, const GLfixed *params)
                      , gl_fptof(params[3])};
 
   glFogfv(pname, fparams);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
+{
+  glFrustumf(gl_fptof(left), gl_fptof(right), gl_fptof(bottom), gl_fptof(top), gl_fptof(zNear), gl_fptof(zFar));
 }
 
 //-----------------------------------------------------------------------------

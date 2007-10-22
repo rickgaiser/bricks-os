@@ -185,17 +185,17 @@ bwm(int argc, char * argv[])
             CSurface * pVideoSurface;
 
             // Test 2d with a single buffered surface
-            devices[iDev]->getSurface(&pVideoSurface, stSCREEN, false);
-            test2d(pVideoSurface);
-            delete pVideoSurface;
+            //devices[iDev]->getSurface(&pVideoSurface, stSCREEN, false);
+            //test2d(pVideoSurface);
+            //delete pVideoSurface;
 #ifdef CONFIG_GL
             // Test 3d with a double buffered surface
             devices[iDev]->getSurface(&pVideoSurface, stSCREEN, true);
             eglInit(pVideoSurface);
-            // Test fixed point interface
-            testGLFx(pVideoSurface);
             // Test floating point interface
             testGLF(pVideoSurface);
+            // Test fixed point interface
+            testGLFx(pVideoSurface);
             eglDestroy();
             delete pVideoSurface;
 #endif // CONFIG_GL
