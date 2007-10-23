@@ -437,3 +437,199 @@ CMatrixFx::operator*=(const CMatrixFx & m)
 
   return(*this);
 }
+
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+CAGLESMatrixF::CAGLESMatrixF()
+ : matrixMode_(GL_MODELVIEW)
+ , pCurrentMatrix_(&matrixModelView)
+{
+  zNear_ =   0.1f;
+  zFar_  = 100.0f;
+  zA_    = -((zFar_ + zNear_) / (zFar_ - zNear_));
+  zB_    = -((2.0f * zFar_ * zNear_) / (zFar_ - zNear_));
+}
+
+//---------------------------------------------------------------------------
+CAGLESMatrixF::~CAGLESMatrixF()
+{
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixF::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+{
+  CMatrixF m;
+
+  zNear_ = zNear;
+  zFar_  = zFar;
+  zA_    = -((zFar + zNear) / (zFar - zNear));
+  zB_    = -((2.0f * zFar * zNear) / (zFar - zNear));
+
+  m.matrix[0][0] = (2.0f * zNear) / (right - left);
+  m.matrix[0][1] = 0.0f;
+  m.matrix[0][2] = (right + left) / (right - left);
+  m.matrix[0][3] = 0.0f;
+
+  m.matrix[1][0] = 0.0f;
+  m.matrix[1][1] = (2.0f * zNear) / (top - bottom);
+  m.matrix[1][2] = (top + bottom) / (top - bottom);
+  m.matrix[1][3] = 0.0f;
+
+  m.matrix[2][0] = 0.0f;
+  m.matrix[2][1] = 0.0f;
+  m.matrix[2][2] = zA_;
+  m.matrix[2][3] = zB_;
+
+  m.matrix[3][0] = 0.0f;
+  m.matrix[3][1] = 0.0f;
+  m.matrix[3][2] = -1.0f;
+  m.matrix[3][3] = 0.0f;
+
+  (*pCurrentMatrix_) *= m;
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixF::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
+{
+  pCurrentMatrix_->rotate(angle, x, y, z);
+
+  // FIXME
+  matrixRotation.rotate(angle, x, y, z);
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixF::glScalef(GLfloat x, GLfloat y, GLfloat z)
+{
+  pCurrentMatrix_->scale(x, y, z);
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixF::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
+{
+  pCurrentMatrix_->translate(x, y, z);
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixF::glLoadIdentity(void)
+{
+  pCurrentMatrix_->loadIdentity();
+
+  // FIXME
+  matrixRotation.loadIdentity();
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixF::glMatrixMode(GLenum mode)
+{
+  matrixMode_ = mode;
+
+  switch(mode)
+  {
+    case GL_MODELVIEW:  pCurrentMatrix_ = &matrixModelView;  break;
+    case GL_PROJECTION: pCurrentMatrix_ = &matrixProjection; break;
+  };
+}
+
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+CAGLESMatrixFx::CAGLESMatrixFx()
+ : matrixMode_(GL_MODELVIEW)
+ , pCurrentMatrix_(&matrixModelView)
+{
+  zNear_ = gl_fpfromf(  0.1f);
+  zFar_  = gl_fpfromf(100.0f);
+  zA_    = -gl_fpdiv((zFar_ + zNear_), (zFar_ - zNear_));
+  zB_    = -gl_fpdiv((gl_fpmul(zFar_, zNear_) << 1), (zFar_ - zNear_));
+}
+
+//---------------------------------------------------------------------------
+CAGLESMatrixFx::~CAGLESMatrixFx()
+{
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
+{
+  CMatrixFx m;
+
+  zNear_ = zNear;
+  zFar_  = zFar;
+  zA_    = -gl_fpdiv((zFar + zNear), (zFar - zNear));
+  zB_    = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear));
+
+  m.matrix[0][0] = gl_fpdiv((zNear << 1), (right - left));
+  m.matrix[0][1] = gl_fpfromi(0);
+  m.matrix[0][2] = gl_fpdiv((right + left), (right - left));
+  m.matrix[0][3] = gl_fpfromi(0);
+
+  m.matrix[1][0] = gl_fpfromi(0);
+  m.matrix[1][1] = gl_fpdiv((zNear << 1), (top - bottom));
+  m.matrix[1][2] = gl_fpdiv((top + bottom), (top - bottom));
+  m.matrix[1][3] = gl_fpfromi(0);
+
+  m.matrix[2][0] = gl_fpfromi(0);
+  m.matrix[2][1] = gl_fpfromi(0);
+  m.matrix[2][2] = zA_;
+  m.matrix[2][3] = zB_;
+
+  m.matrix[3][0] = gl_fpfromi(0);
+  m.matrix[3][1] = gl_fpfromi(0);
+  m.matrix[3][2] = gl_fpfromi(-1);
+  m.matrix[3][3] = gl_fpfromi(0);
+
+  (*pCurrentMatrix_) *= m;
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixFx::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
+{
+  pCurrentMatrix_->rotate(angle, x, y, z);
+
+  // FIXME
+  matrixRotation.rotate(angle, x, y, z);
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixFx::glScalex(GLfixed x, GLfixed y, GLfixed z)
+{
+  pCurrentMatrix_->scale(x, y, z);
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixFx::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
+{
+  pCurrentMatrix_->translate(x, y, z);
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixFx::glLoadIdentity(void)
+{
+  pCurrentMatrix_->loadIdentity();
+
+  // FIXME
+  matrixRotation.loadIdentity();
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixFx::glMatrixMode(GLenum mode)
+{
+  matrixMode_ = mode;
+
+  switch(mode)
+  {
+    case GL_MODELVIEW:  pCurrentMatrix_ = &matrixModelView;  break;
+    case GL_PROJECTION: pCurrentMatrix_ = &matrixProjection; break;
+  };
+}

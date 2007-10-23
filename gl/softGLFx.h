@@ -127,6 +127,7 @@ struct SLightFx
 class CSoftGLESFixed
  : public CAGLESFloatToFxContext
  , public CAGLESBuffers
+ , public CAGLESMatrixFx
 {
 public:
   CSoftGLESFixed();
@@ -147,16 +148,10 @@ public:
   virtual void glFlush(void);
   virtual void glFogx(GLenum pname, GLfixed param);
   virtual void glFogxv(GLenum pname, const GLfixed *params);
-  virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
   virtual void glLightx(GLenum light, GLenum pname, GLfixed param);
   virtual void glLightxv(GLenum light, GLenum pname, const GLfixed * params);
-  virtual void glLoadIdentity(void);
-  virtual void glMatrixMode(GLenum mode);
   virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
-  virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
-  virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);
   virtual void glShadeModel(GLenum mode);
-  virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
@@ -179,8 +174,6 @@ protected:
   GLfixed     depthClear_;
   uint16_t    zClearValue_;
   uint16_t  * zbuffer;
-  GLfixed     zFar_;
-  GLfixed     zNear_;
   GLfixed     zLoss_;
 
   GLenum      shadingModel_;
@@ -189,14 +182,6 @@ protected:
   bool        cullFaceEnabled_;
   bool        bCullBack_;
   GLenum      cullFaceMode_;
-
-  // Matrix
-  GLenum      matrixMode_;
-  CMatrixFx   matrixModelView;
-  CMatrixFx   matrixProjection;
-  CMatrixFx   matrixPerspective;
-  CMatrixFx   matrixRotation;
-  CMatrixFx * pCurrentMatrix_;
 
   // Colors
   SColorFx    clCurrent;
@@ -223,11 +208,8 @@ protected:
   GLint       viewportXOffset;
   GLint       viewportYOffset;
   GLsizei     viewportPixelCount;
-  GLsizei     viewportByteCount;
   GLsizei     viewportWidth;
   GLsizei     viewportHeight;
-  GLfixed     fpFieldofviewXScalar;
-  GLfixed     fpFieldofviewYScalar;
 };
 
 

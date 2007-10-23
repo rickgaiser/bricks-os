@@ -24,22 +24,20 @@ CGBAGLESContext::~CGBAGLESContext()
 void
 CGBAGLESContext::glClear(GLbitfield mask)
 {
-  long iCount(viewportByteCount >> 1);
-
   if(mask & GL_COLOR_BUFFER_BIT)
   {
     //uint16_t color = fpRGB(clClear.r, clClear.g, clClear.b;
-    //dmaFill16(color, renderSurface->p, iCount);
+    //dmaFill16(color, renderSurface->p, viewportPixelCount);
 
     uint32_t color = (fpRGB(clClear.r, clClear.g, clClear.b) << 16) | fpRGB(clClear.r, clClear.g, clClear.b);
-    dmaFill32(color, renderSurface->p, iCount>>1);
+    dmaFill32(color, renderSurface->p, viewportPixelCount>>1);
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    //dmaFill16(zClearValue_, zbuffer, iCount);
+    //dmaFill16(zClearValue_, zbuffer, viewportPixelCount);
 
     uint32_t z = (zClearValue_ << 16) | zClearValue_;
-    dmaFill32(z, zbuffer, iCount>>1);
+    dmaFill32(z, zbuffer, viewportPixelCount>>1);
   }
 }
 

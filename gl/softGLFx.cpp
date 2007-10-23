@@ -16,7 +16,10 @@ typedef unsigned int wint_t;
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CSoftGLESFixed::CSoftGLESFixed()
- : CAGLESBuffers()
+ : CAGLESFloatToFxContext()
+ , CAGLESBuffers()
+ , CAGLESMatrixFx()
+
  , renderSurface(0)
  , depthTestEnabled_(false)
  , depthFunction_(GL_LESS)
@@ -27,8 +30,6 @@ CSoftGLESFixed::CSoftGLESFixed()
  , cullFaceEnabled_(false)
  , bCullBack_(true)
  , cullFaceMode_(GL_BACK)
- , matrixMode_(GL_MODELVIEW)
- , pCurrentMatrix_(&matrixModelView)
  , lightingEnabled_(false)
  , fogEnabled_(false)
  , edge1(0)
@@ -36,11 +37,8 @@ CSoftGLESFixed::CSoftGLESFixed()
  , viewportXOffset(0)
  , viewportYOffset(0)
  , viewportPixelCount(0)
- , viewportByteCount(0)
  , viewportWidth(0)
  , viewportHeight(0)
- , fpFieldofviewXScalar(gl_fpfromi(1))
- , fpFieldofviewYScalar(gl_fpfromi(1))
 {
   clCurrent.r = gl_fpfromi(0);
   clCurrent.g = gl_fpfromi(0);
@@ -72,10 +70,7 @@ CSoftGLESFixed::CSoftGLESFixed()
     lights_[iLight].enabled = false;
   }
 
-  zFar_  = gl_fpfromi(100);
-  zNear_ = gl_fpfromi(2);
   zLoss_ = 0;
-
   GLfixed zmax = zFar_ - zNear_;
   uint16_t newz = zmax;
   if(newz != zmax)
@@ -106,18 +101,16 @@ CSoftGLESFixed::setSurface(CSurface * surface)
 void
 CSoftGLESFixed::glClear(GLbitfield mask)
 {
-  long iCount(viewportByteCount >> 1);
-
   if(mask & GL_COLOR_BUFFER_BIT)
   {
     color_t color(fpRGB(clClear.r, clClear.g, clClear.b));
 
-    for(int i(0); i < iCount; i++)
+    for(int i(0); i < viewportPixelCount; i++)
       ((uint16_t *)renderSurface->p)[i] = color;
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    for(int i(0); i < iCount; i++)
+    for(int i(0); i < viewportPixelCount; i++)
       zbuffer[i] = zClearValue_;
   }
 }
@@ -492,35 +485,6 @@ CSoftGLESFixed::glFogxv(GLenum pname, const GLfixed * params)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFixed::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
-{
-  CMatrixFx m;
-
-  m.matrix[0][0] = gl_fpdiv((zNear << 1), (right - left));
-  m.matrix[0][1] = gl_fpfromi(0);
-  m.matrix[0][2] = gl_fpdiv((right + left), (right - left));
-  m.matrix[0][3] = gl_fpfromi(0);
-
-  m.matrix[1][0] = gl_fpfromi(0);
-  m.matrix[1][1] = gl_fpdiv((zNear << 1), (top - bottom));
-  m.matrix[1][2] = gl_fpdiv((top + bottom), (top - bottom));
-  m.matrix[1][3] = gl_fpfromi(0);
-
-  m.matrix[2][0] = gl_fpfromi(0);
-  m.matrix[2][1] = gl_fpfromi(0);
-  m.matrix[2][2] = -gl_fpdiv((zFar + zNear), (zFar - zNear));
-  m.matrix[2][3] = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear));
-
-  m.matrix[3][0] = gl_fpfromi(0);
-  m.matrix[3][1] = gl_fpfromi(0);
-  m.matrix[3][2] = gl_fpfromi(-1);
-  m.matrix[3][3] = gl_fpfromi(0);
-
-  (*pCurrentMatrix_) *= m;
-}
-
-//-----------------------------------------------------------------------------
-void
 CSoftGLESFixed::glLightx(GLenum light, GLenum pname, GLfixed param)
 {
 }
@@ -562,58 +526,9 @@ CSoftGLESFixed::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFixed::glLoadIdentity()
-{
-  pCurrentMatrix_->loadIdentity();
-
-  // FIXME
-  if(lightingEnabled_ == true)
-    matrixRotation.loadIdentity();
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::glMatrixMode(GLenum mode)
-{
-  matrixMode_ = mode;
-
-  switch(mode)
-  {
-    case GL_MODELVIEW:  pCurrentMatrix_ = &matrixModelView;  break;
-    case GL_PROJECTION: pCurrentMatrix_ = &matrixProjection; break;
-  };
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
-{
-  pCurrentMatrix_->rotate(angle, x, y, z);
-
-  // FIXME
-  if(lightingEnabled_ == true)
-    matrixRotation.rotate(angle, x, y, z);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::glScalex(GLfixed x, GLfixed y, GLfixed z)
-{
-  pCurrentMatrix_->scale(x, y, z);
-}
-
-//-----------------------------------------------------------------------------
-void
 CSoftGLESFixed::glShadeModel(GLenum mode)
 {
   shadingModel_ = mode;
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
-{
-  pCurrentMatrix_->translate(x, y, z);
 }
 
 //-----------------------------------------------------------------------------
@@ -632,16 +547,10 @@ CSoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportWidth      = width;
   viewportHeight     = height;
   viewportPixelCount = width * height;
-  viewportByteCount  = width * height * 2;
   zbuffer            = new uint16_t[width * height];
   edge1              = new CEdgeFx(viewportHeight);
   edge2              = new CEdgeFx(viewportHeight);
 
-  // Calculate field of view scalars
-  //fpFieldofviewXScalar = gl_fpfromf(static_cast<float>(width)  / tan(80)); // 5.67 == tan(80)
-  //fpFieldofviewYScalar = gl_fpfromf(static_cast<float>(height) / tan(80)); // 5.67 == tan(80)
-  fpFieldofviewYScalar = gl_fpfromi(viewportHeight);
-  fpFieldofviewXScalar = gl_fpfromi(viewportWidth);
   matrixPerspective.loadIdentity();
 }
 

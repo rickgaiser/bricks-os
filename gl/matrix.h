@@ -2,6 +2,7 @@
 #define CMATRIX_H
 
 
+#include "context.h"
 #include "fixedPoint.h"
 
 
@@ -88,6 +89,66 @@ private:
   static bool bInitialized_;
   static GLfixed fpSin_[360];
   static GLfixed fpCos_[360];
+};
+
+//-----------------------------------------------------------------------------
+class CAGLESMatrixF
+ : public virtual IGLESContext
+{
+public:
+  CAGLESMatrixF();
+  virtual ~CAGLESMatrixF();
+
+  virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
+  virtual void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
+  virtual void glScalef(GLfloat x, GLfloat y, GLfloat z);
+  virtual void glTranslatef(GLfloat x, GLfloat y, GLfloat z);
+
+  virtual void glLoadIdentity(void);
+  virtual void glMatrixMode(GLenum mode);
+
+protected:
+  GLenum      matrixMode_;
+  CMatrixF    matrixModelView;
+  CMatrixF    matrixProjection;
+  CMatrixF    matrixPerspective;
+  CMatrixF    matrixRotation;
+  CMatrixF  * pCurrentMatrix_;
+
+  GLfloat     zNear_;
+  GLfloat     zFar_;
+  GLfloat     zA_;
+  GLfloat     zB_;
+};
+
+//-----------------------------------------------------------------------------
+class CAGLESMatrixFx
+ : public virtual IGLESContext
+{
+public:
+  CAGLESMatrixFx();
+  virtual ~CAGLESMatrixFx();
+
+  virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
+  virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
+  virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);
+  virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z);
+
+  virtual void glLoadIdentity(void);
+  virtual void glMatrixMode(GLenum mode);
+
+protected:
+  GLenum      matrixMode_;
+  CMatrixFx   matrixModelView;
+  CMatrixFx   matrixProjection;
+  CMatrixFx   matrixPerspective;
+  CMatrixFx   matrixRotation;
+  CMatrixFx * pCurrentMatrix_;
+
+  GLfixed     zNear_;
+  GLfixed     zFar_;
+  GLfixed     zA_;
+  GLfixed     zB_;
 };
 
 

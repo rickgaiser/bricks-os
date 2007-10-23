@@ -4,6 +4,7 @@ OBJS            =\
                 edge \
                 egl \
                 gl \
+                glu \
                 matrix \
                 softGLF \
                 softGLFx \

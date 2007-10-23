@@ -126,6 +126,7 @@ struct SLightF
 class CSoftGLESFloat
  : public CAGLESFxToFloatContext
  , public CAGLESBuffers
+ , public CAGLESMatrixF
 {
 public:
   CSoftGLESFloat();
@@ -146,16 +147,10 @@ public:
   virtual void glFlush(void);
   virtual void glFogf(GLenum pname, GLfloat param);
   virtual void glFogfv(GLenum pname, const GLfloat *params);
-  virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
   virtual void glLightf(GLenum light, GLenum pname, GLfloat param);
   virtual void glLightfv(GLenum light, GLenum pname, const GLfloat * params);
-  virtual void glLoadIdentity(void);
-  virtual void glMatrixMode(GLenum mode);
   virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
-  virtual void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
-  virtual void glScalef(GLfloat x, GLfloat y, GLfloat z);
   virtual void glShadeModel(GLenum mode);
-  virtual void glTranslatef(GLfloat x, GLfloat y, GLfloat z);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
@@ -178,10 +173,6 @@ protected:
   GLfloat     depthClear_;
   uint32_t    zClearValue_;
   uint32_t  * zbuffer;
-  GLfloat     zFar_;
-  GLfloat     zNear_;
-  GLfloat     zA_;
-  GLfloat     zB_;
 
   GLenum      shadingModel_;
 
@@ -189,14 +180,6 @@ protected:
   bool        cullFaceEnabled_;
   bool        bCullBack_;
   GLenum      cullFaceMode_;
-
-  // Matrix
-  GLenum      matrixMode_;
-  CMatrixF    matrixModelView;
-  CMatrixF    matrixProjection;
-  CMatrixF    matrixPerspective;
-  CMatrixF    matrixRotation;
-  CMatrixF  * pCurrentMatrix_;
 
   // Colors
   SColorF     clCurrent;
@@ -223,11 +206,8 @@ protected:
   GLint       viewportXOffset;
   GLint       viewportYOffset;
   GLsizei     viewportPixelCount;
-  GLsizei     viewportByteCount;
   GLsizei     viewportWidth;
   GLsizei     viewportHeight;
-  GLfloat     fpFieldofviewXScalar;
-  GLfloat     fpFieldofviewYScalar;
 };
 
 
