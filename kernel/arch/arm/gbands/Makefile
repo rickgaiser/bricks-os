@@ -11,7 +11,13 @@ OBJS            =\
 
 
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
+
+ifeq ($(TARGET),nds9)
+OBJS-$(CONFIG_GL)                  += glesContextNDS
+else
 OBJS-$(CONFIG_GL)                  += glesContext
+endif
+
 OBJS-$(CONFIG_GBA_CONSOLE)         += font8x8 video
 OBJS-$(CONFIG_GBA_KEYBOARD)        += keyboard
 OBJS-$(CONFIG_GBA_SERIAL)          += serial

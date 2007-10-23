@@ -100,6 +100,7 @@ public:
   virtual ~CAGLESMatrixF();
 
   virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
+  virtual void glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
   virtual void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
   virtual void glScalef(GLfloat x, GLfloat y, GLfloat z);
   virtual void glTranslatef(GLfloat x, GLfloat y, GLfloat z);
@@ -130,6 +131,7 @@ public:
   virtual ~CAGLESMatrixFx();
 
   virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
+  virtual void glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
   virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
   virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);
   virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z);

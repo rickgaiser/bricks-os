@@ -76,7 +76,7 @@ public:
 //  virtual void glMultMatrixf(const GLfloat *m) = 0;
 //  virtual void glMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q) = 0;
   virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz) = 0;
-//  virtual void glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar) = 0;
+  virtual void glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar) = 0;
 //  virtual void glPointParameterf(GLenum pname, GLfloat param) = 0;
 //  virtual void glPointParameterfv(GLenum pname, const GLfloat *params) = 0;
 //  virtual void glPointSize(GLfloat size) = 0;
@@ -163,7 +163,7 @@ public:
 //  virtual void glMultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, GLfixed q) = 0;
   virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz) = 0;
   virtual void glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer) = 0;
-//  virtual void glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar) = 0;
+  virtual void glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar) = 0;
 //  virtual void glPixelStorei(GLenum pname, GLint param) = 0;
 //  virtual void glPointParameterx(GLenum pname, GLfixed param) = 0;
 //  virtual void glPointParameterxv(GLenum pname, const GLfixed *params) = 0;
@@ -236,6 +236,7 @@ public:
   virtual void glLightf(GLenum light, GLenum pname, GLfloat param);
   virtual void glLightfv(GLenum light, GLenum pname, const GLfloat * params);
   virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
+  virtual void glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
   virtual void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
   virtual void glScalef(GLfloat x, GLfloat y, GLfloat z);
   virtual void glTranslatef(GLfloat x, GLfloat y, GLfloat z);
@@ -257,6 +258,7 @@ public:
   virtual void glLightx(GLenum light, GLenum pname, GLfixed param);
   virtual void glLightxv(GLenum light, GLenum pname, const GLfixed * params);
   virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
+  virtual void glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
   virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
   virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);
   virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z);

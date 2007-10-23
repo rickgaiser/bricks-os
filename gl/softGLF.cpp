@@ -635,16 +635,18 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
     {
       // ModelView Transformation
       matrixModelView.transform(poly.v[i]->v1, poly.v[i]->v2);
-
       // Projection Transformation
       matrixProjection.transform(poly.v[i]->v2, poly.v[i]->v2);
-
-      // Eye coordinates to clipping coordinates
+      // Perspective division, viewport transformation
       matrixPerspective.transform(poly.v[i]->v2, poly.v[i]->v2);
 
-      // Get normalized device coordinates
-      poly.v[i]->sx = (GLint)(((poly.v[i]->v2[0] / -poly.v[i]->v2[3]) + 0.5f) * viewportWidth);
-      poly.v[i]->sy = (GLint)(((poly.v[i]->v2[1] / -poly.v[i]->v2[3]) + 0.5f) * viewportHeight);
+      // Divide x and y by linear depth: w
+      poly.v[i]->v2[0] /= -poly.v[i]->v2[3];
+      poly.v[i]->v2[1] /= -poly.v[i]->v2[3];
+
+      // From normalized device coordinates to window coordinates
+      poly.v[i]->sx = (GLint)((poly.v[i]->v2[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
+      poly.v[i]->sy = (GLint)((poly.v[i]->v2[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
 
       poly.v[i]->bProcessed = true;
     }

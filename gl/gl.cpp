@@ -91,6 +91,14 @@ GL_APIENTRY glNormal3f (GLfloat nx, GLfloat ny, GLfloat nz)
 
 //-----------------------------------------------------------------------------
 GL_API void
+GL_APIENTRY glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+{
+  GLES_GET_CONTEXT();
+  context->glOrthof(left, right, bottom, top, zNear, zFar);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
 GL_APIENTRY glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
   GLES_GET_CONTEXT();
@@ -295,6 +303,14 @@ GL_APIENTRY glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 {
   GLES_GET_CONTEXT();
   context->glNormalPointer(type, stride, pointer);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
+{
+  GLES_GET_CONTEXT();
+  context->glOrthox(left, right, bottom, top, zNear, zFar);
 }
 
 //-----------------------------------------------------------------------------

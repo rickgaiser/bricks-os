@@ -6,8 +6,6 @@
 #include "stdlib.h"
 
 
-#define SCREENX(v) ((int)((v[0] * fpFieldofviewXScalar) / -v[2]) + (viewportWidth  >> 1))
-#define SCREENY(v) ((int)((v[1] * fpFieldofviewYScalar) / -v[2]) + (viewportHeight >> 1))
 #define clamp(f)   (f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f))
 DECLARE_GS_PACKET(dma_buf,1000);
 extern uint32_t   gs_mem_current;
@@ -18,7 +16,9 @@ extern uint16_t   gs_origin_y;
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CPS2GLESContext::CPS2GLESContext()
- : CAGLESBuffers()
+ : CAGLESFxToFloatContext()
+ , CAGLESBuffers()
+ , CAGLESMatrixF()
 
  , ps2Shading_(SHADE_FLAT)
  , ps2Textures_(TEXTURES_OFF)
@@ -34,8 +34,6 @@ CPS2GLESContext::CPS2GLESContext()
  , cullFaceEnabled_(false)
  , bCullBack_(true)
  , cullFaceMode_(GL_BACK)
- , matrixMode_(GL_MODELVIEW)
- , pCurrentMatrix_(&matrixModelView)
  , lightingEnabled_(false)
  , fogEnabled_(false)
  , depthTestEnabled_(false)
@@ -44,11 +42,8 @@ CPS2GLESContext::CPS2GLESContext()
  , viewportXOffset(0)
  , viewportYOffset(0)
  , viewportPixelCount(0)
- , viewportByteCount(0)
  , viewportWidth(0)
  , viewportHeight(0)
- , fpFieldofviewXScalar(1.0f)
- , fpFieldofviewYScalar(1.0f)
 {
   clCurrent.r = 0.0f;
   clCurrent.g = 0.0f;
@@ -79,11 +74,6 @@ CPS2GLESContext::CPS2GLESContext()
 
     lights_[iLight].enabled = false;
   }
-
-  zFar_  = 100.0f;
-  zNear_ =   2.0f;
-  zA_    = zFar_ / (zFar_ - zNear_);
-  zB_    = (zFar_ * zNear_) / (zNear_ - zFar_);
 
   // Initialize the DMA buffer
   BEGIN_GS_PACKET(dma_buf);
@@ -334,6 +324,14 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // Perspective division, viewport transformation
     matrixPerspective.transform(v.v1, v.v1);
 
+    // Divide x and y by linear depth: w
+    v.v1[0] /= -v.v1[3];
+    v.v1[1] /= -v.v1[3];
+
+    // From normalized device coordinates to window coordinates
+    v.sx = (GLint)((v.v1[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
+    v.sy = (GLint)((v.v1[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
+
     // Lighting
     if(lightingEnabled_ == true)
     {
@@ -358,24 +356,26 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // Fog
     if(fogEnabled_ == true)
     {
-      GLfloat partFog   = clamp((abs(v.v1[2]) - fogStart_) / (fogEnd_ - fogStart_));
+      GLfloat partFog   = clamp((abs(v.v1[3]) - fogStart_) / (fogEnd_ - fogStart_));
       GLfloat partColor = 1.0f - partFog;
       v.c1.r = clamp((v.c1.r * partColor) + (fogColor_.r * partFog));
       v.c1.g = clamp((v.c1.g * partColor) + (fogColor_.g * partFog));
       v.c1.b = clamp((v.c1.b * partColor) + (fogColor_.b * partFog));
     }
     
-    // To screen coordinates
-    v.sx = SCREENX(v.v1);
-    v.sy = SCREENY(v.v1);
-
     // Calculate Z
     uint32_t z;
     if(ps2DepthInvert_ == true)
-      z = (uint32_t)((1.0f - (zA_ + (zB_ / (v.v1[2])))) * ps2ZMax_);
+    {
+    //  z = (uint32_t)((1.0f - (zA_ + (zB_ / (v.v1[3])))) * ps2ZMax_);
+      z = (uint32_t)((1.0f - v.v1[2]) * ps2ZMax_);
+    }
     else
-      z = (uint32_t)((zA_ + (zB_ / (v.v1[2]))) * ps2ZMax_);
-    
+    {
+    //  z = (uint32_t)((zA_ + (zB_ / (v.v1[3]))) * ps2ZMax_);
+      z = (uint32_t)(v.v1[2] * ps2ZMax_);
+    }
+
     // Add to message
     GIF_DATA_AD(dma_buf, rgbaq, GS_RGBAQ((uint8_t)(v.c1.r*255), (uint8_t)(v.c1.g*255), (uint8_t)(v.c1.b*255), 100, 0));
     GIF_DATA_AD(dma_buf, xyz2,  GS_XYZ2((gs_origin_x+v.sx)<<4, (gs_origin_y+v.sy)<<4, z));
@@ -512,48 +512,6 @@ CPS2GLESContext::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glLoadIdentity()
-{
-  pCurrentMatrix_->loadIdentity();
-
-  // FIXME
-  if(lightingEnabled_ == true)
-    matrixRotation.loadIdentity();
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glMatrixMode(GLenum mode)
-{
-  matrixMode_ = mode;
-
-  switch(mode)
-  {
-    case GL_MODELVIEW:  pCurrentMatrix_ = &matrixModelView;  break;
-    case GL_PROJECTION: pCurrentMatrix_ = &matrixProjection; break;
-  };
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
-{
-  pCurrentMatrix_->rotate(angle, x, y, z);
-
-  // FIXME
-  if(lightingEnabled_ == true)
-    matrixRotation.rotate(angle, x, y, z);
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glScalef(GLfloat x, GLfloat y, GLfloat z)
-{
-  pCurrentMatrix_->scale(x, y, z);
-}
-
-//-----------------------------------------------------------------------------
-void
 CPS2GLESContext::glShadeModel(GLenum mode)
 {
   shadingModel_ = mode;
@@ -566,13 +524,6 @@ CPS2GLESContext::glShadeModel(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
-{
-  pCurrentMatrix_->translate(x, y, -z);
-}
-
-//-----------------------------------------------------------------------------
-void
 CPS2GLESContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
   viewportXOffset    = x;
@@ -580,13 +531,7 @@ CPS2GLESContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportWidth      = width;
   viewportHeight     = height;
   viewportPixelCount = width * height;
-  viewportByteCount  = width * height * 2;
 
-  // Calculate field of view scalars
-  //fpFieldofviewXScalar = gl_fpfromf(static_cast<float>(width)  / tan(80)); // 5.67 == tan(80)
-  //fpFieldofviewYScalar = gl_fpfromf(static_cast<float>(height) / tan(80)); // 5.67 == tan(80)
-  fpFieldofviewYScalar = viewportHeight;
-  fpFieldofviewXScalar = viewportWidth;
   matrixPerspective.loadIdentity();
 }
 

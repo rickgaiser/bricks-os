@@ -39,6 +39,7 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 #define MODE_3                0x10003
 #define MODE_4                0x10004
 #define MODE_5                0x10005
+#define ENABLE_3D             (1<<3)
 #endif // NDS
 #define BG0_ENABLE            (1<<8)
 #define BG1_ENABLE            (1<<9)
@@ -407,6 +408,76 @@ enum ESerialMode
 #define REG_SUB_BG3_CR        (*(vuint16_t*)0x0400100E)
 #define REG_SUB_BRIGHTNESS    (*(vuint16_t*)0x0400106C)
 #define REG_IPC_FIFO_RX       (*(vuint32_t*)0x04100000)
+
+#ifdef NDS9
+// NDS 3D Core Registers
+#define GFX_CONTROL           (*(vuint16_t*)0x04000060)
+
+#define GFX_FIFO              (*(vuint32_t*)0x04000400)
+#define GFX_STATUS            (*(vuint32_t*)0x04000600)
+#define GFX_COLOR             (*(vuint32_t*)0x04000480)
+
+#define GFX_VERTEX10          (*(vuint32_t*)0x04000490)
+#define GFX_VERTEX_XY         (*(vuint32_t*)0x04000494)
+#define GFX_VERTEX_XZ         (*(vuint32_t*)0x04000498)
+#define GFX_VERTEX_YZ         (*(vuint32_t*)0x0400049C)
+#define GFX_VERTEX_DIFF       (*(vuint32_t*)0x040004A0)
+
+#define GFX_VERTEX16          (*(vuint32_t*)0x0400048C)
+#define GFX_TEX_COORD         (*(vuint32_t*)0x04000488)
+#define GFX_TEX_FORMAT        (*(vuint32_t*)0x040004A8)
+#define GFX_PAL_FORMAT        (*(vuint32_t*)0x040004AC)
+
+#define GFX_CLEAR_COLOR       (*(vuint32_t*)0x04000350)
+#define GFX_CLEAR_DEPTH       (*(vuint16_t*)0x04000354)
+
+#define GFX_LIGHT_VECTOR      (*(vuint32_t*)0x040004C8)
+#define GFX_LIGHT_COLOR       (*(vuint32_t*)0x040004CC)
+#define GFX_NORMAL            (*(vuint32_t*)0x04000484)
+
+#define GFX_DIFFUSE_AMBIENT   (*(vuint32_t*)0x040004C0)
+#define GFX_SPECULAR_EMISSION (*(vuint32_t*)0x040004C4)
+#define GFX_SHININESS         (*(vuint32_t*)0x040004D0)
+
+#define GFX_POLY_FORMAT       (*(vuint32_t*)0x040004A4)
+#define GFX_ALPHA_TEST        (*(vuint16_t*)0x04000340)
+
+#define GFX_BEGIN             (*(vuint32_t*)0x04000500)
+#define GFX_END               (*(vuint32_t*)0x04000504)
+#define GFX_FLUSH             (*(vuint32_t*)0x04000540)
+#define GFX_VIEWPORT          (*(vuint32_t*)0x04000580)
+#define GFX_TOON_TABLE        ( (vuint16_t*)0x04000380)
+#define GFX_EDGE_TABLE        ( (vuint16_t*)0x04000330)
+#define GFX_BOX_TEST          (*(vint32_t *)0x040005C0)
+
+#define GFX_BUSY              (GFX_STATUS & BIT(27))
+
+#define GFX_VERTEX_RAM_USAGE  (*(vuint16_t*)0x04000606)
+#define GFX_POLYGON_RAM_USAGE (*(vuint16_t*)0x04000604)
+
+#define GFX_CUTOFF_DEPTH      (*(vuint16_t*)0x04000610)
+
+// NDS 3D Matrix Registers
+#define MATRIX_CONTROL        (*(vuint32_t*)0x04000440)
+#define MATRIX_PUSH           (*(vuint32_t*)0x04000444)
+#define MATRIX_POP            (*(vuint32_t*)0x04000448)
+#define MATRIX_SCALE          (*(vint32_t *)0x0400046C)
+#define MATRIX_TRANSLATE      (*(vint32_t *)0x04000470)
+#define MATRIX_RESTORE        (*(vuint32_t*)0x04000450)
+#define MATRIX_STORE          (*(vuint32_t*)0x0400044C)
+#define MATRIX_IDENTITY       (*(vuint32_t*)0x04000454)
+#define MATRIX_LOAD4x4        (*(vint32_t *)0x04000458)
+#define MATRIX_LOAD4x3        (*(vint32_t *)0x0400045C)
+#define MATRIX_MULT4x4        (*(vint32_t *)0x04000460)
+#define MATRIX_MULT4x3        (*(vint32_t *)0x04000464)
+#define MATRIX_MULT3x3        (*(vint32_t *)0x04000468)
+
+#define MATRIX_READ_MODELVIEW ( (vint32_t *)0x04000640)
+#define MATRIX_READ_ROTATION  ( (vint32_t *)0x04000680)
+#define POINT_RESULT          ( (vint32_t *)0x04000620)
+#define VECTOR_RESULT         ( (vuint16_t*)0x04000630)
+#endif // NDS9
+
 
 
 #endif

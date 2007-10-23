@@ -140,33 +140,28 @@ CMatrixF::rotate(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
       CMatrixF rot;
       rot.loadIdentity();
       rot.matrix[0][0] = iCos;
-      rot.matrix[0][1] = -iSin;
-      rot.matrix[1][0] = iSin;
+      rot.matrix[0][1] = iSin;
+      rot.matrix[1][0] = -iSin;
       rot.matrix[1][1] = iCos;
       *this *= rot;
       break;
     }
     default:
     {
-/*
       // Mixed Rotation
+      GLfloat iMinCos = 1.0f - iCos;
       CMatrixF rot;
       rot.loadIdentity();
-      x = m_to_s(x);
-      y = m_to_s(y);
-      z = m_to_s(z);
-      rot.matrix[0][0] = s_to_m(s_fpmul(x, x) + s_fpmul(iCos, s_fpfromi(1) - s_fpmul(x, x)));
-      rot.matrix[1][0] = s_to_m(s_fpmul(s_fpmul(x, y), (s_fpfromi(1) - iCos) - s_fpmul(z, iSin)));
-      rot.matrix[2][0] = s_to_m(s_fpmul(s_fpmul(z, x), (s_fpfromi(1) - iCos) + s_fpmul(y, iSin)));
-      rot.matrix[0][1] = s_to_m(s_fpmul(s_fpmul(x, y), (s_fpfromi(1) - iCos) + s_fpmul(z, iSin)));
-      rot.matrix[1][1] = s_to_m(s_fpmul(y, y) + s_fpmul(iCos, s_fpfromi(1) - s_fpmul(y, y)));
-      rot.matrix[2][1] = s_to_m(s_fpmul(s_fpmul(y, z), (s_fpfromi(1) - iCos) - s_fpmul(x, iSin)));
-      rot.matrix[0][2] = s_to_m(s_fpmul(s_fpmul(y, z), (s_fpfromi(1) - iCos) - s_fpmul(x, iSin)));
-      rot.matrix[1][2] = s_to_m(s_fpmul(s_fpmul(y, z), (s_fpfromi(1) - iCos) + s_fpmul(x, iSin)));
-      rot.matrix[2][2] = s_to_m(s_fpmul(z, z) + s_fpmul(iCos, s_fpfromi(1) - s_fpmul(z, z)));
-      rot.matrix[3][3] = m_fpfromi(1);
+      rot.matrix[0][0] = x * x * iMinCos + iCos;
+      rot.matrix[0][1] = x * y * iMinCos - z * iSin;
+      rot.matrix[0][2] = x * z * iMinCos + y * iSin;
+      rot.matrix[1][0] = y * x * iMinCos + z * iSin;
+      rot.matrix[1][1] = y * y * iMinCos + iCos;
+      rot.matrix[1][2] = y * z * iMinCos - x * iSin;
+      rot.matrix[2][0] = z * x * iMinCos - y * iSin;
+      rot.matrix[2][1] = z * y * iMinCos + x * iSin;
+      rot.matrix[2][2] = z * z * iMinCos + iCos;
       *this *= rot;
-*/
     }
   };
 }
@@ -354,30 +349,28 @@ CMatrixFx::rotate(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
       CMatrixFx rot;
       rot.loadIdentity();
       rot.matrix[0][0] = iCos;
-      rot.matrix[0][1] = -iSin;
-      rot.matrix[1][0] = iSin;
+      rot.matrix[0][1] = iSin;
+      rot.matrix[1][0] = -iSin;
       rot.matrix[1][1] = iCos;
       *this *= rot;
       break;
     }
     default:
     {
-/*
       // Mixed Rotation
+      GLfixed iMinCos = gl_fpfromi(1) - iCos;
       CMatrixFx rot;
       rot.loadIdentity();
-      rot.matrix[0][0] = (x * x) + iCos * (1.0f - (x * x);
-      rot.matrix[1][0] = (x * y) * (1.0f - iCos) - (z * iSin);
-      rot.matrix[2][0] = (z * x) * (1.0f - iCos) + (y * iSin));
-      rot.matrix[0][1] = (x * y) * (1.0f - iCos) + (z * iSin));
-      rot.matrix[1][1] = (y * y) + iCos * (1.0f - (y * y));
-      rot.matrix[2][1] = (y * z) * (1.0f - iCos) - (x * iSin));
-      rot.matrix[0][2] = (y * z) * (1.0f - iCos) - (x * iSin));
-      rot.matrix[1][2] = (y * z) * (1.0f - iCos) + (x * iSin));
-      rot.matrix[2][2] = (z * z) + iCos * (1.0f - (z * z));
-      rot.matrix[3][3] = 1.0f;
+      rot.matrix[0][0] = gl_fpmul(gl_fpmul(x, x), iMinCos) + iCos;
+      rot.matrix[0][1] = gl_fpmul(gl_fpmul(x, y), iMinCos) - gl_fpmul(z, iSin);
+      rot.matrix[0][2] = gl_fpmul(gl_fpmul(x, z), iMinCos) + gl_fpmul(y, iSin);
+      rot.matrix[1][0] = gl_fpmul(gl_fpmul(y, x), iMinCos) + gl_fpmul(z, iSin);
+      rot.matrix[1][1] = gl_fpmul(gl_fpmul(y, y), iMinCos) + iCos;
+      rot.matrix[1][2] = gl_fpmul(gl_fpmul(y, z), iMinCos) - gl_fpmul(x, iSin);
+      rot.matrix[2][0] = gl_fpmul(gl_fpmul(z, x), iMinCos) - gl_fpmul(y, iSin);
+      rot.matrix[2][1] = gl_fpmul(gl_fpmul(z, y), iMinCos) + gl_fpmul(x, iSin);
+      rot.matrix[2][2] = gl_fpmul(gl_fpmul(z, z), iMinCos) + iCos;
       *this *= rot;
-*/
     }
   };
 }
@@ -491,6 +484,38 @@ CAGLESMatrixF::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat t
 
 //---------------------------------------------------------------------------
 void
+CAGLESMatrixF::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+{
+  CMatrixF m;
+
+  zNear_ = zNear;
+  zFar_  = zFar;
+
+  m.matrix[0][0] = 2.0f / (right - left);
+  m.matrix[0][1] = 0.0f;
+  m.matrix[0][2] = 0.0f;
+  m.matrix[0][3] = -((right + left) / (right - left));
+
+  m.matrix[1][0] = 0.0f;
+  m.matrix[1][1] = 2.0f / (top - bottom);
+  m.matrix[1][2] = 0.0f;
+  m.matrix[1][3] = -((top + bottom) / (top - bottom));
+
+  m.matrix[2][0] = 0.0f;
+  m.matrix[2][1] = 0.0f;
+  m.matrix[2][2] = -2.0f / (zFar - zNear);
+  m.matrix[2][3] = -((zFar + zNear) / (zFar - zNear));
+
+  m.matrix[3][0] = 0.0f;
+  m.matrix[3][1] = 0.0f;
+  m.matrix[3][2] = 0.0f;
+  m.matrix[3][3] = 1.0f;
+
+  (*pCurrentMatrix_) *= m;
+}
+
+//---------------------------------------------------------------------------
+void
 CAGLESMatrixF::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
   pCurrentMatrix_->rotate(angle, x, y, z);
@@ -583,6 +608,38 @@ CAGLESMatrixFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed 
   m.matrix[3][1] = gl_fpfromi(0);
   m.matrix[3][2] = gl_fpfromi(-1);
   m.matrix[3][3] = gl_fpfromi(0);
+
+  (*pCurrentMatrix_) *= m;
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
+{
+  CMatrixFx m;
+
+  zNear_ = zNear;
+  zFar_  = zFar;
+
+  m.matrix[0][0] = gl_fpdiv(gl_fpfromi(2), (right - left));
+  m.matrix[0][1] = gl_fpfromi(0);
+  m.matrix[0][2] = gl_fpfromi(0);
+  m.matrix[0][3] = -gl_fpdiv((right + left), (right - left));
+
+  m.matrix[1][0] = gl_fpfromi(0);
+  m.matrix[1][1] = gl_fpdiv(gl_fpfromi(2), (top - bottom));
+  m.matrix[1][2] = gl_fpfromi(0);
+  m.matrix[1][3] = -gl_fpdiv((top + bottom), (top - bottom));
+
+  m.matrix[2][0] = gl_fpfromi(0);
+  m.matrix[2][1] = gl_fpfromi(0);
+  m.matrix[2][2] = gl_fpdiv(gl_fpfromi(-2), (zFar - zNear));
+  m.matrix[2][3] = -gl_fpdiv((zFar + zNear), (zFar - zNear));
+
+  m.matrix[3][0] = gl_fpfromi(0);
+  m.matrix[3][1] = gl_fpfromi(0);
+  m.matrix[3][2] = gl_fpfromi(0);
+  m.matrix[3][3] = gl_fpfromi(1);
 
   (*pCurrentMatrix_) *= m;
 }

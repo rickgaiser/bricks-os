@@ -152,6 +152,13 @@ CAGLESFloatToFxContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 
 //-----------------------------------------------------------------------------
 void
+CAGLESFloatToFxContext::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+{
+  glOrthox(gl_fpfromf(left), gl_fpfromf(right), gl_fpfromf(bottom), gl_fpfromf(top), gl_fpfromf(zNear), gl_fpfromf(zFar));
+}
+
+//-----------------------------------------------------------------------------
+void
 CAGLESFloatToFxContext::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
   glRotatex(gl_fpfromf(angle), gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
@@ -243,6 +250,13 @@ void
 CAGLESFxToFloatContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 {
   glNormal3f(gl_fptof(nx), gl_fptof(ny), gl_fptof(nz));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
+{
+  glOrthof(gl_fptof(left), gl_fptof(right), gl_fptof(bottom), gl_fptof(top), gl_fptof(zNear), gl_fptof(zFar));
 }
 
 //-----------------------------------------------------------------------------

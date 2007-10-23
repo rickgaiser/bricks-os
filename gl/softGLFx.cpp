@@ -657,16 +657,18 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
     {
       // ModelView Transformation
       matrixModelView.transform(poly.v[i]->v1, poly.v[i]->v2);
-
       // Projection Transformation
       matrixProjection.transform(poly.v[i]->v2, poly.v[i]->v2);
-
-      // Eye coordinates to clipping coordinates
+      // Perspective division, viewport transformation
       matrixPerspective.transform(poly.v[i]->v2, poly.v[i]->v2);
 
-      // Get normalized device coordinates
-      poly.v[i]->sx = gl_fptoi((gl_fpdiv(poly.v[i]->v2[0], -poly.v[i]->v2[3]) + gl_fpfromf(0.5f)) * viewportWidth);
-      poly.v[i]->sy = gl_fptoi((gl_fpdiv(poly.v[i]->v2[1], -poly.v[i]->v2[3]) + gl_fpfromf(0.5f)) * viewportHeight);
+      // Divide x and y by linear depth: w
+      poly.v[i]->v2[0] = gl_fpdiv(poly.v[i]->v2[0], -poly.v[i]->v2[3]);
+      poly.v[i]->v2[1] = gl_fpdiv(poly.v[i]->v2[1], -poly.v[i]->v2[3]);
+
+      // From normalized device coordinates to window coordinates
+      poly.v[i]->sx = gl_fptoi(gl_fpmul((poly.v[i]->v2[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  / 2))) + viewportXOffset;
+      poly.v[i]->sy = gl_fptoi(gl_fpmul((poly.v[i]->v2[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight / 2))) + viewportYOffset;
 
       poly.v[i]->bProcessed = true;
     }
