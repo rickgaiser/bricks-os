@@ -145,6 +145,7 @@ public:
   virtual void glDisable(GLenum cap);
   virtual void glDrawArrays(GLenum mode, GLint first, GLsizei count);
   virtual void glEnable(GLenum cap);
+  virtual void glFinish(void);
   virtual void glFlush(void);
   virtual void glFogx(GLenum pname, GLfixed param);
   virtual void glFogxv(GLenum pname, const GLfixed *params);

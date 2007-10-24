@@ -430,6 +430,12 @@ CSoftGLESFloat::glEnable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
+CSoftGLESFloat::glFinish(void)
+{
+}
+
+//-----------------------------------------------------------------------------
+void
 CSoftGLESFloat::glFlush(void)
 {
 }
@@ -529,8 +535,6 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   zbuffer            = new uint32_t[width * height];
   edge1              = new CEdgeF(viewportHeight);
   edge2              = new CEdgeF(viewportHeight);
-
-  matrixPerspective.loadIdentity();
 }
 
 //-----------------------------------------------------------------------------
@@ -637,8 +641,6 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
       matrixModelView.transform(poly.v[i]->v1, poly.v[i]->v2);
       // Projection Transformation
       matrixProjection.transform(poly.v[i]->v2, poly.v[i]->v2);
-      // Perspective division, viewport transformation
-      matrixPerspective.transform(poly.v[i]->v2, poly.v[i]->v2);
 
       // Divide x and y by linear depth: w
       poly.v[i]->v2[0] /= -poly.v[i]->v2[3];

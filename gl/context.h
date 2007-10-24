@@ -122,7 +122,7 @@ public:
 //  virtual void glDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices) = 0;
   virtual void glEnable(GLenum cap) = 0;
   virtual void glEnableClientState(GLenum array) = 0;
-//  virtual void glFinish(void) = 0;
+  virtual void glFinish(void) = 0;
   virtual void glFlush(void) = 0;
   virtual void glFogx(GLenum pname, GLfixed param) = 0;
   virtual void glFogxv(GLenum pname, const GLfixed *params) = 0;

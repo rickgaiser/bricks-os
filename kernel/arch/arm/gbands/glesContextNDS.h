@@ -3,6 +3,23 @@
 
 
 #include "../../../../gl/softGLFx.h"
+#include "../../../../gl/fixedPoint.h"
+
+
+// Macro's for NDS (4.12)
+#define FP_PRESICION_NDS 12
+#define nds_fpfromi(i)   fpfromi(FP_PRESICION_NDS,i)
+#define nds_fptoi(i)     fptoi(FP_PRESICION_NDS,i)
+#define nds_fpfromf(i)   fpfromf(FP_PRESICION_NDS,i)
+#define nds_fptof(i)     fptof(FP_PRESICION_NDS,i)
+#define nds_fpmul(i1,i2) fpmul32(FP_PRESICION_NDS,i1,i2)
+#define nds_fpdiv(i1,i2) fpdiv32(FP_PRESICION_NDS,i1,i2)
+
+#define nds_to_gl(i)     (i>>4)
+#define gl_to_nds(i)     (i>>4)
+
+
+typedef GLfixed NDSfixed;
 
 
 //-----------------------------------------------------------------------------
@@ -26,6 +43,8 @@ public:
 
 protected:
   virtual void rasterPoly(SPolygonFx & poly);
+
+  uint32_t ndsCurrentMatrixId_;
 };
 
 

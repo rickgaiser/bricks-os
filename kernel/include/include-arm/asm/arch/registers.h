@@ -273,6 +273,13 @@ enum ESerialMode
 #define SIO_UART_RECV_ENABLE  (1<<11)
 #endif // GBA
 
+// Matrix mode
+#define NDS_PROJECTION      0
+#define NDS_POSITION        1
+#define NDS_MODELVIEW       2
+#define NDS_TEXTURE         3
+
+
 // Memory Locations
 #define BG_PALETTE            ( (uint16_t*)0x05000000)
 #define SPRITE_PALETTE        ( (uint16_t*)0x05000200)

@@ -14,6 +14,12 @@
 #define m_fpmul(i1,i2) fpmul32(MATRIX_PRECISION,i1,i2)
 #define m_fpdiv(i1,i2) fpdiv32(MATRIX_PRECISION,i1,i2)
 
+#define m_to_gl(i)     (i)
+#define gl_to_m(i)     (i)
+
+
+typedef GLfixed Mfixed;
+
 
 //---------------------------------------------------------------------------
 class CMatrixF
@@ -24,6 +30,9 @@ public:
 
   void clear();
   void loadIdentity();
+
+  void frustum  (GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
+  void ortho    (GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
 
   void translate(GLfloat x, GLfloat y, GLfloat z);
   void translate(GLfloat * vec);
@@ -63,6 +72,9 @@ public:
   void clear();
   void loadIdentity();
 
+  void frustum  (GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
+  void ortho    (GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
+
   void translate(GLfixed x, GLfixed y, GLfixed z);
   void translate(GLfixed * vec);
 
@@ -78,7 +90,7 @@ public:
   CMatrixFx & operator*=(const CMatrixFx & m);
 
 public:
-  GLfixed matrix[4][4];
+  Mfixed matrix[4][4];
   // [ROW][COLUMN]
   // 00, 01, 02, 03
   // 10, 11, 12, 13
@@ -87,8 +99,8 @@ public:
 
 private:
   static bool bInitialized_;
-  static GLfixed fpSin_[360];
-  static GLfixed fpCos_[360];
+  static Mfixed fpSin_[360];
+  static Mfixed fpCos_[360];
 };
 
 //-----------------------------------------------------------------------------
@@ -112,7 +124,6 @@ protected:
   GLenum      matrixMode_;
   CMatrixF    matrixModelView;
   CMatrixF    matrixProjection;
-  CMatrixF    matrixPerspective;
   CMatrixF    matrixRotation;
   CMatrixF  * pCurrentMatrix_;
 
@@ -143,7 +154,6 @@ protected:
   GLenum      matrixMode_;
   CMatrixFx   matrixModelView;
   CMatrixFx   matrixProjection;
-  CMatrixFx   matrixPerspective;
   CMatrixFx   matrixRotation;
   CMatrixFx * pCurrentMatrix_;
 

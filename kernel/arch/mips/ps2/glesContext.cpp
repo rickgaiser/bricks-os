@@ -28,7 +28,7 @@ CPS2GLESContext::CPS2GLESContext()
  , ps2DepthFunction_(ZTST_GREATER)
  , ps2DepthInvert_(true)
  , ps2ZMax_(0xffff)
- 
+
  , renderSurface(0)
  , shadingModel_(GL_FLAT)
  , cullFaceEnabled_(false)
@@ -321,8 +321,6 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     matrixModelView.transform(v.v1, v.v1);
     // Projection Transformation
     matrixProjection.transform(v.v1, v.v1);
-    // Perspective division, viewport transformation
-    matrixPerspective.transform(v.v1, v.v1);
 
     // Divide x and y by linear depth: w
     v.v1[0] /= -v.v1[3];
@@ -362,7 +360,7 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       v.c1.g = clamp((v.c1.g * partColor) + (fogColor_.g * partFog));
       v.c1.b = clamp((v.c1.b * partColor) + (fogColor_.b * partFog));
     }
-    
+
     // Calculate Z
     uint32_t z;
     if(ps2DepthInvert_ == true)
@@ -427,6 +425,12 @@ CPS2GLESContext::glEnable(GLenum cap)
     default:
       ; // Not supported
   };
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::glFinish(void)
+{
 }
 
 //-----------------------------------------------------------------------------
@@ -531,8 +535,6 @@ CPS2GLESContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportWidth      = width;
   viewportHeight     = height;
   viewportPixelCount = width * height;
-
-  matrixPerspective.loadIdentity();
 }
 
 //-----------------------------------------------------------------------------

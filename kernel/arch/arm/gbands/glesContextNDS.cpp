@@ -30,9 +30,11 @@ typedef unsigned int wint_t;
 //-----------------------------------------------------------------------------
 CNDSGLESContext::CNDSGLESContext()
  : CSoftGLESFixed()
+ , ndsCurrentMatrixId_(NDS_MODELVIEW)
 {
+  // Power control
   REG_POWCNT |= POWER_LCD |POWER_2D_TOP |POWER_2D_BOTTOM | POWER_3D_CORE | POWER_3D_MATRIX;
-
+  // Display control
   REG_DISPCNT = MODE_0 | BG0_ENABLE | ENABLE_3D;
 
   GFX_POLY_FORMAT = POLY_ALPHA(31) | POLY_CULL_NONE;
@@ -78,30 +80,30 @@ CNDSGLESContext::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed
 {
   zNear_ = zNear;
   zFar_  = zFar;
-  zA_    = -gl_fpdiv((zFar + zNear), (zFar - zNear)) >> 4;
-  zB_    = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear)) >> 4;
+  zA_    = -gl_fpdiv((zFar + zNear), (zFar - zNear));
+  zB_    = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear));
 
-  MATRIX_MULT4x4 = gl_fpdiv((zNear << 1), (right - left)) >> 4;
-  MATRIX_MULT4x4 = gl_fpfromi(0) >> 4;
-  MATRIX_MULT4x4 = gl_fpdiv((right + left), (right - left)) >> 4;
-  MATRIX_MULT4x4 = gl_fpfromi(0) >> 4;
+  MATRIX_MULT4x4 = gl_to_nds(gl_fpdiv((zNear << 1), (right - left)));
+  MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = gl_to_nds(gl_fpdiv((right + left), (right - left)));
+  MATRIX_MULT4x4 = nds_fpfromi(0);
 
-  MATRIX_MULT4x4 = gl_fpfromi(0) >> 4;
-  MATRIX_MULT4x4 = gl_fpdiv((zNear << 1), (top - bottom)) >> 4;
-  MATRIX_MULT4x4 = gl_fpdiv((top + bottom), (top - bottom)) >> 4;
-  MATRIX_MULT4x4 = gl_fpfromi(0) >> 4;
+  MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = gl_to_nds(gl_fpdiv((zNear << 1), (top - bottom)));
+  MATRIX_MULT4x4 = gl_to_nds(gl_fpdiv((top + bottom), (top - bottom)));
+  MATRIX_MULT4x4 = nds_fpfromi(0);
 
-  MATRIX_MULT4x4 = gl_fpfromi(0) >> 4;
-  MATRIX_MULT4x4 = gl_fpfromi(0) >> 4;
-  MATRIX_MULT4x4 = zA_;
-  MATRIX_MULT4x4 = gl_fpfromi(-1) >> 4;
+  MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = gl_to_nds(zA_);
+  MATRIX_MULT4x4 = nds_fpfromi(-1);
 
-  MATRIX_MULT4x4 = gl_fpfromi(0) >> 4;
-  MATRIX_MULT4x4 = gl_fpfromi(0) >> 4;
-  MATRIX_MULT4x4 = zB_;
-  MATRIX_MULT4x4 = gl_fpfromi(0) >> 4;
+  MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = gl_to_nds(zB_);
+  MATRIX_MULT4x4 = nds_fpfromi(0);
 
-  MATRIX_STORE = 0;  // GL_PROJECTION
+  MATRIX_STORE = ndsCurrentMatrixId_;
 }
 
 //-----------------------------------------------------------------------------
@@ -112,10 +114,6 @@ CNDSGLESContext::glLoadIdentity()
 }
 
 //-----------------------------------------------------------------------------
-//#define GL_PROJECTION      0
-//#define GL_POSITION        1
-//#define GL_MODELVIEW       2
-//#define GL_TEXTURE         3
 void
 CNDSGLESContext::glMatrixMode(GLenum mode)
 {
@@ -123,72 +121,123 @@ CNDSGLESContext::glMatrixMode(GLenum mode)
 
   switch(mode)
   {
-    case GL_MODELVIEW:  MATRIX_CONTROL = 2; break;
-    case GL_PROJECTION: MATRIX_CONTROL = 0; break;
+    case GL_PROJECTION: ndsCurrentMatrixId_ = NDS_PROJECTION; break;
+    //case GL_???:        ndsCurrentMatrixId_ = NDS_POSITION;   break;
+    case GL_MODELVIEW:  ndsCurrentMatrixId_ = NDS_MODELVIEW;  break;
+    case GL_TEXTURE:    ndsCurrentMatrixId_ = NDS_TEXTURE;    break;
   };
+
+  MATRIX_CONTROL = ndsCurrentMatrixId_;
 }
 
 //-----------------------------------------------------------------------------
 void
 CNDSGLESContext::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
-  /*
-  int32_t axis[3];
-  int32_t sine = SIN[angle &  LUT_MASK];
-  int32_t cosine = COS[angle & LUT_MASK];
-  int32_t one_minus_cosine = inttof32(1) - cosine;
+  // Normalize the angle
+  angle = angle - gl_fpfromi((gl_fptoi(angle) / 360) * 360);
+  if(angle < 0)
+    angle += gl_fpfromi(360);
 
-  axis[0]=x;
-  axis[1]=y;
-  axis[2]=z;
+  // Get sin and cos from lookup table
+  NDSfixed iSin = nds_fpfromf(sin(gl_fptof(angle) * M_PI / 180.0f));
+  NDSfixed iCos = nds_fpfromf(cos(gl_fptof(angle) * M_PI / 180.0f));
 
-  normalizef32(axis);   // should require passed in normalized?
+  // Convert from gl fixed to nds fixed
+  x = gl_to_nds(x);
+  y = gl_to_nds(y);
+  z = gl_to_nds(z);
 
-  MATRIX_MULT3x3 = cosine + mulf32(one_minus_cosine, mulf32(axis[0], axis[0]));
-  MATRIX_MULT3x3 = mulf32(one_minus_cosine, mulf32(axis[0], axis[1])) - mulf32(axis[2], sine);
-  MATRIX_MULT3x3 = mulf32(mulf32(one_minus_cosine, axis[0]), axis[2]) + mulf32(axis[1], sine);
+  long flags(((z != 0) << 2) | ((y != 0) << 1) | (x != 0));
+  switch(flags)
+  {
+    case 0x00:
+    {
+      break;
+    }
+    case 0x01:
+    {
+      // X Rotation only
+      MATRIX_MULT3x3 = nds_fpfromi(1);
+      MATRIX_MULT3x3 = nds_fpfromi(0);
+      MATRIX_MULT3x3 = nds_fpfromi(0);
 
-  MATRIX_MULT3x3 = mulf32(mulf32(one_minus_cosine, axis[0]),  axis[1]) + mulf32(axis[2], sine);
-  MATRIX_MULT3x3 = cosine + mulf32(mulf32(one_minus_cosine, axis[1]), axis[1]);
-  MATRIX_MULT3x3 = mulf32(mulf32(one_minus_cosine, axis[1]), axis[2]) - mulf32(axis[0], sine);
+      MATRIX_MULT3x3 = nds_fpfromi(0);
+      MATRIX_MULT3x3 = iCos;
+      MATRIX_MULT3x3 = -iSin;
 
-  MATRIX_MULT3x3 = mulf32(mulf32(one_minus_cosine, axis[0]), axis[2]) - mulf32(axis[1], sine);
-  MATRIX_MULT3x3 = mulf32(mulf32(one_minus_cosine, axis[1]), axis[2]) + mulf32(axis[0], sine);
-  MATRIX_MULT3x3 = cosine + mulf32(mulf32(one_minus_cosine, axis[2]), axis[2]);
-  */
+      MATRIX_MULT3x3 = nds_fpfromi(0);
+      MATRIX_MULT3x3 = iSin;
+      MATRIX_MULT3x3 = iCos;
+      break;
+    }
+    case 0x02:
+    {
+      // Y Rotation only
+      MATRIX_MULT3x3 = iCos;
+      MATRIX_MULT3x3 = nds_fpfromi(0);
+      MATRIX_MULT3x3 = iSin;
 
-  uint32_t iSin = gl_fpfromf(sin(gl_fptof(angle) * M_PI / 180.0f)) >> 4;
-  uint32_t iCos = gl_fpfromf(cos(gl_fptof(angle) * M_PI / 180.0f)) >> 4;
+      MATRIX_MULT3x3 = nds_fpfromi(0);
+      MATRIX_MULT3x3 = nds_fpfromi(1);
+      MATRIX_MULT3x3 = nds_fpfromi(0);
 
-  MATRIX_MULT3x3 = iCos;
-  MATRIX_MULT3x3 = 0;
-  MATRIX_MULT3x3 = iSin;
+      MATRIX_MULT3x3 = -iSin;
+      MATRIX_MULT3x3 = nds_fpfromi(0);
+      MATRIX_MULT3x3 = iCos;
+      break;
+    }
+    case 0x04:
+    {
+      // Z Rotation only
+      MATRIX_MULT3x3 = iCos;
+      MATRIX_MULT3x3 = iSin;
+      MATRIX_MULT3x3 = nds_fpfromi(0);
 
-  MATRIX_MULT3x3 = 0;
-  MATRIX_MULT3x3 = gl_fpfromi(1) >> 4;
-  MATRIX_MULT3x3 = 0;
+      MATRIX_MULT3x3 = -iSin;
+      MATRIX_MULT3x3 = iCos;
+      MATRIX_MULT3x3 = nds_fpfromi(0);
 
-  MATRIX_MULT3x3 = -iSin;
-  MATRIX_MULT3x3 = 0;
-  MATRIX_MULT3x3 = iCos;
+      MATRIX_MULT3x3 = nds_fpfromi(0);
+      MATRIX_MULT3x3 = nds_fpfromi(0);
+      MATRIX_MULT3x3 = nds_fpfromi(1);
+      break;
+    }
+    default:
+    {
+      // Mixed Rotation
+      NDSfixed iMinCos = nds_fpfromi(1) - iCos;
+      MATRIX_MULT3x3 = nds_fpmul(nds_fpmul(x, x), iMinCos) + iCos;
+      MATRIX_MULT3x3 = nds_fpmul(nds_fpmul(x, y), iMinCos) - nds_fpmul(z, iSin);
+      MATRIX_MULT3x3 = nds_fpmul(nds_fpmul(x, z), iMinCos) + nds_fpmul(y, iSin);
+
+      MATRIX_MULT3x3 = nds_fpmul(nds_fpmul(y, x), iMinCos) + nds_fpmul(z, iSin);
+      MATRIX_MULT3x3 = nds_fpmul(nds_fpmul(y, y), iMinCos) + iCos;
+      MATRIX_MULT3x3 = nds_fpmul(nds_fpmul(y, z), iMinCos) - nds_fpmul(x, iSin);
+
+      MATRIX_MULT3x3 = nds_fpmul(nds_fpmul(z, x), iMinCos) - nds_fpmul(y, iSin);
+      MATRIX_MULT3x3 = nds_fpmul(nds_fpmul(z, y), iMinCos) + nds_fpmul(x, iSin);
+      MATRIX_MULT3x3 = nds_fpmul(nds_fpmul(z, z), iMinCos) + iCos;
+    }
+  };
 }
 
 //-----------------------------------------------------------------------------
 void
 CNDSGLESContext::glScalex(GLfixed x, GLfixed y, GLfixed z)
 {
-  MATRIX_SCALE = (x >> 4);
-  MATRIX_SCALE = (y >> 4);
-  MATRIX_SCALE = (z >> 4);
+  MATRIX_SCALE = gl_to_nds(x);
+  MATRIX_SCALE = gl_to_nds(y);
+  MATRIX_SCALE = gl_to_nds(z);
 }
 
 //-----------------------------------------------------------------------------
 void
 CNDSGLESContext::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
-  MATRIX_TRANSLATE = (x >> 4);
-  MATRIX_TRANSLATE = (y >> 4);
-  MATRIX_TRANSLATE = (z >> 4);
+  MATRIX_TRANSLATE = gl_to_nds(x);
+  MATRIX_TRANSLATE = gl_to_nds(y);
+  MATRIX_TRANSLATE = gl_to_nds(z);
 }
 
 //-----------------------------------------------------------------------------
@@ -200,8 +249,8 @@ CNDSGLESContext::rasterPoly(SPolygonFx & poly)
   {
     GFX_COLOR = fpRGB(poly.v[i]->c1.r, poly.v[i]->c1.g, poly.v[i]->c1.b);
     // Fixed Point 4.12
-    GFX_VERTEX16 = ((poly.v[i]->v1[1] << 12) & 0xffff0000) | ((poly.v[i]->v1[0] >> 4) & 0xffff);
-    GFX_VERTEX16 = (poly.v[i]->v1[2] >> 4) & 0xffff;
+    GFX_VERTEX16 = ((gl_to_nds(poly.v[i]->v1[1]) << 16) & 0xffff0000) | (gl_to_nds(poly.v[i]->v1[0]) & 0xffff);
+    GFX_VERTEX16 = gl_to_nds(poly.v[i]->v1[2]) & 0xffff;
   }
   GFX_END = 0;
 }
