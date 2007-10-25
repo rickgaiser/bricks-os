@@ -278,6 +278,11 @@ enum ESerialMode
 #define NDS_POSITION        1
 #define NDS_MODELVIEW       2
 #define NDS_TEXTURE         3
+// Poly mode
+#define NDS_TRIANGLES       0
+#define NDS_TRIANGLE_STRIP  2
+#define NDS_QUADS           1
+#define NDS_QUAD_STRIP      3
 
 
 // Memory Locations

@@ -4,51 +4,91 @@
 
 #include "../../../../gl/softGLFx.h"
 #include "../../../../gl/fixedPoint.h"
-
-
-// Macro's for NDS (4.12)
-#define FP_PRESICION_NDS 12
-#define nds_fpfromi(i)   fpfromi(FP_PRESICION_NDS,i)
-#define nds_fptoi(i)     fptoi(FP_PRESICION_NDS,i)
-#define nds_fpfromf(i)   fpfromf(FP_PRESICION_NDS,i)
-#define nds_fptof(i)     fptof(FP_PRESICION_NDS,i)
-#define nds_fpmul(i1,i2) fpmul32(FP_PRESICION_NDS,i1,i2)
-#define nds_fpdiv(i1,i2) fpdiv32(FP_PRESICION_NDS,i1,i2)
-
-#define nds_to_gl(i)     (i>>4)
-#define gl_to_nds(i)     (i>>4)
-
-
-typedef GLfixed NDSfixed;
+#include "matrixNDS.h"
 
 
 //-----------------------------------------------------------------------------
 class CNDSGLESContext
- : public CSoftGLESFixed
+ : public CAGLESFloatToFxContext
+ , public CAGLESBuffers
+ , public CAGLESMatrixNDSFx
 {
 public:
   CNDSGLESContext();
   virtual ~CNDSGLESContext();
 
+  virtual void setSurface(CSurface * surface);
+
   virtual void glClear(GLbitfield mask);
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
+  virtual void glClearDepthx(GLclampx depth);
+  virtual void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
+  virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
+  virtual void glCullFace(GLenum mode);
+  virtual void glDepthFunc(GLenum func);
+  virtual void glDisable(GLenum cap);
+  virtual void glDrawArrays(GLenum mode, GLint first, GLsizei count);
+  virtual void glEnable(GLenum cap);
+  virtual void glFinish(void);
   virtual void glFlush(void);
-  virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
-  virtual void glLoadIdentity(void);
-  virtual void glMatrixMode(GLenum mode);
-  virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
-  virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);
-  virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z);
+  virtual void glFogx(GLenum pname, GLfixed param);
+  virtual void glFogxv(GLenum pname, const GLfixed *params);
+  virtual void glLightx(GLenum light, GLenum pname, GLfixed param);
+  virtual void glLightxv(GLenum light, GLenum pname, const GLfixed * params);
+  virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
+  virtual void glShadeModel(GLenum mode);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
-  virtual void rasterPoly(SPolygonFx & poly);
+  virtual void addVertexToTriangleFan(SVertexFx & v);
+  virtual void plotPoly(SPolygonFx & poly);
 
-  uint32_t ndsCurrentMatrixId_;
+protected:
+  CSurface  * renderSurface;
+  GLint       iVCount_;
+
+  // Depth testing
+  bool        depthTestEnabled_;
+  GLenum      depthFunction_;
+  GLfixed     depthClear_;
+  uint16_t    zClearValue_;
+  GLfixed     zLoss_;
+
+  GLenum      shadingModel_;
+
+  // Backface culling
+  bool        cullFaceEnabled_;
+  bool        bCullBack_;
+  GLenum      cullFaceMode_;
+
+  // Colors
+  SColorFx    clCurrent;
+  SColorFx    clClear;
+
+  // Lighting
+  bool        lightingEnabled_;
+  SLightFx    lights_[8];
+
+  // Normals
+  GLfixed     normal_[4];
+
+  // Fog
+  bool        fogEnabled_;
+  GLfixed     fogDensity_;
+  GLfixed     fogStart_;
+  GLfixed     fogEnd_;
+  SColorFx    fogColor_;
+
+  // Viewport
+  GLint       viewportXOffset;
+  GLint       viewportYOffset;
+  GLsizei     viewportPixelCount;
+  GLsizei     viewportWidth;
+  GLsizei     viewportHeight;
 };
 
 
 IGLESContext * getGLESContext();
 
 
-#endif // GBA_GLESCONTEXT_H
+#endif // NDS_GLESCONTEXTNDS_H

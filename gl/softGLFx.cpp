@@ -208,136 +208,6 @@ CSoftGLESFixed::glDisable(GLenum cap)
   };
 }
 
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::addVertexToTriangle(SVertexFx & v)
-{
-  static SPolygonFx polygon;
-  static SVertexFx vertices[3];
-  static bool bInitialized(false);
-  if(bInitialized == false)
-  {
-    polygon.v[0] = &vertices[0];
-    polygon.v[1] = &vertices[1];
-    polygon.v[2] = &vertices[2];
-    bInitialized = true;
-  }
-
-  polygon.v[iVCount_]->bProcessed = false;
-  // Copy vertex
-  polygon.v[iVCount_]->v1[0] = v.v1[0];
-  polygon.v[iVCount_]->v1[1] = v.v1[1];
-  polygon.v[iVCount_]->v1[2] = v.v1[2];
-  polygon.v[iVCount_]->v1[3] = v.v1[3];
-  polygon.v[iVCount_]->n1[0] = v.n1[0];
-  polygon.v[iVCount_]->n1[1] = v.n1[1];
-  polygon.v[iVCount_]->n1[2] = v.n1[2];
-  polygon.v[iVCount_]->n1[3] = v.n1[3];
-  polygon.v[iVCount_]->c1    = v.c1;
-
-  if(iVCount_ == 2)
-    plotPoly(polygon);
-
-  iVCount_ = (iVCount_ + 1) % 3;
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::addVertexToTriangleStrip(SVertexFx & v)
-{
-  static SPolygonFx polygon;
-  static SVertexFx vertices[3];
-  static bool bInitialized(false);
-  static bool bFlipFlop(true);
-  if(bInitialized == false)
-  {
-    polygon.v[0] = &vertices[0];
-    polygon.v[1] = &vertices[1];
-    polygon.v[2] = &vertices[2];
-    bInitialized = true;
-  }
-
-  polygon.v[iVCount_]->bProcessed = false;
-  // Copy vertex
-  polygon.v[iVCount_]->v1[0] = v.v1[0];
-  polygon.v[iVCount_]->v1[1] = v.v1[1];
-  polygon.v[iVCount_]->v1[2] = v.v1[2];
-  polygon.v[iVCount_]->v1[3] = v.v1[3];
-  polygon.v[iVCount_]->n1[0] = v.n1[0];
-  polygon.v[iVCount_]->n1[1] = v.n1[1];
-  polygon.v[iVCount_]->n1[2] = v.n1[2];
-  polygon.v[iVCount_]->n1[3] = v.n1[3];
-  polygon.v[iVCount_]->c1    = v.c1;
-
-  if(iVCount_ == 2)
-  {
-    plotPoly(polygon);
-
-    if(bFlipFlop == true)
-    {
-      SVertexFx * pTemp = polygon.v[0];
-      polygon.v[0] = polygon.v[2];
-      polygon.v[2] = pTemp;
-    }
-    else
-    {
-      SVertexFx * pTemp = polygon.v[1];
-      polygon.v[1] = polygon.v[2];
-      polygon.v[2] = pTemp;
-    }
-  }
-  else
-    iVCount_++;
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::addVertexToTriangleFan(SVertexFx & v)
-{
-  static SPolygonFx polygon;
-  static SVertexFx vertices[3];
-  static bool bInitialized(false);
-  if(bInitialized == false)
-  {
-    polygon.v[0] = &vertices[0];
-    polygon.v[1] = &vertices[1];
-    polygon.v[2] = &vertices[2];
-    bInitialized = true;
-  }
-
-  polygon.v[iVCount_]->bProcessed = false;
-  // Copy vertex
-  polygon.v[iVCount_]->v1[0] = v.v1[0];
-  polygon.v[iVCount_]->v1[1] = v.v1[1];
-  polygon.v[iVCount_]->v1[2] = v.v1[2];
-  polygon.v[iVCount_]->v1[3] = v.v1[3];
-  polygon.v[iVCount_]->n1[0] = v.n1[0];
-  polygon.v[iVCount_]->n1[1] = v.n1[1];
-  polygon.v[iVCount_]->n1[2] = v.n1[2];
-  polygon.v[iVCount_]->n1[3] = v.n1[3];
-  polygon.v[iVCount_]->c1    = v.c1;
-
-  if(iVCount_ == 2)
-  {
-    plotPoly(polygon);
-
-    // Swap 3rd and 2nd vertex
-    if(polygon.v[1] == &vertices[1])
-    {
-      polygon.v[1] = &vertices[2];
-      polygon.v[2] = &vertices[1];
-    }
-    else
-    {
-      polygon.v[1] = &vertices[1];
-      polygon.v[2] = &vertices[2];
-    }
-  }
-  else
-    iVCount_++;
-}
-
 //-----------------------------------------------------------------------------
 void
 CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
@@ -559,6 +429,7 @@ CSoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 bool
 CSoftGLESFixed::testAndSetDepth(GLfixed z, uint32_t index)
 {
@@ -649,6 +520,135 @@ CSoftGLESFixed::hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y)
       index++;
     }
   }
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFixed::addVertexToTriangle(SVertexFx & v)
+{
+  static SPolygonFx polygon;
+  static SVertexFx vertices[3];
+  static bool bInitialized(false);
+  if(bInitialized == false)
+  {
+    polygon.v[0] = &vertices[0];
+    polygon.v[1] = &vertices[1];
+    polygon.v[2] = &vertices[2];
+    bInitialized = true;
+  }
+
+  polygon.v[iVCount_]->bProcessed = false;
+  // Copy vertex
+  polygon.v[iVCount_]->v1[0] = v.v1[0];
+  polygon.v[iVCount_]->v1[1] = v.v1[1];
+  polygon.v[iVCount_]->v1[2] = v.v1[2];
+  polygon.v[iVCount_]->v1[3] = v.v1[3];
+  polygon.v[iVCount_]->n1[0] = v.n1[0];
+  polygon.v[iVCount_]->n1[1] = v.n1[1];
+  polygon.v[iVCount_]->n1[2] = v.n1[2];
+  polygon.v[iVCount_]->n1[3] = v.n1[3];
+  polygon.v[iVCount_]->c1    = v.c1;
+
+  if(iVCount_ == 2)
+    plotPoly(polygon);
+
+  iVCount_ = (iVCount_ + 1) % 3;
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFixed::addVertexToTriangleStrip(SVertexFx & v)
+{
+  static SPolygonFx polygon;
+  static SVertexFx vertices[3];
+  static bool bInitialized(false);
+  static bool bFlipFlop(true);
+  if(bInitialized == false)
+  {
+    polygon.v[0] = &vertices[0];
+    polygon.v[1] = &vertices[1];
+    polygon.v[2] = &vertices[2];
+    bInitialized = true;
+  }
+
+  polygon.v[iVCount_]->bProcessed = false;
+  // Copy vertex
+  polygon.v[iVCount_]->v1[0] = v.v1[0];
+  polygon.v[iVCount_]->v1[1] = v.v1[1];
+  polygon.v[iVCount_]->v1[2] = v.v1[2];
+  polygon.v[iVCount_]->v1[3] = v.v1[3];
+  polygon.v[iVCount_]->n1[0] = v.n1[0];
+  polygon.v[iVCount_]->n1[1] = v.n1[1];
+  polygon.v[iVCount_]->n1[2] = v.n1[2];
+  polygon.v[iVCount_]->n1[3] = v.n1[3];
+  polygon.v[iVCount_]->c1    = v.c1;
+
+  if(iVCount_ == 2)
+  {
+    plotPoly(polygon);
+
+    if(bFlipFlop == true)
+    {
+      SVertexFx * pTemp = polygon.v[0];
+      polygon.v[0] = polygon.v[2];
+      polygon.v[2] = pTemp;
+    }
+    else
+    {
+      SVertexFx * pTemp = polygon.v[1];
+      polygon.v[1] = polygon.v[2];
+      polygon.v[2] = pTemp;
+    }
+  }
+  else
+    iVCount_++;
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFixed::addVertexToTriangleFan(SVertexFx & v)
+{
+  static SPolygonFx polygon;
+  static SVertexFx vertices[3];
+  static bool bInitialized(false);
+  if(bInitialized == false)
+  {
+    polygon.v[0] = &vertices[0];
+    polygon.v[1] = &vertices[1];
+    polygon.v[2] = &vertices[2];
+    bInitialized = true;
+  }
+
+  polygon.v[iVCount_]->bProcessed = false;
+  // Copy vertex
+  polygon.v[iVCount_]->v1[0] = v.v1[0];
+  polygon.v[iVCount_]->v1[1] = v.v1[1];
+  polygon.v[iVCount_]->v1[2] = v.v1[2];
+  polygon.v[iVCount_]->v1[3] = v.v1[3];
+  polygon.v[iVCount_]->n1[0] = v.n1[0];
+  polygon.v[iVCount_]->n1[1] = v.n1[1];
+  polygon.v[iVCount_]->n1[2] = v.n1[2];
+  polygon.v[iVCount_]->n1[3] = v.n1[3];
+  polygon.v[iVCount_]->c1    = v.c1;
+
+  if(iVCount_ == 2)
+  {
+    plotPoly(polygon);
+
+    // Swap 3rd and 2nd vertex
+    if(polygon.v[1] == &vertices[1])
+    {
+      polygon.v[1] = &vertices[2];
+      polygon.v[2] = &vertices[1];
+    }
+    else
+    {
+      polygon.v[1] = &vertices[1];
+      polygon.v[2] = &vertices[2];
+    }
+  }
+  else
+    iVCount_++;
 }
 
 //-----------------------------------------------------------------------------
