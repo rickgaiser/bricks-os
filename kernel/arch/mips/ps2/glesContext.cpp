@@ -103,9 +103,9 @@ CPS2GLESContext::glClear(GLbitfield mask)
 
   if(mask & GL_COLOR_BUFFER_BIT)
   {
-    uint8_t r = 128;//clClear.r * 255;
-    uint8_t g = 128;//clClear.r * 255;
-    uint8_t b = 128;//clClear.r * 255;
+    uint8_t r = (uint8_t)(clClear.r * 255);
+    uint8_t g = (uint8_t)(clClear.g * 255);
+    uint8_t b = (uint8_t)(clClear.b * 255);
 
     GIF_DATA_AD(dma_buf, prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
     GIF_DATA_AD(dma_buf, rgbaq, GS_RGBAQ(r, g, b, 0x80, 0));
@@ -197,7 +197,11 @@ CPS2GLESContext::glDepthFunc(GLenum func)
     case GL_ALWAYS:
     default:          ps2DepthFunction_ = ZTST_ALWAYS;  ps2DepthInvert_ = false; break;
   }
-  GIF_DATA_AD(dma_buf, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+  
+  if(depthTestEnabled_ == true)
+  {
+    GIF_DATA_AD(dma_buf, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -217,12 +221,14 @@ CPS2GLESContext::glDisable(GLenum cap)
     case GL_LIGHT7: lights_[7].enabled = false; break;
 
     case GL_DEPTH_TEST:
+    {
       depthTestEnabled_ = false;
       // Z-Buffer
       GIF_DATA_AD(dma_buf, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_DISABLE));
       // Z-Buffer test
       GIF_DATA_AD(dma_buf, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
+    }
     case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
     case GL_FOG:        fogEnabled_ = false; break;
 
@@ -323,12 +329,12 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     matrixProjection.transform(v.v, v.v);
 
     // Divide x and y by linear depth: w
-    v.v[0] /= -v.v[3];
-    v.v[1] /= -v.v[3];
+    v.v[0] /= v.v[3];
+    v.v[1] /= v.v[3];
 
     // From normalized device coordinates to window coordinates
-    v.sx = (GLint)((v.v[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
-    v.sy = (GLint)((v.v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
+    v.sx = (GLint)(( v.v[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
+    v.sy = (GLint)((-v.v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
 
     // Lighting
     if(lightingEnabled_ == true)
@@ -364,15 +370,9 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // Calculate Z
     uint32_t z;
     if(ps2DepthInvert_ == true)
-    {
-    //  z = (uint32_t)((1.0f - (zA_ + (zB_ / (v.v[3])))) * ps2ZMax_);
-      z = (uint32_t)((1.0f - v.v[2]) * ps2ZMax_);
-    }
+      z = ps2ZMax_ - (uint32_t)(((v.v[3] - zNear_) / (zFar_ - zNear_)) * ps2ZMax_); // Linear depth
     else
-    {
-    //  z = (uint32_t)((zA_ + (zB_ / (v.v[3]))) * ps2ZMax_);
-      z = (uint32_t)(v.v[2] * ps2ZMax_);
-    }
+      z =            (uint32_t)(((v.v[3] - zNear_) / (zFar_ - zNear_)) * ps2ZMax_); // Linear depth
 
     // Add to message
     GIF_DATA_AD(dma_buf, rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, 0));
@@ -397,6 +397,7 @@ CPS2GLESContext::glEnable(GLenum cap)
     case GL_LIGHT7:     lights_[7].enabled = true; break;
 
     case GL_DEPTH_TEST:
+    {
       depthTestEnabled_ = true;
       if(colorFormatOps[renderSurface->format_].bitsPerPixel == 16)
       {
@@ -419,6 +420,7 @@ CPS2GLESContext::glEnable(GLenum cap)
       // Z-Buffer test
       GIF_DATA_AD(dma_buf, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
+    }
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
 

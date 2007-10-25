@@ -415,7 +415,8 @@ CSoftGLESFloat::testAndSetDepth(GLfloat z, uint32_t index)
 {
   if((z >= zNear_) && (z <= zFar_))
   {
-    uint32_t zval = (uint32_t)((zA_ + (zB_ / z)) * 0xffffffff);
+    //uint32_t zval = (uint32_t)((zA_ + (zB_ / z)) * 0xffffffff);
+    uint32_t zval = (uint32_t)(((z - zNear_) / (zFar_ - zNear_)) * 0xffffffff);
 
     switch(depthFunction_)
     {
@@ -644,12 +645,12 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
       matrixProjection.transform(poly.v[i]->v, poly.v[i]->v);
 
       // Divide x and y by linear depth: w
-      poly.v[i]->v[0] /= -poly.v[i]->v[3];
-      poly.v[i]->v[1] /= -poly.v[i]->v[3];
+      poly.v[i]->v[0] /= poly.v[i]->v[3];
+      poly.v[i]->v[1] /= poly.v[i]->v[3];
 
       // From normalized device coordinates to window coordinates
-      poly.v[i]->sx = (GLint)((poly.v[i]->v[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
-      poly.v[i]->sy = (GLint)((poly.v[i]->v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
+      poly.v[i]->sx = (GLint)(( poly.v[i]->v[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
+      poly.v[i]->sy = (GLint)((-poly.v[i]->v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
 
       poly.v[i]->bProcessed = true;
     }

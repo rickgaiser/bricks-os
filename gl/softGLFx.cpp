@@ -665,12 +665,12 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
       matrixProjection.transform(poly.v[i]->v, poly.v[i]->v);
 
       // Divide x and y by linear depth: w
-      poly.v[i]->v[0] = gl_fpdiv(poly.v[i]->v[0], -poly.v[i]->v[3]);
-      poly.v[i]->v[1] = gl_fpdiv(poly.v[i]->v[1], -poly.v[i]->v[3]);
+      poly.v[i]->v[0] = gl_fpdiv(poly.v[i]->v[0], poly.v[i]->v[3]);
+      poly.v[i]->v[1] = gl_fpdiv(poly.v[i]->v[1], poly.v[i]->v[3]);
 
       // From normalized device coordinates to window coordinates
-      poly.v[i]->sx = gl_fptoi(gl_fpmul((poly.v[i]->v[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  / 2))) + viewportXOffset;
-      poly.v[i]->sy = gl_fptoi(gl_fpmul((poly.v[i]->v[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight / 2))) + viewportYOffset;
+      poly.v[i]->sx = gl_fptoi(gl_fpmul(( poly.v[i]->v[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  / 2))) + viewportXOffset;
+      poly.v[i]->sy = gl_fptoi(gl_fpmul((-poly.v[i]->v[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight / 2))) + viewportYOffset;
 
       poly.v[i]->bProcessed = true;
     }
