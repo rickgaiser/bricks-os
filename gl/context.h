@@ -181,7 +181,7 @@ public:
 //  virtual void glStencilFunc(GLenum func, GLint ref, GLuint mask) = 0;
 //  virtual void glStencilMask(GLuint mask) = 0;
 //  virtual void glStencilOp(GLenum fail, GLenum zfail, GLenum zpass) = 0;
-//  virtual void glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) = 0;
+  virtual void glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer) = 0;
 //  virtual void glTexEnvi(GLenum target, GLenum pname, GLint param) = 0;
 //  virtual void glTexEnvx(GLenum target, GLenum pname, GLfixed param) = 0;
 //  virtual void glTexEnviv(GLenum target, GLenum pname, const GLint *params) = 0;
@@ -209,15 +209,18 @@ public:
   virtual void glDisableClientState(GLenum array);
   virtual void glEnableClientState(GLenum array);
   virtual void glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer);
+  virtual void glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
   virtual void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
 
 protected:
-  bool bBufVertexEnabled_;
-  bool bBufNormalEnabled_;
   bool bBufColorEnabled_;
-  SBufferPointer bufVertex_;
-  SBufferPointer bufNormal_;
+  bool bBufNormalEnabled_;
+  bool bBufTexCoordEnabled_;
+  bool bBufVertexEnabled_;
   SBufferPointer bufColor_;
+  SBufferPointer bufNormal_;
+  SBufferPointer bufTexCoord_;
+  SBufferPointer bufVertex_;
 };
 
 //-----------------------------------------------------------------------------

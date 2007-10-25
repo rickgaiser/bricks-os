@@ -5,9 +5,10 @@
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CAGLESBuffers::CAGLESBuffers()
- : bBufVertexEnabled_(false)
+ : bBufColorEnabled_(false)
  , bBufNormalEnabled_(false)
- , bBufColorEnabled_(false)
+ , bBufTexCoordEnabled_(false)
+ , bBufVertexEnabled_(false)
 {
 }
 
@@ -47,10 +48,10 @@ CAGLESBuffers::glEnableClientState(GLenum array)
 {
   switch(array)
   {
-    case GL_VERTEX_ARRAY: bBufVertexEnabled_ = true; break;
-    case GL_NORMAL_ARRAY: bBufNormalEnabled_ = true; break;
-    case GL_COLOR_ARRAY:  bBufColorEnabled_  = true; break;
-
+    case GL_COLOR_ARRAY:         bBufColorEnabled_    = true; break;
+    case GL_NORMAL_ARRAY:        bBufNormalEnabled_   = true; break;
+    case GL_TEXTURE_COORD_ARRAY: bBufTexCoordEnabled_ = true; break;
+    case GL_VERTEX_ARRAY:        bBufVertexEnabled_   = true; break;
     default:
       ; // Not supported
   };
@@ -64,6 +65,16 @@ CAGLESBuffers::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * point
   bufNormal_.type    = type;
   bufNormal_.stride  = stride;
   bufNormal_.pointer = pointer;
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESBuffers::glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+{
+  bufTexCoord_.size    = size;
+  bufTexCoord_.type    = type;
+  bufTexCoord_.stride  = stride;
+  bufTexCoord_.pointer = pointer;
 }
 
 //-----------------------------------------------------------------------------

@@ -74,7 +74,7 @@ GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, typ
 }
 
 //-----------------------------------------------------------------------------
-// GL API (48 of 145 implemented, 33%)
+// GL API (49 of 145 implemented)
 //-----------------------------------------------------------------------------
 //GL_API void GL_APIENTRY glAlphaFunc (GLenum func, GLclampf ref);
 GL_APIFUNCTION_4(glClearColor,         GLclampf, red, GLclampf, green, GLclampf, blue, GLclampf, alpha);
@@ -207,7 +207,7 @@ GL_APIFUNCTION_1(glShadeModel,         GLenum, mode);
 //GL_API void GL_APIENTRY glStencilFunc (GLenum func, GLint ref, GLuint mask);
 //GL_API void GL_APIENTRY glStencilMask (GLuint mask);
 //GL_API void GL_APIENTRY glStencilOp (GLenum fail, GLenum zfail, GLenum zpass);
-//GL_API void GL_APIENTRY glTexCoordPointer (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+GL_APIFUNCTION_4(glTexCoordPointer,    GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);
 //GL_API void GL_APIENTRY glTexEnvi (GLenum target, GLenum pname, GLint param);
 //GL_API void GL_APIENTRY glTexEnvx (GLenum target, GLenum pname, GLfixed param);
 //GL_API void GL_APIENTRY glTexEnviv (GLenum target, GLenum pname, const GLint *params);
