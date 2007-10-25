@@ -74,7 +74,7 @@ GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, typ
 }
 
 //-----------------------------------------------------------------------------
-// GL API (44 of 145 implemented, 30%)
+// GL API (48 of 145 implemented, 33%)
 //-----------------------------------------------------------------------------
 //GL_API void GL_APIENTRY glAlphaFunc (GLenum func, GLclampf ref);
 GL_APIFUNCTION_4(glClearColor,         GLclampf, red, GLclampf, green, GLclampf, blue, GLclampf, alpha);
@@ -96,10 +96,10 @@ GL_APIFUNCTION_6(glFrustumf,           GLfloat, left, GLfloat, right, GLfloat, b
 GL_APIFUNCTION_3(glLightf,             GLenum, light, GLenum, pname, GLfloat, param);
 GL_APIFUNCTION_3(glLightfv,            GLenum, light, GLenum, pname, const GLfloat *, params);
 //GL_API void GL_APIENTRY glLineWidth (GLfloat width);
-//GL_API void GL_APIENTRY glLoadMatrixf (const GLfloat *m);
+GL_APIFUNCTION_1(glLoadMatrixf,        const GLfloat *, m);
 //GL_API void GL_APIENTRY glMaterialf (GLenum face, GLenum pname, GLfloat param);
 //GL_API void GL_APIENTRY glMaterialfv (GLenum face, GLenum pname, const GLfloat *params);
-//GL_API void GL_APIENTRY glMultMatrixf (const GLfloat *m);
+GL_APIFUNCTION_1(glMultMatrixf,        const GLfloat *, m);
 //GL_API void GL_APIENTRY glMultiTexCoord4f (GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
 GL_APIFUNCTION_3(glNormal3f,           GLfloat, nx, GLfloat, ny, GLfloat, nz);
 GL_APIFUNCTION_6(glOrthof,             GLfloat, left, GLfloat, right, GLfloat, bottom, GLfloat, top, GLfloat, zNear, GLfloat, zFar);
@@ -180,12 +180,12 @@ GL_APIFUNCTION_3(glLightx,             GLenum, light, GLenum, pname, GLfixed, pa
 GL_APIFUNCTION_3(glLightxv,            GLenum, light, GLenum, pname, const GLfixed *, params);
 //GL_API void GL_APIENTRY glLineWidthx (GLfixed width);
 GL_APIFUNCTION_0(glLoadIdentity);
-//GL_API void GL_APIENTRY glLoadMatrixx (const GLfixed *m);
+GL_APIFUNCTION_1(glLoadMatrixx,        const GLfixed *, m);
 //GL_API void GL_APIENTRY glLogicOp (GLenum opcode);
 //GL_API void GL_APIENTRY glMaterialx (GLenum face, GLenum pname, GLfixed param);
 //GL_API void GL_APIENTRY glMaterialxv (GLenum face, GLenum pname, const GLfixed *params);
 GL_APIFUNCTION_1(glMatrixMode,         GLenum, mode);
-//GL_API void GL_APIENTRY glMultMatrixx (const GLfixed *m);
+GL_APIFUNCTION_1(glMultMatrixx,        const GLfixed *, m);
 //GL_API void GL_APIENTRY glMultiTexCoord4x (GLenum target, GLfixed s, GLfixed t, GLfixed r, GLfixed q);
 GL_APIFUNCTION_3(glNormal3x,           GLfixed, nx, GLfixed, ny, GLfixed, nz);
 GL_APIFUNCTION_3(glNormalPointer,      GLenum, type, GLsizei, stride, const GLvoid *, pointer);

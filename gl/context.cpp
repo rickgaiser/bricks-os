@@ -119,6 +119,54 @@ CAGLESFloatToFxContext::glFogfv(GLenum pname, const GLfloat * params)
 
 //-----------------------------------------------------------------------------
 void
+CAGLESFloatToFxContext::glLoadMatrixf(const GLfloat *m)
+{
+  GLfixed xparams[] = {gl_fpfromf(m[0])
+                     , gl_fpfromf(m[1])
+                     , gl_fpfromf(m[2])
+                     , gl_fpfromf(m[3])
+                     , gl_fpfromf(m[4])
+                     , gl_fpfromf(m[5])
+                     , gl_fpfromf(m[6])
+                     , gl_fpfromf(m[7])
+                     , gl_fpfromf(m[8])
+                     , gl_fpfromf(m[9])
+                     , gl_fpfromf(m[10])
+                     , gl_fpfromf(m[11])
+                     , gl_fpfromf(m[12])
+                     , gl_fpfromf(m[13])
+                     , gl_fpfromf(m[14])
+                     , gl_fpfromf(m[15])};
+
+  glLoadMatrixx(xparams);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glMultMatrixf(const GLfloat *m)
+{
+  GLfixed xparams[] = {gl_fpfromf(m[0])
+                     , gl_fpfromf(m[1])
+                     , gl_fpfromf(m[2])
+                     , gl_fpfromf(m[3])
+                     , gl_fpfromf(m[4])
+                     , gl_fpfromf(m[5])
+                     , gl_fpfromf(m[6])
+                     , gl_fpfromf(m[7])
+                     , gl_fpfromf(m[8])
+                     , gl_fpfromf(m[9])
+                     , gl_fpfromf(m[10])
+                     , gl_fpfromf(m[11])
+                     , gl_fpfromf(m[12])
+                     , gl_fpfromf(m[13])
+                     , gl_fpfromf(m[14])
+                     , gl_fpfromf(m[15])};
+
+  glMultMatrixx(xparams);
+}
+
+//-----------------------------------------------------------------------------
+void
 CAGLESFloatToFxContext::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
   glFrustumx(gl_fpfromf(left), gl_fpfromf(right), gl_fpfromf(bottom), gl_fpfromf(top), gl_fpfromf(zNear), gl_fpfromf(zFar));
@@ -243,6 +291,54 @@ CAGLESFxToFloatContext::glLightxv(GLenum light, GLenum pname, const GLfixed * pa
                      , gl_fptof(params[3])};
 
   glLightfv(light, pname, fparams);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glLoadMatrixx(const GLfixed *m)
+{
+  GLfloat fparams[] = {gl_fptof(m[0])
+                     , gl_fptof(m[1])
+                     , gl_fptof(m[2])
+                     , gl_fptof(m[3])
+                     , gl_fptof(m[4])
+                     , gl_fptof(m[5])
+                     , gl_fptof(m[6])
+                     , gl_fptof(m[7])
+                     , gl_fptof(m[8])
+                     , gl_fptof(m[9])
+                     , gl_fptof(m[10])
+                     , gl_fptof(m[11])
+                     , gl_fptof(m[12])
+                     , gl_fptof(m[13])
+                     , gl_fptof(m[14])
+                     , gl_fptof(m[15])};
+
+  glLoadMatrixf(fparams);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glMultMatrixx(const GLfixed *m)
+{
+  GLfloat fparams[] = {gl_fptof(m[0])
+                     , gl_fptof(m[1])
+                     , gl_fptof(m[2])
+                     , gl_fptof(m[3])
+                     , gl_fptof(m[4])
+                     , gl_fptof(m[5])
+                     , gl_fptof(m[6])
+                     , gl_fptof(m[7])
+                     , gl_fptof(m[8])
+                     , gl_fptof(m[9])
+                     , gl_fptof(m[10])
+                     , gl_fptof(m[11])
+                     , gl_fptof(m[12])
+                     , gl_fptof(m[13])
+                     , gl_fptof(m[14])
+                     , gl_fptof(m[15])};
+
+  glMultMatrixf(fparams);
 }
 
 //-----------------------------------------------------------------------------

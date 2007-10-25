@@ -74,6 +74,56 @@ CAGLESMatrixNDSFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfix
 
 //---------------------------------------------------------------------------
 void
+CAGLESMatrixNDSFx::glLoadMatrixx(const GLfixed *m)
+{
+  MATRIX_LOAD4x4 = gl_to_nds(m[0]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[1]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[2]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[3]);
+
+  MATRIX_LOAD4x4 = gl_to_nds(m[4]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[5]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[6]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[7]);
+
+  MATRIX_LOAD4x4 = gl_to_nds(m[8]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[9]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[10]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[11]);
+
+  MATRIX_LOAD4x4 = gl_to_nds(m[12]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[13]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[14]);
+  MATRIX_LOAD4x4 = gl_to_nds(m[15]);
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixNDSFx::glMultMatrixx(const GLfixed *m)
+{
+  MATRIX_MULT4x4 = gl_to_nds(m[0]);
+  MATRIX_MULT4x4 = gl_to_nds(m[1]);
+  MATRIX_MULT4x4 = gl_to_nds(m[2]);
+  MATRIX_MULT4x4 = gl_to_nds(m[3]);
+
+  MATRIX_MULT4x4 = gl_to_nds(m[4]);
+  MATRIX_MULT4x4 = gl_to_nds(m[5]);
+  MATRIX_MULT4x4 = gl_to_nds(m[6]);
+  MATRIX_MULT4x4 = gl_to_nds(m[7]);
+
+  MATRIX_MULT4x4 = gl_to_nds(m[8]);
+  MATRIX_MULT4x4 = gl_to_nds(m[9]);
+  MATRIX_MULT4x4 = gl_to_nds(m[10]);
+  MATRIX_MULT4x4 = gl_to_nds(m[11]);
+
+  MATRIX_MULT4x4 = gl_to_nds(m[12]);
+  MATRIX_MULT4x4 = gl_to_nds(m[13]);
+  MATRIX_MULT4x4 = gl_to_nds(m[14]);
+  MATRIX_MULT4x4 = gl_to_nds(m[15]);
+}
+
+//---------------------------------------------------------------------------
+void
 CAGLESMatrixNDSFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
   zNear_ = zNear;

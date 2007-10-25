@@ -30,6 +30,8 @@ public:
   virtual ~CAGLESMatrixNDSFx();
 
   virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
+  virtual void glLoadMatrixx(const GLfixed *m);
+  virtual void glMultMatrixx(const GLfixed *m);
   virtual void glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
   virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
   virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);

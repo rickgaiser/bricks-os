@@ -703,16 +703,13 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
         poly.v[0]->c.g = clampf((poly.v[0]->c.g * ambient.g) + ((poly.v[0]->c.g * normal[0]) * diffuse.g));
         poly.v[0]->c.b = clampf((poly.v[0]->c.b * ambient.b) + ((poly.v[0]->c.b * normal[0]) * diffuse.b));
 
-        if(shadingModel_ == GL_SMOOTH)
-        {
-          poly.v[1]->c.r = clampf((poly.v[1]->c.r * ambient.r) + ((poly.v[1]->c.r * normal[1]) * diffuse.r));
-          poly.v[1]->c.g = clampf((poly.v[1]->c.g * ambient.g) + ((poly.v[1]->c.g * normal[1]) * diffuse.g));
-          poly.v[1]->c.b = clampf((poly.v[1]->c.b * ambient.b) + ((poly.v[1]->c.b * normal[1]) * diffuse.b));
+        poly.v[1]->c.r = clampf((poly.v[1]->c.r * ambient.r) + ((poly.v[1]->c.r * normal[1]) * diffuse.r));
+        poly.v[1]->c.g = clampf((poly.v[1]->c.g * ambient.g) + ((poly.v[1]->c.g * normal[1]) * diffuse.g));
+        poly.v[1]->c.b = clampf((poly.v[1]->c.b * ambient.b) + ((poly.v[1]->c.b * normal[1]) * diffuse.b));
 
-          poly.v[2]->c.r = clampf((poly.v[2]->c.r * ambient.r) + ((poly.v[2]->c.r * normal[2]) * diffuse.r));
-          poly.v[2]->c.g = clampf((poly.v[2]->c.g * ambient.g) + ((poly.v[2]->c.g * normal[2]) * diffuse.g));
-          poly.v[2]->c.b = clampf((poly.v[2]->c.b * ambient.b) + ((poly.v[2]->c.b * normal[2]) * diffuse.b));
-        }
+        poly.v[2]->c.r = clampf((poly.v[2]->c.r * ambient.r) + ((poly.v[2]->c.r * normal[2]) * diffuse.r));
+        poly.v[2]->c.g = clampf((poly.v[2]->c.g * ambient.g) + ((poly.v[2]->c.g * normal[2]) * diffuse.g));
+        poly.v[2]->c.b = clampf((poly.v[2]->c.b * ambient.b) + ((poly.v[2]->c.b * normal[2]) * diffuse.b));
       }
     }
   }

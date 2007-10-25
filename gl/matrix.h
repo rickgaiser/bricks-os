@@ -46,7 +46,13 @@ public:
   void transform(const GLfloat * from, GLfloat * to);
 
   CMatrixF   operator* (const CMatrixF & m);
+  CMatrixF   operator* (const GLfloat * m);
+
   CMatrixF & operator*=(const CMatrixF & m);
+  CMatrixF & operator*=(const GLfloat * m);
+
+  CMatrixF & operator= (const CMatrixF & m);
+  CMatrixF & operator= (const GLfloat * m);
 
 public:
   GLfloat matrix[4][4];
@@ -87,7 +93,13 @@ public:
   void transform(const GLfixed * from, GLfixed * to);
 
   CMatrixFx   operator* (const CMatrixFx & m);
+  CMatrixFx   operator* (const GLfixed * m);
+
   CMatrixFx & operator*=(const CMatrixFx & m);
+  CMatrixFx & operator*=(const GLfixed * m);
+
+  CMatrixFx & operator= (const CMatrixFx & m);
+  CMatrixFx & operator= (const GLfixed * m);
 
 public:
   Mfixed matrix[4][4];
@@ -112,6 +124,8 @@ public:
   virtual ~CAGLESMatrixF();
 
   virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
+  virtual void glLoadMatrixf(const GLfloat *m);
+  virtual void glMultMatrixf(const GLfloat *m);
   virtual void glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
   virtual void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
   virtual void glScalef(GLfloat x, GLfloat y, GLfloat z);
@@ -142,6 +156,8 @@ public:
   virtual ~CAGLESMatrixFx();
 
   virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
+  virtual void glLoadMatrixx(const GLfixed *m);
+  virtual void glMultMatrixx(const GLfixed *m);
   virtual void glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
   virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
   virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);

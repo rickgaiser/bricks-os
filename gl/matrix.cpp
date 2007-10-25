@@ -251,9 +251,20 @@ CMatrixF::operator*(const CMatrixF & m)
 {
   CMatrixF mReturn(*this);
 
-  mReturn *= *this;
+  mReturn *= m;
 
-  return(mReturn);
+  return mReturn;
+}
+
+//---------------------------------------------------------------------------
+CMatrixF
+CMatrixF::operator*(const GLfloat * m)
+{
+  CMatrixF mReturn(*this);
+
+  mReturn *= m;
+
+  return mReturn;
 }
 
 //---------------------------------------------------------------------------
@@ -276,6 +287,46 @@ CMatrixF::operator*=(const CMatrixF & m)
   }
 
   memcpy(matrix, mtemp, sizeof(GLfloat) * 16);
+
+  return(*this);
+}
+
+//---------------------------------------------------------------------------
+CMatrixF &
+CMatrixF::operator*=(const GLfloat * m)
+{
+  GLfloat mtemp[4][4];
+
+  for(int iRow(0); iRow < 4; iRow++)
+  {
+    for(int iCol(0); iCol < 4; iCol++)
+    {
+      mtemp[iRow][iCol] = matrix[iRow][0] * m[0*4+iCol] +
+                          matrix[iRow][1] * m[1*4+iCol] +
+                          matrix[iRow][2] * m[2*4+iCol] +
+                          matrix[iRow][3] * m[3*4+iCol];
+    }
+  }
+
+  memcpy(matrix, mtemp, sizeof(GLfloat) * 16);
+
+  return(*this);
+}
+
+//---------------------------------------------------------------------------
+CMatrixF &
+CMatrixF::operator=(const CMatrixF & m)
+{
+  memcpy(matrix, m.matrix, sizeof(GLfloat) * 16);
+
+  return(*this);
+}
+
+//---------------------------------------------------------------------------
+CMatrixF &
+CMatrixF::operator=(const GLfloat * m)
+{
+  memcpy(matrix, m, sizeof(GLfloat) * 16);
 
   return(*this);
 }
@@ -523,7 +574,18 @@ CMatrixFx::operator*(const CMatrixFx & m)
 {
   CMatrixFx mReturn(*this);
 
-  mReturn *= *this;
+  mReturn *= m;
+
+  return mReturn;
+}
+
+//---------------------------------------------------------------------------
+CMatrixFx
+CMatrixFx::operator*(const GLfixed * m)
+{
+  CMatrixFx mReturn(*this);
+
+  mReturn *= m;
 
   return mReturn;
 }
@@ -553,6 +615,48 @@ CMatrixFx::operator*=(const CMatrixFx & m)
 }
 
 //---------------------------------------------------------------------------
+CMatrixFx &
+CMatrixFx::operator*=(const GLfixed * m)
+{
+  Mfixed mtemp[4][4];
+
+  for(int iRow(0); iRow < 4; iRow++)
+  {
+    for(int iCol(0); iCol < 4; iCol++)
+    {
+      mtemp[iRow][iCol] = m_fpmul(matrix[iRow][0], gl_to_m(m[0*4+iCol])) +
+                          m_fpmul(matrix[iRow][1], gl_to_m(m[1*4+iCol])) +
+                          m_fpmul(matrix[iRow][2], gl_to_m(m[2*4+iCol])) +
+                          m_fpmul(matrix[iRow][3], gl_to_m(m[3*4+iCol]));
+    }
+  }
+
+  memcpy(matrix, mtemp, sizeof(Mfixed) * 16);
+
+  return (*this);
+}
+
+//---------------------------------------------------------------------------
+CMatrixFx &
+CMatrixFx::operator=(const CMatrixFx & m)
+{
+  memcpy(matrix, m.matrix, sizeof(Mfixed) * 16);
+
+  return(*this);
+}
+
+//---------------------------------------------------------------------------
+CMatrixFx &
+CMatrixFx::operator=(const GLfixed * m)
+{
+  for(int iRow(0); iRow < 4; iRow++)
+    for(int iCol(0); iCol < 4; iCol++)
+      matrix[iRow][iCol] = gl_to_m(m[iRow*4+iCol]);
+
+  return(*this);
+}
+
+//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CAGLESMatrixF::CAGLESMatrixF()
  : matrixMode_(GL_MODELVIEW)
@@ -577,6 +681,20 @@ CAGLESMatrixF::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat t
   zFar_  = zFar;
 
   pCurrentMatrix_->frustum(left, right, bottom, top, zNear, zFar);
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixF::glLoadMatrixf(const GLfloat *m)
+{
+  *pCurrentMatrix_ = m;
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixF::glMultMatrixf(const GLfloat *m)
+{
+  *pCurrentMatrix_ *= m;
 }
 
 //---------------------------------------------------------------------------
@@ -661,6 +779,20 @@ CAGLESMatrixFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed 
   zFar_  = zFar;
 
   pCurrentMatrix_->frustum(left, right, bottom, top, zNear, zFar);
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixFx::glLoadMatrixx(const GLfixed *m)
+{
+  *pCurrentMatrix_ = m;
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixFx::glMultMatrixx(const GLfixed *m)
+{
+  *pCurrentMatrix_ *= m;
 }
 
 //---------------------------------------------------------------------------

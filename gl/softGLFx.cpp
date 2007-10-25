@@ -724,16 +724,13 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
         poly.v[0]->c.g = clampfx(gl_fpmul(poly.v[0]->c.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[0]->c.g, normal[0]), diffuse.g));
         poly.v[0]->c.b = clampfx(gl_fpmul(poly.v[0]->c.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[0]->c.b, normal[0]), diffuse.b));
 
-        if(shadingModel_ == GL_SMOOTH)
-        {
-          poly.v[1]->c.r = clampfx(gl_fpmul(poly.v[1]->c.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[1]->c.r, normal[1]), diffuse.r));
-          poly.v[1]->c.g = clampfx(gl_fpmul(poly.v[1]->c.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[1]->c.g, normal[1]), diffuse.g));
-          poly.v[1]->c.b = clampfx(gl_fpmul(poly.v[1]->c.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[1]->c.b, normal[1]), diffuse.b));
+        poly.v[1]->c.r = clampfx(gl_fpmul(poly.v[1]->c.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[1]->c.r, normal[1]), diffuse.r));
+        poly.v[1]->c.g = clampfx(gl_fpmul(poly.v[1]->c.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[1]->c.g, normal[1]), diffuse.g));
+        poly.v[1]->c.b = clampfx(gl_fpmul(poly.v[1]->c.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[1]->c.b, normal[1]), diffuse.b));
 
-          poly.v[2]->c.r = clampfx(gl_fpmul(poly.v[2]->c.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[2]->c.r, normal[2]), diffuse.r));
-          poly.v[2]->c.g = clampfx(gl_fpmul(poly.v[2]->c.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[2]->c.g, normal[2]), diffuse.g));
-          poly.v[2]->c.b = clampfx(gl_fpmul(poly.v[2]->c.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[2]->c.b, normal[2]), diffuse.b));
-        }
+        poly.v[2]->c.r = clampfx(gl_fpmul(poly.v[2]->c.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[2]->c.r, normal[2]), diffuse.r));
+        poly.v[2]->c.g = clampfx(gl_fpmul(poly.v[2]->c.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[2]->c.g, normal[2]), diffuse.g));
+        poly.v[2]->c.b = clampfx(gl_fpmul(poly.v[2]->c.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[2]->c.b, normal[2]), diffuse.b));
       }
     }
   }
