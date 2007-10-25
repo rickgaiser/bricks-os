@@ -48,43 +48,23 @@ typedef union
 struct SVertexFx
 {
   // Vertex itself
-  // Original
   union
   {
     struct
     {
-      GLfixed vx1, vy1, vz1, vw1;
+      GLfixed vx, vy, vz, vw;
     };
-    GLfixed v1[4];
-  };
-  // Transformed
-  union
-  {
-    struct
-    {
-      GLfixed vx2, vy2, vz2, vw2;
-    };
-    GLfixed v2[4];
+    GLfixed v[4];
   };
 
   // Normal vector
-  // Original
   union
   {
     struct
     {
-      GLfixed nx1, ny1, nz1, nw1;
+      GLfixed nx, ny, nz, nw;
     };
-    GLfixed n1[4];
-  };
-  // Transformed
-  union
-  {
-    struct
-    {
-      GLfixed nx2, ny2, nz2, nw2;
-    };
-    GLfixed n2[4];
+    GLfixed n[4];
   };
 
   // 2D Point (on screen) x/y
@@ -98,13 +78,10 @@ struct SVertexFx
   };
 
   // Color
-  // Original
-  SColorFx  c1;
-  // Lighted
-  SColorFx  c2;
+  SColorFx  c;
 
-  // State: indicates if the xxx2 values have been created already
-  bool      bProcessed;
+  // State indicates if the values have been processed already
+  bool bProcessed;
 };
 
 //-----------------------------------------------------------------------------

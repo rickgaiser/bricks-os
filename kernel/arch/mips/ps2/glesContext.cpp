@@ -264,16 +264,16 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     switch(bufVertex_.type)
     {
       case GL_FLOAT:
-        v.v1[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v1[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v1[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v1[3] = 1.0f;
+        v.v[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v[3] = 1.0f;
         break;
       case GL_FIXED:
-        v.v1[0] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v1[1] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v1[2] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v1[3] = 1.0f;
+        v.v[0] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v[1] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v[2] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v[3] = 1.0f;
         break;
     };
 
@@ -283,16 +283,16 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufColor_.type)
       {
         case GL_FLOAT:
-          v.n1[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n1[1] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n1[2] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n1[3] = 1.0f;
+          v.n[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n[1] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n[2] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n[3] = 1.0f;
           break;
         case GL_FIXED:
-          v.n1[0] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n1[1] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n1[2] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n1[3] = 1.0f;
+          v.n[0] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n[1] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n[2] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n[3] = 1.0f;
           break;
       };
     }
@@ -303,40 +303,40 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufColor_.type)
       {
         case GL_FLOAT:
-          v.c1.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c1.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c1.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c1.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.c.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.c.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.c.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.c.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
           break;
         case GL_FIXED:
-          v.c1.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c1.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c1.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c1.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.c.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.c.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.c.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.c.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
           break;
       };
     }
 
     // ModelView Transformation
-    matrixModelView.transform(v.v1, v.v1);
+    matrixModelView.transform(v.v, v.v);
     // Projection Transformation
-    matrixProjection.transform(v.v1, v.v1);
+    matrixProjection.transform(v.v, v.v);
 
     // Divide x and y by linear depth: w
-    v.v1[0] /= -v.v1[3];
-    v.v1[1] /= -v.v1[3];
+    v.v[0] /= -v.v[3];
+    v.v[1] /= -v.v[3];
 
     // From normalized device coordinates to window coordinates
-    v.sx = (GLint)((v.v1[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
-    v.sy = (GLint)((v.v1[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
+    v.sx = (GLint)((v.v[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
+    v.sy = (GLint)((v.v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
 
     // Lighting
     if(lightingEnabled_ == true)
     {
       // Normal Rotation
-      matrixRotation.transform(v.n1, v.n1);
+      matrixRotation.transform(v.n, v.n);
       // FIXME: Light value of normal
-      GLfloat normal = clampf(-v.n1[2]);
+      GLfloat normal = clampf(-v.n[2]);
 
       for(int iLight(0); iLight < 8; iLight++)
       {
@@ -344,9 +344,9 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
         {
           SColorF & ambient = lights_[iLight].ambient;
           SColorF & diffuse = lights_[iLight].diffuse;
-          v.c1.r = clamp((v.c1.r * ambient.r) + ((v.c1.r * normal) * diffuse.r));
-          v.c1.g = clamp((v.c1.g * ambient.g) + ((v.c1.g * normal) * diffuse.g));
-          v.c1.b = clamp((v.c1.b * ambient.b) + ((v.c1.b * normal) * diffuse.b));
+          v.c.r = clamp((v.c.r * ambient.r) + ((v.c.r * normal) * diffuse.r));
+          v.c.g = clamp((v.c.g * ambient.g) + ((v.c.g * normal) * diffuse.g));
+          v.c.b = clamp((v.c.b * ambient.b) + ((v.c.b * normal) * diffuse.b));
         }
       }
     }
@@ -354,28 +354,28 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // Fog
     if(fogEnabled_ == true)
     {
-      GLfloat partFog   = clamp((abs(v.v1[3]) - fogStart_) / (fogEnd_ - fogStart_));
+      GLfloat partFog   = clamp((abs(v.v[3]) - fogStart_) / (fogEnd_ - fogStart_));
       GLfloat partColor = 1.0f - partFog;
-      v.c1.r = clamp((v.c1.r * partColor) + (fogColor_.r * partFog));
-      v.c1.g = clamp((v.c1.g * partColor) + (fogColor_.g * partFog));
-      v.c1.b = clamp((v.c1.b * partColor) + (fogColor_.b * partFog));
+      v.c.r = clamp((v.c.r * partColor) + (fogColor_.r * partFog));
+      v.c.g = clamp((v.c.g * partColor) + (fogColor_.g * partFog));
+      v.c.b = clamp((v.c.b * partColor) + (fogColor_.b * partFog));
     }
 
     // Calculate Z
     uint32_t z;
     if(ps2DepthInvert_ == true)
     {
-    //  z = (uint32_t)((1.0f - (zA_ + (zB_ / (v.v1[3])))) * ps2ZMax_);
-      z = (uint32_t)((1.0f - v.v1[2]) * ps2ZMax_);
+    //  z = (uint32_t)((1.0f - (zA_ + (zB_ / (v.v[3])))) * ps2ZMax_);
+      z = (uint32_t)((1.0f - v.v[2]) * ps2ZMax_);
     }
     else
     {
-    //  z = (uint32_t)((zA_ + (zB_ / (v.v1[3]))) * ps2ZMax_);
-      z = (uint32_t)(v.v1[2] * ps2ZMax_);
+    //  z = (uint32_t)((zA_ + (zB_ / (v.v[3]))) * ps2ZMax_);
+      z = (uint32_t)(v.v[2] * ps2ZMax_);
     }
 
     // Add to message
-    GIF_DATA_AD(dma_buf, rgbaq, GS_RGBAQ((uint8_t)(v.c1.r*255), (uint8_t)(v.c1.g*255), (uint8_t)(v.c1.b*255), 100, 0));
+    GIF_DATA_AD(dma_buf, rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, 0));
     GIF_DATA_AD(dma_buf, xyz2,  GS_XYZ2((gs_origin_x+v.sx)<<4, (gs_origin_y+v.sy)<<4, z));
   }
 }

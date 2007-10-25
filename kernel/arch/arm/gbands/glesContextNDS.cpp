@@ -12,19 +12,82 @@ typedef unsigned int wint_t;
 
 
 //-----------------------------------------------------------------------------
-// glPolyFmt constants
-//-----------------------------------------------------------------------------
-#define POLY_ALPHA(n)           ((n) << 16)
-#define POLY_TOON_SHADING       0x20
-#define POLY_CULL_BACK          0x80
-#define POLY_CULL_FRONT         0x40
-#define POLY_CULL_NONE          0xC0
-#define POLY_ID(n)              ((n)<<24)
+enum ENDSShadingMode
+{
+  NDS_SM_TOON      = 0,
+  NDS_SM_HIGHLIGHT = 1
+};
 
-#define POLY_FORMAT_LIGHT0      0x1
-#define POLY_FORMAT_LIGHT1      0x2
-#define POLY_FORMAT_LIGHT2      0x4
-#define POLY_FORMAT_LIGHT3      0x8
+enum ENDSFogMode
+{
+  NDS_FM_ALPHACOLOR = 0,
+  NDS_FM_ALPHA      = 1
+};
+
+enum ENDSFlowMode
+{
+  NDS_FM_NONE = 0,
+  NDS_FM_ACK  = 1
+};
+
+struct SNDSGFXControl
+{
+  uint32_t bTexture2D     : 1;
+  uint32_t eShadingMode   : 1;
+  uint32_t bAlphaTest     : 1;
+  uint32_t bAlphaBlend    : 1;
+  uint32_t bAntiAliasing  : 1;
+  uint32_t bEdgeMark      : 1;
+  uint32_t eFogMode       : 1;
+  uint32_t bFog           : 1;
+  uint32_t iFogShift      : 4;
+  uint32_t eCLUnderflow   : 1;
+  uint32_t ePVOverflow    : 1;
+  uint32_t eRearPlaneMode : 1;
+  uint32_t iUnknown3      : 17;
+};
+
+
+enum ENDSPolyMode
+{
+  NDS_PM_MODULATION     = 0,
+  NDS_PM_DECAL          = 1,
+  NDS_PM_TOON_HIGHLIGHT = 2,
+  NDS_PM_SHADOW         = 3
+};
+
+enum ENDSPolyCulling
+{
+  NDS_PC_FRONT_AND_BACK = 0,
+  NDS_PC_BACK           = 1,
+  NDS_PC_FRONT          = 2,
+  NDS_PC_NONE           = 3,
+};
+
+enum ENDSDepthTestMode
+{
+  NDS_DT_LESS  = 0,
+  NDS_DT_EQUAL = 1,
+};
+
+struct SNDSGFXPolyControl
+{
+  uint32_t bLight0        : 1;
+  uint32_t bLight1        : 1;
+  uint32_t bLight2        : 1;
+  uint32_t bLight3        : 1;
+  uint32_t ePolyMode      : 2;
+  uint32_t ePolyCulling   : 2;
+  uint32_t iNotUsed1      : 3;
+  uint32_t bUnknown1      : 1;
+  uint32_t bUnknown2      : 1;
+  uint32_t eDeptTestMode  : 1;
+  uint32_t bFog           : 1;
+  uint32_t iAlpha         : 5;
+  uint32_t iNotUsed2      : 3;
+  uint32_t iID            : 6;
+  uint32_t iNotUsed3      : 2;
+};
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -38,7 +101,13 @@ CNDSGLESContext::CNDSGLESContext()
   // Display control
   REG_DISPCNT = MODE_0 | BG0_ENABLE | ENABLE_3D;
 
-  GFX_POLY_FORMAT = POLY_ALPHA(31) | POLY_CULL_NONE;
+  (*(SNDSGFXPolyControl*)(&GFX_POLY_FORMAT)).ePolyMode    = NDS_PM_TOON_HIGHLIGHT;
+  (*(SNDSGFXPolyControl*)(&GFX_POLY_FORMAT)).ePolyCulling = NDS_PC_NONE;
+  (*(SNDSGFXPolyControl*)(&GFX_POLY_FORMAT)).iAlpha       = 31;
+
+  (*(SNDSGFXControl*)(&GFX_CONTROL)).bTexture2D    = false;
+  (*(SNDSGFXControl*)(&GFX_CONTROL)).bAntiAliasing = true;
+  (*(SNDSGFXControl*)(&GFX_CONTROL)).eShadingMode  = /*NDS_SM_TOON*/NDS_SM_HIGHLIGHT;
 
   GFX_CLEAR_DEPTH = 0x7fff;
 }
@@ -193,16 +262,16 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     switch(bufVertex_.type)
     {
       case GL_FLOAT:
-        v.v1[0] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
-        v.v1[1] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
-        v.v1[2] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
-        v.v1[3] = gl_fpfromi(1);
+        v.v[0] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v.v[1] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v.v[2] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v.v[3] = gl_fpfromi(1);
         break;
       case GL_FIXED:
-        v.v1[0] = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.v1[1] = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.v1[2] = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.v1[3] = gl_fpfromi(1);
+        v.v[0] = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
+        v.v[1] = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
+        v.v[2] = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
+        v.v[3] = gl_fpfromi(1);
         break;
     };
 
@@ -212,16 +281,16 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufColor_.type)
       {
         case GL_FLOAT:
-          v.n1[0] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
-          v.n1[1] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
-          v.n1[2] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
-          v.n1[3] = gl_fpfromi(1);
+          v.n[0] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+          v.n[1] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+          v.n[2] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+          v.n[3] = gl_fpfromi(1);
           break;
         case GL_FIXED:
-          v.n1[0] = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
-          v.n1[1] = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
-          v.n1[2] = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
-          v.n1[3] = gl_fpfromi(1);
+          v.n[0] = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
+          v.n[1] = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
+          v.n[2] = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
+          v.n[3] = gl_fpfromi(1);
           break;
       };
     }
@@ -232,16 +301,16 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufColor_.type)
       {
         case GL_FLOAT:
-          v.c1.r = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-          v.c1.g = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-          v.c1.b = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-          v.c1.a = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v.c.r = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v.c.g = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v.c.b = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v.c.a = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
           break;
         case GL_FIXED:
-          v.c1.r = ((GLfixed *)bufColor_.pointer)[idxColor++];
-          v.c1.g = ((GLfixed *)bufColor_.pointer)[idxColor++];
-          v.c1.b = ((GLfixed *)bufColor_.pointer)[idxColor++];
-          v.c1.a = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          v.c.r = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          v.c.g = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          v.c.b = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          v.c.a = ((GLfixed *)bufColor_.pointer)[idxColor++];
           break;
       };
     }
@@ -250,9 +319,9 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     {
       case GL_TRIANGLES:
       case GL_TRIANGLE_STRIP:
-        GFX_COLOR = fpRGB(v.c1.r, v.c1.g, v.c1.b);
-        GFX_VERTEX16 = ((gl_to_nds(v.v1[1]) << 16) & 0xffff0000) | (gl_to_nds(v.v1[0]) & 0xffff);
-        GFX_VERTEX16 = gl_to_nds(v.v1[2]) & 0xffff;
+        GFX_COLOR = fpRGB(v.c.r, v.c.g, v.c.b);
+        GFX_VERTEX16 = ((gl_to_nds(v.v[1]) << 16) & 0xffff0000) | (gl_to_nds(v.v[0]) & 0xffff);
+        GFX_VERTEX16 = gl_to_nds(v.v[2]) & 0xffff;
         break;
       case GL_TRIANGLE_FAN:
         addVertexToTriangleFan(v);
@@ -401,15 +470,15 @@ CNDSGLESContext::addVertexToTriangleFan(SVertexFx & v)
 
   polygon.v[iVCount_]->bProcessed = false;
   // Copy vertex
-  polygon.v[iVCount_]->v1[0] = v.v1[0];
-  polygon.v[iVCount_]->v1[1] = v.v1[1];
-  polygon.v[iVCount_]->v1[2] = v.v1[2];
-  polygon.v[iVCount_]->v1[3] = v.v1[3];
-  polygon.v[iVCount_]->n1[0] = v.n1[0];
-  polygon.v[iVCount_]->n1[1] = v.n1[1];
-  polygon.v[iVCount_]->n1[2] = v.n1[2];
-  polygon.v[iVCount_]->n1[3] = v.n1[3];
-  polygon.v[iVCount_]->c1    = v.c1;
+  polygon.v[iVCount_]->v[0] = v.v[0];
+  polygon.v[iVCount_]->v[1] = v.v[1];
+  polygon.v[iVCount_]->v[2] = v.v[2];
+  polygon.v[iVCount_]->v[3] = v.v[3];
+  polygon.v[iVCount_]->n[0] = v.n[0];
+  polygon.v[iVCount_]->n[1] = v.n[1];
+  polygon.v[iVCount_]->n[2] = v.n[2];
+  polygon.v[iVCount_]->n[3] = v.n[3];
+  polygon.v[iVCount_]->c    = v.c;
 
   if(iVCount_ == 2)
   {
@@ -437,9 +506,9 @@ CNDSGLESContext::plotPoly(SPolygonFx & poly)
 {
   for(int i(0); i < 3; i++)
   {
-    GFX_COLOR = fpRGB(poly.v[i]->c1.r, poly.v[i]->c1.g, poly.v[i]->c1.b);
-    GFX_VERTEX16 = ((gl_to_nds(poly.v[i]->v1[1]) << 16) & 0xffff0000) | (gl_to_nds(poly.v[i]->v1[0]) & 0xffff);
-    GFX_VERTEX16 = gl_to_nds(poly.v[i]->v1[2]) & 0xffff;
+    GFX_COLOR = fpRGB(poly.v[i]->c.r, poly.v[i]->c.g, poly.v[i]->c.b);
+    GFX_VERTEX16 = ((gl_to_nds(poly.v[i]->v[1]) << 16) & 0xffff0000) | (gl_to_nds(poly.v[i]->v[0]) & 0xffff);
+    GFX_VERTEX16 = gl_to_nds(poly.v[i]->v[2]) & 0xffff;
   }
 }
 

@@ -212,16 +212,16 @@ CSoftGLESFloat::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     switch(bufVertex_.type)
     {
       case GL_FLOAT:
-        v.v1[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v1[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v1[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v1[3] = 1.0f;
+        v.v[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v[3] = 1.0f;
         break;
       case GL_FIXED:
-        v.v1[0] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v1[1] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v1[2] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v1[3] = 1.0f;
+        v.v[0] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v[1] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v[2] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v[3] = 1.0f;
         break;
     };
 
@@ -231,16 +231,16 @@ CSoftGLESFloat::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufColor_.type)
       {
         case GL_FLOAT:
-          v.n1[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n1[1] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n1[2] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n1[3] = 1.0f;
+          v.n[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n[1] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n[2] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n[3] = 1.0f;
           break;
         case GL_FIXED:
-          v.n1[0] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n1[1] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n1[2] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n1[3] = 1.0f;
+          v.n[0] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n[1] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n[2] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n[3] = 1.0f;
           break;
       };
     }
@@ -251,16 +251,16 @@ CSoftGLESFloat::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufColor_.type)
       {
         case GL_FLOAT:
-          v.c1.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c1.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c1.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c1.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.c.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.c.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.c.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.c.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
           break;
         case GL_FIXED:
-          v.c1.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c1.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c1.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c1.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.c.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.c.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.c.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.c.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
           break;
       };
     }
@@ -518,15 +518,15 @@ CSoftGLESFloat::addVertexToTriangle(SVertexF & v)
 
   polygon.v[iVCount_]->bProcessed = false;
   // Copy vertex
-  polygon.v[iVCount_]->v1[0] = v.v1[0];
-  polygon.v[iVCount_]->v1[1] = v.v1[1];
-  polygon.v[iVCount_]->v1[2] = v.v1[2];
-  polygon.v[iVCount_]->v1[3] = v.v1[3];
-  polygon.v[iVCount_]->n1[0] = v.n1[0];
-  polygon.v[iVCount_]->n1[1] = v.n1[1];
-  polygon.v[iVCount_]->n1[2] = v.n1[2];
-  polygon.v[iVCount_]->n1[3] = v.n1[3];
-  polygon.v[iVCount_]->c1    = v.c1;
+  polygon.v[iVCount_]->v[0] = v.v[0];
+  polygon.v[iVCount_]->v[1] = v.v[1];
+  polygon.v[iVCount_]->v[2] = v.v[2];
+  polygon.v[iVCount_]->v[3] = v.v[3];
+  polygon.v[iVCount_]->n[0] = v.n[0];
+  polygon.v[iVCount_]->n[1] = v.n[1];
+  polygon.v[iVCount_]->n[2] = v.n[2];
+  polygon.v[iVCount_]->n[3] = v.n[3];
+  polygon.v[iVCount_]->c    = v.c;
 
   if(iVCount_ == 2)
     plotPoly(polygon);
@@ -552,15 +552,15 @@ CSoftGLESFloat::addVertexToTriangleStrip(SVertexF & v)
 
   polygon.v[iVCount_]->bProcessed = false;
   // Copy vertex
-  polygon.v[iVCount_]->v1[0] = v.v1[0];
-  polygon.v[iVCount_]->v1[1] = v.v1[1];
-  polygon.v[iVCount_]->v1[2] = v.v1[2];
-  polygon.v[iVCount_]->v1[3] = v.v1[3];
-  polygon.v[iVCount_]->n1[0] = v.n1[0];
-  polygon.v[iVCount_]->n1[1] = v.n1[1];
-  polygon.v[iVCount_]->n1[2] = v.n1[2];
-  polygon.v[iVCount_]->n1[3] = v.n1[3];
-  polygon.v[iVCount_]->c1    = v.c1;
+  polygon.v[iVCount_]->v[0] = v.v[0];
+  polygon.v[iVCount_]->v[1] = v.v[1];
+  polygon.v[iVCount_]->v[2] = v.v[2];
+  polygon.v[iVCount_]->v[3] = v.v[3];
+  polygon.v[iVCount_]->n[0] = v.n[0];
+  polygon.v[iVCount_]->n[1] = v.n[1];
+  polygon.v[iVCount_]->n[2] = v.n[2];
+  polygon.v[iVCount_]->n[3] = v.n[3];
+  polygon.v[iVCount_]->c    = v.c;
 
   if(iVCount_ == 2)
   {
@@ -600,15 +600,15 @@ CSoftGLESFloat::addVertexToTriangleFan(SVertexF & v)
 
   polygon.v[iVCount_]->bProcessed = false;
   // Copy vertex
-  polygon.v[iVCount_]->v1[0] = v.v1[0];
-  polygon.v[iVCount_]->v1[1] = v.v1[1];
-  polygon.v[iVCount_]->v1[2] = v.v1[2];
-  polygon.v[iVCount_]->v1[3] = v.v1[3];
-  polygon.v[iVCount_]->n1[0] = v.n1[0];
-  polygon.v[iVCount_]->n1[1] = v.n1[1];
-  polygon.v[iVCount_]->n1[2] = v.n1[2];
-  polygon.v[iVCount_]->n1[3] = v.n1[3];
-  polygon.v[iVCount_]->c1    = v.c1;
+  polygon.v[iVCount_]->v[0] = v.v[0];
+  polygon.v[iVCount_]->v[1] = v.v[1];
+  polygon.v[iVCount_]->v[2] = v.v[2];
+  polygon.v[iVCount_]->v[3] = v.v[3];
+  polygon.v[iVCount_]->n[0] = v.n[0];
+  polygon.v[iVCount_]->n[1] = v.n[1];
+  polygon.v[iVCount_]->n[2] = v.n[2];
+  polygon.v[iVCount_]->n[3] = v.n[3];
+  polygon.v[iVCount_]->c    = v.c;
 
   if(iVCount_ == 2)
   {
@@ -639,17 +639,17 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
     if(poly.v[i]->bProcessed == false)
     {
       // ModelView Transformation
-      matrixModelView.transform(poly.v[i]->v1, poly.v[i]->v2);
+      matrixModelView.transform(poly.v[i]->v, poly.v[i]->v);
       // Projection Transformation
-      matrixProjection.transform(poly.v[i]->v2, poly.v[i]->v2);
+      matrixProjection.transform(poly.v[i]->v, poly.v[i]->v);
 
       // Divide x and y by linear depth: w
-      poly.v[i]->v2[0] /= -poly.v[i]->v2[3];
-      poly.v[i]->v2[1] /= -poly.v[i]->v2[3];
+      poly.v[i]->v[0] /= -poly.v[i]->v[3];
+      poly.v[i]->v[1] /= -poly.v[i]->v[3];
 
       // From normalized device coordinates to window coordinates
-      poly.v[i]->sx = (GLint)((poly.v[i]->v2[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
-      poly.v[i]->sy = (GLint)((poly.v[i]->v2[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
+      poly.v[i]->sx = (GLint)((poly.v[i]->v[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
+      poly.v[i]->sy = (GLint)((poly.v[i]->v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
 
       poly.v[i]->bProcessed = true;
     }
@@ -686,11 +686,11 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
   if(lightingEnabled_ == true)
   {
     // Normal Rotation
-    matrixRotation.transform(poly.v[0]->n1, poly.v[0]->n2);
-    matrixRotation.transform(poly.v[1]->n1, poly.v[1]->n2);
-    matrixRotation.transform(poly.v[2]->n1, poly.v[2]->n2);
+    matrixRotation.transform(poly.v[0]->n, poly.v[0]->n);
+    matrixRotation.transform(poly.v[1]->n, poly.v[1]->n);
+    matrixRotation.transform(poly.v[2]->n, poly.v[2]->n);
     // FIXME: Light value of normal
-    GLfloat normal[3] = {abs(poly.v[0]->n2[2]), abs(poly.v[1]->n2[2]), abs(poly.v[2]->n2[2])};
+    GLfloat normal[3] = {abs(poly.v[0]->n[2]), abs(poly.v[1]->n[2]), abs(poly.v[2]->n[2])};
 
     for(int iLight(0); iLight < 8; iLight++)
     {
@@ -699,32 +699,21 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
         SColorF & ambient = lights_[iLight].ambient;
         SColorF & diffuse = lights_[iLight].diffuse;
 
-        poly.v[0]->c2.r = clampf((poly.v[0]->c1.r * ambient.r) + ((poly.v[0]->c1.r * normal[0]) * diffuse.r));
-        poly.v[0]->c2.g = clampf((poly.v[0]->c1.g * ambient.g) + ((poly.v[0]->c1.g * normal[0]) * diffuse.g));
-        poly.v[0]->c2.b = clampf((poly.v[0]->c1.b * ambient.b) + ((poly.v[0]->c1.b * normal[0]) * diffuse.b));
+        poly.v[0]->c.r = clampf((poly.v[0]->c.r * ambient.r) + ((poly.v[0]->c.r * normal[0]) * diffuse.r));
+        poly.v[0]->c.g = clampf((poly.v[0]->c.g * ambient.g) + ((poly.v[0]->c.g * normal[0]) * diffuse.g));
+        poly.v[0]->c.b = clampf((poly.v[0]->c.b * ambient.b) + ((poly.v[0]->c.b * normal[0]) * diffuse.b));
 
         if(shadingModel_ == GL_SMOOTH)
         {
-          poly.v[1]->c2.r = clampf((poly.v[1]->c1.r * ambient.r) + ((poly.v[1]->c1.r * normal[1]) * diffuse.r));
-          poly.v[1]->c2.g = clampf((poly.v[1]->c1.g * ambient.g) + ((poly.v[1]->c1.g * normal[1]) * diffuse.g));
-          poly.v[1]->c2.b = clampf((poly.v[1]->c1.b * ambient.b) + ((poly.v[1]->c1.b * normal[1]) * diffuse.b));
+          poly.v[1]->c.r = clampf((poly.v[1]->c.r * ambient.r) + ((poly.v[1]->c.r * normal[1]) * diffuse.r));
+          poly.v[1]->c.g = clampf((poly.v[1]->c.g * ambient.g) + ((poly.v[1]->c.g * normal[1]) * diffuse.g));
+          poly.v[1]->c.b = clampf((poly.v[1]->c.b * ambient.b) + ((poly.v[1]->c.b * normal[1]) * diffuse.b));
 
-          poly.v[2]->c2.r = clampf((poly.v[2]->c1.r * ambient.r) + ((poly.v[2]->c1.r * normal[2]) * diffuse.r));
-          poly.v[2]->c2.g = clampf((poly.v[2]->c1.g * ambient.g) + ((poly.v[2]->c1.g * normal[2]) * diffuse.g));
-          poly.v[2]->c2.b = clampf((poly.v[2]->c1.b * ambient.b) + ((poly.v[2]->c1.b * normal[2]) * diffuse.b));
+          poly.v[2]->c.r = clampf((poly.v[2]->c.r * ambient.r) + ((poly.v[2]->c.r * normal[2]) * diffuse.r));
+          poly.v[2]->c.g = clampf((poly.v[2]->c.g * ambient.g) + ((poly.v[2]->c.g * normal[2]) * diffuse.g));
+          poly.v[2]->c.b = clampf((poly.v[2]->c.b * ambient.b) + ((poly.v[2]->c.b * normal[2]) * diffuse.b));
         }
       }
-    }
-  }
-  else
-  {
-    // No lighting, lust copy colors
-    for(int i(0); i < 3; i++)
-    {
-      poly.v[i]->c2.r = poly.v[i]->c1.r;
-      poly.v[i]->c2.g = poly.v[i]->c1.g;
-      poly.v[i]->c2.b = poly.v[i]->c1.b;
-      poly.v[i]->c2.a = poly.v[i]->c1.a;
     }
   }
 
@@ -733,11 +722,11 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
   {
     for(int i(0); i < 3; i++)
     {
-      GLfloat partFog   = clampf((abs(poly.v[i]->v2[2]) - fogStart_) / (fogEnd_ - fogStart_));
+      GLfloat partFog   = clampf((abs(poly.v[i]->v[2]) - fogStart_) / (fogEnd_ - fogStart_));
       GLfloat partColor = 1.0f - partFog;
-      poly.v[i]->c2.r = clampf((poly.v[i]->c2.r * partColor) + (fogColor_.r * partFog));
-      poly.v[i]->c2.g = clampf((poly.v[i]->c2.g * partColor) + (fogColor_.g * partFog));
-      poly.v[i]->c2.b = clampf((poly.v[i]->c2.b * partColor) + (fogColor_.b * partFog));
+      poly.v[i]->c.r = clampf((poly.v[i]->c.r * partColor) + (fogColor_.r * partFog));
+      poly.v[i]->c.g = clampf((poly.v[i]->c.g * partColor) + (fogColor_.g * partFog));
+      poly.v[i]->c.b = clampf((poly.v[i]->c.b * partColor) + (fogColor_.b * partFog));
     }
   }
 
@@ -781,24 +770,24 @@ CSoftGLESFloat::rasterPoly(SPolygonF & poly)
   {
     if(shadingModel_ == GL_SMOOTH)
     {
-      edge1->addZC(vlo->sx, vlo->sy, vlo->v2[3], vlo->c2, vhi->sx, vhi->sy, vhi->v2[3], vhi->c2);
-      edge2->addZC(vlo->sx, vlo->sy, vlo->v2[3], vlo->c2, vmi->sx, vmi->sy, vmi->v2[3], vmi->c2);
-      edge2->addZC(vmi->sx, vmi->sy, vmi->v2[3], vmi->c2, vhi->sx, vhi->sy, vhi->v2[3], vhi->c2);
+      edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
+      edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vmi->sx, vmi->sy, vmi->v[3], vmi->c);
+      edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
     }
     else
     {
-      edge1->addZ(vlo->sx, vlo->sy, vlo->v2[3], vhi->sx, vhi->sy, vhi->v2[3]);
-      edge2->addZ(vlo->sx, vlo->sy, vlo->v2[3], vmi->sx, vmi->sy, vmi->v2[3]);
-      edge2->addZ(vmi->sx, vmi->sy, vmi->v2[3], vhi->sx, vhi->sy, vhi->v2[3]);
+      edge1->addZ(vlo->sx, vlo->sy, vlo->v[3], vhi->sx, vhi->sy, vhi->v[3]);
+      edge2->addZ(vlo->sx, vlo->sy, vlo->v[3], vmi->sx, vmi->sy, vmi->v[3]);
+      edge2->addZ(vmi->sx, vmi->sy, vmi->v[3], vhi->sx, vhi->sy, vhi->v[3]);
     }
   }
   else
   {
     if(shadingModel_ == GL_SMOOTH)
     {
-      edge1->addC(vlo->sx, vlo->sy, vlo->c2, vhi->sx, vhi->sy, vhi->c2);
-      edge2->addC(vlo->sx, vlo->sy, vlo->c2, vmi->sx, vmi->sy, vmi->c2);
-      edge2->addC(vmi->sx, vmi->sy, vmi->c2, vhi->sx, vhi->sy, vhi->c2);
+      edge1->addC(vlo->sx, vlo->sy, vlo->c, vhi->sx, vhi->sy, vhi->c);
+      edge2->addC(vlo->sx, vlo->sy, vlo->c, vmi->sx, vmi->sy, vmi->c);
+      edge2->addC(vmi->sx, vmi->sy, vmi->c, vhi->sx, vhi->sy, vhi->c);
     }
     else
     {
@@ -824,7 +813,7 @@ CSoftGLESFloat::rasterPoly(SPolygonF & poly)
     case GL_FLAT:
     {
       for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hline(*pEdgeLeft, *pEdgeRight, y, poly.v[2]->c2);
+        hline(*pEdgeLeft, *pEdgeRight, y, poly.v[2]->c);
       break;
     }
     case GL_SMOOTH:
