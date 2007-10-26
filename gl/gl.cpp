@@ -73,8 +73,16 @@ GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, typ
   context->name(arg1, arg2, arg3, arg4, arg5, arg6); \
 }
 
+#define GL_APIFUNCTION_9(name,type1,arg1,type2,arg2,type3,arg3,type4,arg4,type5,arg5,type6,arg6,type7,arg7,type8,arg8,type9,arg9) \
+GL_API void \
+GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, type6 arg6, type7 arg7, type8 arg8, type9 arg9) \
+{ \
+  GLES_GET_CONTEXT(); \
+  context->name(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9); \
+}
+
 //-----------------------------------------------------------------------------
-// GL API (49 of 145 implemented)
+// GL API (53 of 145 implemented)
 //-----------------------------------------------------------------------------
 //GL_API void GL_APIENTRY glAlphaFunc (GLenum func, GLclampf ref);
 GL_APIFUNCTION_4(glClearColor,         GLclampf, red, GLclampf, green, GLclampf, blue, GLclampf, alpha);
@@ -118,7 +126,7 @@ GL_APIFUNCTION_3(glTranslatef,         GLfloat, x, GLfloat, y, GLfloat, z);
 //GL_API void GL_APIENTRY glActiveTexture (GLenum texture);
 //GL_API void GL_APIENTRY glAlphaFuncx (GLenum func, GLclampx ref);
 //GL_API void GL_APIENTRY glBindBuffer (GLenum target, GLuint buffer);
-//GL_API void GL_APIENTRY glBindTexture (GLenum target, GLuint texture);
+GL_APIFUNCTION_2(glBindTexture,        GLenum, target, GLuint, texture);
 //GL_API void GL_APIENTRY glBlendFunc (GLenum sfactor, GLenum dfactor);
 //GL_API void GL_APIENTRY glBufferData (GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage);
 //GL_API void GL_APIENTRY glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data);
@@ -138,7 +146,7 @@ GL_APIFUNCTION_4(glColorPointer,       GLint, size, GLenum, type, GLsizei, strid
 //GL_API void GL_APIENTRY glCopyTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
 GL_APIFUNCTION_1(glCullFace,           GLenum, mode);
 //GL_API void GL_APIENTRY glDeleteBuffers (GLsizei n, const GLuint *buffers);
-//GL_API void GL_APIENTRY glDeleteTextures (GLsizei n, const GLuint *textures);
+GL_APIFUNCTION_2(glDeleteTextures,     GLsizei, n, const GLuint *, textures);
 GL_APIFUNCTION_1(glDepthFunc,          GLenum, func);
 //GL_API void GL_APIENTRY glDepthMask (GLboolean flag);
 //GL_API void GL_APIENTRY glDepthRangex (GLclampx zNear, GLclampx zFar);
@@ -158,7 +166,7 @@ GL_APIFUNCTION_6(glFrustumx,           GLfixed, left, GLfixed, right, GLfixed, b
 //GL_API void GL_APIENTRY glGetBufferParameteriv (GLenum target, GLenum pname, GLint *params);
 //GL_API void GL_APIENTRY glGetClipPlanex (GLenum pname, GLfixed eqn[4]);
 //GL_API void GL_APIENTRY glGenBuffers (GLsizei n, GLuint *buffers);
-//GL_API void GL_APIENTRY glGenTextures (GLsizei n, GLuint *textures);
+GL_APIFUNCTION_2(glGenTextures,        GLsizei, n, GLuint *, textures);
 //GL_API GLenum GL_APIENTRY glGetError (void);
 //GL_API void GL_APIENTRY glGetFixedv (GLenum pname, GLfixed *params);
 //GL_API void GL_APIENTRY glGetIntegerv (GLenum pname, GLint *params);
@@ -212,7 +220,7 @@ GL_APIFUNCTION_4(glTexCoordPointer,    GLint, size, GLenum, type, GLsizei, strid
 //GL_API void GL_APIENTRY glTexEnvx (GLenum target, GLenum pname, GLfixed param);
 //GL_API void GL_APIENTRY glTexEnviv (GLenum target, GLenum pname, const GLint *params);
 //GL_API void GL_APIENTRY glTexEnvxv (GLenum target, GLenum pname, const GLfixed *params);
-//GL_API void GL_APIENTRY glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+GL_APIFUNCTION_9(glTexImage2D,         GLenum, target, GLint, level, GLint, internalformat, GLsizei, width, GLsizei, height, GLint, border, GLenum, format, GLenum, type, const GLvoid *, pixels);
 //GL_API void GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint param);
 //GL_API void GL_APIENTRY glTexParameterx (GLenum target, GLenum pname, GLfixed param);
 //GL_API void GL_APIENTRY glTexParameteriv (GLenum target, GLenum pname, const GLint *params);

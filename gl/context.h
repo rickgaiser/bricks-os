@@ -92,7 +92,7 @@ public:
 //  virtual void glActiveTexture(GLenum texture) = 0;
 //  virtual void glAlphaFuncx(GLenum func, GLclampx ref) = 0;
 //  virtual void glBindBuffer(GLenum target, GLuint buffer) = 0;
-//  virtual void glBindTexture(GLenum target, GLuint texture) = 0;
+  virtual void glBindTexture(GLenum target, GLuint texture) = 0;
 //  virtual void glBlendFunc(GLenum sfactor, GLenum dfactor) = 0;
 //  virtual void glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage) = 0;
 //  virtual void glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data) = 0;
@@ -112,7 +112,7 @@ public:
 //  virtual void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height) = 0;
   virtual void glCullFace(GLenum mode) = 0;
 //  virtual void glDeleteBuffers(GLsizei n, const GLuint *buffers) = 0;
-//  virtual void glDeleteTextures(GLsizei n, const GLuint *textures) = 0;
+  virtual void glDeleteTextures(GLsizei n, const GLuint *textures) = 0;
   virtual void glDepthFunc(GLenum func) = 0;
 //  virtual void glDepthMask(GLboolean flag) = 0;
 //  virtual void glDepthRangex(GLclampx zNear, GLclampx zFar) = 0;
@@ -132,7 +132,7 @@ public:
 //  virtual void glGetBufferParameteriv(GLenum target, GLenum pname, GLint *params) = 0;
 //  virtual void glGetClipPlanex(GLenum pname, GLfixed eqn[4]) = 0;
 //  virtual void glGenBuffers(GLsizei n, GLuint *buffers) = 0;
-//  virtual void glGenTextures(GLsizei n, GLuint *textures) = 0;
+  virtual void glGenTextures(GLsizei n, GLuint *textures) = 0;
 //  virtual GLenum glGetError(void) = 0;
 //  virtual void glGetFixedv(GLenum pname, GLfixed *params) = 0;
 //  virtual void glGetIntegerv(GLenum pname, GLint *params) = 0;
@@ -186,7 +186,7 @@ public:
 //  virtual void glTexEnvx(GLenum target, GLenum pname, GLfixed param) = 0;
 //  virtual void glTexEnviv(GLenum target, GLenum pname, const GLint *params) = 0;
 //  virtual void glTexEnvxv(GLenum target, GLenum pname, const GLfixed *params) = 0;
-//  virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels) = 0;
+  virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels) = 0;
 //  virtual void glTexParameteri(GLenum target, GLenum pname, GLint param) = 0;
 //  virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param) = 0;
 //  virtual void glTexParameteriv(GLenum target, GLenum pname, const GLint *params) = 0;

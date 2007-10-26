@@ -19,6 +19,7 @@ CSoftGLESFixed::CSoftGLESFixed()
  : CAGLESFloatToFxContext()
  , CAGLESBuffers()
  , CAGLESMatrixFx()
+ , CAGLESTextures()
 
  , renderSurface(0)
  , depthTestEnabled_(false)

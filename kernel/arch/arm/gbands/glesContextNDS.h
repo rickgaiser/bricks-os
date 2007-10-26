@@ -3,6 +3,7 @@
 
 
 #include "../../../../gl/softGLFx.h"
+#include "../../../../gl/textures.h"
 #include "../../../../gl/fixedPoint.h"
 #include "matrixNDS.h"
 
@@ -12,6 +13,7 @@ class CNDSGLESContext
  : public CAGLESFloatToFxContext
  , public CAGLESBuffers
  , public CAGLESMatrixNDSFx
+ , public CAGLESTextures
 {
 public:
   CNDSGLESContext();

@@ -95,6 +95,7 @@ CNDSGLESContext::CNDSGLESContext()
  : CAGLESFloatToFxContext()
  , CAGLESBuffers()
  , CAGLESMatrixNDSFx()
+ , CAGLESTextures()
 {
   // Power control
   REG_POWCNT |= POWER_LCD |POWER_2D_TOP |POWER_2D_BOTTOM | POWER_3D_CORE | POWER_3D_MATRIX;

@@ -19,6 +19,7 @@ CPS2GLESContext::CPS2GLESContext()
  : CAGLESFxToFloatContext()
  , CAGLESBuffers()
  , CAGLESMatrixF()
+ , CAGLESTextures()
 
  , ps2Shading_(SHADE_FLAT)
  , ps2Textures_(TEXTURES_OFF)
@@ -197,7 +198,7 @@ CPS2GLESContext::glDepthFunc(GLenum func)
     case GL_ALWAYS:
     default:          ps2DepthFunction_ = ZTST_ALWAYS;  ps2DepthInvert_ = false; break;
   }
-  
+
   if(depthTestEnabled_ == true)
   {
     GIF_DATA_AD(dma_buf, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));

@@ -4,6 +4,7 @@
 
 #include "../../../../gl/softGLF.h"
 #include "../../../../gl/matrix.h"
+#include "../../../../gl/textures.h"
 
 
 //-----------------------------------------------------------------------------
@@ -11,6 +12,7 @@ class CPS2GLESContext
  : public CAGLESFxToFloatContext
  , public CAGLESBuffers
  , public CAGLESMatrixF
+ , public CAGLESTextures
 {
 public:
   CPS2GLESContext();

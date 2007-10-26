@@ -33,10 +33,10 @@ CAGLESBuffers::glDisableClientState(GLenum array)
 {
   switch(array)
   {
-    case GL_VERTEX_ARRAY: bBufVertexEnabled_ = false; break;
-    case GL_NORMAL_ARRAY: bBufNormalEnabled_ = false; break;
-    case GL_COLOR_ARRAY:  bBufColorEnabled_  = false; break;
-
+    case GL_COLOR_ARRAY:         bBufColorEnabled_    = false; break;
+    case GL_NORMAL_ARRAY:        bBufNormalEnabled_   = false; break;
+    case GL_TEXTURE_COORD_ARRAY: bBufTexCoordEnabled_ = false; break;
+    case GL_VERTEX_ARRAY:        bBufVertexEnabled_   = false; break;
     default:
       ; // Not supported
   };

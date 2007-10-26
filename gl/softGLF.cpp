@@ -13,6 +13,7 @@ CSoftGLESFloat::CSoftGLESFloat()
  : CAGLESFxToFloatContext()
  , CAGLESBuffers()
  , CAGLESMatrixF()
+ , CAGLESTextures()
 
  , renderSurface(0)
  , depthTestEnabled_(false)

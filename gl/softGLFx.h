@@ -10,6 +10,7 @@
 
 #include "kernel/videoManager.h"
 #include "matrix.h"
+#include "textures.h"
 #include "edge.h"
 #include "fixedPoint.h"
 
@@ -105,6 +106,7 @@ class CSoftGLESFixed
  : public CAGLESFloatToFxContext
  , public CAGLESBuffers
  , public CAGLESMatrixFx
+ , public CAGLESTextures
 {
 public:
   CSoftGLESFixed();
