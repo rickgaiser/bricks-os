@@ -16,6 +16,7 @@ CSoftGLESFloat::CSoftGLESFloat()
  , CAGLESTextures()
 
  , renderSurface(0)
+ , texturesEnabled_(false)
  , depthTestEnabled_(false)
  , depthFunction_(GL_LESS)
  , depthClear_(1.0f)
@@ -182,7 +183,8 @@ CSoftGLESFloat::glDisable(GLenum cap)
 
     case GL_DEPTH_TEST: depthTestEnabled_ = false; break;
     case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
-    case GL_FOG:        fogEnabled_ = false; break;
+    case GL_FOG:        fogEnabled_       = false; break;
+    case GL_TEXTURE_2D: texturesEnabled_  = false; break;
 
     default:
       ; // Not supported
@@ -196,9 +198,10 @@ CSoftGLESFloat::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   if(bBufVertexEnabled_ == false)
     return;
 
-  GLint idxVertex(first * bufVertex_.size);
-  GLint idxColor (first * bufColor_.size);
-  GLint idxNormal(first * bufNormal_.size);
+  GLint idxVertex  (first * bufVertex_.size);
+  GLint idxColor   (first * bufColor_.size);
+  GLint idxNormal  (first * bufNormal_.size);
+  GLint idxTexCoord(first * bufTexCoord_.size);
 
   SVertexF v;
   v.bProcessed = false;
@@ -246,24 +249,46 @@ CSoftGLESFloat::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       };
     }
 
-    // Color
-    if(bBufColorEnabled_ == true)
+    // Textures/Colors
+    if(texturesEnabled_ == true)
     {
-      switch(bufColor_.type)
+      // Textures
+      if(bBufTexCoordEnabled_ == true)
       {
-        case GL_FLOAT:
-          v.c.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          break;
-        case GL_FIXED:
-          v.c.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          break;
-      };
+        switch(bufTexCoord_.type)
+        {
+          case GL_FLOAT:
+            v.ts =         ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]  * pCurrentTex_->width;
+            v.tt = (1.0f - ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]) * pCurrentTex_->height;
+            break;
+          case GL_FIXED:
+            v.ts =         gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++])  * pCurrentTex_->width;
+            v.tt = (1.0f - gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++])) * pCurrentTex_->height;
+            break;
+        };
+      }
+    }
+    else
+    {
+      // Color
+      if(bBufColorEnabled_ == true)
+      {
+        switch(bufColor_.type)
+        {
+          case GL_FLOAT:
+            v.c.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.c.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.c.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.c.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            break;
+          case GL_FIXED:
+            v.c.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            v.c.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            v.c.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            v.c.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            break;
+        };
+      }
     }
 
     switch(mode)
@@ -294,6 +319,7 @@ CSoftGLESFloat::glEnable(GLenum cap)
     case GL_DEPTH_TEST: depthTestEnabled_  = true; break;
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
+    case GL_TEXTURE_2D: texturesEnabled_   = true; break;
 
     default:
       ; // Not supported
@@ -504,6 +530,42 @@ CSoftGLESFloat::hline_s(CEdgeF & from, CEdgeF & to, GLint & y)
 }
 
 //-----------------------------------------------------------------------------
+// Horizontal Line Fill, texture mapped
+void
+CSoftGLESFloat::hline_t(CEdgeF & from, CEdgeF & to, GLint & y)
+{
+  if(from.x_[y] < to.x_[y])
+  {
+    GLint dx(to.x_[y] - from.x_[y]);
+    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
+    GLfloat z(from.z_[y]);
+
+    GLfloat mts((to.ts_[y] - from.ts_[y]) / dx);
+    GLfloat mtt((to.tt_[y] - from.tt_[y]) / dx);
+    GLfloat ts(from.ts_[y]);
+    GLfloat tt(from.tt_[y]);
+
+    unsigned long index((y * viewportWidth) + from.x_[y]);
+    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
+    {
+      if(x >= viewportWidth)
+        break;
+
+      if(x >= 0)
+      {
+        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
+          ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[(((GLint)(tt) % pCurrentTex_->height) * pCurrentTex_->width) + ((GLint)(ts) % pCurrentTex_->width)];
+      }
+      if(depthTestEnabled_ == true)
+        z += mz;
+      ts += mts;
+      tt += mtt;
+      index++;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
 void
 CSoftGLESFloat::addVertexToTriangle(SVertexF & v)
 {
@@ -528,6 +590,8 @@ CSoftGLESFloat::addVertexToTriangle(SVertexF & v)
   polygon.v[iVCount_]->n[1] = v.n[1];
   polygon.v[iVCount_]->n[2] = v.n[2];
   polygon.v[iVCount_]->n[3] = v.n[3];
+  polygon.v[iVCount_]->ts   = v.ts;
+  polygon.v[iVCount_]->tt   = v.tt;
   polygon.v[iVCount_]->c    = v.c;
 
   if(iVCount_ == 2)
@@ -562,6 +626,8 @@ CSoftGLESFloat::addVertexToTriangleStrip(SVertexF & v)
   polygon.v[iVCount_]->n[1] = v.n[1];
   polygon.v[iVCount_]->n[2] = v.n[2];
   polygon.v[iVCount_]->n[3] = v.n[3];
+  polygon.v[iVCount_]->ts   = v.ts;
+  polygon.v[iVCount_]->tt   = v.tt;
   polygon.v[iVCount_]->c    = v.c;
 
   if(iVCount_ == 2)
@@ -610,6 +676,8 @@ CSoftGLESFloat::addVertexToTriangleFan(SVertexF & v)
   polygon.v[iVCount_]->n[1] = v.n[1];
   polygon.v[iVCount_]->n[2] = v.n[2];
   polygon.v[iVCount_]->n[3] = v.n[3];
+  polygon.v[iVCount_]->ts   = v.ts;
+  polygon.v[iVCount_]->tt   = v.tt;
   polygon.v[iVCount_]->c    = v.c;
 
   if(iVCount_ == 2)
@@ -684,48 +752,51 @@ CSoftGLESFloat::plotPoly(SPolygonF & poly)
       return; // Triangle invisible
   }
 
-  // Lighting
-  if(lightingEnabled_ == true)
+  if(texturesEnabled_ == false)
   {
-    // Normal Rotation
-    matrixRotation.transform(poly.v[0]->n, poly.v[0]->n);
-    matrixRotation.transform(poly.v[1]->n, poly.v[1]->n);
-    matrixRotation.transform(poly.v[2]->n, poly.v[2]->n);
-    // FIXME: Light value of normal
-    GLfloat normal[3] = {abs(poly.v[0]->n[2]), abs(poly.v[1]->n[2]), abs(poly.v[2]->n[2])};
-
-    for(int iLight(0); iLight < 8; iLight++)
+    // Lighting
+    if(lightingEnabled_ == true)
     {
-      if(lights_[iLight].enabled == true)
+      // Normal Rotation
+      matrixRotation.transform(poly.v[0]->n, poly.v[0]->n);
+      matrixRotation.transform(poly.v[1]->n, poly.v[1]->n);
+      matrixRotation.transform(poly.v[2]->n, poly.v[2]->n);
+      // FIXME: Light value of normal
+      GLfloat normal[3] = {abs(poly.v[0]->n[2]), abs(poly.v[1]->n[2]), abs(poly.v[2]->n[2])};
+
+      for(int iLight(0); iLight < 8; iLight++)
       {
-        SColorF & ambient = lights_[iLight].ambient;
-        SColorF & diffuse = lights_[iLight].diffuse;
+        if(lights_[iLight].enabled == true)
+        {
+          SColorF & ambient = lights_[iLight].ambient;
+          SColorF & diffuse = lights_[iLight].diffuse;
 
-        poly.v[0]->c.r = clampf((poly.v[0]->c.r * ambient.r) + ((poly.v[0]->c.r * normal[0]) * diffuse.r));
-        poly.v[0]->c.g = clampf((poly.v[0]->c.g * ambient.g) + ((poly.v[0]->c.g * normal[0]) * diffuse.g));
-        poly.v[0]->c.b = clampf((poly.v[0]->c.b * ambient.b) + ((poly.v[0]->c.b * normal[0]) * diffuse.b));
+          poly.v[0]->c.r = clampf((poly.v[0]->c.r * ambient.r) + ((poly.v[0]->c.r * normal[0]) * diffuse.r));
+          poly.v[0]->c.g = clampf((poly.v[0]->c.g * ambient.g) + ((poly.v[0]->c.g * normal[0]) * diffuse.g));
+          poly.v[0]->c.b = clampf((poly.v[0]->c.b * ambient.b) + ((poly.v[0]->c.b * normal[0]) * diffuse.b));
 
-        poly.v[1]->c.r = clampf((poly.v[1]->c.r * ambient.r) + ((poly.v[1]->c.r * normal[1]) * diffuse.r));
-        poly.v[1]->c.g = clampf((poly.v[1]->c.g * ambient.g) + ((poly.v[1]->c.g * normal[1]) * diffuse.g));
-        poly.v[1]->c.b = clampf((poly.v[1]->c.b * ambient.b) + ((poly.v[1]->c.b * normal[1]) * diffuse.b));
+          poly.v[1]->c.r = clampf((poly.v[1]->c.r * ambient.r) + ((poly.v[1]->c.r * normal[1]) * diffuse.r));
+          poly.v[1]->c.g = clampf((poly.v[1]->c.g * ambient.g) + ((poly.v[1]->c.g * normal[1]) * diffuse.g));
+          poly.v[1]->c.b = clampf((poly.v[1]->c.b * ambient.b) + ((poly.v[1]->c.b * normal[1]) * diffuse.b));
 
-        poly.v[2]->c.r = clampf((poly.v[2]->c.r * ambient.r) + ((poly.v[2]->c.r * normal[2]) * diffuse.r));
-        poly.v[2]->c.g = clampf((poly.v[2]->c.g * ambient.g) + ((poly.v[2]->c.g * normal[2]) * diffuse.g));
-        poly.v[2]->c.b = clampf((poly.v[2]->c.b * ambient.b) + ((poly.v[2]->c.b * normal[2]) * diffuse.b));
+          poly.v[2]->c.r = clampf((poly.v[2]->c.r * ambient.r) + ((poly.v[2]->c.r * normal[2]) * diffuse.r));
+          poly.v[2]->c.g = clampf((poly.v[2]->c.g * ambient.g) + ((poly.v[2]->c.g * normal[2]) * diffuse.g));
+          poly.v[2]->c.b = clampf((poly.v[2]->c.b * ambient.b) + ((poly.v[2]->c.b * normal[2]) * diffuse.b));
+        }
       }
     }
-  }
 
-  // Fog
-  if(fogEnabled_ == true)
-  {
-    for(int i(0); i < 3; i++)
+    // Fog
+    if(fogEnabled_ == true)
     {
-      GLfloat partFog   = clampf((abs(poly.v[i]->v[2]) - fogStart_) / (fogEnd_ - fogStart_));
-      GLfloat partColor = 1.0f - partFog;
-      poly.v[i]->c.r = clampf((poly.v[i]->c.r * partColor) + (fogColor_.r * partFog));
-      poly.v[i]->c.g = clampf((poly.v[i]->c.g * partColor) + (fogColor_.g * partFog));
-      poly.v[i]->c.b = clampf((poly.v[i]->c.b * partColor) + (fogColor_.b * partFog));
+      for(int i(0); i < 3; i++)
+      {
+        GLfloat partFog   = clampf((abs(poly.v[i]->v[2]) - fogStart_) / (fogEnd_ - fogStart_));
+        GLfloat partColor = 1.0f - partFog;
+        poly.v[i]->c.r = clampf((poly.v[i]->c.r * partColor) + (fogColor_.r * partFog));
+        poly.v[i]->c.g = clampf((poly.v[i]->c.g * partColor) + (fogColor_.g * partFog));
+        poly.v[i]->c.b = clampf((poly.v[i]->c.b * partColor) + (fogColor_.b * partFog));
+      }
     }
   }
 
@@ -765,34 +836,43 @@ CSoftGLESFloat::rasterPoly(SPolygonF & poly)
   }
 
   // Create edge lists
-  if(depthTestEnabled_ == true)
+  if(texturesEnabled_ == true)
   {
-    if(shadingModel_ == GL_SMOOTH)
-    {
-      edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
-      edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vmi->sx, vmi->sy, vmi->v[3], vmi->c);
-      edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
-    }
-    else
-    {
-      edge1->addZ(vlo->sx, vlo->sy, vlo->v[3], vhi->sx, vhi->sy, vhi->v[3]);
-      edge2->addZ(vlo->sx, vlo->sy, vlo->v[3], vmi->sx, vmi->sy, vmi->v[3]);
-      edge2->addZ(vmi->sx, vmi->sy, vmi->v[3], vhi->sx, vhi->sy, vhi->v[3]);
-    }
+    edge1->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
+    edge2->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt);
+    edge2->addZT(vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
   }
   else
   {
-    if(shadingModel_ == GL_SMOOTH)
+    if(depthTestEnabled_ == true)
     {
-      edge1->addC(vlo->sx, vlo->sy, vlo->c, vhi->sx, vhi->sy, vhi->c);
-      edge2->addC(vlo->sx, vlo->sy, vlo->c, vmi->sx, vmi->sy, vmi->c);
-      edge2->addC(vmi->sx, vmi->sy, vmi->c, vhi->sx, vhi->sy, vhi->c);
+      if(shadingModel_ == GL_SMOOTH)
+      {
+        edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
+        edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vmi->sx, vmi->sy, vmi->v[3], vmi->c);
+        edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
+      }
+      else
+      {
+        edge1->addZ(vlo->sx, vlo->sy, vlo->v[3], vhi->sx, vhi->sy, vhi->v[3]);
+        edge2->addZ(vlo->sx, vlo->sy, vlo->v[3], vmi->sx, vmi->sy, vmi->v[3]);
+        edge2->addZ(vmi->sx, vmi->sy, vmi->v[3], vhi->sx, vhi->sy, vhi->v[3]);
+      }
     }
     else
     {
-      edge1->add(vlo->sx, vlo->sy, vhi->sx, vhi->sy);
-      edge2->add(vlo->sx, vlo->sy, vmi->sx, vmi->sy);
-      edge2->add(vmi->sx, vmi->sy, vhi->sx, vhi->sy);
+      if(shadingModel_ == GL_SMOOTH)
+      {
+        edge1->addC(vlo->sx, vlo->sy, vlo->c, vhi->sx, vhi->sy, vhi->c);
+        edge2->addC(vlo->sx, vlo->sy, vlo->c, vmi->sx, vmi->sy, vmi->c);
+        edge2->addC(vmi->sx, vmi->sy, vmi->c, vhi->sx, vhi->sy, vhi->c);
+      }
+      else
+      {
+        edge1->add(vlo->sx, vlo->sy, vhi->sx, vhi->sy);
+        edge2->add(vlo->sx, vlo->sy, vmi->sx, vmi->sy);
+        edge2->add(vmi->sx, vmi->sy, vhi->sx, vhi->sy);
+      }
     }
   }
 
@@ -807,19 +887,27 @@ CSoftGLESFloat::rasterPoly(SPolygonF & poly)
   }
 
   // Display triangle (horizontal lines forming the triangle)
-  switch(shadingModel_)
+  if(texturesEnabled_ == true)
   {
-    case GL_FLAT:
+    for(GLint y(vlo->sy); y < vhi->sy; y++)
+      hline_t(*pEdgeLeft, *pEdgeRight, y);
+  }
+  else
+  {
+    switch(shadingModel_)
     {
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hline(*pEdgeLeft, *pEdgeRight, y, poly.v[2]->c);
-      break;
-    }
-    case GL_SMOOTH:
-    {
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hline_s(*pEdgeLeft, *pEdgeRight, y);
-      break;
+      case GL_FLAT:
+      {
+        for(GLint y(vlo->sy); y < vhi->sy; y++)
+          hline(*pEdgeLeft, *pEdgeRight, y, poly.v[2]->c);
+        break;
+      }
+      case GL_SMOOTH:
+      {
+        for(GLint y(vlo->sy); y < vhi->sy; y++)
+          hline_s(*pEdgeLeft, *pEdgeRight, y);
+        break;
+      }
     }
   }
 }

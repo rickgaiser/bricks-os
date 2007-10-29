@@ -7,9 +7,11 @@
 CEdgeF::CEdgeF(uint32_t height)
  : iHeight_(height)
 {
-  x_ = new GLint[iHeight_];
-  z_ = new GLfloat[iHeight_];
-  c_ = new SColorF[iHeight_];
+  x_  = new GLint[iHeight_];
+  z_  = new GLfloat[iHeight_];
+  ts_ = new GLfloat[iHeight_];
+  tt_ = new GLfloat[iHeight_];
+  c_  = new SColorF[iHeight_];
 }
 
 //-----------------------------------------------------------------------------
@@ -17,6 +19,8 @@ CEdgeF::~CEdgeF()
 {
   delete x_;
   delete z_;
+  delete ts_;
+  delete tt_;
   delete c_;
 }
 
@@ -103,6 +107,39 @@ CEdgeF::addC(GLint x1, GLint y1, SColorF & c1, GLint x2, GLint y2, SColorF & c2)
 
 //-----------------------------------------------------------------------------
 void
+CEdgeF::addZT(GLint x1, GLint y1, GLfloat z1, GLfloat ts1, GLfloat tt1, GLint x2, GLint y2, GLfloat z2, GLfloat ts2, GLfloat tt2)
+{
+  if(y1 < y2)
+  {
+    GLfloat x(x1);
+    GLfloat mx((GLfloat)(x2 - x1) / (GLfloat)(y2 - y1));
+
+    GLfloat mz((z2 - z1) / (GLfloat)(y2 - y1));
+
+    GLfloat ts(ts1);
+    GLfloat tt(tt1);
+    GLfloat mts((ts2 - ts1) / (GLfloat)(y2 - y1));
+    GLfloat mtt((tt2 - tt1) / (GLfloat)(y2 - y1));
+
+    while(y1 != y2)
+    {
+      x_[y1]  = (GLint)x;
+      z_[y1]  = z1;
+      ts_[y1] = ts;
+      tt_[y1] = tt;
+
+      x  += mx;
+      z1 += mz;
+      ts += mts;
+      tt += mtt;
+
+      y1++;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
 CEdgeF::addZC(GLint x1, GLint y1, GLfloat z1, SColorF & c1, GLint x2, GLint y2, GLfloat z2, SColorF & c2)
 {
   if(y1 < y2)
@@ -147,9 +184,11 @@ CEdgeF::addZC(GLint x1, GLint y1, GLfloat z1, SColorF & c1, GLint x2, GLint y2, 
 CEdgeFx::CEdgeFx(uint32_t height)
  : iHeight_(height)
 {
-  x_ = new GLint[iHeight_];
-  z_ = new GLfixed[iHeight_];
-  c_ = new SColorFx[iHeight_];
+  x_  = new GLint[iHeight_];
+  z_  = new GLfixed[iHeight_];
+  ts_ = new GLfixed[iHeight_];
+  tt_ = new GLfixed[iHeight_];
+  c_  = new SColorFx[iHeight_];
 }
 
 //-----------------------------------------------------------------------------
@@ -157,6 +196,8 @@ CEdgeFx::~CEdgeFx()
 {
   delete x_;
   delete z_;
+  delete ts_;
+  delete tt_;
   delete c_;
 }
 
@@ -243,6 +284,39 @@ CEdgeFx::addC(GLint x1, GLint y1, SColorFx & c1, GLint x2, GLint y2, SColorFx & 
 
 //-----------------------------------------------------------------------------
 void
+CEdgeFx::addZT(GLint x1, GLint y1, GLfixed z1, GLfixed ts1, GLfixed tt1, GLint x2, GLint y2, GLfixed z2, GLfixed ts2, GLfixed tt2)
+{
+  if(y1 < y2)
+  {
+    GLfixed x(gl_fpfromi(x1));
+    GLfixed mx(gl_fpfromi(x2 - x1) / (y2 - y1));
+
+    GLfixed mz((z2 - z1) / (y2 - y1));
+
+    GLfixed ts(ts1);
+    GLfixed tt(tt1);
+    GLfixed mts((ts2 - ts1) / (y2 - y1));
+    GLfixed mtt((tt2 - tt1) / (y2 - y1));
+
+    while(y1 != y2)
+    {
+      x_[y1]  = gl_fptoi(x);
+      z_[y1]  = z1;
+      ts_[y1] = ts;
+      tt_[y1] = tt;
+
+      x  += mx;
+      z1 += mz;
+      ts += mts;
+      tt += mtt;
+
+      y1++;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
 CEdgeFx::addZC(GLint x1, GLint y1, GLfixed z1, SColorFx & c1, GLint x2, GLint y2, GLfixed z2, SColorFx & c2)
 {
   if(y1 < y2)
@@ -256,10 +330,10 @@ CEdgeFx::addZC(GLint x1, GLint y1, GLfixed z1, SColorFx & c1, GLint x2, GLint y2
     GLfixed g(c1.g);
     GLfixed b(c1.b);
     GLfixed a(c1.a);
-    GLfixed mr((c2.r - c1.r) / (GLfixed)(y2 - y1));
-    GLfixed mg((c2.g - c1.g) / (GLfixed)(y2 - y1));
-    GLfixed mb((c2.b - c1.b) / (GLfixed)(y2 - y1));
-    GLfixed ma((c2.a - c1.a) / (GLfixed)(y2 - y1));
+    GLfixed mr((c2.r - c1.r) / (y2 - y1));
+    GLfixed mg((c2.g - c1.g) / (y2 - y1));
+    GLfixed mb((c2.b - c1.b) / (y2 - y1));
+    GLfixed ma((c2.a - c1.a) / (y2 - y1));
 
     while(y1 != y2)
     {

@@ -67,6 +67,16 @@ struct SVertexF
     GLfloat n[4];
   };
 
+  // Texture coordinates
+  union
+  {
+    struct
+    {
+      GLfloat ts, tt;
+    };
+    GLfloat t[2];
+  };
+
   // 2D Point (on screen) x/y
   union
   {
@@ -137,6 +147,7 @@ protected:
   virtual bool testAndSetDepth(GLfloat z, uint32_t index);
   virtual void hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c);
   virtual void hline_s(CEdgeF & from, CEdgeF & to, GLint & y);
+  virtual void hline_t(CEdgeF & from, CEdgeF & to, GLint & y);
   virtual void addVertexToTriangle(SVertexF & v);
   virtual void addVertexToTriangleStrip(SVertexF & v);
   virtual void addVertexToTriangleFan(SVertexF & v);
@@ -146,6 +157,7 @@ protected:
 protected:
   CSurface  * renderSurface;
   GLint       iVCount_;
+  bool        texturesEnabled_;
 
   // Depth testing
   bool        depthTestEnabled_;
