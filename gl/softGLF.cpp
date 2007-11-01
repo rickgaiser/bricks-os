@@ -554,7 +554,7 @@ CSoftGLESFloat::hline_t(CEdgeF & from, CEdgeF & to, GLint & y)
       if(x >= 0)
       {
         if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-          ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[(((GLint)(tt) % pCurrentTex_->height) * pCurrentTex_->width) + ((GLint)(ts) % pCurrentTex_->width)];
+          ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[(((GLint)(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(ts) & pCurrentTex_->maskWidth)];
       }
       if(depthTestEnabled_ == true)
         z += mz;

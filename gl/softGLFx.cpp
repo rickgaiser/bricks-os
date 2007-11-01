@@ -574,7 +574,7 @@ CSoftGLESFixed::hline_t(CEdgeFx & from, CEdgeFx & to, GLint & y)
       if(x >= 0)
       {
         if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-          ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(tt) % pCurrentTex_->height) * pCurrentTex_->width) + (gl_fptoi(ts) % pCurrentTex_->width)];
+          ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
       }
       if(depthTestEnabled_ == true)
         z += mz;

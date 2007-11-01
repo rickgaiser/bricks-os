@@ -49,24 +49,24 @@ CAGLESMatrixNDSFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfix
   zA_    = -gl_fpdiv((zFar + zNear), (zFar - zNear));
   zB_    = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear));
 
-  MATRIX_MULT4x4 = gl_to_nds(gl_fpdiv((zNear << 1), (right - left)));
+  MATRIX_MULT4x4 = gl_to_ndsv(gl_fpdiv((zNear << 1), (right - left)));
   MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_nds(gl_fpdiv((right + left), (right - left)));
-  MATRIX_MULT4x4 = nds_fpfromi(0);
-
-  MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_nds(gl_fpdiv((zNear << 1), (top - bottom)));
-  MATRIX_MULT4x4 = gl_to_nds(gl_fpdiv((top + bottom), (top - bottom)));
+  MATRIX_MULT4x4 = gl_to_ndsv(gl_fpdiv((right + left), (right - left)));
   MATRIX_MULT4x4 = nds_fpfromi(0);
 
   MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = gl_to_ndsv(gl_fpdiv((zNear << 1), (top - bottom)));
+  MATRIX_MULT4x4 = gl_to_ndsv(gl_fpdiv((top + bottom), (top - bottom)));
   MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_nds(zA_);
+
+  MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = gl_to_ndsv(zA_);
   MATRIX_MULT4x4 = nds_fpfromi(-1);
 
   MATRIX_MULT4x4 = nds_fpfromi(0);
   MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_nds(zB_);
+  MATRIX_MULT4x4 = gl_to_ndsv(zB_);
   MATRIX_MULT4x4 = nds_fpfromi(0);
 
 //  MATRIX_STORE = ndsCurrentMatrixId_;
@@ -76,50 +76,50 @@ CAGLESMatrixNDSFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfix
 void
 CAGLESMatrixNDSFx::glLoadMatrixx(const GLfixed *m)
 {
-  MATRIX_LOAD4x4 = gl_to_nds(m[0]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[1]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[2]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[3]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[0]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[1]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[2]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[3]);
 
-  MATRIX_LOAD4x4 = gl_to_nds(m[4]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[5]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[6]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[7]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[4]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[5]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[6]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[7]);
 
-  MATRIX_LOAD4x4 = gl_to_nds(m[8]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[9]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[10]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[11]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[8]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[9]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[10]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[11]);
 
-  MATRIX_LOAD4x4 = gl_to_nds(m[12]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[13]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[14]);
-  MATRIX_LOAD4x4 = gl_to_nds(m[15]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[12]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[13]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[14]);
+  MATRIX_LOAD4x4 = gl_to_ndsv(m[15]);
 }
 
 //---------------------------------------------------------------------------
 void
 CAGLESMatrixNDSFx::glMultMatrixx(const GLfixed *m)
 {
-  MATRIX_MULT4x4 = gl_to_nds(m[0]);
-  MATRIX_MULT4x4 = gl_to_nds(m[1]);
-  MATRIX_MULT4x4 = gl_to_nds(m[2]);
-  MATRIX_MULT4x4 = gl_to_nds(m[3]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[0]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[1]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[2]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[3]);
 
-  MATRIX_MULT4x4 = gl_to_nds(m[4]);
-  MATRIX_MULT4x4 = gl_to_nds(m[5]);
-  MATRIX_MULT4x4 = gl_to_nds(m[6]);
-  MATRIX_MULT4x4 = gl_to_nds(m[7]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[4]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[5]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[6]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[7]);
 
-  MATRIX_MULT4x4 = gl_to_nds(m[8]);
-  MATRIX_MULT4x4 = gl_to_nds(m[9]);
-  MATRIX_MULT4x4 = gl_to_nds(m[10]);
-  MATRIX_MULT4x4 = gl_to_nds(m[11]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[8]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[9]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[10]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[11]);
 
-  MATRIX_MULT4x4 = gl_to_nds(m[12]);
-  MATRIX_MULT4x4 = gl_to_nds(m[13]);
-  MATRIX_MULT4x4 = gl_to_nds(m[14]);
-  MATRIX_MULT4x4 = gl_to_nds(m[15]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[12]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[13]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[14]);
+  MATRIX_MULT4x4 = gl_to_ndsv(m[15]);
 }
 
 //---------------------------------------------------------------------------
@@ -131,24 +131,24 @@ CAGLESMatrixNDSFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed
   zA_    = -gl_fpdiv((zFar + zNear), (zFar - zNear));
   zB_    = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear));
 
-  MATRIX_MULT4x4 = gl_to_nds(gl_fpdiv(gl_fpfromi(2), (right - left)));
+  MATRIX_MULT4x4 = gl_to_ndsv(gl_fpdiv(gl_fpfromi(2), (right - left)));
   MATRIX_MULT4x4 = nds_fpfromi(0);
   MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_nds(-gl_fpdiv((right + left), (right - left)));
+  MATRIX_MULT4x4 = gl_to_ndsv(-gl_fpdiv((right + left), (right - left)));
 
   MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_nds(gl_fpdiv(gl_fpfromi(2), (top - bottom)));
+  MATRIX_MULT4x4 = gl_to_ndsv(gl_fpdiv(gl_fpfromi(2), (top - bottom)));
   MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_nds(-gl_fpdiv((top + bottom), (top - bottom)));
-
-  MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_nds(zA_);
-  MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = gl_to_ndsv(-gl_fpdiv((top + bottom), (top - bottom)));
 
   MATRIX_MULT4x4 = nds_fpfromi(0);
   MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_nds(zB_);
+  MATRIX_MULT4x4 = gl_to_ndsv(zA_);
+  MATRIX_MULT4x4 = nds_fpfromi(0);
+
+  MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = nds_fpfromi(0);
+  MATRIX_MULT4x4 = gl_to_ndsv(zB_);
   MATRIX_MULT4x4 = nds_fpfromi(1);
 
 //  MATRIX_STORE = ndsCurrentMatrixId_;
@@ -169,9 +169,9 @@ CAGLESMatrixNDSFx::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 
   // Convert from gl fixed to nds fixed
   iSin = -iSin; // Why???
-  x = gl_to_nds(x);
-  y = gl_to_nds(y);
-  z = gl_to_nds(z);
+  x = gl_to_ndsv(x);
+  y = gl_to_ndsv(y);
+  z = gl_to_ndsv(z);
 
   long flags(((z != 0) << 2) | ((y != 0) << 1) | (x != 0));
   switch(flags)
@@ -251,18 +251,18 @@ CAGLESMatrixNDSFx::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 void
 CAGLESMatrixNDSFx::glScalex(GLfixed x, GLfixed y, GLfixed z)
 {
-  MATRIX_SCALE = gl_to_nds(x);
-  MATRIX_SCALE = gl_to_nds(y);
-  MATRIX_SCALE = gl_to_nds(z);
+  MATRIX_SCALE = gl_to_ndsv(x);
+  MATRIX_SCALE = gl_to_ndsv(y);
+  MATRIX_SCALE = gl_to_ndsv(z);
 }
 
 //---------------------------------------------------------------------------
 void
 CAGLESMatrixNDSFx::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
-  MATRIX_TRANSLATE = gl_to_nds(x);
-  MATRIX_TRANSLATE = gl_to_nds(y);
-  MATRIX_TRANSLATE = gl_to_nds(z);
+  MATRIX_TRANSLATE = gl_to_ndsv(x);
+  MATRIX_TRANSLATE = gl_to_ndsv(y);
+  MATRIX_TRANSLATE = gl_to_ndsv(z);
 }
 
 //---------------------------------------------------------------------------

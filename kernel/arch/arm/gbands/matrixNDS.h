@@ -15,7 +15,9 @@
 #define nds_fpdiv(i1,i2) fpdiv32(NDS_MATRIX_PRECISION,i1,i2)
 
 #define nds_to_gl(i)     (i>>4)
-#define gl_to_nds(i)     (i>>4)
+#define gl_to_ndsv(i)    (i>>4)  // Vertex format 4.12
+#define gl_to_ndst(i)    (i>>12) // Texture format 12.4
+#define gl_to_ndsz(i)    (i>>13) // Depth format 12.3
 
 
 typedef GLfixed NDSfixed;

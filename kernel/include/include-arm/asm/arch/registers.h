@@ -273,16 +273,49 @@ enum ESerialMode
 #define SIO_UART_RECV_ENABLE  (1<<11)
 #endif // GBA
 
-// Matrix mode
-#define NDS_PROJECTION      0
-#define NDS_POSITION        1
-#define NDS_MODELVIEW       2
-#define NDS_TEXTURE         3
-// Poly mode
-#define NDS_TRIANGLES       0
-#define NDS_TRIANGLE_STRIP  2
-#define NDS_QUADS           1
-#define NDS_QUAD_STRIP      3
+// "REG_MATRIX_CONTROL" bits
+#define NDS_PROJECTION        0
+#define NDS_POSITION          1
+#define NDS_MODELVIEW         2
+#define NDS_TEXTURE           3
+// "REG_GFX_BEGIN" bits
+#define NDS_TRIANGLES         0
+#define NDS_TRIANGLE_STRIP    2
+#define NDS_QUADS             1
+#define NDS_QUAD_STRIP        3
+// "REG_GFX_POLY_FORMAT" bits
+#define NDS_LIGHT0            (1<<0)
+#define NDS_LIGHT1            (1<<1)
+#define NDS_LIGHT2            (1<<2)
+#define NDS_LIGHT3            (1<<3)
+#define NDS_PM_MASK           0x00000030
+#define NDS_PM_MODULATION     0x00000000
+#define NDS_PM_DECAL          0x00000010
+#define NDS_PM_TOON_HIGHLIGHT 0x00000020
+#define NDS_PM_SHADOW         0x00000030
+#define NDS_CULL_MASK         0x000000c0
+#define NDS_CULL_NONE         0x000000c0
+#define NDS_CULL_BACK         0x00000080
+#define NDS_CULL_FRONT        0x00000040
+#define NDS_CULL_BACK_AND_FRONT 0x00000000
+#define NDS_DT_LESS           (0<<14)
+#define NDS_DT_EQUAL          (1<<14)
+#define NDS_POLY_FOG          (1<<15)
+#define NDS_POLY_ALPHA_MASK   0x001f0000
+#define NDS_POLY_ALPHA(n)     ((n) << 16)
+#define NDS_POLY_ID_MASK      0x3f000000
+#define NDS_POLY_ID(n)        ((n) << 24)
+// "REG_GFX_CONTROL" bits
+#define NDS_TEXTURE_2D        (1<<0)
+#define NDS_SHADING_TOON      (0<<1)
+#define NDS_SHADING_HIGHLIGHT (1<<1)
+#define NDS_ALPHA_TEST        (1<<2)
+#define NDS_BLEND             (1<<3)
+#define NDS_ANTIALIASING      (1<<4)
+#define NDS_EDGE_MARK         (1<<5)
+#define NDS_FOG_ALPHACOLOR    (0<<6)
+#define NDS_FOG_ALPHA         (1<<6)
+#define NDS_FOG               (1<<7)
 
 
 // Memory Locations
@@ -468,6 +501,10 @@ enum ESerialMode
 #define GFX_POLYGON_RAM_USAGE (*(vuint16_t*)0x04000604)
 
 #define GFX_CUTOFF_DEPTH      (*(vuint16_t*)0x04000610)
+
+#define GFX_FOG_COLOR         (*(vuint32_t*)0x04000358)
+#define GFX_FOG_OFFSET        (*(vuint32_t*)0x0400035c)
+#define GFX_FOG_TABLE         ( (vuint32_t*)0x04000360)
 
 // NDS 3D Matrix Registers
 #define MATRIX_CONTROL        (*(vuint32_t*)0x04000440)

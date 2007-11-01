@@ -3,9 +3,9 @@
 
 
 #include "../../../../gl/softGLFx.h"
-#include "../../../../gl/textures.h"
 #include "../../../../gl/fixedPoint.h"
 #include "matrixNDS.h"
+#include "texturesNDS.h"
 
 
 //-----------------------------------------------------------------------------
@@ -13,7 +13,7 @@ class CNDSGLESContext
  : public CAGLESFloatToFxContext
  , public CAGLESBuffers
  , public CAGLESMatrixNDSFx
- , public CAGLESTextures
+ , public CAGLESTexturesNDS
 {
 public:
   CNDSGLESContext();
@@ -44,10 +44,15 @@ public:
 protected:
   virtual void addVertexToTriangleFan(SVertexFx & v);
   virtual void plotPoly(SPolygonFx & poly);
+  void updateLights();
+  void updateFog();
 
 protected:
   CSurface  * renderSurface;
   GLint       iVCount_;
+  bool        texturesEnabled_;
+  uint32_t    iNDSGFXControl_;
+  uint32_t    iNDSPolyFormat_;
 
   // Depth testing
   bool        depthTestEnabled_;
@@ -60,7 +65,6 @@ protected:
 
   // Backface culling
   bool        cullFaceEnabled_;
-  bool        bCullBack_;
   GLenum      cullFaceMode_;
 
   // Colors
@@ -69,7 +73,7 @@ protected:
 
   // Lighting
   bool        lightingEnabled_;
-  SLightFx    lights_[8];
+  SLightFx    lights_[4];
 
   // Normals
   GLfixed     normal_[4];

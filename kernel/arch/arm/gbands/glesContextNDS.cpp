@@ -10,84 +10,12 @@ typedef unsigned int wint_t;
                       (((g*255) >> 14) & 0x03e0) | \
                       (((r*255) >> 19) & 0x001f))
 
+#define fpFogRGBA(r,g,b,a) (0x8000 | \
+                      (((a*255) >>  3) & 0x001f0000) | \
+                      (((b*255) >>  9) & 0x00007c00) | \
+                      (((g*255) >> 14) & 0x000003e0) | \
+                      (((r*255) >> 19) & 0x0000001f))
 
-//-----------------------------------------------------------------------------
-enum ENDSShadingMode
-{
-  NDS_SM_TOON      = 0,
-  NDS_SM_HIGHLIGHT = 1
-};
-
-enum ENDSFogMode
-{
-  NDS_FM_ALPHACOLOR = 0,
-  NDS_FM_ALPHA      = 1
-};
-
-enum ENDSFlowMode
-{
-  NDS_FM_NONE = 0,
-  NDS_FM_ACK  = 1
-};
-
-struct SNDSGFXControl
-{
-  uint32_t bTexture2D     : 1;
-  uint32_t eShadingMode   : 1;
-  uint32_t bAlphaTest     : 1;
-  uint32_t bAlphaBlend    : 1;
-  uint32_t bAntiAliasing  : 1;
-  uint32_t bEdgeMark      : 1;
-  uint32_t eFogMode       : 1;
-  uint32_t bFog           : 1;
-  uint32_t iFogShift      : 4;
-  uint32_t eCLUnderflow   : 1;
-  uint32_t ePVOverflow    : 1;
-  uint32_t eRearPlaneMode : 1;
-  uint32_t iUnknown3      : 17;
-};
-
-
-enum ENDSPolyMode
-{
-  NDS_PM_MODULATION     = 0,
-  NDS_PM_DECAL          = 1,
-  NDS_PM_TOON_HIGHLIGHT = 2,
-  NDS_PM_SHADOW         = 3
-};
-
-enum ENDSPolyCulling
-{
-  NDS_PC_FRONT_AND_BACK = 0,
-  NDS_PC_BACK           = 1,
-  NDS_PC_FRONT          = 2,
-  NDS_PC_NONE           = 3,
-};
-
-enum ENDSDepthTestMode
-{
-  NDS_DT_LESS  = 0,
-  NDS_DT_EQUAL = 1,
-};
-
-struct SNDSGFXPolyControl
-{
-  uint32_t bLight0        : 1;
-  uint32_t bLight1        : 1;
-  uint32_t bLight2        : 1;
-  uint32_t bLight3        : 1;
-  uint32_t ePolyMode      : 2;
-  uint32_t ePolyCulling   : 2;
-  uint32_t iNotUsed1      : 3;
-  uint32_t bUnknown1      : 1;
-  uint32_t bUnknown2      : 1;
-  uint32_t eDeptTestMode  : 1;
-  uint32_t bFog           : 1;
-  uint32_t iAlpha         : 5;
-  uint32_t iNotUsed2      : 3;
-  uint32_t iID            : 6;
-  uint32_t iNotUsed3      : 2;
-};
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -95,22 +23,25 @@ CNDSGLESContext::CNDSGLESContext()
  : CAGLESFloatToFxContext()
  , CAGLESBuffers()
  , CAGLESMatrixNDSFx()
- , CAGLESTextures()
+ , CAGLESTexturesNDS()
+
+ , texturesEnabled_(false)
 {
   // Power control
   REG_POWCNT |= POWER_LCD |POWER_2D_TOP |POWER_2D_BOTTOM | POWER_3D_CORE | POWER_3D_MATRIX;
   // Display control
   REG_DISPCNT = MODE_0 | BG0_ENABLE | ENABLE_3D;
 
-  (*(SNDSGFXPolyControl*)(&GFX_POLY_FORMAT)).ePolyMode    = NDS_PM_TOON_HIGHLIGHT;
-  (*(SNDSGFXPolyControl*)(&GFX_POLY_FORMAT)).ePolyCulling = NDS_PC_NONE;
-  (*(SNDSGFXPolyControl*)(&GFX_POLY_FORMAT)).iAlpha       = 31;
+  iNDSGFXControl_ = NDS_SHADING_HIGHLIGHT;
+  iNDSPolyFormat_ = NDS_POLY_ALPHA(31) | NDS_CULL_BACK | NDS_PM_MODULATION | NDS_POLY_FOG;
 
-  (*(SNDSGFXControl*)(&GFX_CONTROL)).bTexture2D    = false;
-  (*(SNDSGFXControl*)(&GFX_CONTROL)).bAntiAliasing = true;
-  (*(SNDSGFXControl*)(&GFX_CONTROL)).eShadingMode  = /*NDS_SM_TOON*/NDS_SM_HIGHLIGHT;
-
+  GFX_CONTROL     = iNDSGFXControl_;
+  GFX_POLY_FORMAT = iNDSPolyFormat_;
   GFX_CLEAR_DEPTH = 0x7fff;
+
+  // Set the fog density table
+  for(int i(0); i < 32; i++)
+    GFX_FOG_TABLE[i] = (i << 2);
 }
 
 //-----------------------------------------------------------------------------
@@ -150,7 +81,8 @@ void
 CNDSGLESContext::glClearDepthx(GLclampx depth)
 {
   depthClear_ = clampfx(depth);
-  zClearValue_ = gl_fptoi(depthClear_ * 0xffff);
+  zClearValue_ = gl_fptoi(depthClear_ * 0x7fff);
+  GFX_CLEAR_DEPTH = zClearValue_;
 }
 
 //-----------------------------------------------------------------------------
@@ -161,6 +93,7 @@ CNDSGLESContext::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte al
   clCurrent.g = gl_fpfromi(green) / 255;
   clCurrent.b = gl_fpfromi(blue ) / 255;
   clCurrent.a = gl_fpfromi(alpha) / 255;
+  GFX_COLOR = fpRGB(clCurrent.r, clCurrent.g, clCurrent.b);
 }
 
 //-----------------------------------------------------------------------------
@@ -171,6 +104,7 @@ CNDSGLESContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alp
   clCurrent.g = green;
   clCurrent.b = blue;
   clCurrent.a = alpha;
+  GFX_COLOR = fpRGB(clCurrent.r, clCurrent.g, clCurrent.b);
 }
 
 //-----------------------------------------------------------------------------
@@ -181,6 +115,7 @@ CNDSGLESContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
   normal_[1] = ny;
   normal_[2] = nz;
   normal_[3] = gl_fpfromi(1);
+  //GFX_NORMAL = ...;
 
   //if((enableCapabilities_ & GL_NORMALIZE) == GL_NORMALIZE)
   //{
@@ -193,7 +128,17 @@ void
 CNDSGLESContext::glCullFace(GLenum mode)
 {
   cullFaceMode_ = mode;
-  bCullBack_ = (cullFaceMode_ == GL_BACK);
+
+  if(cullFaceEnabled_ == true)
+  {
+    switch(mode)
+    {
+      case GL_FRONT:          iNDSPolyFormat_ = (iNDSPolyFormat_ & ~NDS_CULL_MASK) | NDS_CULL_FRONT;          break;
+      case GL_BACK:           iNDSPolyFormat_ = (iNDSPolyFormat_ & ~NDS_CULL_MASK) | NDS_CULL_BACK;           break;
+      case GL_FRONT_AND_BACK: iNDSPolyFormat_ = (iNDSPolyFormat_ & ~NDS_CULL_MASK) | NDS_CULL_BACK_AND_FRONT; break;
+    };
+    GFX_POLY_FORMAT = iNDSPolyFormat_;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -209,25 +154,21 @@ CNDSGLESContext::glDisable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_LIGHTING: lightingEnabled_ = false; break;
-    case GL_LIGHT0: lights_[0].enabled = false; break;
-    case GL_LIGHT1: lights_[1].enabled = false; break;
-    case GL_LIGHT2: lights_[2].enabled = false; break;
-    case GL_LIGHT3: lights_[3].enabled = false; break;
-    case GL_LIGHT4: lights_[4].enabled = false; break;
-    case GL_LIGHT5: lights_[5].enabled = false; break;
-    case GL_LIGHT6: lights_[6].enabled = false; break;
-    case GL_LIGHT7: lights_[7].enabled = false; break;
+    case GL_LIGHTING:   lightingEnabled_   = false; updateLights(); break;
+    case GL_LIGHT0:     lights_[0].enabled = false; updateLights(); break;
+    case GL_LIGHT1:     lights_[1].enabled = false; updateLights(); break;
+    case GL_LIGHT2:     lights_[2].enabled = false; updateLights(); break;
+    case GL_LIGHT3:     lights_[3].enabled = false; updateLights(); break;
 
-    case GL_DEPTH_TEST: depthTestEnabled_ = false; break;
-    case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
-    case GL_FOG:        fogEnabled_ = false; break;
+    case GL_DEPTH_TEST: depthTestEnabled_  = false; break;
+    case GL_CULL_FACE:  cullFaceEnabled_   = false; iNDSPolyFormat_ &= ~NDS_CULL_MASK;  GFX_POLY_FORMAT = iNDSPolyFormat_; break;
+    case GL_FOG:        fogEnabled_        = false; iNDSGFXControl_ &= ~NDS_FOG;        GFX_CONTROL     = iNDSGFXControl_; break;
+    case GL_TEXTURE_2D: texturesEnabled_   = false; iNDSGFXControl_ &= ~NDS_TEXTURE_2D; GFX_CONTROL     = iNDSGFXControl_; break;
 
     default:
       ; // Not supported
   };
 }
-
 
 //-----------------------------------------------------------------------------
 void
@@ -236,9 +177,10 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   if(bBufVertexEnabled_ == false)
     return;
 
-  GLint idxVertex(first * bufVertex_.size);
-  GLint idxColor (first * bufColor_.size);
-  GLint idxNormal(first * bufNormal_.size);
+  GLint idxVertex  (first * bufVertex_.size);
+  GLint idxColor   (first * bufColor_.size);
+  GLint idxNormal  (first * bufNormal_.size);
+  GLint idxTexCoord(first * bufTexCoord_.size);
 
   SVertexFx v;
 
@@ -296,33 +238,58 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       };
     }
 
-    // Color
-    if(bBufColorEnabled_ == true)
+    // Textures/Colors
+    if(texturesEnabled_ == true)
     {
-      switch(bufColor_.type)
+      // Textures
+      if(bBufTexCoordEnabled_ == true)
       {
-        case GL_FLOAT:
-          v.c.r = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-          v.c.g = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-          v.c.b = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-          v.c.a = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-          break;
-        case GL_FIXED:
-          v.c.r = ((GLfixed *)bufColor_.pointer)[idxColor++];
-          v.c.g = ((GLfixed *)bufColor_.pointer)[idxColor++];
-          v.c.b = ((GLfixed *)bufColor_.pointer)[idxColor++];
-          v.c.a = ((GLfixed *)bufColor_.pointer)[idxColor++];
-          break;
-      };
+        switch(bufTexCoord_.type)
+        {
+          case GL_FLOAT:
+            v.ts =                  gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++])  * pCurrentTex_->width;
+            v.tt = (gl_fpfromi(1) - gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++])) * pCurrentTex_->height;
+            break;
+          case GL_FIXED:
+            v.ts =                  ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]  * pCurrentTex_->width;
+            v.tt = (gl_fpfromi(1) - ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]) * pCurrentTex_->height;
+            break;
+        };
+      }
+    }
+    else
+    {
+      // Color
+      if(bBufColorEnabled_ == true)
+      {
+        switch(bufColor_.type)
+        {
+          case GL_FLOAT:
+            v.c.r = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+            v.c.g = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+            v.c.b = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+            v.c.a = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+            break;
+          case GL_FIXED:
+            v.c.r = ((GLfixed *)bufColor_.pointer)[idxColor++];
+            v.c.g = ((GLfixed *)bufColor_.pointer)[idxColor++];
+            v.c.b = ((GLfixed *)bufColor_.pointer)[idxColor++];
+            v.c.a = ((GLfixed *)bufColor_.pointer)[idxColor++];
+            break;
+        };
+      }
     }
 
     switch(mode)
     {
       case GL_TRIANGLES:
       case GL_TRIANGLE_STRIP:
-        GFX_COLOR = fpRGB(v.c.r, v.c.g, v.c.b);
-        GFX_VERTEX16 = ((gl_to_nds(v.v[1]) << 16) & 0xffff0000) | (gl_to_nds(v.v[0]) & 0xffff);
-        GFX_VERTEX16 = gl_to_nds(v.v[2]) & 0xffff;
+        if(texturesEnabled_ == true)
+          GFX_TEX_COORD = ((gl_to_ndst(v.ts) << 16) & 0xffff0000) | (gl_to_ndst(v.tt) & 0xffff);
+        else
+          GFX_COLOR = fpRGB(v.c.r, v.c.g, v.c.b);
+        GFX_VERTEX16 = ((gl_to_ndsv(v.v[1]) << 16) & 0xffff0000) | (gl_to_ndsv(v.v[0]) & 0xffff);
+        GFX_VERTEX16 = gl_to_ndsv(v.v[2]) & 0xffff;
         break;
       case GL_TRIANGLE_FAN:
         addVertexToTriangleFan(v);
@@ -338,19 +305,16 @@ CNDSGLESContext::glEnable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_LIGHTING:   lightingEnabled_   = true; break;
-    case GL_LIGHT0:     lights_[0].enabled = true; break;
-    case GL_LIGHT1:     lights_[1].enabled = true; break;
-    case GL_LIGHT2:     lights_[2].enabled = true; break;
-    case GL_LIGHT3:     lights_[3].enabled = true; break;
-    case GL_LIGHT4:     lights_[4].enabled = true; break;
-    case GL_LIGHT5:     lights_[5].enabled = true; break;
-    case GL_LIGHT6:     lights_[6].enabled = true; break;
-    case GL_LIGHT7:     lights_[7].enabled = true; break;
+    case GL_LIGHTING:   lightingEnabled_   = true; updateLights(); break;
+    case GL_LIGHT0:     lights_[0].enabled = true; updateLights(); break;
+    case GL_LIGHT1:     lights_[1].enabled = true; updateLights(); break;
+    case GL_LIGHT2:     lights_[2].enabled = true; updateLights(); break;
+    case GL_LIGHT3:     lights_[3].enabled = true; updateLights(); break;
 
     case GL_DEPTH_TEST: depthTestEnabled_  = true; break;
-    case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
-    case GL_FOG:        fogEnabled_        = true; break;
+    case GL_CULL_FACE:  cullFaceEnabled_   = true; glCullFace(cullFaceMode_);                                            break;
+    case GL_FOG:        fogEnabled_        = true; iNDSGFXControl_ |= NDS_FOG;        GFX_CONTROL     = iNDSGFXControl_; break;
+    case GL_TEXTURE_2D: texturesEnabled_   = true; iNDSGFXControl_ |= NDS_TEXTURE_2D; GFX_CONTROL     = iNDSGFXControl_; break;
 
     default:
       ; // Not supported
@@ -376,10 +340,10 @@ CNDSGLESContext::glFogx(GLenum pname, GLfixed param)
 {
   switch(pname)
   {
-    case GL_FOG_DENSITY: fogDensity_ = param; break;
-    case GL_FOG_START:   fogStart_   = param; break;
-    case GL_FOG_END:     fogEnd_     = param; break;
-    case GL_FOG_MODE:                         break;
+    case GL_FOG_DENSITY: fogDensity_ = param; updateFog(); break;
+    case GL_FOG_START:   fogStart_   = param; updateFog(); break;
+    case GL_FOG_END:     fogEnd_     = param; updateFog(); break;
+    case GL_FOG_MODE:                                      break;
   };
 }
 
@@ -394,6 +358,7 @@ CNDSGLESContext::glFogxv(GLenum pname, const GLfixed * params)
       fogColor_.g = params[1];
       fogColor_.b = params[2];
       fogColor_.a = params[3];
+      GFX_FOG_COLOR = fpFogRGBA(fogColor_.r, fogColor_.g, fogColor_.b, fogColor_.a);
       break;
   };
 }
@@ -415,10 +380,6 @@ CNDSGLESContext::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
     case GL_LIGHT1: pLight = &lights_[1]; break;
     case GL_LIGHT2: pLight = &lights_[2]; break;
     case GL_LIGHT3: pLight = &lights_[3]; break;
-    case GL_LIGHT4: pLight = &lights_[4]; break;
-    case GL_LIGHT5: pLight = &lights_[5]; break;
-    case GL_LIGHT6: pLight = &lights_[6]; break;
-    case GL_LIGHT7: pLight = &lights_[7]; break;
     default:
       return;
   }
@@ -507,10 +468,38 @@ CNDSGLESContext::plotPoly(SPolygonFx & poly)
 {
   for(int i(0); i < 3; i++)
   {
-    GFX_COLOR = fpRGB(poly.v[i]->c.r, poly.v[i]->c.g, poly.v[i]->c.b);
-    GFX_VERTEX16 = ((gl_to_nds(poly.v[i]->v[1]) << 16) & 0xffff0000) | (gl_to_nds(poly.v[i]->v[0]) & 0xffff);
-    GFX_VERTEX16 = gl_to_nds(poly.v[i]->v[2]) & 0xffff;
+    if(texturesEnabled_ == true)
+      GFX_TEX_COORD = ((gl_to_ndst(poly.v[i]->ts) << 16) & 0xffff0000) | (gl_to_ndst(poly.v[i]->tt) & 0xffff);
+    else
+      GFX_COLOR = fpRGB(poly.v[i]->c.r, poly.v[i]->c.g, poly.v[i]->c.b);
+    GFX_VERTEX16 = ((gl_to_ndsv(poly.v[i]->v[1]) << 16) & 0xffff0000) | (gl_to_ndsv(poly.v[i]->v[0]) & 0xffff);
+    GFX_VERTEX16 = gl_to_ndsv(poly.v[i]->v[2]) & 0xffff;
   }
+}
+
+//-----------------------------------------------------------------------------
+void
+CNDSGLESContext::updateLights()
+{
+  iNDSPolyFormat_ &= ~(NDS_LIGHT0 | NDS_LIGHT1 | NDS_LIGHT2 | NDS_LIGHT3);
+  if(lightingEnabled_ = true)
+  {
+    if(lights_[0].enabled == true) iNDSPolyFormat_ |= NDS_LIGHT0;
+    if(lights_[1].enabled == true) iNDSPolyFormat_ |= NDS_LIGHT1;
+    if(lights_[2].enabled == true) iNDSPolyFormat_ |= NDS_LIGHT2;
+    if(lights_[3].enabled == true) iNDSPolyFormat_ |= NDS_LIGHT3;
+  }
+  GFX_POLY_FORMAT = iNDSPolyFormat_;
+}
+
+//-----------------------------------------------------------------------------
+void
+CNDSGLESContext::updateFog()
+{
+  GFX_FOG_OFFSET = gl_to_ndsz(fogStart_);
+
+//  fogDensity_
+//  fogEnd_
 }
 
 //-----------------------------------------------------------------------------
