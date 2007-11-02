@@ -67,7 +67,10 @@ enum EColorFormat
   ((b >> colorFormatOps[fmt].lossB) << colorFormatOps[fmt].shiftB) | \
   ((a >> colorFormatOps[fmt].lossA) << colorFormatOps[fmt].shiftA)
 #define BxColorFormat_FromRGB(fmt,r,g,b) \
-  BxColorFormat_FromRGBA(fmt,r,g,b,255)
+  ((r >> colorFormatOps[fmt].lossR) << colorFormatOps[fmt].shiftR) | \
+  ((g >> colorFormatOps[fmt].lossG) << colorFormatOps[fmt].shiftG) | \
+  ((b >> colorFormatOps[fmt].lossB) << colorFormatOps[fmt].shiftB) | \
+  (colorFormatOps[fmt].maskA)
 // Get colors from color formats
 #define BxColorFormat_GetR(fmt,color) \
   (((color & colorFormatOps[fmt].maskR) >> colorFormatOps[fmt].shiftR) << colorFormatOps[fmt].lossR)

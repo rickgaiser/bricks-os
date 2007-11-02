@@ -209,6 +209,7 @@ enum EDMAMODE
 #define VRAM_TYPE_MAIN_BG     (1<<0)
 #define VRAM_TYPE_MAIN_SPRITE (2<<0)
 #define VRAM_TYPE_TEXTURE     (3<<0)
+#define VRAM_OFFSET(x)        ((x&0x3)<<3)
 // "REG_POWCNT" bits
 #ifdef NDS7
 #define POWER_SOUND           (1<<0)
