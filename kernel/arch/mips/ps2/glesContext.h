@@ -4,7 +4,7 @@
 
 #include "../../../../gl/softGLF.h"
 #include "../../../../gl/matrix.h"
-#include "../../../../gl/textures.h"
+#include "textures.h"
 
 
 //-----------------------------------------------------------------------------
@@ -12,7 +12,7 @@ class CPS2GLESContext
  : public CAGLESFxToFloatContext
  , public CAGLESBuffers
  , public CAGLESMatrixF
- , public CAGLESTextures
+ , public CAGLESTexturesPS2
 {
 public:
   CPS2GLESContext();
@@ -52,6 +52,7 @@ protected:
 
   CSurface  * renderSurface;
   GLint       iVCount_;
+  bool        texturesEnabled_;
 
   GLenum      shadingModel_;
 

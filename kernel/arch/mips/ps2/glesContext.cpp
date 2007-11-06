@@ -19,7 +19,7 @@ CPS2GLESContext::CPS2GLESContext()
  : CAGLESFxToFloatContext()
  , CAGLESBuffers()
  , CAGLESMatrixF()
- , CAGLESTextures()
+ , CAGLESTexturesPS2()
 
  , ps2Shading_(SHADE_FLAT)
  , ps2Textures_(TEXTURES_OFF)
@@ -31,6 +31,7 @@ CPS2GLESContext::CPS2GLESContext()
  , ps2ZMax_(0xffff)
 
  , renderSurface(0)
+ , texturesEnabled_(false)
  , shadingModel_(GL_FLAT)
  , cullFaceEnabled_(false)
  , bCullBack_(true)
@@ -211,15 +212,15 @@ CPS2GLESContext::glDisable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_LIGHTING: lightingEnabled_ = false; break;
-    case GL_LIGHT0: lights_[0].enabled = false; break;
-    case GL_LIGHT1: lights_[1].enabled = false; break;
-    case GL_LIGHT2: lights_[2].enabled = false; break;
-    case GL_LIGHT3: lights_[3].enabled = false; break;
-    case GL_LIGHT4: lights_[4].enabled = false; break;
-    case GL_LIGHT5: lights_[5].enabled = false; break;
-    case GL_LIGHT6: lights_[6].enabled = false; break;
-    case GL_LIGHT7: lights_[7].enabled = false; break;
+    case GL_LIGHTING:   lightingEnabled_   = false; break;
+    case GL_LIGHT0:     lights_[0].enabled = false; break;
+    case GL_LIGHT1:     lights_[1].enabled = false; break;
+    case GL_LIGHT2:     lights_[2].enabled = false; break;
+    case GL_LIGHT3:     lights_[3].enabled = false; break;
+    case GL_LIGHT4:     lights_[4].enabled = false; break;
+    case GL_LIGHT5:     lights_[5].enabled = false; break;
+    case GL_LIGHT6:     lights_[6].enabled = false; break;
+    case GL_LIGHT7:     lights_[7].enabled = false; break;
 
     case GL_DEPTH_TEST:
     {
@@ -230,8 +231,9 @@ CPS2GLESContext::glDisable(GLenum cap)
       GIF_DATA_AD(dma_buf, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
     }
-    case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
-    case GL_FOG:        fogEnabled_ = false; break;
+    case GL_CULL_FACE:  cullFaceEnabled_ = false; break;
+    case GL_FOG:        fogEnabled_      = false; break;
+    case GL_TEXTURE_2D: texturesEnabled_ = false; ps2Textures_ = TEXTURES_OFF; break;
 
     default:
       ; // Not supported
@@ -245,22 +247,23 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   if(bBufVertexEnabled_ == false)
     return;
 
-  GLint idxVertex(first * bufVertex_.size);
-  GLint idxColor (first * bufColor_.size);
-  GLint idxNormal(first * bufNormal_.size);
+  GLint idxVertex  (first * bufVertex_.size);
+  GLint idxColor   (first * bufColor_.size);
+  GLint idxNormal  (first * bufNormal_.size);
+  GLint idxTexCoord(first * bufTexCoord_.size);
 
   SVertexF v;
 
   switch(mode)
   {
     case GL_TRIANGLES:
-      GIF_DATA_AD(dma_buf, prim, GS_PRIM(PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, 0, 0, 0));
+      GIF_DATA_AD(dma_buf, prim, GS_PRIM(PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
     case GL_TRIANGLE_STRIP:
-      GIF_DATA_AD(dma_buf, prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, 0, 0, 0));
+      GIF_DATA_AD(dma_buf, prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
     case GL_TRIANGLE_FAN:
-      GIF_DATA_AD(dma_buf, prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, 0, 0, 0));
+      GIF_DATA_AD(dma_buf, prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
   };
 
@@ -304,6 +307,26 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       };
     }
 
+    // Textures
+    if(texturesEnabled_ == true)
+    {
+      // Textures
+      if(bBufTexCoordEnabled_ == true)
+      {
+        switch(bufTexCoord_.type)
+        {
+          case GL_FLOAT:
+            v.ts =         ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
+            v.tt = (1.0f - ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
+            break;
+          case GL_FIXED:
+            v.ts =         gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+            v.tt = (1.0f - gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]));
+            break;
+        };
+      }
+    }
+
     // Color
     if(bBufColorEnabled_ == true)
     {
@@ -323,6 +346,8 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
           break;
       };
     }
+    else
+      v.c = clCurrent;
 
     // ModelView Transformation
     matrixModelView.transform(v.v, v.v);
@@ -376,8 +401,20 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       z =            (uint32_t)(((v.v[3] - zNear_) / (zFar_ - zNear_)) * ps2ZMax_); // Linear depth
 
     // Add to message
-    GIF_DATA_AD(dma_buf, rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, 0));
-    GIF_DATA_AD(dma_buf, xyz2,  GS_XYZ2((gs_origin_x+v.sx)<<4, (gs_origin_y+v.sy)<<4, z));
+    if(texturesEnabled_ == true)
+    {
+      v.ts /= v.v[3];
+      v.tt /= v.v[3];
+      float tq = 1.0f / v.v[3];
+
+      GIF_DATA_AD(dma_buf, st, GS_ST(*(uint32_t *)(&v.ts), *(uint32_t *)(&v.tt)));
+      GIF_DATA_AD(dma_buf, rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, *(uint32_t *)(&tq)));
+    }
+    else
+    {
+      GIF_DATA_AD(dma_buf, rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, 0));
+    }
+    GIF_DATA_AD(dma_buf, xyz2, GS_XYZ2((gs_origin_x+v.sx)<<4, (gs_origin_y+v.sy)<<4, z));
   }
 }
 
@@ -424,6 +461,7 @@ CPS2GLESContext::glEnable(GLenum cap)
     }
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
+    case GL_TEXTURE_2D: texturesEnabled_   = true; ps2Textures_ = TEXTURES_ON; break;
 
     default:
       ; // Not supported

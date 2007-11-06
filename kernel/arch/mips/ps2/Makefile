@@ -13,7 +13,7 @@ OBJS            =\
 
 
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
-OBJS-$(CONFIG_GL)                  += glesContext
+OBJS-$(CONFIG_GL)                  += glesContext textures
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel
