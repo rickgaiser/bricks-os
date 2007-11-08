@@ -6,7 +6,7 @@
 //---------------------------------------------------------------------------
 #define SET_PIXEL(x,y,c) \
 { \
-  switch(colorFormatOps[format_].bitsPerPixel) \
+  switch(bpp_) \
   { \
     case 16: \
       ((uint16_t *)p)[y * width_ + x] = c; \
@@ -264,7 +264,7 @@ CSurface::swap(bool sync)
     if(sync == true)
       waitVSync();
 
-    memcpy(pFront, pBack, width_ * height_ * (colorFormatOps[format_].bitsPerPixel / 8));
+    memcpy(pFront, pBack, width_ * height_ * (bpp_ / 8));
   }
 }
 

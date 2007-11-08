@@ -437,24 +437,25 @@ CPS2GLESContext::glEnable(GLenum cap)
     case GL_DEPTH_TEST:
     {
       depthTestEnabled_ = true;
-      if(colorFormatOps[renderSurface->format_].bitsPerPixel == 16)
+      // Z-Buffer
+      switch(renderSurface->bpp_)
       {
-        // Z-Buffer
-        GIF_DATA_AD(dma_buf, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_ENABLE));
-        ps2ZMax_ = 0xffff;
-      }
-      else if(colorFormatOps[renderSurface->format_].bitsPerPixel == 24)
-      {
-        // Z-Buffer
-        GIF_DATA_AD(dma_buf, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
-        ps2ZMax_ = 0xffffff;
-      }
-      else if(colorFormatOps[renderSurface->format_].bitsPerPixel == 32)
-      {
-        // Z-Buffer
-        GIF_DATA_AD(dma_buf, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
-        ps2ZMax_ = 0xffffffff;
-      }
+        case 16:
+        {
+          GIF_DATA_AD(dma_buf, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_ENABLE));
+          ps2ZMax_ = 0xffff;
+        }
+        case 24:
+        {
+          GIF_DATA_AD(dma_buf, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
+          ps2ZMax_ = 0xffffff;
+        }
+        case 32:
+        {
+          GIF_DATA_AD(dma_buf, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
+          ps2ZMax_ = 0xffffffff;
+        }
+      };
       // Z-Buffer test
       GIF_DATA_AD(dma_buf, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;

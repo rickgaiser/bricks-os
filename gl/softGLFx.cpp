@@ -107,8 +107,21 @@ CSoftGLESFixed::glClear(GLbitfield mask)
   {
     color_t color(fpRGB(clClear.r, clClear.g, clClear.b));
 
-    for(int i(0); i < viewportPixelCount; i++)
-      ((uint16_t *)renderSurface->p)[i] = color;
+    switch(renderSurface->bpp_)
+    {
+      case 8:
+        for(int i(0); i < viewportPixelCount; i++)
+          ((uint8_t  *)renderSurface->p)[i] = color;
+        break;
+      case 16:
+        for(int i(0); i < viewportPixelCount; i++)
+          ((uint16_t *)renderSurface->p)[i] = color;
+        break;
+      case 32:
+        for(int i(0); i < viewportPixelCount; i++)
+          ((uint32_t *)renderSurface->p)[i] = color;
+        break;
+    };
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
@@ -501,7 +514,20 @@ CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c)
       if(x >= 0)
       {
         if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-          ((uint16_t *)renderSurface->p)[index] = color;
+        {
+          switch(renderSurface->bpp_)
+          {
+            case 8:
+              ((uint8_t  *)renderSurface->p)[index] = color;
+              break;
+            case 16:
+              ((uint16_t *)renderSurface->p)[index] = color;
+              break;
+            case 32:
+              ((uint32_t *)renderSurface->p)[index] = color;
+              break;
+          };
+        }
       }
       if(depthTestEnabled_ == true)
         z += mz;
@@ -537,7 +563,20 @@ CSoftGLESFixed::hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y)
       if(x >= 0)
       {
         if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-          ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
+        {
+          switch(renderSurface->bpp_)
+          {
+            case 8:
+              ((uint8_t  *)renderSurface->p)[index] = fpRGB(r, g, b);
+              break;
+            case 16:
+              ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
+              break;
+            case 32:
+              ((uint32_t *)renderSurface->p)[index] = fpRGB(r, g, b);
+              break;
+          };
+        }
       }
       if(depthTestEnabled_ == true)
         z += mz;
@@ -574,7 +613,20 @@ CSoftGLESFixed::hline_t(CEdgeFx & from, CEdgeFx & to, GLint & y)
       if(x >= 0)
       {
         if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-          ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+        {
+          switch(renderSurface->bpp_)
+          {
+            case 8:
+              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+              break;
+            case 16:
+              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+              break;
+            case 32:
+              ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+              break;
+          };
+        }
       }
       if(depthTestEnabled_ == true)
         z += mz;

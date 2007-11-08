@@ -23,7 +23,7 @@ ps2_vmode_t vmodes[] =
   {0x02,  640,  448, GRAPH_PSM_16, INTERLACED,     16, GS_SET_DISPLAY(632, 50, 3, 0, 2559,  447)},
   {0x02,  640,  448, GRAPH_PSM_24, INTERLACED,     24, GS_SET_DISPLAY(632, 50, 3, 0, 2559,  447)},
   {0x02,  640,  448, GRAPH_PSM_32, INTERLACED,     32, GS_SET_DISPLAY(632, 50, 3, 0, 2559,  447)},
-  
+
   // EDTV
   {0x50,  720,  480, GRAPH_PSM_16, NON_INTERLACED, 16, GS_SET_DISPLAY(232, 35, 1, 0, 1439,  479)},
   {0x50,  720,  480, GRAPH_PSM_24, NON_INTERLACED, 24, GS_SET_DISPLAY(232, 35, 1, 0, 1439,  479)},
@@ -33,7 +33,7 @@ ps2_vmode_t vmodes[] =
   {0x52, 1280,  720, GRAPH_PSM_24, NON_INTERLACED, 24, GS_SET_DISPLAY(302, 24, 0, 0, 1279,  719)},
   {0x52, 1280,  720, GRAPH_PSM_32, NON_INTERLACED, 32, GS_SET_DISPLAY(302, 24, 0, 0, 1279,  719)},
   {0x51, 1920, 1080, GRAPH_PSM_16, INTERLACED,     16, GS_SET_DISPLAY(238, 40, 0, 0, 1919, 1079)},
-  
+
   // VGA
   {0x1A,  640,  480, GRAPH_PSM_16, NON_INTERLACED, 16, GS_SET_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 60Hz
   {0x1A,  640,  480, GRAPH_PSM_24, NON_INTERLACED, 24, GS_SET_DISPLAY(276, 34, 1, 0, 1279,  479)},
@@ -836,6 +836,9 @@ CPS2VideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble
         {
           pSurface = new CPS2Surface;
           pSurface->setMode(&vmodes[i]);
+          pSurface->width_ = pCurrentMode_->width;
+          pSurface->height_= pCurrentMode_->height;
+          pSurface->bpp_   = pCurrentMode_->bpp;
           pSurface->format_= pCurrentMode_->format;
           pSurface->pBack  = 0;//new uint32_t[pCurrentMode_->xres * pCurrentMode_->yres];
           pSurface->pFront = pSurface->pBack;  // Fail safe?

@@ -147,6 +147,7 @@ public:
   // Geometry
   unsigned int width_;
   unsigned int height_;
+  unsigned int bpp_;
 
   // Colors
   SColor color_;

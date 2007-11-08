@@ -227,6 +227,7 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble
       CSurface * pSurface = new CGBASurface;
       pSurface->width_ = pCurrentMode_->width;
       pSurface->height_= pCurrentMode_->height;
+      pSurface->bpp_   = pCurrentMode_->bpp;
       pSurface->format_= pCurrentMode_->format;
       pSurface->pFront = (uint16_t *)0x6000000;
       if(bDouble == true)
@@ -255,8 +256,9 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble
     case stOFFSCREEN:
     {
       CSurface * pSurface = new CGBASurface;
-      pSurface->width_ = 0;
-      pSurface->height_= 0;
+      pSurface->width_ = pCurrentMode_->width;
+      pSurface->height_= pCurrentMode_->height;
+      pSurface->bpp_   = pCurrentMode_->bpp;
       pSurface->format_= pCurrentMode_->format;
       pSurface->p      = 0;
       *surface = pSurface;
