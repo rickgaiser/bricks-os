@@ -21,7 +21,6 @@ CSoftGLESFixed::CSoftGLESFixed()
  , CAGLESMatrixFx()
  , CAGLESTextures()
 
- , renderSurface(0)
  , texturesEnabled_(false)
  , depthTestEnabled_(false)
  , depthFunction_(GL_LESS)
@@ -90,13 +89,6 @@ CSoftGLESFixed::CSoftGLESFixed()
 //-----------------------------------------------------------------------------
 CSoftGLESFixed::~CSoftGLESFixed()
 {
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::setSurface(CSurface * surface)
-{
-  renderSurface = surface;
 }
 
 //-----------------------------------------------------------------------------

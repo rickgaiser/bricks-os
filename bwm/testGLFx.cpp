@@ -5,62 +5,13 @@
 #include "../gl/fixedPoint.h"
 
 
+extern void initPyramidFx();
+extern void drawPyramidFx();
+extern void initCubeFx();
+extern void drawCubeFx();
 const GLfixed lightAmbient[] = {gl_fpfromf(0.1f), gl_fpfromf(0.1f), gl_fpfromf(0.1f), gl_fpfromf(1.0f)};
 const GLfixed lightDiffuse[] = {gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f)};
-const GLfixed fogColor[]     = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f)};
-
-const GLfixed triangle[] =
-{
-  // Square (strip)
-  gl_fpfromf(-1.0f), gl_fpfromf(-1.5f), gl_fpfromf( 1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(-1.5f), gl_fpfromf( 1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf(-1.5f), gl_fpfromf(-1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(-1.5f), gl_fpfromf(-1.0f),
-
-  // Pyramid (fan)
-  gl_fpfromf( 0.0f), gl_fpfromf( 1.0f), gl_fpfromf( 0.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f)
-};
-const GLint square_vcount(4);
-const GLint pyramid_vcount(6);
-
-const GLfixed colors[] =
-{
-  // Square
-  gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(1.0f),
-  gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(1.0f),
-  gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(1.0f),
-  gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(1.0f),
-
-  // Pyramid
-  gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f)
-};
-
-const GLfixed normals[] =
-{
-  // Square
-  gl_fpfromf( 0.0f), gl_fpfromf(1.0f), gl_fpfromf( 0.0f),
-  gl_fpfromf( 0.0f), gl_fpfromf(1.0f), gl_fpfromf( 0.0f),
-  gl_fpfromf( 0.0f), gl_fpfromf(1.0f), gl_fpfromf( 0.0f),
-  gl_fpfromf( 0.0f), gl_fpfromf(1.0f), gl_fpfromf( 0.0f),
-
-  // Pyramid
-  gl_fpfromf( 0.0f), gl_fpfromf(1.0f), gl_fpfromf( 0.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf(0.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(0.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(0.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf(0.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf(0.0f), gl_fpfromf( 1.0f)
-};
+const GLfixed fogColor[]     = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
 
 
 // -----------------------------------------------------------------------------
@@ -74,14 +25,14 @@ testGLFx(CSurface * surface)
   glClearDepthx(gl_fpfromi(1));
   glDepthFunc(GL_LEQUAL);
   //glEnable(GL_DEPTH_TEST);
-  
+
   // Backface culling
   glCullFace(GL_BACK);
-  //glEnable(GL_CULL_FACE);
-  
+  glEnable(GL_CULL_FACE);
+
   // Shade model
   glShadeModel(/*GL_FLAT*/GL_SMOOTH);
-  
+
   // Lighting
   //glLightxv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
   //glLightxv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
@@ -94,14 +45,6 @@ testGLFx(CSurface * surface)
   glFogx(GL_FOG_START, gl_fpfromi(1));
   glFogx(GL_FOG_END, gl_fpfromi(10));
   //glEnable(GL_FOG);
-  
-  // Pointers to data
-  glVertexPointer(3, GL_FIXED, 0, triangle);
-  glColorPointer(4, GL_FIXED, 0, colors);
-  //glNormalPointer(GL_FIXED, 0, normals);
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glEnableClientState(GL_COLOR_ARRAY);
-  //glEnableClientState(GL_NORMAL_ARRAY);
 
   // Viewport & Perspective
   glViewport(0, 0, surface->width(), surface->height());
@@ -113,9 +56,10 @@ testGLFx(CSurface * surface)
   glTranslatex(gl_fpfromi(0), gl_fpfromi(-2), gl_fpfromi(0));
   // Look down a little
   glRotatex(gl_fpfromi(23), gl_fpfromi(1), gl_fpfromi(0), gl_fpfromi(0));
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
 
+  initPyramidFx();
+  initCubeFx();
+  glMatrixMode(GL_MODELVIEW);
   // Show Pyramid for 1 full rotation around y axis
   for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(2))
   {
@@ -123,23 +67,20 @@ testGLFx(CSurface * surface)
     glClear(GL_COLOR_BUFFER_BIT);
 
     glLoadIdentity();
-    glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
-    glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, square_vcount);
-    glDrawArrays(GL_TRIANGLE_FAN, square_vcount, pyramid_vcount);
-/*
-    glLoadIdentity();
     glTranslatex(gl_fpfromi(-2), gl_fpfromi(0), gl_fpfromi(-8));
     glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, square_vcount);
-    glDrawArrays(GL_TRIANGLE_FAN, square_vcount, pyramid_vcount);
+    drawPyramidFx();
 
     glLoadIdentity();
     glTranslatex(gl_fpfromi(2), gl_fpfromi(0), gl_fpfromi(-8));
     glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, square_vcount);
-    glDrawArrays(GL_TRIANGLE_FAN, square_vcount, pyramid_vcount);
-*/
+    drawPyramidFx();
+
+    glLoadIdentity();
+    glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
+    glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
+    drawCubeFx();
+
     glFlush();
 
     // Display progress bar

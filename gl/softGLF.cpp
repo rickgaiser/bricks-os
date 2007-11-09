@@ -15,7 +15,6 @@ CSoftGLESFloat::CSoftGLESFloat()
  , CAGLESMatrixF()
  , CAGLESTextures()
 
- , renderSurface(0)
  , texturesEnabled_(false)
  , depthTestEnabled_(false)
  , depthFunction_(GL_LESS)
@@ -70,13 +69,6 @@ CSoftGLESFloat::CSoftGLESFloat()
 //-----------------------------------------------------------------------------
 CSoftGLESFloat::~CSoftGLESFloat()
 {
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::setSurface(CSurface * surface)
-{
-  renderSurface = surface;
 }
 
 //-----------------------------------------------------------------------------

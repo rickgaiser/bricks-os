@@ -19,8 +19,6 @@ public:
   CNDSGLESContext();
   virtual ~CNDSGLESContext();
 
-  virtual void setSurface(CSurface * surface);
-
   virtual void glClear(GLbitfield mask);
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
   virtual void glClearDepthx(GLclampx depth);
@@ -48,7 +46,6 @@ protected:
   void updateFog();
 
 protected:
-  CSurface  * renderSurface;
   GLint       iVCount_;
   bool        texturesEnabled_;
   uint32_t    iNDSGFXControl_;

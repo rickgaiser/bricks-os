@@ -122,8 +122,6 @@ public:
   CSoftGLESFixed();
   virtual ~CSoftGLESFixed();
 
-  virtual void setSurface(CSurface * surface);
-
   virtual void glClear(GLbitfield mask);
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
   virtual void glClearDepthx(GLclampx depth);
@@ -156,7 +154,6 @@ protected:
   virtual void rasterPoly(SPolygonFx & poly);
 
 protected:
-  CSurface  * renderSurface;
   GLint       iVCount_;
   bool        texturesEnabled_;
 

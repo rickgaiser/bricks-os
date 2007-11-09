@@ -51,13 +51,6 @@ CNDSGLESContext::~CNDSGLESContext()
 
 //-----------------------------------------------------------------------------
 void
-CNDSGLESContext::setSurface(CSurface * surface)
-{
-  renderSurface = surface;
-}
-
-//-----------------------------------------------------------------------------
-void
 CNDSGLESContext::glClear(GLbitfield mask)
 {
   if(mask & GL_COLOR_BUFFER_BIT)

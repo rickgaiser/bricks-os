@@ -6,7 +6,7 @@ OBJS            =\
                 bwm \
 
 
-OBJS-$(CONFIG_GL)                  += testGLF testGLFx
+OBJS-$(CONFIG_GL)                  += testGLF testGLFx pyramid cube crate
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.user

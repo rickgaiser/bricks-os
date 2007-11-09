@@ -46,9 +46,10 @@ struct SBufferPointer
 class IGLESContext
 {
 public:
-  virtual ~IGLESContext(){}
+  IGLESContext();
+  virtual ~IGLESContext();
 
-  virtual void setSurface(CSurface * surface) = 0;
+  virtual void setSurface(CSurface * surface);
 
 //  virtual void glAlphaFunc(GLenum func, GLclampf ref) = 0;
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) = 0;
@@ -195,6 +196,9 @@ public:
   virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z) = 0;
   virtual void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer) = 0;
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height) = 0;
+
+protected:
+  CSurface  * renderSurface;
 };
 
 //-----------------------------------------------------------------------------

@@ -30,7 +30,6 @@ CPS2GLESContext::CPS2GLESContext()
  , ps2DepthInvert_(true)
  , ps2ZMax_(0xffff)
 
- , renderSurface(0)
  , texturesEnabled_(false)
  , shadingModel_(GL_FLAT)
  , cullFaceEnabled_(false)
@@ -85,13 +84,6 @@ CPS2GLESContext::CPS2GLESContext()
 //-----------------------------------------------------------------------------
 CPS2GLESContext::~CPS2GLESContext()
 {
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::setSurface(CSurface * surface)
-{
-  renderSurface = surface;
 }
 
 //-----------------------------------------------------------------------------

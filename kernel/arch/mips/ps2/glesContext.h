@@ -18,8 +18,6 @@ public:
   CPS2GLESContext();
   virtual ~CPS2GLESContext();
 
-  virtual void setSurface(CSurface * surface);
-
   virtual void glClear(GLbitfield mask);
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
   virtual void glClearDepthf(GLclampf depth);
@@ -50,7 +48,6 @@ protected:
   bool        ps2DepthInvert_;
   uint32_t    ps2ZMax_;
 
-  CSurface  * renderSurface;
   GLint       iVCount_;
   bool        texturesEnabled_;
 

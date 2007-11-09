@@ -19,7 +19,7 @@ struct STexture
   uint32_t maskWidth;
   uint32_t maskHeight;
 
-  const void * data;
+  void * data;
 };
 
 //-----------------------------------------------------------------------------

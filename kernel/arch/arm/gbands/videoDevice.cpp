@@ -10,7 +10,7 @@ static const SVideoMode videoModes[] =
 {
 #ifdef GBA
 //  {240, 160, 16, cfX1R5G5B5}, // 3:2
-//  {240, 160,  8, cf????????}, // 3:2
+//  {240, 160,  8, cfP8}, // 3:2
   {160, 128, 16, cfX1R5G5B5}, // 5:4
 //  {120,  80, 16, cfX1R5G5B5}, // 3:2
 #endif // GBA
@@ -44,9 +44,12 @@ CGBASurface::fill()
 void
 CGBASurface::fillRect_i(int x, int y, unsigned int width, unsigned int height)
 {
+  unsigned int iBase(y * width_ + x);
+
   for(unsigned int iY(y); iY < (y + height); iY++)
   {
-    dmaFill16(fmtFillColor_ | 0x8000, &((uint16_t *)p)[iY * width_ + x], width);
+    dmaFill16(fmtFillColor_ | 0x8000, &((uint16_t *)p)[iBase], width);
+    iBase += width_;
   }
 }
 

@@ -57,6 +57,9 @@ enum EColorFormat
   , cfX1B5G5R5      = 14  // GBA
   , cfA4B4G4R4      = 15
   , cfX4B4G4R4      = 16
+    // Palettized
+  , cfP8            = 17  // 256 colors (8 bit)
+  , cfP4            = 18  //  16 colors (4 bit)
 };
 
 //---------------------------------------------------------------------------
