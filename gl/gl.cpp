@@ -1,18 +1,25 @@
 #include "EGL/egl.h"
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
-
 #include "context.h"
+#include "asm/arch/config.h"
 
 
 extern void * eglGetCurrentGLESContext();
 
-#define GLES_GET_CONTEXT(RETVAL) \
-IGLESContext * context = (IGLESContext *)eglGetCurrentGLESContext(); \
-if(context == 0) \
-{ \
-  return RETVAL; \
-}
+#ifdef GL_MULTI_CONTEXT
+  #define GLES_GET_CONTEXT(RETVAL) \
+  IGLESContext * context = (IGLESContext *)eglGetCurrentGLESContext(); \
+  if(context == 0) \
+    return RETVAL;
+#else
+  IGLESContext * context = 0;
+  #define GLES_GET_CONTEXT(RETVAL) \
+  if(context == 0) \
+    context = (IGLESContext *)eglGetCurrentGLESContext(); \
+  if(context == 0) \
+    return RETVAL;
+#endif // GL_MULTI_CONTEXT
 
 //-----------------------------------------------------------------------------
 // GL API Macros

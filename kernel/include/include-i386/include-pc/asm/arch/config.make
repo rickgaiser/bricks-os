@@ -10,6 +10,7 @@
 # Video configuration
 #CONFIG_FRAMEBUFFER=y
 #CONFIG_GL=y
+#CONFIG_GL_MULTI_CONTEXT=y
 
 # Library configuration
 CONFIG_BUILTIN_MM=y

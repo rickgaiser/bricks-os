@@ -3,8 +3,8 @@
 
 
 // Kernel interface
-//#define CONFIG_DIRECT_ACCESS_KERNEL
-//#define CONFIG_DIRECT_ACCESS_KERNEL_FUNC
+#undef  CONFIG_DIRECT_ACCESS_KERNEL
+#undef  CONFIG_DIRECT_ACCESS_KERNEL_FUNC
 
 // File System
 #undef  CONFIG_FILESYSTEM
@@ -14,6 +14,7 @@
 // Video configuration
 #undef  CONFIG_FRAMEBUFFER
 #undef  CONFIG_GL
+#undef  CONFIG_GL_MULTI_CONTEXT
 
 // Library configuration
 #define CONFIG_BUILTIN_MM
