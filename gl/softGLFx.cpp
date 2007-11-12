@@ -492,11 +492,11 @@ CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c)
 {
   if(from.x_[y] < to.x_[y])
   {
-    GLint dx(to.x_[y] - from.x_[y]);
+    GLfixed dx(gl_fpdiv(gl_fpfromi(1), gl_fpfromi(to.x_[y] - from.x_[y])));
 
     // Depth interpolation
     GLfixed z(from.z_[y]);
-    GLfixed mz((to.z_[y] - from.z_[y]) / dx);
+    GLfixed mz(gl_fpmul(to.z_[y] - from.z_[y], dx));
 
     color_t color(fpRGB(c.r, c.g, c.b));
 
@@ -537,21 +537,21 @@ CSoftGLESFixed::hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y)
 {
   if(from.x_[y] < to.x_[y])
   {
-    GLint dx(to.x_[y] - from.x_[y]);
+    GLfixed dx(gl_fpdiv(gl_fpfromi(1), gl_fpfromi(to.x_[y] - from.x_[y])));
 
     // Depth interpolation
     GLfixed z(from.z_[y]);
-    GLfixed mz((to.z_[y] - from.z_[y]) / dx);
+    GLfixed mz(gl_fpmul(to.z_[y] - from.z_[y], dx));
 
     // Color interpolation
     GLfixed r(from.c_[y].r);
     GLfixed g(from.c_[y].g);
     GLfixed b(from.c_[y].b);
     GLfixed a(from.c_[y].a);
-    GLfixed mr((to.c_[y].r - from.c_[y].r) / dx);
-    GLfixed mg((to.c_[y].g - from.c_[y].g) / dx);
-    GLfixed mb((to.c_[y].b - from.c_[y].b) / dx);
-    GLfixed ma((to.c_[y].a - from.c_[y].a) / dx);
+    GLfixed mr(gl_fpmul(to.c_[y].r - from.c_[y].r, dx));
+    GLfixed mg(gl_fpmul(to.c_[y].g - from.c_[y].g, dx));
+    GLfixed mb(gl_fpmul(to.c_[y].b - from.c_[y].b, dx));
+    GLfixed ma(gl_fpmul(to.c_[y].a - from.c_[y].a, dx));
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -594,17 +594,17 @@ CSoftGLESFixed::hline_ta(CEdgeFx & from, CEdgeFx & to, GLint & y)
 {
   if(from.x_[y] < to.x_[y])
   {
-    GLint dx(to.x_[y] - from.x_[y]);
+    GLfixed dx(gl_fpdiv(gl_fpfromi(1), gl_fpfromi(to.x_[y] - from.x_[y])));
 
     // Depth interpolation
     GLfixed z(from.z_[y]);
-    GLfixed mz((to.z_[y] - from.z_[y]) / dx);
+    GLfixed mz(gl_fpmul(to.z_[y] - from.z_[y], dx));
 
     // Texture coordinate interpolation
     GLfixed ts(from.ts_[y]);
     GLfixed tt(from.tt_[y]);
-    GLfixed mts((to.ts_[y] - from.ts_[y]) / dx);
-    GLfixed mtt((to.tt_[y] - from.tt_[y]) / dx);
+    GLfixed mts(gl_fpmul(to.ts_[y] - from.ts_[y], dx));
+    GLfixed mtt(gl_fpmul(to.tt_[y] - from.tt_[y], dx));
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -645,19 +645,19 @@ CSoftGLESFixed::hline_tp(CEdgeFx & from, CEdgeFx & to, GLint & y)
 {
   if(from.x_[y] < to.x_[y])
   {
-    GLint dx(to.x_[y] - from.x_[y]);
+    GLfixed dx(gl_fpdiv(gl_fpfromi(1), gl_fpfromi(to.x_[y] - from.x_[y])));
 
     // Depth interpolation
     GLfixed z(from.z_[y]);
-    GLfixed mz((to.z_[y] - from.z_[y]) / dx);
+    GLfixed mz(gl_fpmul(to.z_[y] - from.z_[y], dx));
 
     // Texture coordinate interpolation
     GLfixed tz(gl_fpdiv(gl_fpfromi(1), from.z_[y]));
     GLfixed ts(gl_fpmul(from.ts_[y], tz));
     GLfixed tt(gl_fpmul(from.tt_[y], tz));
-    GLfixed mtz((gl_fpdiv(gl_fpfromi(1), to.z_[y]) - tz) / dx);
-    GLfixed mts(gl_fpmul(to.ts_[y] - from.ts_[y], tz) / dx);
-    GLfixed mtt(gl_fpmul(to.tt_[y] - from.tt_[y], tz) / dx);
+    GLfixed mtz(gl_fpmul((gl_fpdiv(gl_fpfromi(1), to.z_[y]) - tz), dx));
+    GLfixed mts(gl_fpmul(gl_fpmul(to.ts_[y] - from.ts_[y], tz), dx));
+    GLfixed mtt(gl_fpmul(gl_fpmul(to.tt_[y] - from.tt_[y], tz), dx));
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)

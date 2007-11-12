@@ -2,6 +2,91 @@
 #include "fixedPoint.h"
 
 
+// Fixed Point Macros
+#define DELTA_F_Y() \
+  GLfloat dy(1.0f / (GLfloat)(y2 - y1))
+#define INTERPOLATE_F_X() \
+  GLfloat x((GLfloat)x1); \
+  GLfloat mx((GLfloat)(x2 - x1) * dy)
+#define INTERPOLATE_F_Z() \
+  GLfloat mz((z2 - z1) * dy)
+#define INTERPOLATE_F_C() \
+  GLfloat r(c1.r); \
+  GLfloat g(c1.g); \
+  GLfloat b(c1.b); \
+  GLfloat a(c1.a); \
+  GLfloat mr((c2.r - c1.r) * dy); \
+  GLfloat mg((c2.g - c1.g) * dy); \
+  GLfloat mb((c2.b - c1.b) * dy); \
+  GLfloat ma((c2.a - c1.a) * dy)
+#define INTERPOLATE_F_T() \
+  GLfloat ts(ts1); \
+  GLfloat tt(tt1); \
+  GLfloat mts((ts2 - ts1) / (GLfloat)(y2 - y1)); \
+  GLfloat mtt((tt2 - tt1) / (GLfloat)(y2 - y1))
+#define STORE_F_X() \
+  x_[y1] = (GLint)x
+#define STORE_F_Z() \
+  z_[y1] = z1
+#define STORE_F_C() \
+  c_[y1].r = r; \
+  c_[y1].g = g; \
+  c_[y1].b = b; \
+  c_[y1].a = a
+#define STORE_F_T() \
+  ts_[y1] = ts; \
+  tt_[y1] = tt
+
+// Fixed Point Macros
+#define DELTA_FX_Y() \
+  GLfixed dy(gl_fpdiv(gl_fpfromi(1), gl_fpfromi(y2 - y1)))
+#define INTERPOLATE_FX_X() \
+  GLfixed x(gl_fpfromi(x1)); \
+  GLfixed mx(gl_fpmul(gl_fpfromi(x2 - x1), dy))
+#define INTERPOLATE_FX_Z() \
+  GLfixed mz(gl_fpmul(z2 - z1, dy))
+#define INTERPOLATE_FX_C() \
+  GLfixed r(c1.r); \
+  GLfixed g(c1.g); \
+  GLfixed b(c1.b); \
+  GLfixed a(c1.a); \
+  GLfixed mr(gl_fpmul(c2.r - c1.r, dy)); \
+  GLfixed mg(gl_fpmul(c2.g - c1.g, dy)); \
+  GLfixed mb(gl_fpmul(c2.b - c1.b, dy)); \
+  GLfixed ma(gl_fpmul(c2.a - c1.a, dy))
+#define INTERPOLATE_FX_T() \
+  GLfixed ts(ts1); \
+  GLfixed tt(tt1); \
+  GLfixed mts(gl_fpmul(ts2 - ts1, dy)); \
+  GLfixed mtt(gl_fpmul(tt2 - tt1, dy))
+#define STORE_FX_X() \
+  x_[y1] = gl_fptoi(x)
+#define STORE_FX_Z() \
+  z_[y1] = z1
+#define STORE_FX_C() \
+  c_[y1].r = r; \
+  c_[y1].g = g; \
+  c_[y1].b = b; \
+  c_[y1].a = a
+#define STORE_FX_T() \
+  ts_[y1] = ts; \
+  tt_[y1] = tt
+
+// Common Macros
+#define INCREMENT_X() \
+  x += mx
+#define INCREMENT_Z() \
+  z1 += mz
+#define INCREMENT_C() \
+  r += mr; \
+  g += mg; \
+  b += mb; \
+  a += ma
+#define INCREMENT_T() \
+  ts += mts; \
+  tt += mtt
+
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CEdgeF::CEdgeF(uint32_t height)
@@ -30,20 +115,19 @@ CEdgeF::add(GLint x1, GLint y1, GLint x2, GLint y2)
 {
   if(y1 < y2)
   {
-    GLfloat x(x1);
-    GLfloat mx((GLfloat)(x2 - x1) / (GLfloat)(y2 - y1));
+    DELTA_F_Y();
+    INTERPOLATE_F_X();
 
-    while(y1 < y2)
+    for(;y1 < y2; y1++)
     {
       if(y1 >= iHeight_)
         break;
 
       if(y1 >= 0)
-        x_[y1] = (GLint)x;
-
-      x += mx;
-
-      y1++;
+      {
+        STORE_F_X();
+      }
+      INCREMENT_X();
     }
   }
 }
@@ -54,26 +138,22 @@ CEdgeF::addZ(GLint x1, GLint y1, GLfloat z1, GLint x2, GLint y2, GLfloat z2)
 {
   if(y1 < y2)
   {
-    GLfloat x(x1);
-    GLfloat mx((GLfloat)(x2 - x1) / (GLfloat)(y2 - y1));
+    DELTA_F_Y();
+    INTERPOLATE_F_X();
+    INTERPOLATE_F_Z();
 
-    GLfloat mz((z2 - z1) / (GLfloat)(y2 - y1));
-
-    while(y1 < y2)
+    for(;y1 < y2; y1++)
     {
       if(y1 >= iHeight_)
         break;
 
       if(y1 >= 0)
       {
-        x_[y1] = (GLint)x;
-        z_[y1] = z1;
+        STORE_F_X();
+        STORE_F_Z();
       }
-
-      x  += mx;
-      z1 += mz;
-
-      y1++;
+      INCREMENT_X();
+      INCREMENT_Z();
     }
   }
 }
@@ -84,39 +164,22 @@ CEdgeF::addC(GLint x1, GLint y1, SColorF & c1, GLint x2, GLint y2, SColorF & c2)
 {
   if(y1 < y2)
   {
-    GLfloat x(x1);
-    GLfloat mx((GLfloat)(x2 - x1) / (GLfloat)(y2 - y1));
+    DELTA_F_Y();
+    INTERPOLATE_F_X();
+    INTERPOLATE_F_C();
 
-    GLfloat r(c1.r);
-    GLfloat g(c1.g);
-    GLfloat b(c1.b);
-    GLfloat a(c1.a);
-    GLfloat mr((c2.r - c1.r) / (GLfloat)(y2 - y1));
-    GLfloat mg((c2.g - c1.g) / (GLfloat)(y2 - y1));
-    GLfloat mb((c2.b - c1.b) / (GLfloat)(y2 - y1));
-    GLfloat ma((c2.a - c1.a) / (GLfloat)(y2 - y1));
-
-    while(y1 < y2)
+    for(;y1 < y2; y1++)
     {
       if(y1 >= iHeight_)
         break;
 
       if(y1 >= 0)
       {
-        x_[y1]   = (GLint)x;
-        c_[y1].r = r;
-        c_[y1].g = g;
-        c_[y1].b = b;
-        c_[y1].a = a;
+        STORE_F_X();
+        STORE_F_C();
       }
-
-      x += mx;
-      r += mr;
-      g += mg;
-      b += mb;
-      a += ma;
-
-      y1++;
+      INCREMENT_X();
+      INCREMENT_C();
     }
   }
 }
@@ -127,35 +190,26 @@ CEdgeF::addZT(GLint x1, GLint y1, GLfloat z1, GLfloat ts1, GLfloat tt1, GLint x2
 {
   if(y1 < y2)
   {
-    GLfloat x(x1);
-    GLfloat mx((GLfloat)(x2 - x1) / (GLfloat)(y2 - y1));
+    DELTA_F_Y();
+    INTERPOLATE_F_X();
+    INTERPOLATE_F_Z();
+    INTERPOLATE_F_T();
 
-    GLfloat mz((z2 - z1) / (GLfloat)(y2 - y1));
-
-    GLfloat ts(ts1);
-    GLfloat tt(tt1);
-    GLfloat mts((ts2 - ts1) / (GLfloat)(y2 - y1));
-    GLfloat mtt((tt2 - tt1) / (GLfloat)(y2 - y1));
-
-    while(y1 < y2)
+    for(;y1 < y2; y1++)
     {
       if(y1 >= iHeight_)
         break;
 
       if(y1 >= 0)
       {
-        x_[y1]  = (GLint)x;
-        z_[y1]  = z1;
-        ts_[y1] = ts;
-        tt_[y1] = tt;
+        STORE_F_X();
+        STORE_F_Z();
+        STORE_F_T();
       }
 
-      x  += mx;
-      z1 += mz;
-      ts += mts;
-      tt += mtt;
-
-      y1++;
+      INCREMENT_X();
+      INCREMENT_Z();
+      INCREMENT_T();
     }
   }
 }
@@ -166,43 +220,25 @@ CEdgeF::addZC(GLint x1, GLint y1, GLfloat z1, SColorF & c1, GLint x2, GLint y2, 
 {
   if(y1 < y2)
   {
-    GLfloat x(x1);
-    GLfloat mx((GLfloat)(x2 - x1) / (GLfloat)(y2 - y1));
+    DELTA_F_Y();
+    INTERPOLATE_F_X();
+    INTERPOLATE_F_Z();
+    INTERPOLATE_F_C();
 
-    GLfloat mz((z2 - z1) / (GLfloat)(y2 - y1));
-
-    GLfloat r(c1.r);
-    GLfloat g(c1.g);
-    GLfloat b(c1.b);
-    GLfloat a(c1.a);
-    GLfloat mr((c2.r - c1.r) / (GLfloat)(y2 - y1));
-    GLfloat mg((c2.g - c1.g) / (GLfloat)(y2 - y1));
-    GLfloat mb((c2.b - c1.b) / (GLfloat)(y2 - y1));
-    GLfloat ma((c2.a - c1.a) / (GLfloat)(y2 - y1));
-
-    while(y1 < y2)
+    for(;y1 < y2; y1++)
     {
       if(y1 >= iHeight_)
         break;
 
       if(y1 >= 0)
       {
-        x_[y1]   = (GLint)x;
-        z_[y1]   = z1;
-        c_[y1].r = r;
-        c_[y1].g = g;
-        c_[y1].b = b;
-        c_[y1].a = a;
+        STORE_F_X();
+        STORE_F_Z();
+        STORE_F_C();
       }
-
-      x  += mx;
-      z1 += mz;
-      r  += mr;
-      g  += mg;
-      b  += mb;
-      a  += ma;
-
-      y1++;
+      INCREMENT_X();
+      INCREMENT_Z();
+      INCREMENT_C();
     }
   }
 }
@@ -235,20 +271,18 @@ CEdgeFx::add(GLint x1, GLint y1, GLint x2, GLint y2)
 {
   if(y1 < y2)
   {
-    GLfixed x(gl_fpfromi(x1));
-    GLfixed mx(gl_fpfromi(x2 - x1) / (y2 - y1));
+    DELTA_FX_Y();
+    INTERPOLATE_FX_X();
 
-    while(y1 < y2)
+    for(;y1 < y2; y1++)
     {
       if(y1 >= iHeight_)
         break;
-
       if(y1 >= 0)
-        x_[y1] = gl_fptoi(x);
-
-      x += mx;
-
-      y1++;
+      {
+        STORE_FX_X();
+      }
+      INCREMENT_X();
     }
   }
 }
@@ -259,26 +293,21 @@ CEdgeFx::addZ(GLint x1, GLint y1, GLfixed z1, GLint x2, GLint y2, GLfixed z2)
 {
   if(y1 < y2)
   {
-    GLfixed x(gl_fpfromi(x1));
-    GLfixed mx(gl_fpfromi(x2 - x1) / (y2 - y1));
+    DELTA_FX_Y();
+    INTERPOLATE_FX_X();
+    INTERPOLATE_FX_Z();
 
-    GLfixed mz((z2 - z1) / (y2 - y1));
-
-    while(y1 < y2)
+    for(;y1 < y2; y1++)
     {
       if(y1 >= iHeight_)
         break;
-
       if(y1 >= 0)
       {
-        x_[y1] = gl_fptoi(x);
-        z_[y1] = z1;
+        STORE_FX_X();
+        STORE_FX_Z();
       }
-
-      x  += mx;
-      z1 += mz;
-
-      y1++;
+      INCREMENT_X();
+      INCREMENT_Z();
     }
   }
 }
@@ -289,39 +318,23 @@ CEdgeFx::addC(GLint x1, GLint y1, SColorFx & c1, GLint x2, GLint y2, SColorFx & 
 {
   if(y1 < y2)
   {
-    GLfixed x(gl_fpfromi(x1));
-    GLfixed mx(gl_fpfromi(x2 - x1) / (y2 - y1));
+    DELTA_FX_Y();
+    INTERPOLATE_FX_X();
+    INTERPOLATE_FX_C();
 
-    GLfixed r(c1.r);
-    GLfixed g(c1.g);
-    GLfixed b(c1.b);
-    GLfixed a(c1.a);
-    GLfixed mr((c2.r - c1.r) / (y2 - y1));
-    GLfixed mg((c2.g - c1.g) / (y2 - y1));
-    GLfixed mb((c2.b - c1.b) / (y2 - y1));
-    GLfixed ma((c2.a - c1.a) / (y2 - y1));
-
-    while(y1 < y2)
+    for(;y1 < y2; y1++)
     {
       if(y1 >= iHeight_)
         break;
 
       if(y1 >= 0)
       {
-        x_[y1]   = gl_fptoi(x);
-        c_[y1].r = r;
-        c_[y1].g = g;
-        c_[y1].b = b;
-        c_[y1].a = a;
+        STORE_FX_X();
+        STORE_FX_C();
       }
 
-      x += mx;
-      r += mr;
-      g += mg;
-      b += mb;
-      a += ma;
-
-      y1++;
+      INCREMENT_X();
+      INCREMENT_C();
     }
   }
 }
@@ -332,35 +345,26 @@ CEdgeFx::addZT(GLint x1, GLint y1, GLfixed z1, GLfixed ts1, GLfixed tt1, GLint x
 {
   if(y1 < y2)
   {
-    GLfixed x(gl_fpfromi(x1));
-    GLfixed mx(gl_fpfromi(x2 - x1) / (y2 - y1));
+    DELTA_FX_Y();
+    INTERPOLATE_FX_X();
+    INTERPOLATE_FX_Z();
+    INTERPOLATE_FX_T();
 
-    GLfixed mz((z2 - z1) / (y2 - y1));
-
-    GLfixed ts(ts1);
-    GLfixed tt(tt1);
-    GLfixed mts((ts2 - ts1) / (y2 - y1));
-    GLfixed mtt((tt2 - tt1) / (y2 - y1));
-
-    while(y1 < y2)
+    for(;y1 < y2; y1++)
     {
       if(y1 >= iHeight_)
         break;
 
       if(y1 >= 0)
       {
-        x_[y1]  = gl_fptoi(x);
-        z_[y1]  = z1;
-        ts_[y1] = ts;
-        tt_[y1] = tt;
+        STORE_FX_X();
+        STORE_FX_Z();
+        STORE_FX_T();
       }
 
-      x  += mx;
-      z1 += mz;
-      ts += mts;
-      tt += mtt;
-
-      y1++;
+      INCREMENT_X();
+      INCREMENT_Z();
+      INCREMENT_T();
     }
   }
 }
@@ -371,43 +375,26 @@ CEdgeFx::addZC(GLint x1, GLint y1, GLfixed z1, SColorFx & c1, GLint x2, GLint y2
 {
   if(y1 < y2)
   {
-    GLfixed x(gl_fpfromi(x1));
-    GLfixed mx(gl_fpfromi(x2 - x1) / (y2 - y1));
+    DELTA_FX_Y();
+    INTERPOLATE_FX_X();
+    INTERPOLATE_FX_Z();
+    INTERPOLATE_FX_C();
 
-    GLfixed mz((z2 - z1) / (y2 - y1));
-
-    GLfixed r(c1.r);
-    GLfixed g(c1.g);
-    GLfixed b(c1.b);
-    GLfixed a(c1.a);
-    GLfixed mr((c2.r - c1.r) / (y2 - y1));
-    GLfixed mg((c2.g - c1.g) / (y2 - y1));
-    GLfixed mb((c2.b - c1.b) / (y2 - y1));
-    GLfixed ma((c2.a - c1.a) / (y2 - y1));
-
-    while(y1 < y2)
+    for(;y1 < y2; y1++)
     {
       if(y1 >= iHeight_)
         break;
 
       if(y1 >= 0)
       {
-        x_[y1]   = gl_fptoi(x);
-        z_[y1]   = z1;
-        c_[y1].r = r;
-        c_[y1].g = g;
-        c_[y1].b = b;
-        c_[y1].a = a;
+        STORE_FX_X();
+        STORE_FX_Z();
+        STORE_FX_C();
       }
 
-      x  += mx;
-      z1 += mz;
-      r  += mr;
-      g  += mg;
-      b  += mb;
-      a  += ma;
-
-      y1++;
+      INCREMENT_X();
+      INCREMENT_Z();
+      INCREMENT_C();
     }
   }
 }

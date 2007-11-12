@@ -472,11 +472,11 @@ CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c)
 {
   if(from.x_[y] < to.x_[y])
   {
-    GLint dx(to.x_[y] - from.x_[y]);
+    GLfloat dx(1.0f / (GLfloat)(to.x_[y] - from.x_[y]));
 
     // Depth interpolation
     GLfloat z(from.z_[y]);
-    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
+    GLfloat mz((to.z_[y] - from.z_[y]) * dx);
 
     color_t color = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255), (uint8_t)(c.a * 255));
 
@@ -517,21 +517,21 @@ CSoftGLESFloat::hline_s(CEdgeF & from, CEdgeF & to, GLint & y)
 {
   if(from.x_[y] < to.x_[y])
   {
-    GLint dx(to.x_[y] - from.x_[y]);
+    GLfloat dx(1.0f / (GLfloat)(to.x_[y] - from.x_[y]));
 
     // Depth interpolation
     GLfloat z(from.z_[y]);
-    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
+    GLfloat mz((to.z_[y] - from.z_[y]) * dx);
 
     // Color interpolation
     GLfloat r(from.c_[y].r);
     GLfloat g(from.c_[y].g);
     GLfloat b(from.c_[y].b);
     GLfloat a(from.c_[y].a);
-    GLfloat mr((to.c_[y].r - from.c_[y].r) / dx);
-    GLfloat mg((to.c_[y].g - from.c_[y].g) / dx);
-    GLfloat mb((to.c_[y].b - from.c_[y].b) / dx);
-    GLfloat ma((to.c_[y].a - from.c_[y].a) / dx);
+    GLfloat mr((to.c_[y].r - from.c_[y].r) * dx);
+    GLfloat mg((to.c_[y].g - from.c_[y].g) * dx);
+    GLfloat mb((to.c_[y].b - from.c_[y].b) * dx);
+    GLfloat ma((to.c_[y].a - from.c_[y].a) * dx);
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -574,17 +574,17 @@ CSoftGLESFloat::hline_ta(CEdgeF & from, CEdgeF & to, GLint & y)
 {
   if(from.x_[y] < to.x_[y])
   {
-    GLint dx(to.x_[y] - from.x_[y]);
+    GLfloat dx(1.0f / (GLfloat)(to.x_[y] - from.x_[y]));
 
     // Depth interpolation
     GLfloat z(from.z_[y]);
-    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
+    GLfloat mz((to.z_[y] - from.z_[y]) * dx);
 
     // Texture coordinate interpolation
     GLfloat ts(from.ts_[y]);
     GLfloat tt(from.tt_[y]);
-    GLfloat mts((to.ts_[y] - from.ts_[y]) / dx);
-    GLfloat mtt((to.tt_[y] - from.tt_[y]) / dx);
+    GLfloat mts((to.ts_[y] - from.ts_[y]) * dx);
+    GLfloat mtt((to.tt_[y] - from.tt_[y]) * dx);
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -625,19 +625,19 @@ CSoftGLESFloat::hline_tp(CEdgeF & from, CEdgeF & to, GLint & y)
 {
   if(from.x_[y] < to.x_[y])
   {
-    GLint dx(to.x_[y] - from.x_[y]);
+    GLfloat dx(1.0f / (GLfloat)(to.x_[y] - from.x_[y]));
 
     // Depth interpolation
     GLfloat z(from.z_[y]);
-    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
+    GLfloat mz((to.z_[y] - from.z_[y]) * dx);
 
     // Texture coordinate interpolation
     GLfloat tz(1.0f / from.z_[y]);
     GLfloat ts(from.ts_[y] * tz);
     GLfloat tt(from.tt_[y] * tz);
-    GLfloat mtz(((1.0f / to.z_[y]) - tz) / dx);
-    GLfloat mts(((to.ts_[y] - from.ts_[y]) * tz) / dx);
-    GLfloat mtt(((to.tt_[y] - from.tt_[y]) * tz) / dx);
+    GLfloat mtz(((1.0f / to.z_[y]) - tz) * dx);
+    GLfloat mts(((to.ts_[y] - from.ts_[y]) * tz) * dx);
+    GLfloat mtt(((to.tt_[y] - from.tt_[y]) * tz) * dx);
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
