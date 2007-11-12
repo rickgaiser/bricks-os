@@ -115,7 +115,7 @@ CAGLESTexturesNDS::glTexImage2D(GLenum target, GLint level, GLint internalformat
 
       pCurrentTex_->width  = width;
       pCurrentTex_->height = height;
-      pCurrentTex_->format = TEXGEN_TEXCOORD | (idxWidth << 20) | (idxHeight << 23) | (((uint32_t)0x6840000 >> 3) & 0xFFFF) | (NDS_RGBA << 26);
+      pCurrentTex_->format = TEXGEN_OFF | (idxWidth << 20) | (idxHeight << 23) | (((uint32_t)0x6840000 >> 3) & 0xFFFF) | (NDS_RGBA << 26);
       pCurrentTex_->data   = (void *)0x6840000;
 
       // Set current texture format
@@ -125,9 +125,27 @@ CAGLESTexturesNDS::glTexImage2D(GLenum target, GLint level, GLint internalformat
       REG_VRAM_C_CR = VRAM_ENABLE | VRAM_TYPE_LCD;
 
       // Copy to texture memory
-      //memcpy((void *)0x6840000, pixels, width * height * 2);
-      for(int i(0); i < (width * height); i++)
-        ((uint16_t *)0x6840000)[i] = ((uint16_t *)pixels)[i] | 0x8000;
+      // Convert everything to cfA1B5G5R5 (native NDS format)
+      switch(type)
+      {
+        case GL_UNSIGNED_BYTE:
+          for(int i(0); i < (width*height); i++)
+            ((uint16_t *)0x6840000)[i] = BxColorFormat_Convert(cfA8B8G8R8, cfA1B5G5R5, ((uint32_t *)pixels)[i]);
+          break;
+        case GL_UNSIGNED_SHORT_5_6_5:
+          for(int i(0); i < (width*height); i++)
+            ((uint16_t *)0x6840000)[i] = BxColorFormat_Convert(cfR5G6B5,   cfA1B5G5R5, ((uint16_t *)pixels)[i]);
+          break;
+        case GL_UNSIGNED_SHORT_4_4_4_4:
+          for(int i(0); i < (width*height); i++)
+            ((uint16_t *)0x6840000)[i] = BxColorFormat_Convert(cfA4B4G4R4, cfA1B5G5R5, ((uint16_t *)pixels)[i]);
+          break;
+        case GL_UNSIGNED_SHORT_5_5_5_1:
+          //memcpy((void *)0x6840000, pixels, width * height * 2);
+          for(int i(0); i < (width*height); i++)
+            ((uint16_t *)0x6840000)[i] = ((uint16_t *)pixels)[i] | 0x8000;
+          break;
+      };
 
       // Restore texture memory
       REG_VRAM_C_CR = VRAM_ENABLE | VRAM_TYPE_TEXTURE;

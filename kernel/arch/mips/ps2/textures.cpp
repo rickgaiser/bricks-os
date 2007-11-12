@@ -32,7 +32,7 @@ CAGLESTexturesPS2::glBindTexture(GLenum target, GLuint texture)
 
     BEGIN_GS_PACKET(gs_tex_buf);
     GIF_TAG_AD(gs_tex_buf, 1, 0, 0, 0);
-    
+
     GIF_DATA_AD(gs_tex_buf, tex0_1,
       GS_TEX0(
         ((uint32_t)pCurrentTex_->data)/256,            // base pointer
@@ -94,7 +94,42 @@ CAGLESTexturesPS2::glTexImage2D(GLenum target, GLint level, GLint internalformat
       pCurrentTex_->data   = (void *)gs_mem_current;
 
       // Copy to texture memory
-      gs_load_texture(0, 0, width, height, (uint32_t)pixels, gs_mem_current, width);
+      // Convert everything to cfA8R8G8B8 (native PS2 format)
+      switch(type)
+      {
+        case GL_UNSIGNED_BYTE:
+        {
+          gs_load_texture(0, 0, width, height, (uint32_t)pixels, gs_mem_current, width);
+          break;
+        }
+        case GL_UNSIGNED_SHORT_5_6_5:
+        {
+          uint32_t * newTexture = new uint32_t[width*height];
+          for(int i(0); i < (width*height); i++)
+            newTexture[i] = BxColorFormat_Convert(cfR5G6B5, cfA8R8G8B8, ((uint16_t *)pixels)[i]);
+          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, gs_mem_current, width);
+          delete newTexture;
+          break;
+        }
+        case GL_UNSIGNED_SHORT_4_4_4_4:
+        {
+          uint32_t * newTexture = new uint32_t[width*height];
+          for(int i(0); i < (width*height); i++)
+            newTexture[i] = BxColorFormat_Convert(cfA4B4G4R4, cfA8R8G8B8, ((uint16_t *)pixels)[i]);
+          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, gs_mem_current, width);
+          delete newTexture;
+          break;
+        }
+        case GL_UNSIGNED_SHORT_5_5_5_1:
+        {
+          uint32_t * newTexture = new uint32_t[width*height];
+          for(int i(0); i < (width*height); i++)
+            newTexture[i] = BxColorFormat_Convert(cfA1B5G5R5, cfA8R8G8B8, ((uint16_t *)pixels)[i]);
+          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, gs_mem_current, width);
+          delete newTexture;
+          break;
+        }
+      };
     }
   }
 }

@@ -83,6 +83,13 @@ enum EColorFormat
   (((color & colorFormatOps[fmt].maskB) >> colorFormatOps[fmt].shiftB) << colorFormatOps[fmt].lossB)
 #define BxColorFormat_GetA(fmt,color) \
   (((color & colorFormatOps[fmt].maskA) >> colorFormatOps[fmt].shiftA) << colorFormatOps[fmt].lossA)
+// Convert color formats
+#define BxColorFormat_Convert(fmtFrom,fmtTo,color) \
+  BxColorFormat_FromRGBA(fmtTo, \
+                         BxColorFormat_GetR(fmtFrom, color), \
+                         BxColorFormat_GetG(fmtFrom, color), \
+                         BxColorFormat_GetB(fmtFrom, color), \
+                         BxColorFormat_GetA(fmtFrom, color))
 
 //---------------------------------------------------------------------------
 enum ESurfaceType

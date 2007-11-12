@@ -9,13 +9,13 @@ volatile bool bSwap(false);
 static const SVideoMode videoModes[] =
 {
 #ifdef GBA
-//  {240, 160, 16, cfX1R5G5B5}, // 3:2
+//  {240, 160, 16, cfX1B5G5R5}, // 3:2
 //  {240, 160,  8, cfP8}, // 3:2
-  {160, 128, 16, cfX1R5G5B5}, // 5:4
-//  {120,  80, 16, cfX1R5G5B5}, // 3:2
+  {160, 128, 16, cfX1B5G5R5}, // 5:4
+//  {120,  80, 16, cfX1B5G5R5}, // 3:2
 #endif // GBA
 #ifdef NDS9
-  {256, 192, 16, cfA1R5G5B5}, // 4:3
+  {256, 192, 16, cfA1B5G5R5}, // 4:3
 #endif // NDS9
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
@@ -138,7 +138,7 @@ void
 CGBAVideoDevice::setMode(const SVideoMode * mode)
 {
 //  printk("Mode set to: %dx%dx%d\n", mode->xres, mode->yres, mode->bitsPerPixel);
-/*
+
   // Setup BG2
   REG_BG3CNT  = BG_BMP16_256x256;
   REG_BG2_XDX = 1 << 8;
@@ -156,7 +156,7 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
   REG_BG3_YDY = 1 << 8;
   REG_BG3_CX  = 0;
   REG_BG3_CY  = 0;
-*/
+
 #ifdef GBA
   if((mode->width == 240) && (mode->height == 160) && (mode->bpp == 16))
   {

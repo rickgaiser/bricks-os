@@ -234,6 +234,7 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // Textures/Colors
     if(texturesEnabled_ == true)
     {
+      GFX_COLOR = 0xffff;
       // Textures
       if(bBufTexCoordEnabled_ == true)
       {

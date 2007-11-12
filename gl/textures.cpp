@@ -1,5 +1,6 @@
 #include "textures.h"
 #include "unistd.h"
+#include "string.h"
 
 
 //-----------------------------------------------------------------------------
@@ -138,31 +139,36 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
           return; // ERROR, invalid render surface
       };
 
-      // Copy texture, change to surface pixel format
-      for(int i(0); i < (width*height); i++)
+      // Copy texture
+      if(fmtTo != fmtFrom)
       {
+        // Convert to surface pixel format
         uint32_t px(0);
 
-        // Get pixel
-        switch(type)
+        for(int i(0); i < (width*height); i++)
         {
-          case GL_UNSIGNED_BYTE:          px = ((uint32_t *)pixels)[i]; break;
-          case GL_UNSIGNED_SHORT_5_6_5:   px = ((uint16_t *)pixels)[i]; break;
-          case GL_UNSIGNED_SHORT_4_4_4_4: px = ((uint16_t *)pixels)[i]; break;
-          case GL_UNSIGNED_SHORT_5_5_5_1: px = ((uint16_t *)pixels)[i]; break;
-        };
+          // Get pixel
+          switch(type)
+          {
+            case GL_UNSIGNED_BYTE:          px = BxColorFormat_Convert(fmtFrom, fmtTo, ((uint32_t *)pixels)[i]); break;
+            case GL_UNSIGNED_SHORT_5_6_5:   px = BxColorFormat_Convert(fmtFrom, fmtTo, ((uint16_t *)pixels)[i]); break;
+            case GL_UNSIGNED_SHORT_4_4_4_4: px = BxColorFormat_Convert(fmtFrom, fmtTo, ((uint16_t *)pixels)[i]); break;
+            case GL_UNSIGNED_SHORT_5_5_5_1: px = BxColorFormat_Convert(fmtFrom, fmtTo, ((uint16_t *)pixels)[i]) | 0x8000; break;
+          };
 
-        // FIXME: Convert pixel
-        if(fmtTo != fmtFrom)
-          px = px;
-
-        // Put pixel
-        switch(renderSurface->bpp_)
-        {
-          case 8:  ((uint8_t  *)pCurrentTex_->data)[i] = px; break;
-          case 16: ((uint16_t *)pCurrentTex_->data)[i] = px; break;
-          case 32: ((uint32_t *)pCurrentTex_->data)[i] = px; break;
-        };
+          // Put pixel
+          switch(renderSurface->bpp_)
+          {
+            case 8:  ((uint8_t  *)pCurrentTex_->data)[i] = px; break;
+            case 16: ((uint16_t *)pCurrentTex_->data)[i] = px; break;
+            case 32: ((uint32_t *)pCurrentTex_->data)[i] = px; break;
+          };
+        }
+      }
+      else
+      {
+        // Just copy
+        memcpy(pCurrentTex_->data, pixels, width * height * (renderSurface->bpp_ / 8));
       }
     }
   }
