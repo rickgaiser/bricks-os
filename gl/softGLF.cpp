@@ -473,9 +473,12 @@ CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c)
   if(from.x_[y] < to.x_[y])
   {
     GLint dx(to.x_[y] - from.x_[y]);
-    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
+
+    // Depth interpolation
     GLfloat z(from.z_[y]);
-    color_t color = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255), 255);
+    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
+
+    color_t color = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255), (uint8_t)(c.a * 255));
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -501,8 +504,7 @@ CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c)
           };
         }
       }
-      if(depthTestEnabled_ == true)
-        z += mz;
+      z += mz;
       index++;
     }
   }
@@ -516,15 +518,20 @@ CSoftGLESFloat::hline_s(CEdgeF & from, CEdgeF & to, GLint & y)
   if(from.x_[y] < to.x_[y])
   {
     GLint dx(to.x_[y] - from.x_[y]);
-    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
-    GLfloat z(from.z_[y]);
 
-    GLfloat mr((to.c_[y].r - from.c_[y].r) / dx);
-    GLfloat mg((to.c_[y].g - from.c_[y].g) / dx);
-    GLfloat mb((to.c_[y].b - from.c_[y].b) / dx);
+    // Depth interpolation
+    GLfloat z(from.z_[y]);
+    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
+
+    // Color interpolation
     GLfloat r(from.c_[y].r);
     GLfloat g(from.c_[y].g);
     GLfloat b(from.c_[y].b);
+    GLfloat a(from.c_[y].a);
+    GLfloat mr((to.c_[y].r - from.c_[y].r) / dx);
+    GLfloat mg((to.c_[y].g - from.c_[y].g) / dx);
+    GLfloat mb((to.c_[y].b - from.c_[y].b) / dx);
+    GLfloat ma((to.c_[y].a - from.c_[y].a) / dx);
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -539,42 +546,45 @@ CSoftGLESFloat::hline_s(CEdgeF & from, CEdgeF & to, GLint & y)
           switch(renderSurface->bpp_)
           {
             case 8:
-              ((uint8_t  *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), 255);
+              ((uint8_t  *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
               break;
             case 16:
-              ((uint16_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), 255);
+              ((uint16_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
               break;
             case 32:
-              ((uint32_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), 255);
+              ((uint32_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
               break;
           };
         }
       }
-      if(depthTestEnabled_ == true)
-        z += mz;
+      z += mz;
       r += mr;
       g += mg;
       b += mb;
+      a += ma;
       index++;
     }
   }
 }
 
 //-----------------------------------------------------------------------------
-// Horizontal Line Fill, texture mapped
+// Horizontal Line Fill, texture mapped, affine
 void
-CSoftGLESFloat::hline_t(CEdgeF & from, CEdgeF & to, GLint & y)
+CSoftGLESFloat::hline_ta(CEdgeF & from, CEdgeF & to, GLint & y)
 {
   if(from.x_[y] < to.x_[y])
   {
     GLint dx(to.x_[y] - from.x_[y]);
-    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
-    GLfloat z(from.z_[y]);
 
-    GLfloat mts((to.ts_[y] - from.ts_[y]) / dx);
-    GLfloat mtt((to.tt_[y] - from.tt_[y]) / dx);
+    // Depth interpolation
+    GLfloat z(from.z_[y]);
+    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
+
+    // Texture coordinate interpolation
     GLfloat ts(from.ts_[y]);
     GLfloat tt(from.tt_[y]);
+    GLfloat mts((to.ts_[y] - from.ts_[y]) / dx);
+    GLfloat mtt((to.tt_[y] - from.tt_[y]) / dx);
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -600,8 +610,64 @@ CSoftGLESFloat::hline_t(CEdgeF & from, CEdgeF & to, GLint & y)
           };
         }
       }
-      if(depthTestEnabled_ == true)
-        z += mz;
+      z  += mz;
+      ts += mts;
+      tt += mtt;
+      index++;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+// Horizontal Line Fill, texture mapped, perspective correct
+void
+CSoftGLESFloat::hline_tp(CEdgeF & from, CEdgeF & to, GLint & y)
+{
+  if(from.x_[y] < to.x_[y])
+  {
+    GLint dx(to.x_[y] - from.x_[y]);
+
+    // Depth interpolation
+    GLfloat z(from.z_[y]);
+    GLfloat mz((to.z_[y] - from.z_[y]) / dx);
+
+    // Texture coordinate interpolation
+    GLfloat tz(1.0f / from.z_[y]);
+    GLfloat ts(from.ts_[y] * tz);
+    GLfloat tt(from.tt_[y] * tz);
+    GLfloat mtz(((1.0f / to.z_[y]) - tz) / dx);
+    GLfloat mts(((to.ts_[y] - from.ts_[y]) * tz) / dx);
+    GLfloat mtt(((to.tt_[y] - from.tt_[y]) * tz) / dx);
+
+    unsigned long index((y * viewportWidth) + from.x_[y]);
+    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
+    {
+      if(x >= viewportWidth)
+        break;
+
+      if(x >= 0)
+      {
+        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
+        {
+          GLfloat recip = 1.0f / tz;
+          GLfloat s     = ts * recip;
+          GLfloat t     = tt * recip;
+          switch(renderSurface->bpp_)
+          {
+            case 8:
+              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[(((GLint)(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(s) & pCurrentTex_->maskWidth)];
+              break;
+            case 16:
+              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[(((GLint)(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(s) & pCurrentTex_->maskWidth)];
+              break;
+            case 32:
+              ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[(((GLint)(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(s) & pCurrentTex_->maskWidth)];
+              break;
+          };
+        }
+      }
+      z  += mz;
+      tz += mtz;
       ts += mts;
       tt += mtt;
       index++;
@@ -934,7 +1000,7 @@ CSoftGLESFloat::rasterPoly(SPolygonF & poly)
   if(texturesEnabled_ == true)
   {
     for(GLint y(vlo->sy); y < vhi->sy; y++)
-      hline_t(*pEdgeLeft, *pEdgeRight, y);
+      hline_tp(*pEdgeLeft, *pEdgeRight, y);
   }
   else
   {

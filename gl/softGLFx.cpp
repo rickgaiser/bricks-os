@@ -493,8 +493,11 @@ CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c)
   if(from.x_[y] < to.x_[y])
   {
     GLint dx(to.x_[y] - from.x_[y]);
-    GLfixed mz((to.z_[y] - from.z_[y]) / dx);
+
+    // Depth interpolation
     GLfixed z(from.z_[y]);
+    GLfixed mz((to.z_[y] - from.z_[y]) / dx);
+
     color_t color(fpRGB(c.r, c.g, c.b));
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
@@ -521,8 +524,7 @@ CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c)
           };
         }
       }
-      if(depthTestEnabled_ == true)
-        z += mz;
+      z += mz;
       index++;
     }
   }
@@ -536,15 +538,20 @@ CSoftGLESFixed::hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y)
   if(from.x_[y] < to.x_[y])
   {
     GLint dx(to.x_[y] - from.x_[y]);
-    GLfixed mz((to.z_[y] - from.z_[y]) / dx);
-    GLfixed z(from.z_[y]);
 
-    GLfixed mr((to.c_[y].r - from.c_[y].r) / dx);
-    GLfixed mg((to.c_[y].g - from.c_[y].g) / dx);
-    GLfixed mb((to.c_[y].b - from.c_[y].b) / dx);
+    // Depth interpolation
+    GLfixed z(from.z_[y]);
+    GLfixed mz((to.z_[y] - from.z_[y]) / dx);
+
+    // Color interpolation
     GLfixed r(from.c_[y].r);
     GLfixed g(from.c_[y].g);
     GLfixed b(from.c_[y].b);
+    GLfixed a(from.c_[y].a);
+    GLfixed mr((to.c_[y].r - from.c_[y].r) / dx);
+    GLfixed mg((to.c_[y].g - from.c_[y].g) / dx);
+    GLfixed mb((to.c_[y].b - from.c_[y].b) / dx);
+    GLfixed ma((to.c_[y].a - from.c_[y].a) / dx);
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -570,31 +577,34 @@ CSoftGLESFixed::hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y)
           };
         }
       }
-      if(depthTestEnabled_ == true)
-        z += mz;
+      z += mz;
       r += mr;
       g += mg;
       b += mb;
+      a += ma;
       index++;
     }
   }
 }
 
 //-----------------------------------------------------------------------------
-// Horizontal Line Fill, texture mapped
+// Horizontal Line Fill, texture mapped, affine
 void
-CSoftGLESFixed::hline_t(CEdgeFx & from, CEdgeFx & to, GLint & y)
+CSoftGLESFixed::hline_ta(CEdgeFx & from, CEdgeFx & to, GLint & y)
 {
   if(from.x_[y] < to.x_[y])
   {
     GLint dx(to.x_[y] - from.x_[y]);
-    GLfixed mz((to.z_[y] - from.z_[y]) / dx);
-    GLfixed z(from.z_[y]);
 
-    GLfixed mts((to.ts_[y] - from.ts_[y]) / dx);
-    GLfixed mtt((to.tt_[y] - from.tt_[y]) / dx);
+    // Depth interpolation
+    GLfixed z(from.z_[y]);
+    GLfixed mz((to.z_[y] - from.z_[y]) / dx);
+
+    // Texture coordinate interpolation
     GLfixed ts(from.ts_[y]);
     GLfixed tt(from.tt_[y]);
+    GLfixed mts((to.ts_[y] - from.ts_[y]) / dx);
+    GLfixed mtt((to.tt_[y] - from.tt_[y]) / dx);
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -620,8 +630,64 @@ CSoftGLESFixed::hline_t(CEdgeFx & from, CEdgeFx & to, GLint & y)
           };
         }
       }
-      if(depthTestEnabled_ == true)
-        z += mz;
+      z  += mz;
+      ts += mts;
+      tt += mtt;
+      index++;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+// Horizontal Line Fill, texture mapped, perspective correct
+void
+CSoftGLESFixed::hline_tp(CEdgeFx & from, CEdgeFx & to, GLint & y)
+{
+  if(from.x_[y] < to.x_[y])
+  {
+    GLint dx(to.x_[y] - from.x_[y]);
+
+    // Depth interpolation
+    GLfixed z(from.z_[y]);
+    GLfixed mz((to.z_[y] - from.z_[y]) / dx);
+
+    // Texture coordinate interpolation
+    GLfixed tz(gl_fpdiv(gl_fpfromi(1), from.z_[y]));
+    GLfixed ts(gl_fpmul(from.ts_[y], tz));
+    GLfixed tt(gl_fpmul(from.tt_[y], tz));
+    GLfixed mtz((gl_fpdiv(gl_fpfromi(1), to.z_[y]) - tz) / dx);
+    GLfixed mts(gl_fpmul(to.ts_[y] - from.ts_[y], tz) / dx);
+    GLfixed mtt(gl_fpmul(to.tt_[y] - from.tt_[y], tz) / dx);
+
+    unsigned long index((y * viewportWidth) + from.x_[y]);
+    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
+    {
+      if(x >= viewportWidth)
+        break;
+
+      if(x >= 0)
+      {
+        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
+        {
+          GLfixed recip = gl_fpdiv(gl_fpfromi(1), tz);
+          GLfixed s     = gl_fpmul(ts, recip);
+          GLfixed t     = gl_fpmul(tt, recip);
+          switch(renderSurface->bpp_)
+          {
+            case 8:
+              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
+              break;
+            case 16:
+              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
+              break;
+            case 32:
+              ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
+              break;
+          };
+        }
+      }
+      z  += mz;
+      tz += mtz;
       ts += mts;
       tt += mtt;
       index++;
@@ -954,7 +1020,7 @@ CSoftGLESFixed::rasterPoly(SPolygonFx & poly)
   if(texturesEnabled_ == true)
   {
     for(GLint y(vlo->sy); y < vhi->sy; y++)
-      hline_t(*pEdgeLeft, *pEdgeRight, y);
+      hline_ta(*pEdgeLeft, *pEdgeRight, y);
   }
   else
   {

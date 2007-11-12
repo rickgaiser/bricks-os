@@ -145,7 +145,8 @@ protected:
   virtual bool testAndSetDepth(GLfloat z, uint32_t index);
   virtual void hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c);
   virtual void hline_s(CEdgeF & from, CEdgeF & to, GLint & y);
-  virtual void hline_t(CEdgeF & from, CEdgeF & to, GLint & y);
+  virtual void hline_ta(CEdgeF & from, CEdgeF & to, GLint & y);
+  virtual void hline_tp(CEdgeF & from, CEdgeF & to, GLint & y);
   virtual void addVertexToTriangle(SVertexF & v);
   virtual void addVertexToTriangleStrip(SVertexF & v);
   virtual void addVertexToTriangleFan(SVertexF & v);
