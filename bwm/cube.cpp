@@ -154,12 +154,19 @@ const GLfixed cubeTexFx[] =
 void
 initCubeF()
 {
-  // Texture
-  glGenTextures(1, &textures[0]);
-  glBindTexture(GL_TEXTURE_2D, textures[0]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 256, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, crate_Bitmap);
-//  glMatrixMode(GL_TEXTURE);
-//  glLoadIdentity();
+  static bool bInitialized(false);
+
+  if(bInitialized == false)
+  {
+    bInitialized = true;
+
+    // Texture
+    glGenTextures(1, &textures[0]);
+    glBindTexture(GL_TEXTURE_2D, textures[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 256, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crate_Bitmap);
+    //glMatrixMode(GL_TEXTURE);
+    //glLoadIdentity();
+  }
 }
 
 // -----------------------------------------------------------------------------
