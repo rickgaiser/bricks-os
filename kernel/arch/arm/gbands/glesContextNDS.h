@@ -40,13 +40,6 @@ public:
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
-  virtual void addVertexToTriangleFan(SVertexFx & v);
-  virtual void plotPoly(SPolygonFx & poly);
-  void updateLights();
-  void updateFog();
-
-protected:
-  GLint       iVCount_;
   bool        texturesEnabled_;
   uint32_t    iNDSGFXControl_;
   uint32_t    iNDSPolyFormat_;
@@ -88,6 +81,11 @@ protected:
   GLsizei     viewportPixelCount;
   GLsizei     viewportWidth;
   GLsizei     viewportHeight;
+
+private:
+  void plotPoly(SVertexFx * vtx[3]);
+  void updateLights();
+  void updateFog();
 };
 
 

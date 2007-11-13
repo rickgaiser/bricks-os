@@ -228,15 +228,20 @@ CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   GLint idxNormal  (first * bufNormal_.size);
   GLint idxTexCoord(first * bufTexCoord_.size);
 
-  SVertexFx v;
-  v.bProcessed = false;
-
-  // Reset vertex count for strips/fans/...
-  iVCount_ = 0;
+  SVertexFx * polygon[3];
+  SVertexFx   vertices[3];
+  bool bFlipFlop(true);
+  polygon[0] = &vertices[0];
+  polygon[1] = &vertices[1];
+  polygon[2] = &vertices[2];
+  GLint idx(0);
 
   // Process all vertices
   for(GLint i(0); i < count; i++)
   {
+    SVertexFx & v = *polygon[idx];
+    v.bProcessed = false;
+
     // Vertex
     switch(bufVertex_.type)
     {
@@ -257,7 +262,7 @@ CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // Normal
     if(bBufNormalEnabled_ == true)
     {
-      switch(bufColor_.type)
+      switch(bufNormal_.type)
       {
         case GL_FLOAT:
           v.n[0] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
@@ -318,9 +323,56 @@ CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 
     switch(mode)
     {
-      case GL_TRIANGLES:      addVertexToTriangle(v);      break;
-      case GL_TRIANGLE_STRIP: addVertexToTriangleStrip(v); break;
-      case GL_TRIANGLE_FAN:   addVertexToTriangleFan(v);   break;
+      case GL_TRIANGLES:
+      {
+        if(idx == 2)
+          plotPoly(polygon);
+        idx = (idx + 1) % 3;
+        break;
+      }
+      case GL_TRIANGLE_STRIP:
+      {
+        if(idx == 2)
+        {
+          plotPoly(polygon);
+          if(bFlipFlop == true)
+          {
+            SVertexFx * pTemp = polygon[0];
+            polygon[0] = polygon[2];
+            polygon[2] = pTemp;
+          }
+          else
+          {
+            SVertexFx * pTemp = polygon[1];
+            polygon[1] = polygon[2];
+            polygon[2] = pTemp;
+          }
+        }
+        else
+          idx++;
+        break;
+      }
+      case GL_TRIANGLE_FAN:
+      {
+        if(idx == 2)
+        {
+          plotPoly(polygon);
+          // Swap 3rd and 2nd vertex
+          if(polygon[1] == &vertices[1])
+          {
+            polygon[1] = &vertices[2];
+            polygon[2] = &vertices[1];
+          }
+          else
+          {
+            polygon[1] = &vertices[1];
+            polygon[2] = &vertices[2];
+          }
+        }
+        else
+          idx++;
+        break;
+      }
     };
   }
 }
@@ -697,161 +749,32 @@ CSoftGLESFixed::hline_tp(CEdgeFx & from, CEdgeFx & to, GLint & y)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFixed::addVertexToTriangle(SVertexFx & v)
-{
-  static SPolygonFx polygon;
-  static SVertexFx vertices[3];
-  static bool bInitialized(false);
-  if(bInitialized == false)
-  {
-    polygon.v[0] = &vertices[0];
-    polygon.v[1] = &vertices[1];
-    polygon.v[2] = &vertices[2];
-    bInitialized = true;
-  }
-
-  polygon.v[iVCount_]->bProcessed = false;
-  // Copy vertex
-  polygon.v[iVCount_]->v[0] = v.v[0];
-  polygon.v[iVCount_]->v[1] = v.v[1];
-  polygon.v[iVCount_]->v[2] = v.v[2];
-  polygon.v[iVCount_]->v[3] = v.v[3];
-  polygon.v[iVCount_]->n[0] = v.n[0];
-  polygon.v[iVCount_]->n[1] = v.n[1];
-  polygon.v[iVCount_]->n[2] = v.n[2];
-  polygon.v[iVCount_]->n[3] = v.n[3];
-  polygon.v[iVCount_]->ts   = v.ts;
-  polygon.v[iVCount_]->tt   = v.tt;
-  polygon.v[iVCount_]->c    = v.c;
-
-  if(iVCount_ == 2)
-    plotPoly(polygon);
-
-  iVCount_ = (iVCount_ + 1) % 3;
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::addVertexToTriangleStrip(SVertexFx & v)
-{
-  static SPolygonFx polygon;
-  static SVertexFx vertices[3];
-  static bool bInitialized(false);
-  static bool bFlipFlop(true);
-  if(bInitialized == false)
-  {
-    polygon.v[0] = &vertices[0];
-    polygon.v[1] = &vertices[1];
-    polygon.v[2] = &vertices[2];
-    bInitialized = true;
-  }
-
-  polygon.v[iVCount_]->bProcessed = false;
-  // Copy vertex
-  polygon.v[iVCount_]->v[0] = v.v[0];
-  polygon.v[iVCount_]->v[1] = v.v[1];
-  polygon.v[iVCount_]->v[2] = v.v[2];
-  polygon.v[iVCount_]->v[3] = v.v[3];
-  polygon.v[iVCount_]->n[0] = v.n[0];
-  polygon.v[iVCount_]->n[1] = v.n[1];
-  polygon.v[iVCount_]->n[2] = v.n[2];
-  polygon.v[iVCount_]->n[3] = v.n[3];
-  polygon.v[iVCount_]->ts   = v.ts;
-  polygon.v[iVCount_]->tt   = v.tt;
-  polygon.v[iVCount_]->c    = v.c;
-
-  if(iVCount_ == 2)
-  {
-    plotPoly(polygon);
-
-    if(bFlipFlop == true)
-    {
-      SVertexFx * pTemp = polygon.v[0];
-      polygon.v[0] = polygon.v[2];
-      polygon.v[2] = pTemp;
-    }
-    else
-    {
-      SVertexFx * pTemp = polygon.v[1];
-      polygon.v[1] = polygon.v[2];
-      polygon.v[2] = pTemp;
-    }
-  }
-  else
-    iVCount_++;
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::addVertexToTriangleFan(SVertexFx & v)
-{
-  static SPolygonFx polygon;
-  static SVertexFx vertices[3];
-  static bool bInitialized(false);
-  if(bInitialized == false)
-  {
-    polygon.v[0] = &vertices[0];
-    polygon.v[1] = &vertices[1];
-    polygon.v[2] = &vertices[2];
-    bInitialized = true;
-  }
-
-  polygon.v[iVCount_]->bProcessed = false;
-  // Copy vertex
-  polygon.v[iVCount_]->v[0] = v.v[0];
-  polygon.v[iVCount_]->v[1] = v.v[1];
-  polygon.v[iVCount_]->v[2] = v.v[2];
-  polygon.v[iVCount_]->v[3] = v.v[3];
-  polygon.v[iVCount_]->n[0] = v.n[0];
-  polygon.v[iVCount_]->n[1] = v.n[1];
-  polygon.v[iVCount_]->n[2] = v.n[2];
-  polygon.v[iVCount_]->n[3] = v.n[3];
-  polygon.v[iVCount_]->ts   = v.ts;
-  polygon.v[iVCount_]->tt   = v.tt;
-  polygon.v[iVCount_]->c    = v.c;
-
-  if(iVCount_ == 2)
-  {
-    plotPoly(polygon);
-
-    // Swap 3rd and 2nd vertex
-    if(polygon.v[1] == &vertices[1])
-    {
-      polygon.v[1] = &vertices[2];
-      polygon.v[2] = &vertices[1];
-    }
-    else
-    {
-      polygon.v[1] = &vertices[1];
-      polygon.v[2] = &vertices[2];
-    }
-  }
-  else
-    iVCount_++;
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::plotPoly(SPolygonFx & poly)
+CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
 {
   for(int i(0); i < 3; i++)
   {
-    if(poly.v[i]->bProcessed == false)
+    if(vtx[i]->bProcessed == false)
     {
-      // ModelView Transformation
-      matrixModelView.transform(poly.v[i]->v, poly.v[i]->v);
-      // Projection Transformation
-      matrixProjection.transform(poly.v[i]->v, poly.v[i]->v);
+      GLfixed * v = vtx[i]->v;
 
-      // Divide x and y by linear depth: w
-      poly.v[i]->v[0] = gl_fpdiv(poly.v[i]->v[0], poly.v[i]->v[3]);
-      poly.v[i]->v[1] = gl_fpdiv(poly.v[i]->v[1], poly.v[i]->v[3]);
+      // Model-View matrix
+      //   from 'object coordinates' to 'eye coordinates'
+      matrixModelView.transform(v, v);
+      // Projection matrix
+      //   from 'eye coordinates' to 'clip coordinates'
+      matrixProjection.transform(v, v);
+      // Perspective division
+      //   from 'clip coordinates' to 'normalized device coordinates'
+      v[0] = gl_fpdiv(v[0], v[3]);
+      v[1] = gl_fpdiv(v[1], v[3]);
+      v[2] = gl_fpdiv(v[2], v[3]);
+      // Viewport transformation
+      //   from 'normalized device coordinates' to 'window coordinates'
+      vtx[i]->sx = gl_fptoi(gl_fpmul(( v[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  / 2))) + viewportXOffset;
+      vtx[i]->sy = gl_fptoi(gl_fpmul((-v[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight / 2))) + viewportYOffset;
+//      vtx[i]->sz = gl_fpdiv(zFar - zNear, v[2] << 1) + ((zNear + zFar)>>1);
 
-      // From normalized device coordinates to window coordinates
-      poly.v[i]->sx = gl_fptoi(gl_fpmul(( poly.v[i]->v[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  / 2))) + viewportXOffset;
-      poly.v[i]->sy = gl_fptoi(gl_fpmul((-poly.v[i]->v[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight / 2))) + viewportYOffset;
-
-      poly.v[i]->bProcessed = true;
+      vtx[i]->bProcessed = true;
     }
   }
 
@@ -863,19 +786,19 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
       return;
 
     // Figure out if we need to cull
-    if((poly.v[1]->sx != poly.v[0]->sx) && (poly.v[2]->sx != poly.v[0]->sx))
+    if((vtx[1]->sx != vtx[0]->sx) && (vtx[2]->sx != vtx[0]->sx))
     {
-      if(((((gl_fpfromi(poly.v[1]->sy - poly.v[0]->sy) / (poly.v[1]->sx - poly.v[0]->sx)) - (gl_fpfromi(poly.v[2]->sy - poly.v[0]->sy) / (poly.v[2]->sx - poly.v[0]->sx))) < 0) ^ ((poly.v[0]->sx <= poly.v[1]->sx) == (poly.v[0]->sx > poly.v[2]->sx))) == bCullBack_)
+      if(((((gl_fpfromi(vtx[1]->sy - vtx[0]->sy) / (vtx[1]->sx - vtx[0]->sx)) - (gl_fpfromi(vtx[2]->sy - vtx[0]->sy) / (vtx[2]->sx - vtx[0]->sx))) < 0) ^ ((vtx[0]->sx <= vtx[1]->sx) == (vtx[0]->sx > vtx[2]->sx))) == bCullBack_)
         return;
     }
-    else if((poly.v[2]->sx != poly.v[1]->sx) && (poly.v[0]->sx != poly.v[1]->sx))
+    else if((vtx[2]->sx != vtx[1]->sx) && (vtx[0]->sx != vtx[1]->sx))
     {
-      if(((((gl_fpfromi(poly.v[2]->sy - poly.v[1]->sy) / (poly.v[2]->sx - poly.v[1]->sx)) - (gl_fpfromi(poly.v[0]->sy - poly.v[1]->sy) / (poly.v[0]->sx - poly.v[1]->sx))) < 0) ^ ((poly.v[1]->sx <= poly.v[2]->sx) == (poly.v[1]->sx > poly.v[0]->sx))) == bCullBack_)
+      if(((((gl_fpfromi(vtx[2]->sy - vtx[1]->sy) / (vtx[2]->sx - vtx[1]->sx)) - (gl_fpfromi(vtx[0]->sy - vtx[1]->sy) / (vtx[0]->sx - vtx[1]->sx))) < 0) ^ ((vtx[1]->sx <= vtx[2]->sx) == (vtx[1]->sx > vtx[0]->sx))) == bCullBack_)
         return;
     }
-    else if((poly.v[0]->sx != poly.v[2]->sx) && (poly.v[1]->sx != poly.v[2]->sx))
+    else if((vtx[0]->sx != vtx[2]->sx) && (vtx[1]->sx != vtx[2]->sx))
     {
-      if(((((gl_fpfromi(poly.v[0]->sy - poly.v[2]->sy) / (poly.v[0]->sx - poly.v[2]->sx)) - (gl_fpfromi(poly.v[1]->sy - poly.v[2]->sy) / (poly.v[1]->sx - poly.v[2]->sx))) < 0) ^ ((poly.v[2]->sx <= poly.v[0]->sx) == (poly.v[2]->sx > poly.v[1]->sx))) == bCullBack_)
+      if(((((gl_fpfromi(vtx[0]->sy - vtx[2]->sy) / (vtx[0]->sx - vtx[2]->sx)) - (gl_fpfromi(vtx[1]->sy - vtx[2]->sy) / (vtx[1]->sx - vtx[2]->sx))) < 0) ^ ((vtx[2]->sx <= vtx[0]->sx) == (vtx[2]->sx > vtx[1]->sx))) == bCullBack_)
         return;
     }
     else
@@ -888,11 +811,11 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
     if(lightingEnabled_ == true)
     {
       // Normal Rotation
-      matrixRotation.transform(poly.v[0]->n, poly.v[0]->n);
-      matrixRotation.transform(poly.v[1]->n, poly.v[1]->n);
-      matrixRotation.transform(poly.v[2]->n, poly.v[2]->n);
+      matrixRotation.transform(vtx[0]->n, vtx[0]->n);
+      matrixRotation.transform(vtx[1]->n, vtx[1]->n);
+      matrixRotation.transform(vtx[2]->n, vtx[2]->n);
       // FIXME: Light value of normal
-      GLfixed normal[3] = {abs(poly.v[0]->n[2]), abs(poly.v[1]->n[2]), abs(poly.v[2]->n[2])};
+      GLfixed normal[3] = {abs(vtx[0]->n[2]), abs(vtx[1]->n[2]), abs(vtx[2]->n[2])};
 
       for(int iLight(0); iLight < 8; iLight++)
       {
@@ -901,17 +824,17 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
           SColorFx & ambient = lights_[iLight].ambient;
           SColorFx & diffuse = lights_[iLight].diffuse;
 
-          poly.v[0]->c.r = clampfx(gl_fpmul(poly.v[0]->c.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[0]->c.r, normal[0]), diffuse.r));
-          poly.v[0]->c.g = clampfx(gl_fpmul(poly.v[0]->c.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[0]->c.g, normal[0]), diffuse.g));
-          poly.v[0]->c.b = clampfx(gl_fpmul(poly.v[0]->c.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[0]->c.b, normal[0]), diffuse.b));
+          vtx[0]->c.r = clampfx(gl_fpmul(vtx[0]->c.r, ambient.r) + gl_fpmul(gl_fpmul(vtx[0]->c.r, normal[0]), diffuse.r));
+          vtx[0]->c.g = clampfx(gl_fpmul(vtx[0]->c.g, ambient.g) + gl_fpmul(gl_fpmul(vtx[0]->c.g, normal[0]), diffuse.g));
+          vtx[0]->c.b = clampfx(gl_fpmul(vtx[0]->c.b, ambient.b) + gl_fpmul(gl_fpmul(vtx[0]->c.b, normal[0]), diffuse.b));
 
-          poly.v[1]->c.r = clampfx(gl_fpmul(poly.v[1]->c.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[1]->c.r, normal[1]), diffuse.r));
-          poly.v[1]->c.g = clampfx(gl_fpmul(poly.v[1]->c.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[1]->c.g, normal[1]), diffuse.g));
-          poly.v[1]->c.b = clampfx(gl_fpmul(poly.v[1]->c.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[1]->c.b, normal[1]), diffuse.b));
+          vtx[1]->c.r = clampfx(gl_fpmul(vtx[1]->c.r, ambient.r) + gl_fpmul(gl_fpmul(vtx[1]->c.r, normal[1]), diffuse.r));
+          vtx[1]->c.g = clampfx(gl_fpmul(vtx[1]->c.g, ambient.g) + gl_fpmul(gl_fpmul(vtx[1]->c.g, normal[1]), diffuse.g));
+          vtx[1]->c.b = clampfx(gl_fpmul(vtx[1]->c.b, ambient.b) + gl_fpmul(gl_fpmul(vtx[1]->c.b, normal[1]), diffuse.b));
 
-          poly.v[2]->c.r = clampfx(gl_fpmul(poly.v[2]->c.r, ambient.r) + gl_fpmul(gl_fpmul(poly.v[2]->c.r, normal[2]), diffuse.r));
-          poly.v[2]->c.g = clampfx(gl_fpmul(poly.v[2]->c.g, ambient.g) + gl_fpmul(gl_fpmul(poly.v[2]->c.g, normal[2]), diffuse.g));
-          poly.v[2]->c.b = clampfx(gl_fpmul(poly.v[2]->c.b, ambient.b) + gl_fpmul(gl_fpmul(poly.v[2]->c.b, normal[2]), diffuse.b));
+          vtx[2]->c.r = clampfx(gl_fpmul(vtx[2]->c.r, ambient.r) + gl_fpmul(gl_fpmul(vtx[2]->c.r, normal[2]), diffuse.r));
+          vtx[2]->c.g = clampfx(gl_fpmul(vtx[2]->c.g, ambient.g) + gl_fpmul(gl_fpmul(vtx[2]->c.g, normal[2]), diffuse.g));
+          vtx[2]->c.b = clampfx(gl_fpmul(vtx[2]->c.b, ambient.b) + gl_fpmul(gl_fpmul(vtx[2]->c.b, normal[2]), diffuse.b));
         }
       }
     }
@@ -921,27 +844,27 @@ CSoftGLESFixed::plotPoly(SPolygonFx & poly)
     {
       for(int i(0); i < 3; i++)
       {
-        GLfixed partFog   = clampfx(gl_fpdiv(abs(poly.v[i]->v[2]) - fogStart_, fogEnd_ - fogStart_));
+        GLfixed partFog   = clampfx(gl_fpdiv(abs(vtx[i]->v[2]) - fogStart_, fogEnd_ - fogStart_));
         GLfixed partColor = gl_fpfromi(1) - partFog;
-        poly.v[i]->c.r = clampfx(gl_fpmul(poly.v[i]->c.r, partColor) + gl_fpmul(fogColor_.r, partFog));
-        poly.v[i]->c.g = clampfx(gl_fpmul(poly.v[i]->c.g, partColor) + gl_fpmul(fogColor_.g, partFog));
-        poly.v[i]->c.b = clampfx(gl_fpmul(poly.v[i]->c.b, partColor) + gl_fpmul(fogColor_.b, partFog));
+        vtx[i]->c.r = clampfx(gl_fpmul(vtx[i]->c.r, partColor) + gl_fpmul(fogColor_.r, partFog));
+        vtx[i]->c.g = clampfx(gl_fpmul(vtx[i]->c.g, partColor) + gl_fpmul(fogColor_.g, partFog));
+        vtx[i]->c.b = clampfx(gl_fpmul(vtx[i]->c.b, partColor) + gl_fpmul(fogColor_.b, partFog));
       }
     }
   }
 
-  rasterPoly(poly);
+  rasterPoly(vtx);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFixed::rasterPoly(SPolygonFx & poly)
+CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
 {
   // Bubble sort the 3 vertexes
   SVertexFx * vtemp;
-  SVertexFx * vhi(poly.v[0]);
-  SVertexFx * vmi(poly.v[1]);
-  SVertexFx * vlo(poly.v[2]);
+  SVertexFx * vhi(vtx[0]);
+  SVertexFx * vmi(vtx[1]);
+  SVertexFx * vlo(vtx[2]);
 
   // Swap bottom with middle?
   if(vlo->sy > vmi->sy)
@@ -1029,7 +952,7 @@ CSoftGLESFixed::rasterPoly(SPolygonFx & poly)
       case GL_FLAT:
       {
         for(GLint y(vlo->sy); y < vhi->sy; y++)
-          hline(*pEdgeLeft, *pEdgeRight, y, poly.v[2]->c);
+          hline(*pEdgeLeft, *pEdgeRight, y, vtx[2]->c);
         break;
       }
       case GL_SMOOTH:

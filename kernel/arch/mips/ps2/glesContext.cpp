@@ -282,7 +282,7 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // Normal
     if(bBufNormalEnabled_ == true)
     {
-      switch(bufColor_.type)
+      switch(bufNormal_.type)
       {
         case GL_FLOAT:
           v.n[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
@@ -341,18 +341,22 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     else
       v.c = clCurrent;
 
-    // ModelView Transformation
+    // Model-View matrix
+    //   from 'object coordinates' to 'eye coordinates'
     matrixModelView.transform(v.v, v.v);
-    // Projection Transformation
+    // Projection matrix
+    //   from 'eye coordinates' to 'clip coordinates'
     matrixProjection.transform(v.v, v.v);
-
-    // Divide x and y by linear depth: w
+    // Perspective division
+    //   from 'clip coordinates' to 'normalized device coordinates'
     v.v[0] /= v.v[3];
     v.v[1] /= v.v[3];
-
-    // From normalized device coordinates to window coordinates
+    v.v[2] /= v.v[3];
+    // Viewport transformation
+    //   from 'normalized device coordinates' to 'window coordinates'
     v.sx = (GLint)(( v.v[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
     v.sy = (GLint)((-v.v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
+//    v.sz = (GLint)(((zFar - zNear) / (2.0f * v.v[2])) + ((zNear + zFar) / 2.0f));
 
     // Lighting
     if(lightingEnabled_ == true)

@@ -175,7 +175,12 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   GLint idxNormal  (first * bufNormal_.size);
   GLint idxTexCoord(first * bufTexCoord_.size);
 
-  SVertexFx v;
+  SVertexFx * polygon[3];
+  SVertexFx   vertices[3];
+  polygon[0] = &vertices[0];
+  polygon[1] = &vertices[1];
+  polygon[2] = &vertices[2];
+  GLint idx(0);
 
   switch(mode)
   {
@@ -194,6 +199,9 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   // Process all vertices
   for(GLint i(0); i < count; i++)
   {
+    SVertexFx & v = *polygon[idx];
+    v.bProcessed = false;
+
     // Vertex
     switch(bufVertex_.type)
     {
@@ -214,7 +222,7 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // Normal
     if(bBufNormalEnabled_ == true)
     {
-      switch(bufColor_.type)
+      switch(bufNormal_.type)
       {
         case GL_FLOAT:
           v.n[0] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
@@ -286,8 +294,26 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
         GFX_VERTEX16 = gl_to_ndsv(v.v[2]) & 0xffff;
         break;
       case GL_TRIANGLE_FAN:
-        addVertexToTriangleFan(v);
+      {
+        if(idx == 2)
+        {
+          plotPoly(polygon);
+          // Swap 3rd and 2nd vertex
+          if(polygon[1] == &vertices[1])
+          {
+            polygon[1] = &vertices[2];
+            polygon[2] = &vertices[1];
+          }
+          else
+          {
+            polygon[1] = &vertices[1];
+            polygon[2] = &vertices[2];
+          }
+        }
+        else
+          idx++;
         break;
+      }
     };
   }
   GFX_END = 0;
@@ -411,63 +437,16 @@ CNDSGLESContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void
-CNDSGLESContext::addVertexToTriangleFan(SVertexFx & v)
-{
-  static SPolygonFx polygon;
-  static SVertexFx vertices[3];
-  static bool bInitialized(false);
-  if(bInitialized == false)
-  {
-    polygon.v[0] = &vertices[0];
-    polygon.v[1] = &vertices[1];
-    polygon.v[2] = &vertices[2];
-    bInitialized = true;
-  }
-
-  polygon.v[iVCount_]->bProcessed = false;
-  // Copy vertex
-  polygon.v[iVCount_]->v[0] = v.v[0];
-  polygon.v[iVCount_]->v[1] = v.v[1];
-  polygon.v[iVCount_]->v[2] = v.v[2];
-  polygon.v[iVCount_]->v[3] = v.v[3];
-  polygon.v[iVCount_]->n[0] = v.n[0];
-  polygon.v[iVCount_]->n[1] = v.n[1];
-  polygon.v[iVCount_]->n[2] = v.n[2];
-  polygon.v[iVCount_]->n[3] = v.n[3];
-  polygon.v[iVCount_]->c    = v.c;
-
-  if(iVCount_ == 2)
-  {
-    plotPoly(polygon);
-
-    // Swap 3rd and 2nd vertex
-    if(polygon.v[1] == &vertices[1])
-    {
-      polygon.v[1] = &vertices[2];
-      polygon.v[2] = &vertices[1];
-    }
-    else
-    {
-      polygon.v[1] = &vertices[1];
-      polygon.v[2] = &vertices[2];
-    }
-  }
-  else
-    iVCount_++;
-}
-
-//-----------------------------------------------------------------------------
-void
-CNDSGLESContext::plotPoly(SPolygonFx & poly)
+CNDSGLESContext::plotPoly(SVertexFx * vtx[3])
 {
   for(int i(0); i < 3; i++)
   {
     if(texturesEnabled_ == true)
-      GFX_TEX_COORD = ((gl_to_ndst(poly.v[i]->ts) << 16) & 0xffff0000) | (gl_to_ndst(poly.v[i]->tt) & 0xffff);
+      GFX_TEX_COORD = ((gl_to_ndst(vtx[i]->ts) << 16) & 0xffff0000) | (gl_to_ndst(vtx[i]->tt) & 0xffff);
     else
-      GFX_COLOR = fpRGB(poly.v[i]->c.r, poly.v[i]->c.g, poly.v[i]->c.b);
-    GFX_VERTEX16 = ((gl_to_ndsv(poly.v[i]->v[1]) << 16) & 0xffff0000) | (gl_to_ndsv(poly.v[i]->v[0]) & 0xffff);
-    GFX_VERTEX16 = gl_to_ndsv(poly.v[i]->v[2]) & 0xffff;
+      GFX_COLOR = fpRGB(vtx[i]->c.r, vtx[i]->c.g, vtx[i]->c.b);
+    GFX_VERTEX16 = ((gl_to_ndsv(vtx[i]->v[1]) << 16) & 0xffff0000) | (gl_to_ndsv(vtx[i]->v[0]) & 0xffff);
+    GFX_VERTEX16 = gl_to_ndsv(vtx[i]->v[2]) & 0xffff;
   }
 }
 

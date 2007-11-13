@@ -96,13 +96,6 @@ struct SVertexFx
 };
 
 //-----------------------------------------------------------------------------
-// Triangle/Polygon
-struct SPolygonFx
-{
-  SVertexFx * v[3];
-};
-
-//-----------------------------------------------------------------------------
 struct SLightFx
 {
   SColorFx diffuse;
@@ -143,19 +136,6 @@ public:
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
-  virtual bool testAndSetDepth(GLfixed z, uint32_t index);
-  virtual void hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c);
-  virtual void hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y);
-  virtual void hline_ta(CEdgeFx & from, CEdgeFx & to, GLint & y);
-  virtual void hline_tp(CEdgeFx & from, CEdgeFx & to, GLint & y);
-  virtual void addVertexToTriangle(SVertexFx & v);
-  virtual void addVertexToTriangleStrip(SVertexFx & v);
-  virtual void addVertexToTriangleFan(SVertexFx & v);
-  virtual void plotPoly(SPolygonFx & poly);
-  virtual void rasterPoly(SPolygonFx & poly);
-
-protected:
-  GLint       iVCount_;
   bool        texturesEnabled_;
 
   // Depth testing
@@ -200,6 +180,15 @@ protected:
   GLsizei     viewportPixelCount;
   GLsizei     viewportWidth;
   GLsizei     viewportHeight;
+
+private:
+  bool testAndSetDepth(GLfixed z, uint32_t index);
+  void hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c);
+  void hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y);
+  void hline_ta(CEdgeFx & from, CEdgeFx & to, GLint & y);
+  void hline_tp(CEdgeFx & from, CEdgeFx & to, GLint & y);
+  void plotPoly(SVertexFx * vtx[3]);
+  void rasterPoly(SVertexFx * vtx[3]);
 };
 
 
