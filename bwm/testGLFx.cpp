@@ -65,7 +65,7 @@ testGLFx(CSurface * surface)
   {
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
-
+/*
     glLoadIdentity();
     glTranslatex(gl_fpfromi(-2), gl_fpfromi(0), gl_fpfromi(-8));
     glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
@@ -75,7 +75,7 @@ testGLFx(CSurface * surface)
     glTranslatex(gl_fpfromi(2), gl_fpfromi(0), gl_fpfromi(-8));
     glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
     drawPyramidFx();
-
+*/
     glLoadIdentity();
     glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
     glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
@@ -90,5 +90,6 @@ testGLFx(CSurface * surface)
     //surface->fillRect(3, surface->height() - 10, ((surface->width() - 6) * gl_fptoi(yrot)) / 360, 6);
 
     surface->swap(true);
+    //surface->swap(false);
   }
 }

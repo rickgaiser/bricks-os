@@ -7,6 +7,7 @@
 #include "GLES/gl_extra.h"
 #include "kernel/videoManager.h"
 #include "fixedPoint.h"
+#include "asm/arch/config.h"
 
 
 #define clampf(f)    (f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f))
@@ -227,6 +228,7 @@ protected:
   SBufferPointer bufVertex_;
 };
 
+#ifndef CONFIG_FPU
 //-----------------------------------------------------------------------------
 class CAGLESFloatToFxContext
  : public virtual IGLESContext
@@ -250,7 +252,7 @@ public:
   virtual void glScalef(GLfloat x, GLfloat y, GLfloat z);
   virtual void glTranslatef(GLfloat x, GLfloat y, GLfloat z);
 };
-
+#else
 //-----------------------------------------------------------------------------
 class CAGLESFxToFloatContext
  : public virtual IGLESContext
@@ -274,6 +276,7 @@ public:
   virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);
   virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z);
 };
+#endif // CONFIG_FPU
 
 
 #endif // GL_CONTEXT_H

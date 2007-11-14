@@ -4,6 +4,7 @@
 
 #include "context.h"
 #include "fixedPoint.h"
+#include "asm/arch/config.h"
 
 
 #define MATRIX_PRECISION   16
@@ -21,6 +22,7 @@
 typedef GLfixed Mfixed;
 
 
+#ifdef CONFIG_FPU
 //---------------------------------------------------------------------------
 class CMatrixF
 {
@@ -67,7 +69,7 @@ private:
   static GLfloat fpSin_[360];
   static GLfloat fpCos_[360];
 };
-
+#else
 //---------------------------------------------------------------------------
 class CMatrixFx
 {
@@ -114,7 +116,9 @@ private:
   static Mfixed fpSin_[360];
   static Mfixed fpCos_[360];
 };
+#endif // CONFIG_FPU
 
+#ifdef CONFIG_FPU
 //-----------------------------------------------------------------------------
 class CAGLESMatrixF
  : public virtual IGLESContext
@@ -146,7 +150,7 @@ protected:
   GLfloat     zA_;
   GLfloat     zB_;
 };
-
+#else
 //-----------------------------------------------------------------------------
 class CAGLESMatrixFx
  : public virtual IGLESContext
@@ -178,6 +182,7 @@ protected:
   GLfixed     zA_;
   GLfixed     zB_;
 };
+#endif // CONFIG_FPU
 
 
 #endif

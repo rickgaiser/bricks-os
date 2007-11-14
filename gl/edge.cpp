@@ -87,6 +87,7 @@
   tt += mtt
 
 
+#ifdef CONFIG_FPU
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CEdgeF::CEdgeF(uint32_t height)
@@ -242,7 +243,7 @@ CEdgeF::addZC(GLint x1, GLint y1, GLfloat z1, SColorF & c1, GLint x2, GLint y2, 
     }
   }
 }
-
+#else
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CEdgeFx::CEdgeFx(uint32_t height)
@@ -398,3 +399,4 @@ CEdgeFx::addZC(GLint x1, GLint y1, GLfixed z1, SColorFx & c1, GLint x2, GLint y2
     }
   }
 }
+#endif // CONFIG_FPU

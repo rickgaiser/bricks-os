@@ -2,6 +2,9 @@
 #define CONFIG_H
 
 
+// Hardware capabilities
+#undef  CONFIG_FPU
+
 // Kernel interface
 #define CONFIG_DIRECT_ACCESS_KERNEL
 #define CONFIG_DIRECT_ACCESS_KERNEL_FUNC

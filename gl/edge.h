@@ -5,8 +5,10 @@
 #include "GLES/gl.h"
 #include "context.h"
 #include "inttypes.h"
+#include "asm/arch/config.h"
 
 
+#ifdef CONFIG_FPU
 //-----------------------------------------------------------------------------
 class CEdgeF
 {
@@ -33,7 +35,7 @@ public:
 
   int32_t iHeight_;
 };
-
+#else
 //-----------------------------------------------------------------------------
 class CEdgeFx
 {
@@ -60,6 +62,7 @@ public:
 
   int32_t iHeight_;
 };
+#endif // CONFIG_FPU
 
 
 #endif

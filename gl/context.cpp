@@ -105,6 +105,7 @@ CAGLESBuffers::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GL
   bufVertex_.pointer = pointer;
 }
 
+#ifndef CONFIG_FPU
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void
@@ -254,7 +255,7 @@ CAGLESFloatToFxContext::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
   glTranslatex(gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
 }
-
+#else
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void
@@ -404,3 +405,4 @@ CAGLESFxToFloatContext::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
   glTranslatef(gl_fptof(x), gl_fptof(y), gl_fptof(z));
 }
+#endif // CONFIG_FPU

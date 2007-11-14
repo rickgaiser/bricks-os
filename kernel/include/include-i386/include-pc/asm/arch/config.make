@@ -1,3 +1,6 @@
+# Hardware capabilities
+CONFIG_FPU=y
+
 # Kernel interface
 #CONFIG_DIRECT_ACCESS_KERNEL=y
 #CONFIG_DIRECT_ACCESS_KERNEL_FUNC=y

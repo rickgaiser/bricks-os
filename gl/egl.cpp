@@ -1,8 +1,6 @@
 #include "EGL/egl.h"
 #include "context.h"
 #include "stddef.h"
-#include "softGLFx.h"
-#include "softGLF.h"
 
 
 extern IGLESContext * getGLESContext();

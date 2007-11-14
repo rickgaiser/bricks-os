@@ -4,15 +4,18 @@ typedef unsigned int wint_t;
 #include <math.h>
 
 
+#ifdef CONFIG_FPU
 bool      CMatrixF::bInitialized_(false);
 GLfloat   CMatrixF::fpSin_[360];
 GLfloat   CMatrixF::fpCos_[360];
-
+#else
 bool      CMatrixFx::bInitialized_(false);
 Mfixed    CMatrixFx::fpSin_[360];
 Mfixed    CMatrixFx::fpCos_[360];
+#endif // CONFIG_FPU
 
 
+#ifdef CONFIG_FPU
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CMatrixF::CMatrixF()
@@ -330,7 +333,7 @@ CMatrixF::operator=(const GLfloat * m)
 
   return(*this);
 }
-
+#else
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CMatrixFx::CMatrixFx()
@@ -655,7 +658,9 @@ CMatrixFx::operator=(const GLfixed * m)
 
   return(*this);
 }
+#endif // CONFIG_FPU
 
+#ifdef CONFIG_FPU
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CAGLESMatrixF::CAGLESMatrixF()
@@ -753,7 +758,7 @@ CAGLESMatrixF::glMatrixMode(GLenum mode)
     case GL_PROJECTION: pCurrentMatrix_ = &matrixProjection; break;
   };
 }
-
+#else
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CAGLESMatrixFx::CAGLESMatrixFx()
@@ -851,3 +856,4 @@ CAGLESMatrixFx::glMatrixMode(GLenum mode)
     case GL_PROJECTION: pCurrentMatrix_ = &matrixProjection; break;
   };
 }
+#endif // CONFIG_FPU
