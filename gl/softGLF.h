@@ -82,9 +82,9 @@ struct SVertexF
   {
     struct
     {
-      GLint sx, sy;
+      GLint sx, sy, sz;
     };
-    GLint s[2];
+    GLint s[3];
   };
 
   // Color
@@ -107,6 +107,7 @@ struct SLightF
 class CSoftGLESFloat
  : public CAGLESFxToFloatContext
  , public CAGLESBuffers
+ , public CAGLESCull
  , public CAGLESMatrixF
  , public CAGLESTextures
 {
@@ -119,7 +120,7 @@ public:
   virtual void glClearDepthf(GLclampf depth);
   virtual void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
   virtual void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
-  virtual void glCullFace(GLenum mode);
+  virtual void glDepthRangef(GLclampf zNear, GLclampf zFar);
   virtual void glDepthFunc(GLenum func);
   virtual void glDisable(GLenum cap);
   virtual void glDrawArrays(GLenum mode, GLint first, GLsizei count);
@@ -135,21 +136,16 @@ public:
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
-  bool        texturesEnabled_;
-
   // Depth testing
   bool        depthTestEnabled_;
   GLenum      depthFunction_;
   GLfloat     depthClear_;
   uint32_t    zClearValue_;
   uint32_t  * zbuffer;
+  GLclampf    zNear_;
+  GLclampf    zFar_;
 
   GLenum      shadingModel_;
-
-  // Backface culling
-  bool        cullFaceEnabled_;
-  bool        bCullBack_;
-  GLenum      cullFaceMode_;
 
   // Colors
   SColorF     clCurrent;

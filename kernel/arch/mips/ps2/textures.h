@@ -16,6 +16,11 @@ struct STexturePS2
   GLsizei width;
   GLsizei height;
 
+  GLint texMinFilter;
+  GLint texMagFilter;
+  GLint texWrapS;
+  GLint texWrapT;
+
   const void * data;
 };
 
@@ -31,8 +36,11 @@ public:
   virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
   virtual void glGenTextures(GLsizei n, GLuint *textures);
   virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+  virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
+  virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
 
 protected:
+  bool        texturesEnabled_;
   STexturePS2 * pCurrentTex_;
 
 private:

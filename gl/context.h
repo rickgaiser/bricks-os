@@ -57,7 +57,7 @@ public:
   virtual void glClearDepthf(GLclampf depth) = 0;
 //  virtual void glClipPlanef(GLenum plane, const GLfloat *equation) = 0;
   virtual void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) = 0;
-//  virtual void glDepthRangef(GLclampf zNear, GLclampf zFar) = 0;
+  virtual void glDepthRangef(GLclampf zNear, GLclampf zFar) = 0;
   virtual void glFogf(GLenum pname, GLfloat param) = 0;
   virtual void glFogfv(GLenum pname, const GLfloat *params) = 0;
   virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar) = 0;
@@ -87,7 +87,7 @@ public:
   virtual void glScalef(GLfloat x, GLfloat y, GLfloat z) = 0;
 //  virtual void glTexEnvf(GLenum target, GLenum pname, GLfloat param) = 0;
 //  virtual void glTexEnvfv(GLenum target, GLenum pname, const GLfloat *params) = 0;
-//  virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param) = 0;
+  virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param) = 0;
 //  virtual void glTexParameterfv(GLenum target, GLenum pname, const GLfloat *params) = 0;
   virtual void glTranslatef(GLfloat x, GLfloat y, GLfloat z) = 0;
 
@@ -117,7 +117,7 @@ public:
   virtual void glDeleteTextures(GLsizei n, const GLuint *textures) = 0;
   virtual void glDepthFunc(GLenum func) = 0;
 //  virtual void glDepthMask(GLboolean flag) = 0;
-//  virtual void glDepthRangex(GLclampx zNear, GLclampx zFar) = 0;
+  virtual void glDepthRangex(GLclampx zNear, GLclampx zFar) = 0;
   virtual void glDisable(GLenum cap) = 0;
   virtual void glDisableClientState(GLenum array) = 0;
   virtual void glDrawArrays(GLenum mode, GLint first, GLsizei count) = 0;
@@ -128,7 +128,7 @@ public:
   virtual void glFlush(void) = 0;
   virtual void glFogx(GLenum pname, GLfixed param) = 0;
   virtual void glFogxv(GLenum pname, const GLfixed *params) = 0;
-//  virtual void glFrontFace(GLenum mode) = 0;
+  virtual void glFrontFace(GLenum mode) = 0;
   virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar) = 0;
 //  virtual void glGetBooleanv(GLenum pname, GLboolean *params) = 0;
 //  virtual void glGetBufferParameteriv(GLenum target, GLenum pname, GLint *params) = 0;
@@ -190,7 +190,7 @@ public:
 //  virtual void glTexEnvxv(GLenum target, GLenum pname, const GLfixed *params) = 0;
   virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels) = 0;
 //  virtual void glTexParameteri(GLenum target, GLenum pname, GLint param) = 0;
-//  virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param) = 0;
+  virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param) = 0;
 //  virtual void glTexParameteriv(GLenum target, GLenum pname, const GLint *params) = 0;
 //  virtual void glTexParameterxv(GLenum target, GLenum pname, const GLfixed *params) = 0;
 //  virtual void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels) = 0;
@@ -228,6 +228,24 @@ protected:
   SBufferPointer bufVertex_;
 };
 
+//-----------------------------------------------------------------------------
+class CAGLESCull
+ : public virtual IGLESContext
+{
+public:
+  CAGLESCull();
+  virtual ~CAGLESCull();
+
+  virtual void glCullFace(GLenum mode);
+  virtual void glFrontFace(GLenum mode);
+
+protected:
+  bool        cullFaceEnabled_;
+  GLenum      cullFaceMode_;
+  GLenum      frontFace_;
+  bool        bCullCW_;
+};
+
 #ifndef CONFIG_FPU
 //-----------------------------------------------------------------------------
 class CAGLESFloatToFxContext
@@ -239,6 +257,7 @@ public:
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
   virtual void glClearDepthf(GLclampf depth);
   virtual void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+  virtual void glDepthRangef(GLclampf zNear, GLclampf zFar);
   virtual void glFogf(GLenum pname, GLfloat param);
   virtual void glFogfv(GLenum pname, const GLfloat *params);
   virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
@@ -263,6 +282,7 @@ public:
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
   virtual void glClearDepthx(GLclampx depth);
   virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
+  virtual void glDepthRangex(GLclampx zNear, GLclampx zFar);
   virtual void glFogx(GLenum pname, GLfixed param);
   virtual void glFogxv(GLenum pname, const GLfixed *params);
   virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);

@@ -5,7 +5,8 @@
 
 //-----------------------------------------------------------------------------
 CAGLESTextures::CAGLESTextures()
- : pCurrentTex_(0)
+ : texturesEnabled_(false)
+ , pCurrentTex_(NULL)
 {
   // Initialize all texture structs
   for(GLuint idxTex(0); idxTex < MAX_TEXTURE_COUNT; idxTex++)
@@ -111,8 +112,12 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
           return; // ERROR, invalid height
       };
 
-      pCurrentTex_->width  = width;
-      pCurrentTex_->height = height;
+      pCurrentTex_->width        = width;
+      pCurrentTex_->height       = height;
+      pCurrentTex_->texMinFilter = GL_LINEAR;
+      pCurrentTex_->texMagFilter = GL_LINEAR;
+      pCurrentTex_->texWrapS     = GL_REPEAT;
+      pCurrentTex_->texWrapT     = GL_REPEAT;
 
       EColorFormat fmtTo = renderSurface->format_;
       EColorFormat fmtFrom;
@@ -172,4 +177,27 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
       }
     }
   }
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESTextures::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
+{
+  if((pCurrentTex_ != 0) && (target == GL_TEXTURE_2D))
+  {
+    switch(pname)
+    {
+      case GL_TEXTURE_MIN_FILTER: pCurrentTex_->texMinFilter = (GLint)param; break;
+      case GL_TEXTURE_MAG_FILTER: pCurrentTex_->texMagFilter = (GLint)param; break;
+      case GL_TEXTURE_WRAP_S:     pCurrentTex_->texWrapS     = (GLint)param; break;
+      case GL_TEXTURE_WRAP_T:     pCurrentTex_->texWrapT     = (GLint)param; break;
+    };
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESTextures::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
+{
+  glTexParameterf(target, pname, gl_fptof(param));
 }

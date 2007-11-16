@@ -18,19 +18,20 @@ typedef unsigned int wint_t;
 CSoftGLESFixed::CSoftGLESFixed()
  : CAGLESFloatToFxContext()
  , CAGLESBuffers()
+ , CAGLESCull()
  , CAGLESMatrixFx()
  , CAGLESTextures()
 
- , texturesEnabled_(false)
  , depthTestEnabled_(false)
  , depthFunction_(GL_LESS)
  , depthClear_(gl_fpfromi(1))
  , zClearValue_(0xffff)
  , zbuffer(0)
+ , zNear_(gl_fpfromi(0))
+ , zFar_(gl_fpfromi(1))
+
  , shadingModel_(GL_FLAT)
- , cullFaceEnabled_(false)
- , bCullBack_(true)
- , cullFaceMode_(GL_BACK)
+
  , lightingEnabled_(false)
  , fogEnabled_(false)
  , edge1(0)
@@ -72,6 +73,7 @@ CSoftGLESFixed::CSoftGLESFixed()
   }
 
   zLoss_ = 0;
+/*
   GLfixed zmax = zFar_ - zNear_;
   uint16_t newz = zmax;
   if(newz != zmax)
@@ -84,6 +86,7 @@ CSoftGLESFixed::CSoftGLESFixed()
         break;
     }
   }
+*/
 }
 
 //-----------------------------------------------------------------------------
@@ -162,6 +165,14 @@ CSoftGLESFixed::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alph
 
 //-----------------------------------------------------------------------------
 void
+CSoftGLESFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
+{
+  zNear_ = clampfx(zNear);
+  zFar_  = clampfx(zFar);
+}
+
+//-----------------------------------------------------------------------------
+void
 CSoftGLESFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 {
   normal_[0] = nx;
@@ -173,14 +184,6 @@ CSoftGLESFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
   //{
   //  // FIXME: Normalize normal
   //}
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::glCullFace(GLenum mode)
-{
-  cullFaceMode_ = mode;
-  bCullBack_ = (cullFaceMode_ == GL_BACK);
 }
 
 //-----------------------------------------------------------------------------
@@ -517,6 +520,7 @@ CSoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 bool
 CSoftGLESFixed::testAndSetDepth(GLfixed z, uint32_t index)
 {
+/*
   if((z >= zNear_) && (z <= zFar_))
   {
     //uint32_t zval = z;
@@ -534,6 +538,7 @@ CSoftGLESFixed::testAndSetDepth(GLfixed z, uint32_t index)
       case GL_NEVER:                                                      return false; break;
     };
   }
+*/
   return false;
 }
 
@@ -788,17 +793,17 @@ CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
     // Figure out if we need to cull
     if((vtx[1]->sx != vtx[0]->sx) && (vtx[2]->sx != vtx[0]->sx))
     {
-      if(((((gl_fpfromi(vtx[1]->sy - vtx[0]->sy) / (vtx[1]->sx - vtx[0]->sx)) - (gl_fpfromi(vtx[2]->sy - vtx[0]->sy) / (vtx[2]->sx - vtx[0]->sx))) < 0) ^ ((vtx[0]->sx <= vtx[1]->sx) == (vtx[0]->sx > vtx[2]->sx))) == bCullBack_)
+      if(((((gl_fpfromi(vtx[1]->sy - vtx[0]->sy) / (vtx[1]->sx - vtx[0]->sx)) - (gl_fpfromi(vtx[2]->sy - vtx[0]->sy) / (vtx[2]->sx - vtx[0]->sx))) < 0) ^ ((vtx[0]->sx <= vtx[1]->sx) == (vtx[0]->sx > vtx[2]->sx))) == bCullCW_)
         return;
     }
     else if((vtx[2]->sx != vtx[1]->sx) && (vtx[0]->sx != vtx[1]->sx))
     {
-      if(((((gl_fpfromi(vtx[2]->sy - vtx[1]->sy) / (vtx[2]->sx - vtx[1]->sx)) - (gl_fpfromi(vtx[0]->sy - vtx[1]->sy) / (vtx[0]->sx - vtx[1]->sx))) < 0) ^ ((vtx[1]->sx <= vtx[2]->sx) == (vtx[1]->sx > vtx[0]->sx))) == bCullBack_)
+      if(((((gl_fpfromi(vtx[2]->sy - vtx[1]->sy) / (vtx[2]->sx - vtx[1]->sx)) - (gl_fpfromi(vtx[0]->sy - vtx[1]->sy) / (vtx[0]->sx - vtx[1]->sx))) < 0) ^ ((vtx[1]->sx <= vtx[2]->sx) == (vtx[1]->sx > vtx[0]->sx))) == bCullCW_)
         return;
     }
     else if((vtx[0]->sx != vtx[2]->sx) && (vtx[1]->sx != vtx[2]->sx))
     {
-      if(((((gl_fpfromi(vtx[0]->sy - vtx[2]->sy) / (vtx[0]->sx - vtx[2]->sx)) - (gl_fpfromi(vtx[1]->sy - vtx[2]->sy) / (vtx[1]->sx - vtx[2]->sx))) < 0) ^ ((vtx[2]->sx <= vtx[0]->sx) == (vtx[2]->sx > vtx[1]->sx))) == bCullBack_)
+      if(((((gl_fpfromi(vtx[0]->sy - vtx[2]->sy) / (vtx[0]->sx - vtx[2]->sx)) - (gl_fpfromi(vtx[1]->sy - vtx[2]->sy) / (vtx[1]->sx - vtx[2]->sx))) < 0) ^ ((vtx[2]->sx <= vtx[0]->sx) == (vtx[2]->sx > vtx[1]->sx))) == bCullCW_)
         return;
     }
     else
@@ -810,6 +815,7 @@ CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
     // Lighting
     if(lightingEnabled_ == true)
     {
+/*
       // Normal Rotation
       matrixRotation.transform(vtx[0]->n, vtx[0]->n);
       matrixRotation.transform(vtx[1]->n, vtx[1]->n);
@@ -837,6 +843,7 @@ CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
           vtx[2]->c.b = clampfx(gl_fpmul(vtx[2]->c.b, ambient.b) + gl_fpmul(gl_fpmul(vtx[2]->c.b, normal[2]), diffuse.b));
         }
       }
+*/
     }
 
     // Fog

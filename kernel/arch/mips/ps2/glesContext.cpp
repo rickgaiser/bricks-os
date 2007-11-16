@@ -18,8 +18,26 @@ extern uint16_t   gs_origin_y;
 CPS2GLESContext::CPS2GLESContext()
  : CAGLESFxToFloatContext()
  , CAGLESBuffers()
+ , CAGLESCull()
  , CAGLESMatrixF()
  , CAGLESTexturesPS2()
+
+ , depthTestEnabled_(false)
+ , depthFunction_(GL_LESS)
+ , depthClear_(1.0f)
+ , zClearValue_(0xffffffff)
+ , zbuffer(0)
+ , zNear_(0.0f)
+ , zFar_(1.0f)
+
+ , shadingModel_(GL_FLAT)
+ , lightingEnabled_(false)
+ , fogEnabled_(false)
+ , viewportXOffset(0)
+ , viewportYOffset(0)
+ , viewportPixelCount(0)
+ , viewportWidth(0)
+ , viewportHeight(0)
 
  , ps2Shading_(SHADE_FLAT)
  , ps2Textures_(TEXTURES_OFF)
@@ -29,22 +47,6 @@ CPS2GLESContext::CPS2GLESContext()
  , ps2DepthFunction_(ZTST_GREATER)
  , ps2DepthInvert_(true)
  , ps2ZMax_(0xffff)
-
- , texturesEnabled_(false)
- , shadingModel_(GL_FLAT)
- , cullFaceEnabled_(false)
- , bCullBack_(true)
- , cullFaceMode_(GL_BACK)
- , lightingEnabled_(false)
- , fogEnabled_(false)
- , depthTestEnabled_(false)
- , depthFunction_(GL_LESS)
- , depthClear_(1.0f)
- , viewportXOffset(0)
- , viewportYOffset(0)
- , viewportPixelCount(0)
- , viewportWidth(0)
- , viewportHeight(0)
 {
   clCurrent.r = 0.0f;
   clCurrent.g = 0.0f;
@@ -152,6 +154,14 @@ CPS2GLESContext::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alp
 
 //-----------------------------------------------------------------------------
 void
+CPS2GLESContext::glDepthRangef(GLclampf zNear, GLclampf zFar)
+{
+  zNear_ = clampf(zNear);
+  zFar_  = clampf(zFar);
+}
+
+//-----------------------------------------------------------------------------
+void
 CPS2GLESContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 {
   normal_[0] = nx;
@@ -163,14 +173,6 @@ CPS2GLESContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
   //{
   //  // FIXME: Normalize normal
   //}
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glCullFace(GLenum mode)
-{
-  cullFaceMode_ = mode;
-  bCullBack_ = (cullFaceMode_ == GL_BACK);
 }
 
 //-----------------------------------------------------------------------------
@@ -356,11 +358,12 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     //   from 'normalized device coordinates' to 'window coordinates'
     v.sx = (GLint)(( v.v[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
     v.sy = (GLint)((-v.v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
-//    v.sz = (GLint)(((zFar - zNear) / (2.0f * v.v[2])) + ((zNear + zFar) / 2.0f));
+    v.sz = (GLint)(((zFar_ - zNear_) / (2.0f * v.v[2])) + ((zNear_ + zFar_) / 2.0f));
 
     // Lighting
     if(lightingEnabled_ == true)
     {
+/*
       // Normal Rotation
       matrixRotation.transform(v.n, v.n);
       // FIXME: Light value of normal
@@ -377,6 +380,7 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
           v.c.b = clamp((v.c.b * ambient.b) + ((v.c.b * normal) * diffuse.b));
         }
       }
+*/
     }
 
     // Fog
@@ -392,9 +396,9 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // Calculate Z
     uint32_t z;
     if(ps2DepthInvert_ == true)
-      z = ps2ZMax_ - (uint32_t)(((v.v[3] - zNear_) / (zFar_ - zNear_)) * ps2ZMax_); // Linear depth
+      z = ps2ZMax_ - (uint32_t)(v.sz);
     else
-      z =            (uint32_t)(((v.v[3] - zNear_) / (zFar_ - zNear_)) * ps2ZMax_); // Linear depth
+      z =            (uint32_t)(v.sz);
 
     // Add to message
     if(texturesEnabled_ == true)

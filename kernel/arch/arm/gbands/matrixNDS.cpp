@@ -28,11 +28,6 @@ CAGLESMatrixNDSFx::CAGLESMatrixNDSFx()
       fpCos_[i] = nds_fpfromf(cos(static_cast<float>(i) * M_PI / 180.0f));
     }
   }
-
-  zNear_ = gl_fpfromf(  0.1f);
-  zFar_  = gl_fpfromf(100.0f);
-  zA_    = -gl_fpdiv((zFar_ + zNear_), (zFar_ - zNear_));
-  zB_    = -gl_fpdiv((gl_fpmul(zFar_, zNear_) << 1), (zFar_ - zNear_));
 }
 
 //---------------------------------------------------------------------------
@@ -44,11 +39,6 @@ CAGLESMatrixNDSFx::~CAGLESMatrixNDSFx()
 void
 CAGLESMatrixNDSFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
-  zNear_ = zNear;
-  zFar_  = zFar;
-  zA_    = -gl_fpdiv((zFar + zNear), (zFar - zNear));
-  zB_    = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear));
-
   MATRIX_MULT4x4 = gl_to_ndsv(gl_fpdiv((zNear << 1), (right - left)));
   MATRIX_MULT4x4 = nds_fpfromi(0);
   MATRIX_MULT4x4 = gl_to_ndsv(gl_fpdiv((right + left), (right - left)));
@@ -61,12 +51,12 @@ CAGLESMatrixNDSFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfix
 
   MATRIX_MULT4x4 = nds_fpfromi(0);
   MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_ndsv(zA_);
+  MATRIX_MULT4x4 = gl_to_ndsv(-gl_fpdiv((zFar + zNear), (zFar - zNear)));
   MATRIX_MULT4x4 = nds_fpfromi(-1);
 
   MATRIX_MULT4x4 = nds_fpfromi(0);
   MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_ndsv(zB_);
+  MATRIX_MULT4x4 = gl_to_ndsv(-gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear)));
   MATRIX_MULT4x4 = nds_fpfromi(0);
 
 //  MATRIX_STORE = ndsCurrentMatrixId_;
@@ -126,11 +116,6 @@ CAGLESMatrixNDSFx::glMultMatrixx(const GLfixed *m)
 void
 CAGLESMatrixNDSFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
-  zNear_ = zNear;
-  zFar_  = zFar;
-  zA_    = -gl_fpdiv((zFar + zNear), (zFar - zNear));
-  zB_    = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear));
-
   MATRIX_MULT4x4 = gl_to_ndsv(gl_fpdiv(gl_fpfromi(2), (right - left)));
   MATRIX_MULT4x4 = nds_fpfromi(0);
   MATRIX_MULT4x4 = nds_fpfromi(0);
@@ -143,12 +128,12 @@ CAGLESMatrixNDSFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed
 
   MATRIX_MULT4x4 = nds_fpfromi(0);
   MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_ndsv(zA_);
+  MATRIX_MULT4x4 = gl_to_ndsv(-gl_fpdiv((zFar + zNear), (zFar - zNear)));
   MATRIX_MULT4x4 = nds_fpfromi(0);
 
   MATRIX_MULT4x4 = nds_fpfromi(0);
   MATRIX_MULT4x4 = nds_fpfromi(0);
-  MATRIX_MULT4x4 = gl_to_ndsv(zB_);
+  MATRIX_MULT4x4 = gl_to_ndsv(-gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear)));
   MATRIX_MULT4x4 = nds_fpfromi(1);
 
 //  MATRIX_STORE = ndsCurrentMatrixId_;

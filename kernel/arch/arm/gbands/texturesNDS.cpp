@@ -14,6 +14,11 @@
 #define NDS_RGBA       7 // 15 bit direct color, 1 bit of alpha
 #define NDS_RGB        8 // 15 bit direct color, alpha bit autoset to 1
 
+#define NDS_REPEAT_S    (1<<16)
+#define NDS_REPEAT_T    (1<<17)
+#define NDS_FLIP_S      (1<<18)
+#define NDS_FLIP_T      (1<<19)
+
 #define TEXGEN_OFF      (0<<30)  //unmodified texcoord
 #define TEXGEN_TEXCOORD (1<<30)  //texcoord * texture-matrix
 #define TEXGEN_NORMAL   (2<<30)  //normal * texture-matrix
@@ -22,7 +27,8 @@
 
 //-----------------------------------------------------------------------------
 CAGLESTexturesNDS::CAGLESTexturesNDS()
- : pCurrentTex_(0)
+ : texturesEnabled_(false)
+ , pCurrentTex_(NULL)
 {
   for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
     textures_[idx].used = false;
@@ -115,7 +121,7 @@ CAGLESTexturesNDS::glTexImage2D(GLenum target, GLint level, GLint internalformat
 
       pCurrentTex_->width  = width;
       pCurrentTex_->height = height;
-      pCurrentTex_->format = TEXGEN_OFF | (idxWidth << 20) | (idxHeight << 23) | (((uint32_t)0x6840000 >> 3) & 0xFFFF) | (NDS_RGBA << 26);
+      pCurrentTex_->format = TEXGEN_OFF | NDS_REPEAT_S | NDS_REPEAT_T | (idxWidth << 20) | (idxHeight << 23) | (((uint32_t)0x6840000 >> 3) & 0xFFFF) | (NDS_RGBA << 26);
       pCurrentTex_->data   = (void *)0x6840000;
 
       // Set current texture format
@@ -151,4 +157,47 @@ CAGLESTexturesNDS::glTexImage2D(GLenum target, GLint level, GLint internalformat
       REG_VRAM_C_CR = VRAM_ENABLE | VRAM_TYPE_TEXTURE;
     }
   }
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESTexturesNDS::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
+{
+  if((pCurrentTex_ != 0) && (target == GL_TEXTURE_2D))
+  {
+    switch(pname)
+    {
+      case GL_TEXTURE_WRAP_S:
+        switch((GLint)param)
+        {
+          //case GL_CLAMP:
+          case GL_CLAMP_TO_EDGE:
+            pCurrentTex_->format &= ~NDS_REPEAT_S;
+            break;
+          case GL_REPEAT:
+            pCurrentTex_->format |= NDS_REPEAT_S;
+            break;
+        };
+        break;
+      case GL_TEXTURE_WRAP_T:
+        switch((GLint)param)
+        {
+          //case GL_CLAMP:
+          case GL_CLAMP_TO_EDGE:
+            pCurrentTex_->format &= ~NDS_REPEAT_T;
+            break;
+          case GL_REPEAT:
+            pCurrentTex_->format |= NDS_REPEAT_T;
+            break;
+        };
+        break;
+    };
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESTexturesNDS::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
+{
+  glTexParameterf(target, pname, gl_fptof(param));
 }

@@ -19,6 +19,11 @@ struct STexture
   uint32_t maskWidth;
   uint32_t maskHeight;
 
+  GLint texMinFilter;
+  GLint texMagFilter;
+  GLint texWrapS;
+  GLint texWrapT;
+
   void * data;
 };
 
@@ -34,9 +39,12 @@ public:
   virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
   virtual void glGenTextures(GLsizei n, GLuint *textures);
   virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+  virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
+  virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
 
 protected:
-  STexture * pCurrentTex_;
+  bool        texturesEnabled_;
+  STexture  * pCurrentTex_;
 
 private:
   STexture textures_[MAX_TEXTURE_COUNT];

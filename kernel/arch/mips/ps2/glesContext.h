@@ -11,6 +11,7 @@
 class CPS2GLESContext
  : public CAGLESFxToFloatContext
  , public CAGLESBuffers
+ , public CAGLESCull
  , public CAGLESMatrixF
  , public CAGLESTexturesPS2
 {
@@ -23,7 +24,7 @@ public:
   virtual void glClearDepthf(GLclampf depth);
   virtual void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
   virtual void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
-  virtual void glCullFace(GLenum mode);
+  virtual void glDepthRangef(GLclampf zNear, GLclampf zFar);
   virtual void glDepthFunc(GLenum func);
   virtual void glDisable(GLenum cap);
   virtual void glDrawArrays(GLenum mode, GLint first, GLsizei count);
@@ -39,24 +40,16 @@ public:
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
-  uint16_t    ps2Shading_;
-  uint16_t    ps2Textures_;
-  uint16_t    ps2Fog_;
-  uint16_t    ps2AlphaBlend_;
-  uint16_t    ps2Aliasing_;
-  uint16_t    ps2DepthFunction_;
-  bool        ps2DepthInvert_;
-  uint32_t    ps2ZMax_;
-
-  GLint       iVCount_;
-  bool        texturesEnabled_;
+  // Depth testing
+  bool        depthTestEnabled_;
+  GLenum      depthFunction_;
+  GLfloat     depthClear_;
+  uint32_t    zClearValue_;
+  uint32_t  * zbuffer;
+  GLclampf    zNear_;
+  GLclampf    zFar_;
 
   GLenum      shadingModel_;
-
-  // Backface culling
-  bool        cullFaceEnabled_;
-  bool        bCullBack_;
-  GLenum      cullFaceMode_;
 
   // Colors
   SColorF     clCurrent;
@@ -76,17 +69,22 @@ protected:
   GLfloat     fogEnd_;
   SColorF     fogColor_;
 
-  // Depth testing
-  bool        depthTestEnabled_;
-  GLenum      depthFunction_;
-  GLfloat     depthClear_;
-
   // Viewport
   GLint       viewportXOffset;
   GLint       viewportYOffset;
   GLsizei     viewportPixelCount;
   GLsizei     viewportWidth;
   GLsizei     viewportHeight;
+
+private:
+  uint16_t    ps2Shading_;
+  uint16_t    ps2Textures_;
+  uint16_t    ps2Fog_;
+  uint16_t    ps2AlphaBlend_;
+  uint16_t    ps2Aliasing_;
+  uint16_t    ps2DepthFunction_;
+  bool        ps2DepthInvert_;
+  uint32_t    ps2ZMax_;
 };
 
 

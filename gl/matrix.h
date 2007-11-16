@@ -142,13 +142,8 @@ protected:
   GLenum      matrixMode_;
   CMatrixF    matrixModelView;
   CMatrixF    matrixProjection;
-  CMatrixF    matrixRotation;
+  CMatrixF    matrixTexture;
   CMatrixF  * pCurrentMatrix_;
-
-  GLfloat     zNear_;
-  GLfloat     zFar_;
-  GLfloat     zA_;
-  GLfloat     zB_;
 };
 #else
 //-----------------------------------------------------------------------------
@@ -174,13 +169,8 @@ protected:
   GLenum      matrixMode_;
   CMatrixFx   matrixModelView;
   CMatrixFx   matrixProjection;
-  CMatrixFx   matrixRotation;
+  CMatrixFx   matrixTexture;
   CMatrixFx * pCurrentMatrix_;
-
-  GLfixed     zNear_;
-  GLfixed     zFar_;
-  GLfixed     zA_;
-  GLfixed     zB_;
 };
 #endif // CONFIG_FPU
 

@@ -89,14 +89,14 @@ GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, typ
 }
 
 //-----------------------------------------------------------------------------
-// GL API (53 of 145 implemented)
+// GL API (58 of 145 implemented)
 //-----------------------------------------------------------------------------
 //GL_API void GL_APIENTRY glAlphaFunc (GLenum func, GLclampf ref);
 GL_APIFUNCTION_4(glClearColor,         GLclampf, red, GLclampf, green, GLclampf, blue, GLclampf, alpha);
 GL_APIFUNCTION_1(glClearDepthf,        GLclampf, depth);
 //GL_API void GL_APIENTRY glClipPlanef (GLenum plane, const GLfloat *equation);
 GL_APIFUNCTION_4(glColor4f,            GLfloat, red, GLfloat, green, GLfloat, blue, GLfloat, alpha);
-//GL_API void GL_APIENTRY glDepthRangef (GLclampf zNear, GLclampf zFar);
+GL_APIFUNCTION_2(glDepthRangef,        GLclampf, zNear, GLclampf, zFar);
 GL_APIFUNCTION_2(glFogf,               GLenum, pname, GLfloat, param);
 GL_APIFUNCTION_2(glFogfv,              GLenum, pname, const GLfloat *, params);
 GL_APIFUNCTION_6(glFrustumf,           GLfloat, left, GLfloat, right, GLfloat, bottom, GLfloat, top, GLfloat, zNear, GLfloat, zFar);
@@ -126,7 +126,7 @@ GL_APIFUNCTION_4(glRotatef,            GLfloat, angle, GLfloat, x, GLfloat, y, G
 GL_APIFUNCTION_3(glScalef,             GLfloat, x, GLfloat, y, GLfloat, z);
 //GL_API void GL_APIENTRY glTexEnvf (GLenum target, GLenum pname, GLfloat param);
 //GL_API void GL_APIENTRY glTexEnvfv (GLenum target, GLenum pname, const GLfloat *params);
-//GL_API void GL_APIENTRY glTexParameterf (GLenum target, GLenum pname, GLfloat param);
+GL_APIFUNCTION_3(glTexParameterf,      GLenum, target, GLenum, pname, GLfloat, param);
 //GL_API void GL_APIENTRY glTexParameterfv (GLenum target, GLenum pname, const GLfloat *params);
 GL_APIFUNCTION_3(glTranslatef,         GLfloat, x, GLfloat, y, GLfloat, z);
 
@@ -156,7 +156,7 @@ GL_APIFUNCTION_1(glCullFace,           GLenum, mode);
 GL_APIFUNCTION_2(glDeleteTextures,     GLsizei, n, const GLuint *, textures);
 GL_APIFUNCTION_1(glDepthFunc,          GLenum, func);
 //GL_API void GL_APIENTRY glDepthMask (GLboolean flag);
-//GL_API void GL_APIENTRY glDepthRangex (GLclampx zNear, GLclampx zFar);
+GL_APIFUNCTION_2(glDepthRangex,        GLclampx, zNear, GLclampx, zFar);
 GL_APIFUNCTION_1(glDisable,            GLenum, cap);
 GL_APIFUNCTION_1(glDisableClientState, GLenum, array);
 GL_APIFUNCTION_3(glDrawArrays,         GLenum, mode, GLint, first, GLsizei, count);
@@ -167,7 +167,7 @@ GL_APIFUNCTION_0(glFinish);
 GL_APIFUNCTION_0(glFlush);
 GL_APIFUNCTION_2(glFogx,               GLenum, pname, GLfixed, param);
 GL_APIFUNCTION_2(glFogxv,              GLenum, pname, const GLfixed *, params);
-//GL_API void GL_APIENTRY glFrontFace (GLenum mode);
+GL_APIFUNCTION_1(glFrontFace,          GLenum, mode);
 GL_APIFUNCTION_6(glFrustumx,           GLfixed, left, GLfixed, right, GLfixed, bottom, GLfixed, top, GLfixed, zNear, GLfixed, zFar);
 //GL_API void GL_APIENTRY glGetBooleanv (GLenum pname, GLboolean *params);
 //GL_API void GL_APIENTRY glGetBufferParameteriv (GLenum target, GLenum pname, GLint *params);
@@ -229,7 +229,7 @@ GL_APIFUNCTION_4(glTexCoordPointer,    GLint, size, GLenum, type, GLsizei, strid
 //GL_API void GL_APIENTRY glTexEnvxv (GLenum target, GLenum pname, const GLfixed *params);
 GL_APIFUNCTION_9(glTexImage2D,         GLenum, target, GLint, level, GLint, internalformat, GLsizei, width, GLsizei, height, GLint, border, GLenum, format, GLenum, type, const GLvoid *, pixels);
 //GL_API void GL_APIENTRY glTexParameteri (GLenum target, GLenum pname, GLint param);
-//GL_API void GL_APIENTRY glTexParameterx (GLenum target, GLenum pname, GLfixed param);
+GL_APIFUNCTION_3(glTexParameterx,      GLenum, target, GLenum, pname, GLfixed, param);
 //GL_API void GL_APIENTRY glTexParameteriv (GLenum target, GLenum pname, const GLint *params);
 //GL_API void GL_APIENTRY glTexParameterxv (GLenum target, GLenum pname, const GLfixed *params);
 //GL_API void GL_APIENTRY glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);

@@ -667,10 +667,6 @@ CAGLESMatrixF::CAGLESMatrixF()
  : matrixMode_(GL_MODELVIEW)
  , pCurrentMatrix_(&matrixModelView)
 {
-  zNear_ =   0.1f;
-  zFar_  = 100.0f;
-  zA_    = -((zFar_ + zNear_) / (zFar_ - zNear_));
-  zB_    = -((2.0f * zFar_ * zNear_) / (zFar_ - zNear_));
 }
 
 //---------------------------------------------------------------------------
@@ -682,9 +678,6 @@ CAGLESMatrixF::~CAGLESMatrixF()
 void
 CAGLESMatrixF::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
-  zNear_ = zNear;
-  zFar_  = zFar;
-
   pCurrentMatrix_->frustum(left, right, bottom, top, zNear, zFar);
 }
 
@@ -706,9 +699,6 @@ CAGLESMatrixF::glMultMatrixf(const GLfloat *m)
 void
 CAGLESMatrixF::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
-  zNear_ = zNear;
-  zFar_  = zFar;
-
   pCurrentMatrix_->ortho(left, right, bottom, top, zNear, zFar);
 }
 
@@ -717,9 +707,6 @@ void
 CAGLESMatrixF::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
   pCurrentMatrix_->rotate(angle, x, y, z);
-
-  // FIXME
-  matrixRotation.rotate(angle, x, y, z);
 }
 
 //---------------------------------------------------------------------------
@@ -741,9 +728,6 @@ void
 CAGLESMatrixF::glLoadIdentity(void)
 {
   pCurrentMatrix_->loadIdentity();
-
-  // FIXME
-  matrixRotation.loadIdentity();
 }
 
 //---------------------------------------------------------------------------
@@ -756,6 +740,7 @@ CAGLESMatrixF::glMatrixMode(GLenum mode)
   {
     case GL_MODELVIEW:  pCurrentMatrix_ = &matrixModelView;  break;
     case GL_PROJECTION: pCurrentMatrix_ = &matrixProjection; break;
+    case GL_TEXTURE:    pCurrentMatrix_ = &matrixTexture;    break;
   };
 }
 #else
@@ -765,10 +750,6 @@ CAGLESMatrixFx::CAGLESMatrixFx()
  : matrixMode_(GL_MODELVIEW)
  , pCurrentMatrix_(&matrixModelView)
 {
-  zNear_ = gl_fpfromf(  0.1f);
-  zFar_  = gl_fpfromf(100.0f);
-  zA_    = -gl_fpdiv((zFar_ + zNear_), (zFar_ - zNear_));
-  zB_    = -gl_fpdiv((gl_fpmul(zFar_, zNear_) << 1), (zFar_ - zNear_));
 }
 
 //---------------------------------------------------------------------------
@@ -780,9 +761,6 @@ CAGLESMatrixFx::~CAGLESMatrixFx()
 void
 CAGLESMatrixFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
-  zNear_ = zNear;
-  zFar_  = zFar;
-
   pCurrentMatrix_->frustum(left, right, bottom, top, zNear, zFar);
 }
 
@@ -804,9 +782,6 @@ CAGLESMatrixFx::glMultMatrixx(const GLfixed *m)
 void
 CAGLESMatrixFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
-  zNear_ = zNear;
-  zFar_  = zFar;
-
   pCurrentMatrix_->ortho(left, right, bottom, top, zNear, zFar);
 }
 
@@ -815,9 +790,6 @@ void
 CAGLESMatrixFx::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
   pCurrentMatrix_->rotate(angle, x, y, z);
-
-  // FIXME
-  matrixRotation.rotate(angle, x, y, z);
 }
 
 //---------------------------------------------------------------------------
@@ -839,9 +811,6 @@ void
 CAGLESMatrixFx::glLoadIdentity(void)
 {
   pCurrentMatrix_->loadIdentity();
-
-  // FIXME
-  matrixRotation.loadIdentity();
 }
 
 //---------------------------------------------------------------------------
@@ -854,6 +823,7 @@ CAGLESMatrixFx::glMatrixMode(GLenum mode)
   {
     case GL_MODELVIEW:  pCurrentMatrix_ = &matrixModelView;  break;
     case GL_PROJECTION: pCurrentMatrix_ = &matrixProjection; break;
+    case GL_TEXTURE:    pCurrentMatrix_ = &matrixTexture;    break;
   };
 }
 #endif // CONFIG_FPU

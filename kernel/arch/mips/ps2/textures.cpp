@@ -11,7 +11,12 @@ extern uint32_t   gs_mem_current;
 
 //-----------------------------------------------------------------------------
 CAGLESTexturesPS2::CAGLESTexturesPS2()
- : pCurrentTex_(0)
+ : texturesEnabled_(false)
+ , texMinFilter_(GL_LINEAR)
+ , texMagFilter_(GL_LINEAR)
+ , texWrapS_(GL_REPEAT)
+ , texWrapT_(GL_REPEAT)
+ , pCurrentTex_(NULL)
 {
   for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
     textures_[idx].used = false;
@@ -89,9 +94,13 @@ CAGLESTexturesPS2::glTexImage2D(GLenum target, GLint level, GLint internalformat
   {
     if((pCurrentTex_ != 0) && (pCurrentTex_->used == true))
     {
-      pCurrentTex_->width  = width;
-      pCurrentTex_->height = height;
-      pCurrentTex_->data   = (void *)gs_mem_current;
+      pCurrentTex_->width        = width;
+      pCurrentTex_->height       = height;
+      pCurrentTex_->texMinFilter = GL_LINEAR;
+      pCurrentTex_->texMagFilter = GL_LINEAR;
+      pCurrentTex_->texWrapS     = GL_REPEAT;
+      pCurrentTex_->texWrapT     = GL_REPEAT;
+      pCurrentTex_->data         = (void *)gs_mem_current;
 
       // Copy to texture memory
       // Convert everything to cfA8R8G8B8 (native PS2 format)
@@ -132,4 +141,27 @@ CAGLESTexturesPS2::glTexImage2D(GLenum target, GLint level, GLint internalformat
       };
     }
   }
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESTexturesPS2::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
+{
+  if((pCurrentTex_ != 0) && (target == GL_TEXTURE_2D))
+  {
+    switch(pname)
+    {
+      case GL_TEXTURE_MIN_FILTER: pCurrentTex_->texMinFilter = (GLint)param; break;
+      case GL_TEXTURE_MAG_FILTER: pCurrentTex_->texMagFilter = (GLint)param; break;
+      case GL_TEXTURE_WRAP_S:     pCurrentTex_->texWrapS     = (GLint)param; break;
+      case GL_TEXTURE_WRAP_T:     pCurrentTex_->texWrapT     = (GLint)param; break;
+    };
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESTexturesPS2::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
+{
+  glTexParameterf(target, pname, gl_fptof(param));
 }

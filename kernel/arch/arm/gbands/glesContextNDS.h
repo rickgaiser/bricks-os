@@ -24,6 +24,7 @@ public:
   virtual void glClearDepthx(GLclampx depth);
   virtual void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
   virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
+  virtual void glDepthRangex(GLclampx zNear, GLclampx zFar);
   virtual void glCullFace(GLenum mode);
   virtual void glDepthFunc(GLenum func);
   virtual void glDisable(GLenum cap);
@@ -33,6 +34,7 @@ public:
   virtual void glFlush(void);
   virtual void glFogx(GLenum pname, GLfixed param);
   virtual void glFogxv(GLenum pname, const GLfixed *params);
+  virtual void glFrontFace(GLenum mode);
   virtual void glLightx(GLenum light, GLenum pname, GLfixed param);
   virtual void glLightxv(GLenum light, GLenum pname, const GLfixed * params);
   virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
@@ -40,22 +42,21 @@ public:
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
-  bool        texturesEnabled_;
-  uint32_t    iNDSGFXControl_;
-  uint32_t    iNDSPolyFormat_;
-
   // Depth testing
   bool        depthTestEnabled_;
   GLenum      depthFunction_;
   GLfixed     depthClear_;
   uint16_t    zClearValue_;
   GLfixed     zLoss_;
+  GLclampx    zNear_;
+  GLclampx    zFar_;
 
   GLenum      shadingModel_;
 
   // Backface culling
   bool        cullFaceEnabled_;
   GLenum      cullFaceMode_;
+  GLenum      frontFace_;
 
   // Colors
   SColorFx    clCurrent;
@@ -86,6 +87,9 @@ private:
   void plotPoly(SVertexFx * vtx[3]);
   void updateLights();
   void updateFog();
+
+  uint32_t    iNDSGFXControl_;
+  uint32_t    iNDSPolyFormat_;
 };
 
 

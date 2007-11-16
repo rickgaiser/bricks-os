@@ -12,19 +12,20 @@ typedef unsigned int wint_t;
 CSoftGLESFloat::CSoftGLESFloat()
  : CAGLESFxToFloatContext()
  , CAGLESBuffers()
+ , CAGLESCull()
  , CAGLESMatrixF()
  , CAGLESTextures()
 
- , texturesEnabled_(false)
  , depthTestEnabled_(false)
  , depthFunction_(GL_LESS)
  , depthClear_(1.0f)
  , zClearValue_(0xffffffff)
  , zbuffer(0)
+ , zNear_(0.0f)
+ , zFar_(1.0f)
+
  , shadingModel_(GL_FLAT)
- , cullFaceEnabled_(false)
- , bCullBack_(true)
- , cullFaceMode_(GL_BACK)
+
  , lightingEnabled_(false)
  , fogEnabled_(false)
  , edge1(0)
@@ -124,10 +125,10 @@ CSoftGLESFloat::glClearDepthf(GLclampf depth)
 void
 CSoftGLESFloat::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 {
-  clCurrent.r = (GLfloat)red   / 255.0f;
-  clCurrent.g = (GLfloat)green / 255.0f;
-  clCurrent.b = (GLfloat)blue  / 255.0f;
-  clCurrent.a = (GLfloat)alpha / 255.0f;
+  clCurrent.r = (GLfloat)red   * (1.0f/255.0f);
+  clCurrent.g = (GLfloat)green * (1.0f/255.0f);
+  clCurrent.b = (GLfloat)blue  * (1.0f/255.0f);
+  clCurrent.a = (GLfloat)alpha * (1.0f/255.0f);
 }
 
 //-----------------------------------------------------------------------------
@@ -138,6 +139,14 @@ CSoftGLESFloat::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alph
   clCurrent.g = green;
   clCurrent.b = blue;
   clCurrent.a = alpha;
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
+{
+  zNear_ = clampf(zNear);
+  zFar_  = clampf(zFar);
 }
 
 //-----------------------------------------------------------------------------
@@ -153,14 +162,6 @@ CSoftGLESFloat::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
   //{
   //  // FIXME: Normalize normal
   //}
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::glCullFace(GLenum mode)
-{
-  cullFaceMode_ = mode;
-  bCullBack_ = (cullFaceMode_ == GL_BACK);
 }
 
 //-----------------------------------------------------------------------------
@@ -497,6 +498,7 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 bool
 CSoftGLESFloat::testAndSetDepth(GLfloat z, uint32_t index)
 {
+/*
   if((z >= zNear_) && (z <= zFar_))
   {
     //uint32_t zval = (uint32_t)((zA_ + (zB_ / z)) * 0xffffffff);
@@ -514,6 +516,7 @@ CSoftGLESFloat::testAndSetDepth(GLfloat z, uint32_t index)
       case GL_NEVER:                                                      return false; break;
     };
   }
+*/
   return false;
 }
 
@@ -750,8 +753,8 @@ CSoftGLESFloat::plotPoly(SVertexF * vtx[3])
       v[2] /= v[3];
       // Viewport transformation
       //   from 'normalized device coordinates' to 'window coordinates'
-      vtx[i]->sx = (GLint)(( v[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
-      vtx[i]->sy = (GLint)((-v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
+      vtx[i]->sx = (GLint)(( v[0] + 1.0f) * (viewportWidth  >> 1)) + viewportXOffset;
+      vtx[i]->sy = (GLint)((-v[1] + 1.0f) * (viewportHeight >> 1)) + viewportYOffset;
 //      vtx[i]->sz = (GLint)(((zFar - zNear) / (2.0f * v[2])) + ((zNear + zFar) / 2.0f));
 
       vtx[i]->bProcessed = true;
@@ -768,17 +771,17 @@ CSoftGLESFloat::plotPoly(SVertexF * vtx[3])
     // Figure out if we need to cull
     if((vtx[1]->sx != vtx[0]->sx) && (vtx[2]->sx != vtx[0]->sx))
     {
-      if(((((gl_fpfromi(vtx[1]->sy - vtx[0]->sy) / (vtx[1]->sx - vtx[0]->sx)) - (gl_fpfromi(vtx[2]->sy - vtx[0]->sy) / (vtx[2]->sx - vtx[0]->sx))) < 0) ^ ((vtx[0]->sx <= vtx[1]->sx) == (vtx[0]->sx > vtx[2]->sx))) == bCullBack_)
+      if(((((gl_fpfromi(vtx[1]->sy - vtx[0]->sy) / (vtx[1]->sx - vtx[0]->sx)) - (gl_fpfromi(vtx[2]->sy - vtx[0]->sy) / (vtx[2]->sx - vtx[0]->sx))) < 0) ^ ((vtx[0]->sx <= vtx[1]->sx) == (vtx[0]->sx > vtx[2]->sx))) == bCullCW_)
         return;
     }
     else if((vtx[2]->sx != vtx[1]->sx) && (vtx[0]->sx != vtx[1]->sx))
     {
-      if(((((gl_fpfromi(vtx[2]->sy - vtx[1]->sy) / (vtx[2]->sx - vtx[1]->sx)) - (gl_fpfromi(vtx[0]->sy - vtx[1]->sy) / (vtx[0]->sx - vtx[1]->sx))) < 0) ^ ((vtx[1]->sx <= vtx[2]->sx) == (vtx[1]->sx > vtx[0]->sx))) == bCullBack_)
+      if(((((gl_fpfromi(vtx[2]->sy - vtx[1]->sy) / (vtx[2]->sx - vtx[1]->sx)) - (gl_fpfromi(vtx[0]->sy - vtx[1]->sy) / (vtx[0]->sx - vtx[1]->sx))) < 0) ^ ((vtx[1]->sx <= vtx[2]->sx) == (vtx[1]->sx > vtx[0]->sx))) == bCullCW_)
         return;
     }
     else if((vtx[0]->sx != vtx[2]->sx) && (vtx[1]->sx != vtx[2]->sx))
     {
-      if(((((gl_fpfromi(vtx[0]->sy - vtx[2]->sy) / (vtx[0]->sx - vtx[2]->sx)) - (gl_fpfromi(vtx[1]->sy - vtx[2]->sy) / (vtx[1]->sx - vtx[2]->sx))) < 0) ^ ((vtx[2]->sx <= vtx[0]->sx) == (vtx[2]->sx > vtx[1]->sx))) == bCullBack_)
+      if(((((gl_fpfromi(vtx[0]->sy - vtx[2]->sy) / (vtx[0]->sx - vtx[2]->sx)) - (gl_fpfromi(vtx[1]->sy - vtx[2]->sy) / (vtx[1]->sx - vtx[2]->sx))) < 0) ^ ((vtx[2]->sx <= vtx[0]->sx) == (vtx[2]->sx > vtx[1]->sx))) == bCullCW_)
         return;
     }
     else
@@ -790,6 +793,7 @@ CSoftGLESFloat::plotPoly(SVertexF * vtx[3])
     // Lighting
     if(lightingEnabled_ == true)
     {
+/*
       // Normal Rotation
       matrixRotation.transform(vtx[0]->n, vtx[0]->n);
       matrixRotation.transform(vtx[1]->n, vtx[1]->n);
@@ -817,6 +821,7 @@ CSoftGLESFloat::plotPoly(SVertexF * vtx[3])
           vtx[2]->c.b = clampf((vtx[2]->c.b * ambient.b) + ((vtx[2]->c.b * normal[2]) * diffuse.b));
         }
       }
+*/
     }
 
     // Fog

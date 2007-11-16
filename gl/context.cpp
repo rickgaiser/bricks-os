@@ -105,6 +105,39 @@ CAGLESBuffers::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GL
   bufVertex_.pointer = pointer;
 }
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+CAGLESCull::CAGLESCull()
+ : cullFaceEnabled_(false)
+ , cullFaceMode_(GL_BACK)
+ , frontFace_(GL_CCW)
+ , bCullCW_(true)
+{
+}
+
+//-----------------------------------------------------------------------------
+CAGLESCull::~CAGLESCull()
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESCull::glCullFace(GLenum mode)
+{
+  cullFaceMode_ = mode;
+
+  bCullCW_ = (frontFace_ == GL_CCW) == (cullFaceMode_ == GL_BACK);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESCull::glFrontFace(GLenum mode)
+{
+  frontFace_ = mode;
+
+  bCullCW_ = (frontFace_ == GL_CCW) == (cullFaceMode_ == GL_BACK);
+}
+
 #ifndef CONFIG_FPU
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -126,6 +159,13 @@ void
 CAGLESFloatToFxContext::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
   glColor4x(gl_fpfromf(red), gl_fpfromf(green), gl_fpfromf(blue), gl_fpfromf(alpha));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glDepthRangef(GLclampf zNear, GLclampf zFar)
+{
+  glDepthRangex(gl_fpfromf(zNear), gl_fpfromf(zFar));
 }
 
 //-----------------------------------------------------------------------------
@@ -276,6 +316,13 @@ void
 CAGLESFxToFloatContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 {
   glColor4f(gl_fptof(red), gl_fptof(green), gl_fptof(blue), gl_fptof(alpha));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glDepthRangex(GLclampx zNear, GLclampx zFar)
+{
+  glDepthRangef(gl_fptof(zNear), gl_fptof(zFar));
 }
 
 //-----------------------------------------------------------------------------

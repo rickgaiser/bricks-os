@@ -25,7 +25,14 @@ CNDSGLESContext::CNDSGLESContext()
  , CAGLESMatrixNDSFx()
  , CAGLESTexturesNDS()
 
- , texturesEnabled_(false)
+ , zNear_(gl_fpfromi(0))
+ , zFar_(gl_fpfromi(1))
+
+ , shadingModel_(GL_FLAT)
+
+ , cullFaceEnabled_(false)
+ , cullFaceMode_(GL_BACK)
+ , frontFace_(GL_CCW)
 {
   // Power control
   REG_POWCNT |= POWER_LCD |POWER_2D_TOP |POWER_2D_BOTTOM | POWER_3D_CORE | POWER_3D_MATRIX;
@@ -98,6 +105,14 @@ CNDSGLESContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alp
   clCurrent.b = blue;
   clCurrent.a = alpha;
   GFX_COLOR = fpRGB(clCurrent.r, clCurrent.g, clCurrent.b);
+}
+
+//-----------------------------------------------------------------------------
+void
+CNDSGLESContext::glDepthRangex(GLclampx zNear, GLclampx zFar)
+{
+  zNear_ = clampfx(zNear);
+  zFar_  = clampfx(zFar);
 }
 
 //-----------------------------------------------------------------------------
@@ -287,7 +302,7 @@ CNDSGLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       case GL_TRIANGLES:
       case GL_TRIANGLE_STRIP:
         if(texturesEnabled_ == true)
-          GFX_TEX_COORD = ((gl_to_ndst(v.ts) << 16) & 0xffff0000) | (gl_to_ndst(v.tt) & 0xffff);
+          GFX_TEX_COORD = ((gl_to_ndst(v.tt) << 16) & 0xffff0000) | (gl_to_ndst(v.ts) & 0xffff);
         else
           GFX_COLOR = fpRGB(v.c.r, v.c.g, v.c.b);
         GFX_VERTEX16 = ((gl_to_ndsv(v.v[1]) << 16) & 0xffff0000) | (gl_to_ndsv(v.v[0]) & 0xffff);
@@ -381,6 +396,15 @@ CNDSGLESContext::glFogxv(GLenum pname, const GLfixed * params)
       GFX_FOG_COLOR = fpFogRGBA(fogColor_.r, fogColor_.g, fogColor_.b, fogColor_.a);
       break;
   };
+}
+
+//-----------------------------------------------------------------------------
+void
+CNDSGLESContext::glFrontFace(GLenum mode)
+{
+  frontFace_ = mode;
+
+  // FIXME, only CCW is supported
 }
 
 //-----------------------------------------------------------------------------

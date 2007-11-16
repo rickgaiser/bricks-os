@@ -46,11 +46,6 @@ protected:
   GLenum      matrixMode_;
   uint32_t    ndsCurrentMatrixId_;
 
-  GLfixed     zNear_;
-  GLfixed     zFar_;
-  GLfixed     zA_;
-  GLfixed     zB_;
-
   static bool        bInitialized_;
   static NDSfixed    fpSin_[];
   static NDSfixed    fpCos_[];
