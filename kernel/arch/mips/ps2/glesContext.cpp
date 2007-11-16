@@ -11,6 +11,7 @@ DECLARE_GS_PACKET(dma_buf,1000);
 extern uint32_t   gs_mem_current;
 extern uint16_t   gs_origin_x;
 extern uint16_t   gs_origin_y;
+uint32_t          ps2TexturesStart_(0);
 
 
 //-----------------------------------------------------------------------------
@@ -358,12 +359,12 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     //   from 'normalized device coordinates' to 'window coordinates'
     v.sx = (GLint)(( v.v[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
     v.sy = (GLint)((-v.v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
-    v.sz = (GLint)(((zFar_ - zNear_) / (2.0f * v.v[2])) + ((zNear_ + zFar_) / 2.0f));
+    v.sz = (GLint)((-v.v[2] + 1.0f) * 0.5f * ps2ZMax_);
 
+/*
     // Lighting
     if(lightingEnabled_ == true)
     {
-/*
       // Normal Rotation
       matrixRotation.transform(v.n, v.n);
       // FIXME: Light value of normal
@@ -380,7 +381,6 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
           v.c.b = clamp((v.c.b * ambient.b) + ((v.c.b * normal) * diffuse.b));
         }
       }
-*/
     }
 
     // Fog
@@ -392,13 +392,10 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       v.c.g = clamp((v.c.g * partColor) + (fogColor_.g * partFog));
       v.c.b = clamp((v.c.b * partColor) + (fogColor_.b * partFog));
     }
+*/
 
     // Calculate Z
-    uint32_t z;
-    if(ps2DepthInvert_ == true)
-      z = ps2ZMax_ - (uint32_t)(v.sz);
-    else
-      z =            (uint32_t)(v.sz);
+    uint32_t z = (ps2DepthInvert_ == false) ? (ps2ZMax_ - v.sz) : v.sz;
 
     // Add to message
     if(texturesEnabled_ == true)
@@ -443,17 +440,23 @@ CPS2GLESContext::glEnable(GLenum cap)
         case 16:
         {
           GIF_DATA_AD(dma_buf, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_ENABLE));
+          ps2TexturesStart_ = gs_mem_current + (renderSurface->width_ * renderSurface->height_ * 2);
           ps2ZMax_ = 0xffff;
+          break;
         }
         case 24:
         {
           GIF_DATA_AD(dma_buf, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
+          ps2TexturesStart_ = gs_mem_current + (renderSurface->width_ * renderSurface->height_ * 3);
           ps2ZMax_ = 0xffffff;
+          break;
         }
         case 32:
         {
           GIF_DATA_AD(dma_buf, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
+          ps2TexturesStart_ = gs_mem_current + (renderSurface->width_ * renderSurface->height_ * 4);
           ps2ZMax_ = 0xffffffff;
+          break;
         }
       };
       // Z-Buffer test

@@ -6,7 +6,7 @@
 
 
 DECLARE_GS_PACKET(gs_tex_buf,50);
-extern uint32_t   gs_mem_current;
+extern uint32_t   ps2TexturesStart_;
 
 
 //-----------------------------------------------------------------------------
@@ -36,14 +36,21 @@ CAGLESTexturesPS2::glBindTexture(GLenum target, GLuint texture)
 
     GIF_DATA_AD(gs_tex_buf, tex0_1,
       GS_TEX0(
-        ((uint32_t)pCurrentTex_->data)/256,            // base pointer
-        pCurrentTex_->width/64,              // width
-        0,                              // 32bit RGBA
-        gs_texture_wh(pCurrentTex_->width),    // width
-        gs_texture_wh(pCurrentTex_->height),    // height
-        1,                              // RGBA
-        TEX_DECAL,                      // just overwrite existing pixels
-        0,0,0,0,0));
+        ((uint32_t)pCurrentTex_->data)>>8,   // base pointer
+        pCurrentTex_->width>>6,              // width
+        0,                                   // 32bit RGBA
+        gs_texture_wh(pCurrentTex_->width),  // width
+        gs_texture_wh(pCurrentTex_->height), // height
+        1,                                   // RGBA
+        TEX_DECAL,                           // just overwrite existing pixels
+        0, 0, 0, 0, 0));
+
+    GIF_DATA_AD(gs_tex_buf, tex1_1,
+      GS_TEX1(
+        0, 0,
+        pCurrentTex_->texMagFilter != GL_NEAREST,
+        pCurrentTex_->texMinFilter != GL_NEAREST,
+        0, 0, 0));
 
     SEND_GS_PACKET(gs_tex_buf);
   }
@@ -96,23 +103,23 @@ CAGLESTexturesPS2::glTexImage2D(GLenum target, GLint level, GLint internalformat
       pCurrentTex_->texMagFilter = GL_LINEAR;
       pCurrentTex_->texWrapS     = GL_REPEAT;
       pCurrentTex_->texWrapT     = GL_REPEAT;
-      pCurrentTex_->data         = (void *)gs_mem_current;
+      pCurrentTex_->data         = (void *)ps2TexturesStart_;
 
       // Copy to texture memory
-      // Convert everything to cfA8R8G8B8 (native PS2 format)
+      // Convert everything to cfA8B8G8R8
       switch(type)
       {
         case GL_UNSIGNED_BYTE:
         {
-          gs_load_texture(0, 0, width, height, (uint32_t)pixels, gs_mem_current, width);
+          gs_load_texture(0, 0, width, height, (uint32_t)pixels, ps2TexturesStart_, width);
           break;
         }
         case GL_UNSIGNED_SHORT_5_6_5:
         {
           uint32_t * newTexture = new uint32_t[width*height];
           for(int i(0); i < (width*height); i++)
-            newTexture[i] = BxColorFormat_Convert(cfR5G6B5, cfA8R8G8B8, ((uint16_t *)pixels)[i]);
-          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, gs_mem_current, width);
+            newTexture[i] = BxColorFormat_Convert(cfB5G6R5, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
+          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
           delete newTexture;
           break;
         }
@@ -120,8 +127,8 @@ CAGLESTexturesPS2::glTexImage2D(GLenum target, GLint level, GLint internalformat
         {
           uint32_t * newTexture = new uint32_t[width*height];
           for(int i(0); i < (width*height); i++)
-            newTexture[i] = BxColorFormat_Convert(cfA4B4G4R4, cfA8R8G8B8, ((uint16_t *)pixels)[i]);
-          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, gs_mem_current, width);
+            newTexture[i] = BxColorFormat_Convert(cfA4B4G4R4, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
+          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
           delete newTexture;
           break;
         }
@@ -129,8 +136,8 @@ CAGLESTexturesPS2::glTexImage2D(GLenum target, GLint level, GLint internalformat
         {
           uint32_t * newTexture = new uint32_t[width*height];
           for(int i(0); i < (width*height); i++)
-            newTexture[i] = BxColorFormat_Convert(cfA1B5G5R5, cfA8R8G8B8, ((uint16_t *)pixels)[i]);
-          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, gs_mem_current, width);
+            newTexture[i] = BxColorFormat_Convert(cfA1B5G5R5, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
+          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
           delete newTexture;
           break;
         }
