@@ -9,9 +9,10 @@ extern void initPyramidFx();
 extern void drawPyramidFx();
 extern void initCubeFx();
 extern void drawCubeFx();
-const GLfixed lightAmbient[] = {gl_fpfromf(0.1f), gl_fpfromf(0.1f), gl_fpfromf(0.1f), gl_fpfromf(1.0f)};
-const GLfixed lightDiffuse[] = {gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f)};
-const GLfixed fogColor[]     = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
+const GLfixed lightAmbient[]  = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
+const GLfixed lightDiffuse[]  = {gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f)};
+const GLfixed lightPosition[] = {gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(2.0f), gl_fpfromf(1.0f)};
+const GLfixed fogColor[]      = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
 
 
 // -----------------------------------------------------------------------------
@@ -36,6 +37,7 @@ testGLFx(CSurface * surface)
   // Lighting
   //glLightxv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
   //glLightxv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+  //glLightxv(GL_LIGHT0, GL_POSITION, lightPosition);
   //glEnable(GL_LIGHT0);
   //glEnable(GL_LIGHTING);
 

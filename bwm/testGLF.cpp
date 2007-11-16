@@ -8,9 +8,10 @@ extern void initPyramidF();
 extern void drawPyramidF();
 extern void initCubeF();
 extern void drawCubeF();
-const GLfloat lightAmbient[] = {0.1f, 0.1f, 0.1f, 1.0f};
-const GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-const GLfloat fogColor[]     = {0.5f, 0.5f, 0.5f, 1.0f};
+const GLfloat lightAmbient[]  = {0.5f, 0.5f, 0.5f, 1.0f};
+const GLfloat lightDiffuse[]  = {1.0f, 1.0f, 1.0f, 1.0f};
+const GLfloat lightPosition[] = {0.0f, 0.0f, 2.0f, 1.0f};
+const GLfloat fogColor[]      = {0.5f, 0.5f, 0.5f, 1.0f};
 
 
 // -----------------------------------------------------------------------------
@@ -35,6 +36,7 @@ testGLF(CSurface * surface)
   // Lighting
   //glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
   //glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+  //glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
   //glEnable(GL_LIGHT0);
   //glEnable(GL_LIGHTING);
 
