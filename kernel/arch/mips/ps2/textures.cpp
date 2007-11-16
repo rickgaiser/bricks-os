@@ -12,10 +12,6 @@ extern uint32_t   gs_mem_current;
 //-----------------------------------------------------------------------------
 CAGLESTexturesPS2::CAGLESTexturesPS2()
  : texturesEnabled_(false)
- , texMinFilter_(GL_LINEAR)
- , texMagFilter_(GL_LINEAR)
- , texWrapS_(GL_REPEAT)
- , texWrapT_(GL_REPEAT)
  , pCurrentTex_(NULL)
 {
   for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
