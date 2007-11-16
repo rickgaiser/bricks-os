@@ -83,7 +83,8 @@ struct SVertexFx
   {
     struct
     {
-      GLint sx, sy, sz;
+      GLint sx, sy;
+      uint32_t sz;
     };
     GLint s[3];
   };
