@@ -28,7 +28,7 @@ class CMatrixF
 {
 public:
   CMatrixF();
-  virtual ~CMatrixF();
+  ~CMatrixF();
 
   void clear();
   void loadIdentity();
@@ -57,12 +57,7 @@ public:
   CMatrixF & operator= (const GLfloat * m);
 
 public:
-  GLfloat matrix[4][4];
-  // [ROW][COLUMN]
-  // 00, 01, 02, 03
-  // 10, 11, 12, 13
-  // 20, 21, 22, 23
-  // 30, 31, 32, 33
+  GLfloat matrix[16];
 
 private:
   static bool bInitialized_;
@@ -75,7 +70,7 @@ class CMatrixFx
 {
 public:
   CMatrixFx();
-  virtual ~CMatrixFx();
+  ~CMatrixFx();
 
   void clear();
   void loadIdentity();
@@ -104,12 +99,7 @@ public:
   CMatrixFx & operator= (const GLfixed * m);
 
 public:
-  Mfixed matrix[4][4];
-  // [ROW][COLUMN]
-  // 00, 01, 02, 03
-  // 10, 11, 12, 13
-  // 20, 21, 22, 23
-  // 30, 31, 32, 33
+  Mfixed matrix[16];
 
 private:
   static bool bInitialized_;

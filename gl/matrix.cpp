@@ -4,6 +4,37 @@ typedef unsigned int wint_t;
 #include <math.h>
 
 
+#define matrixf_copy(mto, mfrom) \
+mto[0*4+0] = mfrom[0*4+0]; mto[0*4+1] = mfrom[0*4+1]; mto[0*4+2] = mfrom[0*4+2]; mto[0*4+3] = mfrom[0*4+3]; \
+mto[1*4+0] = mfrom[1*4+0]; mto[1*4+1] = mfrom[1*4+1]; mto[1*4+2] = mfrom[1*4+2]; mto[1*4+3] = mfrom[1*4+3]; \
+mto[2*4+0] = mfrom[2*4+0]; mto[2*4+1] = mfrom[2*4+1]; mto[2*4+2] = mfrom[2*4+2]; mto[2*4+3] = mfrom[2*4+3]; \
+mto[3*4+0] = mfrom[3*4+0]; mto[3*4+1] = mfrom[3*4+1]; mto[3*4+2] = mfrom[3*4+2]; mto[3*4+3] = mfrom[3*4+3]
+//memcpy(mto, mfrom, sizeof(GLfloat) * 16)
+#define matrixf_clear(m) \
+m[0*4+0] = 0; m[0*4+1] = 0; m[0*4+2] = 0; m[0*4+3] = 0; \
+m[1*4+0] = 0; m[1*4+1] = 0; m[1*4+2] = 0; m[1*4+3] = 0; \
+m[2*4+0] = 0; m[2*4+1] = 0; m[2*4+2] = 0; m[2*4+3] = 0; \
+m[3*4+0] = 0; m[3*4+1] = 0; m[3*4+2] = 0; m[3*4+3] = 0
+//memset(m, 0, sizeof(GLfloat) * 16)
+#define matrixf_identity(m) \
+m[0*4+0] = 1; m[0*4+1] = 0; m[0*4+2] = 0; m[0*4+3] = 0; \
+m[1*4+0] = 0; m[1*4+1] = 1; m[1*4+2] = 0; m[1*4+3] = 0; \
+m[2*4+0] = 0; m[2*4+1] = 0; m[2*4+2] = 1; m[2*4+3] = 0; \
+m[3*4+0] = 0; m[3*4+1] = 0; m[3*4+2] = 0; m[3*4+3] = 1
+
+#define matrixfx_copy(mto, mfrom) \
+matrixf_copy(mto, mfrom)
+//memcpy(mto, mfrom, sizeof(Mfixed) * 16)
+#define matrixfx_clear(m) \
+matrixf_clear(m)
+//memset(m, 0, sizeof(Mfixed) * 16)
+#define matrixfx_identity(m) \
+m[0*4+0] = m_fpfromi(1); m[0*4+1] = m_fpfromi(0); m[0*4+2] = m_fpfromi(0); m[0*4+3] = m_fpfromi(0); \
+m[1*4+0] = m_fpfromi(0); m[1*4+1] = m_fpfromi(1); m[1*4+2] = m_fpfromi(0); m[1*4+3] = m_fpfromi(0); \
+m[2*4+0] = m_fpfromi(0); m[2*4+1] = m_fpfromi(0); m[2*4+2] = m_fpfromi(1); m[2*4+3] = m_fpfromi(0); \
+m[3*4+0] = m_fpfromi(0); m[3*4+1] = m_fpfromi(0); m[3*4+2] = m_fpfromi(0); m[3*4+3] = m_fpfromi(1)
+
+
 #ifdef CONFIG_FPU
 bool      CMatrixF::bInitialized_(false);
 GLfloat   CMatrixF::fpSin_[360];
@@ -29,8 +60,6 @@ CMatrixF::CMatrixF()
       fpCos_[i] = cos(static_cast<float>(i) * M_PI / 180.0f);
     }
   }
-
-  clear();
 }
 
 //---------------------------------------------------------------------------
@@ -42,45 +71,41 @@ CMatrixF::~CMatrixF()
 void
 CMatrixF::clear()
 {
-  memset(matrix, 0, sizeof(GLfloat) * 16);
+  matrixf_clear(matrix);
 }
 
 //---------------------------------------------------------------------------
 void
 CMatrixF::loadIdentity()
 {
-  clear();
-  matrix[0][0] = 1.0f;
-  matrix[1][1] = 1.0f;
-  matrix[2][2] = 1.0f;
-  matrix[3][3] = 1.0f;
+  matrixf_identity(matrix);
 }
 
 //---------------------------------------------------------------------------
 void
 CMatrixF::frustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
-  CMatrixF m;
+  GLfloat m[16];
 
-  m.matrix[0][0] = (2.0f * zNear) / (right - left);
-  m.matrix[0][1] = 0.0f;
-  m.matrix[0][2] = (right + left) / (right - left);
-  m.matrix[0][3] = 0.0f;
+  m[0*4+0] = (2.0f * zNear) / (right - left);
+  m[0*4+1] = 0.0f;
+  m[0*4+2] = (right + left) / (right - left);
+  m[0*4+3] = 0.0f;
 
-  m.matrix[1][0] = 0.0f;
-  m.matrix[1][1] = (2.0f * zNear) / (top - bottom);
-  m.matrix[1][2] = (top + bottom) / (top - bottom);
-  m.matrix[1][3] = 0.0f;
+  m[1*4+0] = 0.0f;
+  m[1*4+1] = (2.0f * zNear) / (top - bottom);
+  m[1*4+2] = (top + bottom) / (top - bottom);
+  m[1*4+3] = 0.0f;
 
-  m.matrix[2][0] = 0.0f;
-  m.matrix[2][1] = 0.0f;
-  m.matrix[2][2] = -((zFar + zNear) / (zFar - zNear));
-  m.matrix[2][3] = -((2.0f * zFar * zNear) / (zFar - zNear));
+  m[2*4+0] = 0.0f;
+  m[2*4+1] = 0.0f;
+  m[2*4+2] = -((zFar + zNear) / (zFar - zNear));
+  m[2*4+3] = -((2.0f * zFar * zNear) / (zFar - zNear));
 
-  m.matrix[3][0] = 0.0f;
-  m.matrix[3][1] = 0.0f;
-  m.matrix[3][2] = -1.0f;
-  m.matrix[3][3] = 0.0f;
+  m[3*4+0] = 0.0f;
+  m[3*4+1] = 0.0f;
+  m[3*4+2] = -1.0f;
+  m[3*4+3] = 0.0f;
 
   *this *= m;
 }
@@ -89,27 +114,27 @@ CMatrixF::frustum(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfl
 void
 CMatrixF::ortho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
-  CMatrixF m;
+  GLfloat m[16];
 
-  m.matrix[0][0] = 2.0f / (right - left);
-  m.matrix[0][1] = 0.0f;
-  m.matrix[0][2] = 0.0f;
-  m.matrix[0][3] = -((right + left) / (right - left));
+  m[0*4+0] = 2.0f / (right - left);
+  m[0*4+1] = 0.0f;
+  m[0*4+2] = 0.0f;
+  m[0*4+3] = -((right + left) / (right - left));
 
-  m.matrix[1][0] = 0.0f;
-  m.matrix[1][1] = 2.0f / (top - bottom);
-  m.matrix[1][2] = 0.0f;
-  m.matrix[1][3] = -((top + bottom) / (top - bottom));
+  m[1*4+0] = 0.0f;
+  m[1*4+1] = 2.0f / (top - bottom);
+  m[1*4+2] = 0.0f;
+  m[1*4+3] = -((top + bottom) / (top - bottom));
 
-  m.matrix[2][0] = 0.0f;
-  m.matrix[2][1] = 0.0f;
-  m.matrix[2][2] = -2.0f / (zFar - zNear);
-  m.matrix[2][3] = -((zFar + zNear) / (zFar - zNear));
+  m[2*4+0] = 0.0f;
+  m[2*4+1] = 0.0f;
+  m[2*4+2] = -2.0f / (zFar - zNear);
+  m[2*4+3] = -((zFar + zNear) / (zFar - zNear));
 
-  m.matrix[3][0] = 0.0f;
-  m.matrix[3][1] = 0.0f;
-  m.matrix[3][2] = 0.0f;
-  m.matrix[3][3] = 1.0f;
+  m[3*4+0] = 0.0f;
+  m[3*4+1] = 0.0f;
+  m[3*4+2] = 0.0f;
+  m[3*4+3] = 1.0f;
 
   *this *= m;
 }
@@ -118,11 +143,11 @@ CMatrixF::ortho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloa
 void
 CMatrixF::translate(GLfloat x, GLfloat y, GLfloat z)
 {
-  CMatrixF m;
-  m.loadIdentity();
-  m.matrix[0][3] = x;
-  m.matrix[1][3] = y;
-  m.matrix[2][3] = z;
+  GLfloat m[16];
+  matrixf_identity(m);
+  m[0*4+3] = x;
+  m[1*4+3] = y;
+  m[2*4+3] = z;
   *this *= m;
 }
 
@@ -137,11 +162,11 @@ CMatrixF::translate(GLfloat * vec)
 void
 CMatrixF::scale(GLfloat x, GLfloat y, GLfloat z)
 {
-  CMatrixF m;
-  m.loadIdentity();
-  m.matrix[0][0] = x;
-  m.matrix[1][1] = y;
-  m.matrix[2][2] = z;
+  GLfloat m[16];
+  matrixf_identity(m);
+  m[0*4+0] = x;
+  m[1*4+1] = y;
+  m[2*4+2] = z;
   *this *= m;
 }
 
@@ -174,55 +199,61 @@ CMatrixF::rotate(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
     case 0x01:
     {
       // X Rotation only
-      CMatrixF rot;
-      rot.loadIdentity();
-      rot.matrix[1][1] = iCos;
-      rot.matrix[1][2] = -iSin;
-      rot.matrix[2][1] = iSin;
-      rot.matrix[2][2] = iCos;
-      *this *= rot;
+      GLfloat m[16];
+      matrixf_identity(m);
+      m[1*4+1] = iCos;
+      m[1*4+2] = -iSin;
+      m[2*4+1] = iSin;
+      m[2*4+2] = iCos;
+      *this *= m;
       break;
     }
     case 0x02:
     {
       // Y Rotation only
-      CMatrixF rot;
-      rot.loadIdentity();
-      rot.matrix[0][0] = iCos;
-      rot.matrix[0][2] = iSin;
-      rot.matrix[2][0] = -iSin;
-      rot.matrix[2][2] = iCos;
-      *this *= rot;
+      GLfloat m[16];
+      matrixf_identity(m);
+      m[0*4+0] = iCos;
+      m[0*4+2] = iSin;
+      m[2*4+0] = -iSin;
+      m[2*4+2] = iCos;
+      *this *= m;
       break;
     }
     case 0x04:
     {
       // Z Rotation only
-      CMatrixF rot;
-      rot.loadIdentity();
-      rot.matrix[0][0] = iCos;
-      rot.matrix[0][1] = iSin;
-      rot.matrix[1][0] = -iSin;
-      rot.matrix[1][1] = iCos;
-      *this *= rot;
+      GLfloat m[16];
+      matrixf_identity(m);
+      m[0*4+0] = iCos;
+      m[0*4+1] = iSin;
+      m[1*4+0] = -iSin;
+      m[1*4+1] = iCos;
+      *this *= m;
       break;
     }
     default:
     {
       // Mixed Rotation
       GLfloat iMinCos = 1.0f - iCos;
-      CMatrixF rot;
-      rot.loadIdentity();
-      rot.matrix[0][0] = x * x * iMinCos + iCos;
-      rot.matrix[0][1] = x * y * iMinCos - z * iSin;
-      rot.matrix[0][2] = x * z * iMinCos + y * iSin;
-      rot.matrix[1][0] = y * x * iMinCos + z * iSin;
-      rot.matrix[1][1] = y * y * iMinCos + iCos;
-      rot.matrix[1][2] = y * z * iMinCos - x * iSin;
-      rot.matrix[2][0] = z * x * iMinCos - y * iSin;
-      rot.matrix[2][1] = z * y * iMinCos + x * iSin;
-      rot.matrix[2][2] = z * z * iMinCos + iCos;
-      *this *= rot;
+      GLfloat m[16];
+      m[0*4+0] = x * x * iMinCos + iCos;
+      m[0*4+1] = x * y * iMinCos - z * iSin;
+      m[0*4+2] = x * z * iMinCos + y * iSin;
+      m[0*4+3] = 0.0f;
+      m[1*4+0] = y * x * iMinCos + z * iSin;
+      m[1*4+1] = y * y * iMinCos + iCos;
+      m[1*4+2] = y * z * iMinCos - x * iSin;
+      m[1*4+3] = 0.0f;
+      m[2*4+0] = z * x * iMinCos - y * iSin;
+      m[2*4+1] = z * y * iMinCos + x * iSin;
+      m[2*4+2] = z * z * iMinCos + iCos;
+      m[2*4+3] = 0.0f;
+      m[3*4+0] = 0.0f;
+      m[3*4+1] = 0.0f;
+      m[3*4+2] = 0.0f;
+      m[3*4+3] = 1.0f;
+      *this *= m;
     }
   };
 }
@@ -242,10 +273,11 @@ CMatrixF::transform(const GLfloat * from, GLfloat * to)
   GLfloat y(from[1]);
   GLfloat z(from[2]);
   GLfloat w(from[3]);
-  to[0] = matrix[0][0] * x + matrix[0][1] * y + matrix[0][2] * z + matrix[0][3] * w;
-  to[1] = matrix[1][0] * x + matrix[1][1] * y + matrix[1][2] * z + matrix[1][3] * w;
-  to[2] = matrix[2][0] * x + matrix[2][1] * y + matrix[2][2] * z + matrix[2][3] * w;
-  to[3] = matrix[3][0] * x + matrix[3][1] * y + matrix[3][2] * z + matrix[3][3] * w;
+
+  to[0] = matrix[0*4+0] * x + matrix[0*4+1] * y + matrix[0*4+2] * z + matrix[0*4+3] * w;
+  to[1] = matrix[1*4+0] * x + matrix[1*4+1] * y + matrix[1*4+2] * z + matrix[1*4+3] * w;
+  to[2] = matrix[2*4+0] * x + matrix[2*4+1] * y + matrix[2*4+2] * z + matrix[2*4+3] * w;
+  to[3] = matrix[3*4+0] * x + matrix[3*4+1] * y + matrix[3*4+2] * z + matrix[3*4+3] * w;
 }
 
 //---------------------------------------------------------------------------
@@ -276,20 +308,29 @@ CMatrixF::operator*(const GLfloat * m)
 CMatrixF &
 CMatrixF::operator*=(const CMatrixF & m)
 {
-  GLfloat mtemp[4][4];
+  GLfloat mtemp[16];
 
-  for(int iRow(0); iRow < 4; iRow++)
-  {
-    for(int iCol(0); iCol < 4; iCol++)
-    {
-      mtemp[iRow][iCol] = matrix[iRow][0] * m.matrix[0][iCol] +
-                          matrix[iRow][1] * m.matrix[1][iCol] +
-                          matrix[iRow][2] * m.matrix[2][iCol] +
-                          matrix[iRow][3] * m.matrix[3][iCol];
-    }
-  }
+  mtemp[0*4+0] = matrix[0*4+0] * m.matrix[0*4+0] + matrix[0*4+1] * m.matrix[1*4+0] + matrix[0*4+2] * m.matrix[2*4+0] + matrix[0*4+3] * m.matrix[3*4+0];
+  mtemp[0*4+1] = matrix[0*4+0] * m.matrix[0*4+1] + matrix[0*4+1] * m.matrix[1*4+1] + matrix[0*4+2] * m.matrix[2*4+1] + matrix[0*4+3] * m.matrix[3*4+1];
+  mtemp[0*4+2] = matrix[0*4+0] * m.matrix[0*4+2] + matrix[0*4+1] * m.matrix[1*4+2] + matrix[0*4+2] * m.matrix[2*4+2] + matrix[0*4+3] * m.matrix[3*4+2];
+  mtemp[0*4+3] = matrix[0*4+0] * m.matrix[0*4+3] + matrix[0*4+1] * m.matrix[1*4+3] + matrix[0*4+2] * m.matrix[2*4+3] + matrix[0*4+3] * m.matrix[3*4+3];
 
-  memcpy(matrix, mtemp, sizeof(GLfloat) * 16);
+  mtemp[1*4+0] = matrix[1*4+0] * m.matrix[0*4+0] + matrix[1*4+1] * m.matrix[1*4+0] + matrix[1*4+2] * m.matrix[2*4+0] + matrix[1*4+3] * m.matrix[3*4+0];
+  mtemp[1*4+1] = matrix[1*4+0] * m.matrix[0*4+1] + matrix[1*4+1] * m.matrix[1*4+1] + matrix[1*4+2] * m.matrix[2*4+1] + matrix[1*4+3] * m.matrix[3*4+1];
+  mtemp[1*4+2] = matrix[1*4+0] * m.matrix[0*4+2] + matrix[1*4+1] * m.matrix[1*4+2] + matrix[1*4+2] * m.matrix[2*4+2] + matrix[1*4+3] * m.matrix[3*4+2];
+  mtemp[1*4+3] = matrix[1*4+0] * m.matrix[0*4+3] + matrix[1*4+1] * m.matrix[1*4+3] + matrix[1*4+2] * m.matrix[2*4+3] + matrix[1*4+3] * m.matrix[3*4+3];
+
+  mtemp[2*4+0] = matrix[2*4+0] * m.matrix[0*4+0] + matrix[2*4+1] * m.matrix[1*4+0] + matrix[2*4+2] * m.matrix[2*4+0] + matrix[2*4+3] * m.matrix[3*4+0];
+  mtemp[2*4+1] = matrix[2*4+0] * m.matrix[0*4+1] + matrix[2*4+1] * m.matrix[1*4+1] + matrix[2*4+2] * m.matrix[2*4+1] + matrix[2*4+3] * m.matrix[3*4+1];
+  mtemp[2*4+2] = matrix[2*4+0] * m.matrix[0*4+2] + matrix[2*4+1] * m.matrix[1*4+2] + matrix[2*4+2] * m.matrix[2*4+2] + matrix[2*4+3] * m.matrix[3*4+2];
+  mtemp[2*4+3] = matrix[2*4+0] * m.matrix[0*4+3] + matrix[2*4+1] * m.matrix[1*4+3] + matrix[2*4+2] * m.matrix[2*4+3] + matrix[2*4+3] * m.matrix[3*4+3];
+
+  mtemp[3*4+0] = matrix[3*4+0] * m.matrix[0*4+0] + matrix[3*4+1] * m.matrix[1*4+0] + matrix[3*4+2] * m.matrix[2*4+0] + matrix[3*4+3] * m.matrix[3*4+0];
+  mtemp[3*4+1] = matrix[3*4+0] * m.matrix[0*4+1] + matrix[3*4+1] * m.matrix[1*4+1] + matrix[3*4+2] * m.matrix[2*4+1] + matrix[3*4+3] * m.matrix[3*4+1];
+  mtemp[3*4+2] = matrix[3*4+0] * m.matrix[0*4+2] + matrix[3*4+1] * m.matrix[1*4+2] + matrix[3*4+2] * m.matrix[2*4+2] + matrix[3*4+3] * m.matrix[3*4+2];
+  mtemp[3*4+3] = matrix[3*4+0] * m.matrix[0*4+3] + matrix[3*4+1] * m.matrix[1*4+3] + matrix[3*4+2] * m.matrix[2*4+3] + matrix[3*4+3] * m.matrix[3*4+3];
+
+  matrixf_copy(matrix, mtemp);
 
   return(*this);
 }
@@ -298,20 +339,29 @@ CMatrixF::operator*=(const CMatrixF & m)
 CMatrixF &
 CMatrixF::operator*=(const GLfloat * m)
 {
-  GLfloat mtemp[4][4];
+  GLfloat mtemp[16];
 
-  for(int iRow(0); iRow < 4; iRow++)
-  {
-    for(int iCol(0); iCol < 4; iCol++)
-    {
-      mtemp[iRow][iCol] = matrix[iRow][0] * m[0*4+iCol] +
-                          matrix[iRow][1] * m[1*4+iCol] +
-                          matrix[iRow][2] * m[2*4+iCol] +
-                          matrix[iRow][3] * m[3*4+iCol];
-    }
-  }
+  mtemp[0*4+0] = matrix[0*4+0] * m[0*4+0] + matrix[0*4+1] * m[1*4+0] + matrix[0*4+2] * m[2*4+0] + matrix[0*4+3] * m[3*4+0];
+  mtemp[0*4+1] = matrix[0*4+0] * m[0*4+1] + matrix[0*4+1] * m[1*4+1] + matrix[0*4+2] * m[2*4+1] + matrix[0*4+3] * m[3*4+1];
+  mtemp[0*4+2] = matrix[0*4+0] * m[0*4+2] + matrix[0*4+1] * m[1*4+2] + matrix[0*4+2] * m[2*4+2] + matrix[0*4+3] * m[3*4+2];
+  mtemp[0*4+3] = matrix[0*4+0] * m[0*4+3] + matrix[0*4+1] * m[1*4+3] + matrix[0*4+2] * m[2*4+3] + matrix[0*4+3] * m[3*4+3];
 
-  memcpy(matrix, mtemp, sizeof(GLfloat) * 16);
+  mtemp[1*4+0] = matrix[1*4+0] * m[0*4+0] + matrix[1*4+1] * m[1*4+0] + matrix[1*4+2] * m[2*4+0] + matrix[1*4+3] * m[3*4+0];
+  mtemp[1*4+1] = matrix[1*4+0] * m[0*4+1] + matrix[1*4+1] * m[1*4+1] + matrix[1*4+2] * m[2*4+1] + matrix[1*4+3] * m[3*4+1];
+  mtemp[1*4+2] = matrix[1*4+0] * m[0*4+2] + matrix[1*4+1] * m[1*4+2] + matrix[1*4+2] * m[2*4+2] + matrix[1*4+3] * m[3*4+2];
+  mtemp[1*4+3] = matrix[1*4+0] * m[0*4+3] + matrix[1*4+1] * m[1*4+3] + matrix[1*4+2] * m[2*4+3] + matrix[1*4+3] * m[3*4+3];
+
+  mtemp[2*4+0] = matrix[2*4+0] * m[0*4+0] + matrix[2*4+1] * m[1*4+0] + matrix[2*4+2] * m[2*4+0] + matrix[2*4+3] * m[3*4+0];
+  mtemp[2*4+1] = matrix[2*4+0] * m[0*4+1] + matrix[2*4+1] * m[1*4+1] + matrix[2*4+2] * m[2*4+1] + matrix[2*4+3] * m[3*4+1];
+  mtemp[2*4+2] = matrix[2*4+0] * m[0*4+2] + matrix[2*4+1] * m[1*4+2] + matrix[2*4+2] * m[2*4+2] + matrix[2*4+3] * m[3*4+2];
+  mtemp[2*4+3] = matrix[2*4+0] * m[0*4+3] + matrix[2*4+1] * m[1*4+3] + matrix[2*4+2] * m[2*4+3] + matrix[2*4+3] * m[3*4+3];
+
+  mtemp[3*4+0] = matrix[3*4+0] * m[0*4+0] + matrix[3*4+1] * m[1*4+0] + matrix[3*4+2] * m[2*4+0] + matrix[3*4+3] * m[3*4+0];
+  mtemp[3*4+1] = matrix[3*4+0] * m[0*4+1] + matrix[3*4+1] * m[1*4+1] + matrix[3*4+2] * m[2*4+1] + matrix[3*4+3] * m[3*4+1];
+  mtemp[3*4+2] = matrix[3*4+0] * m[0*4+2] + matrix[3*4+1] * m[1*4+2] + matrix[3*4+2] * m[2*4+2] + matrix[3*4+3] * m[3*4+2];
+  mtemp[3*4+3] = matrix[3*4+0] * m[0*4+3] + matrix[3*4+1] * m[1*4+3] + matrix[3*4+2] * m[2*4+3] + matrix[3*4+3] * m[3*4+3];
+
+  matrixf_copy(matrix, mtemp);
 
   return(*this);
 }
@@ -320,7 +370,7 @@ CMatrixF::operator*=(const GLfloat * m)
 CMatrixF &
 CMatrixF::operator=(const CMatrixF & m)
 {
-  memcpy(matrix, m.matrix, sizeof(GLfloat) * 16);
+  matrixf_copy(matrix, m.matrix);
 
   return(*this);
 }
@@ -329,7 +379,7 @@ CMatrixF::operator=(const CMatrixF & m)
 CMatrixF &
 CMatrixF::operator=(const GLfloat * m)
 {
-  memcpy(matrix, m, sizeof(GLfloat) * 16);
+  matrixf_copy(matrix, m);
 
   return(*this);
 }
@@ -347,8 +397,6 @@ CMatrixFx::CMatrixFx()
       fpCos_[i] = m_fpfromf(cos(static_cast<float>(i) * M_PI / 180.0f));
     }
   }
-
-  clear();
 }
 
 //---------------------------------------------------------------------------
@@ -360,45 +408,41 @@ CMatrixFx::~CMatrixFx()
 void
 CMatrixFx::clear()
 {
-  memset(matrix, 0, sizeof(Mfixed) * 16);
+  matrixfx_clear(matrix);
 }
 
 //---------------------------------------------------------------------------
 void
 CMatrixFx::loadIdentity()
 {
-  clear();
-  matrix[0][0] = m_fpfromi(1);
-  matrix[1][1] = m_fpfromi(1);
-  matrix[2][2] = m_fpfromi(1);
-  matrix[3][3] = m_fpfromi(1);
+  matrixfx_identity(matrix);
 }
 
 //---------------------------------------------------------------------------
 void
 CMatrixFx::frustum(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
-  CMatrixFx m;
+  Mfixed m[16];
 
-  m.matrix[0][0] = gl_to_m(gl_fpdiv((zNear << 1), (right - left)));
-  m.matrix[0][1] = m_fpfromi(0);
-  m.matrix[0][2] = gl_to_m(gl_fpdiv((right + left), (right - left)));
-  m.matrix[0][3] = m_fpfromi(0);
+  m[0*4+0] = gl_to_m(gl_fpdiv((zNear << 1), (right - left)));
+  m[0*4+1] = m_fpfromi(0);
+  m[0*4+2] = gl_to_m(gl_fpdiv((right + left), (right - left)));
+  m[0*4+3] = m_fpfromi(0);
 
-  m.matrix[1][0] = m_fpfromi(0);
-  m.matrix[1][1] = gl_to_m(gl_fpdiv((zNear << 1), (top - bottom)));
-  m.matrix[1][2] = gl_to_m(gl_fpdiv((top + bottom), (top - bottom)));
-  m.matrix[1][3] = m_fpfromi(0);
+  m[1*4+0] = m_fpfromi(0);
+  m[1*4+1] = gl_to_m(gl_fpdiv((zNear << 1), (top - bottom)));
+  m[1*4+2] = gl_to_m(gl_fpdiv((top + bottom), (top - bottom)));
+  m[1*4+3] = m_fpfromi(0);
 
-  m.matrix[2][0] = m_fpfromi(0);
-  m.matrix[2][1] = m_fpfromi(0);
-  m.matrix[2][2] = gl_to_m(-gl_fpdiv((zFar + zNear), (zFar - zNear)));
-  m.matrix[2][3] = gl_to_m(-gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear)));
+  m[2*4+0] = m_fpfromi(0);
+  m[2*4+1] = m_fpfromi(0);
+  m[2*4+2] = gl_to_m(-gl_fpdiv((zFar + zNear), (zFar - zNear)));
+  m[2*4+3] = gl_to_m(-gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear)));
 
-  m.matrix[3][0] = m_fpfromi(0);
-  m.matrix[3][1] = m_fpfromi(0);
-  m.matrix[3][2] = m_fpfromi(-1);
-  m.matrix[3][3] = m_fpfromi(0);
+  m[3*4+0] = m_fpfromi(0);
+  m[3*4+1] = m_fpfromi(0);
+  m[3*4+2] = m_fpfromi(-1);
+  m[3*4+3] = m_fpfromi(0);
 
   *this *= m;
 }
@@ -407,27 +451,27 @@ CMatrixFx::frustum(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLf
 void
 CMatrixFx::ortho(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
-  CMatrixFx m;
+  Mfixed m[16];
 
-  m.matrix[0][0] = gl_to_m(gl_fpdiv(gl_fpfromi(2), (right - left)));
-  m.matrix[0][1] = m_fpfromi(0);
-  m.matrix[0][2] = m_fpfromi(0);
-  m.matrix[0][3] = gl_to_m(-gl_fpdiv((right + left), (right - left)));
+  m[0*4+0] = gl_to_m(gl_fpdiv(gl_fpfromi(2), (right - left)));
+  m[0*4+1] = m_fpfromi(0);
+  m[0*4+2] = m_fpfromi(0);
+  m[0*4+3] = gl_to_m(-gl_fpdiv((right + left), (right - left)));
 
-  m.matrix[1][0] = m_fpfromi(0);
-  m.matrix[1][1] = gl_to_m(gl_fpdiv(gl_fpfromi(2), (top - bottom)));
-  m.matrix[1][2] = m_fpfromi(0);
-  m.matrix[1][3] = gl_to_m(-gl_fpdiv((top + bottom), (top - bottom)));
+  m[1*4+0] = m_fpfromi(0);
+  m[1*4+1] = gl_to_m(gl_fpdiv(gl_fpfromi(2), (top - bottom)));
+  m[1*4+2] = m_fpfromi(0);
+  m[1*4+3] = gl_to_m(-gl_fpdiv((top + bottom), (top - bottom)));
 
-  m.matrix[2][0] = m_fpfromi(0);
-  m.matrix[2][1] = m_fpfromi(0);
-  m.matrix[2][2] = gl_to_m(gl_fpdiv(gl_fpfromi(-2), (zFar - zNear)));
-  m.matrix[2][3] = gl_to_m(-gl_fpdiv((zFar + zNear), (zFar - zNear)));
+  m[2*4+0] = m_fpfromi(0);
+  m[2*4+1] = m_fpfromi(0);
+  m[2*4+2] = gl_to_m(gl_fpdiv(gl_fpfromi(-2), (zFar - zNear)));
+  m[2*4+3] = gl_to_m(-gl_fpdiv((zFar + zNear), (zFar - zNear)));
 
-  m.matrix[3][0] = m_fpfromi(0);
-  m.matrix[3][1] = m_fpfromi(0);
-  m.matrix[3][2] = m_fpfromi(0);
-  m.matrix[3][3] = m_fpfromi(1);
+  m[3*4+0] = m_fpfromi(0);
+  m[3*4+1] = m_fpfromi(0);
+  m[3*4+2] = m_fpfromi(0);
+  m[3*4+3] = m_fpfromi(1);
 
   *this *= m;
 }
@@ -436,11 +480,11 @@ CMatrixFx::ortho(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfix
 void
 CMatrixFx::translate(GLfixed x, GLfixed y, GLfixed z)
 {
-  CMatrixFx m;
-  m.loadIdentity();
-  m.matrix[0][3] = gl_to_m(x);
-  m.matrix[1][3] = gl_to_m(y);
-  m.matrix[2][3] = gl_to_m(z);
+  Mfixed m[16];
+  matrixfx_identity(m);
+  m[0*4+3] = gl_to_m(x);
+  m[1*4+3] = gl_to_m(y);
+  m[2*4+3] = gl_to_m(z);
   *this *= m;
 }
 
@@ -455,11 +499,11 @@ CMatrixFx::translate(GLfixed * vec)
 void
 CMatrixFx::scale(GLfixed x, GLfixed y, GLfixed z)
 {
-  CMatrixFx m;
-  m.loadIdentity();
-  m.matrix[0][0] = gl_to_m(x);
-  m.matrix[1][1] = gl_to_m(y);
-  m.matrix[2][2] = gl_to_m(z);
+  Mfixed m[16];
+  matrixfx_identity(m);
+  m[0*4+0] = gl_to_m(x);
+  m[1*4+1] = gl_to_m(y);
+  m[2*4+2] = gl_to_m(z);
   *this *= m;
 }
 
@@ -497,55 +541,61 @@ CMatrixFx::rotate(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
     case 0x01:
     {
       // X Rotation only
-      CMatrixFx rot;
-      rot.loadIdentity();
-      rot.matrix[1][1] = iCos;
-      rot.matrix[1][2] = -iSin;
-      rot.matrix[2][1] = iSin;
-      rot.matrix[2][2] = iCos;
-      *this *= rot;
+      Mfixed m[16];
+      matrixfx_identity(m);
+      m[1*4+1] = iCos;
+      m[1*4+2] = -iSin;
+      m[2*4+1] = iSin;
+      m[2*4+2] = iCos;
+      *this *= m;
       break;
     }
     case 0x02:
     {
       // Y Rotation only
-      CMatrixFx rot;
-      rot.loadIdentity();
-      rot.matrix[0][0] = iCos;
-      rot.matrix[0][2] = iSin;
-      rot.matrix[2][0] = -iSin;
-      rot.matrix[2][2] = iCos;
-      *this *= rot;
+      Mfixed m[16];
+      matrixfx_identity(m);
+      m[0*4+0] = iCos;
+      m[0*4+2] = iSin;
+      m[2*4+0] = -iSin;
+      m[2*4+2] = iCos;
+      *this *= m;
       break;
     }
     case 0x04:
     {
       // Z Rotation only
-      CMatrixFx rot;
-      rot.loadIdentity();
-      rot.matrix[0][0] = iCos;
-      rot.matrix[0][1] = iSin;
-      rot.matrix[1][0] = -iSin;
-      rot.matrix[1][1] = iCos;
-      *this *= rot;
+      Mfixed m[16];
+      matrixfx_identity(m);
+      m[0*4+0] = iCos;
+      m[0*4+1] = iSin;
+      m[1*4+0] = -iSin;
+      m[1*4+1] = iCos;
+      *this *= m;
       break;
     }
     default:
     {
       // Mixed Rotation
       Mfixed iMinCos = m_fpfromi(1) - iCos;
-      CMatrixFx rot;
-      rot.loadIdentity();
-      rot.matrix[0][0] = m_fpmul(m_fpmul(x, x), iMinCos) + iCos;
-      rot.matrix[0][1] = m_fpmul(m_fpmul(x, y), iMinCos) - m_fpmul(z, iSin);
-      rot.matrix[0][2] = m_fpmul(m_fpmul(x, z), iMinCos) + m_fpmul(y, iSin);
-      rot.matrix[1][0] = m_fpmul(m_fpmul(y, x), iMinCos) + m_fpmul(z, iSin);
-      rot.matrix[1][1] = m_fpmul(m_fpmul(y, y), iMinCos) + iCos;
-      rot.matrix[1][2] = m_fpmul(m_fpmul(y, z), iMinCos) - m_fpmul(x, iSin);
-      rot.matrix[2][0] = m_fpmul(m_fpmul(z, x), iMinCos) - m_fpmul(y, iSin);
-      rot.matrix[2][1] = m_fpmul(m_fpmul(z, y), iMinCos) + m_fpmul(x, iSin);
-      rot.matrix[2][2] = m_fpmul(m_fpmul(z, z), iMinCos) + iCos;
-      *this *= rot;
+      Mfixed m[16];
+      m[0*4+0] = m_fpmul(m_fpmul(x, x), iMinCos) + iCos;
+      m[0*4+1] = m_fpmul(m_fpmul(x, y), iMinCos) - m_fpmul(z, iSin);
+      m[0*4+2] = m_fpmul(m_fpmul(x, z), iMinCos) + m_fpmul(y, iSin);
+      m[0*4+3] = m_fpfromi(0);
+      m[1*4+0] = m_fpmul(m_fpmul(y, x), iMinCos) + m_fpmul(z, iSin);
+      m[1*4+1] = m_fpmul(m_fpmul(y, y), iMinCos) + iCos;
+      m[1*4+2] = m_fpmul(m_fpmul(y, z), iMinCos) - m_fpmul(x, iSin);
+      m[1*4+3] = m_fpfromi(0);
+      m[2*4+0] = m_fpmul(m_fpmul(z, x), iMinCos) - m_fpmul(y, iSin);
+      m[2*4+1] = m_fpmul(m_fpmul(z, y), iMinCos) + m_fpmul(x, iSin);
+      m[2*4+2] = m_fpmul(m_fpmul(z, z), iMinCos) + iCos;
+      m[2*4+3] = m_fpfromi(0);
+      m[3*4+0] = m_fpfromi(0);
+      m[3*4+1] = m_fpfromi(0);
+      m[3*4+2] = m_fpfromi(0);
+      m[3*4+3] = m_fpfromi(1);
+      *this *= m;
     }
   };
 }
@@ -565,10 +615,11 @@ CMatrixFx::transform(const GLfixed * from, GLfixed * to)
   Mfixed y(gl_to_m(from[1]));
   Mfixed z(gl_to_m(from[2]));
   Mfixed w(gl_to_m(from[3]));
-  to[0] = m_to_gl(m_fpmul(matrix[0][0], x) + m_fpmul(matrix[0][1], y) + m_fpmul(matrix[0][2], z) + m_fpmul(matrix[0][3], w));
-  to[1] = m_to_gl(m_fpmul(matrix[1][0], x) + m_fpmul(matrix[1][1], y) + m_fpmul(matrix[1][2], z) + m_fpmul(matrix[1][3], w));
-  to[2] = m_to_gl(m_fpmul(matrix[2][0], x) + m_fpmul(matrix[2][1], y) + m_fpmul(matrix[2][2], z) + m_fpmul(matrix[2][3], w));
-  to[3] = m_to_gl(m_fpmul(matrix[3][0], x) + m_fpmul(matrix[3][1], y) + m_fpmul(matrix[3][2], z) + m_fpmul(matrix[3][3], w));
+
+  to[0] = m_to_gl(m_fpmul(matrix[0*4+0], x) + m_fpmul(matrix[0*4+1], y) + m_fpmul(matrix[0*4+2], z) + m_fpmul(matrix[0*4+3], w));
+  to[1] = m_to_gl(m_fpmul(matrix[1*4+0], x) + m_fpmul(matrix[1*4+1], y) + m_fpmul(matrix[1*4+2], z) + m_fpmul(matrix[1*4+3], w));
+  to[2] = m_to_gl(m_fpmul(matrix[2*4+0], x) + m_fpmul(matrix[2*4+1], y) + m_fpmul(matrix[2*4+2], z) + m_fpmul(matrix[2*4+3], w));
+  to[3] = m_to_gl(m_fpmul(matrix[3*4+0], x) + m_fpmul(matrix[3*4+1], y) + m_fpmul(matrix[3*4+2], z) + m_fpmul(matrix[3*4+3], w));
 }
 
 //---------------------------------------------------------------------------
@@ -599,20 +650,29 @@ CMatrixFx::operator*(const GLfixed * m)
 CMatrixFx &
 CMatrixFx::operator*=(const CMatrixFx & m)
 {
-  Mfixed mtemp[4][4];
+  Mfixed mtemp[16];
 
-  for(int iRow(0); iRow < 4; iRow++)
-  {
-    for(int iCol(0); iCol < 4; iCol++)
-    {
-      mtemp[iRow][iCol] = m_fpmul(matrix[iRow][0], m.matrix[0][iCol]) +
-                          m_fpmul(matrix[iRow][1], m.matrix[1][iCol]) +
-                          m_fpmul(matrix[iRow][2], m.matrix[2][iCol]) +
-                          m_fpmul(matrix[iRow][3], m.matrix[3][iCol]);
-    }
-  }
+  mtemp[0*4+0] = m_fpmul(matrix[0*4+0], m.matrix[0*4+0]) + m_fpmul(matrix[0*4+1], m.matrix[1*4+0]) + m_fpmul(matrix[0*4+2], m.matrix[2*4+0]) + m_fpmul(matrix[0*4+3], m.matrix[3*4+0]);
+  mtemp[0*4+1] = m_fpmul(matrix[0*4+0], m.matrix[0*4+1]) + m_fpmul(matrix[0*4+1], m.matrix[1*4+1]) + m_fpmul(matrix[0*4+2], m.matrix[2*4+1]) + m_fpmul(matrix[0*4+3], m.matrix[3*4+1]);
+  mtemp[0*4+2] = m_fpmul(matrix[0*4+0], m.matrix[0*4+2]) + m_fpmul(matrix[0*4+1], m.matrix[1*4+2]) + m_fpmul(matrix[0*4+2], m.matrix[2*4+2]) + m_fpmul(matrix[0*4+3], m.matrix[3*4+2]);
+  mtemp[0*4+3] = m_fpmul(matrix[0*4+0], m.matrix[0*4+3]) + m_fpmul(matrix[0*4+1], m.matrix[1*4+3]) + m_fpmul(matrix[0*4+2], m.matrix[2*4+3]) + m_fpmul(matrix[0*4+3], m.matrix[3*4+3]);
 
-  memcpy(matrix, mtemp, sizeof(Mfixed) * 16);
+  mtemp[1*4+0] = m_fpmul(matrix[1*4+0], m.matrix[0*4+0]) + m_fpmul(matrix[1*4+1], m.matrix[1*4+0]) + m_fpmul(matrix[1*4+2], m.matrix[2*4+0]) + m_fpmul(matrix[1*4+3], m.matrix[3*4+0]);
+  mtemp[1*4+1] = m_fpmul(matrix[1*4+0], m.matrix[0*4+1]) + m_fpmul(matrix[1*4+1], m.matrix[1*4+1]) + m_fpmul(matrix[1*4+2], m.matrix[2*4+1]) + m_fpmul(matrix[1*4+3], m.matrix[3*4+1]);
+  mtemp[1*4+2] = m_fpmul(matrix[1*4+0], m.matrix[0*4+2]) + m_fpmul(matrix[1*4+1], m.matrix[1*4+2]) + m_fpmul(matrix[1*4+2], m.matrix[2*4+2]) + m_fpmul(matrix[1*4+3], m.matrix[3*4+2]);
+  mtemp[1*4+3] = m_fpmul(matrix[1*4+0], m.matrix[0*4+3]) + m_fpmul(matrix[1*4+1], m.matrix[1*4+3]) + m_fpmul(matrix[1*4+2], m.matrix[2*4+3]) + m_fpmul(matrix[1*4+3], m.matrix[3*4+3]);
+
+  mtemp[2*4+0] = m_fpmul(matrix[2*4+0], m.matrix[0*4+0]) + m_fpmul(matrix[2*4+1], m.matrix[1*4+0]) + m_fpmul(matrix[2*4+2], m.matrix[2*4+0]) + m_fpmul(matrix[2*4+3], m.matrix[3*4+0]);
+  mtemp[2*4+1] = m_fpmul(matrix[2*4+0], m.matrix[0*4+1]) + m_fpmul(matrix[2*4+1], m.matrix[1*4+1]) + m_fpmul(matrix[2*4+2], m.matrix[2*4+1]) + m_fpmul(matrix[2*4+3], m.matrix[3*4+1]);
+  mtemp[2*4+2] = m_fpmul(matrix[2*4+0], m.matrix[0*4+2]) + m_fpmul(matrix[2*4+1], m.matrix[1*4+2]) + m_fpmul(matrix[2*4+2], m.matrix[2*4+2]) + m_fpmul(matrix[2*4+3], m.matrix[3*4+2]);
+  mtemp[2*4+3] = m_fpmul(matrix[2*4+0], m.matrix[0*4+3]) + m_fpmul(matrix[2*4+1], m.matrix[1*4+3]) + m_fpmul(matrix[2*4+2], m.matrix[2*4+3]) + m_fpmul(matrix[2*4+3], m.matrix[3*4+3]);
+
+  mtemp[3*4+0] = m_fpmul(matrix[3*4+0], m.matrix[0*4+0]) + m_fpmul(matrix[3*4+1], m.matrix[1*4+0]) + m_fpmul(matrix[3*4+2], m.matrix[2*4+0]) + m_fpmul(matrix[3*4+3], m.matrix[3*4+0]);
+  mtemp[3*4+1] = m_fpmul(matrix[3*4+0], m.matrix[0*4+1]) + m_fpmul(matrix[3*4+1], m.matrix[1*4+1]) + m_fpmul(matrix[3*4+2], m.matrix[2*4+1]) + m_fpmul(matrix[3*4+3], m.matrix[3*4+1]);
+  mtemp[3*4+2] = m_fpmul(matrix[3*4+0], m.matrix[0*4+2]) + m_fpmul(matrix[3*4+1], m.matrix[1*4+2]) + m_fpmul(matrix[3*4+2], m.matrix[2*4+2]) + m_fpmul(matrix[3*4+3], m.matrix[3*4+2]);
+  mtemp[3*4+3] = m_fpmul(matrix[3*4+0], m.matrix[0*4+3]) + m_fpmul(matrix[3*4+1], m.matrix[1*4+3]) + m_fpmul(matrix[3*4+2], m.matrix[2*4+3]) + m_fpmul(matrix[3*4+3], m.matrix[3*4+3]);
+
+  matrixfx_copy(matrix, mtemp);
 
   return (*this);
 }
@@ -621,20 +681,29 @@ CMatrixFx::operator*=(const CMatrixFx & m)
 CMatrixFx &
 CMatrixFx::operator*=(const GLfixed * m)
 {
-  Mfixed mtemp[4][4];
+  Mfixed mtemp[16];
 
-  for(int iRow(0); iRow < 4; iRow++)
-  {
-    for(int iCol(0); iCol < 4; iCol++)
-    {
-      mtemp[iRow][iCol] = m_fpmul(matrix[iRow][0], gl_to_m(m[0*4+iCol])) +
-                          m_fpmul(matrix[iRow][1], gl_to_m(m[1*4+iCol])) +
-                          m_fpmul(matrix[iRow][2], gl_to_m(m[2*4+iCol])) +
-                          m_fpmul(matrix[iRow][3], gl_to_m(m[3*4+iCol]));
-    }
-  }
+  mtemp[0*4+0] = m_fpmul(matrix[0*4+0], gl_to_m(m[0*4+0])) + m_fpmul(matrix[0*4+1], gl_to_m(m[1*4+0])) + m_fpmul(matrix[0*4+2], gl_to_m(m[2*4+0])) + m_fpmul(matrix[0*4+3], gl_to_m(m[3*4+0]));
+  mtemp[0*4+1] = m_fpmul(matrix[0*4+0], gl_to_m(m[0*4+1])) + m_fpmul(matrix[0*4+1], gl_to_m(m[1*4+1])) + m_fpmul(matrix[0*4+2], gl_to_m(m[2*4+1])) + m_fpmul(matrix[0*4+3], gl_to_m(m[3*4+1]));
+  mtemp[0*4+2] = m_fpmul(matrix[0*4+0], gl_to_m(m[0*4+2])) + m_fpmul(matrix[0*4+1], gl_to_m(m[1*4+2])) + m_fpmul(matrix[0*4+2], gl_to_m(m[2*4+2])) + m_fpmul(matrix[0*4+3], gl_to_m(m[3*4+2]));
+  mtemp[0*4+3] = m_fpmul(matrix[0*4+0], gl_to_m(m[0*4+3])) + m_fpmul(matrix[0*4+1], gl_to_m(m[1*4+3])) + m_fpmul(matrix[0*4+2], gl_to_m(m[2*4+3])) + m_fpmul(matrix[0*4+3], gl_to_m(m[3*4+3]));
 
-  memcpy(matrix, mtemp, sizeof(Mfixed) * 16);
+  mtemp[1*4+0] = m_fpmul(matrix[1*4+0], gl_to_m(m[0*4+0])) + m_fpmul(matrix[1*4+1], gl_to_m(m[1*4+0])) + m_fpmul(matrix[1*4+2], gl_to_m(m[2*4+0])) + m_fpmul(matrix[1*4+3], gl_to_m(m[3*4+0]));
+  mtemp[1*4+1] = m_fpmul(matrix[1*4+0], gl_to_m(m[0*4+1])) + m_fpmul(matrix[1*4+1], gl_to_m(m[1*4+1])) + m_fpmul(matrix[1*4+2], gl_to_m(m[2*4+1])) + m_fpmul(matrix[1*4+3], gl_to_m(m[3*4+1]));
+  mtemp[1*4+2] = m_fpmul(matrix[1*4+0], gl_to_m(m[0*4+2])) + m_fpmul(matrix[1*4+1], gl_to_m(m[1*4+2])) + m_fpmul(matrix[1*4+2], gl_to_m(m[2*4+2])) + m_fpmul(matrix[1*4+3], gl_to_m(m[3*4+2]));
+  mtemp[1*4+3] = m_fpmul(matrix[1*4+0], gl_to_m(m[0*4+3])) + m_fpmul(matrix[1*4+1], gl_to_m(m[1*4+3])) + m_fpmul(matrix[1*4+2], gl_to_m(m[2*4+3])) + m_fpmul(matrix[1*4+3], gl_to_m(m[3*4+3]));
+
+  mtemp[2*4+0] = m_fpmul(matrix[2*4+0], gl_to_m(m[0*4+0])) + m_fpmul(matrix[2*4+1], gl_to_m(m[1*4+0])) + m_fpmul(matrix[2*4+2], gl_to_m(m[2*4+0])) + m_fpmul(matrix[2*4+3], gl_to_m(m[3*4+0]));
+  mtemp[2*4+1] = m_fpmul(matrix[2*4+0], gl_to_m(m[0*4+1])) + m_fpmul(matrix[2*4+1], gl_to_m(m[1*4+1])) + m_fpmul(matrix[2*4+2], gl_to_m(m[2*4+1])) + m_fpmul(matrix[2*4+3], gl_to_m(m[3*4+1]));
+  mtemp[2*4+2] = m_fpmul(matrix[2*4+0], gl_to_m(m[0*4+2])) + m_fpmul(matrix[2*4+1], gl_to_m(m[1*4+2])) + m_fpmul(matrix[2*4+2], gl_to_m(m[2*4+2])) + m_fpmul(matrix[2*4+3], gl_to_m(m[3*4+2]));
+  mtemp[2*4+3] = m_fpmul(matrix[2*4+0], gl_to_m(m[0*4+3])) + m_fpmul(matrix[2*4+1], gl_to_m(m[1*4+3])) + m_fpmul(matrix[2*4+2], gl_to_m(m[2*4+3])) + m_fpmul(matrix[2*4+3], gl_to_m(m[3*4+3]));
+
+  mtemp[3*4+0] = m_fpmul(matrix[3*4+0], gl_to_m(m[0*4+0])) + m_fpmul(matrix[3*4+1], gl_to_m(m[1*4+0])) + m_fpmul(matrix[3*4+2], gl_to_m(m[2*4+0])) + m_fpmul(matrix[3*4+3], gl_to_m(m[3*4+0]));
+  mtemp[3*4+1] = m_fpmul(matrix[3*4+0], gl_to_m(m[0*4+1])) + m_fpmul(matrix[3*4+1], gl_to_m(m[1*4+1])) + m_fpmul(matrix[3*4+2], gl_to_m(m[2*4+1])) + m_fpmul(matrix[3*4+3], gl_to_m(m[3*4+1]));
+  mtemp[3*4+2] = m_fpmul(matrix[3*4+0], gl_to_m(m[0*4+2])) + m_fpmul(matrix[3*4+1], gl_to_m(m[1*4+2])) + m_fpmul(matrix[3*4+2], gl_to_m(m[2*4+2])) + m_fpmul(matrix[3*4+3], gl_to_m(m[3*4+2]));
+  mtemp[3*4+3] = m_fpmul(matrix[3*4+0], gl_to_m(m[0*4+3])) + m_fpmul(matrix[3*4+1], gl_to_m(m[1*4+3])) + m_fpmul(matrix[3*4+2], gl_to_m(m[2*4+3])) + m_fpmul(matrix[3*4+3], gl_to_m(m[3*4+3]));
+
+  matrixfx_copy(matrix, mtemp);
 
   return (*this);
 }
@@ -643,7 +712,7 @@ CMatrixFx::operator*=(const GLfixed * m)
 CMatrixFx &
 CMatrixFx::operator=(const CMatrixFx & m)
 {
-  memcpy(matrix, m.matrix, sizeof(Mfixed) * 16);
+  matrixfx_copy(matrix, m.matrix);
 
   return(*this);
 }
@@ -652,9 +721,10 @@ CMatrixFx::operator=(const CMatrixFx & m)
 CMatrixFx &
 CMatrixFx::operator=(const GLfixed * m)
 {
-  for(int iRow(0); iRow < 4; iRow++)
-    for(int iCol(0); iCol < 4; iCol++)
-      matrix[iRow][iCol] = gl_to_m(m[iRow*4+iCol]);
+  matrix[0*4+0] = gl_to_m(m[0*4+0]); matrix[0*4+1] = gl_to_m(m[0*4+1]); matrix[0*4+2] = gl_to_m(m[0*4+2]); matrix[0*4+3] = gl_to_m(m[0*4+3]);
+  matrix[1*4+0] = gl_to_m(m[1*4+0]); matrix[1*4+1] = gl_to_m(m[1*4+1]); matrix[1*4+2] = gl_to_m(m[1*4+2]); matrix[1*4+3] = gl_to_m(m[1*4+3]);
+  matrix[2*4+0] = gl_to_m(m[2*4+0]); matrix[2*4+1] = gl_to_m(m[2*4+1]); matrix[2*4+2] = gl_to_m(m[2*4+2]); matrix[2*4+3] = gl_to_m(m[2*4+3]);
+  matrix[3*4+0] = gl_to_m(m[3*4+0]); matrix[3*4+1] = gl_to_m(m[3*4+1]); matrix[3*4+2] = gl_to_m(m[3*4+2]); matrix[3*4+3] = gl_to_m(m[3*4+3]);
 
   return(*this);
 }
