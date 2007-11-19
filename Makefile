@@ -3,12 +3,14 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 
 DIRS            =\
                 kernel \
+                libc \
                 libtace \
                 srr \
 
 LIBS            =\
                 arch \
                 kernel \
+                tc \
                 tace \
                 srr \
 

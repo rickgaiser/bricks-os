@@ -1,4 +1,4 @@
-LIB             =c
+LIB             =tc
 OBJS            =\
                 string \
 

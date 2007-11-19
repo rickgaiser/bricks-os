@@ -11,7 +11,6 @@ OBJS            =\
                 settings \
                 srr \
                 srrChannel \
-                string \
                 task \
                 timeValue \
                 video \
