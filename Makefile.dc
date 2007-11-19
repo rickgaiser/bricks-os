@@ -1,0 +1,8 @@
+MAKEFLAGS	+=--no-print-directory -s
+
+
+all:
+	make -f Makefile all ARCH=sh TARGET=dc
+
+clean:
+	make -f Makefile clean ARCH=sh TARGET=dc
