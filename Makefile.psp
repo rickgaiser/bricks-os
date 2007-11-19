@@ -1,0 +1,8 @@
+MAKEFLAGS	+=--no-print-directory -s
+
+
+all:
+	make -f Makefile all ARCH=mips TARGET=psp
+
+clean:
+	make -f Makefile clean ARCH=mips TARGET=psp
