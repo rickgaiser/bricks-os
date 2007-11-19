@@ -269,12 +269,12 @@ CSoftGLESFloat::glDrawArrays(GLenum mode, GLint first, GLsizei count)
         switch(bufTexCoord_.type)
         {
           case GL_FLOAT:
-            v.ts =         ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]  * pCurrentTex_->width;
-            v.tt = (1.0f - ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]) * pCurrentTex_->height;
+            v.ts =         ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
+            v.tt = (1.0f - ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
             break;
           case GL_FIXED:
-            v.ts =         gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++])  * pCurrentTex_->width;
-            v.tt = (1.0f - gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++])) * pCurrentTex_->height;
+            v.ts =         gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+            v.tt = (1.0f - gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]));
             break;
         };
       }
@@ -641,6 +641,11 @@ CSoftGLESFloat::hline_ta(CEdgeF & from, CEdgeF & to, GLint & y)
     GLfloat mts((to.ts_[y] - from.ts_[y]) * dx);
     GLfloat mtt((to.tt_[y] - from.tt_[y]) * dx);
 
+    ts  *= pCurrentTex_->width;
+    tt  *= pCurrentTex_->height;
+    mts *= pCurrentTex_->width;
+    mtt *= pCurrentTex_->height;
+
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     {
@@ -688,11 +693,11 @@ CSoftGLESFloat::hline_tp(CEdgeF & from, CEdgeF & to, GLint & y)
 
     // Texture coordinate interpolation
     GLfloat tz(1.0f / from.z_[y]);
-    GLfloat ts(from.ts_[y] * tz);
-    GLfloat tt(from.tt_[y] * tz);
+    GLfloat ts(from.ts_[y] * pCurrentTex_->width  * tz);
+    GLfloat tt(from.tt_[y] * pCurrentTex_->height * tz);
     GLfloat mtz(((1.0f / to.z_[y]) - tz) * dx);
-    GLfloat mts(((to.ts_[y] - from.ts_[y]) * tz) * dx);
-    GLfloat mtt(((to.tt_[y] - from.tt_[y]) * tz) * dx);
+    GLfloat mts(((to.ts_[y] - from.ts_[y]) * pCurrentTex_->width  * tz) * dx);
+    GLfloat mtt(((to.tt_[y] - from.tt_[y]) * pCurrentTex_->height * tz) * dx);
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -788,12 +793,12 @@ CSoftGLESFloat::plotPoly(SVertexF * vtx[3])
       return; // Triangle invisible
   }
 
+/*
   if(texturesEnabled_ == false)
   {
     // Lighting
     if(lightingEnabled_ == true)
     {
-/*
       // Normal Rotation
       matrixRotation.transform(vtx[0]->n, vtx[0]->n);
       matrixRotation.transform(vtx[1]->n, vtx[1]->n);
@@ -821,7 +826,6 @@ CSoftGLESFloat::plotPoly(SVertexF * vtx[3])
           vtx[2]->c.b = clampf((vtx[2]->c.b * ambient.b) + ((vtx[2]->c.b * normal[2]) * diffuse.b));
         }
       }
-*/
     }
 
     // Fog
@@ -837,6 +841,7 @@ CSoftGLESFloat::plotPoly(SVertexF * vtx[3])
       }
     }
   }
+*/
 
   rasterPoly(vtx);
 }
@@ -928,7 +933,7 @@ CSoftGLESFloat::rasterPoly(SVertexF * vtx[3])
   if(texturesEnabled_ == true)
   {
     for(GLint y(vlo->sy); y < vhi->sy; y++)
-      hline_tp(*pEdgeLeft, *pEdgeRight, y);
+      hline_ta(*pEdgeLeft, *pEdgeRight, y);
   }
   else
   {

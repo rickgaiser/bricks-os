@@ -291,12 +291,12 @@ CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
         switch(bufTexCoord_.type)
         {
           case GL_FLOAT:
-            v.ts =                  gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++])  * pCurrentTex_->width;
-            v.tt = (gl_fpfromi(1) - gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++])) * pCurrentTex_->height;
+            v.ts =                  gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
+            v.tt = (gl_fpfromi(1) - gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]));
             break;
           case GL_FIXED:
-            v.ts =                  ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]  * pCurrentTex_->width;
-            v.tt = (gl_fpfromi(1) - ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]) * pCurrentTex_->height;
+            v.ts =                  ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++];
+            v.tt = (gl_fpfromi(1) - ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
             break;
         };
       }
@@ -663,6 +663,11 @@ CSoftGLESFixed::hline_ta(CEdgeFx & from, CEdgeFx & to, GLint & y)
     GLfixed mts(gl_fpmul(to.ts_[y] - from.ts_[y], dx));
     GLfixed mtt(gl_fpmul(to.tt_[y] - from.tt_[y], dx));
 
+    ts  *= pCurrentTex_->width;
+    tt  *= pCurrentTex_->height;
+    mts *= pCurrentTex_->width;
+    mtt *= pCurrentTex_->height;
+
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     {
@@ -710,11 +715,11 @@ CSoftGLESFixed::hline_tp(CEdgeFx & from, CEdgeFx & to, GLint & y)
 
     // Texture coordinate interpolation
     GLfixed tz(gl_fpdiv(gl_fpfromi(1), from.z_[y]));
-    GLfixed ts(gl_fpmul(from.ts_[y], tz));
-    GLfixed tt(gl_fpmul(from.tt_[y], tz));
+    GLfixed ts(gl_fpmul(from.ts_[y] * pCurrentTex_->width,  tz));
+    GLfixed tt(gl_fpmul(from.tt_[y] * pCurrentTex_->height, tz));
     GLfixed mtz(gl_fpmul((gl_fpdiv(gl_fpfromi(1), to.z_[y]) - tz), dx));
-    GLfixed mts(gl_fpmul(gl_fpmul(to.ts_[y] - from.ts_[y], tz), dx));
-    GLfixed mtt(gl_fpmul(gl_fpmul(to.tt_[y] - from.tt_[y], tz), dx));
+    GLfixed mts(gl_fpmul(gl_fpmul((to.ts_[y] - from.ts_[y]) * pCurrentTex_->width,  tz), dx));
+    GLfixed mtt(gl_fpmul(gl_fpmul((to.tt_[y] - from.tt_[y]) * pCurrentTex_->height, tz), dx));
 
     unsigned long index((y * viewportWidth) + from.x_[y]);
     for(GLint x(from.x_[y]); x < to.x_[y]; x++)
@@ -810,12 +815,12 @@ CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
       return; // Triangle invisible
   }
 
+/*
   if(texturesEnabled_ == false)
   {
     // Lighting
     if(lightingEnabled_ == true)
     {
-/*
       // Normal Rotation
       matrixRotation.transform(vtx[0]->n, vtx[0]->n);
       matrixRotation.transform(vtx[1]->n, vtx[1]->n);
@@ -843,7 +848,6 @@ CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
           vtx[2]->c.b = clampfx(gl_fpmul(vtx[2]->c.b, ambient.b) + gl_fpmul(gl_fpmul(vtx[2]->c.b, normal[2]), diffuse.b));
         }
       }
-*/
     }
 
     // Fog
@@ -859,6 +863,7 @@ CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
       }
     }
   }
+*/
 
   rasterPoly(vtx);
 }
