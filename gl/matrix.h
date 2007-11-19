@@ -90,13 +90,13 @@ public:
   void transform(const GLfixed * from, GLfixed * to);
 
   CMatrixFx   operator* (const CMatrixFx & m);
-  CMatrixFx   operator* (const GLfixed * m);
+  CMatrixFx   operator* (const Mfixed * m);
 
   CMatrixFx & operator*=(const CMatrixFx & m);
-  CMatrixFx & operator*=(const GLfixed * m);
+  CMatrixFx & operator*=(const Mfixed * m);
 
   CMatrixFx & operator= (const CMatrixFx & m);
-  CMatrixFx & operator= (const GLfixed * m);
+  CMatrixFx & operator= (const Mfixed * m);
 
 public:
   Mfixed matrix[16];

@@ -635,7 +635,7 @@ CMatrixFx::operator*(const CMatrixFx & m)
 
 //---------------------------------------------------------------------------
 CMatrixFx
-CMatrixFx::operator*(const GLfixed * m)
+CMatrixFx::operator*(const Mfixed * m)
 {
   CMatrixFx mReturn(*this);
 
@@ -679,29 +679,29 @@ CMatrixFx::operator*=(const CMatrixFx & m)
 
 //---------------------------------------------------------------------------
 CMatrixFx &
-CMatrixFx::operator*=(const GLfixed * m)
+CMatrixFx::operator*=(const Mfixed * m)
 {
   Mfixed mtemp[16];
 
-  mtemp[0*4+0] = m_fpmul(matrix[0*4+0], gl_to_m(m[0*4+0])) + m_fpmul(matrix[0*4+1], gl_to_m(m[1*4+0])) + m_fpmul(matrix[0*4+2], gl_to_m(m[2*4+0])) + m_fpmul(matrix[0*4+3], gl_to_m(m[3*4+0]));
-  mtemp[0*4+1] = m_fpmul(matrix[0*4+0], gl_to_m(m[0*4+1])) + m_fpmul(matrix[0*4+1], gl_to_m(m[1*4+1])) + m_fpmul(matrix[0*4+2], gl_to_m(m[2*4+1])) + m_fpmul(matrix[0*4+3], gl_to_m(m[3*4+1]));
-  mtemp[0*4+2] = m_fpmul(matrix[0*4+0], gl_to_m(m[0*4+2])) + m_fpmul(matrix[0*4+1], gl_to_m(m[1*4+2])) + m_fpmul(matrix[0*4+2], gl_to_m(m[2*4+2])) + m_fpmul(matrix[0*4+3], gl_to_m(m[3*4+2]));
-  mtemp[0*4+3] = m_fpmul(matrix[0*4+0], gl_to_m(m[0*4+3])) + m_fpmul(matrix[0*4+1], gl_to_m(m[1*4+3])) + m_fpmul(matrix[0*4+2], gl_to_m(m[2*4+3])) + m_fpmul(matrix[0*4+3], gl_to_m(m[3*4+3]));
+  mtemp[0*4+0] = m_fpmul(matrix[0*4+0], m[0*4+0]) + m_fpmul(matrix[0*4+1], m[1*4+0]) + m_fpmul(matrix[0*4+2], m[2*4+0]) + m_fpmul(matrix[0*4+3], m[3*4+0]);
+  mtemp[0*4+1] = m_fpmul(matrix[0*4+0], m[0*4+1]) + m_fpmul(matrix[0*4+1], m[1*4+1]) + m_fpmul(matrix[0*4+2], m[2*4+1]) + m_fpmul(matrix[0*4+3], m[3*4+1]);
+  mtemp[0*4+2] = m_fpmul(matrix[0*4+0], m[0*4+2]) + m_fpmul(matrix[0*4+1], m[1*4+2]) + m_fpmul(matrix[0*4+2], m[2*4+2]) + m_fpmul(matrix[0*4+3], m[3*4+2]);
+  mtemp[0*4+3] = m_fpmul(matrix[0*4+0], m[0*4+3]) + m_fpmul(matrix[0*4+1], m[1*4+3]) + m_fpmul(matrix[0*4+2], m[2*4+3]) + m_fpmul(matrix[0*4+3], m[3*4+3]);
 
-  mtemp[1*4+0] = m_fpmul(matrix[1*4+0], gl_to_m(m[0*4+0])) + m_fpmul(matrix[1*4+1], gl_to_m(m[1*4+0])) + m_fpmul(matrix[1*4+2], gl_to_m(m[2*4+0])) + m_fpmul(matrix[1*4+3], gl_to_m(m[3*4+0]));
-  mtemp[1*4+1] = m_fpmul(matrix[1*4+0], gl_to_m(m[0*4+1])) + m_fpmul(matrix[1*4+1], gl_to_m(m[1*4+1])) + m_fpmul(matrix[1*4+2], gl_to_m(m[2*4+1])) + m_fpmul(matrix[1*4+3], gl_to_m(m[3*4+1]));
-  mtemp[1*4+2] = m_fpmul(matrix[1*4+0], gl_to_m(m[0*4+2])) + m_fpmul(matrix[1*4+1], gl_to_m(m[1*4+2])) + m_fpmul(matrix[1*4+2], gl_to_m(m[2*4+2])) + m_fpmul(matrix[1*4+3], gl_to_m(m[3*4+2]));
-  mtemp[1*4+3] = m_fpmul(matrix[1*4+0], gl_to_m(m[0*4+3])) + m_fpmul(matrix[1*4+1], gl_to_m(m[1*4+3])) + m_fpmul(matrix[1*4+2], gl_to_m(m[2*4+3])) + m_fpmul(matrix[1*4+3], gl_to_m(m[3*4+3]));
+  mtemp[1*4+0] = m_fpmul(matrix[1*4+0], m[0*4+0]) + m_fpmul(matrix[1*4+1], m[1*4+0]) + m_fpmul(matrix[1*4+2], m[2*4+0]) + m_fpmul(matrix[1*4+3], m[3*4+0]);
+  mtemp[1*4+1] = m_fpmul(matrix[1*4+0], m[0*4+1]) + m_fpmul(matrix[1*4+1], m[1*4+1]) + m_fpmul(matrix[1*4+2], m[2*4+1]) + m_fpmul(matrix[1*4+3], m[3*4+1]);
+  mtemp[1*4+2] = m_fpmul(matrix[1*4+0], m[0*4+2]) + m_fpmul(matrix[1*4+1], m[1*4+2]) + m_fpmul(matrix[1*4+2], m[2*4+2]) + m_fpmul(matrix[1*4+3], m[3*4+2]);
+  mtemp[1*4+3] = m_fpmul(matrix[1*4+0], m[0*4+3]) + m_fpmul(matrix[1*4+1], m[1*4+3]) + m_fpmul(matrix[1*4+2], m[2*4+3]) + m_fpmul(matrix[1*4+3], m[3*4+3]);
 
-  mtemp[2*4+0] = m_fpmul(matrix[2*4+0], gl_to_m(m[0*4+0])) + m_fpmul(matrix[2*4+1], gl_to_m(m[1*4+0])) + m_fpmul(matrix[2*4+2], gl_to_m(m[2*4+0])) + m_fpmul(matrix[2*4+3], gl_to_m(m[3*4+0]));
-  mtemp[2*4+1] = m_fpmul(matrix[2*4+0], gl_to_m(m[0*4+1])) + m_fpmul(matrix[2*4+1], gl_to_m(m[1*4+1])) + m_fpmul(matrix[2*4+2], gl_to_m(m[2*4+1])) + m_fpmul(matrix[2*4+3], gl_to_m(m[3*4+1]));
-  mtemp[2*4+2] = m_fpmul(matrix[2*4+0], gl_to_m(m[0*4+2])) + m_fpmul(matrix[2*4+1], gl_to_m(m[1*4+2])) + m_fpmul(matrix[2*4+2], gl_to_m(m[2*4+2])) + m_fpmul(matrix[2*4+3], gl_to_m(m[3*4+2]));
-  mtemp[2*4+3] = m_fpmul(matrix[2*4+0], gl_to_m(m[0*4+3])) + m_fpmul(matrix[2*4+1], gl_to_m(m[1*4+3])) + m_fpmul(matrix[2*4+2], gl_to_m(m[2*4+3])) + m_fpmul(matrix[2*4+3], gl_to_m(m[3*4+3]));
+  mtemp[2*4+0] = m_fpmul(matrix[2*4+0], m[0*4+0]) + m_fpmul(matrix[2*4+1], m[1*4+0]) + m_fpmul(matrix[2*4+2], m[2*4+0]) + m_fpmul(matrix[2*4+3], m[3*4+0]);
+  mtemp[2*4+1] = m_fpmul(matrix[2*4+0], m[0*4+1]) + m_fpmul(matrix[2*4+1], m[1*4+1]) + m_fpmul(matrix[2*4+2], m[2*4+1]) + m_fpmul(matrix[2*4+3], m[3*4+1]);
+  mtemp[2*4+2] = m_fpmul(matrix[2*4+0], m[0*4+2]) + m_fpmul(matrix[2*4+1], m[1*4+2]) + m_fpmul(matrix[2*4+2], m[2*4+2]) + m_fpmul(matrix[2*4+3], m[3*4+2]);
+  mtemp[2*4+3] = m_fpmul(matrix[2*4+0], m[0*4+3]) + m_fpmul(matrix[2*4+1], m[1*4+3]) + m_fpmul(matrix[2*4+2], m[2*4+3]) + m_fpmul(matrix[2*4+3], m[3*4+3]);
 
-  mtemp[3*4+0] = m_fpmul(matrix[3*4+0], gl_to_m(m[0*4+0])) + m_fpmul(matrix[3*4+1], gl_to_m(m[1*4+0])) + m_fpmul(matrix[3*4+2], gl_to_m(m[2*4+0])) + m_fpmul(matrix[3*4+3], gl_to_m(m[3*4+0]));
-  mtemp[3*4+1] = m_fpmul(matrix[3*4+0], gl_to_m(m[0*4+1])) + m_fpmul(matrix[3*4+1], gl_to_m(m[1*4+1])) + m_fpmul(matrix[3*4+2], gl_to_m(m[2*4+1])) + m_fpmul(matrix[3*4+3], gl_to_m(m[3*4+1]));
-  mtemp[3*4+2] = m_fpmul(matrix[3*4+0], gl_to_m(m[0*4+2])) + m_fpmul(matrix[3*4+1], gl_to_m(m[1*4+2])) + m_fpmul(matrix[3*4+2], gl_to_m(m[2*4+2])) + m_fpmul(matrix[3*4+3], gl_to_m(m[3*4+2]));
-  mtemp[3*4+3] = m_fpmul(matrix[3*4+0], gl_to_m(m[0*4+3])) + m_fpmul(matrix[3*4+1], gl_to_m(m[1*4+3])) + m_fpmul(matrix[3*4+2], gl_to_m(m[2*4+3])) + m_fpmul(matrix[3*4+3], gl_to_m(m[3*4+3]));
+  mtemp[3*4+0] = m_fpmul(matrix[3*4+0], m[0*4+0]) + m_fpmul(matrix[3*4+1], m[1*4+0]) + m_fpmul(matrix[3*4+2], m[2*4+0]) + m_fpmul(matrix[3*4+3], m[3*4+0]);
+  mtemp[3*4+1] = m_fpmul(matrix[3*4+0], m[0*4+1]) + m_fpmul(matrix[3*4+1], m[1*4+1]) + m_fpmul(matrix[3*4+2], m[2*4+1]) + m_fpmul(matrix[3*4+3], m[3*4+1]);
+  mtemp[3*4+2] = m_fpmul(matrix[3*4+0], m[0*4+2]) + m_fpmul(matrix[3*4+1], m[1*4+2]) + m_fpmul(matrix[3*4+2], m[2*4+2]) + m_fpmul(matrix[3*4+3], m[3*4+2]);
+  mtemp[3*4+3] = m_fpmul(matrix[3*4+0], m[0*4+3]) + m_fpmul(matrix[3*4+1], m[1*4+3]) + m_fpmul(matrix[3*4+2], m[2*4+3]) + m_fpmul(matrix[3*4+3], m[3*4+3]);
 
   matrixfx_copy(matrix, mtemp);
 
@@ -719,12 +719,9 @@ CMatrixFx::operator=(const CMatrixFx & m)
 
 //---------------------------------------------------------------------------
 CMatrixFx &
-CMatrixFx::operator=(const GLfixed * m)
+CMatrixFx::operator=(const Mfixed * m)
 {
-  matrix[0*4+0] = gl_to_m(m[0*4+0]); matrix[0*4+1] = gl_to_m(m[0*4+1]); matrix[0*4+2] = gl_to_m(m[0*4+2]); matrix[0*4+3] = gl_to_m(m[0*4+3]);
-  matrix[1*4+0] = gl_to_m(m[1*4+0]); matrix[1*4+1] = gl_to_m(m[1*4+1]); matrix[1*4+2] = gl_to_m(m[1*4+2]); matrix[1*4+3] = gl_to_m(m[1*4+3]);
-  matrix[2*4+0] = gl_to_m(m[2*4+0]); matrix[2*4+1] = gl_to_m(m[2*4+1]); matrix[2*4+2] = gl_to_m(m[2*4+2]); matrix[2*4+3] = gl_to_m(m[2*4+3]);
-  matrix[3*4+0] = gl_to_m(m[3*4+0]); matrix[3*4+1] = gl_to_m(m[3*4+1]); matrix[3*4+2] = gl_to_m(m[3*4+2]); matrix[3*4+3] = gl_to_m(m[3*4+3]);
+  matrixfx_copy(matrix, m);
 
   return(*this);
 }
