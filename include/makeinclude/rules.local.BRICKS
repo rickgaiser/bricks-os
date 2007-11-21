@@ -14,11 +14,13 @@ $(MY_LIB): $(MY_OBJS)
 # Create object file from .c file
 $(VDIR)%.o: %.c $(VDIR).creation_stamp
 	@echo [CC ] $<
+	$(CC) $(CFLAGS) $(MY_INCL_PATH) -o $@.S -S $<
 	$(CC) $(CFLAGS) $(MY_INCL_PATH) -o $@ -c $<
 
 # Create object file from .cpp file
 $(VDIR)%.o: %.cpp $(VDIR).creation_stamp
 	@echo [CC ] $<
+	$(CXX) $(CXXFLAGS) $(MY_INCL_PATH) -o $@.S -S $<
 	$(CXX) $(CXXFLAGS) $(MY_INCL_PATH) -o $@ -c $<
 
 # Create object file from .s file
