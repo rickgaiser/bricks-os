@@ -2,6 +2,8 @@
 #include "../gl/fixedPoint.h"
 
 
+extern const unsigned short crate_Width;
+extern const unsigned short crate_Height;
 extern const unsigned short crate_Bitmap[];
 GLuint textures[1];
 
@@ -163,7 +165,7 @@ initCubeF()
     // Texture
     glGenTextures(1, &textures[0]);
     glBindTexture(GL_TEXTURE_2D, textures[0]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 256, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crate_Bitmap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, crate_Width, crate_Height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crate_Bitmap);
     //glMatrixMode(GL_TEXTURE);
     //glLoadIdentity();
   }

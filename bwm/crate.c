@@ -1,6 +1,8 @@
 //
 // crate (131072 uncompressed bytes)
 //
+const unsigned short crate_Width  = 256;
+const unsigned short crate_Height = 256;
 const unsigned short crate_Bitmap[65536] = {
 0x0ca8, 0x0c62, 0x1085, 0x18e9, 0x18c5, 0x0865, 0x1083, 0x1085,
 0x1083, 0x14c8, 0x1063, 0x0c86, 0x18e9, 0x18c6, 0x1085, 0x18c6,
