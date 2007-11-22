@@ -7,12 +7,6 @@ typedef unsigned int wint_t;
 #include <math.h>
 
 
-#define fpRGB(r,g,b) (0x8000 | \
-                      (((b*255) >>  9) & 0x7c00) | \
-                      (((g*255) >> 14) & 0x03e0) | \
-                      (((r*255) >> 19) & 0x001f))
-
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CSoftGLESFixed::CSoftGLESFixed()
@@ -517,247 +511,6 @@ CSoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-bool
-CSoftGLESFixed::testAndSetDepth(GLfixed z, uint32_t index)
-{
-/*
-  if((z >= zNear_) && (z <= zFar_))
-  {
-    //uint32_t zval = z;
-    uint16_t zval = z >> zLoss_;
-
-    switch(depthFunction_)
-    {
-      case GL_LESS:     if(zval <  zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_EQUAL:    if(zval == zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_LEQUAL:   if(zval <= zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_GREATER:  if(zval >  zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_NOTEQUAL: if(zval != zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_GEQUAL:   if(zval >= zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_ALWAYS:                              zbuffer[index] = zval; return true;  break;
-      case GL_NEVER:                                                      return false; break;
-    };
-  }
-*/
-  return false;
-}
-
-//-----------------------------------------------------------------------------
-// Horizontal Line Fill, flat colors
-void
-CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c)
-{
-  if(from.x_[y] < to.x_[y])
-  {
-    GLfixed dx(gl_fpdiv(gl_fpfromi(1), gl_fpfromi(to.x_[y] - from.x_[y])));
-
-    // Depth interpolation
-    GLfixed z(from.z_[y]);
-    GLfixed mz(gl_fpmul(to.z_[y] - from.z_[y], dx));
-
-    color_t color(fpRGB(c.r, c.g, c.b));
-
-    unsigned long index((y * viewportWidth) + from.x_[y]);
-    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
-    {
-      if(x >= viewportWidth)
-        break;
-
-      if(x >= 0)
-      {
-        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-        {
-          switch(renderSurface->bpp_)
-          {
-            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = color;
-              break;
-            case 16:
-              ((uint16_t *)renderSurface->p)[index] = color;
-              break;
-            case 32:
-              ((uint32_t *)renderSurface->p)[index] = color;
-              break;
-          };
-        }
-      }
-      z += mz;
-      index++;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// Horizontal Line Fill, smooth colors
-void
-CSoftGLESFixed::hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y)
-{
-  if(from.x_[y] < to.x_[y])
-  {
-    GLfixed dx(gl_fpdiv(gl_fpfromi(1), gl_fpfromi(to.x_[y] - from.x_[y])));
-
-    // Depth interpolation
-    GLfixed z(from.z_[y]);
-    GLfixed mz(gl_fpmul(to.z_[y] - from.z_[y], dx));
-
-    // Color interpolation
-    GLfixed r(from.c_[y].r);
-    GLfixed g(from.c_[y].g);
-    GLfixed b(from.c_[y].b);
-    GLfixed a(from.c_[y].a);
-    GLfixed mr(gl_fpmul(to.c_[y].r - from.c_[y].r, dx));
-    GLfixed mg(gl_fpmul(to.c_[y].g - from.c_[y].g, dx));
-    GLfixed mb(gl_fpmul(to.c_[y].b - from.c_[y].b, dx));
-    GLfixed ma(gl_fpmul(to.c_[y].a - from.c_[y].a, dx));
-
-    unsigned long index((y * viewportWidth) + from.x_[y]);
-    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
-    {
-      if(x >= viewportWidth)
-        break;
-
-      if(x >= 0)
-      {
-        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-        {
-          switch(renderSurface->bpp_)
-          {
-            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = fpRGB(r, g, b);
-              break;
-            case 16:
-              ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
-              break;
-            case 32:
-              ((uint32_t *)renderSurface->p)[index] = fpRGB(r, g, b);
-              break;
-          };
-        }
-      }
-      z += mz;
-      r += mr;
-      g += mg;
-      b += mb;
-      a += ma;
-      index++;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// Horizontal Line Fill, texture mapped, affine
-void
-CSoftGLESFixed::hline_ta(CEdgeFx & from, CEdgeFx & to, GLint & y)
-{
-  if(from.x_[y] < to.x_[y])
-  {
-    GLfixed dx(gl_fpdiv(gl_fpfromi(1), gl_fpfromi(to.x_[y] - from.x_[y])));
-
-    // Depth interpolation
-    GLfixed z(from.z_[y]);
-    GLfixed mz(gl_fpmul(to.z_[y] - from.z_[y], dx));
-
-    // Texture coordinate interpolation
-    GLfixed ts(from.ts_[y]);
-    GLfixed tt(from.tt_[y]);
-    GLfixed mts(gl_fpmul(to.ts_[y] - from.ts_[y], dx));
-    GLfixed mtt(gl_fpmul(to.tt_[y] - from.tt_[y], dx));
-
-    ts  *= pCurrentTex_->width;
-    tt  *= pCurrentTex_->height;
-    mts *= pCurrentTex_->width;
-    mtt *= pCurrentTex_->height;
-
-    unsigned long index((y * viewportWidth) + from.x_[y]);
-    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
-    {
-      if(x >= viewportWidth)
-        break;
-
-      if(x >= 0)
-      {
-        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-        {
-          switch(renderSurface->bpp_)
-          {
-            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
-              break;
-            case 16:
-              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
-              break;
-            case 32:
-              ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
-              break;
-          };
-        }
-      }
-      z  += mz;
-      ts += mts;
-      tt += mtt;
-      index++;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// Horizontal Line Fill, texture mapped, perspective correct
-void
-CSoftGLESFixed::hline_tp(CEdgeFx & from, CEdgeFx & to, GLint & y)
-{
-  if(from.x_[y] < to.x_[y])
-  {
-    GLfixed dx(gl_fpdiv(gl_fpfromi(1), gl_fpfromi(to.x_[y] - from.x_[y])));
-
-    // Depth interpolation
-    GLfixed z(from.z_[y]);
-    GLfixed mz(gl_fpmul(to.z_[y] - from.z_[y], dx));
-
-    // Texture coordinate interpolation
-    GLfixed tz(gl_fpdiv(gl_fpfromi(1), from.z_[y]));
-    GLfixed ts(gl_fpmul(from.ts_[y] * pCurrentTex_->width,  tz));
-    GLfixed tt(gl_fpmul(from.tt_[y] * pCurrentTex_->height, tz));
-    GLfixed mtz(gl_fpmul((gl_fpdiv(gl_fpfromi(1), to.z_[y]) - tz), dx));
-    GLfixed mts(gl_fpmul(gl_fpmul((to.ts_[y] - from.ts_[y]) * pCurrentTex_->width,  tz), dx));
-    GLfixed mtt(gl_fpmul(gl_fpmul((to.tt_[y] - from.tt_[y]) * pCurrentTex_->height, tz), dx));
-
-    unsigned long index((y * viewportWidth) + from.x_[y]);
-    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
-    {
-      if(x >= viewportWidth)
-        break;
-
-      if(x >= 0)
-      {
-        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-        {
-          GLfixed recip = gl_fpdiv(gl_fpfromi(1), tz);
-          GLfixed s     = gl_fpmul(ts, recip);
-          GLfixed t     = gl_fpmul(tt, recip);
-          switch(renderSurface->bpp_)
-          {
-            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
-              break;
-            case 16:
-              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
-              break;
-            case 32:
-              ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
-              break;
-          };
-        }
-      }
-      z  += mz;
-      tz += mtz;
-      ts += mts;
-      tt += mtt;
-      index++;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
 void
 CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
 {
@@ -780,8 +533,8 @@ CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
       v[2] = gl_fpdiv(v[2], v[3]);
       // Viewport transformation
       //   from 'normalized device coordinates' to 'window coordinates'
-      vtx[i]->sx = gl_fptoi(gl_fpmul(( v[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  / 2))) + viewportXOffset;
-      vtx[i]->sy = gl_fptoi(gl_fpmul((-v[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight / 2))) + viewportYOffset;
+      vtx[i]->sx = gl_fptoi(gl_fpmul(( v[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  >> 1))) + viewportXOffset;
+      vtx[i]->sy = gl_fptoi(gl_fpmul((-v[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight >> 1))) + viewportYOffset;
 //      vtx[i]->sz = gl_fpdiv(zFar - zNear, v[2] << 1) + ((zNear + zFar)>>1);
 
       vtx[i]->bProcessed = true;
@@ -903,41 +656,47 @@ CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
   // Create edge lists
   if(texturesEnabled_ == true)
   {
-    edge1->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
-    edge2->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt);
-    edge2->addZT(vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
+    if(depthTestEnabled_ == true)
+    {
+      edge1->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
+      edge2->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt);
+      edge2->addZT(vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
+    }
+    else
+    {
+      edge1->addT(vlo->sx, vlo->sy, vlo->ts, vlo->tt, vhi->sx, vhi->sy, vhi->ts, vhi->tt);
+      edge2->addT(vlo->sx, vlo->sy, vlo->ts, vlo->tt, vmi->sx, vmi->sy, vmi->ts, vmi->tt);
+      edge2->addT(vmi->sx, vmi->sy, vmi->ts, vmi->tt, vhi->sx, vhi->sy, vhi->ts, vhi->tt);
+    }
+  }
+  else if(shadingModel_ == GL_SMOOTH)
+  {
+    if(depthTestEnabled_ == true)
+    {
+      edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
+      edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vmi->sx, vmi->sy, vmi->v[3], vmi->c);
+      edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
+    }
+    else
+    {
+      edge1->addC(vlo->sx, vlo->sy, vlo->c, vhi->sx, vhi->sy, vhi->c);
+      edge2->addC(vlo->sx, vlo->sy, vlo->c, vmi->sx, vmi->sy, vmi->c);
+      edge2->addC(vmi->sx, vmi->sy, vmi->c, vhi->sx, vhi->sy, vhi->c);
+    }
   }
   else
   {
     if(depthTestEnabled_ == true)
     {
-      if(shadingModel_ == GL_SMOOTH)
-      {
-        edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
-        edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vmi->sx, vmi->sy, vmi->v[3], vmi->c);
-        edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
-      }
-      else
-      {
-        edge1->addZ(vlo->sx, vlo->sy, vlo->v[3], vhi->sx, vhi->sy, vhi->v[3]);
-        edge2->addZ(vlo->sx, vlo->sy, vlo->v[3], vmi->sx, vmi->sy, vmi->v[3]);
-        edge2->addZ(vmi->sx, vmi->sy, vmi->v[3], vhi->sx, vhi->sy, vhi->v[3]);
-      }
+      edge1->addZ(vlo->sx, vlo->sy, vlo->v[3], vhi->sx, vhi->sy, vhi->v[3]);
+      edge2->addZ(vlo->sx, vlo->sy, vlo->v[3], vmi->sx, vmi->sy, vmi->v[3]);
+      edge2->addZ(vmi->sx, vmi->sy, vmi->v[3], vhi->sx, vhi->sy, vhi->v[3]);
     }
     else
     {
-      if(shadingModel_ == GL_SMOOTH)
-      {
-        edge1->addC(vlo->sx, vlo->sy, vlo->c, vhi->sx, vhi->sy, vhi->c);
-        edge2->addC(vlo->sx, vlo->sy, vlo->c, vmi->sx, vmi->sy, vmi->c);
-        edge2->addC(vmi->sx, vmi->sy, vmi->c, vhi->sx, vhi->sy, vhi->c);
-      }
-      else
-      {
-        edge1->add(vlo->sx, vlo->sy, vhi->sx, vhi->sy);
-        edge2->add(vlo->sx, vlo->sy, vmi->sx, vmi->sy);
-        edge2->add(vmi->sx, vmi->sy, vhi->sx, vhi->sy);
-      }
+      edge1->add(vlo->sx, vlo->sy, vhi->sx, vhi->sy);
+      edge2->add(vlo->sx, vlo->sy, vmi->sx, vmi->sy);
+      edge2->add(vmi->sx, vmi->sy, vhi->sx, vhi->sy);
     }
   }
 
@@ -954,25 +713,29 @@ CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
   // Display triangle (horizontal lines forming the triangle)
   if(texturesEnabled_ == true)
   {
-    for(GLint y(vlo->sy); y < vhi->sy; y++)
-      hline_ta(*pEdgeLeft, *pEdgeRight, y);
+    if(depthTestEnabled_ == true)
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hlineZTa(*pEdgeLeft, *pEdgeRight, y);
+    else
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hlineTa(*pEdgeLeft, *pEdgeRight, y);
+  }
+  else if(shadingModel_ == GL_SMOOTH)
+  {
+    if(depthTestEnabled_ == true)
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hlineZC(*pEdgeLeft, *pEdgeRight, y);
+    else
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hlineC(*pEdgeLeft, *pEdgeRight, y);
   }
   else
   {
-    switch(shadingModel_)
-    {
-      case GL_FLAT:
-      {
-        for(GLint y(vlo->sy); y < vhi->sy; y++)
-          hline(*pEdgeLeft, *pEdgeRight, y, vtx[2]->c);
-        break;
-      }
-      case GL_SMOOTH:
-      {
-        for(GLint y(vlo->sy); y < vhi->sy; y++)
-          hline_s(*pEdgeLeft, *pEdgeRight, y);
-        break;
-      }
-    }
+    if(depthTestEnabled_ == true)
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hlineZ(*pEdgeLeft, *pEdgeRight, y, vtx[2]->c);
+    else
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hline(*pEdgeLeft, *pEdgeRight, y, vtx[2]->c);
   }
 }

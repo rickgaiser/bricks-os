@@ -178,13 +178,19 @@ protected:
 
 private:
   bool testAndSetDepth(GLfloat z, uint32_t index);
-  void hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c);
-  void hline_s(CEdgeF & from, CEdgeF & to, GLint & y);
-  void hline_ta(CEdgeF & from, CEdgeF & to, GLint & y);
-  void hline_tp(CEdgeF & from, CEdgeF & to, GLint & y);
+  void hline   (CEdgeF & from, CEdgeF & to, GLint y, SColorF c);
+  void hlineZ  (CEdgeF & from, CEdgeF & to, GLint y, SColorF c);
+  void hlineC  (CEdgeF & from, CEdgeF & to, GLint y);
+  void hlineZC (CEdgeF & from, CEdgeF & to, GLint y);
+  void hlineTa (CEdgeF & from, CEdgeF & to, GLint y);
+  void hlineZTa(CEdgeF & from, CEdgeF & to, GLint y);
+  void hlineZTp(CEdgeF & from, CEdgeF & to, GLint y);
   void plotPoly(SVertexF * vtx[3]);
   void rasterPoly(SVertexF * vtx[3]);
 };
+
+
+#include "softGLF.inl"
 
 
 #endif // GL_CONTEXT_H

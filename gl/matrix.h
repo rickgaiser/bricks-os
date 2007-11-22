@@ -165,4 +165,7 @@ protected:
 #endif // CONFIG_FPU
 
 
+#include "matrix.inl"
+
+
 #endif

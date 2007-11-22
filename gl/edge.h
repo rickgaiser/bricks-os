@@ -19,8 +19,9 @@ public:
   void add  (GLint x1, GLint y1, GLint x2, GLint y2);
   void addZ (GLint x1, GLint y1, GLfloat z1, GLint x2, GLint y2, GLfloat z2);
   void addC (GLint x1, GLint y1, SColorF & c1, GLint x2, GLint y2, SColorF & c2);
-  void addZT(GLint x1, GLint y1, GLfloat z1, GLfloat ts1, GLfloat tt1, GLint x2, GLint y2, GLfloat z2, GLfloat ts2, GLfloat tt2);
   void addZC(GLint x1, GLint y1, GLfloat z1, SColorF & c1, GLint x2, GLint y2, GLfloat z2, SColorF & c2);
+  void addT (GLint x1, GLint y1, GLfloat ts1, GLfloat tt1, GLint x2, GLint y2, GLfloat ts2, GLfloat tt2);
+  void addZT(GLint x1, GLint y1, GLfloat z1, GLfloat ts1, GLfloat tt1, GLint x2, GLint y2, GLfloat z2, GLfloat ts2, GLfloat tt2);
 
 public:
   // Edge x
@@ -46,8 +47,9 @@ public:
   void add  (GLint x1, GLint y1, GLint x2, GLint y2);
   void addZ (GLint x1, GLint y1, GLfixed z1, GLint x2, GLint y2, GLfixed z2);
   void addC (GLint x1, GLint y1, SColorFx & c1, GLint x2, GLint y2, SColorFx & c2);
-  void addZT(GLint x1, GLint y1, GLfixed z1, GLfixed ts1, GLfixed tt1, GLint x2, GLint y2, GLfixed z2, GLfixed ts2, GLfixed tt2);
   void addZC(GLint x1, GLint y1, GLfixed z1, SColorFx & c1, GLint x2, GLint y2, GLfixed z2, SColorFx & c2);
+  void addT (GLint x1, GLint y1, GLfixed ts1, GLfixed tt1, GLint x2, GLint y2, GLfixed ts2, GLfixed tt2);
+  void addZT(GLint x1, GLint y1, GLfixed z1, GLfixed ts1, GLfixed tt1, GLint x2, GLint y2, GLfixed z2, GLfixed ts2, GLfixed tt2);
 
 public:
   // Edge x
@@ -63,6 +65,9 @@ public:
   int32_t iHeight_;
 };
 #endif // CONFIG_FPU
+
+
+#include "edge.inl"
 
 
 #endif

@@ -15,6 +15,21 @@
 #include "fixedPoint.h"
 
 
+// Better
+#define fpRGB(r,g,b) \
+  (0x8000 | \
+  (((b*255) >>  9) & 0x7c00) | \
+  (((g*255) >> 14) & 0x03e0) | \
+  (((r*255) >> 19) & 0x001f))
+
+// Faster
+#define fpRGBFast(r,g,b) \
+  (0x8000 | \
+  (((b) >>  1) & 0x7c00) | \
+  (((g) >>  6) & 0x03e0) | \
+  (((r) >> 11) & 0x001f))
+
+
 //-----------------------------------------------------------------------------
 typedef union
 {
@@ -180,13 +195,19 @@ protected:
 
 private:
   bool testAndSetDepth(GLfixed z, uint32_t index);
-  void hline(CEdgeFx & from, CEdgeFx & to, GLint & y, SColorFx c);
-  void hline_s(CEdgeFx & from, CEdgeFx & to, GLint & y);
-  void hline_ta(CEdgeFx & from, CEdgeFx & to, GLint & y);
-  void hline_tp(CEdgeFx & from, CEdgeFx & to, GLint & y);
+  void hline   (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c);
+  void hlineZ  (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c);
+  void hlineC  (CEdgeFx & from, CEdgeFx & to, GLint y);
+  void hlineZC (CEdgeFx & from, CEdgeFx & to, GLint y);
+  void hlineTa (CEdgeFx & from, CEdgeFx & to, GLint y);
+  void hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y);
+  void hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y);
   void plotPoly(SVertexFx * vtx[3]);
   void rasterPoly(SVertexFx * vtx[3]);
 };
+
+
+#include "softGLFx.inl"
 
 
 #endif // GL_CONTEXT_H

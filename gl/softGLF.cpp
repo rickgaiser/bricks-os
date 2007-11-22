@@ -495,247 +495,6 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-bool
-CSoftGLESFloat::testAndSetDepth(GLfloat z, uint32_t index)
-{
-/*
-  if((z >= zNear_) && (z <= zFar_))
-  {
-    //uint32_t zval = (uint32_t)((zA_ + (zB_ / z)) * 0xffffffff);
-    uint32_t zval = (uint32_t)(((z - zNear_) / (zFar_ - zNear_)) * 0xffffffff);
-
-    switch(depthFunction_)
-    {
-      case GL_LESS:     if(zval <  zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_EQUAL:    if(zval == zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_LEQUAL:   if(zval <= zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_GREATER:  if(zval >  zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_NOTEQUAL: if(zval != zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_GEQUAL:   if(zval >= zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_ALWAYS:                              zbuffer[index] = zval; return true;  break;
-      case GL_NEVER:                                                      return false; break;
-    };
-  }
-*/
-  return false;
-}
-
-//-----------------------------------------------------------------------------
-// Horizontal Line Fill, flat colors
-void
-CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint & y, SColorF c)
-{
-  if(from.x_[y] < to.x_[y])
-  {
-    GLfloat dx(1.0f / (GLfloat)(to.x_[y] - from.x_[y]));
-
-    // Depth interpolation
-    GLfloat z(from.z_[y]);
-    GLfloat mz((to.z_[y] - from.z_[y]) * dx);
-
-    color_t color = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255), (uint8_t)(c.a * 255));
-
-    unsigned long index((y * viewportWidth) + from.x_[y]);
-    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
-    {
-      if(x >= viewportWidth)
-        break;
-
-      if(x >= 0)
-      {
-        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-        {
-          switch(renderSurface->bpp_)
-          {
-            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = color;
-              break;
-            case 16:
-              ((uint16_t *)renderSurface->p)[index] = color;
-              break;
-            case 32:
-              ((uint32_t *)renderSurface->p)[index] = color;
-              break;
-          };
-        }
-      }
-      z += mz;
-      index++;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// Horizontal Line Fill, smooth colors
-void
-CSoftGLESFloat::hline_s(CEdgeF & from, CEdgeF & to, GLint & y)
-{
-  if(from.x_[y] < to.x_[y])
-  {
-    GLfloat dx(1.0f / (GLfloat)(to.x_[y] - from.x_[y]));
-
-    // Depth interpolation
-    GLfloat z(from.z_[y]);
-    GLfloat mz((to.z_[y] - from.z_[y]) * dx);
-
-    // Color interpolation
-    GLfloat r(from.c_[y].r);
-    GLfloat g(from.c_[y].g);
-    GLfloat b(from.c_[y].b);
-    GLfloat a(from.c_[y].a);
-    GLfloat mr((to.c_[y].r - from.c_[y].r) * dx);
-    GLfloat mg((to.c_[y].g - from.c_[y].g) * dx);
-    GLfloat mb((to.c_[y].b - from.c_[y].b) * dx);
-    GLfloat ma((to.c_[y].a - from.c_[y].a) * dx);
-
-    unsigned long index((y * viewportWidth) + from.x_[y]);
-    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
-    {
-      if(x >= viewportWidth)
-        break;
-
-      if(x >= 0)
-      {
-        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-        {
-          switch(renderSurface->bpp_)
-          {
-            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
-              break;
-            case 16:
-              ((uint16_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
-              break;
-            case 32:
-              ((uint32_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
-              break;
-          };
-        }
-      }
-      z += mz;
-      r += mr;
-      g += mg;
-      b += mb;
-      a += ma;
-      index++;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// Horizontal Line Fill, texture mapped, affine
-void
-CSoftGLESFloat::hline_ta(CEdgeF & from, CEdgeF & to, GLint & y)
-{
-  if(from.x_[y] < to.x_[y])
-  {
-    GLfloat dx(1.0f / (GLfloat)(to.x_[y] - from.x_[y]));
-
-    // Depth interpolation
-    GLfloat z(from.z_[y]);
-    GLfloat mz((to.z_[y] - from.z_[y]) * dx);
-
-    // Texture coordinate interpolation
-    GLfloat ts(from.ts_[y]);
-    GLfloat tt(from.tt_[y]);
-    GLfloat mts((to.ts_[y] - from.ts_[y]) * dx);
-    GLfloat mtt((to.tt_[y] - from.tt_[y]) * dx);
-
-    ts  *= pCurrentTex_->width;
-    tt  *= pCurrentTex_->height;
-    mts *= pCurrentTex_->width;
-    mtt *= pCurrentTex_->height;
-
-    unsigned long index((y * viewportWidth) + from.x_[y]);
-    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
-    {
-      if(x >= viewportWidth)
-        break;
-
-      if(x >= 0)
-      {
-        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-        {
-          switch(renderSurface->bpp_)
-          {
-            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[(((GLint)(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(ts) & pCurrentTex_->maskWidth)];
-              break;
-            case 16:
-              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[(((GLint)(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(ts) & pCurrentTex_->maskWidth)];
-              break;
-            case 32:
-              ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[(((GLint)(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(ts) & pCurrentTex_->maskWidth)];
-              break;
-          };
-        }
-      }
-      z  += mz;
-      ts += mts;
-      tt += mtt;
-      index++;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// Horizontal Line Fill, texture mapped, perspective correct
-void
-CSoftGLESFloat::hline_tp(CEdgeF & from, CEdgeF & to, GLint & y)
-{
-  if(from.x_[y] < to.x_[y])
-  {
-    GLfloat dx(1.0f / (GLfloat)(to.x_[y] - from.x_[y]));
-
-    // Depth interpolation
-    GLfloat z(from.z_[y]);
-    GLfloat mz((to.z_[y] - from.z_[y]) * dx);
-
-    // Texture coordinate interpolation
-    GLfloat tz(1.0f / from.z_[y]);
-    GLfloat ts(from.ts_[y] * pCurrentTex_->width  * tz);
-    GLfloat tt(from.tt_[y] * pCurrentTex_->height * tz);
-    GLfloat mtz(((1.0f / to.z_[y]) - tz) * dx);
-    GLfloat mts(((to.ts_[y] - from.ts_[y]) * pCurrentTex_->width  * tz) * dx);
-    GLfloat mtt(((to.tt_[y] - from.tt_[y]) * pCurrentTex_->height * tz) * dx);
-
-    unsigned long index((y * viewportWidth) + from.x_[y]);
-    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
-    {
-      if(x >= viewportWidth)
-        break;
-
-      if(x >= 0)
-      {
-        if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
-        {
-          GLfloat recip = 1.0f / tz;
-          GLfloat s     = ts * recip;
-          GLfloat t     = tt * recip;
-          switch(renderSurface->bpp_)
-          {
-            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[(((GLint)(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(s) & pCurrentTex_->maskWidth)];
-              break;
-            case 16:
-              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[(((GLint)(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(s) & pCurrentTex_->maskWidth)];
-              break;
-            case 32:
-              ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[(((GLint)(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(s) & pCurrentTex_->maskWidth)];
-              break;
-          };
-        }
-      }
-      z  += mz;
-      tz += mtz;
-      ts += mts;
-      tt += mtt;
-      index++;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
 void
 CSoftGLESFloat::plotPoly(SVertexF * vtx[3])
 {
@@ -881,41 +640,47 @@ CSoftGLESFloat::rasterPoly(SVertexF * vtx[3])
   // Create edge lists
   if(texturesEnabled_ == true)
   {
-    edge1->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
-    edge2->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt);
-    edge2->addZT(vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
+    if(depthTestEnabled_ == true)
+    {
+      edge1->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
+      edge2->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt);
+      edge2->addZT(vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
+    }
+    else
+    {
+      edge1->addT(vlo->sx, vlo->sy, vlo->ts, vlo->tt, vhi->sx, vhi->sy, vhi->ts, vhi->tt);
+      edge2->addT(vlo->sx, vlo->sy, vlo->ts, vlo->tt, vmi->sx, vmi->sy, vmi->ts, vmi->tt);
+      edge2->addT(vmi->sx, vmi->sy, vmi->ts, vmi->tt, vhi->sx, vhi->sy, vhi->ts, vhi->tt);
+    }
+  }
+  else if(shadingModel_ == GL_SMOOTH)
+  {
+    if(depthTestEnabled_ == true)
+    {
+      edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
+      edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vmi->sx, vmi->sy, vmi->v[3], vmi->c);
+      edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
+    }
+    else
+    {
+      edge1->addC(vlo->sx, vlo->sy, vlo->c, vhi->sx, vhi->sy, vhi->c);
+      edge2->addC(vlo->sx, vlo->sy, vlo->c, vmi->sx, vmi->sy, vmi->c);
+      edge2->addC(vmi->sx, vmi->sy, vmi->c, vhi->sx, vhi->sy, vhi->c);
+    }
   }
   else
   {
     if(depthTestEnabled_ == true)
     {
-      if(shadingModel_ == GL_SMOOTH)
-      {
-        edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
-        edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vmi->sx, vmi->sy, vmi->v[3], vmi->c);
-        edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
-      }
-      else
-      {
-        edge1->addZ(vlo->sx, vlo->sy, vlo->v[3], vhi->sx, vhi->sy, vhi->v[3]);
-        edge2->addZ(vlo->sx, vlo->sy, vlo->v[3], vmi->sx, vmi->sy, vmi->v[3]);
-        edge2->addZ(vmi->sx, vmi->sy, vmi->v[3], vhi->sx, vhi->sy, vhi->v[3]);
-      }
+      edge1->addZ(vlo->sx, vlo->sy, vlo->v[3], vhi->sx, vhi->sy, vhi->v[3]);
+      edge2->addZ(vlo->sx, vlo->sy, vlo->v[3], vmi->sx, vmi->sy, vmi->v[3]);
+      edge2->addZ(vmi->sx, vmi->sy, vmi->v[3], vhi->sx, vhi->sy, vhi->v[3]);
     }
     else
     {
-      if(shadingModel_ == GL_SMOOTH)
-      {
-        edge1->addC(vlo->sx, vlo->sy, vlo->c, vhi->sx, vhi->sy, vhi->c);
-        edge2->addC(vlo->sx, vlo->sy, vlo->c, vmi->sx, vmi->sy, vmi->c);
-        edge2->addC(vmi->sx, vmi->sy, vmi->c, vhi->sx, vhi->sy, vhi->c);
-      }
-      else
-      {
-        edge1->add(vlo->sx, vlo->sy, vhi->sx, vhi->sy);
-        edge2->add(vlo->sx, vlo->sy, vmi->sx, vmi->sy);
-        edge2->add(vmi->sx, vmi->sy, vhi->sx, vhi->sy);
-      }
+      edge1->add(vlo->sx, vlo->sy, vhi->sx, vhi->sy);
+      edge2->add(vlo->sx, vlo->sy, vmi->sx, vmi->sy);
+      edge2->add(vmi->sx, vmi->sy, vhi->sx, vhi->sy);
     }
   }
 
@@ -932,25 +697,29 @@ CSoftGLESFloat::rasterPoly(SVertexF * vtx[3])
   // Display triangle (horizontal lines forming the triangle)
   if(texturesEnabled_ == true)
   {
-    for(GLint y(vlo->sy); y < vhi->sy; y++)
-      hline_ta(*pEdgeLeft, *pEdgeRight, y);
+    if(depthTestEnabled_ == true)
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hlineZTa(*pEdgeLeft, *pEdgeRight, y);
+    else
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hlineTa(*pEdgeLeft, *pEdgeRight, y);
+  }
+  else if(shadingModel_ == GL_SMOOTH)
+  {
+    if(depthTestEnabled_ == true)
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hlineZC(*pEdgeLeft, *pEdgeRight, y);
+    else
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hlineC(*pEdgeLeft, *pEdgeRight, y);
   }
   else
   {
-    switch(shadingModel_)
-    {
-      case GL_FLAT:
-      {
-        for(GLint y(vlo->sy); y < vhi->sy; y++)
-          hline(*pEdgeLeft, *pEdgeRight, y, vtx[2]->c);
-        break;
-      }
-      case GL_SMOOTH:
-      {
-        for(GLint y(vlo->sy); y < vhi->sy; y++)
-          hline_s(*pEdgeLeft, *pEdgeRight, y);
-        break;
-      }
-    }
+    if(depthTestEnabled_ == true)
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hlineZ(*pEdgeLeft, *pEdgeRight, y, vtx[2]->c);
+    else
+      for(GLint y(vlo->sy); y < vhi->sy; y++)
+        hline(*pEdgeLeft, *pEdgeRight, y, vtx[2]->c);
   }
 }
