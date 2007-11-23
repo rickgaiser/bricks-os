@@ -61,12 +61,12 @@ testGLF(CSurface * surface)
   initPyramidF();
   initCubeF();
   glMatrixMode(GL_MODELVIEW);
-  // Show Pyramid for 1 full rotation around y axis
+  // Show 1 full rotation around y axis
   for(GLfloat yrot(0.0f); yrot < 360.0f; yrot += 2.0f)
   {
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
-
+/*
     glLoadIdentity();
     glTranslatef(-2.0f, 0.0f, -8.0f);
     glRotatef(yrot, 0.0f, 1.0f, 0.0f);
@@ -76,7 +76,7 @@ testGLF(CSurface * surface)
     glTranslatef(2.0f, 0.0f, -8.0f);
     glRotatef(yrot, 0.0f, 1.0f, 0.0f);
     drawPyramidF();
-
+*/
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -6.0f);
     glRotatef(yrot, 0.0f, 1.0f, 0.0f);

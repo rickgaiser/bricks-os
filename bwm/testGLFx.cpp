@@ -62,7 +62,7 @@ testGLFx(CSurface * surface)
   initPyramidFx();
   initCubeFx();
   glMatrixMode(GL_MODELVIEW);
-  // Show Pyramid for 1 full rotation around y axis
+  // Show 1 full rotation around y axis
   for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(2))
   {
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
