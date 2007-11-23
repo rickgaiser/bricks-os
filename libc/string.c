@@ -3,26 +3,9 @@
 #include "inttypes.h"
 
 
-#define RAND_A     9301
-#define RAND_C    49297
-
-
 const char * sStrError = "strerror not implemented";
-uint32_t seed = 0x12345678;
 
 
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-int
-rand(void)
-{
-  seed = (seed*RAND_A+RAND_C) % RAND_MAX;
-
-  return seed;
-}
-
-
-// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 void *
 memccpy(void * s1, const void * s2, int c, size_t n)
@@ -203,4 +186,27 @@ strncpy(char * s1, const char * s2, size_t n)
   *s1 = 0;
 
   return s1;
+}
+
+// -----------------------------------------------------------------------------
+char *
+strstr(const char * s1, const char * s2)
+{
+  int i;
+  const char * p1;
+  const char * p2;
+  const char * s = s1;
+
+  for(p2 = s2, i = 0; *s; p2 = s2, i++, s++)
+  {
+    for(p1 = s; *p1 && *p2 && *p1 == *p2; p1++, p2++)
+      ;
+    if (!*p2)
+      break;
+  }
+
+  if (!*p2)
+    return (char *)(s1 + i);
+
+  return 0;
 }

@@ -31,7 +31,7 @@ char    * strncpy(char * s1, const char * s2, size_t n);
 //char    * strpbrk(const char *, const char *);
 //char    * strrchr(const char *, int);
 //size_t    strspn(const char *, const char *);
-//char    * strstr(const char *, const char *);
+char    * strstr(const char * s1, const char * s2);
 //char    * strtok(char *, const char *);
 //char    * strtok_r(char *, const char *, char **);
 //size_t    strxfrm(char *, const char *, size_t);
