@@ -7,12 +7,8 @@ INCL_PATH       =\
 
 LIB             =srr
 OBJS            =\
-                srrTest \
-
-
-ifneq ($(CONFIG_DIRECT_ACCESS_KERNEL_FUNC),y)
-OBJS            += srrChannel pthread
-endif
+                srrChannel \
+                pthread \
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.user

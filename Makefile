@@ -5,21 +5,24 @@ DIRS            =\
                 kernel \
                 libc \
                 libtace \
-                srr \
+                apps \
 
 LIBS            =\
                 arch \
                 kernel \
                 tc \
                 tace \
-                srr \
+                apps \
 
 ELF             =Bricks
 
 
+ifneq ($(CONFIG_DIRECT_ACCESS_KERNEL_FUNC),y)
+  DIRS            += srr
+  LIBS            += srr
+endif
+
 ifeq ($(CONFIG_FRAMEBUFFER),y)
-  DIRS            += bwm
-  LIBS            += bwm
   ifeq ($(CONFIG_GL),y)
     DIRS            += gl
     LIBS            += gl

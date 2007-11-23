@@ -5,10 +5,7 @@
 #include "pthread.h"
 
 
-//extern int appMain(int argc, char * argv[]);
-#ifdef CONFIG_FRAMEBUFFER
-extern int bwm(int argc, char * argv[]);
-#endif // CONFIG_FRAMEBUFFER
+extern int appMain(int argc, char * argv[]);
 
 
 // -----------------------------------------------------------------------------
@@ -25,10 +22,7 @@ bricks_main()
   printk("Interrupts...OK\n");
 
   // Execute application
-  //appMain(0, 0);
-#ifdef CONFIG_FRAMEBUFFER
-  bwm(0, 0);
-#endif // CONFIG_FRAMEBUFFER
+  appMain(0, 0);
 
   // Halt current thread
   // FIXME: Forever consuming CPU time now!
