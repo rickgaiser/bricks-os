@@ -3,7 +3,7 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 
 LIB             =apps
 OBJS            =\
-                bwm \
+                testGL \
                 pyramid \
                 cube \
                 crate \
