@@ -11,11 +11,11 @@ extern "C" {
 
 
 #ifndef NULL
-  #define NULL 0
+#define NULL (0)
 #endif
 
 
-struct tm
+typedef struct tm
 {
   int    tm_sec;   // seconds [0,61]
   int    tm_min;   // minutes [0,59]
@@ -26,13 +26,13 @@ struct tm
   int    tm_wday;  // day of week [0,6] (Sunday = 0)
   int    tm_yday;  // day of year [0,365]
   int    tm_isdst; // daylight savings flag
-};
+} tm;
 
-struct timespec
+typedef struct timespec
 {
   time_t tv_sec;   // Seconds
   long   tv_nsec;  // Nanoseconds
-};
+} timespec;
 
 
 #ifdef __cplusplus

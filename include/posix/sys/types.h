@@ -38,7 +38,10 @@ struct pthread_t
   void * pThread;
 };
 
+#ifndef __SIZE_T__
+#define __SIZE_T__
 typedef unsigned int     size_t;
+#endif
 typedef int              ssize_t;
 typedef long             suseconds_t;
 typedef long             time_t;

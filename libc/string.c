@@ -7,6 +7,7 @@
 #define RAND_C    49297
 
 
+const char * sStrError = "strerror not implemented";
 uint32_t seed = 0x12345678;
 
 
@@ -161,6 +162,13 @@ strcpy(char * s1, const char * s2)
   *s1 = 0;
 
   return s1;
+}
+
+// -----------------------------------------------------------------------------
+char *
+strerror(int errnum)
+{
+  return (char *)sStrError;
 }
 
 // -----------------------------------------------------------------------------

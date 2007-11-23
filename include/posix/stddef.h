@@ -8,7 +8,7 @@ extern "C" {
 
 
 #ifndef NULL
-#define NULL 0
+#define NULL (0)
 #endif
 
 
@@ -20,7 +20,10 @@ typedef __WCHAR_TYPE__ wchar_t;
 #endif
 
 typedef long ptrdiff_t;
+#ifndef __SIZE_T__
+#define __SIZE_T__
 typedef unsigned int size_t;
+#endif
 
 
 #ifdef __cplusplus
