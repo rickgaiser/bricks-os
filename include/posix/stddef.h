@@ -2,11 +2,6 @@
 #define STDDEF_H
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 #ifndef NULL
 #define NULL (0)
 #endif
@@ -23,11 +18,6 @@ typedef long ptrdiff_t;
 #ifndef __SIZE_T__
 #define __SIZE_T__
 typedef unsigned int size_t;
-#endif
-
-
-#ifdef __cplusplus
-}
 #endif
 
 

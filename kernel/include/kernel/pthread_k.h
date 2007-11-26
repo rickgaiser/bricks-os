@@ -36,6 +36,12 @@
 
 typedef void *(*pthread_func_entry)(void *);
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 // Threads
 declareSysCallKernel4r(int,  pthread_create,         pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
 declareSysCallKernel1 (      pthread_exit,           void *, status);
@@ -52,6 +58,11 @@ declareSysCallKernel1r(int,  pthread_mutex_destroy,  pthread_mutex_t *, mutex);
 declareSysCallKernel1r(int,  pthread_mutex_lock,     pthread_mutex_t *, mutex);
 declareSysCallKernel1r(int,  pthread_mutex_trylock,  pthread_mutex_t *, mutex);
 declareSysCallKernel1r(int,  pthread_mutex_unlock,   pthread_mutex_t *, mutex);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

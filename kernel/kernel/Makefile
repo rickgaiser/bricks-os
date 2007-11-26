@@ -5,6 +5,7 @@ LIB             =kernel
 OBJS            =\
                 bricks \
                 debug \
+                genwait \
                 interrupt \
                 interruptManager \
                 pthread \
@@ -13,6 +14,7 @@ OBJS            =\
                 srrChannel \
                 task \
                 timeValue \
+                unistd \
                 video \
 
 

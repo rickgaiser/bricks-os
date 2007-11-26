@@ -2,15 +2,15 @@
 #define STDLIB_H
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 #include "stddef.h"
 
 
 #define RAND_MAX 233280
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 //long       a64l(const char *);

@@ -5,11 +5,6 @@
 #include "sys/types.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 #ifndef NULL
 #define NULL (0)
 #endif
@@ -33,11 +28,6 @@ typedef struct timespec
   time_t tv_sec;   // Seconds
   long   tv_nsec;  // Nanoseconds
 } timespec;
-
-
-#ifdef __cplusplus
-}
-#endif
 
 
 #endif

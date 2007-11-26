@@ -1,4 +1,5 @@
 #include "kernel/debug.h"
+#include "kernel/srr_k.h"
 #include "kernel/srrChannel_k.h"
 #include "kernel/task.h"
 #include "string.h"
@@ -21,7 +22,7 @@ k_channelCreate(unsigned iFlags)
       chan->iState = CS_FREE;
       CTaskManager::pCurrentTask_->pChannel_[iChannel] = chan;
 
-      iRetVal = iChannel + 2; // Channels 0&1 are reserved for error&kernel
+      iRetVal = CHANNEL_IDX_TO_ID(iChannel);
 
       break;
     }
@@ -41,7 +42,7 @@ k_channelDestroy(int iChannelID)
 {
   int iRetVal(-1);
 
-  iChannelID -= 2;
+  iChannelID = CHANNEL_ID_TO_IDX(iChannelID);
 
   if((iChannelID >= 0) &&
      (iChannelID < MAX_CHANNEL_COUNT) &&
@@ -54,7 +55,7 @@ k_channelDestroy(int iChannelID)
   }
   else
   {
-    printk("k_channelDestroy: Invalid channel id: %d\n", iChannelID + 2);
+    printk("k_channelDestroy: Invalid channel id: %d\n", CHANNEL_IDX_TO_ID(iChannelID));
   }
 
   return iRetVal;
@@ -69,7 +70,7 @@ k_channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int i
 
   //printk("k_channelConnectAttach\n");
 
-  iChannelID -= 2;
+  iChannelID = CHANNEL_ID_TO_IDX(iChannelID);
 
   if(iNodeID == 0)
   {
@@ -87,7 +88,7 @@ k_channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int i
           if(CTaskManager::pCurrentTask_->pConnection_[i] == NULL)
           {
             CTaskManager::pCurrentTask_->pConnection_[i] = pTask->pChannel_[iChannelID];
-            iRetVal = i + 2;
+            iRetVal = CONNECTION_IDX_TO_ID(i);
             break;
           }
         }
@@ -98,7 +99,7 @@ k_channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int i
       }
       else
       {
-        printk("k_connectAttach: Channel id not found: %d\n", iChannelID + 2);
+        printk("k_connectAttach: Channel id not found: %d\n", CHANNEL_IDX_TO_ID(iChannelID));
       }
     }
     else
@@ -119,7 +120,7 @@ int
 k_channelConnectDetach(int iConnectionID)
 {
   int iRetVal(-1);
-  iConnectionID -= 2;
+  iConnectionID = CONNECTION_ID_TO_IDX(iConnectionID);
 
   if((iConnectionID >= 0) &&
      (iConnectionID < MAX_CONNECTION_COUNT) &&
@@ -131,7 +132,7 @@ k_channelConnectDetach(int iConnectionID)
   }
   else
   {
-    printk("k_channelConnectDetach: Connection id not found: %d\n", iConnectionID + 2);
+    printk("k_channelConnectDetach: Connection id not found: %d\n", CONNECTION_IDX_TO_ID(iConnectionID));
   }
 
   return iRetVal;

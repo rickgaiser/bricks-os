@@ -16,13 +16,14 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
   int iRetVal(-1);
 
 #ifndef CONFIG_DIRECT_ACCESS_KERNEL_FUNC
-  // Filter error ID
   if(iConnectionID <= 0)
   {
+    // Invalid ID
     printk("k_msgSend: Invalid connection id: %d\n", iConnectionID);
   }
   else if(iConnectionID == scKERNEL)
   {
+    // Kernel ID
     SKernelMessageHeader * pHeader = (SKernelMessageHeader *)pSndMsg;
 
     if((pHeader->iHeaderSize == sizeof(SKernelMessageHeader)) &&
@@ -68,21 +69,22 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
       printk("k_msgSend: Invalid kernel header(0x%x, %d, %d, 0x%x)\n", pHeader, pHeader->iHeaderSize, iSndSize, pHeader->iVersion);
     }
   }
-#else
-  // Filter error ID
-  if(iConnectionID <= 1)
+  else if(iConnectionID < CONNECTION_ID_BASE)
   {
+    // Kernel Drivers ID
     printk("k_msgSend: Invalid connection id: %d\n", iConnectionID);
   }
-#endif // CONFIG_DIRECT_ACCESS_KERNEL_FUNC
   else
+#endif // CONFIG_DIRECT_ACCESS_KERNEL_FUNC
   {
-    iConnectionID -= 2;
-    if((iConnectionID >= 0) &&
-       (iConnectionID < MAX_CONNECTION_COUNT) &&
-       (CTaskManager::pCurrentTask_->pConnection_[iConnectionID] != NULL))
+    // User ID
+    int iConnectionIDX(CONNECTION_ID_TO_IDX(iConnectionID));
+
+    if((iConnectionIDX >= 0) &&
+       (iConnectionIDX < MAX_CONNECTION_COUNT) &&
+       (CTaskManager::pCurrentTask_->pConnection_[iConnectionIDX] != NULL))
     {
-      SChannel * pChannel = CTaskManager::pCurrentTask_->pConnection_[iConnectionID];
+      SChannel * pChannel = CTaskManager::pCurrentTask_->pConnection_[iConnectionIDX];
       // Wait for channel to become free
       k_pthread_mutex_lock(&pChannel->mutex);
       while(pChannel->iState != CS_FREE)
@@ -108,7 +110,7 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
     }
     else
     {
-      printk("k_msgSend: Invalid connection id: %d\n", iConnectionID + 2);
+      printk("k_msgSend: Invalid connection id: %d(%d)\n", iConnectionID, iConnectionIDX);
     }
   }
 
@@ -120,39 +122,31 @@ int
 k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
 {
   int iRetVal(-1);
+  int iChannelIDX(CHANNEL_ID_TO_IDX(iChannelID));
 
-  // Filter kernel and error IDs
-  if(iChannelID <= 1)
+  if((iChannelIDX >= 0) &&
+     (iChannelIDX < MAX_CHANNEL_COUNT) &&
+     (CTaskManager::pCurrentTask_->pChannel_[iChannelIDX] != NULL))
   {
-    printk("k_msgReceive: Invalid channel id: %d\n", iChannelID);
+    SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iChannelIDX];
+    // Wait for message to be sent
+    k_pthread_mutex_lock(&pChannel->mutex);
+    while(pChannel->iState != CS_MSG_SEND)
+      k_pthread_cond_wait(&pChannel->stateCond, &pChannel->mutex);
+    if(pChannel->iSndSize < iRcvSize)
+      iRcvSize = pChannel->iSndSize;
+    memcpy(pRcvMsg, pChannel->pSndMsg, iRcvSize);
+    pChannel->iState = CS_MSG_RECEIVED;
+    // Notify others of changed channel state
+    k_pthread_cond_broadcast(&pChannel->stateCond);
+    // Unlock channel
+    k_pthread_mutex_unlock(&pChannel->mutex);
+
+    iRetVal = iChannelID;
   }
   else
   {
-    iChannelID -= 2;
-    if((iChannelID >= 0) &&
-       (iChannelID < MAX_CHANNEL_COUNT) &&
-       (CTaskManager::pCurrentTask_->pChannel_[iChannelID] != NULL))
-    {
-      SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iChannelID];
-      // Wait for message to be sent
-      k_pthread_mutex_lock(&pChannel->mutex);
-      while(pChannel->iState != CS_MSG_SEND)
-        k_pthread_cond_wait(&pChannel->stateCond, &pChannel->mutex);
-      if(pChannel->iSndSize < iRcvSize)
-        iRcvSize = pChannel->iSndSize;
-      memcpy(pRcvMsg, pChannel->pSndMsg, iRcvSize);
-      pChannel->iState = CS_MSG_RECEIVED;
-      // Notify others of changed channel state
-      k_pthread_cond_broadcast(&pChannel->stateCond);
-      // Unlock channel
-      k_pthread_mutex_unlock(&pChannel->mutex);
-
-      iRetVal  = iChannelID + 2;
-    }
-    else
-    {
-      printk("k_msgReceive: Invalid channel id: %d\n", iChannelID + 2);
-    }
+    printk("k_msgReceive: Invalid channel id: %d(%d)\n", iChannelID, iChannelIDX);
   }
 
   return iRetVal;
@@ -163,47 +157,39 @@ int
 k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
 {
   int iRetVal(-1);
+  int iReceiveIDX(CHANNEL_ID_TO_IDX(iReceiveID));
 
-  // Filter kernel and error IDs
-  if(iReceiveID <= 1)
+  if((iReceiveIDX >= 0) &&
+     (iReceiveIDX < MAX_CHANNEL_COUNT) &&
+     (CTaskManager::pCurrentTask_->pChannel_[iReceiveIDX] != NULL))
   {
-    printk("ERROR: Invalid receive id: %d\n", iReceiveID);
-  }
-  else
-  {
-    iReceiveID -= 2;
-    if((iReceiveID >= 0) &&
-       (iReceiveID < MAX_CHANNEL_COUNT) &&
-       (CTaskManager::pCurrentTask_->pChannel_[iReceiveID] != NULL))
+    SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iReceiveIDX];
+
+    // We can only reply a received message
+    k_pthread_mutex_lock(&pChannel->mutex);
+    if(pChannel->iState == CS_MSG_RECEIVED)
     {
-      SChannel * pChannel = CTaskManager::pCurrentTask_->pChannel_[iReceiveID];
-
-      // We can only reply a received message
-      k_pthread_mutex_lock(&pChannel->mutex);
-      if(pChannel->iState == CS_MSG_RECEIVED)
-      {
-        // Copy reply data
-        if(iReplySize < pChannel->iRcvSize)
-          iReplySize = pChannel->iRcvSize;
-        memcpy(pChannel->pRcvMsg, pReplyMsg, iReplySize);
-        pChannel->iRetVal = iStatus;
-        pChannel->iState = CS_MSG_REPLIED;
-        // Notify others of changed channel state
-        k_pthread_cond_broadcast(&pChannel->stateCond);
-        // Unlock channel
-        k_pthread_mutex_unlock(&pChannel->mutex);
-        iRetVal = 0;
-      }
-      else
-      {
-        k_pthread_mutex_unlock(&pChannel->mutex);
-        printk("k_msgReply: No message received, can't reply\n");
-      }
+      // Copy reply data
+      if(iReplySize < pChannel->iRcvSize)
+        iReplySize = pChannel->iRcvSize;
+      memcpy(pChannel->pRcvMsg, pReplyMsg, iReplySize);
+      pChannel->iRetVal = iStatus;
+      pChannel->iState = CS_MSG_REPLIED;
+      // Notify others of changed channel state
+      k_pthread_cond_broadcast(&pChannel->stateCond);
+      // Unlock channel
+      k_pthread_mutex_unlock(&pChannel->mutex);
+      iRetVal = 0;
     }
     else
     {
-      printk("k_msgReply: Invalid receive id: %d\n", iReceiveID + 2);
+      k_pthread_mutex_unlock(&pChannel->mutex);
+      printk("k_msgReply: No message received, can't reply\n");
     }
+  }
+  else
+  {
+    printk("k_msgReply: Invalid receive id: %d(%d)\n", iReceiveID, iReceiveIDX);
   }
 
   return iRetVal;

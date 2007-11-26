@@ -3,9 +3,7 @@
 
 
 #include "kernel/syscall.h"
-#include "kernel/task.h"
-#include "sys/types.h"
-#include "inttypes.h"
+#include "kernel/unistd_k.h"
 
 
 #ifndef NULL
@@ -17,6 +15,11 @@
 #define STDERR  2
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 //declareSysCallUser1r(int,             brk, void *, addr);
 //declareSysCallUser1r(int,             close, int, iFD);
 //declareSysCallUser1 (                 _exit, int, iStatus);
@@ -26,6 +29,11 @@ declareSysCallUser0r(pid_t,           getpid);
 declareSysCallUser1r(unsigned int,    sleep, unsigned int, iSeconds);
 declareSysCallUser1r(int,             usleep, useconds_t, useconds);
 //declareSysCallUser3r(ssize_t,         write, int, iFD, const void *, pBuf, size_t, size);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

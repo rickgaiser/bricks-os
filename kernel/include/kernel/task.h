@@ -140,18 +140,4 @@ private:
 };
 
 
-int genwait_wait(void * obj, useconds_t useconds);
-int genwait_wake(void * obj, int maxcount);
-
-//declareSysCallKernel1r(int,             brk, void *, addr);
-//declareSysCallKernel1r(int,             close, int, iFD);
-//declareSysCallKernel1 (                 _exit, int, iStatus);
-declareSysCallKernel0r(pid_t,           getpid);
-//declareSysCallKernel3r(ssize_t,         read, int, iFD, void *, pBuf, size_t, size);
-//declareSysCallKernel1r(char *,          sbrk, intptr_t, increment);
-declareSysCallKernel1r(unsigned int,    sleep, unsigned int, iSeconds);
-declareSysCallKernel1r(int,             usleep, useconds_t, useconds);
-//declareSysCallKernel3r(ssize_t,         write, int, iFD, const void *, pBuf, size_t, size);
-
-
 #endif

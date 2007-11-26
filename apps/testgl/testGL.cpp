@@ -43,7 +43,7 @@ eglDestroy()
 }
 
 // -----------------------------------------------------------------------------
-int
+extern "C" int
 appMain(int argc, char * argv[])
 {
   CAVideoDevice ** devices;

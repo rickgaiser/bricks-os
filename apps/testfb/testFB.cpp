@@ -123,7 +123,7 @@ test2d(CSurface * surface)
 }
 
 // -----------------------------------------------------------------------------
-int
+extern "C" int
 appMain(int argc, char * argv[])
 {
   CAVideoDevice ** devices;

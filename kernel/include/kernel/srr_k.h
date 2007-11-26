@@ -5,6 +5,15 @@
 #include "kernel/syscall.h"
 
 
+#define CHANNEL_ID_BASE         0x1000
+#define CHANNEL_IDX_TO_ID(i)    ((i)+CHANNEL_ID_BASE)
+#define CHANNEL_ID_TO_IDX(i)    ((i)-CHANNEL_ID_BASE)
+
+#define CONNECTION_ID_BASE      0x1000
+#define CONNECTION_IDX_TO_ID(i) ((i)+CONNECTION_ID_BASE)
+#define CONNECTION_ID_TO_IDX(i) ((i)-CONNECTION_ID_BASE)
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

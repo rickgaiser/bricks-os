@@ -9,6 +9,11 @@
 #include "time.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 // Threads
 declareSysCallUser4r(int,  pthread_create,         pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
 declareSysCallUser1 (      pthread_exit,           void *, status);
@@ -25,6 +30,11 @@ declareSysCallUser1r(int,  pthread_mutex_destroy,  pthread_mutex_t *, mutex);
 declareSysCallUser1r(int,  pthread_mutex_lock,     pthread_mutex_t *, mutex);
 declareSysCallUser1r(int,  pthread_mutex_trylock,  pthread_mutex_t *, mutex);
 declareSysCallUser1r(int,  pthread_mutex_unlock,   pthread_mutex_t *, mutex);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

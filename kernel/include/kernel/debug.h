@@ -2,22 +2,28 @@
 #define KERNEL_DEBUG_H
 
 
+#ifdef __cplusplus
 #include "kernel/fs.h"
+#endif
 
-
-#define va_list         __builtin_va_list
-//#define va_start(v,l)   __builtin_va_start(v,l)
-#define va_start(v,l)   __builtin_stdarg_start(v,l)
-#define va_end(v)       __builtin_va_end(v)
-#define va_arg(v,l)     __builtin_va_arg(v,l)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 void printk(const char * fmt, ...);
 void panic(const char * fmt, ...);
 
 
+#ifdef __cplusplus
+}
+#endif
+
+
+#ifdef __cplusplus
 // Debugging object, used by printk
 extern IFileIO * pDebug;
+#endif
 
 
 #endif

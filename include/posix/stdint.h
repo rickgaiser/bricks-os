@@ -1,10 +1,6 @@
 #ifndef STDINT_H
 #define STDINT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 
 typedef char                        int8_t;
 typedef short                       int16_t;
@@ -36,9 +32,5 @@ typedef volatile uint64_t           vuint64_t;
 typedef int                         intptr_t;
 typedef unsigned int                uintptr_t;
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
