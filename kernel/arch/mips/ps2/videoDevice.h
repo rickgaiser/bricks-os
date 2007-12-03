@@ -54,25 +54,14 @@ public:
   virtual void     waitVSync();
 
 private:
-  void setMode(ps2_vmode_t * mode);
+  void setMode(ps2_vmode_t * mode, bool bDouble);
 
   void g2_put_image(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t *data);
-
-  void g2_set_viewport(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
-  void g2_get_viewport(uint16_t *x0, uint16_t *y0, uint16_t *x1, uint16_t *y1);
-
   void g2_set_visible_frame(uint8_t frame);
   void g2_set_active_frame(uint8_t frame);
-  uint8_t g2_get_visible_frame(void);
-  uint8_t g2_get_active_frame(void);
-
-  void g2_set_visible_field(uint8_t field);
   void g2_set_active_field(uint8_t field);
   uint8_t g2_get_visible_field(void);
   uint8_t g2_get_active_field(void);
-
-  void g2_wait_vsync(void);
-  void g2_wait_hsync(void);
 
   void g2_set_font(uint32_t *data, uint16_t w, uint16_t h, uint16_t *tc);
   void g2_out_text(uint16_t x, uint16_t y, char *str);
@@ -82,9 +71,17 @@ private:
   uint16_t g2_get_font_mag(void);
   void g2_set_font_color(uint8_t red, uint8_t green, uint8_t blue);
 
+  ps2_vmode_t * pCurrentPS2Mode_;
+
+  uint32_t frameAddr_[2];
+  uint8_t  iVisibleFrame_;
+  uint8_t  iActiveFrame_;
+  bool     bInterlaced_;
+  bool     bDouble_;
+  
+  // Text
   unsigned int iCurrentX_;
   unsigned int iCurrentY_;
-
   char pBuffer_[TEXT_HEIGHT][TEXT_WIDTH];
 };
 

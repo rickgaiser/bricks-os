@@ -9,17 +9,17 @@
 //---------------------------------------------------------------------------
 ps2_vmode_t vmodes[] =
 {
-  // PAL
-  { 640,  256, 16, 0x03, GRAPH_PSM_16, INTERLACED, FRAME, GS_SET_DISPLAY(652, 36, 3, 0, 2559,  255)},
-  { 640,  256, 24, 0x03, GRAPH_PSM_24, INTERLACED, FRAME, GS_SET_DISPLAY(652, 36, 3, 0, 2559,  255)},
-  { 640,  256, 32, 0x03, GRAPH_PSM_32, INTERLACED, FRAME, GS_SET_DISPLAY(652, 36, 3, 0, 2559,  255)},
+  // PAL (Why not 704x576 or 720x576 (PAL DVD))
+  { 640,  256, 16, 0x03, GRAPH_PSM_16, NON_INTERLACED, 0, GS_SET_DISPLAY(652, 36, 3, 0, 2559,  255)},
+  { 640,  256, 24, 0x03, GRAPH_PSM_24, NON_INTERLACED, 0, GS_SET_DISPLAY(652, 36, 3, 0, 2559,  255)},
+  { 640,  256, 32, 0x03, GRAPH_PSM_32, NON_INTERLACED, 0, GS_SET_DISPLAY(652, 36, 3, 0, 2559,  255)},
   { 640,  512, 16, 0x03, GRAPH_PSM_16, INTERLACED, FIELD, GS_SET_DISPLAY(652, 72, 3, 0, 2559,  511)},
   { 640,  512, 24, 0x03, GRAPH_PSM_24, INTERLACED, FIELD, GS_SET_DISPLAY(652, 72, 3, 0, 2559,  511)},
   { 640,  512, 32, 0x03, GRAPH_PSM_32, INTERLACED, FIELD, GS_SET_DISPLAY(652, 72, 3, 0, 2559,  511)},
-  // NTSC
-  { 640,  224, 16, 0x02, GRAPH_PSM_16, INTERLACED, FRAME, GS_SET_DISPLAY(632, 25, 3, 0, 2559,  223)},
-  { 640,  224, 24, 0x02, GRAPH_PSM_24, INTERLACED, FRAME, GS_SET_DISPLAY(632, 25, 3, 0, 2559,  223)},
-  { 640,  224, 32, 0x02, GRAPH_PSM_32, INTERLACED, FRAME, GS_SET_DISPLAY(632, 25, 3, 0, 2559,  223)},
+  // NTSC (Why not 640x480 (square) or 720x480 (NTSC DVD))
+  { 640,  224, 16, 0x02, GRAPH_PSM_16, NON_INTERLACED, 0, GS_SET_DISPLAY(632, 25, 3, 0, 2559,  223)},
+  { 640,  224, 24, 0x02, GRAPH_PSM_24, NON_INTERLACED, 0, GS_SET_DISPLAY(632, 25, 3, 0, 2559,  223)},
+  { 640,  224, 32, 0x02, GRAPH_PSM_32, NON_INTERLACED, 0, GS_SET_DISPLAY(632, 25, 3, 0, 2559,  223)},
   { 640,  448, 16, 0x02, GRAPH_PSM_16, INTERLACED, FIELD, GS_SET_DISPLAY(632, 50, 3, 0, 2559,  447)},
   { 640,  448, 24, 0x02, GRAPH_PSM_24, INTERLACED, FIELD, GS_SET_DISPLAY(632, 50, 3, 0, 2559,  447)},
   { 640,  448, 32, 0x02, GRAPH_PSM_32, INTERLACED, FIELD, GS_SET_DISPLAY(632, 50, 3, 0, 2559,  447)},
@@ -32,9 +32,9 @@ ps2_vmode_t vmodes[] =
   {1280,  720, 16, 0x52, GRAPH_PSM_16, NON_INTERLACED, 0, GS_SET_DISPLAY(302, 24, 0, 0, 1279,  719)}, // 720p
   {1280,  720, 24, 0x52, GRAPH_PSM_24, NON_INTERLACED, 0, GS_SET_DISPLAY(302, 24, 0, 0, 1279,  719)}, // 720p
   {1280,  720, 32, 0x52, GRAPH_PSM_32, NON_INTERLACED, 0, GS_SET_DISPLAY(302, 24, 0, 0, 1279,  719)}, // 720p
-  {1920,  540, 16, 0x51, GRAPH_PSM_16, INTERLACED, FRAME, GS_SET_DISPLAY(238, 20, 0, 0, 1919,  539)},
-  {1920,  540, 24, 0x51, GRAPH_PSM_24, INTERLACED, FRAME, GS_SET_DISPLAY(238, 20, 0, 0, 1919,  539)},
-  {1920,  540, 32, 0x51, GRAPH_PSM_32, INTERLACED, FRAME, GS_SET_DISPLAY(238, 20, 0, 0, 1919,  539)},
+  {1920,  540, 16, 0x51, GRAPH_PSM_16, NON_INTERLACED, 0, GS_SET_DISPLAY(238, 20, 0, 0, 1919,  539)},
+  {1920,  540, 24, 0x51, GRAPH_PSM_24, NON_INTERLACED, 0, GS_SET_DISPLAY(238, 20, 0, 0, 1919,  539)},
+  {1920,  540, 32, 0x51, GRAPH_PSM_32, NON_INTERLACED, 0, GS_SET_DISPLAY(238, 20, 0, 0, 1919,  539)},
   {1920, 1080, 16, 0x51, GRAPH_PSM_16, INTERLACED, FIELD, GS_SET_DISPLAY(238, 40, 0, 0, 1919, 1079)}, // 1080i
 
   // VGA
@@ -91,17 +91,17 @@ static const SVideoMode videoModes[] =
   // PAL
 //  { 640,  256, 16, cfA1R5G5B5}, //  320Kb
 //  { 640,  256, 24, cfB8G8R8},   //  480Kb
-//  { 640,  256, 32, cfA8B8G8R8}, //  640Kb
+  { 640,  256, 32, cfA8B8G8R8}, //  640Kb
 //  { 640,  512, 16, cfA1R5G5B5}, //  640Kb
 //  { 640,  512, 24, cfB8G8R8},   //  960Kb
-  { 640,  512, 32, cfA8B8G8R8}, // 1280Kb
+//  { 640,  512, 32, cfA8B8G8R8}, // 1280Kb
   // NTSC
 //  { 640,  224, 16, cfA1R5G5B5}, //  280Kb
 //  { 640,  224, 24, cfB8G8R8},   //  420Kb
-//  { 640,  224, 32, cfA8B8G8R8}, //  560Kb
+  { 640,  224, 32, cfA8B8G8R8}, //  560Kb
 //  { 640,  448, 16, cfA1R5G5B5}, //  560Kb
 //  { 640,  448, 24, cfB8G8R8},   //  840Kb
-  { 640,  448, 32, cfA8B8G8R8}, // 1120Kb
+//  { 640,  448, 32, cfA8B8G8R8}, // 1120Kb
 
   // EDTV
 //  { 720,  480, 16, cfA1R5G5B5}, //  675Kb
@@ -134,16 +134,6 @@ static const SVideoMode videoModes[] =
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
 //---------------------------------------------------------------------------
-static ps2_vmode_t * cur_mode;
-
-static uint16_t   g2_view_x0=0;                 // current viewport coordinates
-static uint16_t   g2_view_x1=1;
-static uint16_t   g2_view_y0=0;
-static uint16_t   g2_view_y1=1;
-
-static uint32_t   g2_frame_addr[2] = {0,0};     // address of both frame buffers in GS memory
-static uint32_t   g2_texbuf_addr   = 0;         // address of texture buffer in GS memory
-
 // Font
 static uint32_t   g2_fontbuf_addr  = 0;         // address of font buffer
 static uint32_t   g2_fontbuf_w     = 256;       // font buffer width
@@ -152,12 +142,9 @@ static uint16_t * g2_font_tc       = 0;         // pointer to texture coordinate
 static uint16_t   g2_font_spacing  = 1;         // pixels between each drawn character
 static uint16_t   g2_font_mag      = 1;         // magnification factor
 
-static uint8_t    g2_visible_frame;             // Identifies the frame buffer to display
-static uint8_t    g2_active_frame;              // Identifies the frame buffer to direct drawing to
-
- uint32_t   gs_mem_current;               // points to current GS memory allocation point
- uint16_t   gs_origin_x;                  // used for mapping Primitive to Window coordinate systems
- uint16_t   gs_origin_y;
+uint32_t   gs_mem_current;               // points to current GS memory allocation point
+uint16_t   gs_origin_x;                  // used for mapping Primitive to Window coordinate systems
+uint16_t   gs_origin_y;
 
 //---------------------------------------------------------------------------
 DECLARE_GS_PACKET(gs_dma_buf,50);
@@ -171,9 +158,17 @@ extern uint16_t fixed_tc[];
 //---------------------------------------------------------------------------
 CPS2Surface::CPS2Surface()
  : CSurface()
+ , pCurrentPS2Mode_(NULL)
+ , iVisibleFrame_(0)
+ , iActiveFrame_(0)
+ , bInterlaced_(false)
+ , bDouble_(false)
  , iCurrentX_(0)
  , iCurrentY_(0)
 {
+  frameAddr_[0] = 0;
+  frameAddr_[1] = 0;
+
   for(int y(0); y < TEXT_HEIGHT; y++)
     pBuffer_[y][0] = 0;
 }
@@ -226,14 +221,17 @@ CPS2Surface::write(const void * data, size_t size, loff_t *)
 
   // Clear screen
   setFillColor(0, 0, 0);
-  fillRect(0, 0, width_, height_);
+  fill();
 
   // Draw all lines
   for(int y(0); y < TEXT_HEIGHT; y++)
     g2_out_text(15, 15 * y,  pBuffer_[y]);
 
-  // Swap buffers
-//  swap();
+  if(bDouble_ == true)
+  {
+    // Swap buffers
+    swap();
+  }
 
   return 0;
 }
@@ -325,25 +323,20 @@ CPS2Surface::drawRect(int x, int y, unsigned int width, unsigned int height)
 void
 CPS2Surface::swap(bool sync)
 {
-//  if(pBack != 0)
+  if(sync == true)
+    waitVSync();
+
+  if(bDouble_ == true)
   {
-    if(sync == true)
-      waitVSync();
+    // Swap frames
+    g2_set_visible_frame(1 - iVisibleFrame_);
+    g2_set_active_frame(1 - iActiveFrame_);
+  }
 
-//    g2_put_image(0, 0, width_, height_, (uint32_t *)pBack);
-
-//    if(cur_mode->interlace == NON_INTERLACED)
-//    {
-      // Swap frames
-      //g2_set_visible_frame(1 - g2_get_visible_frame());
-      //g2_set_active_frame(1 - g2_get_active_frame());
-//    }
-//    else
-//    {
-      // Swap fields
-      //g2_set_visible_field(1 - g2_get_visible_field());
-      //g2_set_active_field(1 - g2_get_active_field());
-//    }
+  if(bInterlaced_ == true)
+  {
+    // Swap fields
+    //g2_set_active_field(1 - g2_get_active_field());
   }
 }
 
@@ -365,35 +358,42 @@ CPS2Surface::waitVSync()
 
 //---------------------------------------------------------------------------
 void
-CPS2Surface::setMode(ps2_vmode_t * mode)
+CPS2Surface::setMode(ps2_vmode_t * mode, bool bDouble)
 {
-  cur_mode = mode;
+  pCurrentPS2Mode_ = mode;
+  bInterlaced_     = (pCurrentPS2Mode_->interlace == INTERLACED);
+  bDouble_         = bDouble;
 
-  width_  = cur_mode->width;
-  height_ = cur_mode->height;
-
-  g2_view_x0 = 0;
-  g2_view_y0 = 0;
-  g2_view_x1 = width_;
-  g2_view_y1 = height_;
+  width_  = pCurrentPS2Mode_->width;
+  height_ = pCurrentPS2Mode_->height;
 
   gs_origin_x = 1024;
   gs_origin_y = 1024;
 
-  g2_visible_frame = 0; // display frame 0
-  g2_active_frame  = 0; // draw to frame 0
-
   // Create memory map
   gs_mem_current = 0;
+
   // Allocate first frame
-  g2_frame_addr[0] = gs_mem_current;
-  gs_mem_current += cur_mode->width * cur_mode->height * (cur_mode->bpp/8);
-  // Allocate second frame is progressive
-  if(cur_mode->interlace == NON_INTERLACED)
+  frameAddr_[0] = gs_mem_current;
+  gs_mem_current += pCurrentPS2Mode_->width * pCurrentPS2Mode_->height * (pCurrentPS2Mode_->bpp/8);
+  iVisibleFrame_ = 0; // display frame 0
+  
+  if(bDouble_ == true)
   {
-    g2_frame_addr[1] = gs_mem_current;
-    gs_mem_current += cur_mode->width * cur_mode->height * (cur_mode->bpp/8);
+    // Allocate second frame
+    frameAddr_[1] = gs_mem_current;
+    gs_mem_current += pCurrentPS2Mode_->width * pCurrentPS2Mode_->height * (pCurrentPS2Mode_->bpp/8);
+    iActiveFrame_ = 1; // draw to frame 1
   }
+  else
+  {
+    frameAddr_[1] = frameAddr_[0];
+    iActiveFrame_ = 0; // draw to frame 0
+  }
+
+  // Allocate texture
+  g2_fontbuf_addr = gs_mem_current;
+  gs_mem_current += g2_fontbuf_w * g2_fontbuf_h * (pCurrentPS2Mode_->bpp/8);
 
   // - Initialize the DMA.
   // - Writes a 0 to most of the DMA registers.
@@ -419,24 +419,25 @@ CPS2Surface::setMode(ps2_vmode_t * mode)
   //   like it should only set the SMODE2 register, but if I remove this syscall
   //   and set the SMODE2 register myself, it donesn't work. What else does
   //   syscall 0x02 do?
-  setGsCrt(cur_mode->interlace, cur_mode->mode, FIELD);
+  setGsCrt(pCurrentPS2Mode_->interlace, pCurrentPS2Mode_->mode, pCurrentPS2Mode_->field);
 
   // - I havn't attempted to understand what the Alpha parameters can do. They
   //   have been blindly copied from the 3stars demo (although they don't seem
   //   do have any impact in this simple 2D code.
   GS_SET_PMODE(
-      1,        // ReadCircuit1 OFF
-      1,        // ReadCircuit2 ON
+      1,        // ReadCircuit1 ON
+      0,        // ReadCircuit2 OFF
       1,        // Use ALP register for Alpha Blending
       1,        // Alpha Value of ReadCircuit2 for output selection
       0,        // Blend Alpha with the output of ReadCircuit2
       0xFF  // Alpha Value = 1.0
   );
 
-  g2_set_visible_frame(0);
+  g2_set_visible_frame(iVisibleFrame_);
+  g2_set_active_frame(iActiveFrame_);
 
-  REG_GS_DISPLAY1 = cur_mode->display;
-  REG_GS_DISPLAY2 = cur_mode->display;
+  REG_GS_DISPLAY1 = pCurrentPS2Mode_->display;
+  //REG_GS_DISPLAY2 = pCurrentPS2Mode_->display;
 
 
   BEGIN_GS_PACKET(gs_dma_buf);
@@ -444,23 +445,13 @@ CPS2Surface::setMode(ps2_vmode_t * mode)
   // Use drawing parameters from PRIM register
   GIF_DATA_AD(gs_dma_buf, prmodecont, 1);
   // Setup frame buffers. Point to 0 initially.
-  GIF_DATA_AD(gs_dma_buf, frame_1, GS_FRAME(0, cur_mode->width >> 6, cur_mode->psm, 0));
+  GIF_DATA_AD(gs_dma_buf, frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
   // Displacement between Primitive and Window coordinate systems.
   GIF_DATA_AD(gs_dma_buf, xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
   // Clip to frame buffer.
   GIF_DATA_AD(gs_dma_buf, scissor_1, GS_SCISSOR(0, width_, 0, height_));
 
 /*
-  // Create a single 256x128 font buffer
-  g2_fontbuf_addr = gs_mem_current;
-  gs_mem_current += g2_fontbuf_w * g2_fontbuf_h * (v->bpp/8);
-
-  // Create a texture buffer as big as the screen.
-  // Just save the address advance GS memory pointer by buffer size (in bytes)
-  // The TEX registers are set later, when drawing.
-  g2_texbuf_addr = gs_mem_current;
-  gs_mem_current += v->width * v->height * (v->bpp/8);
-
   // Setup test_1 register to allow transparent texture regions where A=0
   GIF_DATA_AD(gs_dma_buf, test_1,
       GS_TEST(
@@ -482,61 +473,6 @@ CPS2Surface::setMode(ps2_vmode_t * mode)
           0));      // FIX - not needed
 */
 
-  SEND_GS_PACKET(gs_dma_buf);
-}
-
-//---------------------------------------------------------------------------
-void
-CPS2Surface::g2_put_image(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t *data)
-{
-  x += gs_origin_x;
-  y += gs_origin_y;
-
-  // - Call this to copy the texture data from EE memory to GS memory.
-  // - The g2_texbuf_addr variable holds the byte address of the
-  //   'texture buffer' and is setup in g2_init() to be just after
-  //   the frame buffer(s). When only the standard resolutions are
-  //   used this buffer is guaranteed to be correctly aligned on 256
-  //   bytes.
-  gs_load_texture(0, 0, w, h, (uint32_t)data, g2_texbuf_addr, width_+1);
-
-  BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-
-  // Setup the Texture Buffer register. Note the width and height! They
-  // must both be a power of 2.
-  GIF_DATA_AD(gs_dma_buf, tex0_1,
-    GS_TEX0(
-      g2_texbuf_addr/256,  // base pointer
-      (width_+1)/64,       // width
-      0,                   // 32bit RGBA
-      gs_texture_wh(w),    // width
-      gs_texture_wh(h),    // height
-      1,                   // RGBA
-      TEX_DECAL,           // just overwrite existing pixels
-      0,0,0,0,0));
-
-  GIF_DATA_AD(gs_dma_buf, prim,
-    GS_PRIM(PRIM_SPRITE,
-      0,                   // flat shading
-      1,                   // texture mapping ON
-      0, 0, 0,             // no fog, alpha, or antialiasing
-      1,                   // use UV register for coordinates.
-      0,
-      0));
-
-  // Texture and vertex coordinates are specified consistently, with
-  // the last four bits being the decimal part (always X.0 here).
-
-  // Top/Left, texture coordinates (0, 0).
-  GIF_DATA_AD(gs_dma_buf, uv,    GS_UV(0, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2,  GS_XYZ2(x<<4, y<<4, 0));
-
-  // Bottom/Right, texture coordinates (w, h).
-  GIF_DATA_AD(gs_dma_buf, uv,    GS_UV(w<<4, h<<4));
-  GIF_DATA_AD(gs_dma_buf, xyz2,  GS_XYZ2((x+w)<<4, (y+h)<<4, 0));
-
-  // Finally send the command buffer to the GIF.
   SEND_GS_PACKET(gs_dma_buf);
 }
 
@@ -642,8 +578,8 @@ CPS2Surface::g2_set_font_color(uint8_t red, uint8_t green, uint8_t blue)
   GIF_DATA_AD(gs_dma_buf, frame_1,
     GS_FRAME(
       g2_fontbuf_addr/8192,
-      cur_mode->width/64,
-      cur_mode->psm,
+      pCurrentPS2Mode_->width/64,
+      pCurrentPS2Mode_->psm,
       0));
 
   // Draw the colored rectangle over the entire Font Bitmap.
@@ -657,9 +593,9 @@ CPS2Surface::g2_set_font_color(uint8_t red, uint8_t green, uint8_t blue)
   // Restore the frame buffer to the current active frame buffer.
   GIF_DATA_AD(gs_dma_buf, frame_1,
     GS_FRAME(
-      g2_frame_addr[g2_active_frame]/8192,
-      cur_mode->width/64,
-      cur_mode->psm,
+      frameAddr_[iActiveFrame_]/8192,
+      pCurrentPS2Mode_->width/64,
+      pCurrentPS2Mode_->psm,
       0));
 
   SEND_GS_PACKET(gs_dma_buf);
@@ -697,9 +633,9 @@ CPS2Surface::g2_get_font_mag(void)
 void
 CPS2Surface::g2_set_visible_frame(uint8_t frame)
 {
-  REG_GS_DISPFB1  = GS_SET_DISPFB(g2_frame_addr[frame] >> 13, width_ >> 6, cur_mode->psm, 0, 0);
-  REG_GS_DISPFB2  = GS_SET_DISPFB(g2_frame_addr[frame] >> 13, width_ >> 6, cur_mode->psm, 0, 0);
-  g2_visible_frame = frame;
+  REG_GS_DISPFB1  = GS_SET_DISPFB(frameAddr_[frame] >> 13, width_ >> 6, pCurrentPS2Mode_->psm, 0, 0);
+//  REG_GS_DISPFB2  = GS_SET_DISPFB(frameAddr_[frame] >> 13, width_ >> 6, pCurrentPS2Mode_->psm, 0, 0);
+  iVisibleFrame_ = frame;
 }
 
 //---------------------------------------------------------------------------
@@ -709,34 +645,11 @@ CPS2Surface::g2_set_active_frame(uint8_t frame)
   BEGIN_GS_PACKET(gs_dma_buf);
   GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
-  GIF_DATA_AD(gs_dma_buf, frame_1, GS_FRAME(g2_frame_addr[frame] >> 13, width_ >> 6, cur_mode->psm, 0));
+  GIF_DATA_AD(gs_dma_buf, frame_1, GS_FRAME(frameAddr_[frame] >> 13, width_ >> 6, pCurrentPS2Mode_->psm, 0));
 
   SEND_GS_PACKET(gs_dma_buf);
 
-  g2_active_frame = frame;
-}
-
-//---------------------------------------------------------------------------
-uint8_t
-CPS2Surface::g2_get_visible_frame(void)
-{
-  return g2_visible_frame;
-}
-
-//---------------------------------------------------------------------------
-uint8_t
-CPS2Surface::g2_get_active_frame(void)
-{
-  return g2_active_frame;
-}
-
-//---------------------------------------------------------------------------
-void
-CPS2Surface::g2_set_visible_field(uint8_t field)
-{
-//  REG_GS_DISPFB1  = GS_SET_DISPFB(g2_frame_addr[frame] >> 13, width_ >> 6, cur_mode->psm, 0, 0);
-//  REG_GS_DISPFB2  = GS_SET_DISPFB(g2_frame_addr[frame] >> 13, width_ >> 6, cur_mode->psm, 0, 0);
-//  g2_visible_field = field;
+  iActiveFrame_ = frame;
 }
 
 //---------------------------------------------------------------------------
@@ -746,16 +659,15 @@ CPS2Surface::g2_set_active_field(uint8_t field)
   BEGIN_GS_PACKET(gs_dma_buf);
   GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
 
-  // If the field is odd...
-  if(field == 1)
+  if(field == 1) // Odd
   {
     GIF_DATA_AD(gs_dma_buf, scanmsk, 2);
   }
-  else if(field == 0)
+  else if(field == 0) // Even
   {
     GIF_DATA_AD(gs_dma_buf, scanmsk, 3);
   }
-  else
+  else // Both?
   {
     GIF_DATA_AD(gs_dma_buf, scanmsk, 0);
   }
@@ -784,37 +696,10 @@ CPS2Surface::g2_get_active_field(void)
 }
 
 //---------------------------------------------------------------------------
-void
-CPS2Surface::g2_set_viewport(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
-{
-  g2_view_x0 = x0;
-  g2_view_x1 = x1;
-  g2_view_y0 = y0;
-  g2_view_y1 = y1;
-
-  BEGIN_GS_PACKET(gs_dma_buf);
-
-  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-
-  GIF_DATA_AD(gs_dma_buf, scissor_1, GS_SCISSOR(x0, x1, y0, y1));
-
-  SEND_GS_PACKET(gs_dma_buf);
-}
-
-//---------------------------------------------------------------------------
-void
-CPS2Surface::g2_get_viewport(uint16_t *x0, uint16_t *y0, uint16_t *x1, uint16_t *y1)
-{
-  *x0 = g2_view_x0;
-  *x1 = g2_view_x1;
-  *y0 = g2_view_y0;
-  *y1 = g2_view_y1;
-}
-
-//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CPS2VideoDevice::CPS2VideoDevice()
  : CAVideoDevice()
+ , pCurrentMode_(&videoModes[0])
 {
 }
 
@@ -861,7 +746,7 @@ CPS2VideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble
            (pCurrentMode_->bpp    == vmodes[i].bpp))
         {
           pSurface = new CPS2Surface;
-          pSurface->setMode(&vmodes[i]);
+          pSurface->setMode(&vmodes[i], bDouble);
           pSurface->width_ = pCurrentMode_->width;
           pSurface->height_= pCurrentMode_->height;
           pSurface->bpp_   = pCurrentMode_->bpp;
@@ -870,13 +755,16 @@ CPS2VideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble
           pSurface->pFront = pSurface->pBack;  // Fail safe?
           pSurface->p      = pSurface->pBack;
 
-          // Set active/Visible frame
-          pSurface->g2_set_active_frame(0);
-          pSurface->g2_set_visible_frame(0);
-
           // Clear screen
-          pSurface->setFillColor(0, 0, 0);
+          pSurface->setFillColor(255, 0, 0);
           pSurface->fill();
+          if(bDouble == true)
+          {
+            pSurface->swap();
+            pSurface->setFillColor(0, 255, 0);
+            pSurface->fill();
+            pSurface->swap();
+          }
 
           // Set font
           pSurface->g2_set_font(courier_new, 256, 128, fixed_tc);
