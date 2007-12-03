@@ -5,7 +5,19 @@
 #include "inttypes.h"
 
 
-#define MAX_INTERRUPTS 0x30 // ???
+#define INT_GS            0
+#define INT_SBUS          1
+#define INT_VBLANK_START  2
+#define INT_VBLANK_END    3
+#define INT_VIF0          4
+#define INT_VIF1          5
+#define INT_VU0           6
+#define INT_VU1           7
+#define INT_IPU           8
+#define INT_TIMER0        9
+#define INT_TIMER1       10
+
+#define MAX_INTERRUPTS 0x0b
 
 
 //---------------------------------------------------------------------------

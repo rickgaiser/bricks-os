@@ -32,6 +32,28 @@ static inline void halt(){while(true){}}
 
 
 // -----------------------------------------------------------------------------
+// MIPS Address space
+#define KUSEG_START 0x00000000  // User segment: 2GiB, Mapped
+#define KUSEG_SIZE  0x80000000
+#define KSEG0_START 0x80000000  // Kernel segment 0, 512MiB, Unmapped, Cached
+#define KSEG0_SIZE  0x20000000
+#define KSEG1_START 0xa0000000  // Kernel segment 1, 512MiB, Unmapped, Uncached
+#define KSEG1_SIZE  0x20000000
+#define KSSEG_START 0xc0000000  // Supervisor segment, 512MiB, Mapped
+#define KSSEG_SIZE  0x20000000
+#define KSEG3_START 0xe0000000  // Kernel segment 3, 512MiB, Mapped
+#define KSEG3_SIZE  0x20000000
+
+// -----------------------------------------------------------------------------
+// Address conversion macros
+// NOTE: Only the first 512MiB of KUSEG can be converted from/to
+#define ADDR_TO_KUSEG(a) ((__typeof__(a))(((uint32_t)(a) & 0x1fffffff) | KUSEG_START))
+#define ADDR_TO_KSEG0(a) ((__typeof__(a))(((uint32_t)(a) & 0x1fffffff) | KSEG0_START))
+#define ADDR_TO_KSEG1(a) ((__typeof__(a))(((uint32_t)(a) & 0x1fffffff) | KSEG1_START))
+#define ADDR_TO_KSSEG(a) ((__typeof__(a))(((uint32_t)(a) & 0x1fffffff) | KSSEG_START))
+#define ADDR_TO_KSEG3(a) ((__typeof__(a))(((uint32_t)(a) & 0x1fffffff) | KSEG3_START))
+
+// -----------------------------------------------------------------------------
 // Copied/Modified from linux/include/asm-mips/mipsregs.h
 // -----------------------------------------------------------------------------
 // The following macros are especially useful for __asm__
@@ -472,13 +494,13 @@ clear_c0_##name(unsigned int clear)                             \
 }                                                               \
                                                                 \
 static inline unsigned int                                      \
-change_c0_##name(unsigned int change, unsigned int new)         \
+change_c0_##name(unsigned int change, unsigned int val)         \
 {                                                               \
         unsigned int res;                                       \
                                                                 \
         res = read_c0_##name();                                 \
         res &= ~change;                                         \
-        res |= (new & change);                                  \
+        res |= (val & change);                                  \
         write_c0_##name(res);                                   \
                                                                 \
         return res;                                             \
@@ -487,7 +509,7 @@ change_c0_##name(unsigned int change, unsigned int new)         \
 __BUILD_SET_C0(status)
 __BUILD_SET_C0(cause)
 __BUILD_SET_C0(config)
-__BUILD_SET_C0(intcontrol)
+//__BUILD_SET_C0(intcontrol)
 __BUILD_SET_C0(intctl)
 __BUILD_SET_C0(srsmap)
 

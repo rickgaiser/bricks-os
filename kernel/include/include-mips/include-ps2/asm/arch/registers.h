@@ -61,6 +61,23 @@
 #define finish          0x61 // ...
 #define label           0x62 // ...
 
+// Timer registers
+// FIXME: Really 64bit registers?
+#define REG_TIMER0_COUNT      (*(vuint64_t *)(0x10000000))
+#define REG_TIMER0_MODE       (*(vuint64_t *)(0x10000010))
+#define REG_TIMER0_COMP       (*(vuint64_t *)(0x10000020))
+#define REG_TIMER0_HOLD       (*(vuint64_t *)(0x10000030))
+#define REG_TIMER1_COUNT      (*(vuint64_t *)(0x10000800))
+#define REG_TIMER1_MODE       (*(vuint64_t *)(0x10000810))
+#define REG_TIMER1_COMP       (*(vuint64_t *)(0x10000820))
+#define REG_TIMER1_HOLD       (*(vuint64_t *)(0x10000830))
+#define REG_TIMER2_COUNT      (*(vuint64_t *)(0x10001000))
+#define REG_TIMER2_MODE       (*(vuint64_t *)(0x10001010))
+#define REG_TIMER2_COMP       (*(vuint64_t *)(0x10001020))
+#define REG_TIMER3_COUNT      (*(vuint64_t *)(0x10001800))
+#define REG_TIMER3_MODE       (*(vuint64_t *)(0x10001810))
+#define REG_TIMER3_COMP       (*(vuint64_t *)(0x10001820))
+
 // Graphics InterFace (GIF) registers
 #define REG_GIF_CTRL          (*(vuint32_t *)(0x10003000)) // Control Register
 #define REG_GIF_MODE          (*(vuint32_t *)(0x10003010)) // Mode Setting Register
@@ -71,7 +88,7 @@
 #define REG_GIF_TAG3          (*(vuint32_t *)(0x10003070)) // GIFtag Save Register
 #define REG_GIF_CNT           (*(vuint32_t *)(0x10003080)) // Count Register
 #define REG_GIF_P3CNT         (*(vuint32_t *)(0x10003090)) // PATH3 Count Register
-#define REG_GIF_P3TAG         (*(vuint32_t *)(0x100030A0)) // PATH3 Tag Register
+#define REG_GIF_P3TAG         (*(vuint32_t *)(0x100030a0)) // PATH3 Tag Register
 
 // Graphics InterFace (GIF) DMA channel registers
 #define REG_GIF_CHCR          (*(vuint32_t *)(0x1000a000)) // GIF Channel Control Register
@@ -80,15 +97,15 @@
 #define REG_GIF_TADR          (*(vuint32_t *)(0x1000a030))
 
 // DMA registers
-#define REG_DMA_CTRL          (*(vuint32_t *)(0x1000E000) // DMA Control Register
-#define REG_DMA_STAT          (*(vuint32_t *)(0x1000E010) // Interrupt Status Register
-#define REG_DMA_PCR           (*(vuint32_t *)(0x1000E020) // Priority Control Register
-#define REG_DMA_SQWC          (*(vuint32_t *)(0x1000E030) // Interleave Size Register
-#define REG_DMA_RBSR          (*(vuint32_t *)(0x1000E040) // Ring Buffer Size Register
-#define REG_DMA_RBOR          (*(vuint32_t *)(0x1000E050) // Ring Buffer Address Register
-#define REG_DMA_STADR         (*(vuint32_t *)(0x1000E060) // Stall Address Register
-#define REG_DMA_ENABLER       (*(vuint32_t *)(0x1000F520) // DMA Hold State Register
-#define REG_DMA_ENABLEW       (*(vuint32_t *)(0x1000F590) // DMA Hold Control Register
+#define REG_DMA_CTRL          (*(vuint32_t *)(0x1000e000)) // DMA Control Register
+#define REG_DMA_STAT          (*(vuint32_t *)(0x1000e010)) // Interrupt Status Register
+#define REG_DMA_PCR           (*(vuint32_t *)(0x1000e020)) // Priority Control Register
+#define REG_DMA_SQWC          (*(vuint32_t *)(0x1000e030)) // Interleave Size Register
+#define REG_DMA_RBSR          (*(vuint32_t *)(0x1000e040)) // Ring Buffer Size Register
+#define REG_DMA_RBOR          (*(vuint32_t *)(0x1000e050)) // Ring Buffer Address Register
+#define REG_DMA_STADR         (*(vuint32_t *)(0x1000e060)) // Stall Address Register
+#define REG_DMA_ENABLER       (*(vuint32_t *)(0x1000f520)) // DMA Hold State Register
+#define REG_DMA_ENABLEW       (*(vuint32_t *)(0x1000f590)) // DMA Hold Control Register
 
 // Graphics Synthesizer (GS) privileged registers
 #define REG_GS_PMODE          (*(vuint64_t *)(0x12000000)) // Setup CRT Controller
@@ -110,6 +127,11 @@
 #define REG_GS_IMR            (*(vuint64_t *)(0x12001010)) // Interrupt Mask Register
 #define REG_GS_BUSDIR         (*(vuint64_t *)(0x12001040))
 #define REG_GS_SIGLBLID       (*(vuint64_t *)(0x12001080))
+
+//
+#define REG_INT_STAT          (*(vuint64_t *)(0x1000f000)) // Interrupt status
+#define REG_INT_MASK          (*(vuint64_t *)(0x1000f010)) // Interrupt mask
+#define REG_SBUS_SMFLG        (*(vuint64_t *)(0x1000f230))
 
 
 #endif
