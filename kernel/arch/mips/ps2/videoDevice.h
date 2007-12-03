@@ -13,12 +13,13 @@
 //---------------------------------------------------------------------------
 struct ps2_vmode_t
 {
-  uint16_t mode;
   uint16_t width;
   uint16_t height;
+  uint16_t bpp;
+  uint16_t mode;
   uint16_t psm;
   uint16_t interlace;
-  uint16_t bpp;
+  uint16_t field;
   uint64_t display;
 };
 
