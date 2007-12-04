@@ -10,7 +10,7 @@ extern IGLESContext * getGLESContext();
 CEGLThread * thread = &cThread; \
 
 #define EGL_GET_DISPLAY(dpy) \
-CDisplay * display = &cDisplay; \
+CEGLDisplay * display = pDisplay; \
 
 #define EGL_IF_ERROR(COND, ERRORCODE, RETVAL) \
 if(COND)                                      \
@@ -25,31 +25,54 @@ if(COND)                                      \
   return RETVAL;                      \
 }
 
-class CEGLDisplay
+//-----------------------------------------------------------------------------
+class CRefCount
 {
 public:
-  CEGLDisplay(){}
-  virtual ~CEGLDisplay(){}
+  CRefCount() : iRefCount_(0){}
+  virtual ~CRefCount(){}
+
+  void addReference()   { iRefCount_++; }
+  int  removeReference(){ iRefCount_--; if(iRefCount_ < 0)iRefCount_ = 0; return iRefCount_; }
+
+private:
+  int iRefCount_;
 };
 
+//-----------------------------------------------------------------------------
 class CEGLSurface
+ : public CRefCount
 {
 public:
-  CEGLSurface(){}
+  CEGLSurface() : CRefCount(){}
   virtual ~CEGLSurface(){}
 
   CSurface * pNativeSurface_;
 };
 
+//-----------------------------------------------------------------------------
 class CEGLContext
+ : public CRefCount
 {
 public:
-  CEGLContext() : pGLESContext_(NULL){}
+  CEGLContext() : CRefCount(), pGLESContext_(NULL){}
   virtual ~CEGLContext(){}
 
   IGLESContext * pGLESContext_;
 };
 
+//-----------------------------------------------------------------------------
+class CEGLDisplay
+{
+public:
+  CEGLDisplay() : pContext_(NULL), pSurface_(NULL){}
+  virtual ~CEGLDisplay(){}
+
+  CEGLContext * pContext_; // FIXME: Should be a list
+  CEGLSurface * pSurface_; // FIXME: Should be a list
+};
+
+//-----------------------------------------------------------------------------
 class CEGLThread
 {
 public:
@@ -62,10 +85,9 @@ public:
 };
 
 
-CEGLDisplay cDisplay;
-CEGLSurface cSurface;
-CEGLThread  cThread;
-EGLint      iError(EGL_SUCCESS);
+CEGLDisplay * pDisplay = NULL;
+CEGLThread    cThread;
+EGLint        iError(EGL_SUCCESS);
 
 
 //-----------------------------------------------------------------------------
@@ -92,6 +114,15 @@ EGLAPIENTRY eglGetDisplay(EGLNativeDisplayType display_id)
 EGLAPI EGLBoolean
 EGLAPIENTRY eglInitialize(EGLDisplay dpy, EGLint * major, EGLint * minor)
 {
+  EGL_GET_DISPLAY(dpy);
+  EGL_IF_ERROR(display, EGL_SUCCESS, EGL_TRUE); // Already initialized
+  EGL_IF_ERROR(dpy != EGL_DEFAULT_DISPLAY, EGL_BAD_DISPLAY, EGL_FALSE);
+
+  // Allocate display
+  pDisplay = new CEGLDisplay;
+  if(pDisplay == NULL)
+    EGL_RETURN(EGL_BAD_ALLOC, EGL_FALSE);
+
   if(major)
     *major = 1;
   if(minor)
@@ -104,6 +135,22 @@ EGLAPIENTRY eglInitialize(EGLDisplay dpy, EGLint * major, EGLint * minor)
 EGLAPI EGLBoolean
 EGLAPIENTRY eglTerminate(EGLDisplay dpy)
 {
+  EGL_GET_DISPLAY(dpy);
+  EGL_IF_ERROR(!display, EGL_SUCCESS, EGL_TRUE); // Already terminated
+  EGL_IF_ERROR(dpy != EGL_DEFAULT_DISPLAY, EGL_BAD_DISPLAY, EGL_FALSE);
+
+  // Remove references to contexts
+  if((pDisplay->pContext_ != NULL) && (pDisplay->pContext_->removeReference() == 0))
+    delete pDisplay->pContext_;
+
+  // Remove references to surfaces
+  if((pDisplay->pSurface_ != NULL) && (pDisplay->pSurface_->removeReference() == 0))
+    delete pDisplay->pSurface_;
+
+  // Delete display
+  if(pDisplay != NULL)
+    delete pDisplay;
+
   EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
 }
 
@@ -161,9 +208,24 @@ EGLAPIENTRY eglChooseConfig(EGLDisplay dpy, const EGLint * attrib_list, EGLConfi
 EGLAPI EGLSurface
 EGLAPIENTRY eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config, EGLNativeWindowType win, const EGLint * attrib_list)
 {
-  cSurface.pNativeSurface_ = (CSurface *)win;
+  EGL_GET_DISPLAY(dpy);
+  EGL_IF_ERROR(!display, EGL_NOT_INITIALIZED, EGL_NO_SURFACE);
+  EGL_IF_ERROR(dpy != EGL_DEFAULT_DISPLAY, EGL_BAD_DISPLAY, EGL_NO_SURFACE);
+//  EGL_IF_ERROR(!eglConfigExists(display, config), EGL_BAD_CONFIG, EGL_NO_SURFACE);
 
-  EGL_RETURN(EGL_SUCCESS, (EGLSurface)&cSurface);
+  // FIXME: Only one surface supported
+  if(display->pSurface_ != NULL)
+    EGL_RETURN(EGL_BAD_ALLOC, EGL_NO_SURFACE);
+
+  // Allocate new surface
+  display->pSurface_ = new CEGLSurface;
+  if(display->pSurface_ == NULL)
+    EGL_RETURN(EGL_BAD_ALLOC, EGL_NO_SURFACE);
+
+  display->pSurface_->addReference();
+  display->pSurface_->pNativeSurface_ = (CSurface *)win;
+
+  EGL_RETURN(EGL_SUCCESS, (EGLSurface)display->pSurface_);
 }
 
 //-----------------------------------------------------------------------------
@@ -182,6 +244,17 @@ EGLAPIENTRY eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config, EGLNativeWi
 EGLAPI EGLBoolean
 EGLAPIENTRY eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 {
+  EGL_GET_DISPLAY(dpy);
+  EGL_IF_ERROR(!display, EGL_NOT_INITIALIZED, EGL_FALSE);
+  EGL_IF_ERROR(dpy != EGL_DEFAULT_DISPLAY, EGL_BAD_DISPLAY, EGL_FALSE);
+//  EGL_IF_ERROR(!eglSurfaceExists(display, surface), EGL_BAD_SURFACE, EGL_FALSE);
+
+  // Remove reference
+  if(((CEGLSurface *)surface)->removeReference() == 0)
+    delete ((CEGLSurface *)surface);
+
+  display->pSurface_ = NULL;
+
   EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
 }
 
@@ -306,16 +379,22 @@ EGLAPIENTRY eglGetCurrentContext(void)
 }
 
 //-----------------------------------------------------------------------------
-//EGLAPI EGLSurface
-//EGLAPIENTRY eglGetCurrentSurface(EGLint readdraw)
-//{
-//}
+EGLAPI EGLSurface
+EGLAPIENTRY eglGetCurrentSurface(EGLint readdraw)
+{
+  EGL_GET_THREAD();
+
+  EGL_RETURN(EGL_SUCCESS, (EGLSurface)thread->pSurface_);
+}
 
 //-----------------------------------------------------------------------------
-//EGLAPI EGLDisplay
-//EGLAPIENTRY eglGetCurrentDisplay(void)
-//{
-//}
+EGLAPI EGLDisplay
+EGLAPIENTRY eglGetCurrentDisplay(void)
+{
+  EGL_GET_DISPLAY(EGL_DEFAULT_DISPLAY);
+
+  EGL_RETURN(EGL_SUCCESS, display);
+}
 
 //-----------------------------------------------------------------------------
 //EGLAPI EGLBoolean
