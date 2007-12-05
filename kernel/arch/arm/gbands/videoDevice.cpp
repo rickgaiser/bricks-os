@@ -265,7 +265,7 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
 
 //---------------------------------------------------------------------------
 void
-CGBAVideoDevice::getRenderer(C2DRenderer ** renderer)
+CGBAVideoDevice::getRenderer(I2DRenderer ** renderer)
 {
   *renderer = new CGBA2DRenderer;
 }

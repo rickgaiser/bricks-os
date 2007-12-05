@@ -137,7 +137,29 @@ public:
 };
 
 //---------------------------------------------------------------------------
+class I2DRenderer
+{
+public:
+  virtual ~I2DRenderer(){}
+
+  // Surfaces
+  virtual void       setSurface(CSurface * surf) = 0;
+  virtual CSurface * getSurface() = 0;
+
+  // Color
+  virtual void       setColor(uint8_t r, uint8_t g, uint8_t b) = 0;
+
+  // Drawing
+  virtual void       setPixel(int x, int y) = 0;
+  virtual void       fill() = 0;
+  virtual void       fillRect(int x, int y, unsigned int width, unsigned int height) = 0;
+  virtual void       drawLine(int x1, int y1, int x2, int y2) = 0;
+  virtual void       drawRect(int x, int y, unsigned int width, unsigned int height) = 0;
+};
+
+//---------------------------------------------------------------------------
 class C2DRenderer
+ : public I2DRenderer
 {
 public:
   C2DRenderer(CSurface * surf = 0);
@@ -186,7 +208,7 @@ public:
   virtual void setMode(const SVideoMode * mode) = 0;
 
   virtual void getSurface(CSurface ** surface, ESurfaceType type) = 0;
-  virtual void getRenderer(C2DRenderer ** renderer) = 0;
+  virtual void getRenderer(I2DRenderer ** renderer) = 0;
 };
 
 //---------------------------------------------------------------------------

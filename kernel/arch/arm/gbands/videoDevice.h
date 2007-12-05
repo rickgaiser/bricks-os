@@ -36,7 +36,7 @@ public:
   virtual void setMode(const SVideoMode * mode);
 
   virtual void getSurface(CSurface ** surface, ESurfaceType type);
-  virtual void getRenderer(C2DRenderer ** renderer);
+  virtual void getRenderer(I2DRenderer ** renderer);
 
 private:
   const SVideoMode * pCurrentMode_;

@@ -34,7 +34,7 @@ color_t clPanelFill       (BxRGB(212, 208, 200));
 
 // -----------------------------------------------------------------------------
 void
-test2d(C2DRenderer * renderer, CSurface * surface)
+test2d(I2DRenderer * renderer, CSurface * surface)
 {
   if((renderer == NULL) || (surface == NULL))
     return;
@@ -145,7 +145,7 @@ appMain(int argc, char * argv[])
         {
           devices[iDev]->setMode(&modes[iMode]);
           CSurface    * pVideoSurface;
-          C2DRenderer * pVideoRenderer;
+          I2DRenderer * pVideoRenderer;
 
           // Test 2d with a single buffered surface
           devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
