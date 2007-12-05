@@ -6,16 +6,16 @@
 //---------------------------------------------------------------------------
 #define SET_PIXEL(x,y,c) \
 { \
-  switch(bpp_) \
+  switch(pSurface_->bpp_) \
   { \
     case 8: \
-      ((uint8_t  *)p)[y * width_ + x] = c; \
+      ((uint8_t  *)pSurface_->p)[y * pSurface_->width_ + x] = c; \
       break; \
     case 16: \
-      ((uint16_t *)p)[y * width_ + x] = c; \
+      ((uint16_t *)pSurface_->p)[y * pSurface_->width_ + x] = c; \
       break; \
     case 32: \
-      ((uint32_t *)p)[y * width_ + x] = c; \
+      ((uint32_t *)pSurface_->p)[y * pSurface_->width_ + x] = c; \
       break; \
     default: \
       ; \
@@ -23,18 +23,18 @@
 }
 
 //---------------------------------------------------------------------------
-#define VISIBLE_POINT(x,y) ((x >= 0) && (x < (int)width_) && (y >= 0) && (y < (int)height_))
+#define VISIBLE_POINT(x,y) ((x >= 0) && (x < (int)pSurface_->width_) && (y >= 0) && (y < (int)pSurface_->height_))
 
 //---------------------------------------------------------------------------
-#define VISIBLE_RECT(x,y,w,h) ((x < (int)width_) && ((x+w) >= 0) && (y < (int)height_) && ((y+h) >= 0))
+#define VISIBLE_RECT(x,y,w,h) ((x < (int)pSurface_->width_) && ((x+w) >= 0) && (y < (int)pSurface_->height_) && ((y+h) >= 0))
 
 //---------------------------------------------------------------------------
 #define CLIP_POINT(x,y) \
 { \
   if(x < 0) x = 0; \
   if(y < 0) y = 0; \
-  else if((unsigned int)x >= width_)  x = width_ - 1; \
-  else if((unsigned int)y >= height_) y = height_ -1; \
+  else if((unsigned int)x >= pSurface_->width_)  x = pSurface_->width_ - 1; \
+  else if((unsigned int)y >= pSurface_->height_) y = pSurface_->height_ -1; \
 }
 
 //---------------------------------------------------------------------------
@@ -42,10 +42,10 @@
 // Otherwise this macro makes no sense
 #define CLIP_RECT(x,y,w,h) \
 { \
-  if(x < 0) {x = 0; width -= x;} \
-  if(y < 0) {y = 0; height -= y;} \
-  if((x+w) > width_) {w = width_ - x;} \
-  if((y+h) > height_) {h = height_ - y;} \
+  if(x < 0) {x = 0; w -= x;} \
+  if(y < 0) {y = 0; h -= y;} \
+  if((x+w) > pSurface_->width_) {w = pSurface_->width_ - x;} \
+  if((y+h) > pSurface_->height_) {h = pSurface_->height_ - y;} \
 }
 
 //---------------------------------------------------------------------------
@@ -84,11 +84,7 @@ const SColorFormatOperations colorFormatOps[] =
 //---------------------------------------------------------------------------
 CSurface::CSurface()
  : p(0)
- , pFront(0)
- , pBack(0)
 {
-  setColor(0, 0, 0);
-  setFillColor(0, 0, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -111,91 +107,163 @@ CSurface::height()
 }
 
 //---------------------------------------------------------------------------
+uint32_t
+CSurface::bpp()
+{
+  return bpp_;
+}
+
+//---------------------------------------------------------------------------
+EColorFormat
+CSurface::format()
+{
+  return format_;
+}
+
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+C2DRenderer::C2DRenderer(CSurface * surf)
+ : pSurface_(surf)
+{
+  color_.r = 0;
+  color_.g = 0;
+  color_.b = 0;
+  color_.a = 255;
+
+  if(pSurface_ != NULL)
+    fmtColor_ = BxColorFormat_FromRGB(pSurface_->format_, color_.r, color_.g, color_.b);
+}
+
+//---------------------------------------------------------------------------
+C2DRenderer::~C2DRenderer()
+{
+}
+
+//---------------------------------------------------------------------------
 void
-CSurface::setColor(uint8_t r, uint8_t g, uint8_t b)
+C2DRenderer::setSurface(CSurface * surf)
+{
+  pSurface_ = surf;
+
+  if(pSurface_ != NULL)
+    fmtColor_ = BxColorFormat_FromRGB(pSurface_->format_, color_.r, color_.g, color_.b);
+}
+
+//---------------------------------------------------------------------------
+CSurface *
+C2DRenderer::getSurface()
+{
+  return pSurface_;
+}
+
+//---------------------------------------------------------------------------
+void
+C2DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
 {
   color_.r = r;
   color_.g = g;
   color_.b = b;
   color_.a = 255;
 
-  fmtColor_ = BxColorFormat_FromRGB(format_, r, g, b);
+  if(pSurface_ != NULL)
+    fmtColor_ = BxColorFormat_FromRGB(pSurface_->format_, color_.r, color_.g, color_.b);
 }
 
 //---------------------------------------------------------------------------
 void
-CSurface::setFillColor(uint8_t r, uint8_t g, uint8_t b)
+C2DRenderer::setPixel(int x, int y)
 {
-  fillColor_.r = r;
-  fillColor_.g = g;
-  fillColor_.b = b;
-  fillColor_.a = 255;
-
-  fmtFillColor_ = BxColorFormat_FromRGB(format_, r, g, b);
+  if(pSurface_ != NULL)
+  {
+    if(VISIBLE_POINT(x, y))
+      setPixel_i(x, y);
+  }
 }
 
 //---------------------------------------------------------------------------
 void
-CSurface::setPixel(int x, int y)
+C2DRenderer::fill()
 {
-  if(VISIBLE_POINT(x, y))
-    setPixel_i(x, y);
+  if(pSurface_ != NULL)
+  {
+    fill_i();
+  }
 }
 
 //---------------------------------------------------------------------------
 void
-CSurface::setPixel_i(int x, int y)
+C2DRenderer::fillRect(int x, int y, unsigned int width, unsigned int height)
+{
+  if(pSurface_ != NULL)
+  {
+    if(VISIBLE_RECT(x, y, width, height))
+    {
+      CLIP_RECT(x, y, width, height);
+      fillRect_i(x, y, width, height);
+    }
+  }
+}
+
+//---------------------------------------------------------------------------
+void
+C2DRenderer::drawLine(int x1, int y1, int x2, int y2)
+{
+  if(pSurface_ != NULL)
+  {
+    // FIXME: Are we visible?
+    CLIP_POINT(x1, y1);
+    CLIP_POINT(x2, y2);
+
+    // order: Smallest x first
+    if(x1 <= x2)
+      drawLine_i(x1, y1, x2, y2);
+    else
+      drawLine_i(x2, y2, x1, y1);
+  }
+}
+
+//---------------------------------------------------------------------------
+void
+C2DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
+{
+  if(pSurface_ != NULL)
+  {
+    if(VISIBLE_RECT(x, y, width, height))
+    {
+      CLIP_RECT(x, y, width, height);
+      drawRect_i(x, y, width, height);
+    }
+  }
+}
+
+//---------------------------------------------------------------------------
+void
+C2DRenderer::setPixel_i(int x, int y)
 {
   SET_PIXEL(x, y, fmtColor_);
 }
 
 //---------------------------------------------------------------------------
 void
-CSurface::fill()
+C2DRenderer::fill_i()
 {
-  fillRect_i(0, 0, width_, height_);
+  fillRect_i(0, 0, pSurface_->width_, pSurface_->height_);
 }
 
 //---------------------------------------------------------------------------
 void
-CSurface::fillRect(int x, int y, unsigned int width, unsigned int height)
-{
-  if(VISIBLE_RECT(x, y, width, height))
-  {
-    CLIP_RECT(x, y, width, height);
-    fillRect_i(x, y, width, height);
-  }
-}
-
-//---------------------------------------------------------------------------
-void
-CSurface::fillRect_i(int x, int y, unsigned int width, unsigned int height)
+C2DRenderer::fillRect_i(int x, int y, unsigned int width, unsigned int height)
 {
   for(unsigned int iY(y); iY < (y + height); iY++)
   {
     for(unsigned int iX(x); iX < (x + width); iX++)
-      SET_PIXEL(iX, iY, fmtFillColor_);
+      SET_PIXEL(iX, iY, fmtColor_);
   }
 }
 
 //---------------------------------------------------------------------------
 void
-CSurface::drawLine(int x1, int y1, int x2, int y2)
-{
-  // FIXME: Are we visible?
-  CLIP_POINT(x1, y1);
-  CLIP_POINT(x2, y2);
-
-  // order: Smallest x first
-  if(x1 <= x2)
-    drawLine_i(x1, y1, x2, y2);
-  else
-    drawLine_i(x2, y2, x1, y1);
-}
-
-//---------------------------------------------------------------------------
-void
-CSurface::drawLine_i(int x1, int y1, int x2, int y2)
+C2DRenderer::drawLine_i(int x1, int y1, int x2, int y2)
 {
   float dx = (x2-x1);
   float dy = (y2-y1);
@@ -228,64 +296,12 @@ CSurface::drawLine_i(int x1, int y1, int x2, int y2)
 
 //---------------------------------------------------------------------------
 void
-CSurface::drawRect(int x, int y, unsigned int width, unsigned int height)
-{
-  if(VISIBLE_RECT(x, y, width, height))
-  {
-    CLIP_RECT(x, y, width, height);
-    drawRect_i(x, y, width, height);
-  }
-}
-
-//---------------------------------------------------------------------------
-void
-CSurface::drawRect_i(int x, int y, unsigned int width, unsigned int height)
+C2DRenderer::drawRect_i(int x, int y, unsigned int width, unsigned int height)
 {
   drawLine(x,         y,          x + width, y);
   drawLine(x + width, y + 1,      x + width, y + height - 1);
   drawLine(x,         y + height, x + width, y + height);
   drawLine(x,         y + 1,      x,         y + height - 1);
-}
-
-/*
-//---------------------------------------------------------------------------
-void
-CSurface::copy(int dstx, int dsty, const CSurface & src)
-{
-}
-
-//---------------------------------------------------------------------------
-void
-CSurface::copyRect(int srcx, int srcy, int dstx, int dsty, int width, int height)
-{
-}
-*/
-
-//---------------------------------------------------------------------------
-void
-CSurface::swap(bool sync)
-{
-  if(pBack != 0)
-  {
-    if(sync == true)
-      waitVSync();
-
-    memcpy(pFront, pBack, width_ * height_ * (bpp_ / 8));
-  }
-}
-
-//---------------------------------------------------------------------------
-void
-CSurface::waitHSync()
-{
-  // No HSync
-}
-
-//---------------------------------------------------------------------------
-void
-CSurface::waitVSync()
-{
-  // No VSync
 }
 
 //---------------------------------------------------------------------------
@@ -299,34 +315,6 @@ CAVideoDevice::CAVideoDevice()
 CAVideoDevice::~CAVideoDevice()
 {
   videoManager.removeDevice(this);
-}
-
-//---------------------------------------------------------------------------
-void
-CAVideoDevice::listModes(const SVideoMode ** modes, int * modeCount)
-{
-  *modes = 0;
-  *modeCount = 0;
-}
-
-//---------------------------------------------------------------------------
-void
-CAVideoDevice::getMode(SVideoMode ** mode)
-{
-  *mode = 0;
-}
-
-//---------------------------------------------------------------------------
-void
-CAVideoDevice::setMode(const SVideoMode * mode)
-{
-}
-
-//---------------------------------------------------------------------------
-void
-CAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble)
-{
-  *surface = 0;
 }
 
 //---------------------------------------------------------------------------

@@ -7,24 +7,15 @@
 
 
 //---------------------------------------------------------------------------
-class CGBASurface
- : public CSurface
+class CGBA2DRenderer
+ : public C2DRenderer
 {
 public:
-  CGBASurface();
-  virtual ~CGBASurface();
-
-  // Fill entire surface
-  virtual void     fill();
-
-  // Swap back buffer to front buffer, only if back buffer exists
-  virtual void     swap(bool sync = false);
-
-  // Wait for Vertical Synchronization
-  virtual void     waitVSync();
+  CGBA2DRenderer();
+  virtual ~CGBA2DRenderer();
 
 protected:
-  // Fill rect on surface
+  virtual void     fill_i();
   virtual void     fillRect_i(int x, int y, unsigned int width, unsigned int height);
 };
 
@@ -44,7 +35,8 @@ public:
   virtual void getMode(SVideoMode ** mode);
   virtual void setMode(const SVideoMode * mode);
 
-  virtual void getSurface(CSurface ** surface, ESurfaceType type, bool bDouble);
+  virtual void getSurface(CSurface ** surface, ESurfaceType type);
+  virtual void getRenderer(C2DRenderer ** renderer);
 
 private:
   const SVideoMode * pCurrentMode_;

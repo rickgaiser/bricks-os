@@ -23,36 +23,36 @@ static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-CGBASurface::CGBASurface()
- : CSurface()
+CGBA2DRenderer::CGBA2DRenderer()
+ : C2DRenderer()
 {
 }
 
 //---------------------------------------------------------------------------
-CGBASurface::~CGBASurface()
+CGBA2DRenderer::~CGBA2DRenderer()
 {
-}
-
-//---------------------------------------------------------------------------
-void
-CGBASurface::fill()
-{
-  dmaFill16(fmtFillColor_ | 0x8000, p, width_ * height_);
 }
 
 //---------------------------------------------------------------------------
 void
-CGBASurface::fillRect_i(int x, int y, unsigned int width, unsigned int height)
+CGBA2DRenderer::fill_i()
 {
-  unsigned int iBase(y * width_ + x);
+  dmaFill16(fmtColor_ | 0x8000, pSurface_->p, pSurface_->width_ * pSurface_->height_);
+}
+
+//---------------------------------------------------------------------------
+void
+CGBA2DRenderer::fillRect_i(int x, int y, unsigned int width, unsigned int height)
+{
+  unsigned int iBase(y * pSurface_->width_ + x);
 
   for(unsigned int iY(y); iY < (y + height); iY++)
   {
-    dmaFill16(fmtFillColor_ | 0x8000, &((uint16_t *)p)[iBase], width);
-    iBase += width_;
+    dmaFill16(fmtColor_ | 0x8000, &((uint16_t *)pSurface_->p)[iBase], width);
+    iBase += pSurface_->width_;
   }
 }
-
+/*
 //---------------------------------------------------------------------------
 void
 CGBASurface::swap(bool sync)
@@ -63,7 +63,7 @@ CGBASurface::swap(bool sync)
       waitVSync();
 
 #ifdef GBA
-    if((width_ == 240)/* && (bpp_ == 16)*/)
+    if((width_ == 240)) // && (bpp_ == 16))
     {
       // Copy
       dmaCopy(pBack, pFront, (width_*height_) << 1);
@@ -94,7 +94,7 @@ CGBASurface::waitVSync()
   bSwap = true;
   while(bSwap == true){}
 }
-
+*/
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CGBAVideoDevice::CGBAVideoDevice()
@@ -221,49 +221,38 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
 
 //---------------------------------------------------------------------------
 void
-CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble)
+CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
 {
   switch(type)
   {
     case stSCREEN:
     {
-      CSurface * pSurface = new CGBASurface;
+      CSurface * pSurface = new CSurface;
       pSurface->width_ = pCurrentMode_->width;
       pSurface->height_= pCurrentMode_->height;
       pSurface->bpp_   = pCurrentMode_->bpp;
       pSurface->format_= pCurrentMode_->format;
-      pSurface->pFront = (uint16_t *)0x6000000;
-      if(bDouble == true)
-      {
-        // Allocate back buffer
-#ifdef GBA
-        if(pCurrentMode_->width == 240)
-          pSurface->pBack  = new uint16_t[240*160];
-        else
-          pSurface->pBack  = (uint16_t *)0x600A000;
-#endif // GBA
-#ifdef NDS9
-        pSurface->pBack  = (uint16_t *)0x06020000;
-#endif // NDS9
-        // Draw to back buffer
-        pSurface->p      = pSurface->pBack;
-      }
-      else
-      {
-        pSurface->pBack  = 0;
-        pSurface->p      = pSurface->pFront;
-      }
+      pSurface->p      = (uint16_t *)0x6000000;
       *surface = pSurface;
       break;
     }
     case stOFFSCREEN:
     {
-      CSurface * pSurface = new CGBASurface;
+      CSurface * pSurface = new CSurface;
       pSurface->width_ = pCurrentMode_->width;
       pSurface->height_= pCurrentMode_->height;
       pSurface->bpp_   = pCurrentMode_->bpp;
       pSurface->format_= pCurrentMode_->format;
-      pSurface->p      = 0;
+      // Allocate back buffer
+#ifdef GBA
+      if(pCurrentMode_->width == 240)
+        pSurface->p      = new uint16_t[240*160];
+      else
+        pSurface->p      = (uint16_t *)0x600A000;
+#endif // GBA
+#ifdef NDS9
+      pSurface->p      = (uint16_t *)0x06020000;
+#endif // NDS9
       *surface = pSurface;
       break;
     }
@@ -272,4 +261,11 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type, bool bDouble
       *surface = 0;
     }
   };
+}
+
+//---------------------------------------------------------------------------
+void
+CGBAVideoDevice::getRenderer(C2DRenderer ** renderer)
+{
+  *renderer = new CGBA2DRenderer;
 }

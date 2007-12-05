@@ -117,56 +117,61 @@ public:
   // Geometry
   virtual uint32_t width();
   virtual uint32_t height();
+  virtual uint32_t bpp();
 
-  // Color
-  virtual void     setColor(uint8_t r, uint8_t g, uint8_t b);
-  virtual void     setFillColor(uint8_t r, uint8_t g, uint8_t b);
-
-  // Drawing
-  virtual void     setPixel(int x, int y);
-  virtual void     fill();
-  virtual void     fillRect(int x, int y, unsigned int width, unsigned int height);
-  virtual void     drawLine(int x1, int y1, int x2, int y2);
-  virtual void     drawRect(int x, int y, unsigned int width, unsigned int height);
-  // Copy another surface onto this surface
-//  void copy(int dstx, int dsty, const CSurface & src);
-  // Copy part of the surface to another part of the surface
-//  void copyRect(int srcx, int srcy, int dstx, int dsty, int width, int height);
-
-  // Swap back buffer to front buffer, only if back buffer exists
-  virtual void     swap(bool sync = false);
-
-  // Wait for Horizontal Synchronization
-  virtual void     waitHSync();
-  // Wait for Vertical Synchronization
-  virtual void     waitVSync();
-
-protected:
-  virtual void     setPixel_i(int x, int y);
-  virtual void     fillRect_i(int x, int y, unsigned int width, unsigned int height);
-  virtual void     drawLine_i(int x1, int y1, int x2, int y2);
-  virtual void     drawRect_i(int x, int y, unsigned int width, unsigned int height);
+  // Format
+  virtual EColorFormat format();
 
 //protected:
 public:
   // Data
   void * p;
-  void * pFront;
-  void * pBack;
 
   // Geometry
-  unsigned int width_;
-  unsigned int height_;
-  unsigned int bpp_;
-
-  // Colors
-  SColor color_;
-  SColor fillColor_;
+  uint32_t width_;
+  uint32_t height_;
+  uint32_t bpp_;
 
   // Surface format colors
   EColorFormat format_;
-  color_t fmtColor_;
-  color_t fmtFillColor_;
+};
+
+//---------------------------------------------------------------------------
+class C2DRenderer
+{
+public:
+  C2DRenderer(CSurface * surf = 0);
+  virtual ~C2DRenderer();
+
+  // Surfaces
+  virtual void       setSurface(CSurface * surf);
+  virtual CSurface * getSurface();
+
+  // Color
+  virtual void       setColor(uint8_t r, uint8_t g, uint8_t b);
+
+  // Drawing
+  virtual void       setPixel(int x, int y);
+  virtual void       fill();
+  virtual void       fillRect(int x, int y, unsigned int width, unsigned int height);
+  virtual void       drawLine(int x1, int y1, int x2, int y2);
+  virtual void       drawRect(int x, int y, unsigned int width, unsigned int height);
+
+protected:
+  // Drawing
+  virtual void       setPixel_i(int x, int y);
+  virtual void       fill_i();
+  virtual void       fillRect_i(int x, int y, unsigned int width, unsigned int height);
+  virtual void       drawLine_i(int x1, int y1, int x2, int y2);
+  virtual void       drawRect_i(int x, int y, unsigned int width, unsigned int height);
+
+protected:
+  // Surface we're currently rendering on
+  CSurface * pSurface_;
+
+  // Current drawing color
+  SColor color_;      // Color
+  color_t fmtColor_;  // Pre calculated surface format color
 };
 
 //---------------------------------------------------------------------------
@@ -176,11 +181,12 @@ public:
   CAVideoDevice();
   virtual ~CAVideoDevice();
 
-  virtual void listModes(const SVideoMode ** modes, int * modeCount);
-  virtual void getMode(SVideoMode ** mode);
-  virtual void setMode(const SVideoMode * mode);
+  virtual void listModes(const SVideoMode ** modes, int * modeCount) = 0;
+  virtual void getMode(SVideoMode ** mode) = 0;
+  virtual void setMode(const SVideoMode * mode) = 0;
 
-  virtual void getSurface(CSurface ** surface, ESurfaceType type, bool bDouble);
+  virtual void getSurface(CSurface ** surface, ESurfaceType type) = 0;
+  virtual void getRenderer(C2DRenderer ** renderer) = 0;
 };
 
 //---------------------------------------------------------------------------

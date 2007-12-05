@@ -34,56 +34,59 @@ color_t clPanelFill       (BxRGB(212, 208, 200));
 
 // -----------------------------------------------------------------------------
 void
-test2d(CSurface * surface)
+test2d(C2DRenderer * renderer, CSurface * surface)
 {
-/*
-  for(int i(0); i < 0x001f; i++)
+  if((renderer == NULL) || (surface == NULL))
+    return;
+
+  renderer->setSurface(surface);
+
+  // Full screen fill test
+  for(int i(0); i < 256; i++)
   {
-    // Fill entire screen with one color
-    surface->setFillColor(i);
-    surface->fill();
+    renderer->setColor(i, 0, 0);
+    renderer->fill();
 
     // Display progress bar
-    surface->setFillColor(clWhite);
-    surface->fillRect(2, surface->height() - 12, surface->width() - 4, 10);
-    surface->setFillColor(clBlack);
-    surface->fillRect(3, surface->height() - 10, ((surface->width() - 6) * i) / 0x001f, 6);
+    renderer->setColor(255, 255, 255);
+    renderer->fillRect(2, surface->height() - 12, surface->width() - 4, 10);
+    renderer->setColor(0, 0, 0);
+    renderer->fillRect(3, surface->height() - 10, ((surface->width() - 6) * i) / 0x001f, 6);
 
-    surface->waitVSync();
+    //renderer->waitVSync();
   }
-*/
 
   // Pixel test
-  surface->setFillColor(0, 0, 0);
-  surface->fill();
+  renderer->setColor(0, 0, 0);
+  renderer->fill();
   for(int i(0); i < 0x00FF; i++)
   {
-    surface->setColor(rand() % 255, rand() % 255, rand() % 255);
-    surface->setPixel(
+    renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
+    renderer->setPixel(
       rand() % surface->width(),
       rand() % surface->height());
 
-    surface->waitVSync();
+    //renderer->waitVSync();
   }
 
   // Line test
-  surface->setFillColor(0, 0, 0);
-  surface->fill();
+  renderer->setColor(0, 0, 0);
+  renderer->fill();
   for(int i(0); i < 0x00FF; i++)
   {
-    surface->setColor(rand() % 255, rand() % 255, rand() % 255);
-    surface->drawLine(
+    renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
+    renderer->drawLine(
       rand() % surface->width(),
       rand() % surface->height(),
       rand() % surface->width(),
       rand() % surface->height());
 
-    surface->waitVSync();
+    //renderer->waitVSync();
   }
 
   // Rect test
-  surface->setFillColor(0, 0, 0);
-  surface->fill();
+  renderer->setColor(0, 0, 0);
+  renderer->fill();
   for(int i(0); i < 0x00FF; i++)
   {
     int x1 = rand() % surface->width();
@@ -95,15 +98,15 @@ test2d(CSurface * surface)
     int w  = x1 < x2 ? (x2-x1) : (x1-x2);
     int h  = y1 < y2 ? (y2-y1) : (y1-y2);
 
-    surface->setColor(rand() % 255, rand() % 255, rand() % 255);
-    surface->drawRect(x, y, w, h);
+    renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
+    renderer->drawRect(x, y, w, h);
 
-    surface->waitVSync();
+    //renderer->waitVSync();
   }
 
   // Filled Rect test
-  surface->setFillColor(0, 0, 0);
-  surface->fill();
+  renderer->setColor(0, 0, 0);
+  renderer->fill();
   for(int i(0); i < 0x00FF; i++)
   {
     int x1 = rand() % surface->width();
@@ -115,10 +118,10 @@ test2d(CSurface * surface)
     int w  = x1 < x2 ? (x2-x1) : (x1-x2);
     int h  = y1 < y2 ? (y2-y1) : (y1-y2);
 
-    surface->setFillColor(rand() % 255, rand() % 255, rand() % 255);
-    surface->fillRect(x, y, w, h);
+    renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
+    renderer->fillRect(x, y, w, h);
 
-    surface->waitVSync();
+    //renderer->waitVSync();
   }
 }
 
@@ -141,12 +144,18 @@ appMain(int argc, char * argv[])
         for(int iMode(0); iMode < iModeCount; iMode++)
         {
           devices[iDev]->setMode(&modes[iMode]);
-          CSurface * pVideoSurface;
+          CSurface    * pVideoSurface;
+          C2DRenderer * pVideoRenderer;
 
           // Test 2d with a single buffered surface
-          devices[iDev]->getSurface(&pVideoSurface, stSCREEN, false);
-          test2d(pVideoSurface);
-          delete pVideoSurface;
+          devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
+          devices[iDev]->getRenderer(&pVideoRenderer);
+          test2d(pVideoRenderer, pVideoSurface);
+
+          if(pVideoRenderer != NULL)
+            delete pVideoRenderer;
+          if(pVideoSurface != NULL)
+            delete pVideoSurface;
         }
       }
       else
