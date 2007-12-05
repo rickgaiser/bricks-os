@@ -11,7 +11,7 @@
 
 
 //---------------------------------------------------------------------------
-struct ps2_vmode_t
+struct SPS2VideoMode
 {
   uint16_t width;
   uint16_t height;
@@ -28,61 +28,43 @@ class CPS2VideoDevice;
 //---------------------------------------------------------------------------
 class CPS2Surface
  : public CSurface
- , public IFileIO
 {
 public:
-  friend class CPS2VideoDevice;
-
   CPS2Surface();
   virtual ~CPS2Surface();
 
-  // Inherited from IFileIO
-  virtual ssize_t  write(const void * buffer, size_t size, loff_t * = 0);
+public:
+  uint16_t psm_;
+};
 
-  virtual void     setPixel(int x, int y);
-  virtual void     fill();
-  virtual void     fillRect(int x, int y, unsigned int width, unsigned int height);
-  virtual void     drawLine(int x1, int y1, int x2, int y2);
-  virtual void     drawRect(int x, int y, unsigned int width, unsigned int height);
+//---------------------------------------------------------------------------
+class CPS22DRenderer
+ : public I2DRenderer
+{
+public:
+  CPS22DRenderer(CSurface * surf = 0);
+  virtual ~CPS22DRenderer();
 
-  // Swap back buffer to front buffer, only if back buffer exists
-  virtual void     swap(bool sync = false);
+  // Surfaces
+  virtual void       setSurface(CSurface * surf);
+  virtual CSurface * getSurface();
 
-  // Wait for Horizontal Synchronization
-  virtual void     waitHSync();
-  // Wait for Vertical Synchronization
-  virtual void     waitVSync();
+  // Color
+  virtual void       setColor(uint8_t r, uint8_t g, uint8_t b);
+
+  // Drawing
+  virtual void       setPixel(int x, int y);
+  virtual void       fill();
+  virtual void       fillRect(int x, int y, unsigned int width, unsigned int height);
+  virtual void       drawLine(int x1, int y1, int x2, int y2);
+  virtual void       drawRect(int x, int y, unsigned int width, unsigned int height);
 
 private:
-  void setMode(ps2_vmode_t * mode, bool bDouble);
+  // Surface we're currently rendering on
+  CPS2Surface * pSurface_;
 
-  void g2_put_image(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t *data);
-  void g2_set_visible_frame(uint8_t frame);
-  void g2_set_active_frame(uint8_t frame);
-  void g2_set_active_field(uint8_t field);
-  uint8_t g2_get_visible_field(void);
-  uint8_t g2_get_active_field(void);
-
-  void g2_set_font(uint32_t *data, uint16_t w, uint16_t h, uint16_t *tc);
-  void g2_out_text(uint16_t x, uint16_t y, char *str);
-  void g2_set_font_spacing(uint16_t s);
-  uint16_t g2_get_font_spacing(void);
-  void g2_set_font_mag(uint16_t m);
-  uint16_t g2_get_font_mag(void);
-  void g2_set_font_color(uint8_t red, uint8_t green, uint8_t blue);
-
-  ps2_vmode_t * pCurrentPS2Mode_;
-
-  uint32_t frameAddr_[2];
-  uint8_t  iVisibleFrame_;
-  uint8_t  iActiveFrame_;
-  bool     bInterlaced_;
-  bool     bDouble_;
-  
-  // Text
-  unsigned int iCurrentX_;
-  unsigned int iCurrentY_;
-  char pBuffer_[TEXT_HEIGHT][TEXT_WIDTH];
+  // Current drawing color
+  SColor color_;
 };
 
 //---------------------------------------------------------------------------
@@ -97,10 +79,12 @@ public:
   virtual void getMode(SVideoMode ** mode);
   virtual void setMode(const SVideoMode * mode);
 
-  virtual void getSurface(CSurface ** surface, ESurfaceType type, bool bDouble);
+  virtual void getSurface(CSurface ** surface, ESurfaceType type);
+  virtual void getRenderer(I2DRenderer ** renderer);
 
 private:
-  const SVideoMode * pCurrentMode_;
+  const SVideoMode    * pCurrentMode_;
+  const SPS2VideoMode * pCurrentPS2Mode_;
 };
 
 
