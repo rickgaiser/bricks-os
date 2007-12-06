@@ -15,13 +15,13 @@ CEGLDisplay * display = pDisplay; \
 #define EGL_IF_ERROR(COND, ERRORCODE, RETVAL) \
 if(COND)                                      \
 {                                             \
-  iError = ERRORCODE;                         \
+  eglSetError(ERRORCODE);                     \
   return RETVAL;                              \
 }
 
 #define EGL_RETURN(ERRORCODE, RETVAL) \
 {                                     \
-  iError = ERRORCODE;                 \
+  eglSetError(ERRORCODE);             \
   return RETVAL;                      \
 }
 
@@ -44,10 +44,14 @@ class CEGLSurface
  : public CRefCount
 {
 public:
-  CEGLSurface() : CRefCount(){}
+  CEGLSurface()
+   : CRefCount()
+   , pNativeSurface_(NULL)
+   , type_(){}
   virtual ~CEGLSurface(){}
 
   CSurface * pNativeSurface_;
+  int        type_;
 };
 
 //-----------------------------------------------------------------------------
@@ -76,19 +80,34 @@ public:
 class CEGLThread
 {
 public:
-  CEGLThread() : pContext_(NULL), pSurface_(NULL){}
+  CEGLThread()
+   : pContext_(NULL)
+   , pSurface_(NULL)
+   , api_(EGL_OPENGL_ES_API)
+   , iError_(EGL_SUCCESS){}
   virtual ~CEGLThread(){}
 
-  CEGLContext * pContext_;
-  CEGLSurface * pSurface_;
-  EGLenum       api_;
+  CEGLContext * pContext_;  // Current API context
+  CEGLSurface * pSurface_;  // Current surface API is drawing on
+  EGLenum       api_;       // Used API
+  EGLint        iError_;
 };
 
 
+//-----------------------------------------------------------------------------
 CEGLDisplay * pDisplay = NULL;
 CEGLThread    cThread;
-EGLint        iError(EGL_SUCCESS);
 
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+EGLAPI void
+EGLAPIENTRY eglSetError(EGLint error)
+{
+  EGL_GET_THREAD();
+
+  thread->iError_ = error;
+}
 
 //-----------------------------------------------------------------------------
 // EGL API
@@ -96,7 +115,9 @@ EGLint        iError(EGL_SUCCESS);
 EGLAPI EGLint
 EGLAPIENTRY eglGetError(void)
 {
-  return iError;
+  EGL_GET_THREAD();
+
+  return thread->iError_;
 }
 
 //-----------------------------------------------------------------------------
@@ -251,7 +272,7 @@ EGLAPIENTRY eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 
   // Remove reference
   if(((CEGLSurface *)surface)->removeReference() == 0)
-    delete ((CEGLSurface *)surface);
+    delete (CEGLSurface *)surface;
 
   display->pSurface_ = NULL;
 
@@ -270,28 +291,40 @@ EGLAPIENTRY eglBindAPI(EGLenum api)
 {
   EGL_GET_THREAD();
 
-  if(api == EGL_OPENGL_ES_API)
+  switch(api)
   {
-    thread->api_ = api;
-    EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
-  }
-  else
-  {
-    EGL_RETURN(EGL_BAD_PARAMETER, EGL_FALSE);
-  }
+    case EGL_OPENGL_ES_API:
+    {
+      thread->api_ = api;
+      EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
+    }
+    default:
+    {
+      EGL_RETURN(EGL_BAD_PARAMETER, EGL_FALSE);
+    }
+  };
 }
 
 //-----------------------------------------------------------------------------
-//EGLAPI EGLenum
-//EGLAPIENTRY eglQueryAPI(void)
-//{
-//}
+EGLAPI EGLenum
+EGLAPIENTRY eglQueryAPI(void)
+{
+  EGL_GET_THREAD();
+
+  return thread->api_;
+}
 
 //-----------------------------------------------------------------------------
-//EGLAPI EGLBoolean
-//EGLAPIENTRY eglWaitClient(void)
-//{
-//}
+EGLAPI EGLBoolean
+EGLAPIENTRY eglWaitClient(void)
+{
+  EGL_GET_THREAD();
+
+  if(thread->api_ == EGL_OPENGL_ES_API)
+    thread->pContext_->pGLESContext_->glFinish();
+
+  EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
+}
 
 //-----------------------------------------------------------------------------
 //EGLAPI EGLBoolean
@@ -333,18 +366,31 @@ EGLAPIENTRY eglBindAPI(EGLenum api)
 EGLAPI EGLContext
 EGLAPIENTRY eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint * attrib_list)
 {
-  CEGLContext * pNewContext  = new CEGLContext;
-  pNewContext->pGLESContext_ = getGLESContext();
+  EGL_GET_THREAD();
 
-  EGL_RETURN(EGL_SUCCESS, (EGLContext)pNewContext);
+  switch(thread->api_)
+  {
+    case EGL_OPENGL_ES_API:
+    {
+      CEGLContext * pNewContext  = new CEGLContext;
+      pNewContext->pGLESContext_ = getGLESContext();
+      EGL_RETURN(EGL_SUCCESS, (EGLContext)pNewContext);
+    }
+    default:
+    {
+      EGL_RETURN(EGL_BAD_PARAMETER, EGL_NO_CONTEXT);
+    }
+  };
 }
 
 //-----------------------------------------------------------------------------
 EGLAPI EGLBoolean
 EGLAPIENTRY eglDestroyContext(EGLDisplay dpy, EGLContext ctx)
 {
-  delete ((CEGLContext *)ctx)->pGLESContext_;
-  delete ((CEGLContext *)ctx);
+  if(((CEGLContext *)ctx)->pGLESContext_)
+    delete ((CEGLContext *)ctx)->pGLESContext_;
+  if((CEGLContext *)ctx)
+    delete (CEGLContext *)ctx;
 
   EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
 }
@@ -355,15 +401,36 @@ EGLAPIENTRY eglMakeCurrent(EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGL
 {
   EGL_GET_THREAD();
 
-  thread->pContext_ = (CEGLContext *)ctx;
-  thread->pSurface_ = (CEGLSurface *)draw;
-
-  if((thread->pContext_ != NULL) &&
-     (thread->pContext_->pGLESContext_ != NULL) &&
-     (thread->pSurface_ != NULL) &&
-     (thread->pSurface_->pNativeSurface_ != NULL))
+  // Remove old context (if any)
+  if((thread->pContext_ != NULL) && (thread->pContext_->removeReference() == 0))
   {
-    thread->pContext_->pGLESContext_->setSurface(thread->pSurface_->pNativeSurface_);
+    delete thread->pContext_;
+    thread->pContext_ = NULL;
+  }
+  // Remove old surface (if any)
+  if((thread->pSurface_ != NULL) && (thread->pSurface_->removeReference() == 0))
+  {
+    delete thread->pSurface_;
+    thread->pSurface_ = NULL;
+  }
+
+  // Set new context and suface (if both exist)
+  if((ctx != NULL) && (draw != NULL))
+  {
+    // Set new context
+    thread->pContext_ = (CEGLContext *)ctx;
+    thread->pContext_->addReference();
+
+    // Set new surface
+    thread->pSurface_ = (CEGLSurface *)draw;
+    thread->pSurface_->addReference();
+
+    // Bind the surface to the renderer
+    if((thread->pContext_->pGLESContext_ != NULL) &&
+       (thread->pSurface_->pNativeSurface_ != NULL))
+    {
+      thread->pContext_->pGLESContext_->setSurface(thread->pSurface_->pNativeSurface_);
+    }
   }
 
   EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
@@ -418,6 +485,18 @@ EGLAPIENTRY eglGetCurrentDisplay(void)
 EGLAPI EGLBoolean
 EGLAPIENTRY eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 {
+  EGL_GET_DISPLAY(dpy);
+  EGL_IF_ERROR(!display, EGL_NOT_INITIALIZED, EGL_FALSE);
+  EGL_IF_ERROR(dpy != EGL_DEFAULT_DISPLAY, EGL_BAD_DISPLAY, EGL_FALSE);
+//  EGL_IF_ERROR(!eglSurfaceExists(display, surface), EGL_BAD_SURFACE, EGL_FALSE);
+
+  // Swap buffers only when double buffered (EGL_BACK_BUFFER)
+  if(((CEGLSurface *)surface)->type_ == EGL_BACK_BUFFER)
+  {
+    // FIXME: Swap buffer
+  }
+
+
   EGL_RETURN(EGL_SUCCESS, EGL_TRUE);
 }
 
