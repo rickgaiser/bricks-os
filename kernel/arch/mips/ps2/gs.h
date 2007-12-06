@@ -436,10 +436,10 @@
 extern "C" {
 #endif
 
-extern void gs_load_texture(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t data_adr, uint32_t dest_adr, uint16_t dest_w);
-extern uint16_t gs_texture_wh(uint16_t n);
-extern uint8_t gs_is_ntsc(void);
-extern uint8_t gs_is_pal(void);
+
+void       gs_load_texture(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t data_adr, uint32_t dest_adr, uint16_t dest_w);
+uint16_t   gs_texture_wh(uint16_t n);
+
 
 #ifdef __cplusplus
 }

@@ -4,10 +4,12 @@
 
 #include "kernel/videoManager.h"
 #include "kernel/fs.h"
+#include "gif.h"
 
 
-#define TEXT_WIDTH 45
-#define TEXT_HEIGHT 17
+//---------------------------------------------------------------------------
+#define GS_X_BASE 1024
+#define GS_Y_BASE 1024
 
 
 //---------------------------------------------------------------------------
@@ -23,8 +25,6 @@ struct SPS2VideoMode
   uint64_t display;
 };
 
-
-class CPS2VideoDevice;
 //---------------------------------------------------------------------------
 class CPS2Surface
  : public CSurface
@@ -49,6 +49,9 @@ public:
   virtual void       setSurface(CSurface * surf);
   virtual CSurface * getSurface();
 
+  // Flush operations to surface
+  virtual void       flush();
+
   // Color
   virtual void       setColor(uint8_t r, uint8_t g, uint8_t b);
 
@@ -65,6 +68,10 @@ private:
 
   // Current drawing color
   SColor color_;
+
+  // Data for DMA transfer to GS
+  DECLARE_GS_PACKET(GsCmdBuffer,50);
+  bool bDataWaiting_;
 };
 
 //---------------------------------------------------------------------------
@@ -85,6 +92,7 @@ public:
 private:
   const SVideoMode    * pCurrentMode_;
   const SPS2VideoMode * pCurrentPS2Mode_;
+  DECLARE_GS_PACKET(GsCmdBuffer,50);
 };
 
 

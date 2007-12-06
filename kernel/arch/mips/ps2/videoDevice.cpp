@@ -2,9 +2,14 @@
 #include "bios.h"
 #include "dma.h"
 #include "gs.h"
-#include "gif.h"
 #include "string.h"
 
+
+//---------------------------------------------------------------------------
+#define IS_NTSC() \
+(*((char *)0x1FC80000 - 0xAE) != 'E')
+#define IS_PAL() \
+(*((char *)0x1FC80000 - 0xAE) == 'E')
 
 //---------------------------------------------------------------------------
 SPS2VideoMode vmodes[] =
@@ -134,9 +139,6 @@ static const SVideoMode videoModes[] =
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
 uint32_t   gs_mem_current;
-uint16_t   gs_origin_x;
-uint16_t   gs_origin_y;
-DECLARE_GS_PACKET(gs_dma_buf,50);
 
 
 //---------------------------------------------------------------------------
@@ -155,20 +157,16 @@ CPS2Surface::~CPS2Surface()
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CPS22DRenderer::CPS22DRenderer(CSurface * surf)
+ : bDataWaiting_(false)
 {
+  INIT_GS_PACKET(GsCmdBuffer,50);
+
+  // Create new packet
+  BEGIN_GS_PACKET(GsCmdBuffer);
+  GIF_TAG_AD(GsCmdBuffer, 1, 0, 0, 0);
+
   pSurface_ = dynamic_cast<CPS2Surface *>(surf);
-
-  if(pSurface_ != NULL)
-  {
-    // Set visible frame
-    REG_GS_DISPFB1  = GS_SET_DISPFB((uint32_t)pSurface_->p >> 13, pSurface_->width_ >> 6, pSurface_->psm_, 0, 0);
-
-    // Set active frame
-    BEGIN_GS_PACKET(gs_dma_buf);
-    GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-    GIF_DATA_AD(gs_dma_buf, frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->width_ >> 6, pSurface_->psm_, 0));
-    SEND_GS_PACKET(gs_dma_buf);
-  }
+  setSurface(surf);
 }
 
 //---------------------------------------------------------------------------
@@ -188,10 +186,8 @@ CPS22DRenderer::setSurface(CSurface * surf)
     REG_GS_DISPFB1  = GS_SET_DISPFB((uint32_t)pSurface_->p >> 13, pSurface_->width_ >> 6, pSurface_->psm_, 0, 0);
 
     // Set active frame
-    BEGIN_GS_PACKET(gs_dma_buf);
-    GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-    GIF_DATA_AD(gs_dma_buf, frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->width_ >> 6, pSurface_->psm_, 0));
-    SEND_GS_PACKET(gs_dma_buf);
+    GIF_DATA_AD(GsCmdBuffer, frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->width_ >> 6, pSurface_->psm_, 0));
+    bDataWaiting_ = true;
   }
 }
 
@@ -200,6 +196,25 @@ CSurface *
 CPS22DRenderer::getSurface()
 {
   return pSurface_;
+}
+
+//---------------------------------------------------------------------------
+void
+CPS22DRenderer::flush()
+{
+  if(bDataWaiting_ == true)
+  {
+    // FIXME: Dirty VSync
+    REG_GS_CSR = REG_GS_CSR & 8;
+    while(!(REG_GS_CSR & 8));
+
+    // Send packet to GS
+    SEND_GS_PACKET(GsCmdBuffer);
+
+    // Create new packet
+    BEGIN_GS_PACKET(GsCmdBuffer);
+    GIF_TAG_AD(GsCmdBuffer, 1, 0, 0, 0);
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -216,17 +231,13 @@ CPS22DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
 void
 CPS22DRenderer::setPixel(int x, int y)
 {
-  x += gs_origin_x;
-  y += gs_origin_y;
+  x += GS_X_BASE;
+  y += GS_Y_BASE;
 
-  BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-
-  GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x<<4, y<<4, 0));
-
-  SEND_GS_PACKET(gs_dma_buf);
+  GIF_DATA_AD(GsCmdBuffer, prim, GS_PRIM(PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
+  GIF_DATA_AD(GsCmdBuffer, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  bDataWaiting_ = true;
 }
 
 //---------------------------------------------------------------------------
@@ -240,59 +251,47 @@ CPS22DRenderer::fill()
 void
 CPS22DRenderer::fillRect(int x, int y, unsigned int width, unsigned int height)
 {
-  x += gs_origin_x;
-  y += gs_origin_y;
+  x += GS_X_BASE;
+  y += GS_Y_BASE;
 
-  BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-
-  GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x<<4, y<<4, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2((x+width+1)<<4, (y+height+1)<<4, 0));
-
-  SEND_GS_PACKET(gs_dma_buf);
+  GIF_DATA_AD(GsCmdBuffer, prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+  GIF_DATA_AD(GsCmdBuffer, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2((x+width+1)<<4, (y+height+1)<<4, 0));
+  bDataWaiting_ = true;
 }
 
 //---------------------------------------------------------------------------
 void
 CPS22DRenderer::drawLine(int x1, int y1, int x2, int y2)
 {
-  x1 += gs_origin_x;
-  y1 += gs_origin_y;
-  x2 += gs_origin_x;
-  y2 += gs_origin_y;
+  x1 += GS_X_BASE;
+  y1 += GS_Y_BASE;
+  x2 += GS_X_BASE;
+  y2 += GS_Y_BASE;
 
-  BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-
-  GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x1<<4, y1<<4, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x2<<4, y2<<4, 0));
-
-  SEND_GS_PACKET(gs_dma_buf);
+  GIF_DATA_AD(GsCmdBuffer, prim, GS_PRIM(PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
+  GIF_DATA_AD(GsCmdBuffer, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2(x1<<4, y1<<4, 0));
+  GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2(x2<<4, y2<<4, 0));
+  bDataWaiting_ = true;
 }
 
 //---------------------------------------------------------------------------
 void
 CPS22DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
 {
-  x += gs_origin_x;
-  y += gs_origin_y;
+  x += GS_X_BASE;
+  y += GS_Y_BASE;
 
-  BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-
-  GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x<<4, y<<4, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x+width<<4, y<<4, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x+width<<4, y+height<<4, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x<<4, y+height<<4, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x<<4, y<<4, 0));
-
-  SEND_GS_PACKET(gs_dma_buf);
+  GIF_DATA_AD(GsCmdBuffer, prim, GS_PRIM(PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
+  GIF_DATA_AD(GsCmdBuffer, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2(x+width<<4, y<<4, 0));
+  GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2(x+width<<4, y+height<<4, 0));
+  GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2(x<<4, y+height<<4, 0));
+  GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  bDataWaiting_ = true;
 }
 
 //---------------------------------------------------------------------------
@@ -302,6 +301,7 @@ CPS2VideoDevice::CPS2VideoDevice()
  , pCurrentMode_(NULL)
  , pCurrentPS2Mode_(NULL)
 {
+  INIT_GS_PACKET(GsCmdBuffer,50);
 }
 
 //---------------------------------------------------------------------------
@@ -324,6 +324,7 @@ CPS2VideoDevice::getMode(SVideoMode ** mode)
 }
 
 //---------------------------------------------------------------------------
+// Originally from Tony Saveski
 void
 CPS2VideoDevice::setMode(const SVideoMode * mode)
 {
@@ -342,9 +343,6 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
 
   if(pCurrentPS2Mode_ == NULL)
     return;
-
-  gs_origin_x = 1024;
-  gs_origin_y = 1024;
 
   // - Initialize the DMA.
   // - Writes a 0 to most of the DMA registers.
@@ -387,18 +385,19 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
   REG_GS_DISPLAY1 = pCurrentPS2Mode_->display;
   //REG_GS_DISPLAY2 = pCurrentPS2Mode_->display;
 
-  BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-  // Use drawing parameters from PRIM register
-  GIF_DATA_AD(gs_dma_buf, prmodecont, 1);
-  // Setup frame buffers. Point to 0 initially.
-  GIF_DATA_AD(gs_dma_buf, frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
-  // Displacement between Primitive and Window coordinate systems.
-  GIF_DATA_AD(gs_dma_buf, xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
-  // Clip to frame buffer.
-  GIF_DATA_AD(gs_dma_buf, scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
+  BEGIN_GS_PACKET(GsCmdBuffer);
+  GIF_TAG_AD(GsCmdBuffer, 1, 0, 0, 0);
 
-  SEND_GS_PACKET(gs_dma_buf);
+  // Use drawing parameters from PRIM register
+  GIF_DATA_AD(GsCmdBuffer, prmodecont, 1);
+  // Setup frame buffers. Point to 0 initially.
+  GIF_DATA_AD(GsCmdBuffer, frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+  // Displacement between Primitive and Window coordinate systems.
+  GIF_DATA_AD(GsCmdBuffer, xyoffset_1, GS_XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
+  // Clip to frame buffer.
+  GIF_DATA_AD(GsCmdBuffer, scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
+
+  SEND_GS_PACKET(GsCmdBuffer);
 }
 
 //---------------------------------------------------------------------------

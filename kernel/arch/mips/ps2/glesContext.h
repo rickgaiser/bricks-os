@@ -5,6 +5,7 @@
 #include "../../../../gl/softGLF.h"
 #include "../../../../gl/matrix.h"
 #include "textures.h"
+#include "gif.h"
 
 
 //-----------------------------------------------------------------------------
@@ -85,6 +86,8 @@ private:
   uint16_t    ps2DepthFunction_;
   bool        ps2DepthInvert_;
   uint32_t    ps2ZMax_;
+
+  DECLARE_GS_PACKET(GsCmdBuffer,1000);
 };
 
 

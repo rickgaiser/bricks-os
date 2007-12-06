@@ -24,7 +24,10 @@
   uint64_t NAME##_nloop; \
   uint64_t NAME##_cur; \
   uint64_t NAME##_dma_size; \
-  uint64_t NAME##_max_items=ITEMS
+  uint64_t NAME##_max_items
+
+#define INIT_GS_PACKET(NAME,ITEMS) \
+  NAME##_max_items=ITEMS
 
 #define DECLARE_EXTERN_GS_PACKET(NAME) \
   extern uint64_t __attribute__((aligned(64))) NAME[]; \
