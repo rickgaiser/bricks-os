@@ -70,7 +70,6 @@ private:
   SColor color_;
 
   // Data for DMA transfer to GS
-  DECLARE_GS_PACKET(GsCmdBuffer,50);
   bool bDataWaiting_;
 };
 
@@ -98,7 +97,6 @@ private:
 
   const SVideoMode    * pCurrentMode_;
   const SPS2VideoMode * pCurrentPS2Mode_;
-  DECLARE_GS_PACKET(GsCmdBuffer,50);
 };
 
 

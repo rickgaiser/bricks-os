@@ -101,6 +101,7 @@ appMain(int argc, char * argv[])
 
           // Test 3d with a double buffered surface
           devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
+          devices[iDev]->displaySurface(pVideoSurface);
           eglInit(pVideoSurface);
 #ifdef CONFIG_FPU
           // Test floating point interface

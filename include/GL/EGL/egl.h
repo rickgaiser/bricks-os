@@ -41,7 +41,7 @@ typedef void *EGLClientBuffer;
 #define EGL_TRUE			1
 
 /* Out-of-band handle values */
-#define EGL_DEFAULT_DISPLAY		((void *)0)
+#define EGL_DEFAULT_DISPLAY		((void *)1)
 #define EGL_NO_CONTEXT			((EGLContext)0)
 #define EGL_NO_DISPLAY			((EGLDisplay)0)
 #define EGL_NO_SURFACE			((EGLSurface)0)

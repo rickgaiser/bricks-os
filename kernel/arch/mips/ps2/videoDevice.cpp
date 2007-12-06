@@ -139,6 +139,7 @@ static const SVideoMode videoModes[] =
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
 uint32_t   gs_mem_current;
+DECLARE_GS_PACKET(GsCmdBuffer,50);
 
 
 //---------------------------------------------------------------------------
@@ -200,6 +201,10 @@ CPS22DRenderer::flush()
 {
   if(bDataWaiting_ == true)
   {
+    // FIXME: shouldn't be here
+    REG_GS_CSR = REG_GS_CSR & 8;
+    while(!(REG_GS_CSR & 8));
+
     // Send packet to GS
     SEND_GS_PACKET(GsCmdBuffer);
 
@@ -447,8 +452,8 @@ CPS2VideoDevice::displaySurface(CSurface * surface)
     while(!(REG_GS_CSR & 8));
   }
 
-  // Set new surface if it changed
-  if((pNewSurface != NULL) && (pNewSurface != pSurface_))
+  // Set new surface
+  if(pNewSurface != NULL)
   {
     pSurface_ = pNewSurface;
 

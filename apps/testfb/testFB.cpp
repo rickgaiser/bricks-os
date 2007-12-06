@@ -42,16 +42,17 @@ test2d(I2DRenderer * renderer, CSurface * surface)
   renderer->setSurface(surface);
 
   // Full screen fill test
-  for(int i(0); i < 256; i++)
+  int loops = 256*5;
+  for(int i(0); i < loops; i++)
   {
-    renderer->setColor(i, 0, 0);
+    renderer->setColor(i%255, 0, 0);
     renderer->fill();
 
     // Display progress bar
     renderer->setColor(255, 255, 255);
-    renderer->fillRect(2, surface->height() - 12, surface->width() - 4, 10);
+    renderer->fillRect(surface->width() / 4 + 0, surface->height() / 2 + 0,   surface->width() / 2,                   10 - 0);
     renderer->setColor(0, 0, 0);
-    renderer->fillRect(3, surface->height() - 10, ((surface->width() - 6) * i) / 0x001f, 6);
+    renderer->fillRect(surface->width() / 4 + 2, surface->height() / 2 + 2, ((surface->width() / 2 - 4) * i) / loops, 10 - 4);
 
     //renderer->waitVSync();
     renderer->flush();
@@ -60,7 +61,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
   // Pixel test
   renderer->setColor(0, 0, 0);
   renderer->fill();
-  for(int i(0); i < 0x00FF; i++)
+  for(int i(0); i < loops; i++)
   {
     renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
     renderer->setPixel(
@@ -74,7 +75,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
   // Line test
   renderer->setColor(0, 0, 0);
   renderer->fill();
-  for(int i(0); i < 0x00FF; i++)
+  for(int i(0); i < loops; i++)
   {
     renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
     renderer->drawLine(
@@ -90,7 +91,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
   // Rect test
   renderer->setColor(0, 0, 0);
   renderer->fill();
-  for(int i(0); i < 0x00FF; i++)
+  for(int i(0); i < loops; i++)
   {
     int x1 = rand() % surface->width();
     int y1 = rand() % surface->height();
@@ -111,7 +112,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
   // Filled Rect test
   renderer->setColor(0, 0, 0);
   renderer->fill();
-  for(int i(0); i < 0x00FF; i++)
+  for(int i(0); i < loops; i++)
   {
     int x1 = rand() % surface->width();
     int y1 = rand() % surface->height();
@@ -154,6 +155,7 @@ appMain(int argc, char * argv[])
 
           // Test 2d with a single buffered surface
           devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
+          devices[iDev]->displaySurface(pVideoSurface);
           devices[iDev]->getRenderer(&pVideoRenderer);
           test2d(pVideoRenderer, pVideoSurface);
 
