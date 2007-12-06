@@ -54,6 +54,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
     renderer->fillRect(3, surface->height() - 10, ((surface->width() - 6) * i) / 0x001f, 6);
 
     //renderer->waitVSync();
+    renderer->flush();
   }
 
   // Pixel test
@@ -67,6 +68,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
       rand() % surface->height());
 
     //renderer->waitVSync();
+    renderer->flush();
   }
 
   // Line test
@@ -82,6 +84,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
       rand() % surface->height());
 
     //renderer->waitVSync();
+    renderer->flush();
   }
 
   // Rect test
@@ -102,6 +105,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
     renderer->drawRect(x, y, w, h);
 
     //renderer->waitVSync();
+    renderer->flush();
   }
 
   // Filled Rect test
@@ -122,6 +126,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
     renderer->fillRect(x, y, w, h);
 
     //renderer->waitVSync();
+    renderer->flush();
   }
 }
 

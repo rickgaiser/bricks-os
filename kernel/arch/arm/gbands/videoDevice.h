@@ -38,7 +38,15 @@ public:
   virtual void getSurface(CSurface ** surface, ESurfaceType type);
   virtual void getRenderer(I2DRenderer ** renderer);
 
+  virtual void waitVSync();
+  virtual void displaySurface(CSurface * surface);
+
 private:
+  // Surface we're currently displaying
+  CSurface * pSurface_;
+
+  volatile bool bSwap_;
+
   const SVideoMode * pCurrentMode_;
 };
 

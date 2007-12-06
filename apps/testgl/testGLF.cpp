@@ -2,7 +2,11 @@
 #include "GLES/gl_extra.h"
 #include "GL/glu.h"
 #include "kernel/videoManager.h"
+#include "EGL/egl.h"
 
+
+extern EGLDisplay egldisplay;
+extern EGLSurface eglsurface;
 
 extern void initPyramidF();
 extern void drawPyramidF();
@@ -84,12 +88,6 @@ testGLF(CSurface * surface)
 
     glFlush();
 
-    // Display progress bar
-    //surface->setFillColor(255, 255, 255);
-    //surface->fillRect(1, surface->height() - 12, surface->width() - 2, 10);
-    //surface->setFillColor(0, 0, 0);
-    //surface->fillRect(3, surface->height() - 10, ((surface->width() - 6) * static_cast<int>(yrot)) / 360, 6);
-
-    surface->swap(true);
+    eglSwapBuffers(egldisplay, eglsurface);
   }
 }

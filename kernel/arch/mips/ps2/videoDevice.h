@@ -89,7 +89,13 @@ public:
   virtual void getSurface(CSurface ** surface, ESurfaceType type);
   virtual void getRenderer(I2DRenderer ** renderer);
 
+  virtual void waitVSync();
+  virtual void displaySurface(CSurface * surface);
+
 private:
+  // Surface we're currently displaying
+  CPS2Surface * pSurface_;
+
   const SVideoMode    * pCurrentMode_;
   const SPS2VideoMode * pCurrentPS2Mode_;
   DECLARE_GS_PACKET(GsCmdBuffer,50);

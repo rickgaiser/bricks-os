@@ -2,9 +2,8 @@
 #include "asm/arch/registers.h"
 #include "asm/arch/macros.h"
 #include "kernel/debug.h"
+#include "stddef.h"
 
-
-volatile bool bSwap(false);
 
 static const SVideoMode videoModes[] =
 {
@@ -52,53 +51,14 @@ CGBA2DRenderer::fillRect_i(int x, int y, unsigned int width, unsigned int height
     iBase += pSurface_->width_;
   }
 }
-/*
-//---------------------------------------------------------------------------
-void
-CGBASurface::swap(bool sync)
-{
-  if(pBack != 0)
-  {
-    if(sync == true)
-      waitVSync();
 
-#ifdef GBA
-    if((width_ == 240)) // && (bpp_ == 16))
-    {
-      // Copy
-      dmaCopy(pBack, pFront, (width_*height_) << 1);
-    }
-    else
-    {
-      // Swap
-      REG_DISPCNT ^= 0x0010;
-#endif // GBA
-#ifdef NDS9
-      REG_BG3CNT ^= 0x0800;
-#endif // NDS9
-      p = pFront;
-      pFront = pBack;
-      pBack = p;
-#ifdef GBA
-    }
-#endif // GBA
-  }
-}
-
-//---------------------------------------------------------------------------
-void
-CGBASurface::waitVSync()
-{
-  // Wait for VSync interrupt
-  // FIXME: Busy waiting!
-  bSwap = true;
-  while(bSwap == true){}
-}
-*/
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CGBAVideoDevice::CGBAVideoDevice()
  : CAVideoDevice()
+ , pSurface_(NULL)
+ , bSwap_(false)
+ , pCurrentMode_(NULL)
 {
   CInterruptManager::attach(0, this);
 }
@@ -113,8 +73,8 @@ int
 CGBAVideoDevice::isr(int irq)
 {
   // Notify swap function that we have vertical sync
-  if(bSwap == true)
-    bSwap = false;
+  if(bSwap_ == true)
+    bSwap_ = false;
 
   return 0;
 }
@@ -268,4 +228,37 @@ void
 CGBAVideoDevice::getRenderer(I2DRenderer ** renderer)
 {
   *renderer = new CGBA2DRenderer;
+}
+
+//---------------------------------------------------------------------------
+void
+CGBAVideoDevice::waitVSync()
+{
+  bSwap_ = true;
+  while(bSwap_ == true){}
+}
+
+//---------------------------------------------------------------------------
+void
+CGBAVideoDevice::displaySurface(CSurface * surface)
+{
+  // Always VSync, even if the frame is not new.
+  if(vSync_ == true)
+  {
+    bSwap_ = true;
+    while(bSwap_ == true){}
+  }
+
+  // Set new surface if it changed
+  if((surface != NULL) && (surface != pSurface_))
+  {
+    pSurface_ = surface;
+
+  #ifdef GBA
+    REG_DISPCNT ^= 0x0010;
+  #endif // GBA
+  #ifdef NDS9
+    REG_BG3CNT ^= 0x0800;
+  #endif // NDS9
+  }
 }

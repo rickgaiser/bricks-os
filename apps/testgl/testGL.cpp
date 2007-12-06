@@ -22,14 +22,49 @@ EGLContext   eglcontext;
 void
 eglInit(CSurface * surface)
 {
-  // Initialize EGL
+  // Get default display
   egldisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-  eglInitialize(egldisplay, 0, 0);
-  eglBindAPI(EGL_OPENGL_ES_API);
-//  eglChooseConfig(egldisplay, s_configAttribs, &eglconfig, 1, &numconfigs);
-  eglsurface = eglCreateWindowSurface(egldisplay, eglconfig, (EGLNativeDisplayType)surface, 0);
-  eglcontext = eglCreateContext(egldisplay, eglconfig, 0, 0);
-  eglMakeCurrent(egldisplay, eglsurface, eglsurface, eglcontext);
+  if(egldisplay == NULL)
+  {
+    printk("ERROR: eglInit failed\n");
+    return;
+  }
+
+  // Initialize display
+  if(eglInitialize(egldisplay, NULL, NULL) == EGL_FALSE)
+  {
+    printk("ERROR: eglInitialize failed\n");
+    return;
+  }
+
+  // Bind to OpenGL-ES API
+  //eglBindAPI(EGL_OPENGL_ES_API);
+
+  // Choose configuration
+  //eglChooseConfig(egldisplay, s_configAttribs, &eglconfig, 1, &numconfigs);
+
+  // Create surface
+  eglsurface = eglCreateWindowSurface(egldisplay, eglconfig, (EGLNativeDisplayType)surface, NULL);
+  if(eglsurface == NULL)
+  {
+    printk("ERROR: eglCreateWindowSurface failed\n");
+    return;
+  }
+
+  // Create EGL context
+  eglcontext = eglCreateContext(egldisplay, eglconfig, NULL, NULL);
+  if(eglcontext == NULL)
+  {
+    printk("ERROR: eglCreateContext failed\n");
+    return;
+  }
+
+  // Set current
+  if(eglMakeCurrent(egldisplay, eglsurface, eglsurface, eglcontext) == EGL_FALSE)
+  {
+    printk("ERROR: eglMakeCurrent failed\n");
+    return;
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -38,6 +73,7 @@ eglDestroy()
 {
   // Shutdown EGL
   eglMakeCurrent(egldisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+  eglDestroySurface(egldisplay, eglsurface);
   eglDestroyContext(egldisplay, eglcontext);
   eglTerminate(egldisplay);
 }
@@ -64,7 +100,7 @@ appMain(int argc, char * argv[])
           CSurface * pVideoSurface;
 
           // Test 3d with a double buffered surface
-          devices[iDev]->getSurface(&pVideoSurface, stSCREEN, true);
+          devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
           eglInit(pVideoSurface);
 #ifdef CONFIG_FPU
           // Test floating point interface

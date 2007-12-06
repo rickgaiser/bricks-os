@@ -3,7 +3,11 @@
 #include "GL/glu.h"
 #include "kernel/videoManager.h"
 #include "../gl/fixedPoint.h"
+#include "EGL/egl.h"
 
+
+extern EGLDisplay egldisplay;
+extern EGLSurface eglsurface;
 
 extern void initPyramidFx();
 extern void drawPyramidFx();
@@ -85,13 +89,6 @@ testGLFx(CSurface * surface)
 
     glFlush();
 
-    // Display progress bar
-    //surface->setFillColor(255, 255, 255);
-    //surface->fillRect(1, surface->height() - 12, surface->width() - 2, 10);
-    //surface->setFillColor(0, 0, 0);
-    //surface->fillRect(3, surface->height() - 10, ((surface->width() - 6) * gl_fptoi(yrot)) / 360, 6);
-
-    surface->swap(true);
-    //surface->swap(false);
+    eglSwapBuffers(egldisplay, eglsurface);
   }
 }

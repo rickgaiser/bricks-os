@@ -230,6 +230,15 @@ public:
 
   virtual void getSurface(CSurface ** surface, ESurfaceType type) = 0;
   virtual void getRenderer(I2DRenderer ** renderer) = 0;
+
+  virtual void waitVSync() = 0;
+  virtual void displaySurface(CSurface * surface) = 0;
+
+  virtual void setVSync(bool vsync = true);
+  virtual bool getVSync();
+
+protected:
+  bool vSync_;
 };
 
 //---------------------------------------------------------------------------

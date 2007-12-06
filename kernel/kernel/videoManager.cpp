@@ -313,6 +313,7 @@ C2DRenderer::drawRect_i(int x, int y, unsigned int width, unsigned int height)
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CAVideoDevice::CAVideoDevice()
+ : vSync_(true)
 {
   videoManager.addDevice(this);
 }
@@ -321,6 +322,20 @@ CAVideoDevice::CAVideoDevice()
 CAVideoDevice::~CAVideoDevice()
 {
   videoManager.removeDevice(this);
+}
+
+//---------------------------------------------------------------------------
+void
+CAVideoDevice::setVSync(bool vsync)
+{
+  vSync_ = vsync;
+}
+
+//---------------------------------------------------------------------------
+bool
+CAVideoDevice::getVSync()
+{
+  return vSync_;
 }
 
 //---------------------------------------------------------------------------

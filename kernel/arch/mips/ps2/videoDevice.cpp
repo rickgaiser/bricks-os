@@ -165,7 +165,6 @@ CPS22DRenderer::CPS22DRenderer(CSurface * surf)
   BEGIN_GS_PACKET(GsCmdBuffer);
   GIF_TAG_AD(GsCmdBuffer, 1, 0, 0, 0);
 
-  pSurface_ = dynamic_cast<CPS2Surface *>(surf);
   setSurface(surf);
 }
 
@@ -182,9 +181,6 @@ CPS22DRenderer::setSurface(CSurface * surf)
 
   if(pSurface_ != NULL)
   {
-    // Set visible frame
-    REG_GS_DISPFB1  = GS_SET_DISPFB((uint32_t)pSurface_->p >> 13, pSurface_->width_ >> 6, pSurface_->psm_, 0, 0);
-
     // Set active frame
     GIF_DATA_AD(GsCmdBuffer, frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->width_ >> 6, pSurface_->psm_, 0));
     bDataWaiting_ = true;
@@ -204,10 +200,6 @@ CPS22DRenderer::flush()
 {
   if(bDataWaiting_ == true)
   {
-    // FIXME: Dirty VSync
-    REG_GS_CSR = REG_GS_CSR & 8;
-    while(!(REG_GS_CSR & 8));
-
     // Send packet to GS
     SEND_GS_PACKET(GsCmdBuffer);
 
@@ -298,6 +290,7 @@ CPS22DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
 //---------------------------------------------------------------------------
 CPS2VideoDevice::CPS2VideoDevice()
  : CAVideoDevice()
+ , pSurface_(NULL)
  , pCurrentMode_(NULL)
  , pCurrentPS2Mode_(NULL)
 {
@@ -431,4 +424,35 @@ void
 CPS2VideoDevice::getRenderer(I2DRenderer ** renderer)
 {
   *renderer = new CPS22DRenderer;
+}
+
+//---------------------------------------------------------------------------
+void
+CPS2VideoDevice::waitVSync()
+{
+  REG_GS_CSR = REG_GS_CSR & 8;
+  while(!(REG_GS_CSR & 8));
+}
+
+//---------------------------------------------------------------------------
+void
+CPS2VideoDevice::displaySurface(CSurface * surface)
+{
+  CPS2Surface * pNewSurface = dynamic_cast<CPS2Surface *>(surface);
+
+  // Always VSync, even if the frame is not new.
+  if(vSync_ == true)
+  {
+    REG_GS_CSR = REG_GS_CSR & 8;
+    while(!(REG_GS_CSR & 8));
+  }
+
+  // Set new surface if it changed
+  if((pNewSurface != NULL) && (pNewSurface != pSurface_))
+  {
+    pSurface_ = pNewSurface;
+
+    // Set visible frame
+    REG_GS_DISPFB1 = GS_SET_DISPFB((uint32_t)pSurface_->p >> 13, pSurface_->width_ >> 6, pSurface_->psm_, 0, 0);
+  }
 }
