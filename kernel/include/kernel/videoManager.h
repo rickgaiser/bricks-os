@@ -137,7 +137,22 @@ public:
 };
 
 //---------------------------------------------------------------------------
+class IRenderer
+{
+public:
+  virtual ~IRenderer(){}
+
+  // Surfaces
+  virtual void       setSurface(CSurface * surf) = 0;
+  virtual CSurface * getSurface() = 0;
+
+  // Flush operations to surface
+  virtual void       flush() = 0;
+};
+
+//---------------------------------------------------------------------------
 class I2DRenderer
+ : public IRenderer
 {
 public:
   virtual ~I2DRenderer(){}
@@ -145,6 +160,9 @@ public:
   // Surfaces
   virtual void       setSurface(CSurface * surf) = 0;
   virtual CSurface * getSurface() = 0;
+
+  // Flush operations to surface
+  virtual void       flush() = 0;
 
   // Color
   virtual void       setColor(uint8_t r, uint8_t g, uint8_t b) = 0;
@@ -168,6 +186,9 @@ public:
   // Surfaces
   virtual void       setSurface(CSurface * surf);
   virtual CSurface * getSurface();
+
+  // Flush operations to surface
+  virtual void       flush();
 
   // Color
   virtual void       setColor(uint8_t r, uint8_t g, uint8_t b);
