@@ -1,7 +1,13 @@
 #----------------------------------------------------------------------------
 # PSP
 #----------------------------------------------------------------------------
+ifeq ($(PSP_FW_VERSION),)
+PSP_FW_VERSION=150
+endif
+
+#----------------------------------------------------------------------------
 MY_INCL_PATH    +=\
+                -I$(PSPSDK)/include \
 
 MY_LIBS_PATH    +=\
                 -L$(PSPSDK)/lib \
@@ -13,10 +19,25 @@ CFLAGS          +=\
 CXXFLAGS        +=\
 
 LFLAGS          +=\
+                -D_PSP_FW_VERSION=$(PSP_FW_VERSION) \
                 $(MY_LIBS_PATH) \
+                -lstdc++ \
+                -lpspdebug \
+                -lpspdisplay \
+                -lpspge \
+                -lpspctrl \
+                -lpspsdk \
+                -lc \
+                -lpspnet \
+                -lpspnet_inet \
+                -lpspnet_apctl \
+                -lpspnet_resolver \
+                -lpsputility \
+                -lpspuser \
+                -lpspkernel \
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@
-	$(CXX) $(LFLAGS) $(MY_OBJS) $(MY_LIBS) -o $@
+	$(CC) $(MY_OBJS) $(MY_LIBS) $(LFLAGS) -o $@

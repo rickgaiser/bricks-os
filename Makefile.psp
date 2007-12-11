@@ -1,8 +1,17 @@
 MAKEFLAGS	+=--no-print-directory -s
 
 
-all:
-	make -f Makefile all ARCH=mips TARGET=psp
+all: alldirs bin/psp/EBOOT.PBP
 
 clean:
 	make -f Makefile clean ARCH=mips TARGET=psp
+
+alldirs:
+	make -f Makefile all ARCH=mips TARGET=psp
+
+bin/psp/EBOOT.PBP: bin/psp/Bricks.elf
+	@echo [PBP] $@
+	psp-fixup-imports bin/psp/Bricks.elf
+	mksfo 'Bricks-OS' bin/psp/PARAM.SFO
+	psp-strip bin/psp/Bricks.elf -o bin/psp/Bricks_strip.elf
+	pack-pbp bin/psp/EBOOT.PBP bin/psp/PARAM.SFO NULL NULL NULL NULL NULL bin/psp/Bricks_strip.elf NULL

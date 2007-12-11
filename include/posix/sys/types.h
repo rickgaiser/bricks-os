@@ -2,6 +2,7 @@
 #define TYPES_H
 
 
+typedef unsigned int     clock_t;
 typedef long long int    loff_t;
 typedef long             off_t;
 typedef int              pid_t;
