@@ -28,6 +28,7 @@ LFLAGS          +=\
                 -lpspctrl \
                 -lpspsdk \
                 -lc \
+                -lm \
                 -lpspnet \
                 -lpspnet_inet \
                 -lpspnet_apctl \
