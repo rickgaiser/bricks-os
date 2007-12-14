@@ -17,3 +17,4 @@ CONFIG_GL=y
 
 # Library configuration
 #CONFIG_BUILTIN_MM=y
+#CONFIG_BUILTIN_LIBC=y

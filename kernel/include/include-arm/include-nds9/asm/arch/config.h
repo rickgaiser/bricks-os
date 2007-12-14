@@ -21,6 +21,7 @@
 
 // Library configuration
 #define CONFIG_BUILTIN_MM
+#define CONFIG_BUILTIN_LIBC
 
 // GBA/NDS specific configuration
 #define CONFIG_GBA_CONSOLE

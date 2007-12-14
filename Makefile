@@ -3,19 +3,22 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 
 DIRS            =\
                 kernel \
-                libc \
                 libtace \
                 apps \
 
 LIBS            =\
                 arch \
                 kernel \
-                tc \
                 tace \
                 apps \
 
 ELF             =Bricks
 
+
+ifeq ($(CONFIG_BUILTIN_LIBC),y)
+  DIRS            += libc
+  LIBS            += tc
+endif
 
 ifneq ($(CONFIG_DIRECT_ACCESS_KERNEL_FUNC),y)
   DIRS            += srr
