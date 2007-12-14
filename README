@@ -2,8 +2,7 @@ Bricks-OS
 =========
  1 - About Bricks-OS
  2 - How to compile
- 3 - How to use
- 4 - Supported platforms
+ 3 - Supported platforms
 
 
 1 - About Bricks-OS
@@ -38,18 +37,15 @@ Bricks-OS
   After succesfully building Bricks-OS the binary file will be located at:
     $(BRICKS_ROOT)/bin/$(TARGET)/Bricks.elf
 
-3 - How to use
---------------
-  Currently Bricks-OS will show a welcoming message. On some platforms it will
-  also display key presses. Message:
-    Bricks-OS
-    =========
+  Please note that the appropriate development environment will also need to
+  be installed. Currently I am using devkitPro for most platforms (see 3.)
 
-4 - Supported platforms
+3 - Supported platforms
 -----------------------
   Compiles to:
-   - Gameboy Advance (gba)   (windows, using devkitPro)
-   - Nintendo DS (nds)       (windows, using devkitPro)
-   - Nintendo GameCube (ngc) (windows, using devkitPro)
-   - Playstation2 (ps2)      (windows, using ps2dev)
-   - i386 or later PC (pc)   (linux, using gcc)
+   - Gameboy Advance (gba)       (windows, using devkitPro)
+   - Nintendo DS (nds)           (windows, using devkitPro)
+   - Nintendo GameCube (ngc)     (windows, using devkitPro)
+   - Playstation2 (ps2)          (windows, using ps2dev)
+   - Playstation Portable (psp)  (windows, using devkitPro)
+   - i386 or later PC (pc)       (linux, using gcc)
