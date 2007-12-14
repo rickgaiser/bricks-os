@@ -94,47 +94,47 @@ const uint32_t vmode_count(sizeof(vmodes) / sizeof(SPS2VideoMode));
 static const SVideoMode videoModes[] =
 {
   // PAL
-//  { 640,  256, 16, cfA1R5G5B5}, //  320Kb
-//  { 640,  256, 24, cfB8G8R8},   //  480Kb
-  { 640,  256, 32, cfA8B8G8R8}, //  640Kb
-//  { 640,  512, 16, cfA1R5G5B5}, //  640Kb
-//  { 640,  512, 24, cfB8G8R8},   //  960Kb
-//  { 640,  512, 32, cfA8B8G8R8}, // 1280Kb
+//  { 640,  256,  640,  256, 16, cfA1R5G5B5}, //  320Kb
+//  { 640,  256,  640,  256, 24, cfB8G8R8},   //  480Kb
+  { 640,  256,  640,  256, 32, cfA8B8G8R8}, //  640Kb
+//  { 640,  512,  640,  512, 16, cfA1R5G5B5}, //  640Kb
+//  { 640,  512,  640,  512, 24, cfB8G8R8},   //  960Kb
+//  { 640,  512,  640,  512, 32, cfA8B8G8R8}, // 1280Kb
   // NTSC
-//  { 640,  224, 16, cfA1R5G5B5}, //  280Kb
-//  { 640,  224, 24, cfB8G8R8},   //  420Kb
-  { 640,  224, 32, cfA8B8G8R8}, //  560Kb
-//  { 640,  448, 16, cfA1R5G5B5}, //  560Kb
-//  { 640,  448, 24, cfB8G8R8},   //  840Kb
-//  { 640,  448, 32, cfA8B8G8R8}, // 1120Kb
+//  { 640,  224,  640,  224, 16, cfA1R5G5B5}, //  280Kb
+//  { 640,  224,  640,  224, 24, cfB8G8R8},   //  420Kb
+  { 640,  224,  640,  224, 32, cfA8B8G8R8}, //  560Kb
+//  { 640,  448,  640,  448, 16, cfA1R5G5B5}, //  560Kb
+//  { 640,  448,  640,  448, 24, cfB8G8R8},   //  840Kb
+//  { 640,  448,  640,  448, 32, cfA8B8G8R8}, // 1120Kb
 
   // EDTV
-//  { 720,  480, 16, cfA1R5G5B5}, //  675Kb
-//  { 720,  480, 24, cfB8G8R8},   // 1012Kb
-//  { 720,  480, 32, cfA8B8G8R8}, // 1350Kb
+//  { 720,  480,  720,  480, 16, cfA1R5G5B5}, //  675Kb
+//  { 720,  480,  720,  480, 24, cfB8G8R8},   // 1012Kb
+//  { 720,  480,  720,  480, 32, cfA8B8G8R8}, // 1350Kb
   // HDTV
-//  {1280,  720, 16, cfA1R5G5B5}, // 1800Kb
-//  {1280,  720, 24, cfB8G8R8},   // 2700Kb
-//  {1280,  720, 32, cfA8B8G8R8}, // 3600Kb
-//  {1920,  540, 16, cfA1R5G5B5}, // 2025Kb
-//  {1920,  540, 24, cfB8G8R8},   // 3038Kb
-//  {1920,  540, 32, cfA8B8G8R8}, // 4050Kb
-//  {1920, 1080, 16, cfA1R5G5B5}, // 4050Kb
+//  {1280,  720, 1280,  720, 16, cfA1R5G5B5}, // 1800Kb
+//  {1280,  720, 1280,  720, 24, cfB8G8R8},   // 2700Kb
+//  {1280,  720, 1280,  720, 32, cfA8B8G8R8}, // 3600Kb
+//  {1920,  540, 1920,  540, 16, cfA1R5G5B5}, // 2025Kb
+//  {1920,  540, 1920,  540, 24, cfB8G8R8},   // 3038Kb
+//  {1920,  540, 1920,  540, 32, cfA8B8G8R8}, // 4050Kb
+//  {1920, 1080, 1920, 1080, 16, cfA1R5G5B5}, // 4050Kb
 
   // VGA
-//  { 640,  480, 16, cfA1R5G5B5},
-//  { 640,  480, 24, cfB8G8R8},
-//  { 640,  480, 32, cfA8B8G8R8},
+//  { 640,  480,  640,  480, 16, cfA1R5G5B5},
+//  { 640,  480,  640,  480, 24, cfB8G8R8},
+//  { 640,  480,  640,  480, 32, cfA8B8G8R8},
   // SVGA
-//  { 800,  600, 16, cfA1R5G5B5},
-//  { 800,  600, 24, cfB8G8R8},
-//  { 800,  600, 32, cfA8B8G8R8},
+//  { 800,  600,  800,  600, 16, cfA1R5G5B5},
+//  { 800,  600,  800,  600, 24, cfB8G8R8},
+//  { 800,  600,  800,  600, 32, cfA8B8G8R8},
   // XGA
-//  {1024,  768, 16, cfA1R5G5B5},
-//  {1024,  768, 24, cfB8G8R8},
-//  {1024,  768, 32, cfA8B8G8R8},
+//  {1024,  768, 1024,  768, 16, cfA1R5G5B5},
+//  {1024,  768, 1024,  768, 24, cfB8G8R8},
+//  {1024,  768, 1024,  768, 32, cfA8B8G8R8},
   // SXGA
-//  {1280, 1024, 16, cfA1R5G5B5},
+//  {1280, 1024, 1280, 1024, 16, cfA1R5G5B5},
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
@@ -183,7 +183,7 @@ CPS22DRenderer::setSurface(CSurface * surf)
   if(pSurface_ != NULL)
   {
     // Set active frame
-    GIF_DATA_AD(GsCmdBuffer, frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->width_ >> 6, pSurface_->psm_, 0));
+    GIF_DATA_AD(GsCmdBuffer, frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.width >> 6, pSurface_->psm_, 0));
     bDataWaiting_ = true;
   }
 }
@@ -241,7 +241,7 @@ CPS22DRenderer::setPixel(int x, int y)
 void
 CPS22DRenderer::fill()
 {
-  fillRect(0, 0, pSurface_->width_, pSurface_->height_);
+  fillRect(0, 0, pSurface_->mode.width, pSurface_->mode.height);
 }
 
 //---------------------------------------------------------------------------
@@ -409,12 +409,9 @@ CPS2VideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
     case stSCREEN:
     {
       pSurface = new CPS2Surface;
-      pSurface->width_ = pCurrentPS2Mode_->width;
-      pSurface->height_= pCurrentPS2Mode_->height;
-      pSurface->bpp_   = pCurrentPS2Mode_->bpp;
-      pSurface->format_= pCurrentMode_->format;
-      pSurface->psm_   = pCurrentPS2Mode_->psm;
-      pSurface->p      = 0x00000000;
+      pSurface->mode = *pCurrentMode_;
+      pSurface->psm_ = pCurrentPS2Mode_->psm;
+      pSurface->p    = 0x00000000;
       break;
     }
     default:
@@ -458,6 +455,6 @@ CPS2VideoDevice::displaySurface(CSurface * surface)
     pSurface_ = pNewSurface;
 
     // Set visible frame
-    REG_GS_DISPFB1 = GS_SET_DISPFB((uint32_t)pSurface_->p >> 13, pSurface_->width_ >> 6, pSurface_->psm_, 0, 0);
+    REG_GS_DISPFB1 = GS_SET_DISPFB((uint32_t)pSurface_->p >> 13, pSurface_->mode.width >> 6, pSurface_->psm_, 0, 0);
   }
 }

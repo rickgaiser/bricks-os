@@ -38,9 +38,9 @@ CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint y, SColorF c)
 
   if(xwidth > 0)
   {
-    color_t color = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255), (uint8_t)(c.a * 255));
+    color_t color = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255), (uint8_t)(c.a * 255));
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -49,7 +49,7 @@ CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint y, SColorF c)
 
 //      if(x >= 0)
 //      {
-        switch(renderSurface->bpp_)
+        switch(renderSurface->mode.bpp)
         {
           case 8:
             ((uint8_t  *)renderSurface->p)[index] = color;
@@ -82,9 +82,9 @@ CSoftGLESFloat::hlineZ(CEdgeF & from, CEdgeF & to, GLint y, SColorF c)
     GLfloat z(from.z_[y]);
     GLfloat mz((to.z_[y] - from.z_[y]) * dx);
 
-    color_t color = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255), (uint8_t)(c.a * 255));
+    color_t color = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255), (uint8_t)(c.a * 255));
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -95,7 +95,7 @@ CSoftGLESFloat::hlineZ(CEdgeF & from, CEdgeF & to, GLint y, SColorF c)
 //      {
         if(testAndSetDepth(z, index) == true)
         {
-          switch(renderSurface->bpp_)
+          switch(renderSurface->mode.bpp)
           {
             case 8:
               ((uint8_t  *)renderSurface->p)[index] = color;
@@ -136,7 +136,7 @@ CSoftGLESFloat::hlineC(CEdgeF & from, CEdgeF & to, GLint y)
     GLfloat mb((to.c_[y].b - from.c_[y].b) * dx);
     GLfloat ma((to.c_[y].a - from.c_[y].a) * dx);
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -145,16 +145,16 @@ CSoftGLESFloat::hlineC(CEdgeF & from, CEdgeF & to, GLint y)
 
 //      if(x >= 0)
 //      {
-        switch(renderSurface->bpp_)
+        switch(renderSurface->mode.bpp)
         {
           case 8:
-            ((uint8_t  *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
+            ((uint8_t  *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
             break;
           case 16:
-            ((uint16_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
+            ((uint16_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
             break;
           case 32:
-            ((uint32_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
+            ((uint32_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
             break;
         };
 //      }
@@ -192,7 +192,7 @@ CSoftGLESFloat::hlineZC(CEdgeF & from, CEdgeF & to, GLint y)
     GLfloat mb((to.c_[y].b - from.c_[y].b) * dx);
     GLfloat ma((to.c_[y].a - from.c_[y].a) * dx);
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -203,16 +203,16 @@ CSoftGLESFloat::hlineZC(CEdgeF & from, CEdgeF & to, GLint y)
 //      {
         if(testAndSetDepth(z, index) == true)
         {
-          switch(renderSurface->bpp_)
+          switch(renderSurface->mode.bpp)
           {
             case 8:
-              ((uint8_t  *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
+              ((uint8_t  *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
               break;
             case 16:
-              ((uint16_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
+              ((uint16_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
               break;
             case 32:
-              ((uint32_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->format_, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
+              ((uint32_t *)renderSurface->p)[index] = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(r * 255), (uint8_t)(g * 255), (uint8_t)(b * 255), (uint8_t)(a * 255));
               break;
           };
         }
@@ -249,7 +249,7 @@ CSoftGLESFloat::hlineTa(CEdgeF & from, CEdgeF & to, GLint y)
     mts *= pCurrentTex_->width;
     mtt *= pCurrentTex_->height;
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -258,7 +258,7 @@ CSoftGLESFloat::hlineTa(CEdgeF & from, CEdgeF & to, GLint y)
 
 //      if(x >= 0)
 //      {
-        switch(renderSurface->bpp_)
+        switch(renderSurface->mode.bpp)
         {
           case 8:
             ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[(((GLint)(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(ts) & pCurrentTex_->maskWidth)];
@@ -304,7 +304,7 @@ CSoftGLESFloat::hlineZTa(CEdgeF & from, CEdgeF & to, GLint y)
     mts *= pCurrentTex_->width;
     mtt *= pCurrentTex_->height;
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -315,7 +315,7 @@ CSoftGLESFloat::hlineZTa(CEdgeF & from, CEdgeF & to, GLint y)
 //      {
         if((depthTestEnabled_ == false) || (testAndSetDepth(z, index) == true))
         {
-          switch(renderSurface->bpp_)
+          switch(renderSurface->mode.bpp)
           {
             case 8:
               ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[(((GLint)(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(ts) & pCurrentTex_->maskWidth)];
@@ -360,7 +360,7 @@ CSoftGLESFloat::hlineZTp(CEdgeF & from, CEdgeF & to, GLint y)
     GLfloat mts(((to.ts_[y] - from.ts_[y]) * pCurrentTex_->width  * tz) * dx);
     GLfloat mtt(((to.tt_[y] - from.tt_[y]) * pCurrentTex_->height * tz) * dx);
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -374,7 +374,7 @@ CSoftGLESFloat::hlineZTp(CEdgeF & from, CEdgeF & to, GLint y)
           GLfloat recip = 1.0f / tz;
           GLfloat s     = ts * recip;
           GLfloat t     = tt * recip;
-          switch(renderSurface->bpp_)
+          switch(renderSurface->mode.bpp)
           {
             case 8:
               ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[(((GLint)(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((GLint)(s) & pCurrentTex_->maskWidth)];

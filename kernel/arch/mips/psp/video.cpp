@@ -6,8 +6,7 @@
 
 static const SVideoMode videoModes[] =
 {
-//  {480, 272, 32, cfA8B8G8R8},
-  {512, 272, 32, cfA8B8G8R8},
+  {512, 272, 480, 272, 32, cfA8B8G8R8},
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
@@ -88,11 +87,8 @@ CPSPVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
     case stSCREEN:
     {
       pSurface = new CSurface;
-      pSurface->width_ = pCurrentMode_->width;
-      pSurface->height_= pCurrentMode_->height;
-      pSurface->bpp_   = pCurrentMode_->bpp;
-      pSurface->format_= pCurrentMode_->format;
-      pSurface->p      = (uint16_t *)0x04000000;
+      pSurface->mode = *pCurrentMode_;
+      pSurface->p = (uint16_t *)0x04000000;
       *surface = pSurface;
       break;
     }

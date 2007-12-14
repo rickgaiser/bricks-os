@@ -96,20 +96,29 @@ CSoftGLESFixed::glClear(GLbitfield mask)
   {
     color_t color(fpRGB(clClear.r, clClear.g, clClear.b));
 
-    switch(renderSurface->bpp_)
+    switch(renderSurface->mode.bpp)
     {
       case 8:
-        for(int i(0); i < viewportPixelCount; i++)
-          ((uint8_t  *)renderSurface->p)[i] = color;
+      {
+        for(uint32_t y(0); y < renderSurface->mode.width; y++)
+          for(uint32_t x(0); x < renderSurface->mode.height; x++)
+            ((uint8_t  *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
         break;
+      }
       case 16:
-        for(int i(0); i < viewportPixelCount; i++)
-          ((uint16_t *)renderSurface->p)[i] = color;
+      {
+        for(uint32_t y(0); y < renderSurface->mode.width; y++)
+          for(uint32_t x(0); x < renderSurface->mode.height; x++)
+            ((uint16_t *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
         break;
+      }
       case 32:
-        for(int i(0); i < viewportPixelCount; i++)
-          ((uint32_t *)renderSurface->p)[i] = color;
+      {
+        for(uint32_t y(0); y < renderSurface->mode.width; y++)
+          for(uint32_t x(0); x < renderSurface->mode.height; x++)
+            ((uint32_t *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
         break;
+      }
     };
   }
   if(mask & GL_DEPTH_BUFFER_BIT)

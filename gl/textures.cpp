@@ -119,7 +119,7 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
       pCurrentTex_->texWrapS     = GL_REPEAT;
       pCurrentTex_->texWrapT     = GL_REPEAT;
 
-      EColorFormat fmtTo = renderSurface->format_;
+      EColorFormat fmtTo = renderSurface->mode.format;
       EColorFormat fmtFrom;
       switch(type)
       {
@@ -135,7 +135,7 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
       if(pCurrentTex_->data != NULL)
         delete ((uint8_t *)pCurrentTex_->data);
       // Allocate texture buffer
-      switch(renderSurface->bpp_)
+      switch(renderSurface->mode.bpp)
       {
         case 8:  pCurrentTex_->data = new uint8_t[width*height];  break;
         case 16: pCurrentTex_->data = new uint16_t[width*height]; break;
@@ -162,7 +162,7 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
           };
 
           // Put pixel
-          switch(renderSurface->bpp_)
+          switch(renderSurface->mode.bpp)
           {
             case 8:  ((uint8_t  *)pCurrentTex_->data)[i] = px; break;
             case 16: ((uint16_t *)pCurrentTex_->data)[i] = px; break;
@@ -173,7 +173,7 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
       else
       {
         // Just copy
-        memcpy(pCurrentTex_->data, pixels, width * height * (renderSurface->bpp_ / 8));
+        memcpy(pCurrentTex_->data, pixels, width * height * (renderSurface->mode.bpp / 8));
       }
     }
   }

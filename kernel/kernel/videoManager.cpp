@@ -6,16 +6,16 @@
 //---------------------------------------------------------------------------
 #define SET_PIXEL(x,y,c) \
 { \
-  switch(pSurface_->bpp_) \
+  switch(pSurface_->mode.bpp) \
   { \
     case 8: \
-      ((uint8_t  *)pSurface_->p)[y * pSurface_->width_ + x] = c; \
+      ((uint8_t  *)pSurface_->p)[y * pSurface_->mode.xpitch + x] = c; \
       break; \
     case 16: \
-      ((uint16_t *)pSurface_->p)[y * pSurface_->width_ + x] = c; \
+      ((uint16_t *)pSurface_->p)[y * pSurface_->mode.xpitch + x] = c; \
       break; \
     case 32: \
-      ((uint32_t *)pSurface_->p)[y * pSurface_->width_ + x] = c; \
+      ((uint32_t *)pSurface_->p)[y * pSurface_->mode.xpitch + x] = c; \
       break; \
     default: \
       ; \
@@ -23,18 +23,18 @@
 }
 
 //---------------------------------------------------------------------------
-#define VISIBLE_POINT(x,y) ((x >= 0) && (x < (int)pSurface_->width_) && (y >= 0) && (y < (int)pSurface_->height_))
+#define VISIBLE_POINT(x,y) ((x >= 0) && (x < (int)pSurface_->mode.width) && (y >= 0) && (y < (int)pSurface_->mode.height))
 
 //---------------------------------------------------------------------------
-#define VISIBLE_RECT(x,y,w,h) ((x < (int)pSurface_->width_) && ((x+w) >= 0) && (y < (int)pSurface_->height_) && ((y+h) >= 0))
+#define VISIBLE_RECT(x,y,w,h) ((x < (int)pSurface_->mode.width) && ((x+w) >= 0) && (y < (int)pSurface_->mode.height) && ((y+h) >= 0))
 
 //---------------------------------------------------------------------------
 #define CLIP_POINT(x,y) \
 { \
   if(x < 0) x = 0; \
   if(y < 0) y = 0; \
-  else if((unsigned int)x >= pSurface_->width_)  x = pSurface_->width_ - 1; \
-  else if((unsigned int)y >= pSurface_->height_) y = pSurface_->height_ -1; \
+  else if((unsigned int)x >= pSurface_->mode.width)  x = pSurface_->mode.width - 1; \
+  else if((unsigned int)y >= pSurface_->mode.height) y = pSurface_->mode.height -1; \
 }
 
 //---------------------------------------------------------------------------
@@ -44,8 +44,8 @@
 { \
   if(x < 0) {x = 0; w -= x;} \
   if(y < 0) {y = 0; h -= y;} \
-  if((x+w) > pSurface_->width_) {w = pSurface_->width_ - x;} \
-  if((y+h) > pSurface_->height_) {h = pSurface_->height_ - y;} \
+  if((x+w) > pSurface_->mode.width) {w = pSurface_->mode.width - x;} \
+  if((y+h) > pSurface_->mode.height) {h = pSurface_->mode.height - y;} \
 }
 
 //---------------------------------------------------------------------------
@@ -94,30 +94,44 @@ CSurface::~CSurface()
 
 //---------------------------------------------------------------------------
 uint32_t
+CSurface::xpitch()
+{
+  return mode.xpitch;
+}
+
+//---------------------------------------------------------------------------
+uint32_t
+CSurface::ypitch()
+{
+  return mode.ypitch;
+}
+
+//---------------------------------------------------------------------------
+uint32_t
 CSurface::width()
 {
-  return width_;
+  return mode.width;
 }
 
 //---------------------------------------------------------------------------
 uint32_t
 CSurface::height()
 {
-  return height_;
+  return mode.height;
 }
 
 //---------------------------------------------------------------------------
 uint32_t
 CSurface::bpp()
 {
-  return bpp_;
+  return mode.bpp;
 }
 
 //---------------------------------------------------------------------------
 EColorFormat
 CSurface::format()
 {
-  return format_;
+  return mode.format;
 }
 
 //---------------------------------------------------------------------------
@@ -131,7 +145,7 @@ C2DRenderer::C2DRenderer(CSurface * surf)
   color_.a = 255;
 
   if(pSurface_ != NULL)
-    fmtColor_ = BxColorFormat_FromRGB(pSurface_->format_, color_.r, color_.g, color_.b);
+    fmtColor_ = BxColorFormat_FromRGB(pSurface_->mode.format, color_.r, color_.g, color_.b);
 }
 
 //---------------------------------------------------------------------------
@@ -146,7 +160,7 @@ C2DRenderer::setSurface(CSurface * surf)
   pSurface_ = surf;
 
   if(pSurface_ != NULL)
-    fmtColor_ = BxColorFormat_FromRGB(pSurface_->format_, color_.r, color_.g, color_.b);
+    fmtColor_ = BxColorFormat_FromRGB(pSurface_->mode.format, color_.r, color_.g, color_.b);
 }
 
 //---------------------------------------------------------------------------
@@ -172,7 +186,7 @@ C2DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
   color_.a = 255;
 
   if(pSurface_ != NULL)
-    fmtColor_ = BxColorFormat_FromRGB(pSurface_->format_, color_.r, color_.g, color_.b);
+    fmtColor_ = BxColorFormat_FromRGB(pSurface_->mode.format, color_.r, color_.g, color_.b);
 }
 
 //---------------------------------------------------------------------------
@@ -253,7 +267,7 @@ C2DRenderer::setPixel_i(int x, int y)
 void
 C2DRenderer::fill_i()
 {
-  fillRect_i(0, 0, pSurface_->width_, pSurface_->height_);
+  fillRect_i(0, 0, pSurface_->mode.width, pSurface_->mode.height);
 }
 
 //---------------------------------------------------------------------------

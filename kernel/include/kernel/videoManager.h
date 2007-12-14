@@ -99,13 +99,15 @@ enum ESurfaceType
 };
 
 //---------------------------------------------------------------------------
-struct SVideoMode
+typedef struct SVideoMode
 {
-  int width;
-  int height;
-  int bpp;
-  EColorFormat format;
-};
+  uint32_t xpitch;           // Framebuffer width
+  uint32_t ypitch;           // Framebuffer height
+  uint32_t width;            // Visible width
+  uint32_t height;           // Visible height
+  uint32_t bpp;              // Bits per pixel
+  EColorFormat format;       // Pixel format
+} SVideoMode;
 
 //---------------------------------------------------------------------------
 class CSurface
@@ -114,12 +116,12 @@ public:
   CSurface();
   virtual ~CSurface();
 
-  // Geometry
+  // Video mode for surface
+  virtual uint32_t xpitch();
+  virtual uint32_t ypitch();
   virtual uint32_t width();
   virtual uint32_t height();
   virtual uint32_t bpp();
-
-  // Format
   virtual EColorFormat format();
 
 //protected:
@@ -127,13 +129,8 @@ public:
   // Data
   void * p;
 
-  // Geometry
-  uint32_t width_;
-  uint32_t height_;
-  uint32_t bpp_;
-
-  // Surface format colors
-  EColorFormat format_;
+  // Video mode for surface
+  SVideoMode mode;
 };
 
 //---------------------------------------------------------------------------

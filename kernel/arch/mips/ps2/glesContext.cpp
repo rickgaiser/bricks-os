@@ -434,26 +434,26 @@ CPS2GLESContext::glEnable(GLenum cap)
     {
       depthTestEnabled_ = true;
       // Z-Buffer
-      switch(renderSurface->bpp_)
+      switch(renderSurface->mode.bpp)
       {
         case 16:
         {
           GIF_DATA_AD(GsCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_ENABLE));
-          ps2TexturesStart_ = gs_mem_current + (renderSurface->width_ * renderSurface->height_ * 2);
+          ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 2);
           ps2ZMax_ = 0xffff;
           break;
         }
         case 24:
         {
           GIF_DATA_AD(GsCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
-          ps2TexturesStart_ = gs_mem_current + (renderSurface->width_ * renderSurface->height_ * 3);
+          ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 3);
           ps2ZMax_ = 0xffffff;
           break;
         }
         case 32:
         {
           GIF_DATA_AD(GsCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
-          ps2TexturesStart_ = gs_mem_current + (renderSurface->width_ * renderSurface->height_ * 4);
+          ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 4);
           ps2ZMax_ = 0xffffffff;
           break;
         }

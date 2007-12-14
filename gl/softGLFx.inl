@@ -39,7 +39,7 @@ CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c)
   if(xwidth > 0)
   {
     uint32_t color(fpRGB(c.r, c.g, c.b));
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -81,7 +81,7 @@ CSoftGLESFixed::hlineZ(CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c)
 
     uint32_t color(fpRGB(c.r, c.g, c.b));
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -131,7 +131,7 @@ CSoftGLESFixed::hlineC(CEdgeFx & from, CEdgeFx & to, GLint y)
     GLfixed mb((to.c_[y].b - b) / xwidth);
 //    GLfixed ma((to.c_[y].a - a) / xwidth);
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -185,7 +185,7 @@ CSoftGLESFixed::hlineZC(CEdgeFx & from, CEdgeFx & to, GLint y)
     GLfixed mb((to.c_[y].b - b) / xwidth);
 //    GLfixed ma((to.c_[y].a - a) / xwidth);
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -240,7 +240,7 @@ CSoftGLESFixed::hlineTa(CEdgeFx & from, CEdgeFx & to, GLint y)
     mts = mts * pCurrentTex_->width;
     mtt = mtt * pCurrentTex_->height;
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -293,7 +293,7 @@ CSoftGLESFixed::hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y)
     mts = mts * pCurrentTex_->width;
     mtt = mtt * pCurrentTex_->height;
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -347,7 +347,7 @@ CSoftGLESFixed::hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y)
     GLfixed mts((gl_fpmul((to.ts_[y] - from.ts_[y]) * pCurrentTex_->width,  tz)) / xwidth);
     GLfixed mtt((gl_fpmul((to.tt_[y] - from.tt_[y]) * pCurrentTex_->height, tz)) / xwidth);
 
-    GLuint index((y * viewportWidth) + from.x_[y]);
+    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
