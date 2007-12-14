@@ -111,7 +111,7 @@ private:
 #ifdef CONFIG_FPU
 //-----------------------------------------------------------------------------
 class CAGLESMatrixF
- : public virtual IGLESContext
+ : public virtual IGLESRenderer
 {
 public:
   CAGLESMatrixF();
@@ -138,7 +138,7 @@ protected:
 #else
 //-----------------------------------------------------------------------------
 class CAGLESMatrixFx
- : public virtual IGLESContext
+ : public virtual IGLESRenderer
 {
 public:
   CAGLESMatrixFx();

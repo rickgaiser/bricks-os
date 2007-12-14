@@ -29,7 +29,7 @@ struct STexture
 
 //-----------------------------------------------------------------------------
 class CAGLESTextures
- : public virtual IGLESContext
+ : public virtual IGLESRenderer
 {
 public:
   CAGLESTextures();

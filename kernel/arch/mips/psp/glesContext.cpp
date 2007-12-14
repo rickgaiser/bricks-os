@@ -2,7 +2,7 @@
 
 
 //-----------------------------------------------------------------------------
-IGLESContext *
+IGLESRenderer *
 getGLESContext()
 {
   return new CSoftGLESFloat;

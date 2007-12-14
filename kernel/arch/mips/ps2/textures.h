@@ -26,7 +26,7 @@ struct STexturePS2
 
 //-----------------------------------------------------------------------------
 class CAGLESTexturesPS2
- : public virtual IGLESContext
+ : public virtual IGLESRenderer
 {
 public:
   CAGLESTexturesPS2();

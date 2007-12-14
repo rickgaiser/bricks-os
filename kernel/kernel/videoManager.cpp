@@ -155,9 +155,9 @@ C2DRenderer::~C2DRenderer()
 
 //---------------------------------------------------------------------------
 void
-C2DRenderer::setSurface(CSurface * surf)
+C2DRenderer::setSurface(CSurface * surface)
 {
-  pSurface_ = surf;
+  pSurface_ = surface;
 
   if(pSurface_ != NULL)
     fmtColor_ = BxColorFormat_FromRGB(pSurface_->mode.format, color_.r, color_.g, color_.b);

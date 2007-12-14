@@ -140,7 +140,7 @@ public:
   virtual ~IRenderer(){}
 
   // Surfaces
-  virtual void       setSurface(CSurface * surf) = 0;
+  virtual void       setSurface(CSurface * surface) = 0;
   virtual CSurface * getSurface() = 0;
 
   // Flush operations to surface
@@ -155,7 +155,7 @@ public:
   virtual ~I2DRenderer(){}
 
   // Surfaces
-  virtual void       setSurface(CSurface * surf) = 0;
+  virtual void       setSurface(CSurface * surface) = 0;
   virtual CSurface * getSurface() = 0;
 
   // Flush operations to surface
@@ -181,7 +181,7 @@ public:
   virtual ~C2DRenderer();
 
   // Surfaces
-  virtual void       setSurface(CSurface * surf);
+  virtual void       setSurface(CSurface * surface);
   virtual CSurface * getSurface();
 
   // Flush operations to surface

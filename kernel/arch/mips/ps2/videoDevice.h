@@ -46,7 +46,7 @@ public:
   virtual ~CPS22DRenderer();
 
   // Surfaces
-  virtual void       setSurface(CSurface * surf);
+  virtual void       setSurface(CSurface * surface);
   virtual CSurface * getSurface();
 
   // Flush operations to surface

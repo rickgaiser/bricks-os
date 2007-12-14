@@ -583,7 +583,7 @@ CPS2GLESContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-IGLESContext *
+IGLESRenderer *
 getGLESContext()
 {
   return new CPS2GLESContext;

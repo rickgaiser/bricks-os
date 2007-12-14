@@ -5,7 +5,7 @@
 #include "../../../../gl/softGLF.h"
 
 
-IGLESContext * getGLESContext();
+IGLESRenderer * getGLESContext();
 
 
 #endif // PSP_GLESCONTEXT_H

@@ -9,14 +9,14 @@ extern void * eglGetCurrentGLESContext();
 
 #ifdef GL_MULTI_CONTEXT
   #define GLES_GET_CONTEXT(RETVAL) \
-  IGLESContext * context = (IGLESContext *)eglGetCurrentGLESContext(); \
+  IGLESRenderer * context = (IGLESRenderer *)eglGetCurrentGLESContext(); \
   if(context == 0) \
     return RETVAL;
 #else
-  IGLESContext * context = 0;
+  IGLESRenderer * context = 0;
   #define GLES_GET_CONTEXT(RETVAL) \
   if(context == 0) \
-    context = (IGLESContext *)eglGetCurrentGLESContext(); \
+    context = (IGLESRenderer *)eglGetCurrentGLESContext(); \
   if(context == 0) \
     return RETVAL;
 #endif // GL_MULTI_CONTEXT

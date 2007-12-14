@@ -4,20 +4,35 @@
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-IGLESContext::IGLESContext()
+IGLESRenderer::IGLESRenderer()
  : renderSurface(0)
 {
 }
 
 //-----------------------------------------------------------------------------
-IGLESContext::~IGLESContext()
+IGLESRenderer::~IGLESRenderer()
 {
 }
+
 //-----------------------------------------------------------------------------
 void
-IGLESContext::setSurface(CSurface * surface)
+IGLESRenderer::setSurface(CSurface * surface)
 {
   renderSurface = surface;
+}
+
+//-----------------------------------------------------------------------------
+CSurface *
+IGLESRenderer::getSurface()
+{
+  return renderSurface;
+}
+
+//-----------------------------------------------------------------------------
+void
+IGLESRenderer::flush()
+{
+  this->glFlush();
 }
 
 //-----------------------------------------------------------------------------

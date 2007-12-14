@@ -3,7 +3,7 @@
 #include "stddef.h"
 
 
-extern IGLESContext * getGLESContext();
+extern IGLESRenderer * getGLESContext();
 
 
 #define EGL_GET_THREAD() \
@@ -62,7 +62,7 @@ public:
   CEGLContext() : CRefCount(), pGLESContext_(NULL){}
   virtual ~CEGLContext(){}
 
-  IGLESContext * pGLESContext_;
+  IGLESRenderer * pGLESContext_;
 };
 
 //-----------------------------------------------------------------------------

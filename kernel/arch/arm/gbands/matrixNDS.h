@@ -25,7 +25,7 @@ typedef GLfixed NDSfixed;
 
 //-----------------------------------------------------------------------------
 class CAGLESMatrixNDSFx
- : public virtual IGLESContext
+ : public virtual IGLESRenderer
 {
 public:
   CAGLESMatrixNDSFx();

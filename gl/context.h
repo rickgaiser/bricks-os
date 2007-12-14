@@ -44,13 +44,19 @@ struct SBufferPointer
 };
 
 //-----------------------------------------------------------------------------
-class IGLESContext
+class IGLESRenderer
+ : public IRenderer
 {
 public:
-  IGLESContext();
-  virtual ~IGLESContext();
+  IGLESRenderer();
+  virtual ~IGLESRenderer();
 
-  virtual void setSurface(CSurface * surface);
+  // Surfaces
+  virtual void       setSurface(CSurface * surface);
+  virtual CSurface * getSurface();
+
+  // Flush operations to surface
+  virtual void       flush();
 
 //  virtual void glAlphaFunc(GLenum func, GLclampf ref) = 0;
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) = 0;
@@ -204,7 +210,7 @@ protected:
 
 //-----------------------------------------------------------------------------
 class CAGLESBuffers
- : public virtual IGLESContext
+ : public virtual IGLESRenderer
 {
 public:
   CAGLESBuffers();
@@ -230,7 +236,7 @@ protected:
 
 //-----------------------------------------------------------------------------
 class CAGLESCull
- : public virtual IGLESContext
+ : public virtual IGLESRenderer
 {
 public:
   CAGLESCull();
@@ -249,7 +255,7 @@ protected:
 #ifndef CONFIG_FPU
 //-----------------------------------------------------------------------------
 class CAGLESFloatToFxContext
- : public virtual IGLESContext
+ : public virtual IGLESRenderer
 {
 public:
   virtual ~CAGLESFloatToFxContext(){}
@@ -274,7 +280,7 @@ public:
 #else
 //-----------------------------------------------------------------------------
 class CAGLESFxToFloatContext
- : public virtual IGLESContext
+ : public virtual IGLESRenderer
 {
 public:
   virtual ~CAGLESFxToFloatContext(){}

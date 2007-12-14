@@ -68,7 +68,7 @@ CGBAGLESContext::glClear(GLbitfield mask)
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-IGLESContext *
+IGLESRenderer *
 getGLESContext()
 {
   return new CGBAGLESContext;

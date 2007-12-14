@@ -157,7 +157,7 @@ CPS2Surface::~CPS2Surface()
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-CPS22DRenderer::CPS22DRenderer(CSurface * surf)
+CPS22DRenderer::CPS22DRenderer(CSurface * surface)
  : bDataWaiting_(false)
 {
   INIT_GS_PACKET(GsCmdBuffer,50);
@@ -166,7 +166,7 @@ CPS22DRenderer::CPS22DRenderer(CSurface * surf)
   BEGIN_GS_PACKET(GsCmdBuffer);
   GIF_TAG_AD(GsCmdBuffer, 1, 0, 0, 0);
 
-  setSurface(surf);
+  setSurface(surface);
 }
 
 //---------------------------------------------------------------------------
@@ -176,9 +176,9 @@ CPS22DRenderer::~CPS22DRenderer()
 
 //---------------------------------------------------------------------------
 void
-CPS22DRenderer::setSurface(CSurface * surf)
+CPS22DRenderer::setSurface(CSurface * surface)
 {
-  pSurface_ = dynamic_cast<CPS2Surface *>(surf);
+  pSurface_ = dynamic_cast<CPS2Surface *>(surface);
 
   if(pSurface_ != NULL)
   {
