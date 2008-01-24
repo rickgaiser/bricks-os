@@ -49,7 +49,7 @@ CPartition::write(uint32_t startSector, uint32_t sectorCount, const void * data)
 void
 CFileSystem::addBlockDevice(IBlockDevice * device)
 {
-  printk("CFileSystem::addBlockDevice\n");
+  //printk("CFileSystem::addBlockDevice\n");
 
   // Check if device is already in the list
   for(unsigned int i(0); i < listBlockDevices_.size(); i++)
@@ -68,6 +68,8 @@ CFileSystem::addBlockDevice(IBlockDevice * device)
   for(unsigned int i(0); i < listFileSystemDrivers_.size(); i++)
     if(listFileSystemDrivers_[i]->init(device) == true)
       return;
+
+  printk("CFileSystem::addBlockDevice: No handler for blockdevice\n");
 }
 
 // -----------------------------------------------------------------------------
@@ -81,7 +83,7 @@ CFileSystem::remBlockDevice(IBlockDevice * device)
 void
 CFileSystem::addPartitionDriver(IPartitionDriver * driver)
 {
-  printk("CFileSystem::addPartitionDriver\n");
+  //printk("CFileSystem::addPartitionDriver\n");
 
   // Check if driver is already in the list
   for(unsigned int i(0); i < listPartitionDrivers_.size(); i++)
@@ -106,7 +108,7 @@ CFileSystem::remPartitionDriver(IPartitionDriver * driver)
 void
 CFileSystem::addFileSystemDriver(IFileSystemDriver * driver)
 {
-  printk("CFileSystem::addFileSystemDriver\n");
+  //printk("CFileSystem::addFileSystemDriver\n");
 
   // Check if driver is already in the list
   for(unsigned int i(0); i < listFileSystemDrivers_.size(); i++)
@@ -131,7 +133,7 @@ CFileSystem::remFileSystemDriver(IFileSystemDriver * driver)
 void
 CFileSystem::mount(IMountPoint * point, const char * location)
 {
-  printk("CFileSystem::mount\n");
+  printk("CFileSystem::mount(%s)\n", location);
 
   // Check if already mounted
   // ...

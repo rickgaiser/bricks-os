@@ -80,8 +80,9 @@ struct ata_identify_device
 
 
 // -----------------------------------------------------------------------------
-CATADriver::CATADriver(uint32_t iobase)
+CATADriver::CATADriver(uint32_t iobase, bool master)
  : iIOBase_(iobase)
+ , iMaster_(master ? ATA_DRV_HEAD_MASTER : ATA_DRV_HEAD_SLAVE)
 {
 }
 
@@ -108,8 +109,8 @@ CATADriver::init()
   // Wait untill device is ready
   while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_DRDY) == 0);
 
-  // Select master drive
-  outb(ATA_DRV_HEAD_MASTER, iIOBase_ + EARO_DRV_HEAD);
+  // Select master/slave drive
+  outb(iMaster_, iIOBase_ + EARO_DRV_HEAD);
 
   // Send "identify drive" command
   outb(ATA_COMMAND_IDENTIFY_DRIVE, iIOBase_ + EARO_COMMAND);
@@ -136,7 +137,9 @@ CATADriver::init()
   //data.fw_rev[7] = 0;
   //printk("HDD Firmware: %s\n", data.fw_rev);
   data.model[39] = 0;
-  printk("HDD Model: %s\n", data.model);
+  printk("ATA HDD Detected: %s\n", data.model);
+
+  CFileSystem::addBlockDevice(this);
   
   return 0;
 }
@@ -145,7 +148,7 @@ CATADriver::init()
 int
 CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
 {
-  printk("CATADriver::read(%d, %d)\n", startSector, sectorCount);
+  //printk("CATADriver::read(%d, %d)\n", startSector, sectorCount);
 
   //printk("CATADriver::init: waiting for busy\n");
   // Wait untill device is no longer busy
@@ -166,7 +169,7 @@ CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
   outb(0, iIOBase_ + EARO_LBA_MID);
   outb(0, iIOBase_ + EARO_LBA_HIGH);
   // Set device & LBA mode
-  outb(ATA_DRV_HEAD_MASTER | ATA_DRV_HEAD_LBA, iIOBase_ + EARO_DRV_HEAD);
+  outb(iMaster_ | ATA_DRV_HEAD_LBA, iIOBase_ + EARO_DRV_HEAD);
 
   // Send "read sectors" command
   outb(ATA_COMMAND_READ_SECTORS, iIOBase_ + EARO_COMMAND);

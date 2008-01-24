@@ -6,13 +6,13 @@
 #define CONFIG_FPU
 
 // Kernel interface
-#undef  CONFIG_DIRECT_ACCESS_KERNEL
-#undef  CONFIG_DIRECT_ACCESS_KERNEL_FUNC
+#define CONFIG_DIRECT_ACCESS_KERNEL
+#define CONFIG_DIRECT_ACCESS_KERNEL_FUNC
 
 // File System
-#undef  CONFIG_FILESYSTEM
-#undef  CONFIG_FS_FAT
-#undef  CONFIG_PD_IBM
+#define CONFIG_FILESYSTEM
+#define CONFIG_FS_FAT
+#define CONFIG_PD_IBM
 
 // Video configuration
 #undef  CONFIG_FRAMEBUFFER

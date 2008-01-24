@@ -60,7 +60,7 @@ CIBMPartitionDriver::init(IBlockDevice * device)
   int iPartitionCount(0);
   bool bRetVal(false);
 
-  printk("CIBMPartitionDriver::init\n");
+  //printk("CIBMPartitionDriver::init\n");
 
   // Read MBR (Master Boot Record) from disk
   if(device->read(0, 1, data) == 0)
@@ -81,17 +81,18 @@ CIBMPartitionDriver::init(IBlockDevice * device)
           bRetVal = true;
 
           // Add partition to file system
+          printk("CIBMPartitionDriver::init: valid partition found\n");
           CFileSystem::addBlockDevice(new CPartition(device, pTable->record[i].startSector, pTable->record[i].sectorCount));
         }
       }
     }
-    else
-      printk(" - ERROR: Invalid boot signature\n");
+    //else
+    //  printk(" - ERROR: Invalid boot signature\n");
   }
-  else
-    printk(" - ERROR: Unable to read sector\n");
+  //else
+  //  printk(" - ERROR: Unable to read sector\n");
 
-  printk("%d valid partitions located\n", iPartitionCount);
+  delete data;
 
   return bRetVal;
 }

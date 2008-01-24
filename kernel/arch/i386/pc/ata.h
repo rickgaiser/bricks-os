@@ -12,7 +12,7 @@ class CATADriver
  , public IInterruptServiceRoutine
 {
 public:
-  CATADriver(uint32_t iobase);
+  CATADriver(uint32_t iobase, bool master);
   virtual ~CATADriver();
 
   virtual int init();
@@ -26,6 +26,7 @@ public:
 
 private:
   uint32_t iIOBase_;
+  uint8_t iMaster_;
 };
 
 
