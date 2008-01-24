@@ -1,6 +1,14 @@
 #include "ata.h"
 #include "hal.h"
+#include "asm/cpu.h"
+#include "kernel/debug.h"
 
+
+// -----------------------------------------------------------------------------
+#define LE16(x)  (((x<<8)&0xff00)|((x>>8)&0x00ff))
+#define LE32(x)  (((x<<24)&0xff000000)|((x<<8)&0x00ff0000)|((x>>8)&0x0000ff00)|((x>>24)&0x000000ff))
+//#define LE16(x)  (x)
+//#define LE32(x)  (x)
 
 // -----------------------------------------------------------------------------
 // Default IBM-PC compatible base addresses:
@@ -110,29 +118,44 @@ CATADriver::init()
 
   printk("CATADriver::init: transferring data...\n");
   // Transfer data
+  uint16_t temp;
   for(int i(0); i < 256; i++)
-    ((uint16_t *)&data)[i] = inw(iIOBase_ + EARO_DATA);
+  {
+    temp = inw(iIOBase_ + EARO_DATA);
+    temp = LE16(temp);
+    ((uint16_t *)&data)[i] = temp;
+  }
 
   // Restore interrupts
   local_irq_restore(flags);
 
-  printk("HDD Model: %s\n", data.model);
+  //data.serial_no[19] = 0;
+  //printk("HDD Serial:   %s\n", data.serial_no);
+  //data.fw_rev[7] = 0;
+  //printk("HDD Firmware: %s\n", data.fw_rev);
+  data.model[39] = 0;
+  printk("HDD Model:    %s\n", data.model);
+  
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
 int
 CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
 {
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
 int
 CATADriver::write(uint32_t startSector, uint32_t sectorCount, const void * data)
 {
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
 int
 CATADriver::isr(int irq)
 {
+  return 0;
 }

@@ -3,6 +3,7 @@
 
 
 #include "inttypes.h"
+#include "kernel/fileSystem.h"
 #include "kernel/interrupt.h"
 
 

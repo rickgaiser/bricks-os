@@ -18,6 +18,10 @@
 #include "multiboot.h"
 #include "task.h"
 
+#ifdef CONFIG_FILESYSTEM
+#include "ata.h"
+#endif // #ifdef CONFIG_FILESYSTEM
+
 #include "string.h"
 
 
@@ -312,6 +316,11 @@ main(unsigned long magic, multiboot_info_t * mbi)
 
   // Enable Timer IRQ
   cIRQ.enable(0x20);
+  
+#ifdef CONFIG_FILESYSTEM
+  CATADriver ataDriver(0x1f0);
+  ataDriver.init();
+#endif // CONFIG_FILESYSTEM
 
   iMemKernel = iMemTop - iMemReserved - (freePageCount() * 4096);
   printk("Memory size:     %dKiB\n", iMemTop/1024);
