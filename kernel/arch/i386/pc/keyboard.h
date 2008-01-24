@@ -31,7 +31,7 @@ public:
   // Inherited from IInterruptServiceRoutine
   virtual int isr(int irq);
 
-  // Inherited from IDriver
+  // Inherited from IFileIO
   virtual int read(void * data, size_t size);
 
 private:

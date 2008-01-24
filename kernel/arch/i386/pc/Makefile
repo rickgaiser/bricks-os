@@ -18,4 +18,7 @@ OBJS            =\
                 video \
 
 
+OBJS-$(CONFIG_FILESYSTEM)          += ata
+
+
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel
