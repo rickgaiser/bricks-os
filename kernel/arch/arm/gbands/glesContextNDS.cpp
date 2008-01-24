@@ -497,7 +497,7 @@ CNDSGLESContext::updateFog()
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-IGLESContext *
+IGLESRenderer *
 getGLESContext()
 {
   return new CNDSGLESContext;
