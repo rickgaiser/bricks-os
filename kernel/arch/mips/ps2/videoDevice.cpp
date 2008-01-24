@@ -178,7 +178,7 @@ CPS22DRenderer::~CPS22DRenderer()
 void
 CPS22DRenderer::setSurface(CSurface * surface)
 {
-  pSurface_ = dynamic_cast<CPS2Surface *>(surface);
+  pSurface_ = (CPS2Surface *)surface;
 
   if(pSurface_ != NULL)
   {
@@ -440,7 +440,7 @@ CPS2VideoDevice::waitVSync()
 void
 CPS2VideoDevice::displaySurface(CSurface * surface)
 {
-  CPS2Surface * pNewSurface = dynamic_cast<CPS2Surface *>(surface);
+  CPS2Surface * pNewSurface = (CPS2Surface *)surface;
 
   // Always VSync, even if the frame is not new.
   if(vSync_ == true)

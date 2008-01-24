@@ -48,6 +48,7 @@ CFLAGS          =\
 CXXFLAGS        =\
                 -O2 \
                 -Wall \
+                -fno-rtti \
                 -fno-exceptions \
                 $(MY_DEFINITIONS) \
 
