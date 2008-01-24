@@ -1,6 +1,7 @@
 LIB             =tc
 OBJS            =\
                 ctype \
+                errno \
                 stdlib \
                 string \
 
