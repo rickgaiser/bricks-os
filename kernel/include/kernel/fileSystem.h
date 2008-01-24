@@ -58,13 +58,13 @@ class IMountPoint
 public:
   virtual ~IMountPoint(){}
 
-  virtual int open(void * fileStruct, const char * path,int flags,int mode) = 0;
+  virtual int open(void * fileStruct, const char * path, int flags, int mode) = 0;
   virtual int close(int fd) = 0;
-  virtual int write(int fd,const char * ptr,int len) = 0;
-  virtual int read(int fd,char * ptr,int len) = 0;
+  virtual int write(int fd, const char * ptr, int len) = 0;
+  virtual int read(int fd, char * ptr, int len) = 0;
 /*
-  virtual int seek(int fd,int pos,int dir) = 0;
-  virtual int fstat(int fd,struct stat * st) = 0;
+  virtual int seek(int fd, int pos, int dir) = 0;
+  virtual int fstat(int fd, struct stat * st) = 0;
   virtual int stat(const char * file, struct stat * st) = 0;
   virtual int link(const char * existing, const char * newLink) = 0;
   virtual int unlink(const char * name) = 0;

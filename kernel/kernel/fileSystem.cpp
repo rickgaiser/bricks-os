@@ -52,12 +52,14 @@ CFileSystem::addBlockDevice(IBlockDevice * device)
   printk("CFileSystem::addBlockDevice\n");
 
   // Check if device is already in the list
-  // ...
+  for(unsigned int i(0); i < listBlockDevices_.size(); i++)
+    if(listBlockDevices_[i] == device)
+      return;
 
   // Add device to the list
   listBlockDevices_.push_back(device);
 
-  // Check for partitions on the block device
+  // Check for (extended) partitions on the block device
   for(unsigned int i(0); i < listPartitionDrivers_.size(); i++)
     if(listPartitionDrivers_[i]->init(device) == true)
       return;
@@ -82,7 +84,9 @@ CFileSystem::addPartitionDriver(IPartitionDriver * driver)
   printk("CFileSystem::addPartitionDriver\n");
 
   // Check if driver is already in the list
-  // ...
+  for(unsigned int i(0); i < listPartitionDrivers_.size(); i++)
+    if(listPartitionDrivers_[i] == driver)
+      return;
 
   // Add driver to the list
   listPartitionDrivers_.push_back(driver);
@@ -105,7 +109,9 @@ CFileSystem::addFileSystemDriver(IFileSystemDriver * driver)
   printk("CFileSystem::addFileSystemDriver\n");
 
   // Check if driver is already in the list
-  // ...
+  for(unsigned int i(0); i < listFileSystemDrivers_.size(); i++)
+    if(listFileSystemDrivers_[i] == driver)
+      return;
 
   // Add driver to the list
   listFileSystemDrivers_.push_back(driver);

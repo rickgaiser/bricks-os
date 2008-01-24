@@ -23,6 +23,23 @@ struct SPartitionTable
   SPartitionTableRecord record[4];
 } __attribute__ ((__packed__));
 
+// -----------------------------------------------------------------------------
+enum EPartitionType
+{
+  ptEMPTY      = 0x00,
+  ptFAT12      = 0x01, // Up to 15MB
+  ptFAT16      = 0x04, // Up to 32MB
+  ptEXTENDED   = 0x05, // Within first 8GB of drive
+  ptFAT16_B    = 0x06, // Up to 2GB
+  ptNTFS       = 0x07,
+  ptFAT32      = 0x0b, // Up to 2TB
+  ptFAT32_B    = 0x0c, // Up to 2TB
+  ptFAT16_C    = 0x0e, // Up to 2GB
+  ptEXTENDED_B = 0x0f,
+  ptSWAP       = 0x82,
+  ptLINUX      = 0x83,
+};
+
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -45,26 +62,26 @@ CIBMPartitionDriver::init(IBlockDevice * device)
 
   printk("CIBMPartitionDriver::init\n");
 
+  // Read MBR (Master Boot Record) from disk
   if(device->read(0, 1, data) == true)
   {
+    // Validate if disk uses IBM partitioning
     if((data[0x1FE] == 0x55) && (data[0x1FF] == 0xAA))
     {
       SPartitionTable * pTable = (SPartitionTable *)(&data[0x1BE]);
 
+      // Check partition table (Max. 4 entries)
       for(int i(0); i < 4; i++)
       {
-        if((pTable->record[i].flag == 0x80) || (pTable->record[i].flag == 0x00))
+        // Validate flags (0x80 = bootable, 0x00 = not bootable)
+        if(((pTable->record[i].flag == 0x80) || (pTable->record[i].flag == 0x00)) && (pTable->record[i].startSector > 0))
         {
-          if(pTable->record[i].startSector > 0)
-          {
-            iPartitionCount++;
-            bRetVal = true;
+          // We have a valid partition entry
+          iPartitionCount++;
+          bRetVal = true;
 
-            // Add partition to file system
-            CFileSystem::addBlockDevice(new CPartition(device, pTable->record[i].startSector, pTable->record[i].sectorCount));
-          }
-          else
-            printk(" - ERROR: Invalid start sector\n");
+          // Add partition to file system
+          CFileSystem::addBlockDevice(new CPartition(device, pTable->record[i].startSector, pTable->record[i].sectorCount));
         }
       }
     }

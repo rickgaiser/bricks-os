@@ -180,6 +180,10 @@ CFATDriver::init(IBlockDevice * device)
       if(((pBPB16->BS_FilSysType[0] == 'F') && (pBPB16->BS_FilSysType[1] == 'A') && (pBPB16->BS_FilSysType[2] == 'T')) ||
          ((pBPB32->BS_FilSysType[0] == 'F') && (pBPB32->BS_FilSysType[1] == 'A') && (pBPB32->BS_FilSysType[2] == 'T')))
       {
+        // Mount to the filesystem
+        // FIXME: Where do we mount the volume?
+        CFileSystem::mount(new CFATMountPoint(device), "drive0");
+
         bRetVal = true;
       }
       else
@@ -191,6 +195,53 @@ CFATDriver::init(IBlockDevice * device)
   else
     printk(" - ERROR: Unable to read sector\n");
 
-
   return bRetVal;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+CFATMountPoint::CFATMountPoint(IBlockDevice * device)
+ : device_(device)
+{
+}
+
+// -----------------------------------------------------------------------------
+CFATMountPoint::~CFATMountPoint()
+{
+}
+
+// -----------------------------------------------------------------------------
+int
+CFATMountPoint::open(void * fileStruct, const char * path, int flags, int mode)
+{
+  printk("CFATMountPoint::open(%s)\n", path);
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+int
+CFATMountPoint::close(int fd)
+{
+  printk("CFATMountPoint::close\n");
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+int
+CFATMountPoint::write(int fd, const char * ptr, int len)
+{
+  printk("CFATMountPoint::write\n");
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+int
+CFATMountPoint::read(int fd, char * ptr, int len)
+{
+  printk("CFATMountPoint::read\n");
+
+  return 0;
 }
