@@ -51,9 +51,11 @@ enum EATARegisterOffsets
 #define ATA_ERROR_AMNF  0x01 // Address Mark Not Found
 
 #define ATA_DRV_HEAD_MASTER 0x00
-#define ATA_DRV_HEAD_SLAVE  0x00
+#define ATA_DRV_HEAD_SLAVE  0x10
+#define ATA_DRV_HEAD_LBA    0x40
 
-#define ATA_COMMAND_IDDRV 0xec // Identify Drive
+#define ATA_COMMAND_READ_SECTORS   0x20
+#define ATA_COMMAND_IDENTIFY_DRIVE 0xec
 
 #pragma pack(1)
 struct ata_identify_device
@@ -94,7 +96,7 @@ CATADriver::init()
 {
   ata_identify_device data;
 
-  printk("CATADriver::init: waiting for busy\n");
+  //printk("CATADriver::init: waiting for busy\n");
   // Wait untill device is no longer busy
   while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_BSY) != 0);
 
@@ -102,7 +104,7 @@ CATADriver::init()
   unsigned long flags = local_save_flags();
   local_irq_disable();
 
-  printk("CATADriver::init: waiting for ready\n");
+  //printk("CATADriver::init: waiting for ready\n");
   // Wait untill device is ready
   while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_DRDY) == 0);
 
@@ -110,13 +112,13 @@ CATADriver::init()
   outb(ATA_DRV_HEAD_MASTER, iIOBase_ + EARO_DRV_HEAD);
 
   // Send "identify drive" command
-  outb(ATA_COMMAND_IDDRV, iIOBase_ + EARO_COMMAND);
+  outb(ATA_COMMAND_IDENTIFY_DRIVE, iIOBase_ + EARO_COMMAND);
 
-  printk("CATADriver::init: waiting for data\n");
+  //printk("CATADriver::init: waiting for data\n");
   // Wait for data
   while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_DRQ) == 0);
 
-  printk("CATADriver::init: transferring data...\n");
+  //printk("CATADriver::init: transferring data...\n");
   // Transfer data
   uint16_t temp;
   for(int i(0); i < 256; i++)
@@ -130,11 +132,11 @@ CATADriver::init()
   local_irq_restore(flags);
 
   //data.serial_no[19] = 0;
-  //printk("HDD Serial:   %s\n", data.serial_no);
+  //printk("HDD Serial: %s\n", data.serial_no);
   //data.fw_rev[7] = 0;
   //printk("HDD Firmware: %s\n", data.fw_rev);
   data.model[39] = 0;
-  printk("HDD Model:    %s\n", data.model);
+  printk("HDD Model: %s\n", data.model);
   
   return 0;
 }
@@ -143,6 +145,49 @@ CATADriver::init()
 int
 CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
 {
+  printk("CATADriver::read(%d, %d)\n", startSector, sectorCount);
+
+  //printk("CATADriver::init: waiting for busy\n");
+  // Wait untill device is no longer busy
+  while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_BSY) != 0);
+
+  // Disable interrupts
+  unsigned long flags = local_save_flags();
+  local_irq_disable();
+
+  //printk("CATADriver::init: waiting for ready\n");
+  // Wait untill device is ready
+  while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_DRDY) == 0);
+
+  // Set sector count
+  outb(sectorCount, iIOBase_ + EARO_SECTOR_CNT);
+  // Set LBA addr
+  outb(startSector, iIOBase_ + EARO_LBA_LOW);
+  outb(0, iIOBase_ + EARO_LBA_MID);
+  outb(0, iIOBase_ + EARO_LBA_HIGH);
+  // Set device & LBA mode
+  outb(ATA_DRV_HEAD_MASTER | ATA_DRV_HEAD_LBA, iIOBase_ + EARO_DRV_HEAD);
+
+  // Send "read sectors" command
+  outb(ATA_COMMAND_READ_SECTORS, iIOBase_ + EARO_COMMAND);
+
+  //printk("CATADriver::init: waiting for data\n");
+  // Wait for data
+  while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_DRQ) == 0);
+
+  //printk("CATADriver::init: transferring data...\n");
+  // Transfer data
+  uint16_t temp;
+  for(unsigned int i(0); i < (sectorCount * 256); i++)
+  {
+    temp = inw(iIOBase_ + EARO_DATA);
+    //temp = LE16(temp);
+    ((uint16_t *)data)[i] = temp;
+  }
+
+  // Restore interrupts
+  local_irq_restore(flags);
+
   return 0;
 }
 
@@ -150,7 +195,9 @@ CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
 int
 CATADriver::write(uint32_t startSector, uint32_t sectorCount, const void * data)
 {
-  return 0;
+  printk("CATADriver::write(%d, %d)\n", startSector, sectorCount);
+
+  return -1;
 }
 
 // -----------------------------------------------------------------------------

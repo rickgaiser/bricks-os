@@ -167,7 +167,7 @@ CFATDriver::init(IBlockDevice * device)
 
   printk("CFATDriver::init\n");
 
-  if(device->read(0, 1, data) == true)
+  if(device->read(0, 1, data) == 0)
   {
 //    SBPB   * pBPB   = (SBPB   *)(&data[0]);
     SBPB16 * pBPB16 = (SBPB16 *)(&data[36]);

@@ -6,6 +6,7 @@
 #include "kernel/syscall.h"
 #include "kernel/task.h"
 
+#include "asm/arch/config.h"
 #include "asm/irq.h"
 #include "asm/cpu.h"
 
@@ -19,6 +20,9 @@
 #include "task.h"
 
 #ifdef CONFIG_FILESYSTEM
+#include "kernel/fileSystem.h"
+#include "kernel/ibmPartitionDriver.h"
+#include "kernel/fatDriver.h"
 #include "ata.h"
 #endif // #ifdef CONFIG_FILESYSTEM
 
@@ -318,8 +322,14 @@ main(unsigned long magic, multiboot_info_t * mbi)
   cIRQ.enable(0x20);
   
 #ifdef CONFIG_FILESYSTEM
+  CIBMPartitionDriver ibmPartitionDriver;
+  CFATDriver fatDriver;
   CATADriver ataDriver(0x1f0);
+
+  CFileSystem::addPartitionDriver(&ibmPartitionDriver);
+  CFileSystem::addFileSystemDriver(&fatDriver);
   ataDriver.init();
+  CFileSystem::addBlockDevice(&ataDriver);
 #endif // CONFIG_FILESYSTEM
 
   iMemKernel = iMemTop - iMemReserved - (freePageCount() * 4096);

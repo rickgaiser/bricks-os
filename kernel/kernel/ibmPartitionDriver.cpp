@@ -63,7 +63,7 @@ CIBMPartitionDriver::init(IBlockDevice * device)
   printk("CIBMPartitionDriver::init\n");
 
   // Read MBR (Master Boot Record) from disk
-  if(device->read(0, 1, data) == true)
+  if(device->read(0, 1, data) == 0)
   {
     // Validate if disk uses IBM partitioning
     if((data[0x1FE] == 0x55) && (data[0x1FF] == 0xAA))
