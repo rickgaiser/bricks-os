@@ -1,57 +1,13 @@
 #include "kernel/debug.h"
 #include "kernel/fatDriver.h"
+#include "stddef.h"
+#include "string.h"
 
 
 //#define LE16(x)  (((x<<8)&0xff00)|((x>>8)&0x00ff))
 //#define LE32(x)  (((x<<24)&0xff000000)|((x<<8)&0x00ff0000)|((x>>8)&0x0000ff00)|((x>>24)&0x000000ff))
 #define LE16(x)  (x)
 #define LE32(x)  (x)
-
-
-struct SBPB
-{
-  uint8_t  BS_jmpBoot[3];
-  char     BS_OEMName[8];
-  uint16_t BPB_BytsPerSec;
-  uint8_t  BPB_SecPerClus;
-  uint16_t BPB_RsvdSecCnt;
-  uint8_t  BPB_NumFATs;
-  uint16_t BPB_RootEntCnt;
-  uint16_t BPB_TotSec16;
-  uint8_t  BPB_Media;
-  uint16_t BPB_FATSz16;
-  uint16_t BPB_SecPerTrk;
-  uint16_t BPB_NumHeads;
-  uint32_t BPB_HiddSec;
-  uint32_t BPB_TotSec32;
-} __attribute__ ((__packed__));
-
-struct SBPB16
-{
-  uint8_t  BS_DrvNum;
-  uint8_t  BS_Reserved1;
-  uint8_t  BS_BootSig;
-  uint32_t BS_VolID;
-  char     BS_VolLab[11];
-  char     BS_FilSysType[8];
-} __attribute__ ((__packed__));
-
-struct SBPB32
-{
-  uint32_t BPB_FATSz32;
-  uint16_t BPB_ExtFlags;
-  uint16_t BPB_FSVer;
-  uint32_t BPB_RootClus;
-  uint16_t BPB_FSInfo;
-  uint16_t BPB_BkBootSec;
-  uint8_t  BPB_Reserved[12];
-  uint8_t  BS_DrvNum;
-  uint8_t  BS_Reserved1;
-  uint8_t  BS_BootSig;
-  uint32_t BS_VolID;
-  char     BS_VolLab[11];
-  char     BS_FilSysType[8];
-} __attribute__ ((__packed__));
 
 
 // -----------------------------------------------------------------------------
@@ -76,7 +32,7 @@ CFATDriver::init(IBlockDevice * device)
 
   if(device->read(0, 1, data) == 0)
   {
-    SBPB   * pBPB   = (SBPB   *)(&data[0]);
+    //SBPB   * pBPB   = (SBPB   *)(&data[0]);
     SBPB16 * pBPB16 = (SBPB16 *)(&data[36]);
     SBPB32 * pBPB32 = (SBPB32 *)(&data[36]);
 
@@ -87,48 +43,15 @@ CFATDriver::init(IBlockDevice * device)
       if(((pBPB16->BS_FilSysType[0] == 'F') && (pBPB16->BS_FilSysType[1] == 'A') && (pBPB16->BS_FilSysType[2] == 'T')) ||
          ((pBPB32->BS_FilSysType[0] == 'F') && (pBPB32->BS_FilSysType[1] == 'A') && (pBPB32->BS_FilSysType[2] == 'T')))
       {
-        uint32_t iClusterCount;
-        uint32_t iRootDirSectors;
-        uint32_t iDataSectors;        uint32_t iFATSz;
-        uint32_t iTotSec;
-
-        iRootDirSectors = ((pBPB->BPB_RootEntCnt * 32) + (pBPB->BPB_BytsPerSec - 1)) / pBPB->BPB_BytsPerSec;
-        if(pBPB->BPB_FATSz16 != 0)
-          iFATSz = pBPB->BPB_FATSz16;
-        else
-          iFATSz = LE32(pBPB32->BPB_FATSz32);
-        if(pBPB->BPB_TotSec16 != 0)
-          iTotSec = pBPB->BPB_TotSec16;
-        else          iTotSec = pBPB->BPB_TotSec32;
-        iDataSectors = iTotSec - (pBPB->BPB_RsvdSecCnt + (pBPB->BPB_NumFATs * iFATSz) + iRootDirSectors);
-        iClusterCount = iDataSectors / pBPB->BPB_SecPerClus;
-
-        if(iClusterCount < 4085)        {
-          pBPB16->BS_VolLab[10] = 0;
-          printk("CFATDriver::init: valid FAT12 volume found (%s)\n", pBPB16->BS_VolLab);
-        }
-        else if(iClusterCount < 65525)        {
-          pBPB16->BS_VolLab[10] = 0;
-          printk("CFATDriver::init: valid FAT16 volume found (%s)\n", pBPB16->BS_VolLab);
-        }
-        else        {
-          pBPB32->BS_VolLab[10] = 0;
-          printk("CFATDriver::init: valid FAT32 volume found (%s)\n", pBPB32->BS_VolLab);
-        }
-
         // Mount to the filesystem
         // FIXME: Where do we mount the volume?
-        CFileSystem::mount(new CFATMountPoint(device), "drive0");
+        CFileSystem::mount(new CFATVolume(device), "drive0");
         bRetVal = true;
       }
-      //else
-      //  printk(" - ERROR: \"FAT\" string not found\n");
     }
-    //else
-    //  printk(" - ERROR: Invalid boot signature\n");
   }
-  //else
-  //  printk(" - ERROR: Unable to read sector\n");
+  else
+    printk("CFATDriver::init: ERROR: Unable to read boot sector\n");
 
   delete data;
 
@@ -137,48 +60,130 @@ CFATDriver::init(IBlockDevice * device)
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-CFATMountPoint::CFATMountPoint(IBlockDevice * device)
+CFATVolume::CFATVolume(IBlockDevice * device)
  : device_(device)
 {
+  pBootSector_ = new uint8_t[512];
+
+  if(device->read(0, 1, pBootSector_) == 0)
+  {
+    pBPB_   = (SBPB   *)(&pBootSector_[0]);
+    pBPB16_ = (SBPB16 *)(&pBootSector_[36]);
+    pBPB32_ = (SBPB32 *)(&pBootSector_[36]);
+
+    // Validate boot signature
+    if((pBootSector_[0x1FE] == 0x55) && (pBootSector_[0x1FF] == 0xAA))
+    {
+      // Validate "FAT" string
+      if(((pBPB16_->BS_FilSysType[0] == 'F') && (pBPB16_->BS_FilSysType[1] == 'A') && (pBPB16_->BS_FilSysType[2] == 'T')) ||
+         ((pBPB32_->BS_FilSysType[0] == 'F') && (pBPB32_->BS_FilSysType[1] == 'A') && (pBPB32_->BS_FilSysType[2] == 'T')))
+      {
+        // Root directory sectors
+        iRootDirSectors_ = ((pBPB_->BPB_RootEntCnt * 32) + (pBPB_->BPB_BytsPerSec - 1)) / pBPB_->BPB_BytsPerSec;
+        // FAT size
+        if(pBPB_->BPB_FATSz16 != 0)
+          iFATSz_ = pBPB_->BPB_FATSz16;
+        else
+          iFATSz_ = pBPB32_->BPB_FATSz32;
+        // First data sector
+        iFirstDataSector_ = pBPB_->BPB_RsvdSecCnt + (pBPB_->BPB_NumFATs * iFATSz_) + iRootDirSectors_;
+        // Total sectors
+        if(pBPB_->BPB_TotSec16 != 0)
+          iTotSec_ = pBPB_->BPB_TotSec16;
+        else
+          iTotSec_ = pBPB_->BPB_TotSec32;
+        // Data sectors
+        iDataSectors_ = iTotSec_ - (pBPB_->BPB_RsvdSecCnt + (pBPB_->BPB_NumFATs * iFATSz_) + iRootDirSectors_);
+        // Total clusters
+        iClusterCount_ = iDataSectors_ / pBPB_->BPB_SecPerClus;
+
+        char volumeName[12];
+        volumeName[11] = 0;
+        if(iClusterCount_ < 4085)
+        {
+          memcpy(volumeName, pBPB16_->BS_VolLab, 11);
+          printk("CFATVolume::CFATVolume: FAT12 volume found \"%s\"\n", volumeName);
+        }
+        else if(iClusterCount_ < 65525)
+        {
+          memcpy(volumeName, pBPB16_->BS_VolLab, 11);
+          printk("CFATVolume::CFATVolume: FAT16 volume found \"%s\"\n", volumeName);
+        }
+        else
+        {
+          memcpy(volumeName, pBPB32_->BS_VolLab, 11);
+          printk("CFATVolume::CFATVolume: FAT32 volume found \"%s\"\n", volumeName);
+        }
+
+        // TEST: Print root directory
+        SFAT32Entry * entry = (SFAT32Entry *)new uint8_t[512];
+        if(device->read(iFirstDataSector_, 1, entry) == 0)
+        {
+          for(unsigned int i(0); i < (512/sizeof(SFAT32Entry)); i++)
+          {
+            if(entry[i].name[0] == 0)
+              break;
+
+            if(entry[i].name[0] != 0xe5)
+            {
+              char entryName[12];
+              entryName[11] = 0;
+              memcpy(entryName, entry[i].name, 11);
+              printk("Entry: %s\n", entryName);
+            }
+          }
+        }
+        delete entry;
+      }
+      else
+        printk("CFATVolume::CFATVolume: ERROR: \"FAT\" string not found\n");
+    }
+    else
+      printk("CFATVolume::CFATVolume: ERROR: Invalid boot signature\n");
+  }
+  else
+    printk("CFATVolume::CFATVolume: ERROR: Unable to read sector\n");
 }
 
 // -----------------------------------------------------------------------------
-CFATMountPoint::~CFATMountPoint()
+CFATVolume::~CFATVolume()
 {
+  if(pBootSector_ != NULL)
+    delete pBootSector_;
 }
 
 // -----------------------------------------------------------------------------
 int
-CFATMountPoint::open(void * fileStruct, const char * path, int flags, int mode)
+CFATVolume::open(void * fileStruct, const char * path, int flags, int mode)
 {
-  printk("CFATMountPoint::open(%s)\n", path);
+  printk("CFATVolume::open(%s)\n", path);
 
   return 0;
 }
 
 // -----------------------------------------------------------------------------
 int
-CFATMountPoint::close(int fd)
+CFATVolume::close(int fd)
 {
-  printk("CFATMountPoint::close\n");
+  printk("CFATVolume::close\n");
 
   return 0;
 }
 
 // -----------------------------------------------------------------------------
 int
-CFATMountPoint::write(int fd, const char * ptr, int len)
+CFATVolume::write(int fd, const char * ptr, int len)
 {
-  printk("CFATMountPoint::write\n");
+  printk("CFATVolume::write\n");
 
   return 0;
 }
 
 // -----------------------------------------------------------------------------
 int
-CFATMountPoint::read(int fd, char * ptr, int len)
+CFATVolume::read(int fd, char * ptr, int len)
 {
-  printk("CFATMountPoint::read\n");
+  printk("CFATVolume::read\n");
 
   return 0;
 }
