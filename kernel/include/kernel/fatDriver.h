@@ -89,10 +89,15 @@ public:
   CFATVolume(IBlockDevice * device);
   virtual ~CFATVolume();
 
-  virtual int open(void * fileStruct, const char * path, int flags, int mode);
+  virtual int open(const char * path, int flags, int mode);
   virtual int close(int fd);
-  virtual int write(int fd, const char * ptr, int len);
   virtual int read(int fd, char * ptr, int len);
+  virtual int write(int fd, const char * ptr, int len);
+
+  virtual DIR_ITER * diropen(const char * path);
+  virtual int dirreset(DIR_ITER * dirState);
+  virtual int dirnext(DIR_ITER * dirState, char * filename, struct stat * filestat);
+  virtual int dirclose(DIR_ITER * dirState);
 
 private:
   IBlockDevice * device_;

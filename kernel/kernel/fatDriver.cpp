@@ -65,7 +65,7 @@ CFATVolume::CFATVolume(IBlockDevice * device)
 {
   pBootSector_ = new uint8_t[512];
 
-  if(device->read(0, 1, pBootSector_) == 0)
+  if(device_->read(0, 1, pBootSector_) == 0)
   {
     pBPB_   = (SBPB   *)(&pBootSector_[0]);
     pBPB16_ = (SBPB16 *)(&pBootSector_[36]);
@@ -118,31 +118,6 @@ CFATVolume::CFATVolume(IBlockDevice * device)
         }
         printk(" - Name: \"%s\"\n", volumeName);
         printk(" - Size: %dMiB\n", (iTotSec_ * pBPB_->BPB_BytsPerSec) / (1024*1024));
-
-        // TEST: Print root directory
-        printk("Root directory:\n", iRootDirSec_, iRootDirSectors_);
-        SFATEntry * entry = (SFATEntry *)new uint8_t[512];
-        if(device->read(iRootDirSec_, 1, entry) == 0)
-        {
-          for(unsigned int i(0); i < (512/sizeof(SFATEntry)); i++)
-          {
-            // End of directory
-            if(entry[i].name[0] == 0)
-              break;
-
-            // Not an empty entry
-            if(entry[i].name[0] != 0xe5)
-            {
-              char entryName[12];
-              entryName[11] = 0;
-              memcpy(entryName, entry[i].name, 11);
-              printk(" - %s\n", entryName);
-            }
-          }
-        }
-        else
-          printk("CFATVolume::CFATVolume: ERROR: Unable to read root directory sector\n");
-        delete entry;
       }
       else
         printk("CFATVolume::CFATVolume: ERROR: \"FAT\" string not found\n");
@@ -163,11 +138,11 @@ CFATVolume::~CFATVolume()
 
 // -----------------------------------------------------------------------------
 int
-CFATVolume::open(void * fileStruct, const char * path, int flags, int mode)
+CFATVolume::open(const char * path, int flags, int mode)
 {
   printk("CFATVolume::open(%s)\n", path);
 
-  return 0;
+  return -1;
 }
 
 // -----------------------------------------------------------------------------
@@ -176,16 +151,7 @@ CFATVolume::close(int fd)
 {
   printk("CFATVolume::close\n");
 
-  return 0;
-}
-
-// -----------------------------------------------------------------------------
-int
-CFATVolume::write(int fd, const char * ptr, int len)
-{
-  printk("CFATVolume::write\n");
-
-  return 0;
+  return -1;
 }
 
 // -----------------------------------------------------------------------------
@@ -194,5 +160,77 @@ CFATVolume::read(int fd, char * ptr, int len)
 {
   printk("CFATVolume::read\n");
 
-  return 0;
+  return -1;
+}
+
+// -----------------------------------------------------------------------------
+int
+CFATVolume::write(int fd, const char * ptr, int len)
+{
+  printk("CFATVolume::write\n");
+
+  return -1;
+}
+
+// -----------------------------------------------------------------------------
+DIR_ITER *
+CFATVolume::diropen(const char * path)
+{
+  printk("CFATVolume::diropen(%s)\n", path);
+
+  /*
+  // TEST: Print root directory
+  printk("Root directory:\n", iRootDirSec_, iRootDirSectors_);
+  SFATEntry * entry = (SFATEntry *)new uint8_t[512];
+  if(device_->read(iRootDirSec_, 1, entry) == 0)
+  {
+    for(unsigned int i(0); i < (512/sizeof(SFATEntry)); i++)
+    {
+      // End of directory
+      if(entry[i].name[0] == 0)
+        break;
+
+      // Not an empty entry
+      if(entry[i].name[0] != 0xe5)
+      {
+        char entryName[12];
+        entryName[11] = 0;
+        memcpy(entryName, entry[i].name, 11);
+        printk(" - %s\n", entryName);
+      }
+    }
+  }
+  else
+    printk("CFATVolume::CFATVolume: ERROR: Unable to read root directory sector\n");
+  delete entry;
+  */
+
+  return NULL;
+}
+
+// -----------------------------------------------------------------------------
+int
+CFATVolume::dirreset(DIR_ITER * dirState)
+{
+  printk("CFATVolume::dirreset\n");
+
+  return -1;
+}
+
+// -----------------------------------------------------------------------------
+int
+CFATVolume::dirnext(DIR_ITER * dirState, char * filename, struct stat * filestat)
+{
+  printk("CFATVolume::dirnext\n");
+
+  return -1;
+}
+
+// -----------------------------------------------------------------------------
+int
+CFATVolume::dirclose(DIR_ITER * dirState)
+{
+  printk("CFATVolume::dirclose\n");
+
+  return -1;
 }
