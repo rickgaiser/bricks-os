@@ -165,9 +165,9 @@ CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
   // Set sector count
   outb(sectorCount, iIOBase_ + EARO_SECTOR_CNT);
   // Set LBA addr
-  outb(startSector, iIOBase_ + EARO_LBA_LOW);
-  outb(0, iIOBase_ + EARO_LBA_MID);
-  outb(0, iIOBase_ + EARO_LBA_HIGH);
+  outb((startSector & 0x000000ff)      , iIOBase_ + EARO_LBA_LOW);
+  outb((startSector & 0x0000ff00) >>  8, iIOBase_ + EARO_LBA_MID);
+  outb((startSector & 0x00ff0000) >> 16, iIOBase_ + EARO_LBA_HIGH);
   // Set device & LBA mode
   outb(iMaster_ | ATA_DRV_HEAD_LBA, iIOBase_ + EARO_DRV_HEAD);
 

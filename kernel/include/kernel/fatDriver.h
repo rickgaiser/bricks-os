@@ -54,7 +54,7 @@ struct SBPB32
 } __attribute__ ((__packed__));
 
 // -----------------------------------------------------------------------------
-struct SFAT32Entry
+struct SFATEntry
 {
   uint8_t  name[11];
   uint8_t  attr;
@@ -108,6 +108,7 @@ private:
   uint32_t iFATSz_;
   uint32_t iTotSec_;
   uint32_t iFirstDataSector_;
+  uint32_t iRootDirSec_;
 };
 
 

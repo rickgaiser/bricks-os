@@ -78,7 +78,7 @@ CFATVolume::CFATVolume(IBlockDevice * device)
       if(((pBPB16_->BS_FilSysType[0] == 'F') && (pBPB16_->BS_FilSysType[1] == 'A') && (pBPB16_->BS_FilSysType[2] == 'T')) ||
          ((pBPB32_->BS_FilSysType[0] == 'F') && (pBPB32_->BS_FilSysType[1] == 'A') && (pBPB32_->BS_FilSysType[2] == 'T')))
       {
-        // Root directory sectors
+        // Root directory sector count
         iRootDirSectors_ = ((pBPB_->BPB_RootEntCnt * 32) + (pBPB_->BPB_BytsPerSec - 1)) / pBPB_->BPB_BytsPerSec;
         // FAT size
         if(pBPB_->BPB_FATSz16 != 0)
@@ -96,43 +96,52 @@ CFATVolume::CFATVolume(IBlockDevice * device)
         iDataSectors_ = iTotSec_ - (pBPB_->BPB_RsvdSecCnt + (pBPB_->BPB_NumFATs * iFATSz_) + iRootDirSectors_);
         // Total clusters
         iClusterCount_ = iDataSectors_ / pBPB_->BPB_SecPerClus;
+        // Root directory start sector
+        iRootDirSec_ = pBPB_->BPB_RsvdSecCnt + (pBPB_->BPB_NumFATs * pBPB_->BPB_FATSz16);
 
         char volumeName[12];
         volumeName[11] = 0;
         if(iClusterCount_ < 4085)
         {
           memcpy(volumeName, pBPB16_->BS_VolLab, 11);
-          printk("CFATVolume::CFATVolume: FAT12 volume found \"%s\"\n", volumeName);
+          printk("CFATVolume::CFATVolume: FAT12 volume found:\n");
         }
         else if(iClusterCount_ < 65525)
         {
           memcpy(volumeName, pBPB16_->BS_VolLab, 11);
-          printk("CFATVolume::CFATVolume: FAT16 volume found \"%s\"\n", volumeName);
+          printk("CFATVolume::CFATVolume: FAT16 volume found:\n");
         }
         else
         {
           memcpy(volumeName, pBPB32_->BS_VolLab, 11);
-          printk("CFATVolume::CFATVolume: FAT32 volume found \"%s\"\n", volumeName);
+          printk("CFATVolume::CFATVolume: FAT32 volume found:\n");
         }
+        printk(" - Name: \"%s\"\n", volumeName);
+        printk(" - Size: %dMiB\n", (iTotSec_ * pBPB_->BPB_BytsPerSec) / (1024*1024));
 
         // TEST: Print root directory
-        SFAT32Entry * entry = (SFAT32Entry *)new uint8_t[512];
-        if(device->read(iFirstDataSector_, 1, entry) == 0)
+        printk("Root directory:\n", iRootDirSec_, iRootDirSectors_);
+        SFATEntry * entry = (SFATEntry *)new uint8_t[512];
+        if(device->read(iRootDirSec_, 1, entry) == 0)
         {
-          for(unsigned int i(0); i < (512/sizeof(SFAT32Entry)); i++)
+          for(unsigned int i(0); i < (512/sizeof(SFATEntry)); i++)
           {
+            // End of directory
             if(entry[i].name[0] == 0)
               break;
 
+            // Not an empty entry
             if(entry[i].name[0] != 0xe5)
             {
               char entryName[12];
               entryName[11] = 0;
               memcpy(entryName, entry[i].name, 11);
-              printk("Entry: %s\n", entryName);
+              printk(" - %s\n", entryName);
             }
           }
         }
+        else
+          printk("CFATVolume::CFATVolume: ERROR: Unable to read root directory sector\n");
         delete entry;
       }
       else
