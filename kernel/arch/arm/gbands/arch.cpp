@@ -6,6 +6,7 @@
 #include "asm/cpu.h"
 #include "asm/irq.h"
 #include "timer.h"
+#include "task.h"
 
 #ifdef CONFIG_GBA_CONSOLE
 #include "video.h"
@@ -122,10 +123,7 @@ main(int, char *[])
   pVideoDevice = new CGBAVideoDevice;
 #endif // CONFIG_FRAMEBUFFER
 
-  // Create task structure
-  CTask * pTask = new CTask(0, 0, 0);
-  pTask->thr_->state(TS_RUNNING);
-
+  CGBANDSThread::init();
   setTimerFrequency(0, 100.0f);
   cIRQ.enable(3);
 

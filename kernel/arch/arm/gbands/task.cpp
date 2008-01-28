@@ -1,42 +1,61 @@
 #include "task.h"
 #include "kernel/debug.h"
 #include "asm/cpu.h"
-#include "asm/irq.h"
 
 
 extern pt_regs * current_thread;   // Return state for the current thread, only valid in interrupt
 extern "C" void kill_thread();     // Return function for thread, kills the current thread
 extern "C" void runJump(pt_regs * old_thread, pt_regs * new_thread);
+CTask         * pMainTask;
+CGBANDSThread * pMainThread;
 
+
+// -----------------------------------------------------------------------------
+void
+CGBANDSThread::init()
+{
+  pMainTask   = new CTask(0, 0, 0);
+  pMainThread = (CGBANDSThread *)pMainTask->thr_;
+
+  current_thread = &(pMainThread->threadState_);
+
+  // Add task to taskmanagers list
+  pMainThread->state(TS_RUNNING);
+}
 
 // -----------------------------------------------------------------------------
 CGBANDSThread::CGBANDSThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
  : CThread(task)
+ , pStack_(NULL)
+ , pSvcStack_(NULL)
 {
-  pThreadState_ = new pt_regs;
+  // Main thread?
+  if(entry != NULL)
+  {
+    // Set default stack values
+    if(stack == 0)    stack    = 512;
+    if(svcstack == 0) svcstack = 512;
 
-  if(stack != 0)
+    // Allocate stacks
     pStack_ = new uint32_t[stack];
-  if(svcstack != 0)
     pSvcStack_ = new uint32_t[svcstack];
 
-  pThreadState_->pc     = reinterpret_cast<uint32_t>(entry) + 8;
-  pThreadState_->sp     = reinterpret_cast<uint32_t>(pStack_) + stack;
-  pThreadState_->sp_svc = reinterpret_cast<uint32_t>(pSvcStack_) + svcstack;
-  pThreadState_->r0     = argc;
-  pThreadState_->r1     = reinterpret_cast<uint32_t>(argv);
-  pThreadState_->lr     = reinterpret_cast<uint32_t>(kill);
-  pThreadState_->cpsr   = CPU_MODE_SYSTEM | CPU_MODE_THUMB;
+    threadState_.pc     = reinterpret_cast<uint32_t>(entry) + 8;
+    threadState_.sp     = reinterpret_cast<uint32_t>(pStack_) + stack;
+    threadState_.sp_svc = reinterpret_cast<uint32_t>(pSvcStack_) + svcstack;
+    threadState_.r0     = argc;
+    threadState_.r1     = reinterpret_cast<uint32_t>(argv);
+    threadState_.lr     = reinterpret_cast<uint32_t>(kill);
+    threadState_.cpsr   = CPU_MODE_SYSTEM | CPU_MODE_THUMB;
 
-  if(current_thread == 0)
-    current_thread = pThreadState_;
+    if(current_thread == 0)
+      current_thread = &threadState_;
+  }
 }
 
 // -----------------------------------------------------------------------------
 CGBANDSThread::~CGBANDSThread()
 {
-  if(pThreadState_ != 0)
-    delete pThreadState_;
   if(pStack_ != 0)
     delete pStack_;
   if(pSvcStack_ != 0)
@@ -48,7 +67,7 @@ void
 CGBANDSThread::runJump()
 {
   // Store state in "current_thread" and jump to "pThreadState_"
-  ::runJump(current_thread, pThreadState_);
+  ::runJump(current_thread, &threadState_);
 }
 
 // -----------------------------------------------------------------------------
@@ -56,7 +75,7 @@ void
 CGBANDSThread::runReturn()
 {
   // Switch return stack to the stack of this task.
-  current_thread = pThreadState_;
+  current_thread = &threadState_;
 }
 
 // -----------------------------------------------------------------------------

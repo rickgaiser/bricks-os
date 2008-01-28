@@ -293,7 +293,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
   // Setup Paging
   // Setup Task Management
   // ---------------------
-  init_task();
+  CPCThread::init();
   printk("Paging Enabled!\n");
 /*
   // ------------
@@ -320,7 +320,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
 
   // Enable Timer IRQ
   cIRQ.enable(0x20);
-  
+
 #ifdef CONFIG_FILESYSTEM
   CIBMPartitionDriver ibmPartitionDriver;
   CFATDriver fatDriver;

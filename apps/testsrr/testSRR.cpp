@@ -101,14 +101,14 @@ testSRR()
 void
 testSleep()
 {
-  printk(" - Sleep 5x 1s:");
-  for(int i(0); i < 5; i++)
+  printk(" - Sleep 3x 1s");
+  for(int i(0); i < 3; i++)
   {
     sleep(1);
     printk(".");
   }
-  printk("done\n");
-
+  printk("OK\n");
+/*
   printk(" - Sleep 5x 1000000us:");
   for(int i(0); i < 5; i++)
   {
@@ -116,6 +116,7 @@ testSleep()
     printk(".");
   }
   printk("done\n");
+*/
 }
 
 //---------------------------------------------------------------------------
@@ -123,7 +124,13 @@ testSleep()
 void *
 testThread(void * arg)
 {
-  printk(" - Test Thread running\n");
+  printk("OK\n");
+
+  printk(" - Thread arg...");
+  if(arg == (void *)0x21436587)
+    printk("OK\n");
+  else
+    printk("ERROR\n");
 
   testSleep();
   testSRR();
@@ -142,12 +149,10 @@ appMain(int argc, char * argv[])
 
   // Start test thread since we're called from the kernel thread, and
   // sleeping here will couse the system to die.
-  printk(" - Starting test thread: ");
+  printk(" - Thread Creation...");
   pthread_t thr;
-  if(pthread_create(&thr, 0, testThread, 0) == 0)
-    printk("done\n");
-  else
-    printk("error\n");
+  if(pthread_create(&thr, 0, testThread, (void *)0x21436587) != 0)
+    printk("ERROR\n");
 
   while(1);
 

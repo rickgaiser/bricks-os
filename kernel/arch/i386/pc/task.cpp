@@ -14,7 +14,7 @@ CPCThread  * pMainThread;
 
 // -----------------------------------------------------------------------------
 void
-init_task()
+CPCThread::init()
 {
   pMainTask   = new CTask(0, 0, 0);
   pMainThread = (CPCThread *)pMainTask->thr_;
@@ -42,21 +42,28 @@ init_task()
 // -----------------------------------------------------------------------------
 CPCThread::CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
  : CThread(task)
+ , pStack_(NULL)
+ , pSvcStack_(NULL)
 {
   // Main thread?
   if(entry != NULL)
   {
+    // Set default stack values
+    if(stack == 0)    stack    = 512;
+    if(svcstack == 0) svcstack = 512;
+
+    // Allocate stacks
+    pStack_ = new uint32_t[stack];
+    pSvcStack_ = new uint32_t[svcstack];
+
     // Locate virtual memory for TSS
     memset(&tss_, 0, sizeof(STaskStateSegment));
-    if(svcstack != 0)
-      tss_.esp0 = (uint32_t)(new uint8_t[svcstack] + svcstack);
-    else
-      tss_.esp0 = (uint32_t)(new uint8_t[512] + 512);
+    tss_.esp0 = (uint32_t)(pSvcStack_ + svcstack);
     tss_.ss0  = selDataKernel;
-    if(stack != 0)
-      tss_.esp  = (uint32_t)(new uint8_t[stack] + stack);
-    else
-      tss_.esp  = (uint32_t)(new uint8_t[512] + 512);
+    ((uint32_t *)pStack_)[(512 >> 2) - 1] = (uint32_t)argv;
+    ((uint32_t *)pStack_)[(512 >> 2) - 2] = (uint32_t)argc;
+    ((uint32_t *)pStack_)[(512 >> 2) - 3] = 0; // Function call return address
+    tss_.esp  = pStack_ + stack - 12;
     tss_.cr3  = cASpace_.cr3();
     tss_.eip  = (uint32_t)entry;
     tss_.eflags = 0x200;

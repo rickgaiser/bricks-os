@@ -3,9 +3,7 @@
 
 
 #include "kernel/task.h"
-
-
-struct pt_regs;
+#include "asm/irq.h"
 
 
 class CGBANDSThread
@@ -15,6 +13,8 @@ public:
   CGBANDSThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
   virtual ~CGBANDSThread();
 
+  static void init();
+
   // Task switch #1: Jump to task immediately.
   //  - Used from caller context
   virtual void runJump();
@@ -23,7 +23,7 @@ public:
   virtual void runReturn();
 
 private:
-  pt_regs  * pThreadState_;
+  pt_regs    threadState_;
   uint32_t * pStack_;
   uint32_t * pSvcStack_;
 };
