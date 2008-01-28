@@ -3,103 +3,138 @@
 #include "kernel/srrChannel.h"
 #include "unistd.h"
 #include "pthread.h"
+#include "ace/Task.h"
 
 
 pthread_mutex_t mut_run = PTHREAD_MUTEX_INITIALIZER;
-int iChannelID;
-int iServerPID;
 
 
 //---------------------------------------------------------------------------
-void *
-server(void * arg)
+//---------------------------------------------------------------------------
+class CMsgServer
+ : public ACE_Task_Base
 {
-  printk(" - Channel Creation...");
+public:
+  CMsgServer();
+  virtual ~CMsgServer();
+  
+  int svc();
+  virtual int process(int iReceiveID, void * pRcvMsg) = 0;
 
-  iServerPID = getpid();
-  iChannelID = channelCreate(0);
-  if(iChannelID > 1)
+//protected:
+  int iPID_;
+  int iChannelID_;
+};
+
+//---------------------------------------------------------------------------
+CMsgServer::CMsgServer()
+ : iChannelID_(0)
+{
+  iPID_ = getpid();
+}
+
+//---------------------------------------------------------------------------
+CMsgServer::~CMsgServer()
+{
+}
+
+//---------------------------------------------------------------------------
+int
+CMsgServer::svc()
+{
+  iChannelID_ = channelCreate(0);
+  if(iChannelID_ > 1)
   {
     int rcvid;
     char recvBuffer[20];
 
-    printk("OK\n");
-
     // Notify client we're ready
     pthread_mutex_unlock(&mut_run);
 
-    rcvid = msgReceive(iChannelID, recvBuffer, 20);
-    if((rcvid > 0) &&
-       (recvBuffer[0] == 'S') &&
-       (recvBuffer[1] == 'R') &&
-       (recvBuffer[2] == 'R'))
+    while(true)
     {
-      printk(" - Message Receive...OK\n");
-      if(msgReply(rcvid, 0, "SRV", 4) < 0)
-        printk(" - Message Reply...ERROR\n");
+      rcvid = msgReceive(iChannelID_, recvBuffer, 20);
+      if(rcvid <= 0)
+        break;
+      if(process(rcvid, recvBuffer) < 0)
+        break;
     }
-    else
-      printk(" - Message Receive...ERROR\n");
+
+    channelDestroy(iChannelID_);
   }
   else
-    printk("ERROR\n");
-
-  channelDestroy(iChannelID);
-  pthread_exit(NULL);
+    printk("CMsgServer::svc: ERROR: Unable to get channel\n");
 
   return 0;
 }
 
 //---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+class CTestServer
+ : public CMsgServer
+{
+public:
+  CTestServer(){}
+  virtual ~CTestServer(){}
+  
+  virtual int process(int iReceiveID, void * pRcvMsg);
+};
+
+//---------------------------------------------------------------------------
 int
+CTestServer::process(int iReceiveID, void * pRcvMsg)
+{
+  if((((char *)pRcvMsg)[0] == 'S') &&
+     (((char *)pRcvMsg)[1] == 'R') &&
+     (((char *)pRcvMsg)[2] == 'R'))
+  {
+    printk(" - Message Receive...OK\n");
+    if(msgReply(iReceiveID, 0, "SRV", 4) < 0)
+      printk(" - Message Reply...ERROR\n");
+  }
+  else
+    printk(" - Message Receive...ERROR\n");
+
+  return 0;
+}
+
+//---------------------------------------------------------------------------
+void
 testSRR()
 {
-  int iRetVal(-1);
+  // Create server thread
+  CTestServer server;
 
-  //printk(" - SRR IPC Test\n");
-
-  // Lock mutex before creating the thread
+  // Lock mutex before activating the thread
+  pthread_mutex_lock(&mut_run);
+  // Activate the server thread
+  server.activate();
+  // Wait for server to free mutex
   pthread_mutex_lock(&mut_run);
 
-  // Create server thread
-  //printk(" - Starting server thread...");
-  pthread_t thrServer;
-  if(pthread_create(&thrServer, 0, server, 0) == 0)
+  // Connect to server
+  printk(" - Channel Connect...");
+  int iConnectID = channelConnectAttach(0, server.iPID_, server.iChannelID_, 0);
+  if(iConnectID > 1)
   {
-    //printk("OK\n");
+    printk("OK\n");
 
-    // Wait for server to free mutex
-    pthread_mutex_lock(&mut_run);
-
-    // Connect to server
-    printk(" - Channel Connect...");
-    int iConnectID = channelConnectAttach(0, iServerPID, iChannelID, 0);
-    if(iConnectID > 1)
+    // Send message to server
+    char recvBuffer[20];
+    if((msgSend(iConnectID, "SRR", 4, recvBuffer, 20) >= 0) &&
+       (recvBuffer[0] == 'S') &&
+       (recvBuffer[1] == 'R') &&
+       (recvBuffer[2] == 'V'))
     {
-      printk("OK\n");
-
-      // Send message to server
-      char recvBuffer[20];
-      if((msgSend(iConnectID, "SRR", 4, recvBuffer, 20) >= 0) &&
-         (recvBuffer[0] == 'S') &&
-         (recvBuffer[1] == 'R') &&
-         (recvBuffer[2] == 'V'))
-      {
-        printk(" - Message Send...OK\n");
-        iRetVal = 0;
-      }
-      else
-        printk(" - Message Send...ERROR\n");
-
-      channelConnectDetach(iConnectID);
+      printk(" - Message Send...OK\n");
     }
     else
-      printk("ERROR\n");
+      printk(" - Message Send...ERROR\n");
+
+    channelConnectDetach(iConnectID);
   }
   else
     printk("ERROR\n");
-
-  return iRetVal;
 }
 
 //---------------------------------------------------------------------------
@@ -114,15 +149,6 @@ testSleep()
     printk(".");
   }
   printk("OK\n");
-/*
-  printk(" - Sleep 5x 1000000us:");
-  for(int i(0); i < 5; i++)
-  {
-    usleep(1000000);
-    printk(".");
-  }
-  printk("done\n");
-*/
 }
 
 //---------------------------------------------------------------------------
