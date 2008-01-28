@@ -1,4 +1,5 @@
 #include "superCardDriver.h"
+#include "kernel/debug.h"
 
 
 // Values for changing mode
@@ -66,18 +67,21 @@ CSuperCardDriver::init()
   changeMode(SC_MODE_MEDIA);
 
   cfRegisters_ = _SCCF_Registers;
+
   // See if there is a read/write register
   uint16_t temp = *(cfRegisters_.lba1);
   *(cfRegisters_.lba1) = (~temp & 0xFF);
   temp = (~temp & 0xFF);
-  if(!(*(cfRegisters_.lba1) == temp))
-  {
-    return false;
-  }
+  if(*(cfRegisters_.lba1) != temp)
+    return -1;
+
   // Make sure it is 8 bit
   *(cfRegisters_.lba1) = 0xAA55;
-  if(*(cfRegisters_.lba1) == 0xAA55)
+  if(*(cfRegisters_.lba1) != 0xAA55)
     return -1;
+
+  printk("Supercard Detected\n");
+  CFileSystem::addBlockDevice(this);
 
   return 0;
 }

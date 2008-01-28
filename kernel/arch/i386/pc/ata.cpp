@@ -140,7 +140,7 @@ CATADriver::init()
   printk("ATA HDD Detected: %s\n", data.model);
 
   CFileSystem::addBlockDevice(this);
-  
+
   return 0;
 }
 

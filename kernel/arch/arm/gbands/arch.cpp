@@ -137,7 +137,6 @@ main(int, char *[])
   CFileSystem::addPartitionDriver(&ibmPartitionDriver);
   CFileSystem::addFileSystemDriver(&fatDriver);
   scDriver.init();
-  CFileSystem::addBlockDevice(&scDriver);
 #endif // CONFIG_FILESYSTEM
 
   // Let CPU flag control interrupt state

@@ -53,8 +53,13 @@ CFileSystem::addBlockDevice(IBlockDevice * device)
 
   // Check if device is already in the list
   for(unsigned int i(0); i < listBlockDevices_.size(); i++)
+  {
     if(listBlockDevices_[i] == device)
+    {
+      printk("CFileSystem::addBlockDevice: ERROR: Already added\n");
       return;
+    }
+  }
 
   // Add device to the list
   listBlockDevices_.push_back(device);
@@ -87,8 +92,13 @@ CFileSystem::addPartitionDriver(IPartitionDriver * driver)
 
   // Check if driver is already in the list
   for(unsigned int i(0); i < listPartitionDrivers_.size(); i++)
+  {
     if(listPartitionDrivers_[i] == driver)
+    {
+      printk("CFileSystem::addPartitionDriver: ERROR: Already added\n");
       return;
+    }
+  }
 
   // Add driver to the list
   listPartitionDrivers_.push_back(driver);
@@ -112,8 +122,13 @@ CFileSystem::addFileSystemDriver(IFileSystemDriver * driver)
 
   // Check if driver is already in the list
   for(unsigned int i(0); i < listFileSystemDrivers_.size(); i++)
+  {
     if(listFileSystemDrivers_[i] == driver)
+    {
+      printk("CFileSystem::addFileSystemDriver: ERROR: Already added\n");
       return;
+    }
+  }
 
   // Add driver to the list
   listFileSystemDrivers_.push_back(driver);
@@ -136,7 +151,14 @@ CFileSystem::mount(IMountPoint * point, const char * location)
   printk("CFileSystem::mount(%s)\n", location);
 
   // Check if already mounted
-  // ...
+  for(unsigned int i(0); i < listMountPoints_.size(); i++)
+  {
+    if(listMountPoints_[i]->point == point)
+    {
+      printk("CFileSystem::mount: ERROR: Already mounted\n");
+      return;
+    }
+  }
 
   CFileSystem::SMountPoint * pMP = new CFileSystem::SMountPoint;
   pMP->location = new char[strlen(location)];
