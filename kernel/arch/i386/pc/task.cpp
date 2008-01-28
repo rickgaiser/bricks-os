@@ -63,7 +63,7 @@ CPCThread::CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, 
     ((uint32_t *)pStack_)[(512 >> 2) - 1] = (uint32_t)argv;
     ((uint32_t *)pStack_)[(512 >> 2) - 2] = (uint32_t)argc;
     ((uint32_t *)pStack_)[(512 >> 2) - 3] = 0; // Function call return address
-    tss_.esp  = pStack_ + stack - 12;
+    tss_.esp  = (uint32_t)pStack_ + stack - 12;
     tss_.cr3  = cASpace_.cr3();
     tss_.eip  = (uint32_t)entry;
     tss_.eflags = 0x200;

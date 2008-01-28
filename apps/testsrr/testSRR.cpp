@@ -14,7 +14,7 @@ int iServerPID;
 void *
 server(void * arg)
 {
-  printk(" - Server Thread Running\n");
+  printk(" - Channel Creation...");
 
   iServerPID = getpid();
   iChannelID = channelCreate(0);
@@ -23,25 +23,27 @@ server(void * arg)
     int rcvid;
     char recvBuffer[20];
 
-    printk(" - server: Ready\n");
+    printk("OK\n");
 
     // Notify client we're ready
     pthread_mutex_unlock(&mut_run);
 
     rcvid = msgReceive(iChannelID, recvBuffer, 20);
-    if(rcvid > 0)
+    if((rcvid > 0) &&
+       (recvBuffer[0] == 'S') &&
+       (recvBuffer[1] == 'R') &&
+       (recvBuffer[2] == 'R'))
     {
-      printk(" - server: %s\n", recvBuffer);
+      printk(" - Message Receive...OK\n");
       if(msgReply(rcvid, 0, "SRV", 4) < 0)
-        printk(" - server: msgReply error\n");
+        printk(" - Message Reply...ERROR\n");
     }
     else
-      printk(" - server: msgReceive error\n");
+      printk(" - Message Receive...ERROR\n");
   }
   else
-     printk(" - server: Can't get channel\n");
+    printk("ERROR\n");
 
-  printk(" - server: Done\n");
   channelDestroy(iChannelID);
   pthread_exit(NULL);
 
@@ -54,44 +56,48 @@ testSRR()
 {
   int iRetVal(-1);
 
-  printk(" - SRR IPC Test\n");
+  //printk(" - SRR IPC Test\n");
 
   // Lock mutex before creating the thread
   pthread_mutex_lock(&mut_run);
 
   // Create server thread
-  printk(" - Starting server thread: ");
+  //printk(" - Starting server thread...");
   pthread_t thrServer;
   if(pthread_create(&thrServer, 0, server, 0) == 0)
   {
-    printk("ok\n");
+    //printk("OK\n");
 
     // Wait for server to free mutex
     pthread_mutex_lock(&mut_run);
 
     // Connect to server
+    printk(" - Channel Connect...");
     int iConnectID = channelConnectAttach(0, iServerPID, iChannelID, 0);
     if(iConnectID > 1)
     {
-      printk(" - client: Connected\n");
+      printk("OK\n");
 
       // Send message to server
       char recvBuffer[20];
-      if(msgSend(iConnectID, "SRR", 4, recvBuffer, 20) >= 0)
+      if((msgSend(iConnectID, "SRR", 4, recvBuffer, 20) >= 0) &&
+         (recvBuffer[0] == 'S') &&
+         (recvBuffer[1] == 'R') &&
+         (recvBuffer[2] == 'V'))
       {
-        printk(" - client: %s\n", recvBuffer);
+        printk(" - Message Send...OK\n");
         iRetVal = 0;
       }
       else
-        printk(" - client: msgSend error\n");
+        printk(" - Message Send...ERROR\n");
 
       channelConnectDetach(iConnectID);
     }
     else
-      printk(" - client: Unable to connect\n");
+      printk("ERROR\n");
   }
   else
-    printk("error\n");
+    printk("ERROR\n");
 
   return iRetVal;
 }
