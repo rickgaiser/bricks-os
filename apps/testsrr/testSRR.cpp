@@ -17,7 +17,7 @@ class CMsgServer
 public:
   CMsgServer();
   virtual ~CMsgServer();
-  
+
   int svc();
   virtual int process(int iReceiveID, void * pRcvMsg) = 0;
 
@@ -76,7 +76,7 @@ class CTestServer
 public:
   CTestServer(){}
   virtual ~CTestServer(){}
-  
+
   virtual int process(int iReceiveID, void * pRcvMsg);
 };
 
@@ -156,7 +156,7 @@ testSleep()
 void *
 testThread(void * arg)
 {
-  printk("OK\n");
+  printk(" - Thread Running...OK\n");
 
   printk(" - Thread arg...");
   if(arg == (void *)0x21436587)
@@ -165,10 +165,14 @@ testThread(void * arg)
     printk("ERROR\n");
 
   testSleep();
-  testSRR();
+
+  // Only test SRR if we properly pass arguments to the thread
+  // becouse ACE_Task_Base needs it.
+  if(arg == (void *)0x21436587)
+    testSRR();
 
   // Thread exit
-  pthread_exit(NULL);
+  pthread_exit((void *)0x78563412);
 
   return 0;
 }
@@ -181,10 +185,30 @@ appMain(int argc, char * argv[])
 
   // Start test thread since we're called from the kernel thread, and
   // sleeping here will couse the system to die.
-  printk(" - Thread Creation...");
   pthread_t thr;
   if(pthread_create(&thr, 0, testThread, (void *)0x21436587) != 0)
-    printk("ERROR\n");
+  {
+    printk(" - Thread Creation...ERROR\n");
+  }
+  else
+  {
+    printk(" - Thread Creation...OK\n");
+
+    void * status;
+    if(pthread_join(thr, &status) < 0)
+    {
+      printk(" - Thread Wait...ERROR\n");
+    }
+    else
+    {
+      printk(" - Thread Wait...OK\n");
+      printk(" - Thread Return Value...");
+      if(status == (void *)0x78563412)
+        printk("OK\n");
+      else
+        printk("ERROR\n");
+    }
+  }
 
   while(1);
 
