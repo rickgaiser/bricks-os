@@ -191,7 +191,7 @@ CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
   // Restore interrupts
   local_irq_restore(flags);
 
-  return 0;
+  return sectorCount;
 }
 
 // -----------------------------------------------------------------------------

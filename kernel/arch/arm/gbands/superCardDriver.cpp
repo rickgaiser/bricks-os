@@ -77,7 +77,7 @@ CSuperCardDriver::init()
 
   // Make sure it is 8 bit
   *(cfRegisters_.lba1) = 0xAA55;
-  if(*(cfRegisters_.lba1) != 0xAA55)
+  if(*(cfRegisters_.lba1) == 0xAA55)
     return -1;
 
   printk("Supercard Detected\n");
@@ -108,14 +108,14 @@ CSuperCardDriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
   while((*(cfRegisters_.command) & CF_STS_BUSY) && (i < CF_CARD_TIMEOUT))
     i++;
   if(i >= CF_CARD_TIMEOUT)
-    return 0;
+    return -1;
 
   // Wait until card is ready for commands
   i = 0;
   while((!(*(cfRegisters_.status) & CF_STS_INSERTED)) && (i < CF_CARD_TIMEOUT))
     i++;
   if(i >= CF_CARD_TIMEOUT)
-    return 0;
+    return -1;
 
   // Set number of sectors to read
   *(cfRegisters_.sectorCount) = (sectorCount < 256 ? sectorCount : 0);	// Read a maximum of 256 sectors, 0 means 256
@@ -136,7 +136,7 @@ CSuperCardDriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
     while(((*(cfRegisters_.status) & 0xff)!= CF_STS_READY) && (i < CF_CARD_TIMEOUT))
       i++;
     if(i >= CF_CARD_TIMEOUT)
-      return 0;
+      return -1;
 
     // Read data
     i=256;
@@ -151,7 +151,7 @@ CSuperCardDriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
 int
 CSuperCardDriver::write(uint32_t startSector, uint32_t sectorCount, const void * data)
 {
-  return 0;
+  return -1;
 }
 
 // -----------------------------------------------------------------------------

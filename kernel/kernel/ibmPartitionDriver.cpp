@@ -63,7 +63,7 @@ CIBMPartitionDriver::init(IBlockDevice * device)
   //printk("CIBMPartitionDriver::init\n");
 
   // Read MBR (Master Boot Record) from disk
-  if(device->read(0, 1, data) == 0)
+  if(device->read(0, 1, data) == 1)
   {
     // Validate if disk uses IBM partitioning
     if((data[0x1FE] == 0x55) && (data[0x1FF] == 0xAA))
@@ -86,11 +86,9 @@ CIBMPartitionDriver::init(IBlockDevice * device)
         }
       }
     }
-    //else
-    //  printk(" - ERROR: Invalid boot signature\n");
   }
-  //else
-  //  printk(" - ERROR: Unable to read sector\n");
+  else
+    printk("CIBMPartitionDriver::init: ERROR: Unable to read boot sector\n");
 
   delete data;
 
