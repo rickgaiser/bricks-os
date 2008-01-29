@@ -1,4 +1,5 @@
 #include "ace/Task.h"
+#include "kernel/debug.h"
 
 
 //---------------------------------------------------------------------------
@@ -51,11 +52,14 @@ ACE_Task_Base::thr_mgr(ACE_Thread_Manager * thr_mgr)
 ACE_THR_FUNC_RETURN
 ACE_Task_Base::svc_run(void * args)
 {
-  ACE_THR_FUNC_RETURN iRetVal;
+  ACE_THR_FUNC_RETURN iRetVal = -1;
 
-  ACE_Task_Base * t = (ACE_Task_Base *)args;
-  iRetVal = t->svc();
-  pthread_exit(NULL);
+  if(args != NULL)
+    iRetVal = ((ACE_Task_Base *)args)->svc();
+  else
+    printk("ACE_Task_Base::svc_run: ERROR: NULL pointer received\n");
+
+  pthread_exit((void *)iRetVal);
 
   return iRetVal;
 }

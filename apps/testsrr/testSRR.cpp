@@ -3,70 +3,8 @@
 #include "kernel/srrChannel.h"
 #include "unistd.h"
 #include "pthread.h"
-#include "ace/Task.h"
+#include "msgServer.h"
 
-
-pthread_mutex_t mut_run = PTHREAD_MUTEX_INITIALIZER;
-
-
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-class CMsgServer
- : public ACE_Task_Base
-{
-public:
-  CMsgServer();
-  virtual ~CMsgServer();
-
-  int svc();
-  virtual int process(int iReceiveID, void * pRcvMsg) = 0;
-
-//protected:
-  int iPID_;
-  int iChannelID_;
-};
-
-//---------------------------------------------------------------------------
-CMsgServer::CMsgServer()
- : iChannelID_(0)
-{
-  iPID_ = getpid();
-}
-
-//---------------------------------------------------------------------------
-CMsgServer::~CMsgServer()
-{
-}
-
-//---------------------------------------------------------------------------
-int
-CMsgServer::svc()
-{
-  iChannelID_ = channelCreate(0);
-  if(iChannelID_ > 1)
-  {
-    int rcvid;
-    char recvBuffer[20];
-
-    // Notify client we're ready
-    pthread_mutex_unlock(&mut_run);
-
-    while(true)
-    {
-      rcvid = msgReceive(iChannelID_, recvBuffer, 20);
-      if(rcvid <= 0)
-        break;
-      if(process(rcvid, recvBuffer) < 0)
-        break;
-    }
-
-    channelDestroy(iChannelID_);
-  }
-  else
-    printk("CMsgServer::svc: ERROR: Unable to get channel\n");
-
-  return 0;
-}
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -105,12 +43,11 @@ testSRR()
   // Create server thread
   CTestServer server;
 
-  // Lock mutex before activating the thread
-  pthread_mutex_lock(&mut_run);
   // Activate the server thread
   server.activate();
-  // Wait for server to free mutex
-  pthread_mutex_lock(&mut_run);
+
+  // FIXME: Wait for server to activate
+  sleep(1);
 
   // Connect to server
   printk(" - Channel Connect...");
