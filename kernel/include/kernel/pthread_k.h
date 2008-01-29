@@ -45,6 +45,7 @@ extern "C" {
 // Threads
 declareSysCallKernel4r(int,  pthread_create,         pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
 declareSysCallKernel1 (      pthread_exit,           void *, status);
+declareSysCallKernel2r(int,  pthread_join,           pthread_t, thread, void **, value_ptr);
 // Condition
 declareSysCallKernel2r(int,  pthread_cond_init,      pthread_cond_t *, cond, const pthread_condattr_t *, attr);
 declareSysCallKernel1r(int,  pthread_cond_destroy,   pthread_cond_t *, cond);

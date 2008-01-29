@@ -37,6 +37,24 @@ k_pthread_exit(void * status)
 }
 
 // -----------------------------------------------------------------------------
+int
+k_pthread_join(pthread_t thread, void ** value_ptr)
+{
+  // Check if thread exists
+  // ...
+
+  // Wait untill thread becomes TS_DEAD
+  // ...
+
+  // Set return value
+  //*value_ptr = thread.exit_status;
+
+  // Return
+  //return 0;
+  return -1;
+}
+
+// -----------------------------------------------------------------------------
 // Condition
 // -----------------------------------------------------------------------------
 int
