@@ -16,12 +16,13 @@ public:
   int svc();
   virtual int process(int iReceiveID, void * pRcvMsg) = 0;
 
-//protected:
+  int getPID() const;
+  int getChannelID() const;
+
+protected:
   int iPID_;
   int iChannelID_;
 };
-
-
 
 
 #endif

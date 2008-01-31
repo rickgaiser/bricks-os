@@ -4,6 +4,7 @@
 #include "unistd.h"
 #include "pthread.h"
 #include "msgServer.h"
+#include "nameServer.h"
 
 
 //---------------------------------------------------------------------------
@@ -51,7 +52,7 @@ testSRR()
 
   // Connect to server
   printk(" - Channel Connect...");
-  int iConnectID = channelConnectAttach(0, server.iPID_, server.iChannelID_, 0);
+  int iConnectID = channelConnectAttach(0, server.getPID(), server.getChannelID(), 0);
   if(iConnectID > 1)
   {
     printk("OK\n");
@@ -72,6 +73,36 @@ testSRR()
   }
   else
     printk("ERROR\n");
+}
+
+//---------------------------------------------------------------------------
+void
+testNamed()
+{
+  // Create server thread
+  CNameServer server;
+
+  // Activate the server thread
+  server.activate();
+
+  // FIXME: Wait for server to activate
+  sleep(1);
+
+  // Create name server client
+  CNameServerClient client(server);
+
+  // Test Name Server
+  client.registerName(server.getChannelID(), "NameServer");
+
+  int iNameServerPID, iNameServerChannelID;
+  if(client.lookupName("NameServer", iNameServerPID, iNameServerChannelID) >= 0)
+  {
+    printk("Name server at %d-%d\n", iNameServerPID, iNameServerChannelID);
+  }
+  else
+  {
+    printk("ERROR Trying to lookup name server\n");
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -106,7 +137,10 @@ testThread(void * arg)
   // Only test SRR if we properly pass arguments to the thread
   // becouse ACE_Task_Base needs it.
   if(arg == (void *)0x21436587)
+  {
     testSRR();
+    testNamed();
+  }
 
   // Thread exit
   pthread_exit((void *)0x78563412);

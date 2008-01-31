@@ -25,11 +25,11 @@ CMsgServer::svc()
   if(iChannelID_ > 1)
   {
     int rcvid;
-    char recvBuffer[20];
+    char recvBuffer[80];
 
     while(true)
     {
-      rcvid = msgReceive(iChannelID_, recvBuffer, 20);
+      rcvid = msgReceive(iChannelID_, recvBuffer, 80);
       if(rcvid <= 0)
         break;
       if(process(rcvid, recvBuffer) < 0)
@@ -42,4 +42,18 @@ CMsgServer::svc()
     printk("CMsgServer::svc: ERROR: Unable to get channel\n");
 
   return 0;
+}
+
+//---------------------------------------------------------------------------
+int
+CMsgServer::getPID() const
+{
+  return iPID_;
+}
+
+//---------------------------------------------------------------------------
+int
+CMsgServer::getChannelID() const
+{
+  return iChannelID_;
 }
