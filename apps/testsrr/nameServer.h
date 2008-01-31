@@ -3,6 +3,7 @@
 
 
 #include "msgServer.h"
+#include "kernel/queue.h"
 
 
 //---------------------------------------------------------------------------
@@ -42,6 +43,18 @@ typedef struct SLookupNameReturn
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
+typedef struct SNameEntry
+{
+  TAILQ_ENTRY(SNameEntry) name_qe;
+  int  iPID;
+  int  iChannelID;
+  char sName[20];
+} SNameEntry;
+
+//---------------------------------------------------------------------------
+TAILQ_HEAD(SNameQueue, SNameEntry);
+
+//---------------------------------------------------------------------------
 class CNameServer
  : public CMsgServer
 {
@@ -50,6 +63,10 @@ public:
   virtual ~CNameServer();
 
   virtual int process(int iReceiveID, void * pRcvMsg);
+
+private:
+  // Instance of the queue
+  static SNameQueue nameQueue_;
 };
 
 //---------------------------------------------------------------------------
