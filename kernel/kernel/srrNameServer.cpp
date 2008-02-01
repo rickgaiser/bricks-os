@@ -25,7 +25,7 @@ k_registerName(int channelID, const char * name)
 {
   struct SNameEntry * newEntry = new SNameEntry;
 
-  printk("Register(%d,%s)\n", channelID, name);
+  //printk("k_registerName(%d,%s)\n", channelID, name);
 
   // Create new entry
   newEntry->iPID       = CTaskManager::pCurrentTask_->iPID_;
@@ -43,7 +43,7 @@ k_lookupName(const char * name, int & pid, int & channelID)
 {
   struct SNameEntry * pEntry;
 
-  printk("k_lookupName(%s)\n", name);
+  //printk("k_lookupName(%s)\n", name);
 
   // Lookup name in queue
   TAILQ_FOREACH(pEntry, &nameQueue_, name_qe)
