@@ -1,15 +1,19 @@
 MAKEFLAGS	+=--no-print-directory -s
 
 
-all: all7dirs all9dirs bin/nds9/Bricks.nds
+all: all7dirs all9dirs bin/nds9/Bricks.nds bin/nds/Bricks.nds
 
 clean:
 	make -f Makefile clean ARCH=arm TARGET=nds7
 	make -f Makefile clean ARCH=arm TARGET=nds9
 
-bin/nds9/Bricks.nds: bin/nds7/Bricks.bin bin/nds9/Bricks.bin
+bin/nds9/Bricks.nds: bin/nds9/Bricks.bin
 	@echo [NDS] $@
-	ndstool -c bin/nds9/Bricks.nds -9 bin/nds9/Bricks.bin -7 bin/nds7/Bricks.bin
+	ndstool -c $@ -9 bin/nds9/Bricks.bin
+
+bin/nds/Bricks.nds: bin/nds7/Bricks.bin bin/nds9/Bricks.bin
+	@echo [NDS] $@
+	ndstool -c $@ -9 bin/nds9/Bricks.bin -7 bin/nds7/Bricks.bin
 
 bin/nds7/Bricks.bin: bin/nds7/Bricks.elf
 	@echo [BIN] $@

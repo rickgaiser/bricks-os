@@ -8,7 +8,7 @@ clean:
 
 bin/nds9/Bricks.nds: bin/nds9/Bricks.bin
 	@echo [NDS] $@
-	ndstool -c bin/nds9/Bricks.nds -9 bin/nds9/Bricks.bin
+	ndstool -c $@ -9 bin/nds9/Bricks.bin
 
 bin/nds9/Bricks.bin: bin/nds9/Bricks.elf
 	@echo [BIN] $@
