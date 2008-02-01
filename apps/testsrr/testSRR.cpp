@@ -1,10 +1,10 @@
 #include "kernel/debug.h"
 #include "kernel/srr.h"
 #include "kernel/srrChannel.h"
+#include "kernel/srrNameServer.h"
 #include "unistd.h"
 #include "pthread.h"
 #include "msgServer.h"
-#include "nameServer.h"
 
 
 //---------------------------------------------------------------------------
@@ -79,30 +79,18 @@ testSRR()
 void
 testNamed()
 {
-  // Create server thread
-  CNameServer server;
-
-  // Activate the server thread
-  server.activate();
-
-  // FIXME: Wait for server to activate
-  sleep(1);
-
-  // Create name server client
-  CNameServerClient client(server);
-
-  // Test Name Server
-  client.registerName(server.getChannelID(), "NameServer");
-
-  int iNameServerPID, iNameServerChannelID;
-  if(client.lookupName("NameServer", iNameServerPID, iNameServerChannelID) >= 0)
+  // Register "test" @ channel 1234
+  if(registerName(1234, "test") >= 0)
   {
-    printk("Name server at %d-%d\n", iNameServerPID, iNameServerChannelID);
+    // Lookup "test"
+    int iTestPID, iTestChannelID;
+    if(lookupName("test", iTestPID, iTestChannelID) >= 0)
+      printk("\"test\" @ %d-%d\n", iTestPID, iTestChannelID);
+    else
+      printk("ERROR Trying to lookup \"test\"\n");
   }
   else
-  {
-    printk("ERROR Trying to lookup name server\n");
-  }
+    printk("ERROR Trying to register \"test\"\n");
 }
 
 //---------------------------------------------------------------------------

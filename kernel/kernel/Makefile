@@ -12,6 +12,7 @@ OBJS            =\
                 settings \
                 srr \
                 srrChannel \
+                srrNameServer \
                 task \
                 timeValue \
                 unistd \
