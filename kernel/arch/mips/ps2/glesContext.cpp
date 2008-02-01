@@ -7,7 +7,6 @@
 
 
 #define clamp(f)  (f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f))
-extern uint32_t   gs_mem_current;
 uint32_t          ps2TexturesStart_(0);
 
 
@@ -215,7 +214,7 @@ CPS2GLESContext::glDisable(GLenum cap)
     case GL_LIGHT5:     lights_[5].enabled = false; break;
     case GL_LIGHT6:     lights_[6].enabled = false; break;
     case GL_LIGHT7:     lights_[7].enabled = false; break;
-
+/*
     case GL_DEPTH_TEST:
     {
       depthTestEnabled_ = false;
@@ -225,6 +224,7 @@ CPS2GLESContext::glDisable(GLenum cap)
       GIF_DATA_AD(GsCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
     }
+*/
     case GL_CULL_FACE:  cullFaceEnabled_ = false; break;
     case GL_FOG:        fogEnabled_      = false; break;
     case GL_TEXTURE_2D: texturesEnabled_ = false; ps2Textures_ = TEXTURES_OFF; break;
@@ -429,7 +429,7 @@ CPS2GLESContext::glEnable(GLenum cap)
     case GL_LIGHT5:     lights_[5].enabled = true; break;
     case GL_LIGHT6:     lights_[6].enabled = true; break;
     case GL_LIGHT7:     lights_[7].enabled = true; break;
-
+/*
     case GL_DEPTH_TEST:
     {
       depthTestEnabled_ = true;
@@ -462,6 +462,7 @@ CPS2GLESContext::glEnable(GLenum cap)
       GIF_DATA_AD(GsCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
     }
+*/
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
     case GL_TEXTURE_2D: texturesEnabled_   = true; ps2Textures_ = TEXTURES_ON; break;
