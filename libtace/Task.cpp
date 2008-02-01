@@ -31,7 +31,9 @@ ACE_Task_Base::activate()
 int
 ACE_Task_Base::wait()
 {
-  return 0;
+  void * status;
+
+  return pthread_join(thr_, &status);
 }
 
 //---------------------------------------------------------------------------
