@@ -12,6 +12,8 @@ public:
   CPS2Thread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
   virtual ~CPS2Thread();
 
+  static void init();
+
   // Task switch #1: Jump to task immediately.
   //  - Used from caller context
   //virtual void runJump();
