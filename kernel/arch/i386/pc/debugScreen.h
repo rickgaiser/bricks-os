@@ -1,5 +1,5 @@
-#ifndef I386VIDEO_H
-#define I386VIDEO_H
+#ifndef ARCH_DEBUGSCREEN_H
+#define ARCH_DEBUGSCREEN_H
 
 
 #include "kernel/video.h"
@@ -10,12 +10,12 @@
 #define VIDEO_START    ((char *)0xB8000)
 
 
-class CI386Video
+class CI386DebugScreen
  : public CAVideo
 {
 public:
-  CI386Video();
-  virtual ~CI386Video();
+  CI386DebugScreen();
+  virtual ~CI386DebugScreen();
 
   virtual int init();
 

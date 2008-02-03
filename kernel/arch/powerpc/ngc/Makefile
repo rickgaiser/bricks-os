@@ -5,7 +5,9 @@ LIB             =arch
 OBJS            =\
                 arch \
                 task \
-                video \
+
+
+OBJS-$(CONFIG_DEBUGGING)           += debugScreen
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel

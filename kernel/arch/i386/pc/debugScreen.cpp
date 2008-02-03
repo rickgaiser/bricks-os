@@ -1,8 +1,8 @@
-#include "video.h"
+#include "debugScreen.h"
 
 
 // -----------------------------------------------------------------------------
-CI386Video::CI386Video()
+CI386DebugScreen::CI386DebugScreen()
  : CAVideo(CHARS_PER_LINE, LINE_COUNT)
  , pVideo_(VIDEO_START)
 {
@@ -10,13 +10,13 @@ CI386Video::CI386Video()
 }
 
 // -----------------------------------------------------------------------------
-CI386Video::~CI386Video()
+CI386DebugScreen::~CI386DebugScreen()
 {
 }
 
 // -----------------------------------------------------------------------------
 int
-CI386Video::init()
+CI386DebugScreen::init()
 {
   this->cls();
 
@@ -25,14 +25,14 @@ CI386Video::init()
 
 // -----------------------------------------------------------------------------
 void
-CI386Video::put(int iX, int iY, char c)
+CI386DebugScreen::put(int iX, int iY, char c)
 {
   pVideo_[(iY * CHARS_PER_LINE + iX) * 2] = c;
 }
 
 // -----------------------------------------------------------------------------
 char
-CI386Video::get(int iX, int iY)
+CI386DebugScreen::get(int iX, int iY)
 {
   return pVideo_[(iY * CHARS_PER_LINE + iX) * 2];
 }

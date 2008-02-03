@@ -1,3 +1,6 @@
+# Debugging
+CONFIG_DEBUGGING=y
+
 # Hardware capabilities
 CONFIG_FPU=y
 

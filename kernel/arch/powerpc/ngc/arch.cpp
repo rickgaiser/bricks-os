@@ -1,10 +1,16 @@
 #include "kernel/bricks.h"
 #include "kernel/debug.h"
 #include "kernel/memoryManager.h"
-#include "video.h"
+#include "asm/arch/config.h"
+
+#ifdef CONFIG_DEBUGGING
+#include "debugScreen.h"
+#endif // CONFIG_DEBUGGING
 
 
-CNGCVideo      cVideo;
+#ifdef CONFIG_DEBUGGING
+CNGCDebugScreen cDebug;
+#endif // CONFIG_DEBUGGING
 
 
 // -----------------------------------------------------------------------------
@@ -16,9 +22,11 @@ main(int, char *[])
   // Initialize the memory manager so we can use new/delete/malloc/free
   //init_heap(&__heap_start, (uint32_t)(&__heap_end - &__heap_start));
 
-  if(cVideo.init() == -1)
+#ifdef CONFIG_DEBUGGING
+  if(cDebug.init() == -1)
     iRetVal = -1;
-  pDebug = &cVideo;
+  pDebug = &cDebug;
+#endif // CONFIG_DEBUGGING
 
 //  printf("Bricks-OS\n");
 //  while(1);

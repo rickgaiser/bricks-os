@@ -15,9 +15,9 @@ OBJS            =\
                 mmap \
                 support \
                 task \
-                video \
 
 
+OBJS-$(CONFIG_DEBUGGING)           += debugScreen
 OBJS-$(CONFIG_FILESYSTEM)          += ata
 
 

@@ -2,6 +2,9 @@
 #define CONFIG_H
 
 
+// Debugging
+#undef  CONFIG_DEBUGGING
+
 // Hardware capabilities
 #undef  CONFIG_FPU
 
@@ -24,7 +27,6 @@
 #define CONFIG_BUILTIN_LIBC
 
 // GBA/NDS specific configuration
-#undef  CONFIG_GBA_CONSOLE
 #define CONFIG_GBA_KEYBOARD
 
 // NDS specific configuration

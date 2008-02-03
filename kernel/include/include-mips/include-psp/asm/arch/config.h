@@ -2,6 +2,9 @@
 #define CONFIG_H
 
 
+// Debugging
+#define CONFIG_DEBUGGING
+
 // Hardware capabilities
 #define CONFIG_FPU
 

@@ -1,17 +1,17 @@
-#ifndef ARCH_VIDEO_H
-#define ARCH_VIDEO_H
+#ifndef ARCH_DEBUGSCREEN_H
+#define ARCH_DEBUGSCREEN_H
 
 
 #include "kernel/video.h"
 #include "inttypes.h"
 
 
-class CNGCVideo
+class CNGCDebugScreen
  : public IFileIO
 {
 public:
-  CNGCVideo();
-  virtual ~CNGCVideo();
+  CNGCDebugScreen();
+  virtual ~CNGCDebugScreen();
 
   virtual int init();
 

@@ -1,4 +1,4 @@
-#include "video.h"
+#include "debugScreen.h"
 #include "asm/arch/registers.h"
 #include "font8x8.h"
 #include "string.h"
@@ -15,7 +15,7 @@
 
 
 // -----------------------------------------------------------------------------
-CGBAVideo::CGBAVideo()
+CGBADebugScreen::CGBADebugScreen()
  : CAVideo(CHARS_PER_LINE, LINE_COUNT)
  , pVideo_(reinterpret_cast<uint16_t *>(SCREEN_BASE_BLOCK(31)))
 {
@@ -23,13 +23,13 @@ CGBAVideo::CGBAVideo()
 }
 
 // -----------------------------------------------------------------------------
-CGBAVideo::~CGBAVideo()
+CGBADebugScreen::~CGBADebugScreen()
 {
 }
 
 // -----------------------------------------------------------------------------
 int
-CGBAVideo::init()
+CGBADebugScreen::init()
 {
   REG_DISPCNT = MODE_0 | BG0_ENABLE | SPRITE_ENABLE;
   REG_BG0CNT  = BG_256_COLOR | BG_TILE_BASE(0) | BG_MAP_BASE(31);
@@ -53,14 +53,14 @@ CGBAVideo::init()
 
 // -----------------------------------------------------------------------------
 void
-CGBAVideo::put(int x, int y, char c)
+CGBADebugScreen::put(int x, int y, char c)
 {
   pVideo_[y * 32 + x] = c;
 }
 
 // -----------------------------------------------------------------------------
 char
-CGBAVideo::get(int x, int y)
+CGBADebugScreen::get(int x, int y)
 {
   return pVideo_[y * 32 + x];
 }

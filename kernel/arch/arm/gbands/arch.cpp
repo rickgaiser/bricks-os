@@ -8,9 +8,9 @@
 #include "timer.h"
 #include "task.h"
 
-#ifdef CONFIG_GBA_CONSOLE
-#include "video.h"
-#endif // CONFIG_GBA_CONSOLE
+#ifdef CONFIG_DEBUGGING
+#include "debugScreen.h"
+#endif // CONFIG_DEBUGGING
 
 #ifdef CONFIG_GBA_KEYBOARD
 #include "keyboard.h"
@@ -50,9 +50,9 @@ extern char _end, __eheap_end;
 
 CIRQ           cIRQ;
 
-#ifdef CONFIG_GBA_CONSOLE
-CGBAVideo      cVideo;
-#endif // CONFIG_GBA_CONSOLE
+#ifdef CONFIG_DEBUGGING
+CGBADebugScreen cDebug;
+#endif // CONFIG_DEBUGGING
 
 #ifdef CONFIG_GBA_KEYBOARD
 CGBAKeyboard   cKeyboard;
@@ -91,11 +91,11 @@ main(int, char *[])
   if(cIRQ.init() == -1)
     iRetVal = -1;
 
-#ifdef CONFIG_GBA_CONSOLE
-  if(cVideo.init() == -1)
+#ifdef CONFIG_DEBUGGING
+  if(cDebug.init() == -1)
     iRetVal = -1;
-  pDebug = &cVideo;
-#endif // CONFIG_GBA_CONSOLE
+  pDebug = &cDebug;
+#endif // CONFIG_DEBUGGING
 
 #ifdef CONFIG_GBA_KEYBOARD
   if(cKeyboard.init() == -1)

@@ -1,4 +1,4 @@
-#include "video.h"
+#include "videoDevice.h"
 #include <pspdebug.h>
 #include <pspdisplay.h>
 #include <pspgu.h>
@@ -10,36 +10,6 @@ static const SVideoMode videoModes[] =
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
-
-// -----------------------------------------------------------------------------
-CPSPVideo::CPSPVideo()
-{
-  // Don't use constructor, use init function instead
-}
-
-// -----------------------------------------------------------------------------
-CPSPVideo::~CPSPVideo()
-{
-}
-
-// -----------------------------------------------------------------------------
-int
-CPSPVideo::init()
-{
-  pspDebugScreenInit();
-
-  return 0;
-}
-
-// -----------------------------------------------------------------------------
-ssize_t
-CPSPVideo::write(const void * buffer, size_t size, loff_t *)
-{
-  for(size_t i(0); i < size; i++)
-    pspDebugScreenPrintf("%c", ((const char *)buffer)[i]);
-
-  return 0;
-}
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------

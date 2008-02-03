@@ -1,4 +1,4 @@
-#include "video.h"
+#include "debugScreen.h"
 typedef unsigned int wint_t;
 #include <gccore.h>
 #include <malloc.h>
@@ -16,19 +16,19 @@ GXRModeObj *rmode;
 
 
 // -----------------------------------------------------------------------------
-CNGCVideo::CNGCVideo()
+CNGCDebugScreen::CNGCDebugScreen()
 {
   // Don't use constructor, use init function instead
 }
 
 // -----------------------------------------------------------------------------
-CNGCVideo::~CNGCVideo()
+CNGCDebugScreen::~CNGCDebugScreen()
 {
 }
 
 // -----------------------------------------------------------------------------
 int
-CNGCVideo::init()
+CNGCDebugScreen::init()
 {
   VIDEO_Init();
 
@@ -66,7 +66,7 @@ CNGCVideo::init()
 
 // -----------------------------------------------------------------------------
 ssize_t
-CNGCVideo::write(const void * buffer, size_t size, loff_t *)
+CNGCDebugScreen::write(const void * buffer, size_t size, loff_t *)
 {
   for(size_t i(0); i < size; i++)
     printf("%c", ((const char *)buffer)[i]);

@@ -1,3 +1,6 @@
+# Debugging
+CONFIG_DEBUGGING=y
+
 # Hardware capabilities
 #CONFIG_FPU=y
 
@@ -20,7 +23,6 @@ CONFIG_BUILTIN_MM=y
 CONFIG_BUILTIN_LIBC=y
 
 # GBA/NDS specific configuration
-CONFIG_GBA_CONSOLE=y
 CONFIG_GBA_KEYBOARD=y
 
 # GBA specific configuration

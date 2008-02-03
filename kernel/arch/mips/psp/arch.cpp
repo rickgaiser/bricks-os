@@ -5,10 +5,19 @@
 #include "kernel/bricks.h"
 #include "kernel/debug.h"
 //#include "kernel/memoryManager.h"
-#include "video.h"
+
+#ifdef CONFIG_DEBUGGING
+#include "debugScreen.h"
+#endif // CONFIG_DEBUGGING
+
+#ifdef CONFIG_FRAMEBUFFER
+#include "videoDevice.h"
+#endif // CONFIG_FRAMEBUFFER
 
 
-CPSPVideo      cVideo;
+#ifdef CONFIG_DEBUGGING
+CPSPDebugScreen cDebug;
+#endif // CONFIG_DEBUGGING
 
 #ifdef CONFIG_FRAMEBUFFER
 CPSPVideoDevice * pVideoDevice;
@@ -67,9 +76,11 @@ main(int, char *[])
 
   SetupCallbacks();
 
-  if(cVideo.init() == -1)
+#ifdef CONFIG_DEBUGGING
+  if(cDebug.init() == -1)
     iRetVal = -1;
-  pDebug = &cVideo;
+  pDebug = &cDebug;
+#endif // CONFIG_DEBUGGING
 
 #ifdef CONFIG_FRAMEBUFFER
   pVideoDevice = new CPSPVideoDevice;

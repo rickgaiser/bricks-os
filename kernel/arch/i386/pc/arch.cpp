@@ -12,12 +12,15 @@
 
 #include "apic.h"
 #include "cpuid.h"
-#include "video.h"
 #include "keyboard.h"
 #include "descriptor.h"
 #include "mmap.h"
 #include "multiboot.h"
 #include "task.h"
+
+#ifdef CONFIG_DEBUGGING
+#include "debugScreen.h"
+#endif // #ifdef CONFIG_DEBUGGING
 
 #ifdef CONFIG_FILESYSTEM
 #include "kernel/fileSystem.h"
@@ -33,9 +36,12 @@ extern char       start_text;
 extern char       end_bss;
 
 CIRQ              cIRQ;
-CI386Video        cVideo;
 CI386Keyboard     cKeyboard;
 //CPCTask           taskTest;
+
+#ifdef CONFIG_DEBUGGING
+CI386DebugScreen  cDebug;
+#endif // #ifdef CONFIG_DEBUGGING
 
 bool              bPAEEnabled;
 bool              bAPICEnabled;
@@ -93,15 +99,16 @@ main(unsigned long magic, multiboot_info_t * mbi)
   uint64_t iMemKernel(0);
   unsigned int iMemPageCount(0);
 
-  if(cIRQ.init() == -1)
+#ifdef CONFIG_DEBUGGING
+  if(cDebug.init() == -1)
     iRetVal = -1;
-  if(cVideo.init() == -1)
+  pDebug = &cDebug;
+#endif // #ifdef CONFIG_DEBUGGING
+
+  if(cIRQ.init() == -1)
     iRetVal = -1;
   if(cKeyboard.init() == -1)
     iRetVal = -1;
-
-  pDebug = &cVideo;
-  //CTaskManager::setStandardInput(&cKeyboard);
 
   // ---------------------------------------
   // Miltiboot loader and memorymap required

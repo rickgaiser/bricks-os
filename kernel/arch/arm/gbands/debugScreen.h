@@ -1,17 +1,17 @@
-#ifndef ARCH_VIDEO_H
-#define ARCH_VIDEO_H
+#ifndef ARCH_DEBUGSCREEN_H
+#define ARCH_DEBUGSCREEN_H
 
 
 #include "kernel/video.h"
 #include "inttypes.h"
 
 
-class CGBAVideo
+class CGBADebugScreen
  : public CAVideo
 {
 public:
-  CGBAVideo();
-  virtual ~CGBAVideo();
+  CGBADebugScreen();
+  virtual ~CGBADebugScreen();
 
   virtual int init();
 
