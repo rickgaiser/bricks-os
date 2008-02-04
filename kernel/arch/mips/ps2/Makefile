@@ -12,6 +12,7 @@ OBJS            =\
                 task \
 
 
+OBJS-$(CONFIG_DEBUGGING)           += debugScreen
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
 OBJS-$(CONFIG_GL)                  += glesContext textures
 
