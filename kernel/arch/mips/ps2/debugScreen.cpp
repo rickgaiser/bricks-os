@@ -51,6 +51,11 @@ CPS2DebugScreen::init()
   // Clear screen
   cls();
 
+  // Set font
+  g2_set_font(courier_new, 256, 128, fixed_tc);
+  g2_set_font_spacing(0);
+  g2_set_font_mag(1);
+
   return 0;
 }
 
