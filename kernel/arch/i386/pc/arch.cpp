@@ -130,7 +130,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
 
   // -----------------------------
   // Initialize CPU identification
-  CPU::init();
+  //CPU::init();
 
   // --------------------------------
   // Setup Physical Memory Management

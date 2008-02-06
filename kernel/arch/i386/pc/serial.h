@@ -3,7 +3,9 @@
 #define ARCH_SERIAL_H
 
 
+#include "kernel/fs.h"
 #include "kernel/interrupt.h"
+#include "sys/types.h"
 
 
 // -----------------------------------------------------------------------------

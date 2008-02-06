@@ -106,10 +106,10 @@ CI386Serial::CI386Serial()
 CI386Serial::~CI386Serial()
 {
   // Detach com ports from IRQ
-  CInterruptManager::detach(0x24, cCom1_); // IRQ4, COM1 & COM3
-  CInterruptManager::detach(0x23, cCom2_); // IRQ3, COM2 & COM4
-  CInterruptManager::detach(0x24, cCom3_); // IRQ4, COM1 & COM3
-  CInterruptManager::detach(0x23, cCom4_); // IRQ3, COM2 & COM4
+  CInterruptManager::detach(0x24, &cCom1_); // IRQ4, COM1 & COM3
+  CInterruptManager::detach(0x23, &cCom2_); // IRQ3, COM2 & COM4
+  CInterruptManager::detach(0x24, &cCom3_); // IRQ4, COM1 & COM3
+  CInterruptManager::detach(0x23, &cCom4_); // IRQ3, COM2 & COM4
 }
 
 // -----------------------------------------------------------------------------
@@ -123,10 +123,10 @@ CI386Serial::init()
   cCom4_.init();
 
   // Attach com ports to IRQ
-  CInterruptManager::attach(0x24, cCom1_); // IRQ4, COM1 & COM3
-  CInterruptManager::attach(0x23, cCom2_); // IRQ3, COM2 & COM4
-  CInterruptManager::attach(0x24, cCom3_); // IRQ4, COM1 & COM3
-  CInterruptManager::attach(0x23, cCom4_); // IRQ3, COM2 & COM4
+  CInterruptManager::attach(0x24, &cCom1_); // IRQ4, COM1 & COM3
+  CInterruptManager::attach(0x23, &cCom2_); // IRQ3, COM2 & COM4
+  CInterruptManager::attach(0x24, &cCom3_); // IRQ4, COM1 & COM3
+  CInterruptManager::attach(0x23, &cCom4_); // IRQ3, COM2 & COM4
 
   return 0;
 }
