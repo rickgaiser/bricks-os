@@ -13,6 +13,7 @@ OBJS            =\
                 isrWrapper \
                 keyboard \
                 mmap \
+                serial \
                 support \
                 task \
 

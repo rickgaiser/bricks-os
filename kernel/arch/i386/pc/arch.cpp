@@ -17,6 +17,7 @@
 #include "mmap.h"
 #include "multiboot.h"
 #include "task.h"
+#include "serial.h"
 
 #ifdef CONFIG_DEBUGGING
 #include "debugScreen.h"
@@ -38,6 +39,7 @@ extern char       end_bss;
 CIRQ              cIRQ;
 CI386Keyboard     cKeyboard;
 //CPCTask           taskTest;
+CI386Serial       cSerial;
 
 #ifdef CONFIG_DEBUGGING
 CI386DebugScreen  cDebug;
@@ -108,6 +110,8 @@ main(unsigned long magic, multiboot_info_t * mbi)
   if(cIRQ.init() == -1)
     iRetVal = -1;
   if(cKeyboard.init() == -1)
+    iRetVal = -1;
+  if(cSerial.init() == -1)
     iRetVal = -1;
 
   // ---------------------------------------
