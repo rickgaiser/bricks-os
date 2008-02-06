@@ -2,13 +2,8 @@
 #include "hal.h"
 #include "asm/cpu.h"
 #include "kernel/debug.h"
+#include "kernel/endian.h"
 
-
-// -----------------------------------------------------------------------------
-#define LE16(x)  (((x<<8)&0xff00)|((x>>8)&0x00ff))
-#define LE32(x)  (((x<<24)&0xff000000)|((x<<8)&0x00ff0000)|((x>>8)&0x0000ff00)|((x>>24)&0x000000ff))
-//#define LE16(x)  (x)
-//#define LE32(x)  (x)
 
 // -----------------------------------------------------------------------------
 // Default IBM-PC compatible base addresses:
@@ -125,7 +120,7 @@ CATADriver::init()
   for(int i(0); i < 256; i++)
   {
     temp = inw(iIOBase_ + EARO_DATA);
-    temp = LE16(temp);
+    temp = ENDIAN_BE_16(temp);
     ((uint16_t *)&data)[i] = temp;
   }
 
@@ -184,7 +179,6 @@ CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
   for(unsigned int i(0); i < (sectorCount * 256); i++)
   {
     temp = inw(iIOBase_ + EARO_DATA);
-    //temp = LE16(temp);
     ((uint16_t *)data)[i] = temp;
   }
 
