@@ -6,6 +6,8 @@
 #define CONFIG_DEBUGGING
 
 // Hardware capabilities
+#define __LITTLE_ENDIAN__
+//#define __BIG_ENDIAN__
 #define CONFIG_FPU
 
 // Kernel interface
