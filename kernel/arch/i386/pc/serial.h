@@ -39,7 +39,7 @@ public:
 
   virtual int init();
 
-private:
+//private:
   CI8250 cCom1_;
   CI8250 cCom2_;
   CI8250 cCom3_;

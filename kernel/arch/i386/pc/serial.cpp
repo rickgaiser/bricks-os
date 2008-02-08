@@ -4,16 +4,40 @@
 #include "hal.h"
 
 
-// Register Offsets
-#define I8250_DATA              0
-#define I8250_INTERRUPT_ENABLE  1
-#define I8250_INTERRUPT_ID      2 // Read
-#define I8250_FIFO_CTRL         2 // Write
-#define I8250_LINE_CTRL         3
-#define I8250_MODEM_CTRL        4
-#define I8250_LINE_STATUS       5
-#define I8250_MODEM_STATUS      6
-#define I8250_SCRATCH           7
+// From Linux (include/linux/serial_reg.h)
+#define UART_RX                 0 // In:  Receive buffer
+#define UART_TX                 0 // Out: Transmit buffer
+#define UART_IER                1 // Out: Interrupt Enable Register
+#define UART_IIR                2 // In:  Interrupt ID Register
+#define UART_FCR                2 // Out: FIFO Control Register
+#define UART_LCR                3 // Out: Line Control Register
+#define UART_LCR_DLAB           0x80 // Divisor latch access bit
+#define UART_LCR_SBC            0x40 // Set break control
+#define UART_LCR_SPAR           0x20 // Stick parity (?)
+#define UART_LCR_EPAR           0x10 // Even parity select
+#define UART_LCR_PARITY         0x08 // Parity Enable
+#define UART_LCR_STOP           0x04 // Stop bits: 0=1 bit, 1=2 bits
+#define UART_LCR_WLEN5          0x00 // Wordlength: 5 bits
+#define UART_LCR_WLEN6          0x01 // Wordlength: 6 bits
+#define UART_LCR_WLEN7          0x02 // Wordlength: 7 bits
+#define UART_LCR_WLEN8          0x03 // Wordlength: 8 bits
+#define UART_MCR                4 // Out: Modem Control Register
+#define UART_LSR                5 // In:  Line Status Register
+#define UART_LSR_TEMT           0x40 // Transmitter empty
+#define UART_LSR_THRE           0x20 // Transmit-hold-register empty
+#define UART_LSR_BI             0x10 // Break interrupt indicator
+#define UART_LSR_FE             0x08 // Frame error indicator
+#define UART_LSR_PE             0x04 // Parity error indicator
+#define UART_LSR_OE             0x02 // Overrun error indicator
+#define UART_LSR_DR             0x01 // Receiver data ready
+#define UART_MSR                6 // In:  Modem Status Register
+#define UART_SCR                7 // I/O: Scratch Register
+
+#define UART_DLL                0 // Out: Divisor Latch Low
+#define UART_DLM                1 // Out: Divisor Latch High
+
+#define BOTH_EMPTY (UART_LSR_TEMT | UART_LSR_THRE)
+#define whileTxNotReady() while((inb(iBaseAddr_ + UART_LSR) & BOTH_EMPTY) != BOTH_EMPTY)
 
 
 // -----------------------------------------------------------------------------
@@ -32,35 +56,28 @@ CI8250::~CI8250()
 int
 CI8250::init()
 {
-  uint8_t bits;
+  // Disable interrupts
+  outb(0x00, iBaseAddr_ + UART_IER);
 
-  outb(0xe7, iBaseAddr_ + I8250_FIFO_CTRL);
-  bits = inb(iBaseAddr_ + I8250_INTERRUPT_ID);
+  // Set DLAB on
+  outb(0x80, iBaseAddr_ + UART_LCR);
 
-  // Check if the chip supports fifo (bits 6&7)
-  if((bits & (1<<6)) != 0)
-  {
-    if((bits & (1<<7)) != 0)
-    {
-      // Check for 64byte fifo
-      if((bits & (1<<5)) != 0)
-        printk("CI8250::init: 16750 detected\n");
-      else
-        printk("CI8250::init: 16550A detected\n");
-    }
-    else
-      printk("CI8250::init: 16550 detected\n");
-  }
-  else
-  {
-    // Check if the chip supports scratch
-    outb(0xaa, iBaseAddr_ + I8250_SCRATCH);
-    bits = inb(iBaseAddr_ + I8250_SCRATCH);
-    if(bits == 0xaa)
-      printk("CI8250::init: 16450 detected\n");
-    else
-      printk("CI8250::init: 8250 detected\n");
-  }
+  // Set baudrate to 9600
+  uint16_t divisor = 115200 / 9600;
+  outb(((divisor & 0x00ff)     ), iBaseAddr_ + UART_DLL);
+  outb(((divisor & 0xff00) >> 8), iBaseAddr_ + UART_DLM);
+
+  // 8 Bits, No Parity, 1 Stop Bit (Set DLAB off)
+  outb(0x03, iBaseAddr_ + UART_LCR);
+
+  // Enable fifo, interrupt after receiving 14 bytes
+  outb(0xc7, iBaseAddr_ + UART_FCR);
+
+  // Set DTR + RTS + AUX2
+  outb(0x0b, iBaseAddr_ + UART_MCR);
+
+  // Enable data receive interrupt
+  outb(0x01, iBaseAddr_ + UART_IER);
 
   return 0;
 }
@@ -71,14 +88,27 @@ CI8250::isr(int irq)
 {
   printk("CI8250::isr\n");
 
+  read(0, 0);
+
   return 0;
 }
 
 // -----------------------------------------------------------------------------
+// FIXME: What is status 0xff?
 ssize_t
 CI8250::read(void * buffer, size_t size, loff_t *)
 {
-  printk("CI8250::read\n");
+  uint8_t status, data;
+
+  do
+  {
+    status = inb(iBaseAddr_ + UART_LSR);
+    if((status & UART_LSR_DR) == UART_LSR_DR)
+    {
+      data = inb(iBaseAddr_ + UART_RX);
+      printk("CI8250::read: status = 0x%x, data = %c\n", status, data);
+    }
+  } while((status != 0xff) && ((status & UART_LSR_DR) == UART_LSR_DR));
 
   return 0;
 }
@@ -87,7 +117,11 @@ CI8250::read(void * buffer, size_t size, loff_t *)
 ssize_t
 CI8250::write(const void * buffer, size_t size, loff_t *)
 {
-  printk("CI8250::write\n");
+  for(size_t i(0); i < size; i++)
+  {
+    whileTxNotReady();
+    outb(((char *)buffer)[i], iBaseAddr_ + UART_TX);
+  }
 
   return 0;
 }

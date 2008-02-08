@@ -113,6 +113,8 @@ main(unsigned long magic, multiboot_info_t * mbi)
     iRetVal = -1;
   if(cSerial.init() == -1)
     iRetVal = -1;
+  cSerial.cCom1_.write("Bricks-OS\n", 10);
+  cSerial.cCom1_.write("=========\n", 10);
 
   // ---------------------------------------
   // Miltiboot loader and memorymap required
@@ -356,4 +358,3 @@ main(unsigned long magic, multiboot_info_t * mbi)
 
   return bricks_main();
 }
-
