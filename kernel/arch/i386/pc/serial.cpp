@@ -70,8 +70,8 @@ CI8250::init()
   // 8 Bits, No Parity, 1 Stop Bit (Set DLAB off)
   outb(0x03, iBaseAddr_ + UART_LCR);
 
-  // Enable fifo, interrupt after receiving 14 bytes
-  outb(0xc7, iBaseAddr_ + UART_FCR);
+  // Enable fifo, interrupt after receiving 1 bytes
+  outb(0x07, iBaseAddr_ + UART_FCR);
 
   // Set DTR + RTS + AUX2
   outb(0x0b, iBaseAddr_ + UART_MCR);
@@ -86,7 +86,7 @@ CI8250::init()
 int
 CI8250::isr(int irq)
 {
-  printk("CI8250::isr\n");
+  //printk("CI8250::isr\n");
 
   read(0, 0);
 
@@ -100,15 +100,18 @@ CI8250::read(void * buffer, size_t size, loff_t *)
 {
   uint8_t status, data;
 
-  do
+  while(true)
   {
     status = inb(iBaseAddr_ + UART_LSR);
-    if((status & UART_LSR_DR) == UART_LSR_DR)
+    if((status != 0xff) && ((status & UART_LSR_DR) == UART_LSR_DR))
     {
       data = inb(iBaseAddr_ + UART_RX);
-      printk("CI8250::read: status = 0x%x, data = %c\n", status, data);
+      //printk("CI8250::read: status = 0x%x, data = %c\n", status, data);
+      printk("%c", data);
     }
-  } while((status != 0xff) && ((status & UART_LSR_DR) == UART_LSR_DR));
+    else
+      break;
+  }
 
   return 0;
 }
