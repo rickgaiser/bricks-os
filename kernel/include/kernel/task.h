@@ -6,6 +6,7 @@
 #include "kernel/fs.h"
 #include "kernel/queue.h"
 #include "kernel/pthread_k.h"
+#include "kernel/srrChannel_k.h"
 #include "inttypes.h"
 
 
@@ -25,35 +26,6 @@ enum EThreadState
   TS_SEND_BLOCKED,
   TS_RECEIVE_BLOCKED,
   TS_REPLY_BLOCKED
-};
-
-// -----------------------------------------------------------------------------
-enum EChannelState
-{
-  CS_FREE,
-  CS_USED,
-  CS_MSG_SEND,
-  CS_MSG_RECEIVED,
-  CS_MSG_REPLIED
-};
-
-// -----------------------------------------------------------------------------
-struct SChannel
-{
-  pthread_mutex_t mutex;       // The big channel lock
-  pthread_cond_t stateCond;    // State change condition
-  int iState;
-  const void * pSndMsg;
-  int iSndSize;
-  void * pRcvMsg;
-  int iRcvSize;
-  int iRetVal;
-};
-
-// -----------------------------------------------------------------------------
-struct SConnection
-{
-  SChannel * channel;
 };
 
 class CTask;
@@ -107,12 +79,12 @@ public:
 
   CThread * thr_;
 
-  SChannel * pChannel_[MAX_CHANNEL_COUNT];           // Tasks Channels
-  SChannel * pConnection_[MAX_CONNECTION_COUNT];     // Tasks Connections
+  CChannel * pChannel_[MAX_CHANNEL_COUNT];             // Tasks Channels
+  IChannelClient * pConnection_[MAX_CONNECTION_COUNT]; // Tasks Connections
 
   pid_t iPID_;
 
-  TAILQ_ENTRY(CTask) task_qe;                        // All tasks queue
+  TAILQ_ENTRY(CTask) task_qe;                          // All tasks queue
 };
 
 // -----------------------------------------------------------------------------
