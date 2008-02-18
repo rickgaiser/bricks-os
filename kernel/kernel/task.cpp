@@ -1,6 +1,7 @@
 #include "kernel/debug.h"
 #include "kernel/task.h"
 #include "kernel/genwait.h"
+#include "kernel/srr_k.h"
 #include "asm/cpu.h"
 #include "string.h"
 
@@ -175,8 +176,8 @@ CTask::CTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[
 {
   thr_ = getNewThread(this, entry, stack, svcstack, argc, argv);
 
-  memset(pChannel_,    0, sizeof(pChannel_));
-  memset(pConnection_, 0, sizeof(pConnection_));
+  memset(pChannel_, 0, sizeof(pChannel_));
+  memset(pConnectionsOut_, 0, sizeof(pConnectionsOut_));
 
   // Insert in the "all tasks" queue
   TAILQ_INSERT_TAIL(&CTaskManager::task_queue, this, task_qe);
@@ -185,6 +186,229 @@ CTask::CTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[
 // -----------------------------------------------------------------------------
 CTask::~CTask()
 {
+}
+
+//------------------------------------------------------------------------------
+int
+CTask::msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize)
+{
+  int iRetVal(-1);
+
+  // User ID
+  int iConnectionIDX(CONNECTION_ID_TO_IDX(iConnectionID));
+
+  // Validate out-connection
+  if((iConnectionIDX >= 0) &&
+     (iConnectionIDX < MAX_OUT_CONNECTION_COUNT) &&
+     (pConnectionsOut_[iConnectionIDX] != NULL))
+  {
+    // Send message
+    iRetVal = pConnectionsOut_[iConnectionIDX]->msgSend(pSndMsg, iSndSize, pRcvMsg, iRcvSize);
+  }
+  else
+  {
+    printk("CTask::msgSend: Invalid connection id: %d(%d)\n", iConnectionID, iConnectionIDX);
+  }
+
+  return iRetVal;
+}
+
+//------------------------------------------------------------------------------
+int
+CTask::msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
+{
+  int iRetVal(-1);
+  int iChannelIDX(CHANNEL_ID_TO_IDX(iChannelID));
+
+  // Validate channel
+  if((iChannelIDX >= 0) &&
+     (iChannelIDX < MAX_CHANNEL_COUNT) &&
+     (pChannel_[iChannelIDX] != NULL))
+  {
+    // Receive message
+    iRetVal = pChannel_[iChannelIDX]->msgReceive(pRcvMsg, iRcvSize);
+  }
+  else
+  {
+    printk("CTask::msgReceive: Invalid channel id: %d(%d)\n", iChannelID, iChannelIDX);
+  }
+
+  return iRetVal;
+}
+
+//------------------------------------------------------------------------------
+int
+CTask::msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
+{
+  int iRetVal(-1);
+  int iChannelIDX(RCVID_GET_CHID(iReceiveID));
+  int iConnectionIDX(RCVID_GET_COID(iReceiveID));
+
+  // Validate channel
+  if((iChannelIDX >= 0) &&
+     (iChannelIDX < MAX_CHANNEL_COUNT) &&
+     (pChannel_[iChannelIDX] != NULL))
+  {
+    iRetVal = pChannel_[iChannelIDX]->msgReply(iConnectionIDX, iStatus, pReplyMsg, iReplySize);
+  }
+  else
+  {
+    printk("CTask::msgReply: Invalid channel id: %d\n", iChannelIDX);
+  }
+
+  return iRetVal;
+}
+
+//------------------------------------------------------------------------------
+int
+CTask::channelCreate(unsigned iFlags)
+{
+  int iRetVal(-1);
+
+  //printk("CTask::channelCreate\n");
+
+  // Locate empty channel
+  for(int iChannel(0); iChannel < MAX_CHANNEL_COUNT; iChannel++)
+  {
+    if(pChannel_[iChannel] == NULL)
+    {
+      pChannel_[iChannel] = new CChannel;
+      iRetVal = CHANNEL_IDX_TO_ID(iChannel);
+      break;
+    }
+  }
+
+  if(iRetVal == -1)
+  {
+    printk("CTask::channelCreate: Max channels reached!\n");
+  }
+
+  return iRetVal;
+}
+
+//------------------------------------------------------------------------------
+int
+CTask::channelDestroy(int iChannelID)
+{
+  int iRetVal(-1);
+  iChannelID = CHANNEL_ID_TO_IDX(iChannelID);
+
+  //printk("CTask::channelDestroy\n");
+
+  if((iChannelID >= 0) &&
+     (iChannelID < MAX_CHANNEL_COUNT) &&
+     (pChannel_[iChannelID] != NULL))
+  {
+    // Channel valid, remove it
+    delete pChannel_[iChannelID];
+    pChannel_[iChannelID] = NULL;
+    iRetVal = 0;
+  }
+  else
+  {
+    printk("CTask::channelDestroy: Invalid channel id: %d\n", CHANNEL_IDX_TO_ID(iChannelID));
+  }
+
+  return iRetVal;
+}
+
+// -----------------------------------------------------------------------------
+int
+CTask::channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int iFlags)
+{
+  int iRetVal(-1);
+  int iChannelIDX = CHANNEL_ID_TO_IDX(iChannelID);
+  CTask       * pTask;        // Destination task
+  CChannel    * pChannel;     // Destination channel
+  CConnection * pConnection;  // New connection to channel
+
+  //printk("CTask::channelConnectAttach\n");
+
+  if(iNodeID == 0)
+  {
+    // Locate task to connect to
+    pTask = CTaskManager::getTaskFromPID(iProcessID);
+    if(pTask != NULL)
+    {
+      // Locate channel to connect to
+      if((iChannelIDX >= 0) &&
+         (iChannelIDX < MAX_CHANNEL_COUNT) &&
+         (pTask->pChannel_[iChannelIDX] != NULL))
+      {
+        pChannel = pTask->pChannel_[iChannelIDX];
+
+        // Find empty connection in task
+        for(int i(0); i < MAX_OUT_CONNECTION_COUNT; i++)
+        {
+          if(pConnectionsOut_[i] == NULL)
+          {
+            // Find empty connection in channel
+            for(int j(0); j < MAX_IN_CONNECTION_COUNT; j++)
+            {
+              if(pChannel->pConnectionsIn_[j] == NULL)
+              {
+                pConnection = new CConnection(pTask->pChannel_[iChannelIDX], RCVID_CREATE(iChannelIDX, j));
+
+                // Add new connection to task and channel
+                pConnectionsOut_[i] = pConnection;
+                pChannel->pConnectionsIn_[j] = pConnection;
+
+                // Connection ID: index into the tasks connection list
+                iRetVal = CONNECTION_IDX_TO_ID(i);
+                break;
+              }
+            }
+            break;
+          }
+        }
+        if(iRetVal == -1)
+        {
+          printk("CTask::connectAttach: Max connections reached!\n");
+        }
+      }
+      else
+      {
+        printk("CTask::connectAttach: Channel id not found: %d\n", iChannelID);
+      }
+    }
+    else
+    {
+      printk("CTask::connectAttach: Process id not found: %d\n", iProcessID);
+    }
+  }
+  else
+  {
+    printk("CTask::connectAttach: Remote nodes not supported\n");
+    //iRetVal = node[iNodeID].connectAttach(iProcessID, iChannelID, iFlags);
+  }
+
+  return iRetVal;
+}
+
+// -----------------------------------------------------------------------------
+int
+CTask::channelConnectDetach(int iConnectionID)
+{
+  int iRetVal(-1);
+  iConnectionID = CONNECTION_ID_TO_IDX(iConnectionID);
+
+  //printk("CTask::channelConnectDetach\n");
+
+  if((iConnectionID >= 0) &&
+     (iConnectionID < MAX_OUT_CONNECTION_COUNT) &&
+     (pConnectionsOut_[iConnectionID] != NULL))
+  {
+    // Connection valid, remove it
+    delete pConnectionsOut_[iConnectionID];
+    pConnectionsOut_[iConnectionID] = NULL;
+    iRetVal = 0;
+  }
+  else
+  {
+    printk("CTask::channelConnectDetach: Connection id not found: %d\n", CONNECTION_IDX_TO_ID(iConnectionID));
+  }
+
+  return iRetVal;
 }
 
 // -----------------------------------------------------------------------------

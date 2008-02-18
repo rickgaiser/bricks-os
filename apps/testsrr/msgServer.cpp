@@ -30,8 +30,8 @@ CMsgServer::svc()
     while(true)
     {
       rcvid = msgReceive(iChannelID_, recvBuffer, 80);
-      if(rcvid <= 0)
-        break;
+//      if(rcvid <= 0)
+//        break;
       if(process(rcvid, recvBuffer) < 0)
         break;
     }

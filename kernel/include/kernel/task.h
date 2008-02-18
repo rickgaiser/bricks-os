@@ -10,8 +10,8 @@
 #include "inttypes.h"
 
 
-#define MAX_CHANNEL_COUNT    10
-#define MAX_CONNECTION_COUNT 10
+#define MAX_CHANNEL_COUNT         10
+#define MAX_OUT_CONNECTION_COUNT  10
 
 
 // -----------------------------------------------------------------------------
@@ -77,14 +77,32 @@ public:
   CTask(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
   virtual ~CTask();
 
-  CThread * thr_;
+  int msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize);
+  int msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize);
+  int msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize);
 
-  CChannel * pChannel_[MAX_CHANNEL_COUNT];             // Tasks Channels
-  IChannelClient * pConnection_[MAX_CONNECTION_COUNT]; // Tasks Connections
+  int channelCreate(unsigned iFlags);
+  int channelDestroy(int iChannelID);
+  int channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int iFlags);
+  int channelConnectDetach(int iConnectionID);
+
+  // Main thread of the task
+  CThread * thr_;
 
   pid_t iPID_;
 
   TAILQ_ENTRY(CTask) task_qe;                          // All tasks queue
+
+private:
+  // Tasks channels (CTask has ownership)
+  // NOTE: We are using an array here becouse it is FAST, and we need the
+  //       msgReceive function to locate channels FAST.
+  CChannel * pChannel_[MAX_CHANNEL_COUNT];
+
+  // Tasks connections (to channels) (CTask has ownership)
+  // NOTE: We are using an array here becouse it is FAST, and we need the
+  //       msgSend function to locate connections FAST.
+  CConnection * pConnectionsOut_[MAX_OUT_CONNECTION_COUNT];
 };
 
 // -----------------------------------------------------------------------------

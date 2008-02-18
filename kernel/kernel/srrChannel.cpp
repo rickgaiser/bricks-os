@@ -5,72 +5,136 @@
 #include "string.h"
 
 
-enum EMessageType
-{
-  MT_SEND = 1,
-  MT_REPLY = 2
-};
-
-struct SMessageHeader
-{
-  uint16_t type;   // Message type
-  uint16_t length; // Total length of message, including header
-  uint32_t id;
-};
-
-struct SSendMessage
-{
-  SMessageHeader header;
-  int32_t iConnectionID;
-  int32_t iRcvSize;
-};
-
-struct SReplyMessage
-{
-  SMessageHeader header;
-  int32_t iStatus;
-};
-
-
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 CChannel::CChannel()
- : iState_(CS_FREE)
+ : pMsgWaiting_(NULL)
+ , iState_(CHS_FREE)
 {
+  for(int i(0); i < MAX_IN_CONNECTION_COUNT; i++)
+    pConnectionsIn_[i] = NULL;
 }
 
 //------------------------------------------------------------------------------
 CChannel::~CChannel()
 {
+  // FIXME: Connections need to be disconnected!
+}
+
+//------------------------------------------------------------------------------
+void
+CChannel::msgSend(CConnection & connection)
+{
+  //printk("CChannel::msgSend\n");
+
+  // Wait for channel to become free
+  k_pthread_mutex_lock(&mutex_);
+  while(iState_ != CHS_FREE)
+    k_pthread_cond_wait(&stateCond_, &mutex_);
+
+  // Set the waiting message, and notify msgReceive of the new message
+  pMsgWaiting_ = &connection;
+  iState_ = CHS_MSG_SENT;
+  k_pthread_cond_broadcast(&stateCond_);
+  k_pthread_mutex_unlock(&mutex_);
 }
 
 //------------------------------------------------------------------------------
 int
-CChannel::msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize)
+CChannel::msgReceive(void * pRcvMsg, int iRcvSize)
 {
   int iRetVal;
 
-  // Wait for channel to become free
+  //printk("CChannel::msgReceive\n");
+
+  // Wait for a message
   k_pthread_mutex_lock(&mutex_);
-  while(iState_ != CS_FREE)
+  while(iState_ != CHS_MSG_SENT)
     k_pthread_cond_wait(&stateCond_, &mutex_);
-  // Fill channel
+
+  // Copy the data and receive id
+  if(iRcvSize > pMsgWaiting_->iSndSize_)
+    iRcvSize = pMsgWaiting_->iSndSize_;
+  memcpy(pRcvMsg, pMsgWaiting_->pSndMsg_, iRcvSize);
+  iRetVal = pMsgWaiting_->iReceiveID_;
+
+  // Release the channel, so the next message can be sent
+  iState_ = CHS_FREE;
+  k_pthread_cond_broadcast(&stateCond_);
+  k_pthread_mutex_unlock(&mutex_);
+
+  return iRetVal;
+}
+
+//------------------------------------------------------------------------------
+int
+CChannel::msgReply(int iConnectionIDX, int iStatus, const void * pReplyMsg, int iReplySize)
+{
+  int iRetVal(-1);
+
+  // Validate connection
+  if((iConnectionIDX >= 0) &&
+     (iConnectionIDX < MAX_IN_CONNECTION_COUNT) &&
+     (pConnectionsIn_[iConnectionIDX] != NULL))
+  {
+    // Reply the message
+    iRetVal = pConnectionsIn_[iConnectionIDX]->msgReply(iStatus, pReplyMsg, iReplySize);
+  }
+  else
+  {
+    printk("CChannel::msgReply: Invalid connection id: %d\n", iConnectionIDX);
+  }
+
+  return iRetVal;
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+CConnection::CConnection(CChannel * channel, int iReceiveID)
+ : channel_(channel)
+ , iReceiveID_(iReceiveID)
+ , iState_(COS_FREE)
+{
+}
+
+//------------------------------------------------------------------------------
+CConnection::~CConnection()
+{
+  // FIXME: We need to be disconnected!
+}
+
+//------------------------------------------------------------------------------
+int
+CConnection::msgSend(const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize)
+{
+  int iRetVal;
+
+  //printk("CConnection::msgSend\n");
+
+  // Wait for connection to become free
+  k_pthread_mutex_lock(&mutex_);
+  while(iState_ != COS_FREE)
+    k_pthread_cond_wait(&stateCond_, &mutex_);
+
+  // Set message ready
   pSndMsg_  = pSndMsg;
   iSndSize_ = iSndSize;
   pRcvMsg_  = pRcvMsg;
   iRcvSize_ = iRcvSize;
-  iState_   = CS_MSG_SEND;
-  // Notify others of changed channel state
+  // Send message to channel
+  channel_->msgSend(*this);
+
+  // Wait for reply
+  iState_ = COS_MSG_SENT;
   k_pthread_cond_broadcast(&stateCond_);
-  // Wait for message to be replied
-  do
+  while(iState_ != COS_MSG_REPLIED)
     k_pthread_cond_wait(&stateCond_, &mutex_);
-  while(iState_ != CS_MSG_REPLIED);
+
   iRetVal = iRetVal_;
-  iState_ = CS_FREE;
-  // Notify others of changed channel state
+
+  // Free the connection
+  iState_ = COS_FREE;
   k_pthread_cond_broadcast(&stateCond_);
-  // Unlock channel
   k_pthread_mutex_unlock(&mutex_);
 
   return iRetVal;
@@ -78,215 +142,38 @@ CChannel::msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * 
 
 //------------------------------------------------------------------------------
 int
-CChannel::msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
-{
-  // Wait for message to be sent
-  k_pthread_mutex_lock(&mutex_);
-  while(iState_ != CS_MSG_SEND)
-    k_pthread_cond_wait(&stateCond_, &mutex_);
-  if(iRcvSize > iSndSize_)
-    iRcvSize = iSndSize_;
-  memcpy(pRcvMsg, pSndMsg_, iRcvSize);
-  iState_ = CS_MSG_RECEIVED;
-  // Notify others of changed channel state
-  k_pthread_cond_broadcast(&stateCond_);
-  // Unlock channel
-  k_pthread_mutex_unlock(&mutex_);
-
-  return iChannelID;
-}
-
-//------------------------------------------------------------------------------
-int
-CChannel::msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
+CConnection::msgReply(int iStatus, const void * pReplyMsg, int iReplySize)
 {
   int iRetVal(-1);
 
-  // We can only reply a received message
+  //printk("CConnection::msgReply\n");
+
+  // Lock the connection
   k_pthread_mutex_lock(&mutex_);
-  if(iState_ == CS_MSG_RECEIVED)
+
+  if(iState_ == COS_MSG_SENT)
   {
-    // Copy reply data
+    // Copy reply data and return status
     if(iReplySize < iRcvSize_)
       iReplySize = iRcvSize_;
     memcpy(pRcvMsg_, pReplyMsg, iReplySize);
     iRetVal_ = iStatus;
-    iState_  = CS_MSG_REPLIED;
-    // Notify others of changed channel state
-    k_pthread_cond_broadcast(&stateCond_);
-    // Unlock channel
-    k_pthread_mutex_unlock(&mutex_);
+
     iRetVal = 0;
+
+    // Notify this->msgSend of replied message
+    iState_ = COS_MSG_REPLIED;
+    k_pthread_cond_broadcast(&stateCond_);
   }
   else
   {
-    k_pthread_mutex_unlock(&mutex_);
-    printk("k_msgReply: No message received, can't reply\n");
+    printk("CConnection::msgReply: Can't reply, no message sent\n");
   }
+
+  // Unlock the connection
+  k_pthread_mutex_unlock(&mutex_);
 
   return iRetVal;
-}
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-CRemoteConnection::CRemoteConnection(IFileIO & tunnel)
- : tunnel_(tunnel)
- , iMsgID_(1)
-{
-//  tunnel_.setWriteBack(*this);
-}
-
-//------------------------------------------------------------------------------
-CRemoteConnection::~CRemoteConnection()
-{
-//  tunnel_.removeWriteBack(*this);
-}
-
-//------------------------------------------------------------------------------
-int
-CRemoteConnection::msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize)
-{
-  SSendMessage msg;
-
-  msg.header.type   = MT_SEND;
-  msg.header.length = sizeof(SSendMessage) + iSndSize;
-  msg.header.id     = iMsgID_++;
-  msg.iConnectionID = iConnectionID;
-  msg.iRcvSize      = iRcvSize;
-
-  // Wait for tunnel to become free
-  k_pthread_mutex_lock(&mutex_);
-  while(iState_ != CS_FREE)
-    k_pthread_cond_wait(&stateCond_, &mutex_);
-
-  // Set data ready for callback
-  pRcvMsg_  = (uint8_t *)pRcvMsg;
-  iRcvSize_ = iRcvSize;
-  // Send data
-  tunnel_.write(&msg, sizeof(SSendMessage));
-  if(iSndSize > 0)
-    tunnel_.write(pSndMsg, iSndSize);
-
-  // Wait for message to be replied
-  do
-    k_pthread_cond_wait(&stateCond_, &mutex_);
-  while(iState_ != CS_MSG_REPLIED);
-  iState_ = CS_FREE;
-  // Notify others of changed channel state
-  k_pthread_cond_broadcast(&stateCond_);
-  // Unlock tunnel
-  k_pthread_mutex_unlock(&mutex_);
-
-  return iStatus_;
-}
-
-// -----------------------------------------------------------------------------
-int
-CRemoteConnection::msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
-{
-  SReplyMessage msg;
-
-  msg.header.type   = MT_REPLY;
-  msg.header.length = sizeof(SReplyMessage) + iReplySize;
-  msg.header.id     = iReceiveID;
-  msg.iStatus       = iStatus;
-
-  // Lock tunnel
-  k_pthread_mutex_lock(&mutex_);
-
-  // Send data
-  tunnel_.write(&msg, sizeof(SReplyMessage));
-  if(iReplySize > 0)
-    tunnel_.write(pReplyMsg, iReplySize);
-
-  // Unlock tunnel
-  k_pthread_mutex_unlock(&mutex_);
-
-  return 0;
-}
-
-// -----------------------------------------------------------------------------
-// Write-back handler for channel
-ssize_t
-CRemoteConnection::write(const void * buffer, size_t size, loff_t *)
-{
-  for(size_t i(0); i < size; i++)
-  {
-    if(iBufferIndex_ < BUFFER_SIZE)
-      ((uint8_t *)buffer_)[iBufferIndex_++] = ((uint8_t *)buffer)[i];
-    else
-    {
-      printk("CSRRTunnel::write: ERROR: buffer overflow\n");
-      iBufferIndex_ = 0;
-      return 0;
-    }
-  }
-
-  if(iBufferIndex_ >= sizeof(SMessageHeader))
-  {
-    SMessageHeader * header = (SMessageHeader *)buffer_;
-    if(iBufferIndex_ >= header->length)
-    {
-      if(iBufferIndex_ > header->length)
-        printk("CSRRTunnel::write: Warning: bytes left at end of message\n");
-
-      switch(header->type)
-      {
-        // Remote node sends us a message
-        case MT_SEND:
-        {
-          SSendMessage * msg = (SSendMessage *)buffer_;
-          int status;
-
-          printk("CSRRTunnel::write: Message received: send\n");
-
-          if(msg->iRcvSize > 0)
-          {
-            uint8_t * rMsg = new uint8_t[msg->iRcvSize];
-
-            // Send the message to the local connection
-            status = k_msgSend(msg->iConnectionID, (uint8_t *)buffer_ + sizeof(SSendMessage), header->length - sizeof(SSendMessage), rMsg, msg->iRcvSize);
-
-            // Return the reply to the remote node
-            this->msgReply(msg->header.id, status, rMsg, msg->iRcvSize);
-          }
-          else
-          {
-            // Send the message to the local connection
-            status = k_msgSend(msg->iConnectionID, (uint8_t *)buffer_ + sizeof(SSendMessage), header->length - sizeof(SSendMessage), 0, 0);
-
-            // Return the reply to the remote node
-            this->msgReply(msg->header.id, status, 0, 0);
-          }
-
-          break;
-        }
-        // Remote node replies a message
-        case MT_REPLY:
-        {
-          SReplyMessage * msg = (SReplyMessage *)buffer_;
-
-          printk("CSRRTunnel::write: Message received: reply\n");
-
-          // Reply size
-          iRcvSize_ = (iRcvSize_ < (msg->header.length - sizeof(SReplyMessage))) ? iRcvSize_ : (msg->header.length - sizeof(SReplyMessage));
-          // Reply data
-          if(iRcvSize_ > 0)
-            memcpy(pRcvMsg_, (uint8_t *)buffer_ + sizeof(SReplyMessage), iRcvSize_);
-          // Reply status
-          iStatus_  = msg->iStatus;
-
-          break;
-        }
-        default:
-          printk("CSRRTunnel::write: ERROR: unknown message received\n");
-      };
-
-      iBufferIndex_ = 0;
-    }
-  }
-
-  return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -294,128 +181,26 @@ CRemoteConnection::write(const void * buffer, size_t size, loff_t *)
 int
 k_channelCreate(unsigned iFlags)
 {
-  int iRetVal(-1);
-
-  //printk("k_channelCreate\n");
-
-  // Locate empty channel in current task
-  for(int iChannel(0); iChannel < MAX_CHANNEL_COUNT; iChannel++)
-  {
-    if(CTaskManager::pCurrentTask_->pChannel_[iChannel] == NULL)
-    {
-      CTaskManager::pCurrentTask_->pChannel_[iChannel] = new CChannel;
-      iRetVal = CHANNEL_IDX_TO_ID(iChannel);
-      break;
-    }
-  }
-
-  if(iRetVal == -1)
-  {
-    printk("k_channelCreate: Max channels reached!\n");
-  }
-
-  return iRetVal;
+  return CTaskManager::pCurrentTask_->channelCreate(iFlags);
 }
 
 //------------------------------------------------------------------------------
 int
 k_channelDestroy(int iChannelID)
 {
-  int iRetVal(-1);
-
-  iChannelID = CHANNEL_ID_TO_IDX(iChannelID);
-
-  if((iChannelID >= 0) &&
-     (iChannelID < MAX_CHANNEL_COUNT) &&
-     (CTaskManager::pCurrentTask_->pChannel_[iChannelID] != NULL))
-  {
-    // Channel valid, remove it
-    delete CTaskManager::pCurrentTask_->pChannel_[iChannelID];
-    CTaskManager::pCurrentTask_->pChannel_[iChannelID] = NULL;
-    iRetVal = 0;
-  }
-  else
-  {
-    printk("k_channelDestroy: Invalid channel id: %d\n", CHANNEL_IDX_TO_ID(iChannelID));
-  }
-
-  return iRetVal;
+  return CTaskManager::pCurrentTask_->channelDestroy(iChannelID);
 }
 
 //------------------------------------------------------------------------------
 int
 k_channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int iFlags)
 {
-  int iRetVal(-1);
-  CTask * pTask;
-
-  //printk("k_channelConnectAttach\n");
-
-  iChannelID = CHANNEL_ID_TO_IDX(iChannelID);
-
-  if(iNodeID == 0)
-  {
-    pTask = CTaskManager::getTaskFromPID(iProcessID);
-    if(pTask != NULL)
-    {
-      // Process found, find channel
-      if((iChannelID >= 0) &&
-         (iChannelID < MAX_CHANNEL_COUNT) &&
-         (pTask->pChannel_[iChannelID] != NULL))
-      {
-        // Channel found, find empty connection
-        for(int i(0); i < MAX_CONNECTION_COUNT; i++)
-        {
-          if(CTaskManager::pCurrentTask_->pConnection_[i] == NULL)
-          {
-            CTaskManager::pCurrentTask_->pConnection_[i] = pTask->pChannel_[iChannelID];
-            iRetVal = CONNECTION_IDX_TO_ID(i);
-            break;
-          }
-        }
-        if(iRetVal == -1)
-        {
-          printk("k_connectAttach: Max connections reached!\n");
-        }
-      }
-      else
-      {
-        printk("k_connectAttach: Channel id not found: %d\n", CHANNEL_IDX_TO_ID(iChannelID));
-      }
-    }
-    else
-    {
-      printk("k_connectAttach: Process id not found: %d\n", iProcessID);
-    }
-  }
-  else
-  {
-    printk("k_connectAttach: Remote nodes not supported\n");
-    //iRetVal = node[iNodeID].connectAttach(iProcessID, iChannelID, iFlags);
-  }
-
-  return iRetVal;
+  return CTaskManager::pCurrentTask_->channelConnectAttach(iNodeID, iProcessID, iChannelID, iFlags);
 }
 
 //------------------------------------------------------------------------------
 int
 k_channelConnectDetach(int iConnectionID)
 {
-  int iRetVal(-1);
-  iConnectionID = CONNECTION_ID_TO_IDX(iConnectionID);
-
-  if((iConnectionID >= 0) &&
-     (iConnectionID < MAX_CONNECTION_COUNT) &&
-     (CTaskManager::pCurrentTask_->pConnection_[iConnectionID] != NULL))
-  {
-    // Connection valid, remove it
-    CTaskManager::pCurrentTask_->pConnection_[iConnectionID] = NULL;
-    iRetVal = 0;
-  }
-  else
-  {
-    printk("k_channelConnectDetach: Connection id not found: %d\n", CONNECTION_IDX_TO_ID(iConnectionID));
-  }
-
-  return iRetVal;
+  return CTaskManager::pCurrentTask_->channelConnectDetach(iConnectionID);
 }

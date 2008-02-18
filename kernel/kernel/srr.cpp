@@ -77,19 +77,7 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
   else
 #endif // CONFIG_DIRECT_ACCESS_KERNEL_FUNC
   {
-    // User ID
-    int iConnectionIDX(CONNECTION_ID_TO_IDX(iConnectionID));
-
-    if((iConnectionIDX >= 0) &&
-       (iConnectionIDX < MAX_CONNECTION_COUNT) &&
-       (CTaskManager::pCurrentTask_->pConnection_[iConnectionIDX] != NULL))
-    {
-      iRetVal = CTaskManager::pCurrentTask_->pConnection_[iConnectionIDX]->msgSend(iConnectionID, pSndMsg, iSndSize, pRcvMsg, iRcvSize);
-    }
-    else
-    {
-      printk("k_msgSend: Invalid connection id: %d(%d)\n", iConnectionID, iConnectionIDX);
-    }
+    iRetVal = CTaskManager::pCurrentTask_->msgSend(iConnectionID, pSndMsg, iSndSize, pRcvMsg, iRcvSize);
   }
 
   return iRetVal;
@@ -99,40 +87,12 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
 int
 k_msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize)
 {
-  int iRetVal(-1);
-  int iChannelIDX(CHANNEL_ID_TO_IDX(iChannelID));
-
-  if((iChannelIDX >= 0) &&
-     (iChannelIDX < MAX_CHANNEL_COUNT) &&
-     (CTaskManager::pCurrentTask_->pChannel_[iChannelIDX] != NULL))
-  {
-    iRetVal = CTaskManager::pCurrentTask_->pChannel_[iChannelIDX]->msgReceive(iChannelID, pRcvMsg, iRcvSize);
-  }
-  else
-  {
-    printk("k_msgReceive: Invalid channel id: %d(%d)\n", iChannelID, iChannelIDX);
-  }
-
-  return iRetVal;
+  return CTaskManager::pCurrentTask_->msgReceive(iChannelID, pRcvMsg, iRcvSize);
 }
 
 //---------------------------------------------------------------------------
 int
 k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
 {
-  int iRetVal(-1);
-  int iReceiveIDX(CHANNEL_ID_TO_IDX(iReceiveID));
-
-  if((iReceiveIDX >= 0) &&
-     (iReceiveIDX < MAX_CHANNEL_COUNT) &&
-     (CTaskManager::pCurrentTask_->pChannel_[iReceiveIDX] != NULL))
-  {
-    iRetVal = CTaskManager::pCurrentTask_->pChannel_[iReceiveIDX]->msgReply(iReceiveID, iStatus, pReplyMsg, iReplySize);
-  }
-  else
-  {
-    printk("k_msgReply: Invalid receive id: %d(%d)\n", iReceiveID, iReceiveIDX);
-  }
-
-  return iRetVal;
+  return CTaskManager::pCurrentTask_->msgReply(iReceiveID, iStatus, pReplyMsg, iReplySize);
 }
