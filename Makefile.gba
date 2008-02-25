@@ -9,7 +9,7 @@ clean:
 bin/gba/Bricks.gba: bin/gba/Bricks.elf
 	@echo [GBA] $@
 	arm-eabi-objcopy -O binary $< $@
-	gbafix bin/gba/Bricks.gba
+	gbafix bin/gba/Bricks.gba -tBricks-OS -cBRKS -mOS
 
 alldirs:
 	make -f Makefile all ARCH=arm TARGET=gba
