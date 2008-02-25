@@ -8,7 +8,7 @@ clean:
 
 bin/nds9/Bricks.nds: bin/nds9/Bricks.bin
 	@echo [NDS] $@
-	ndstool -c $@ -9 bin/nds9/Bricks.bin
+	ndstool -c $@ -9 bin/nds9/Bricks.bin -b bin/nds/banner.bmp "Bricks-OS;;" -o bin/nds/logo.bmp -g BRKS OS BRICKS-OS
 
 bin/nds9/Bricks.bin: bin/nds9/Bricks.elf
 	@echo [BIN] $@
