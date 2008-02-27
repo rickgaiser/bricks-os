@@ -7,6 +7,7 @@
 
 // Hardware capabilities
 //#define __LITTLE_ENDIAN__
+#undef  __BIG_ENDIAN__
 #define __BIG_ENDIAN__
 #define CONFIG_FPU
 
@@ -25,7 +26,7 @@
 #undef  CONFIG_GL_MULTI_CONTEXT
 
 // Library configuration
-#define CONFIG_BUILTIN_MM
+#undef  CONFIG_BUILTIN_MM
 #define CONFIG_BUILTIN_LIBC
 
 

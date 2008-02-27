@@ -4,6 +4,7 @@
 #include "ctype.h"
 #include "limits.h"
 #include "kernel/memoryManager.h"
+#include "asm/arch/config.h"
 
 
 #define RAND_A     9301
@@ -20,6 +21,7 @@ atoi(const char * str)
   return (int) strtol (str, (char **) NULL, 10);
 }
 
+#ifdef CONFIG_BUILTIN_MM
 // -----------------------------------------------------------------------------
 void
 free(void * ptr)
@@ -33,6 +35,7 @@ malloc(size_t size)
 {
   return kmalloc(size);
 }
+#endif // CONFIG_BUILTIN_MM
 
 // -----------------------------------------------------------------------------
 int

@@ -17,6 +17,9 @@ typedef struct FILE
 } FILE;
 
 
+int printf(const char * format, ...);
+
+
 extern FILE * stdin;
 extern FILE * stdout;
 extern FILE * stderr;
