@@ -52,6 +52,9 @@ CIRQ           cIRQ;
 
 #ifdef CONFIG_DEBUGGING
 CGBADebugScreen cDebug;
+#ifdef NDS9
+CGBADebugScreen cDebugARM7;
+#endif // NDS9
 #endif // CONFIG_DEBUGGING
 
 #ifdef CONFIG_GBA_KEYBOARD
@@ -109,13 +112,16 @@ main(int, char *[])
 #endif // CONFIG_GBA_SERIAL
 
 #ifdef CONFIG_NDS_IPC
+#ifdef NDS7
   if(cIPC.init() == -1)
     iRetVal = -1;
-#ifdef NDS7
   pDebug = &cIPC;
 #endif // NDS7
 #ifdef NDS9
-  //CTaskManager::setStandardInput(&cIPC);
+  if(cDebugARM7.init(BOTTOM_SCREEN) == -1)
+    iRetVal = -1;
+  if(cIPC.init(&cDebugARM7) == -1)
+    iRetVal = -1;
 #endif // NDS9
 #endif // CONFIG_NDS_IPC
 

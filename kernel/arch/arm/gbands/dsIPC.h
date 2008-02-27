@@ -14,7 +14,7 @@ public:
   CDSIPC();
   virtual ~CDSIPC();
 
-  int init();
+  int init(IFileIO * output = 0);
 
   // Inherited from IInterruptServiceRoutine
   virtual int isr(int irq);
@@ -24,6 +24,7 @@ public:
   virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);
 
 private:
+  IFileIO * pOutput_;
   volatile int iBufferCount_;
   int iKey_;
 };

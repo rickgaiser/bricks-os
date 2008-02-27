@@ -2,11 +2,13 @@
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "asm/arch/registers.h"
+#include "stddef.h"
 
 
 // -----------------------------------------------------------------------------
 CDSIPC::CDSIPC()
- : iBufferCount_(0)
+ : pOutput_(NULL)
+ , iBufferCount_(0)
  , iKey_('~')
 {
 }
@@ -18,8 +20,10 @@ CDSIPC::~CDSIPC()
 
 // -----------------------------------------------------------------------------
 int
-CDSIPC::init()
+CDSIPC::init(IFileIO * output)
 {
+  pOutput_ = output;
+
   // Register ISRs
   CInterruptManager::attach(16, this); // ipc
   CInterruptManager::attach(17, this); // send buf empty
@@ -53,6 +57,8 @@ CDSIPC::isr(int irq)
       {
         iKey_ = REG_IPC_FIFO_RX;
         iBufferCount_ = 1;
+        if(pOutput_ != NULL)
+          pOutput_->write(&iKey_, 1);
       }
       break;
     default:
