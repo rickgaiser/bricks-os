@@ -3,6 +3,7 @@
 
 
 #include "kernel/syscall.h"
+#include "sys/types.h"
 
 
 #define CHANNEL_ID_BASE         0x1000
@@ -28,6 +29,9 @@ declareSysCallKernel1r(int, channelCreate, unsigned, iFlags);
 declareSysCallKernel1r(int, channelDestroy, int, iChannelID);
 declareSysCallKernel4r(int, channelConnectAttach, uint32_t, iNodeID, pid_t, iProcessID, int, iChannelID, int, iFlags);
 declareSysCallKernel1r(int, channelConnectDetach, int, iConnectionID);
+// Names
+declareSysCallKernel2r(int, registerName, int, channelID, const char *, name);
+declareSysCallKernel3r(int, lookupName,   const char *, name, int &, pid, int &, channelID);
 
 
 #ifdef __cplusplus

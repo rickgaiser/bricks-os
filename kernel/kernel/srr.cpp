@@ -1,6 +1,7 @@
 #include "kernel/debug.h"
 #include "kernel/srr_k.h"
-#include "kernel/srrChannel_k.h"
+#include "kernel/srrChannel.h"
+#include "kernel/srrConnection.h"
 #include "kernel/task.h"
 #include "kernel/pthread_k.h"
 #include "kernel/syscall.h"
@@ -53,11 +54,11 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
         //unwrapfunc1r(brk,                    pSndMsg, void *, addr);
         //unwrapfunc1r(close,                  pSndMsg, int, iFD);
         //unwrapfunc1 (_exit,                  pSndMsg, int, iStatus);
-        unwrapfunc0r(getpid);
+//        unwrapfunc0r(getpid);
         //unwrapfunc3r(read,                   pSndMsg, int, iFD, void *, pBuf, size_t, size);
         //unwrapfunc1r(sbrk,                   pSndMsg, intptr_t, increment);
-        unwrapfunc1r(sleep,                  pSndMsg, unsigned int, iSeconds);
-        unwrapfunc1r(usleep,                 pSndMsg, useconds_t, useconds);
+//        unwrapfunc1r(sleep,                  pSndMsg, unsigned int, iSeconds);
+//        unwrapfunc1r(usleep,                 pSndMsg, useconds_t, useconds);
         //unwrapfunc3r(write,                  pSndMsg, int, iFD, const void *, pBuf, size_t, size);
 
         default:

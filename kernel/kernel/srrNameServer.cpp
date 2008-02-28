@@ -1,4 +1,4 @@
-#include "kernel/srrNameServer_k.h"
+#include "kernel/srr_k.h"
 #include "kernel/debug.h"
 #include "kernel/queue.h"
 #include "kernel/task.h"

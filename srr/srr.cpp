@@ -1,5 +1,4 @@
 #include "kernel/srr.h"
-#include "kernel/srrChannel.h"
 #include "kernel/syscall.h"
 #include "string.h"
 

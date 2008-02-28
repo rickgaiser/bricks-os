@@ -7,7 +7,7 @@ INCL_PATH       =\
 
 LIB             =srr
 OBJS            =\
-                srrChannel \
+                srr \
                 pthread \
 
 

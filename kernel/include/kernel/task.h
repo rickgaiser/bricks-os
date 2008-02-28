@@ -6,7 +6,8 @@
 #include "kernel/fs.h"
 #include "kernel/queue.h"
 #include "kernel/pthread_k.h"
-#include "kernel/srrChannel_k.h"
+#include "kernel/srrChannel.h"
+#include "kernel/srrConnection.h"
 #include "inttypes.h"
 
 

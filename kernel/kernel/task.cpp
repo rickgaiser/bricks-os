@@ -2,8 +2,9 @@
 #include "kernel/task.h"
 #include "kernel/genwait.h"
 #include "kernel/srr_k.h"
-#include "kernel/srrChannel_k.h"
-#include "kernel/srrConnection_k.h"
+#include "kernel/srrChannel.h"
+#include "kernel/srrConnection.h"
+#include "kernel/srrNodes.h"
 #include "asm/cpu.h"
 #include "string.h"
 

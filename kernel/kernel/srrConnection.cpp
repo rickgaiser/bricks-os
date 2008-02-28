@@ -1,7 +1,7 @@
 #include "kernel/debug.h"
 #include "kernel/srr_k.h"
-#include "kernel/srrChannel_k.h"
-#include "kernel/srrConnection_k.h"
+#include "kernel/srrChannel.h"
+#include "kernel/srrConnection.h"
 #include "kernel/task.h"
 #include "string.h"
 

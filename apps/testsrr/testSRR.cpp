@@ -1,7 +1,5 @@
 #include "kernel/debug.h"
 #include "kernel/srr.h"
-#include "kernel/srrChannel.h"
-#include "kernel/srrNameServer.h"
 #include "unistd.h"
 #include "pthread.h"
 #include "msgServer.h"
