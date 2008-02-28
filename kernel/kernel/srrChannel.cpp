@@ -1,24 +1,62 @@
 #include "kernel/debug.h"
 #include "kernel/srr_k.h"
 #include "kernel/srrChannel_k.h"
+#include "kernel/srrConnection_k.h"
 #include "kernel/task.h"
 #include "string.h"
 
 
 //------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
 CChannel::CChannel()
  : pMsgWaiting_(NULL)
  , iState_(CHS_FREE)
 {
-  for(int i(0); i < MAX_IN_CONNECTION_COUNT; i++)
-    pConnectionsIn_[i] = NULL;
+  memset(pConnectionsIn_, 0, sizeof(pConnectionsIn_));
 }
 
 //------------------------------------------------------------------------------
 CChannel::~CChannel()
 {
   // FIXME: Connections need to be disconnected!
+}
+
+//------------------------------------------------------------------------------
+int
+CChannel::addConnection(CConnection * connection)
+{
+  int iRetVal(-1);
+
+  //printk("CChannel::addConnection\n");
+
+  // Find empty connection in channel
+  for(int iCOIDX(0); iCOIDX < MAX_IN_CONNECTION_COUNT; iCOIDX++)
+  {
+    //printk("CChannel::addConnection: 0x%x\n", pConnectionsIn_[iCOIDX]);
+    if(pConnectionsIn_[iCOIDX] == NULL)
+    {
+      // Add new connection
+      pConnectionsIn_[iCOIDX] = connection;
+
+      // Return connection index
+      iRetVal = iCOIDX;
+
+      break;
+    }
+  }
+
+  if(iRetVal < 0)
+    printk("CChannel::addConnection: ERROR: Max connections reached\n");
+
+  return iRetVal;
+}
+
+//------------------------------------------------------------------------------
+void
+CChannel::removeConnection(CConnection * connection)
+{
+  for(int iCOIDX(0); iCOIDX < MAX_IN_CONNECTION_COUNT; iCOIDX++)
+    if(pConnectionsIn_[iCOIDX] == connection)
+      pConnectionsIn_[iCOIDX] = NULL;
 }
 
 //------------------------------------------------------------------------------
@@ -64,143 +102,4 @@ CChannel::msgReceive(void * pRcvMsg, int iRcvSize)
   k_pthread_mutex_unlock(&mutex_);
 
   return iRetVal;
-}
-
-//------------------------------------------------------------------------------
-int
-CChannel::msgReply(int iConnectionIDX, int iStatus, const void * pReplyMsg, int iReplySize)
-{
-  int iRetVal(-1);
-
-  // Validate connection
-  if((iConnectionIDX >= 0) &&
-     (iConnectionIDX < MAX_IN_CONNECTION_COUNT) &&
-     (pConnectionsIn_[iConnectionIDX] != NULL))
-  {
-    // Reply the message
-    iRetVal = pConnectionsIn_[iConnectionIDX]->msgReply(iStatus, pReplyMsg, iReplySize);
-  }
-  else
-  {
-    printk("CChannel::msgReply: Invalid connection id: %d\n", iConnectionIDX);
-  }
-
-  return iRetVal;
-}
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-CConnection::CConnection(CChannel * channel, int iReceiveID)
- : channel_(channel)
- , iReceiveID_(iReceiveID)
- , iState_(COS_FREE)
-{
-}
-
-//------------------------------------------------------------------------------
-CConnection::~CConnection()
-{
-  // FIXME: We need to be disconnected!
-}
-
-//------------------------------------------------------------------------------
-int
-CConnection::msgSend(const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize)
-{
-  int iRetVal;
-
-  //printk("CConnection::msgSend\n");
-
-  // Wait for connection to become free
-  k_pthread_mutex_lock(&mutex_);
-  while(iState_ != COS_FREE)
-    k_pthread_cond_wait(&stateCond_, &mutex_);
-
-  // Set message ready
-  pSndMsg_  = pSndMsg;
-  iSndSize_ = iSndSize;
-  pRcvMsg_  = pRcvMsg;
-  iRcvSize_ = iRcvSize;
-  // Send message to channel
-  channel_->msgSend(*this);
-
-  // Wait for reply
-  iState_ = COS_MSG_SENT;
-  k_pthread_cond_broadcast(&stateCond_);
-  while(iState_ != COS_MSG_REPLIED)
-    k_pthread_cond_wait(&stateCond_, &mutex_);
-
-  iRetVal = iRetVal_;
-
-  // Free the connection
-  iState_ = COS_FREE;
-  k_pthread_cond_broadcast(&stateCond_);
-  k_pthread_mutex_unlock(&mutex_);
-
-  return iRetVal;
-}
-
-//------------------------------------------------------------------------------
-int
-CConnection::msgReply(int iStatus, const void * pReplyMsg, int iReplySize)
-{
-  int iRetVal(-1);
-
-  //printk("CConnection::msgReply\n");
-
-  // Lock the connection
-  k_pthread_mutex_lock(&mutex_);
-
-  if(iState_ == COS_MSG_SENT)
-  {
-    // Copy reply data and return status
-    if(iReplySize < iRcvSize_)
-      iReplySize = iRcvSize_;
-    memcpy(pRcvMsg_, pReplyMsg, iReplySize);
-    iRetVal_ = iStatus;
-
-    iRetVal = 0;
-
-    // Notify this->msgSend of replied message
-    iState_ = COS_MSG_REPLIED;
-    k_pthread_cond_broadcast(&stateCond_);
-  }
-  else
-  {
-    printk("CConnection::msgReply: Can't reply, no message sent\n");
-  }
-
-  // Unlock the connection
-  k_pthread_mutex_unlock(&mutex_);
-
-  return iRetVal;
-}
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-int
-k_channelCreate(unsigned iFlags)
-{
-  return CTaskManager::pCurrentTask_->channelCreate(iFlags);
-}
-
-//------------------------------------------------------------------------------
-int
-k_channelDestroy(int iChannelID)
-{
-  return CTaskManager::pCurrentTask_->channelDestroy(iChannelID);
-}
-
-//------------------------------------------------------------------------------
-int
-k_channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int iFlags)
-{
-  return CTaskManager::pCurrentTask_->channelConnectAttach(iNodeID, iProcessID, iChannelID, iFlags);
-}
-
-//------------------------------------------------------------------------------
-int
-k_channelConnectDetach(int iConnectionID)
-{
-  return CTaskManager::pCurrentTask_->channelConnectDetach(iConnectionID);
 }

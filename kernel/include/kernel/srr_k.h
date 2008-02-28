@@ -19,9 +19,15 @@ extern "C" {
 #endif
 
 
+// SRR
 declareSysCallKernel5r(int, msgSend,    int, iConnectionID, const void *, pSndMsg, int, iSndSize, void *, pRcvMsg, int, iRcvSize);
 declareSysCallKernel3r(int, msgReceive, int, iChannelID, void *, pRcvMsg, int, iRcvSize);
 declareSysCallKernel4r(int, msgReply,   int, iReceiveID, int, iStatus, const void *, pReplyMsg, int, iReplySize);
+// Channels
+declareSysCallKernel1r(int, channelCreate, unsigned, iFlags);
+declareSysCallKernel1r(int, channelDestroy, int, iChannelID);
+declareSysCallKernel4r(int, channelConnectAttach, uint32_t, iNodeID, pid_t, iProcessID, int, iChannelID, int, iFlags);
+declareSysCallKernel1r(int, channelConnectDetach, int, iConnectionID);
 
 
 #ifdef __cplusplus

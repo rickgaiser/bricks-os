@@ -96,3 +96,31 @@ k_msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize)
 {
   return CTaskManager::pCurrentTask_->msgReply(iReceiveID, iStatus, pReplyMsg, iReplySize);
 }
+
+//------------------------------------------------------------------------------
+int
+k_channelCreate(unsigned iFlags)
+{
+  return CTaskManager::pCurrentTask_->channelCreate(iFlags);
+}
+
+//------------------------------------------------------------------------------
+int
+k_channelDestroy(int iChannelID)
+{
+  return CTaskManager::pCurrentTask_->channelDestroy(iChannelID);
+}
+
+//------------------------------------------------------------------------------
+int
+k_channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int iFlags)
+{
+  return CTaskManager::pCurrentTask_->channelConnectAttach(iNodeID, iProcessID, iChannelID, iFlags);
+}
+
+//------------------------------------------------------------------------------
+int
+k_channelConnectDetach(int iConnectionID)
+{
+  return CTaskManager::pCurrentTask_->channelConnectDetach(iConnectionID);
+}

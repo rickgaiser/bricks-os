@@ -12,6 +12,7 @@ OBJS            =\
                 settings \
                 srr \
                 srrChannel \
+                srrConnection \
                 srrNameServer \
                 task \
                 timeValue \

@@ -12,6 +12,8 @@
 
 #define MAX_CHANNEL_COUNT         10
 #define MAX_OUT_CONNECTION_COUNT  10
+#define RCVID_TO_COIDX(rcvid) (rcvid)
+#define COIDX_TO_RCVID(coidx) (coidx)
 
 
 // -----------------------------------------------------------------------------
@@ -81,6 +83,9 @@ public:
   int msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize);
   int msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize);
 
+  int addInConnection(CConnection * connection);
+  int addOutConnection(CConnection * connection);
+
   int channelCreate(unsigned iFlags);
   int channelDestroy(int iChannelID);
   int channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int iFlags);
@@ -94,15 +99,22 @@ public:
   TAILQ_ENTRY(CTask) task_qe;                          // All tasks queue
 
 private:
+  int channelConnectAttach(pid_t iProcessID, int iChannelID, int iFlags);
+
   // Tasks channels (CTask has ownership)
   // NOTE: We are using an array here becouse it is FAST, and we need the
   //       msgReceive function to locate channels FAST.
   CChannel * pChannel_[MAX_CHANNEL_COUNT];
 
-  // Tasks connections (to channels) (CTask has ownership)
+  // Tasks connections (to other tasks channel) (CTask has ownership)
   // NOTE: We are using an array here becouse it is FAST, and we need the
   //       msgSend function to locate connections FAST.
   CConnection * pConnectionsOut_[MAX_OUT_CONNECTION_COUNT];
+
+  // Tasks connections (to this tasks channels) (CTask::pConnectionsOut_ has ownership)
+  // NOTE: We are using an array here becouse it is FAST, and we need the
+  //       msgSend function to locate connections FAST.
+  CConnection * pConnectionsIn_[MAX_IN_CONNECTION_COUNT];
 };
 
 // -----------------------------------------------------------------------------
