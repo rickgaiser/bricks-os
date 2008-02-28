@@ -31,7 +31,6 @@ CChannel::addConnection(CConnection * connection)
   // Find empty connection in channel
   for(int iCOIDX(0); iCOIDX < MAX_IN_CONNECTION_COUNT; iCOIDX++)
   {
-    //printk("CChannel::addConnection: 0x%x\n", pConnectionsIn_[iCOIDX]);
     if(pConnectionsIn_[iCOIDX] == NULL)
     {
       // Add new connection
