@@ -14,6 +14,7 @@ OBJS            =\
                 srrChannel \
                 srrConnection \
                 srrNameServer \
+                srrNodes \
                 task \
                 timeValue \
                 unistd \

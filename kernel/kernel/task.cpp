@@ -377,7 +377,28 @@ CTask::channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, 
   }
   else
   {
-    printk("CTask::channelConnectAttach: Remote nodes not supported\n");
+    int iNodeIDX = NODEID_TO_NODEIDX(iNodeID);
+
+    if((iNodeIDX >= 0) &&
+       (iNodeIDX < MAX_NODES) &&
+       (nodes_[iNodeIDX] != NULL))
+    {
+      // Connect to the gateway
+      //iRetVal = channelConnectAttach(nodes_[iNodeIDX]->iProcessID, nodes_[iNodeIDX]->iChannelID, 0);
+      if(iRetVal >= 0)
+      {
+        // Let the gateway connect to the remote node
+        iRetVal = nodes_[iNodeIDX]->channelConnectAttach(iProcessID, iChannelID, iFlags);
+        if(iRetVal < CONNECTION_ID_BASE)
+        {
+          printk("CTask::channelConnectAttach: Remote channel(pid-chid) not found(%d-%d)\n", iProcessID, iChannelID);
+        }
+      }
+    }
+    else
+    {
+      printk("CTask::channelConnectAttach: Remote node not found(%d)\n", iNodeID);
+    }
   }
 
   return iRetVal;
