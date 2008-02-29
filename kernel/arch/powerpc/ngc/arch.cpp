@@ -19,8 +19,7 @@ main(int, char *[])
 {
   int iRetVal(0);
 
-  // Initialize the memory manager so we can use new/delete/malloc/free
-  //init_heap(&__heap_start, (uint32_t)(&__heap_end - &__heap_start));
+  //init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
 
 #ifdef CONFIG_DEBUGGING
   if(cDebug.init() == -1)
@@ -28,8 +27,9 @@ main(int, char *[])
   pDebug = &cDebug;
 #endif // CONFIG_DEBUGGING
 
-//  printf("Bricks-OS\n");
-//  while(1);
+  //printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
+
+  printk("NGC arch ready\n");
 
   return bricks_main();
 }

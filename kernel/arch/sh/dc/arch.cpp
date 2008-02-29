@@ -1,14 +1,18 @@
 #include "kernel/bricks.h"
 #include "kernel/debug.h"
 #include "kernel/memoryManager.h"
+#include "asm/arch/config.h"
 
 
 // -----------------------------------------------------------------------------
 int
 main(int, char *[])
 {
-  // Initialize the memory manager so we can use new/delete/malloc/free
-  //init_heap(&__heap_start, (uint32_t)(&__heap_end - &__heap_start));
+  //init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
+
+  //printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
+
+  printk("DC arch ready\n");
 
   return bricks_main();
 }

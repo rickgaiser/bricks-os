@@ -356,5 +356,11 @@ main(unsigned long magic, multiboot_info_t * mbi)
   printk("Memory kernel:   %dKiB\n", iMemKernel/1024);
   printk("Memory free:     %dKiB\n", freePageCount() * 4);
 
+  // Enable interrupts
+  local_irq_enable();
+  printk("Interrupts...OK\n");
+
+  printk("PC arch ready\n");
+
   return bricks_main();
 }

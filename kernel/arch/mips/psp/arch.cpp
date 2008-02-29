@@ -71,8 +71,7 @@ main(int, char *[])
 {
   int iRetVal(0);
 
-  // Initialize the memory manager so we can use new/delete/malloc/free
-  //init_heap(&__heap_start, (uint32_t)(&__heap_end - &__heap_start));
+  //init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
 
   SetupCallbacks();
 
@@ -87,6 +86,10 @@ main(int, char *[])
 #endif // CONFIG_FRAMEBUFFER
 
 //  sceKernelSleepThread();
+
+  //printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
+
+  printk("PSP arch ready\n");
 
   return bricks_main();
 }

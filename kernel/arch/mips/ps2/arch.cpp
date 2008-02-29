@@ -13,6 +13,8 @@
 
 extern char _end;
 extern char _heap_size;
+#define HEAP_START ((uint32_t)(&_end))
+#define HEAP_END   ((uint32_t)(&_end + &_heap_size))
 
 
 #ifdef CONFIG_DEBUGGING
@@ -30,8 +32,7 @@ main(int, char *[])
 {
   int iRetVal(0);
 
-  // FIXME
-  init_heap(&_end, 4 * 1024 * 1024);
+  init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
 
 #ifdef CONFIG_DEBUGGING
   if(cDebug.init() == -1)
@@ -44,6 +45,10 @@ main(int, char *[])
 #endif // CONFIG_FRAMEBUFFER
 
   CPS2Thread::init();
+
+  printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
+
+  printk("PS2 arch ready\n");
 
   return bricks_main();
 }

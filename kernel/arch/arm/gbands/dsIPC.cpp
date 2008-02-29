@@ -35,6 +35,11 @@ CDSIPC::init(IFileIO * output)
   // fifo init
   REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR | IPC_FIFO_RECV_IRQ | IPC_FIFO_ERROR; // IPC_FIFO_SEND_IRQ
 
+#ifdef NDS7
+  // Wait for "ready" from ARM9
+  while(REG_IPC_FIFO_RX != 'y');
+#endif
+
   return 0;
 }
 

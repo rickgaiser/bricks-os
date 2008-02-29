@@ -39,22 +39,28 @@
 #ifdef GBA
 extern char __iheap_start, __iwram_top;
 extern char __eheap_start, __eheap_end;
-#endif // GBA
-#ifdef NDS7
+#define HEAP_START ((uint32_t)(&__eheap_start))
+#define HEAP_END   ((uint32_t)(&__eheap_end))
+#elif NDS7
 extern char _end, __iwram_top;
-#endif // NDS7
-#ifdef NDS9
+#define HEAP_START ((uint32_t)(&_end))
+#define HEAP_END   ((uint32_t)(&__iwram_top))
+#elif NDS9
 extern char _end, __eheap_end;
-#endif // NDS9
+#define HEAP_START ((uint32_t)(&_end))
+#define HEAP_END   ((uint32_t)(&__eheap_end))
+#endif
 
 
 CIRQ           cIRQ;
 
 #ifdef CONFIG_DEBUGGING
+#if defined(GBA) || defined(NDS9)
 CGBADebugScreen cDebug;
 #ifdef NDS9
 CGBADebugScreen cDebugARM7;
 #endif // NDS9
+#endif // defined(GBA) || defined(NDS9)
 #endif // CONFIG_DEBUGGING
 
 #ifdef CONFIG_GBA_KEYBOARD
@@ -80,24 +86,17 @@ main(int, char *[])
 {
   int iRetVal(0);
 
-#ifdef GBA
-  //init_heap(&__iheap_start, &__iwram_top - &__iheap_start);
-  init_heap(&__eheap_start, (uint32_t)(&__eheap_end - &__eheap_start));
-#endif // GBA
-#ifdef NDS7
-  init_heap(&_end, (uint32_t)(&__iwram_top - &_end));
-#endif // NDS7
-#ifdef NDS9
-  init_heap(&_end, (uint32_t)(&__eheap_end - &_end));
-#endif // NDS9
+  init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
 
   if(cIRQ.init() == -1)
     iRetVal = -1;
 
 #ifdef CONFIG_DEBUGGING
+#if defined(GBA) || defined(NDS9)
   if(cDebug.init() == -1)
     iRetVal = -1;
   pDebug = &cDebug;
+#endif // defined(GBA) || defined(NDS9)
 #endif // CONFIG_DEBUGGING
 
 #ifdef CONFIG_GBA_KEYBOARD
@@ -146,6 +145,25 @@ main(int, char *[])
   // Let CPU flag control interrupt state
   local_irq_disable();  // Disable in cpu interrupt enable flag
   REG_IME = 1;          // Enable REG_IME interrupt enable flag
+
+  printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
+
+  // Enable interrupts
+  local_irq_enable();
+  printk("Interrupts...OK\n");
+
+#if defined(CONFIG_NDS_IPC) && defined(NDS9)
+  // Notify ARM7 CPU that we are ready to receive debugging information
+  cIPC.write("ready", 6);
+#endif
+
+#ifdef GBA
+  printk("GBA arch ready\n");
+#elif NDS7
+  printk("NDS-ARM7 arch ready\n");
+#elif NDS9
+  printk("NDS-ARM9 arch ready\n");
+#endif
 
   return bricks_main();
 }

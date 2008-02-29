@@ -2,7 +2,6 @@
 #include "kernel/debug.h"
 #include "asm/arch/config.h"
 #include "asm/cpu.h"
-#include "pthread.h"
 
 
 extern "C" int appMain(int argc, char * argv[]);
@@ -16,12 +15,7 @@ bricks_main()
   printk("Bricks-OS\n");
   printk("=========\n");
 
-  // Enable interrupts
-  printk("Interrupts...\n");
-  local_irq_enable();
-  printk("Interrupts...OK\n");
-
-  // Execute application
+  // Execute main application
   appMain(0, 0);
 
   // Halt current thread
