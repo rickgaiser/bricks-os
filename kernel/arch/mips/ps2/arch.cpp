@@ -14,7 +14,7 @@
 extern char _end;
 extern char _heap_size;
 #define HEAP_START ((uint32_t)(&_end))
-#define HEAP_END   ((uint32_t)(&_end + &_heap_size))
+#define HEAP_END   ((uint32_t)(&_end + 4*1024*1024)) // FIXME: (&_end + &_heap_size))
 
 
 #ifdef CONFIG_DEBUGGING
