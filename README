@@ -32,6 +32,7 @@ Bricks-OS
     make -f Makefile.nds clean all
     make -f Makefile.ngc clean all
     make -f Makefile.ps2 clean all
+    make -f Makefile.psp clean all
     make -f Makefile.pc  clean all
 
   After succesfully building Bricks-OS the binary file will be located at:
