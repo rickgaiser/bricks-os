@@ -7,10 +7,18 @@
 #include "debugScreen.h"
 #endif // CONFIG_DEBUGGING
 
+#ifdef CONFIG_FRAMEBUFFER
+#include "videoDevice.h"
+#endif // CONFIG_FRAMEBUFFER
+
 
 #ifdef CONFIG_DEBUGGING
 CNGCDebugScreen cDebug;
 #endif // CONFIG_DEBUGGING
+
+#ifdef CONFIG_FRAMEBUFFER
+CNGCVideoDevice * pVideoDevice;
+#endif // CONFIG_FRAMEBUFFER
 
 
 // -----------------------------------------------------------------------------
@@ -26,6 +34,10 @@ main(int, char *[])
     iRetVal = -1;
   pDebug = &cDebug;
 #endif // CONFIG_DEBUGGING
+
+#ifdef CONFIG_FRAMEBUFFER
+  pVideoDevice = new CNGCVideoDevice;
+#endif // CONFIG_FRAMEBUFFER
 
   //printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
 

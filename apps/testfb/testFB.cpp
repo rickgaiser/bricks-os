@@ -34,7 +34,7 @@ color_t clPanelFill       (BxRGB(212, 208, 200));
 
 // -----------------------------------------------------------------------------
 void
-test2d(I2DRenderer * renderer, CSurface * surface)
+test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
 {
   if((renderer == NULL) || (surface == NULL))
     return;
@@ -54,7 +54,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
     renderer->setColor(0, 0, 0);
     renderer->fillRect(surface->width() / 4 + 2, surface->height() / 2 + 2, ((surface->width() / 2 - 4) * i) / loops, 10 - 4);
 
-    //renderer->waitVSync();
+    device->waitVSync();
     renderer->flush();
   }
 
@@ -68,7 +68,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
       rand() % surface->width(),
       rand() % surface->height());
 
-    //renderer->waitVSync();
+    device->waitVSync();
     renderer->flush();
   }
 
@@ -84,7 +84,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
       rand() % surface->width(),
       rand() % surface->height());
 
-    //renderer->waitVSync();
+    device->waitVSync();
     renderer->flush();
   }
 
@@ -105,7 +105,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
     renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
     renderer->drawRect(x, y, w, h);
 
-    //renderer->waitVSync();
+    device->waitVSync();
     renderer->flush();
   }
 
@@ -126,7 +126,7 @@ test2d(I2DRenderer * renderer, CSurface * surface)
     renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
     renderer->fillRect(x, y, w, h);
 
-    //renderer->waitVSync();
+    device->waitVSync();
     renderer->flush();
   }
 }
@@ -157,7 +157,7 @@ appMain(int argc, char * argv[])
           devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
           devices[iDev]->displaySurface(pVideoSurface);
           devices[iDev]->getRenderer(&pVideoRenderer);
-          test2d(pVideoRenderer, pVideoSurface);
+          test2d(devices[iDev], pVideoRenderer, pVideoSurface);
 
           if(pVideoRenderer != NULL)
             delete pVideoRenderer;

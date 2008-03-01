@@ -1,17 +1,10 @@
 #include "debugScreen.h"
-typedef unsigned int wint_t;
 #include <gccore.h>
-#include <malloc.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <ogcsys.h>
-#include <time.h>
-#include "string.h"
-#include "inttypes.h"
 
 
 static void *xfb = NULL;
-u32 first_frame = 1;
 GXRModeObj *rmode;
 
 
@@ -55,7 +48,6 @@ CNGCDebugScreen::init()
   VIDEO_SetBlack(FALSE);
   VIDEO_Flush();
   VIDEO_WaitVSync();
-
   if(rmode->viTVMode&VI_NON_INTERLACE)
     VIDEO_WaitVSync();
 
