@@ -26,7 +26,7 @@
 #define VISIBLE_POINT(x,y) ((x >= 0) && (x < (int)pSurface_->mode.width) && (y >= 0) && (y < (int)pSurface_->mode.height))
 
 //---------------------------------------------------------------------------
-#define VISIBLE_RECT(x,y,w,h) ((x < (int)pSurface_->mode.width) && ((x+w) >= 0) && (y < (int)pSurface_->mode.height) && ((y+h) >= 0))
+#define VISIBLE_RECT(x,y,w,h) ((x < (int)pSurface_->mode.width) && ((x + w - 1) >= 0) && (y < (int)pSurface_->mode.height) && ((y + h - 1) >= 0))
 
 //---------------------------------------------------------------------------
 #define CLIP_POINT(x,y) \
@@ -42,10 +42,10 @@
 // Otherwise this macro makes no sense
 #define CLIP_RECT(x,y,w,h) \
 { \
-  if(x < 0) {x = 0; w -= x;} \
-  if(y < 0) {y = 0; h -= y;} \
-  if((x+w) > pSurface_->mode.width) {w = pSurface_->mode.width - x;} \
-  if((y+h) > pSurface_->mode.height) {h = pSurface_->mode.height - y;} \
+  if(x < 0) {w -= -x; x = 0;} \
+  if(y < 0) {h -= -y; y = 0;} \
+  if((x + w) > pSurface_->mode.width)  {w = pSurface_->mode.width  - x;} \
+  if((y + h) > pSurface_->mode.height) {h = pSurface_->mode.height - y;} \
 }
 
 //---------------------------------------------------------------------------
@@ -316,12 +316,61 @@ C2DRenderer::drawLine_i(int x1, int y1, int x2, int y2)
 
 //---------------------------------------------------------------------------
 void
+C2DRenderer::drawHLine_i(int x, int y, unsigned int width)
+{
+  while(width > 0)
+  {
+    SET_PIXEL(x, y, fmtColor_);
+    x++;
+    width--;
+  }
+}
+
+//---------------------------------------------------------------------------
+void
+C2DRenderer::drawVLine_i(int x, int y, unsigned int height)
+{
+  while(height > 0)
+  {
+    SET_PIXEL(x, y, fmtColor_);
+    y++;
+    height--;
+  }
+}
+
+//---------------------------------------------------------------------------
+void
 C2DRenderer::drawRect_i(int x, int y, unsigned int width, unsigned int height)
 {
-  drawLine(x,         y,          x + width, y);
-  drawLine(x + width, y + 1,      x + width, y + height - 1);
-  drawLine(x,         y + height, x + width, y + height);
-  drawLine(x,         y + 1,      x,         y + height - 1);
+  if((width == 0) || (height == 0))
+  {
+    return;
+  }
+  else if(width == 1)
+  {
+    drawVLine_i(x, y, height);
+  }
+  else if(width == 2)
+  {
+    drawVLine_i(x,     y, height);
+    drawVLine_i(x + 1, y, height);
+  }
+  else if(height == 1)
+  {
+    drawHLine_i(x, y, width);
+  }
+  else if(height == 2)
+  {
+    drawHLine_i(x, y,     width);
+    drawHLine_i(x, y + 1, width);
+  }
+  else
+  {
+    drawHLine_i(x, y, width);                      // Top
+    drawHLine_i(x, y + height - 1, width);         // Bottom
+    drawVLine_i(x, y + 1, height - 2);             // Left
+    drawVLine_i(x + width - 1, y + 1, height - 2); // Right
+  }
 }
 
 //---------------------------------------------------------------------------
