@@ -84,22 +84,22 @@ CSoftGLESFloat::glClear(GLbitfield mask)
     {
       case 8:
       {
-        for(uint32_t y(0); y < renderSurface->mode.width; y++)
-          for(uint32_t x(0); x < renderSurface->mode.height; x++)
+        for(uint32_t y(0); y < renderSurface->mode.height; y++)
+          for(uint32_t x(0); x < renderSurface->mode.width; x++)
             ((uint8_t  *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
         break;
       }
       case 16:
       {
-        for(uint32_t y(0); y < renderSurface->mode.width; y++)
-          for(uint32_t x(0); x < renderSurface->mode.height; x++)
+        for(uint32_t y(0); y < renderSurface->mode.height; y++)
+          for(uint32_t x(0); x < renderSurface->mode.width; x++)
             ((uint16_t *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
         break;
       }
       case 32:
       {
-        for(uint32_t y(0); y < renderSurface->mode.width; y++)
-          for(uint32_t x(0); x < renderSurface->mode.height; x++)
+        for(uint32_t y(0); y < renderSurface->mode.height; y++)
+          for(uint32_t x(0); x < renderSurface->mode.width; x++)
             ((uint32_t *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
         break;
       }
