@@ -18,6 +18,38 @@
 #define KEY_L      (1<<9)
 
 
+#define FLASH_FRAME_COUNT 5
+#define MIN_SPEED         2.0f
+#define MAX_SPEED         6.0f
+#define SPEED_UP          0.2f
+#define SPEED_DOWN        0.6f
+
+
+float fSpeed = MIN_SPEED;
+
+
+// -----------------------------------------------------------------------------
+void
+updateSpeed(I2DRenderer * renderer, CSurface * surface, float diff)
+{
+  fSpeed += diff;
+
+  if(fSpeed < MIN_SPEED) fSpeed = MIN_SPEED;
+  if(fSpeed > MAX_SPEED) fSpeed = MAX_SPEED;
+
+  // Clear speed bar
+  renderer->setColor(0, 0, 0);
+  renderer->fillRect(0, 0, surface->width(), 20);
+
+  float fSpeedPart = (fSpeed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED);
+  if(fSpeedPart > 0.0f)
+  {
+    // Set speed bar
+    renderer->setColor((uint8_t)(255 * (1.0f - fSpeedPart)), (uint8_t)(255 * fSpeedPart), 0);
+    renderer->fillRect(0, 0, (uint32_t)(surface->width() * fSpeedPart), 20);
+  }
+}
+
 // -----------------------------------------------------------------------------
 void
 runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
@@ -36,21 +68,24 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
   uint32_t iBottomWallEdge = surface->height() - 4;
   uint32_t iPlayer1Edge    = 10 + iPlayerWidth;
 
-  uint32_t iP1Pos = iTopWallEdge + 1;
+  uint32_t iP1Pos = iTopWallEdge + ((iBottomWallEdge - iTopWallEdge) >> 1) - (iPlayerHeight >> 2);
   float fBallX = 0;
   float fBallY = iTopWallEdge;
-  float fIncX = 2.12345f;
-  float fIncY = 2.12345f;
-  bool bMissed = false;
-  bool bMissFlash = false;
+  float fIncX = 1.0f;
+  float fIncY = 0.5f;
+  bool  bMissed = false;
+  int   iRedFlash = 0;
+  int   iGreenFlash = 0;
 
   // Wait for vertical sync before drawing
   device->waitVSync();
 
   // Gray background
-  renderer->setColor(64, 64, 64);
+  renderer->setColor(0, 0, 0);
   renderer->fill();
 
+  // Speed bar
+  updateSpeed(renderer, surface, 0.0f);
   // Red frame
   renderer->setColor(255, 0, 0);
   renderer->fillRect(0, 20, surface->width(), 4);
@@ -70,8 +105,8 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
       iP1Pos = iBottomWallEdge - iPlayerHeight;
 
     // Update Ball
-    fBallX += fIncX;
-    fBallY += fIncY;
+    fBallX += fIncX * fSpeed;
+    fBallY += fIncY * fSpeed;
 
     if(fIncX > 0)
     {
@@ -91,8 +126,24 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
         {
           if((fBallY < (iP1Pos + iPlayerHeight)) && ((fBallY + iBallHeight) > iP1Pos))
           {
+            /*
+            // Calculate new ball Y speed
+            int32_t iP1Center   = iP1Pos + (iPlayerHeight >> 1);
+            int32_t iBallCenter = (int32_t)fBallY + (iBallHeight   >> 1);
+            float fOffset = iBallCenter - iP1Center;
+            fOffset /= (iPlayerHeight >> 1);  // nomalize to -1..1
+            fOffset *= 2.0f;
+
+            fIncY += fOffset;
+            if(fIncY >  2.0f) fIncY =  2.0f;
+            if(fIncY < -2.0f) fIncY = -2.0f;
+            */
+
             fIncX = -fIncX;
             fBallX += 2 * (iPlayer1Edge - fBallX);
+
+            iGreenFlash = FLASH_FRAME_COUNT;
+            updateSpeed(renderer, surface, SPEED_UP);
           }
           else
           {
@@ -103,10 +154,13 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
         {
           if(fBallX < 0)
           {
+            bMissed = false;
+
             fIncX = -fIncX;
             fBallX += 2 * (-fBallX);
-            bMissed = false;
-            bMissFlash = true;
+
+            iRedFlash = FLASH_FRAME_COUNT;
+            updateSpeed(renderer, surface, -SPEED_DOWN);
           }
         }
       }
@@ -114,10 +168,10 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
     if(fIncY > 0)
     {
       // Detect hit on bottom wall
-      if((fBallY + iBallHeight - 1) > iBottomWallEdge)
+      if((fBallY + iBallHeight) > iBottomWallEdge)
       {
         fIncY = -fIncY;
-        fBallY -= 2 * ((fBallY + iBallHeight - 1) - iBottomWallEdge);
+        fBallY -= 2 * ((fBallY + iBallHeight) - iBottomWallEdge);
       }
     }
     else
@@ -134,13 +188,20 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
     device->waitVSync();
 
     // Clear play field
-    if(bMissFlash == true)
+    if(iRedFlash > 0)
     {
-      bMissFlash = false;
-      renderer->setColor(255, 0, 0);
+      bMissed = false;
+      renderer->setColor((255 * iRedFlash) / FLASH_FRAME_COUNT, 0, 0);
+      iRedFlash--;
+    }
+    else if(iGreenFlash > 0)
+    {
+      bMissed = false;
+      renderer->setColor(0, (255 * iGreenFlash) / FLASH_FRAME_COUNT, 0);
+      iGreenFlash--;
     }
     else
-      renderer->setColor(64, 64, 64);
+      renderer->setColor(0, 0, 0);
     renderer->fillRect(0, iTopWallEdge, surface->width() - 4, surface->height() - iTopWallEdge - 4);
     //renderer->fill();
 
@@ -150,7 +211,7 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
     //renderer->fillRect(10, 4, iPlayerWidth, surface->height() - 8);
 
     // Draw ball
-    renderer->setColor(0, 0, 255);
+    renderer->setColor(0, 255, 0);
     renderer->fillRect((uint32_t)fBallX, (uint32_t)fBallY, iBallWidth, iBallHeight);
 
     // Flush everything to screen
