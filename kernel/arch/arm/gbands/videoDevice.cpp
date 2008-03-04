@@ -9,7 +9,7 @@ static const SVideoMode videoModes[] =
 {
 #ifdef GBA
 //  {240, 160, 240, 160, 16, cfX1B5G5R5}, // 3:2
-//  {240, 160, 240, 160,  8, cfP8}, // 3:2
+//  {240, 160, 240, 160,  8, cfR3G3B2},   // 3:2
   {160, 128, 160, 128, 16, cfX1B5G5R5}, // 5:4
 //  {160, 128, 120,  80, 16, cfX1B5G5R5}, // 3:2
 #endif // GBA
@@ -38,16 +38,18 @@ CGBA2DRenderer::fill_i()
 {
   if(pSurface_->mode.xpitch == pSurface_->mode.width)
   {
-    dmaFill16(fmtColor_ | 0x8000, pSurface_->p, pSurface_->mode.width * pSurface_->mode.height);
+    if(pSurface_->mode.bpp == 8)
+    {
+      dmaFill16((fmtColor_ << 8) | fmtColor_, pSurface_->p, (pSurface_->mode.width * pSurface_->mode.height) >> 1);
+    }
+    else
+    {
+      dmaFill16(fmtColor_ | 0x8000, pSurface_->p, pSurface_->mode.width * pSurface_->mode.height);
+    }
   }
   else
   {
-    unsigned int iBase(0);
-    for(unsigned int iY(0); iY < pSurface_->mode.height; iY++)
-    {
-      dmaFill16(fmtColor_ | 0x8000, &((uint16_t *)pSurface_->p)[iBase], pSurface_->mode.width);
-      iBase += pSurface_->mode.xpitch;
-    }
+    fillRect_i(0, 0, pSurface_->mode.width, pSurface_->mode.height);
   }
 }
 
@@ -57,10 +59,21 @@ CGBA2DRenderer::fillRect_i(int x, int y, unsigned int width, unsigned int height
 {
   unsigned int iBase(y * pSurface_->mode.xpitch + x);
 
-  for(unsigned int iY(y); iY < (y + height); iY++)
+  if(pSurface_->mode.bpp == 8)
   {
-    dmaFill16(fmtColor_ | 0x8000, &((uint16_t *)pSurface_->p)[iBase], width);
-    iBase += pSurface_->mode.xpitch;
+    for(unsigned int iY(y); iY < (y + height); iY++)
+    {
+      dmaFill16((fmtColor_ << 8) | fmtColor_, &((uint8_t *)pSurface_->p)[iBase], width >> 1);
+      iBase += pSurface_->mode.xpitch;
+    }
+  }
+  else
+  {
+    for(unsigned int iY(y); iY < (y + height); iY++)
+    {
+      dmaFill16(fmtColor_ | 0x8000, &((uint16_t *)pSurface_->p)[iBase], width);
+      iBase += pSurface_->mode.xpitch;
+    }
   }
 }
 
@@ -146,6 +159,16 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
     //  - 2 frames fit in VRAM
     //  - paletted
     REG_DISPCNT = MODE_4 | BG2_ENABLE;
+
+    // Set default palette (cfR3G3B2)
+    for(uint32_t i(0); i < 256; i++)
+    {
+      BG_PALETTE[i] = BxColorFormat_FromRGB(
+        cfX1B5G5R5,
+        BxColorFormat_GetR(cfR3G3B2, i),
+        BxColorFormat_GetG(cfR3G3B2, i),
+        BxColorFormat_GetB(cfR3G3B2, i));
+    }
   }
   else if((mode->width == 160) && (mode->height == 128) && (mode->bpp == 16))
   {
@@ -250,10 +273,7 @@ CGBAVideoDevice::displaySurface(CSurface * surface)
 {
   // Always VSync, even if the frame is not new.
   if(vSync_ == true)
-  {
-    bSwap_ = true;
-    while(bSwap_ == true){}
-  }
+    waitVSync();
 
   // Set new surface if it changed
   if((surface != NULL) && (surface != pSurface_))
