@@ -78,6 +78,22 @@ CGBA2DRenderer::fillRect_i(int x, int y, unsigned int width, unsigned int height
 }
 
 //---------------------------------------------------------------------------
+void
+CGBA2DRenderer::drawHLine_i(int x, int y, unsigned int width)
+{
+  unsigned int iBase(y * pSurface_->mode.xpitch + x);
+
+  if(pSurface_->mode.bpp == 8)
+  {
+    dmaFill16((fmtColor_ << 8) | fmtColor_, &((uint8_t *)pSurface_->p)[iBase], width >> 1);
+  }
+  else
+  {
+    dmaFill16(fmtColor_ | 0x8000, &((uint16_t *)pSurface_->p)[iBase], width);
+  }
+}
+
+//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CGBAVideoDevice::CGBAVideoDevice()
  : CAVideoDevice()

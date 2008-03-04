@@ -15,8 +15,9 @@ public:
   virtual ~CGBA2DRenderer();
 
 protected:
-  virtual void     fill_i();
-  virtual void     fillRect_i(int x, int y, unsigned int width, unsigned int height);
+  virtual void fill_i();
+  virtual void fillRect_i(int x, int y, unsigned int width, unsigned int height);
+  virtual void drawHLine_i(int x, int y, unsigned int width);
 };
 
 //---------------------------------------------------------------------------

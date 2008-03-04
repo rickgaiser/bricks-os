@@ -246,6 +246,32 @@ C2DRenderer::drawLine(int x1, int y1, int x2, int y2)
 
 //---------------------------------------------------------------------------
 void
+C2DRenderer::drawHLine(int x, int y, unsigned int width)
+{
+  if(pSurface_ != NULL)
+  {
+    // FIXME: Are we visible?
+    CLIP_POINT(x, y);
+
+    drawHLine_i(x, y, width);
+  }
+}
+
+//---------------------------------------------------------------------------
+void
+C2DRenderer::drawVLine(int x, int y, unsigned int height)
+{
+  if(pSurface_ != NULL)
+  {
+    // FIXME: Are we visible?
+    CLIP_POINT(x, y);
+
+    drawVLine_i(x, y, height);
+  }
+}
+
+//---------------------------------------------------------------------------
+void
 C2DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
 {
   if(pSurface_ != NULL)
@@ -276,42 +302,50 @@ C2DRenderer::fill_i()
 void
 C2DRenderer::fillRect_i(int x, int y, unsigned int width, unsigned int height)
 {
-  for(unsigned int iY(y); iY < (y + height); iY++)
-  {
-    for(unsigned int iX(x); iX < (x + width); iX++)
-      SET_PIXEL(iX, iY, fmtColor_);
-  }
+  for(uint32_t i(0); i < height; i++)
+    drawHLine_i(x, y + i, width);
 }
 
 //---------------------------------------------------------------------------
 void
 C2DRenderer::drawLine_i(int x1, int y1, int x2, int y2)
 {
-  float dx = (x2-x1);
-  float dy = (y2-y1);
-
-  if(dx >= abs(dy))
+  if(y1 == y2)
   {
-    float currenty = y1 + 0.5f;
-    float slopey   = dy / dx;
-
-    for(; x1 <= x2; x1++)
-    {
-      SET_PIXEL(x1, (int)currenty, fmtColor_);
-      currenty += slopey;
-    }
+    drawHLine_i(x1, y1, x2 - x1 + 1);
+  }
+  else if(x1 == x2)
+  {
+    drawVLine_i(x1, y1, y2 - y1 + 1);
   }
   else
   {
-    float currentx = x1 + 0.5f;
-    float slopex   = dx / dy;
-    int ystart = (y1 <= y2) ? y1 : y2;
-    int yend   = (y1 <= y2) ? y2 : y1;
+    float dx = (x2-x1);
+    float dy = (y2-y1);
 
-    for(; ystart <= yend; ystart++)
+    if(dx >= abs(dy))
     {
-      SET_PIXEL((int)currentx, ystart, fmtColor_);
-      currentx += slopex;
+      float currenty = y1 + 0.5f;
+      float slopey   = dy / dx;
+
+      for(; x1 <= x2; x1++)
+      {
+        SET_PIXEL(x1, (int)currenty, fmtColor_);
+        currenty += slopey;
+      }
+    }
+    else
+    {
+      float currentx = x1 + 0.5f;
+      float slopex   = dx / dy;
+      int ystart = (y1 <= y2) ? y1 : y2;
+      int yend   = (y1 <= y2) ? y2 : y1;
+
+      for(; ystart <= yend; ystart++)
+      {
+        SET_PIXEL((int)currentx, ystart, fmtColor_);
+        currentx += slopex;
+      }
     }
   }
 }
@@ -344,27 +378,24 @@ C2DRenderer::drawVLine_i(int x, int y, unsigned int height)
 void
 C2DRenderer::drawRect_i(int x, int y, unsigned int width, unsigned int height)
 {
-  if((width == 0) || (height == 0))
+  if((width < 3) || (height < 3))
   {
-    return;
-  }
-  else if(width == 1)
-  {
-    drawVLine_i(x, y, height);
-  }
-  else if(width == 2)
-  {
-    drawVLine_i(x,     y, height);
-    drawVLine_i(x + 1, y, height);
-  }
-  else if(height == 1)
-  {
-    drawHLine_i(x, y, width);
-  }
-  else if(height == 2)
-  {
-    drawHLine_i(x, y,     width);
-    drawHLine_i(x, y + 1, width);
+    if((width == 0) || (height == 0))
+      return;
+    else if(width == 1)
+      drawVLine_i(x, y, height);
+    else if(height == 1)
+      drawHLine_i(x, y, width);
+    else if(width == 2)
+    {
+      drawVLine_i(x,     y, height);
+      drawVLine_i(x + 1, y, height);
+    }
+    else if(height == 2)
+    {
+      drawHLine_i(x, y,     width);
+      drawHLine_i(x, y + 1, width);
+    }
   }
   else
   {

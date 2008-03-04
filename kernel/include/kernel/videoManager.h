@@ -171,7 +171,9 @@ public:
   virtual void       fill() = 0;
   virtual void       fillRect(int x, int y, unsigned int width, unsigned int height) = 0;  // Width: width in pixels, Height: height in pixels
   virtual void       drawLine(int x1, int y1, int x2, int y2) = 0;                         // Note: x2 and y2 are drawn
-  virtual void       drawRect(int x, int y, unsigned int width, unsigned int height) = 0;  // Width: width in pixels, Height: height in pixels
+  virtual void       drawHLine(int x, int y, unsigned int width) = 0;
+  virtual void       drawVLine(int x, int y, unsigned int height) = 0;
+  virtual void       drawRect(int x, int y, unsigned int width, unsigned int height) = 0;
 };
 
 //---------------------------------------------------------------------------
@@ -197,6 +199,8 @@ public:
   virtual void       fill();
   virtual void       fillRect(int x, int y, unsigned int width, unsigned int height);
   virtual void       drawLine(int x1, int y1, int x2, int y2);
+  virtual void       drawHLine(int x, int y, unsigned int width);
+  virtual void       drawVLine(int x, int y, unsigned int height);
   virtual void       drawRect(int x, int y, unsigned int width, unsigned int height);
 
 protected:
