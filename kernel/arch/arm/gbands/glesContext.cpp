@@ -2,6 +2,13 @@
 #include "asm/arch/macros.h"
 
 
+#define BxColorFormat_FromFxRGB(format,r,g,b) \
+  BxColorFormat_FromRGB(format, \
+                        (r * 255) >> 16, \
+                        (g * 255) >> 16, \
+                        (b * 255) >> 16);
+
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CGBAGLESContext::CGBAGLESContext()
@@ -25,7 +32,8 @@ CGBAGLESContext::glClear(GLbitfield mask)
       case 8:
       {
         // FIXME!
-        uint32_t color = 0x00000000;
+        uint32_t color = BxColorFormat_FromFxRGB(renderSurface->mode.format, clClear.r, clClear.g, clClear.b);
+        color = (color << 24) | (color << 16) | (color << 8) | color;
         if(renderSurface->mode.xpitch == renderSurface->mode.width)
         {
           dmaFill32(color, renderSurface->p, viewportPixelCount>>2);
@@ -39,10 +47,12 @@ CGBAGLESContext::glClear(GLbitfield mask)
             iBase += renderSurface->mode.xpitch;
           }
         }
+        break;
       }
       case 16:
       {
-        uint32_t color = (fpRGB(clClear.r, clClear.g, clClear.b) << 16) | fpRGB(clClear.r, clClear.g, clClear.b);
+        uint32_t color = BxColorFormat_FromFxRGB(renderSurface->mode.format, clClear.r, clClear.g, clClear.b);
+        color = (color << 16) | color;
         if(renderSurface->mode.xpitch == renderSurface->mode.width)
         {
           dmaFill32(color, renderSurface->p, viewportPixelCount>>1);
@@ -56,6 +66,7 @@ CGBAGLESContext::glClear(GLbitfield mask)
             iBase += renderSurface->mode.xpitch;
           }
         }
+        break;
       }
     };
   }
