@@ -12,10 +12,15 @@ CFLAGS          +=\
 CXXFLAGS        +=\
 
 LFLAGS          +=\
+                -nostdlib \
                 $(MY_LIBS_PATH) \
+
+#----------------------------------------------------------------------------
+STARTUP_LIBS    =\
+                -lgcc \
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@
-	$(CXX) $(LFLAGS) $(MY_OBJS) $(MY_LIBS) -o $@
+	$(CXX) $(LFLAGS) -o $@ $(DEVKITSH)/sh-elf/lib/crt0.o $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) $(STARTUP_LIBS)
