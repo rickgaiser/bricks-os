@@ -7,6 +7,18 @@
 
 
 //---------------------------------------------------------------------------
+class CNGC2DRenderer
+ : public C2DRenderer
+{
+public:
+  CNGC2DRenderer();
+  virtual ~CNGC2DRenderer();
+
+  // Color
+  virtual void       setColor(uint8_t r, uint8_t g, uint8_t b);
+};
+
+//---------------------------------------------------------------------------
 class CNGCVideoDevice
  : public CAVideoDevice
 {

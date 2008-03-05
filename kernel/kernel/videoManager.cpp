@@ -141,13 +141,7 @@ CSurface::format()
 C2DRenderer::C2DRenderer(CSurface * surf)
  : pSurface_(surf)
 {
-  color_.r = 0;
-  color_.g = 0;
-  color_.b = 0;
-  color_.a = 255;
-
-  if(pSurface_ != NULL)
-    fmtColor_ = BxColorFormat_FromRGB(pSurface_->mode.format, color_.r, color_.g, color_.b);
+  setColor(0, 0, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -161,8 +155,7 @@ C2DRenderer::setSurface(CSurface * surface)
 {
   pSurface_ = surface;
 
-  if(pSurface_ != NULL)
-    fmtColor_ = BxColorFormat_FromRGB(pSurface_->mode.format, color_.r, color_.g, color_.b);
+  setColor(color_.r, color_.g, color_.b);
 }
 
 //---------------------------------------------------------------------------
