@@ -60,6 +60,8 @@ public:
   virtual void       fill();
   virtual void       fillRect(int x, int y, unsigned int width, unsigned int height);
   virtual void       drawLine(int x1, int y1, int x2, int y2);
+  virtual void       drawHLine(int x, int y, unsigned int width);
+  virtual void       drawVLine(int x, int y, unsigned int height);
   virtual void       drawRect(int x, int y, unsigned int width, unsigned int height);
 
 private:

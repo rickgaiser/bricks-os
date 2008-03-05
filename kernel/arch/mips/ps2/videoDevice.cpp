@@ -284,6 +284,20 @@ CPS22DRenderer::drawLine(int x1, int y1, int x2, int y2)
 
 //---------------------------------------------------------------------------
 void
+CPS22DRenderer::drawHLine(int x, int y, unsigned int width)
+{
+  drawLine(x, y, x + width - 1, y);
+}
+
+//---------------------------------------------------------------------------
+void
+CPS22DRenderer::drawVLine(int x, int y, unsigned int height)
+{
+  drawLine(x, y, x, y + height - 1);
+}
+
+//---------------------------------------------------------------------------
+void
 CPS22DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
 {
   x += GS_X_BASE;
