@@ -7,6 +7,8 @@
 #include "debugScreen.h"
 #endif // CONFIG_DEBUGGING
 
+#include "serial.h"
+
 #ifdef CONFIG_FRAMEBUFFER
 #include "videoDevice.h"
 #endif // CONFIG_FRAMEBUFFER
@@ -15,6 +17,8 @@
 #ifdef CONFIG_DEBUGGING
 CNGCDebugScreen cDebug;
 #endif // CONFIG_DEBUGGING
+
+CNGCSerial cSerial;
 
 #ifdef CONFIG_FRAMEBUFFER
 CNGCVideoDevice * pVideoDevice;
@@ -34,6 +38,8 @@ main(int, char *[])
     iRetVal = -1;
   pDebug = &cDebug;
 #endif // CONFIG_DEBUGGING
+
+  cSerial.init();
 
 #ifdef CONFIG_FRAMEBUFFER
   pVideoDevice = new CNGCVideoDevice;

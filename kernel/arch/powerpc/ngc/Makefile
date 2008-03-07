@@ -4,6 +4,7 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 LIB             =arch
 OBJS            =\
                 arch \
+                serial \
                 task \
 
 

@@ -1,21 +1,9 @@
 #include "bwm/bwm.h"
 #include "asm/arch/config.h"
+#include "asm/arch/registers.h"
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
 #include "stdlib.h"
-
-
-#define REG_KEYS   (*(volatile unsigned short *)(0x04000130))
-#define KEY_A      (1<<0)
-#define KEY_B      (1<<1)
-#define KEY_SELECT (1<<2)
-#define KEY_START  (1<<3)
-#define KEY_RIGHT  (1<<4)
-#define KEY_LEFT   (1<<5)
-#define KEY_UP     (1<<6)
-#define KEY_DOWN   (1<<7)
-#define KEY_R      (1<<8)
-#define KEY_L      (1<<9)
 
 
 #define FLASH_FRAME_COUNT 5
@@ -25,7 +13,9 @@
 #define SPEED_DOWN        0.6f
 
 
-float fSpeed = MIN_SPEED;
+float fSpeed  = MIN_SPEED;
+bool bKeyUp   = false;
+bool bKeyDown = false;
 
 
 // -----------------------------------------------------------------------------
@@ -48,6 +38,44 @@ updateSpeed(I2DRenderer * renderer, CSurface * surface, float diff)
     renderer->setColor((uint8_t)(255 * (1.0f - fSpeedPart)), (uint8_t)(255 * fSpeedPart), 0);
     renderer->fillRect(0, 0, (uint32_t)(surface->width() * fSpeedPart), 20);
   }
+}
+
+// -----------------------------------------------------------------------------
+void
+getInput()
+{
+  // GBA
+  //uint16_t data;
+  //data     = ~REG_KEYS;
+  //bKeyUp   = (data & KEY_UP);
+  //bKeyDown = (data & KEY_DOWN);
+
+  // GameCube (controller on first port)
+  uint32_t datah, datal;
+  datah    = REG_SI_CHANNEL0_INBUFH;
+  datal    = REG_SI_CHANNEL0_INBUFL;
+  bKeyUp   = (datah & KEY_UP);
+  bKeyDown = (datah & KEY_DOWN);
+
+/*
+  if(datah & KEY_START)
+  {
+    void (*reload)() = (void(*)())0x80001800;
+    reload();
+  }
+
+  static uint32_t datah_old, datal_old;
+  if(datah != datah_old)
+  {
+    printk("keysh: 0x%x -> 0x%x (%d/%d)\n", datah_old, datah, bKeyUp, bKeyDown);
+    datah_old = datah;
+  }
+  if(datal != datal_old)
+  {
+    printk("keysl: 0x%x -> 0x%x\n", datal_old, datal);
+    datal_old = datal;
+  }
+*/
 }
 
 // -----------------------------------------------------------------------------
@@ -94,10 +122,12 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
 
   while(true)
   {
+    getInput();
+
     // Update player 1
-    if(~REG_KEYS & KEY_UP)
+    if(bKeyUp == true)
       iP1Pos -= 2;
-    if(~REG_KEYS & KEY_DOWN)
+    if(bKeyDown == true)
       iP1Pos += 2;
     if(iP1Pos < iTopWallEdge)
       iP1Pos = iTopWallEdge;
