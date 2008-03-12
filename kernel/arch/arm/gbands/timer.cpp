@@ -3,8 +3,8 @@
 #include "asm/arch/macros.h"
 
 
-// Max frequencies (Hz)
-const float maxTimerFreq0(CPU_FREQUENCY);                   //   ~16780000 Hz
+// Max frequencies (Hz)                                     //            GBA    NDS ARM7&9
+const float maxTimerFreq0(CPU_FREQUENCY);                   //   ~16780000 Hz  ~33513982 Hz
 const float maxTimerFreq1(maxTimerFreq0 /   64.0f);         //     ~262188 Hz
 const float maxTimerFreq2(maxTimerFreq0 /  256.0f);         //      ~65547 Hz
 const float maxTimerFreq3(maxTimerFreq0 / 1024.0f);         //      ~16386 Hz
