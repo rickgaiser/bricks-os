@@ -3,21 +3,8 @@
 
 
 #include "kernel/fileSystem.h"
+#include "kernel/ata.h"
 #include "inttypes.h"
-
-
-struct CF_REGISTERS
-{
-  vuint16_t * data;
-  vuint16_t * status;
-  vuint16_t * command;
-  vuint16_t * error;
-  vuint16_t * sectorCount;
-  vuint16_t * lba1;
-  vuint16_t * lba2;
-  vuint16_t * lba3;
-  vuint16_t * lba4;
-};
 
 
 class CSuperCardDriver
@@ -36,7 +23,7 @@ public:
 private:
   void changeMode(uint8_t mode);
 
-  CF_REGISTERS cfRegisters_;
+  SATARegisters regs_;
 };
 
 
