@@ -22,12 +22,12 @@ isr(pt_regs * regs)
   //printk(".");
 
   // Handle timer interrupt for scheduler
-  if(iFlags & (1 << 3))
+  if(iFlags & (1 << 5))
   {
     // Remove flag
-    iFlags &= ~(1 << 3);
+    iFlags &= ~(1 << 5);
     // Acknowledge interrupt
-    REG_IF |= (1 << 3);
+    REG_IF |= (1 << 5);
     // Task/Thread stuff
     CTaskManager::updateSleepers();
     CTaskManager::removeDestroyed();

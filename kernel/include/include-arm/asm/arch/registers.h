@@ -317,6 +317,23 @@ enum ESerialMode
 #define NDS_FOG_ALPHACOLOR    (0<<6)
 #define NDS_FOG_ALPHA         (1<<6)
 #define NDS_FOG               (1<<7)
+#ifdef GBA
+// "REG_SOUNDCNT_H" bits
+#define SNDA_VOL_100          (1<< 2)
+#define SNDB_VOL_100          (1<< 3)
+#define SNDA_ROUT             (1<< 8)
+#define SNDA_LOUT             (1<< 9)
+#define SNDA_TIMER0           (0<<10)
+#define SNDA_TIMER1           (1<<10)
+#define SNDA_FIFORESET        (1<<11)
+#define SNDB_ROUT             (1<<12)
+#define SNDB_LOUT             (1<<13)
+#define SNDB_TIMER0           (0<<14)
+#define SNDB_TIMER1           (1<<14)
+#define SNDB_FIFORESET        (1<<15)
+// "REG_SOUNDCNT_X" bits
+#define SND_ENABLE            (1<<7)
+#endif // GBA
 
 
 // Memory Locations
@@ -367,6 +384,47 @@ enum ESerialMode
 #define REG_BG3_YDY           (*(vuint16_t*)0x04000036)
 #define REG_BG3_CX            (*(vuint32_t*)0x04000038)
 #define REG_BG3_CY            (*(vuint32_t*)0x0400003C)
+#ifdef GBA
+// Sound
+#define REG_SG10              (*(vuint32_t*)0x04000060)
+#define REG_SG10_L            (*(vuint16_t*)0x04000060)
+#define REG_SG10_H            (*(vuint16_t*)0x04000062)
+#define REG_SG11              (*(vuint16_t*)0x04000064)
+#define REG_SG20              (*(vuint16_t*)0x04000068)
+#define REG_SG21              (*(vuint16_t*)0x0400006c)
+#define REG_SG30              (*(vuint32_t*)0x04000070)
+#define REG_SG30_L            (*(vuint16_t*)0x04000070)
+#define REG_SG30_H            (*(vuint16_t*)0x04000072)
+#define REG_SG31              (*(vuint16_t*)0x04000074)
+#define REG_SG40              (*(vuint16_t*)0x04000078)
+#define REG_SG41              (*(vuint16_t*)0x0400007C)
+
+#define REG_SOUNDCNT          (*(vuint32_t*)0x04000080)
+#define REG_SOUNDCNT_L        (*(vuint16_t*)0x04000080)
+#define REG_SOUNDCNT_H        (*(vuint16_t*)0x04000082)
+#define REG_SOUNDCNT_X        (*(vuint16_t*)0x04000084)
+#define REG_SOUNDBIAS         (*(vuint16_t*)0x04000088)
+
+#define REG_SGWR0             (*(vuint32_t*)0x04000090)
+#define REG_SGWR0_L           (*(vuint16_t*)0x04000090)
+#define REG_SGWR0_H           (*(vuint16_t*)0x04000092)
+#define REG_SGWR1             (*(vuint32_t*)0x04000094)
+#define REG_SGWR1_L           (*(vuint16_t*)0x04000094)
+#define REG_SGWR1_H           (*(vuint16_t*)0x04000096)
+#define REG_SGWR2             (*(vuint32_t*)0x04000098)
+#define REG_SGWR2_L           (*(vuint16_t*)0x04000098)
+#define REG_SGWR2_H           (*(vuint16_t*)0x0400009a)
+#define REG_SGWR3             (*(vuint32_t*)0x0400009c)
+#define REG_SGWR3_L           (*(vuint16_t*)0x0400009c)
+#define REG_SGWR3_H           (*(vuint16_t*)0x0400009e)
+
+#define REG_SOUNDA_FIFO       (*(vuint32_t*)0x040000a0)
+#define REG_SOUNDA_FIFO_L     (*(vuint16_t*)0x040000a0)
+#define REG_SOUNDA_FIFO_H     (*(vuint16_t*)0x040000a2)
+#define REG_SOUNDB_FIFO       (*(vuint32_t*)0x040000a4)
+#define REG_SOUNDB_FIFO_L     (*(vuint16_t*)0x040000a4)
+#define REG_SOUNDB_FIFO_H     (*(vuint16_t*)0x040000a6)
+#endif // GBA
 #define REG_DMA0SAD           (*(vuint32_t*)0x040000b0) // DMA source addr
 #define REG_DMA0DAD           (*(vuint32_t*)0x040000b4) // DMA destination addr
 #define REG_DMA0CNT           (*(vuint32_t*)0x040000b8) // See bits above
@@ -389,7 +447,6 @@ enum ESerialMode
 #define REG_DMA3FILL          (*(vuint32_t*)0x040000ec)
 #define REG_DMAFILL(n)        (*((&REG_DMA0FILL)+n))
 #endif // NDS9
-#define REG_BRIGHTNESS        (*(vuint16_t*)0x0400006C)
 #define REG_TM0               (*(vuint32_t*)0x04000100)
 #define REG_TM0D              (*(vuint16_t*)0x04000100)
 #define REG_TM0CNT            (*(vuint16_t*)0x04000102) // See bits above

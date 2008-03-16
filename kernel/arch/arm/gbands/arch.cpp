@@ -8,6 +8,10 @@
 #include "timer.h"
 #include "task.h"
 
+#ifdef CONFIG_GBA_SOUND
+#include "gbaSound.h"
+#endif // CONFIG_GBA_SOUND
+
 #ifdef CONFIG_DEBUGGING
 #include "debugScreen.h"
 #endif // CONFIG_DEBUGGING
@@ -53,6 +57,10 @@ extern char _end, __eheap_end;
 
 
 CIRQ           cIRQ;
+
+#ifdef CONFIG_GBA_SOUND
+CGBASound      cSound;
+#endif // CONFIG_GBA_SOUND
 
 #ifdef CONFIG_DEBUGGING
 #if defined(GBA) || defined(NDS9)
@@ -129,8 +137,12 @@ main(int, char *[])
 #endif // CONFIG_FRAMEBUFFER
 
   CGBANDSThread::init();
-  setTimerFrequency(0, 100.0f);
-  cIRQ.enable(3);
+  setTimerFrequency(2, 100.0f);
+  cIRQ.enable(5);
+
+#ifdef CONFIG_GBA_SOUND
+  cSound.init();
+#endif // CONFIG_GBA_SOUND
 
 #ifdef CONFIG_FILESYSTEM
   CIBMPartitionDriver ibmPartitionDriver;

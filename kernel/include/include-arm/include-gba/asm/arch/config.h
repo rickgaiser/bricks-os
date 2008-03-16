@@ -34,6 +34,7 @@
 // GBA specific configuration
 #undef  CONFIG_GBA_SERIAL
 #define CONFIG_GBA_MULTIBOOT
+#define CONFIG_GBA_SOUND
 
 
 #endif
