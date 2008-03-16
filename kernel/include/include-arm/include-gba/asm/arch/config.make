@@ -27,3 +27,4 @@ CONFIG_GBA_KEYBOARD=y
 
 # GBA specific configuration
 #CONFIG_GBA_SERIAL=y
+CONFIG_GBA_MULTIBOOT=y
