@@ -3,8 +3,36 @@
 #include "kernel/interruptManager.h"
 
 
+//#define USE_INTERRUPTS
+
+
+#ifdef USE_INTERRUPTS
+  #define GET_REPLY() \
+    while(bReceived_ == false); \
+    reply = rcvData_; \
+    bReceived_ = false
+  #define GET_REPLY_NORMAL8()   GET_REPLY()
+  #define GET_REPLY_NORMAL32()  GET_REPLY()
+  #define GET_REPLY_MULTI()     GET_REPLY()
+#else
+  #define GET_REPLY_NORMAL8() \
+    while(REG_SIOCNT & SIO_START); \
+    reply = REG_SIODATA8
+  #define GET_REPLY_NORMAL32() \
+    while(REG_SIOCNT & SIO_START); \
+    reply = REG_SIODATA32
+  #define GET_REPLY_MULTI() \
+    while(REG_SIOCNT & SIO_START); \
+    if(iID_ == 0) reply = REG_SIOMULTI1; \
+    else          reply = REG_SIOMULTI0
+#endif // USE_INTERRUPTS
+
+
 // -----------------------------------------------------------------------------
 CGBASerial::CGBASerial()
+ : bInitialized_(false)
+ , bConnected_(false)
+ , bReceived_(false)
 {
 }
 
@@ -17,46 +45,37 @@ CGBASerial::~CGBASerial()
 int
 CGBASerial::init(ESerialMode mode)
 {
-  eMode_ = mode;
+  bInitialized_ = false;
+  bConnected_   = false;
+  eMode_        = mode;
 
   switch(eMode_)
   {
     case SIO_8BIT_MODE:
     case SIO_32BIT_MODE:
-    {
-      REG_RCNT = 0;
-      REG_SIOCNT = SIO_8BIT_MODE | SIO_NORMAL_CLK_EXTERNAL;
-      REG_SIOCNT = SIO_8BIT_MODE | SIO_NORMAL_CLK_EXTERNAL | SIO_START;
-      bMaster_ = ((REG_SIOCNT & SIO_NORMAL_SI) == 0);
-
-      if(bMaster_ == true)
-      {
-        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE |  SIO_NORMAL_CLK_256KHZ | SIO_NORMAL_SO;
-        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE |  SIO_NORMAL_CLK_256KHZ | SIO_NORMAL_SO | SIO_START;
-        for(volatile int i(0); i < 100000; i++);
-        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE |  SIO_NORMAL_CLK_256KHZ;
-        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE |  SIO_NORMAL_CLK_256KHZ | SIO_START;
-        printk("master\n");
-      }
-      else
-      {
-        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE | SIO_NORMAL_CLK_EXTERNAL;
-        REG_SIOCNT = SIO_8BIT_MODE | SIO_IRQ_ENABLE | SIO_NORMAL_CLK_EXTERNAL | SIO_START;
-        printk("slave\n");
-      }
-    }
-    case SIO_UART_MODE:
-    {
-      REG_RCNT = 0;
-      REG_SIOCNT = eMode_ | SIO_IRQ_ENABLE | SIO_115200_BPS | SIO_UART_CTS_ENABLE | SIO_UART_8BIT | SIO_UART_SEND_ENABLE | SIO_UART_RECV_ENABLE /*| SIO_UART_FIFO_ENABLE*/;
+      // Initialize in connectNormal
+      break;
+    case SIO_MULTI_MODE:
+      REG_RCNT    = 0;
+#ifdef USE_INTERRUPTS
+      REG_SIOCNT  = eMode_ | SIO_IRQ_ENABLE | SIO_115200_BPS;
+#else
+      REG_SIOCNT  = eMode_ | SIO_115200_BPS;
+#endif // USE_INTERRUPTS
       REG_SIOCNT |= SIO_START;
       break;
-    }
+    case SIO_UART_MODE:
+      REG_RCNT    = 0;
+      REG_SIOCNT  = eMode_ | SIO_IRQ_ENABLE | SIO_115200_BPS | SIO_UART_CTS_ENABLE | SIO_UART_8BIT | SIO_UART_SEND_ENABLE | SIO_UART_RECV_ENABLE /*| SIO_UART_FIFO_ENABLE*/;
+      REG_SIOCNT |= SIO_START;
+      break;
     default:
       return -1;
   };
 
   CInterruptManager::attach(7, this);
+
+  bInitialized_ = true;
 
   return 0;
 }
@@ -65,26 +84,39 @@ CGBASerial::init(ESerialMode mode)
 int
 CGBASerial::isr(int irq)
 {
-  uint8_t data('s');
-
   // Receive data
+#ifdef USE_INTERRUPTS
   switch(eMode_)
   {
     case SIO_8BIT_MODE:
-      data = REG_SIODATA8;
+      rcvData_ = REG_SIODATA8;
       break;
     case SIO_32BIT_MODE:
-      data = REG_SIODATA32;
+      rcvData_ = REG_SIODATA32;
+      break;
+    case SIO_MULTI_MODE:
+      switch(iID_)
+      {
+        case 0: rcvData_ = REG_SIOMULTI1; break;
+        case 1: rcvData_ = REG_SIOMULTI0; break;
+        case 2: rcvData_ = REG_SIOMULTI0; break;
+        case 3: rcvData_ = REG_SIOMULTI0; break;
+      };
       break;
     case SIO_UART_MODE:
+#endif // USE_INTERRUPTS
       if((REG_SIOCNT & SIO_UART_RECV_EMPTY) == false)
-        data = REG_SIODATA8;
+        rcvData_ = REG_SIODATA8;
+#ifdef USE_INTERRUPTS
       break;
     default:
       ;
   };
+#endif
 
-  printk("%c", data);
+  bReceived_ = true;
+
+  //printk("0x%x", rcvData_);
 
   return 0;
 }
@@ -93,52 +125,200 @@ CGBASerial::isr(int irq)
 ssize_t
 CGBASerial::write(const void * buffer, size_t size, loff_t *)
 {
-  ssize_t iRetVal(0);
-  int timeout;
+  if(eMode_ != SIO_UART_MODE)
+    return -1;
 
   for(size_t i(0); i < size; i++)
   {
-    switch(eMode_)
-    {
-      case SIO_8BIT_MODE:
-      case SIO_32BIT_MODE:
-      {
-        // Place data to be sent
-        if(eMode_ == SIO_8BIT_MODE)
-          REG_SIODATA8  = ((const unsigned char *)buffer)[i];
-        else
-          REG_SIODATA32 = ((const unsigned char *)buffer)[i];
-
-        // Wait for slave to be ready (SI == 0)
-        for(timeout = 10000; (timeout > 0) && (REG_SIOCNT & SIO_NORMAL_SI); timeout--);
-        if(timeout == 0)
-        {
-          printk("Timeout waiting for slave to be ready\n");
-          return -1;
-        }
-
-        // Set start flag
-        REG_SIOCNT |= SIO_START;
-
-        // Wait for start bit to become zero (transmission complete)
-        for(timeout = 10000; (timeout > 0) && (REG_SIOCNT & SIO_START); timeout--);
-        if(timeout == 0)
-        {
-          printk("Timeout waiting for slave to be ready\n");
-          return -1;
-        }
-      }
-      case SIO_UART_MODE:
-      {
-        while(REG_SIOCNT & SIO_UART_SEND_FULL){}
-        REG_SIODATA8 = ((const unsigned char *)buffer)[i];
-        iRetVal++;
-        break;
-      }
-      default:
-        return -1;
-    };
+    while(REG_SIOCNT & SIO_UART_SEND_FULL){}
+    REG_SIODATA8 = ((const uint8_t *)buffer)[i];
   }
 
-  return iRetVal;
+  return size;
+}
+
+// -----------------------------------------------------------------------------
+int
+CGBASerial::connectNormal(bool master)
+{
+  if(((eMode_ != SIO_8BIT_MODE) && (eMode_ != SIO_32BIT_MODE)) || (bInitialized_ == false))
+    return -1;
+
+  if(bConnected_ == true)
+    return 0;
+
+  bMaster_ = master;
+  if(bMaster_ == true)
+  {
+    REG_RCNT    = 0;
+#ifdef USE_INTERRUPTS
+    REG_SIOCNT  = eMode_ | SIO_IRQ_ENABLE | SIO_NORMAL_CLK_256KHZ;
+#else
+    REG_SIOCNT  = eMode_ | SIO_NORMAL_CLK_256KHZ;
+#endif // USE_INTERRUPTS
+    REG_SIOCNT |= SIO_START;
+  }
+  else
+  {
+    REG_RCNT    = 0;
+#ifdef USE_INTERRUPTS
+    REG_SIOCNT  = eMode_ | SIO_IRQ_ENABLE | SIO_NORMAL_CLK_EXTERNAL;
+#else
+    REG_SIOCNT  = eMode_ | SIO_NORMAL_CLK_EXTERNAL;
+#endif // USE_INTERRUPTS
+    REG_SIOCNT |= SIO_START;
+  }
+
+  bConnected_ = true;
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+int
+CGBASerial::connectMulti()
+{
+  if((eMode_ != SIO_MULTI_MODE) || (bInitialized_ == false))
+    return -1;
+
+  if(bConnected_ == true)
+    return 0;
+
+  if((REG_SIOCNT & SIO_MULTI_CONNECTED) == SIO_MULTI_CONNECTED)
+  {
+//    printk("Cable connected, we are the ");
+    bMaster_ = ((REG_SIOCNT & SIO_MULTI_CHILD) != SIO_MULTI_CHILD);
+//    if(bMaster_ == true)
+//      printk("master\n");
+//    else
+//      printk("slave\n");
+
+    bConnected_ = true;
+
+    // Send to find out our id
+    sendMulti(0);
+
+    iID_ = (REG_SIOCNT & SIO_MULTI_ID_MASK) >> SIO_MULTI_ID_SHIFT;
+
+    return 0;
+  }
+
+//  printk("Cable not connected\n");
+  return -1;
+}
+
+// -----------------------------------------------------------------------------
+bool
+CGBASerial::isMaster()
+{
+  return bMaster_;
+}
+
+// -----------------------------------------------------------------------------
+uint8_t
+CGBASerial::sendNormal8(uint8_t data)
+{
+  uint8_t reply;
+
+  if((eMode_ != SIO_8BIT_MODE) && (bConnected_ == true))
+    return -1;
+
+  if(bMaster_ == true)
+  {
+    // Place data to be sent
+    REG_SIODATA8 = data;
+
+    // Wait for slave to be ready (SI == 0)
+    while((REG_SIOCNT & SIO_NORMAL_SI) != 0);
+
+    // Set start flag
+    REG_SIOCNT |= SIO_START;
+
+    // Wait for, and get reply
+    GET_REPLY_NORMAL8();
+  }
+  else
+  {
+    // Place data to be sent
+    REG_SIODATA8 = data;
+
+    // Set start flag & clear SO
+    REG_SIOCNT = (REG_SIOCNT | SIO_START) & ~SIO_NORMAL_SO;
+
+    // Wait for, and get reply
+    GET_REPLY_NORMAL8();
+
+    // Set SO
+    REG_SIOCNT |= SIO_NORMAL_SO;
+  }
+
+  // Return replied data
+  return reply;
+}
+
+// -----------------------------------------------------------------------------
+uint32_t
+CGBASerial::sendNormal32(uint32_t data)
+{
+  uint32_t reply;
+
+  if((eMode_ != SIO_32BIT_MODE) && (bConnected_ == true))
+    return -1;
+
+  if(bMaster_ == true)
+  {
+    // Place data to be sent
+    REG_SIODATA32 = data;
+
+    // Wait for slave to be ready (SI == 0)
+    while((REG_SIOCNT & SIO_NORMAL_SI) != 0);
+
+    // Set start flag
+    REG_SIOCNT |= SIO_START;
+
+    // Wait for, and get reply
+    GET_REPLY_NORMAL32();
+  }
+  else
+  {
+    // Place data to be sent
+    REG_SIODATA32 = data;
+
+    // Set start flag & clear SO
+    REG_SIOCNT = (REG_SIOCNT | SIO_START) & ~SIO_NORMAL_SO;
+
+    // Wait for, and get reply
+    GET_REPLY_NORMAL32();
+
+    // Set SO
+    REG_SIOCNT |= SIO_NORMAL_SO;
+  }
+
+  // Return replied data
+  return reply;
+}
+
+// -----------------------------------------------------------------------------
+uint16_t
+CGBASerial::sendMulti(uint16_t data)
+{
+  uint16_t reply;
+
+  if((eMode_ != SIO_MULTI_MODE) && (bConnected_ == true))
+    return -1;
+
+  // Place data to be sent
+  REG_SIOMLT_SEND = data;
+
+  if(bMaster_ == true)
+  {
+    // Set start flag
+    REG_SIOCNT |= SIO_START;
+  }
+
+  // Wait for, and get reply
+  GET_REPLY_MULTI();
+
+  // Return replied data
+  return reply;
 }

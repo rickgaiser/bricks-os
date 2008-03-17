@@ -258,6 +258,7 @@ enum ESerialMode
 #define SIO_MULTI_CHILD       (1<<2) // 1=child, 0=parent
 #define SIO_MULTI_CONNECTED   (1<<3) // 1=connected, 0=error
 #define SIO_MULTI_ID_MASK     0x0030 // Mask for getting player id
+#define SIO_MULTI_ID_SHIFT    (4)    // Shift for getting player id
 #define SIO_MULTI_ERROR       (1<<6)
 // UART mode specific
 #define SIO_UART_CTS_ENABLE   (1<<2)
