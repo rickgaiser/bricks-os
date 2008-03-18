@@ -21,7 +21,7 @@
 #endif // CONFIG_GBA_KEYBOARD
 
 #ifdef CONFIG_GBA_SERIAL
-#include "serial.h"
+#include "gbaSerial.h"
 #endif // CONFIG_GBA_SERIAL
 
 #ifdef CONFIG_NDS_IPC
@@ -114,7 +114,7 @@ main(int, char *[])
 #endif // CONFIG_GBA_KEYBOARD
 
 #ifdef CONFIG_GBA_SERIAL
-  if(cSerial.init(SIO_32BIT_MODE) == -1)
+  if(cSerial.init() == -1)
     iRetVal = -1;
 #endif // CONFIG_GBA_SERIAL
 

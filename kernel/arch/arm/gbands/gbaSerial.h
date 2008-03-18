@@ -32,7 +32,7 @@ public:
   CGBASerial();
   virtual ~CGBASerial();
 
-  virtual int init(ESerialMode mode);
+  virtual int init();
 
   // Inherited from IInterruptServiceRoutine
   virtual int isr(int irq) IWRAM_CODE;
@@ -40,6 +40,7 @@ public:
   // Inherited from IFileIO (UART mode only)
   virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);
 
+  int setMode(ESerialMode mode);
   int connectNormal(bool master);       // NORMAL mode
   int connectMulti();                   // MULTI  mode
 
@@ -51,6 +52,7 @@ public:
 
 private:
   bool bInitialized_;
+  bool bModeSet_;
   bool bConnected_;                     // NORMAL & MULTI mode
   bool bMaster_;                        // NORMAL & MULTI mode
   uint8_t iID_;                         // MULTI mode

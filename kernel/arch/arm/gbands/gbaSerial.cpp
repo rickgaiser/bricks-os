@@ -1,4 +1,4 @@
-#include "serial.h"
+#include "gbaSerial.h"
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 
@@ -31,6 +31,7 @@
 // -----------------------------------------------------------------------------
 CGBASerial::CGBASerial()
  : bInitialized_(false)
+ , bModeSet_(false)
  , bConnected_(false)
  , bReceived_(false)
 {
@@ -43,11 +44,92 @@ CGBASerial::~CGBASerial()
 
 // -----------------------------------------------------------------------------
 int
-CGBASerial::init(ESerialMode mode)
+CGBASerial::init()
 {
-  bInitialized_ = false;
+  if(bInitialized_ == false)
+  {
+    CInterruptManager::attach(7, this);
+
+    bInitialized_ = true;
+  }
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+int
+CGBASerial::isr(int irq)
+{
+  // Receive data
+#ifdef USE_INTERRUPTS
+  switch(eMode_)
+  {
+    case SIO_8BIT_MODE:
+      rcvData_ = REG_SIODATA8;
+      bReceived_ = true;
+      break;
+    case SIO_32BIT_MODE:
+      rcvData_ = REG_SIODATA32;
+      bReceived_ = true;
+      break;
+    case SIO_MULTI_MODE:
+      switch(iID_)
+      {
+        case 0: rcvData_ = REG_SIOMULTI1; break;
+        case 1: rcvData_ = REG_SIOMULTI0; break;
+        case 2: rcvData_ = REG_SIOMULTI0; break;
+        case 3: rcvData_ = REG_SIOMULTI0; break;
+      };
+      bReceived_ = true;
+      break;
+    case SIO_UART_MODE:
+      if((REG_SIOCNT & SIO_UART_RECV_EMPTY) == false)
+        rcvData_ = REG_SIODATA8;
+      bReceived_ = true;
+      break;
+    default:
+      ;
+  };
+#else
+  if((eMode_ != SIO_UART_MODE) || (bModeSet_ == false))
+    return 0;
+
+  if((REG_SIOCNT & SIO_UART_RECV_EMPTY) == false)
+    rcvData_ = REG_SIODATA8;
+  bReceived_ = true;
+#endif // USE_INTERRUPTS
+
+  //printk("0x%x", rcvData_);
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+ssize_t
+CGBASerial::write(const void * buffer, size_t size, loff_t *)
+{
+  if((eMode_ != SIO_UART_MODE) || (bModeSet_ == false))
+    return -1;
+
+  for(size_t i(0); i < size; i++)
+  {
+    while(REG_SIOCNT & SIO_UART_SEND_FULL){}
+    REG_SIODATA8 = ((const uint8_t *)buffer)[i];
+  }
+
+  return size;
+}
+
+// -----------------------------------------------------------------------------
+int
+CGBASerial::setMode(ESerialMode mode)
+{
+  bModeSet_     = false;
   bConnected_   = false;
   eMode_        = mode;
+
+  if(bInitialized_ == false)
+    return -1;
 
   switch(eMode_)
   {
@@ -73,75 +155,16 @@ CGBASerial::init(ESerialMode mode)
       return -1;
   };
 
-  CInterruptManager::attach(7, this);
-
-  bInitialized_ = true;
+  bModeSet_ = true;
 
   return 0;
-}
-
-// -----------------------------------------------------------------------------
-int
-CGBASerial::isr(int irq)
-{
-  // Receive data
-#ifdef USE_INTERRUPTS
-  switch(eMode_)
-  {
-    case SIO_8BIT_MODE:
-      rcvData_ = REG_SIODATA8;
-      break;
-    case SIO_32BIT_MODE:
-      rcvData_ = REG_SIODATA32;
-      break;
-    case SIO_MULTI_MODE:
-      switch(iID_)
-      {
-        case 0: rcvData_ = REG_SIOMULTI1; break;
-        case 1: rcvData_ = REG_SIOMULTI0; break;
-        case 2: rcvData_ = REG_SIOMULTI0; break;
-        case 3: rcvData_ = REG_SIOMULTI0; break;
-      };
-      break;
-    case SIO_UART_MODE:
-#endif // USE_INTERRUPTS
-      if((REG_SIOCNT & SIO_UART_RECV_EMPTY) == false)
-        rcvData_ = REG_SIODATA8;
-#ifdef USE_INTERRUPTS
-      break;
-    default:
-      ;
-  };
-#endif
-
-  bReceived_ = true;
-
-  //printk("0x%x", rcvData_);
-
-  return 0;
-}
-
-// -----------------------------------------------------------------------------
-ssize_t
-CGBASerial::write(const void * buffer, size_t size, loff_t *)
-{
-  if(eMode_ != SIO_UART_MODE)
-    return -1;
-
-  for(size_t i(0); i < size; i++)
-  {
-    while(REG_SIOCNT & SIO_UART_SEND_FULL){}
-    REG_SIODATA8 = ((const uint8_t *)buffer)[i];
-  }
-
-  return size;
 }
 
 // -----------------------------------------------------------------------------
 int
 CGBASerial::connectNormal(bool master)
 {
-  if(((eMode_ != SIO_8BIT_MODE) && (eMode_ != SIO_32BIT_MODE)) || (bInitialized_ == false))
+  if(((eMode_ != SIO_8BIT_MODE) && (eMode_ != SIO_32BIT_MODE)) || (bModeSet_ == false))
     return -1;
 
   if(bConnected_ == true)
@@ -178,7 +201,7 @@ CGBASerial::connectNormal(bool master)
 int
 CGBASerial::connectMulti()
 {
-  if((eMode_ != SIO_MULTI_MODE) || (bInitialized_ == false))
+  if((eMode_ != SIO_MULTI_MODE) || (bModeSet_ == false))
     return -1;
 
   if(bConnected_ == true)
