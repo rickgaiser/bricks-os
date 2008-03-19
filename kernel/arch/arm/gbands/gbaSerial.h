@@ -48,8 +48,11 @@ public:
 
   uint8_t  sendNormal8 (uint8_t  data); // NORMAL mode ( 8bit)
   uint32_t sendNormal32(uint32_t data); // NORMAL mode (32bit)
-  uint16_t sendMulti   (uint16_t data); // MULTI  mode (16bit)
+  void     sendMulti   (uint16_t data, uint16_t * slave0, uint16_t * slave1, uint16_t * slave2, uint16_t * slave3);
 
+  uint8_t getBootMode();
+  uint8_t getDeviceID();
+  uint8_t locateMultiBootSlaves();
   int multiBoot();
 
 private:

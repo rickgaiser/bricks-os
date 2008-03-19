@@ -6,6 +6,8 @@
 
 //#define USE_INTERRUPTS
 #define TIMEOUT_COUNT 10000
+#define WAIT_62_5_MS()  for(vuint32_t i(0); i < 50000; i++) // FIXME: How much is this?
+#define WAIT_36_US()    for(vuint32_t i(0); i <   500; i++) // FIXME: How much is this?
 
 
 struct MultiBootParam
@@ -77,8 +79,10 @@ char * bootModes[] =
     for(timeout = TIMEOUT_COUNT; (timeout != 0) && (REG_SIOCNT & SIO_START); timeout--); \
     if(timeout != 0) \
     { \
-      if(iID_ == 0) reply = REG_SIOMULTI1; \
-      else          reply = REG_SIOMULTI0; \
+      *slave0 = REG_SIOMULTI0; \
+      *slave1 = REG_SIOMULTI1; \
+      *slave2 = REG_SIOMULTI2; \
+      *slave3 = REG_SIOMULTI3; \
     }
 #endif // USE_INTERRUPTS
 
@@ -283,7 +287,8 @@ CGBASerial::connectMulti()
     bConnected_ = true;
 
     // Send to find out our id
-    sendMulti(0);
+    uint16_t dummy;
+    sendMulti(0, &dummy, &dummy, &dummy, &dummy);
 
     iID_ = (REG_SIOCNT & SIO_MULTI_ID_MASK) >> SIO_MULTI_ID_SHIFT;
 
@@ -388,14 +393,13 @@ CGBASerial::sendNormal32(uint32_t data)
 }
 
 // -----------------------------------------------------------------------------
-uint16_t
-CGBASerial::sendMulti(uint16_t data)
+void
+CGBASerial::sendMulti(uint16_t data, uint16_t * slave0, uint16_t * slave1, uint16_t * slave2, uint16_t * slave3)
 {
-  uint16_t reply(-1);
   vuint32_t timeout;
 
   if((eMode_ != SIO_MULTI_MODE) && (bConnected_ == true))
-    return -1;
+    return;
 
   // Place data to be sent
   REG_SIOMLT_SEND = data;
@@ -410,21 +414,79 @@ CGBASerial::sendMulti(uint16_t data)
   GET_REPLY_MULTI();
 
   // Delay 36us
-  // FIXME: How much is this?
-  for(vuint32_t i(0); i < 500; i++);
+  WAIT_36_US();
+}
 
-  // Return replied data
-  return reply;
+// -----------------------------------------------------------------------------
+uint8_t
+CGBASerial::getBootMode()
+{
+  return (*((uint8_t *)0x20000c4) & 0x03);
+}
+
+// -----------------------------------------------------------------------------
+uint8_t
+CGBASerial::getDeviceID()
+{
+  return (*((uint8_t *)0x20000c5));
+}
+
+// -----------------------------------------------------------------------------
+uint8_t
+CGBASerial::locateMultiBootSlaves()
+{
+  uint8_t bits(0);
+
+  setMode(SIO_MULTI_MODE);
+  bMaster_ = true;
+  iID_ = 0;
+/*
+  // Wait for slave to enter multiplay/normal mode
+  while(true)
+  {
+    data = sendMulti(0x6200);
+    if(data == 0x0000)
+    {
+      break;
+    }
+    else
+    {
+      printk("Wait: Got 0x%x\n", data);
+      for(vuint32_t i(0); i < 50000; i++);
+    }
+  }
+*/
+  // Detect slaves
+  for(int i(0); i < 15; i++)
+  {
+    uint16_t dummy, slave1, slave2, slave3;
+    sendMulti(0x6200, &dummy, &slave1, &slave2, &slave3);
+
+    if((slave1 & 0xfff0) == 0x7200)
+      bits |= (slave1 & 0x000f);
+    if((slave2 & 0xfff0) == 0x7200)
+      bits |= (slave2 & 0x000f);
+    if((slave3 & 0xfff0) == 0x7200)
+      bits |= (slave3 & 0x000f);
+
+    if(bits == 0)
+    {
+      // Wait 1/16 sec
+      WAIT_62_5_MS();
+    }
+  }
+
+  return bits;
 }
 
 // -----------------------------------------------------------------------------
 int
 CGBASerial::multiBoot()
 {
-  uint8_t bootMode = *((uint8_t *)0x20000c4);
-  uint8_t deviceID = *((uint8_t *)0x20000c5);
+  uint8_t bootMode = getBootMode();
+  uint8_t deviceID = getDeviceID();
 
-  printk("Boot mode: %s\n", bootModes[bootMode & 0x03]);
+  printk("Boot mode: %s\n", bootModes[bootMode]);
   printk("Device ID: %d\n", deviceID);
 
   if(deviceID != 0)
@@ -448,11 +510,9 @@ CGBASerial::multiBoot()
   bMaster_ = true;
   iID_ = 0;
 
-  REG_RCNT = 0; // non-general purpose comms
-
-  uint16_t data;
-  int client_bit(-1);
-
+  uint16_t slave0, slave1, slave2, slave3;
+  uint8_t  client_bit(0);
+/*
   // Wait for slave to enter multiplay/normal mode
   while(true)
   {
@@ -467,94 +527,215 @@ CGBASerial::multiBoot()
       for(vuint32_t i(0); i < 50000; i++);
     }
   }
+*/
 
   // Detect slaves
   for(int i(0); i < 15; i++)
   {
-    uint16_t data = sendMulti(0x6200);
-    if((data & 0xfff0) == 0x7200)
+    sendMulti(0x6200, &slave0, &slave1, &slave2, &slave3);
+    if((slave1 & 0xfff0) == 0x7200)
+      client_bit |= (slave1 & 0x000f);
+    if((slave2 & 0xfff0) == 0x7200)
+      client_bit |= (slave2 & 0x000f);
+    if((slave3 & 0xfff0) == 0x7200)
+      client_bit |= (slave3 & 0x000f);
+
+    if(client_bit == 0)
     {
-      client_bit = data & 0x000f;
-      printk("Slave %d found\n", client_bit);
-      break;
-    }
-    else
-    {
-      printk("Detect: Got 0x%x\n", data);
       // Wait 1/16 sec
-      // FIXME: How much is this?
-      for(vuint32_t i(0); i < 50000; i++);
+      WAIT_62_5_MS();
     }
   }
-  if(client_bit == -1)
+  if(client_bit != 0)
+  {
+    printk("Detected slaves: ");
+    if(client_bit & 0x02) printk("1 ");
+    if(client_bit & 0x04) printk("2 ");
+    if(client_bit & 0x08) printk("3 ");
+    printk("\n");
+  }
+  else
   {
     printk("No slaves!\n");
     return -1;
   }
 
-  data = sendMulti(0x6100 + client_bit);
-  if(data == (0x7200 + client_bit))
-    printk("Slave ACK ok\n");
-  else
+  // Check all slaves
+  sendMulti(0x6100 + client_bit, &slave0, &slave1, &slave2, &slave3);
+  if(client_bit & (1<<1))
   {
-    printk("Slave ACK error (0x%x)\n", data);
-    return -1;
+    if(slave1 != (0x7200 + (1<<1)))
+    {
+      printk("Slave1 ACK error (0x%x)\n", slave1);
+      return -1;
+    }
   }
+  if(client_bit & (1<<2))
+  {
+    if(slave2 != (0x7200 + (1<<2)))
+    {
+      printk("Slave2 ACK error (0x%x)\n", slave2);
+      return -1;
+    }
+  }
+  if(client_bit & (1<<3))
+  {
+    if(slave3 != (0x7200 + (1<<3)))
+    {
+      printk("Slave3 ACK error (0x%x)\n", slave3);
+      return -1;
+    }
+  }
+  printk("Slave(s) ACK(ed) ok\n");
 
   // Send multiboot header
   for(int i(0); i < 0x60; i++)
   {
-    data = sendMulti((pHeader[i*2+1] << 8) + pHeader[i*2]);
-    if(data != (((0x60 - i) << 8) | client_bit))
+    sendMulti((pHeader[i*2+1] << 8) + pHeader[i*2], &slave0, &slave1, &slave2, &slave3);
+    if(client_bit & (1<<1))
     {
-      printk("header invalid response (0x%x)\n", data);
+      if(slave1 != (((0x60 - i) << 8) | (1<<1)))
+      {
+        printk("Slave1 header invalid response (0x%x)\n", slave1);
+        return -1;
+      }
+    }
+    if(client_bit & (1<<2))
+    {
+      if(slave2 != (((0x60 - i) << 8) | (1<<2)))
+      {
+        printk("Slave2 header invalid response (0x%x)\n", slave2);
+        return -1;
+      }
+    }
+    if(client_bit & (1<<3))
+    {
+      if(slave3 != (((0x60 - i) << 8) | (1<<3)))
+      {
+        printk("Slave3 header invalid response (0x%x)\n", slave3);
+        return -1;
+      }
+    }
+  }
+  printk("Slave(s) ACK(ed) ok\n");
+
+  // Check all slaves
+  sendMulti(0x6200, &slave0, &slave1, &slave2, &slave3);
+  if(client_bit & (1<<1))
+  {
+    if(slave1 != (0x0000 + (1<<1)))
+    {
+      printk("Slave1 ACK error (0x%x)\n", slave1);
       return -1;
     }
   }
-
-  data = sendMulti(0x6200);
-  if(data == (0x0000 + client_bit))
-    printk("Slave ACK ok\n");
-  else
+  if(client_bit & (1<<2))
   {
-    printk("Slave ACK error (0x%x)\n", data);
-    return -1;
-  }
-
-  data = sendMulti(0x6200 + client_bit);
-  if(data == 0x7200 + client_bit)
-    printk("Slave ACK ok\n");
-  else
-  {
-    printk("Slave ACK error (0x%x)\n", data);
-    return -1;
-  }
-
-  uint8_t palette_data(0xc1);
-  uint8_t client_data(0);
-  printk("Slave palette mode...");
-  while(true)
-  {
-    data = sendMulti(0x6300 + palette_data);
-    if((data & 0xff00) == 0x7300)
+    if(slave2 != (0x0000 + (1<<2)))
     {
-      client_data = data & 0x00ff;
-      break;
+      printk("Slave2 ACK error (0x%x)\n", slave2);
+      return -1;
     }
   }
-  printk("ok\n");
-
-  uint8_t handshake_data = 0x11 + client_data + 0xff + 0xff;
-  data = sendMulti(0x6400 + handshake_data);
-  if((data & 0xff00) == 0x7300)
-    printk("Slave ACK ok\n");
-  else
+  if(client_bit & (1<<3))
   {
-    printk("Slave ACK error (0x%x)\n", data);
-    return -1;
+    if(slave3 != (0x0000 + (1<<3)))
+    {
+      printk("Slave3 ACK error (0x%x)\n", slave3);
+      return -1;
+    }
   }
+  printk("Slave(s) ACK(ed) ok\n");
 
-  printk("Sending...");
+  // Check all slaves
+  sendMulti(0x6200 + client_bit, &slave0, &slave1, &slave2, &slave3);
+  if(client_bit & (1<<1))
+  {
+    if(slave1 != (0x7200 + (1<<1)))
+    {
+      printk("Slave1 ACK error (0x%x)\n", slave1);
+      return -1;
+    }
+  }
+  if(client_bit & (1<<2))
+  {
+    if(slave2 != (0x7200 + (1<<2)))
+    {
+      printk("Slave2 ACK error (0x%x)\n", slave2);
+      return -1;
+    }
+  }
+  if(client_bit & (1<<3))
+  {
+    if(slave3 != (0x7200 + (1<<3)))
+    {
+      printk("Slave3 ACK error (0x%x)\n", slave3);
+      return -1;
+    }
+  }
+  printk("Slave(s) ACK(ed) ok\n");
+
+  // Send palette data and receive client data
+  uint8_t palette_data(0xc1);
+  uint8_t client_data[3] = {0xff, 0xff, 0xff};
+  uint8_t check = client_bit;
+  while(check != 0)
+  {
+    sendMulti(0x6300 + palette_data, &slave0, &slave1, &slave2, &slave3);
+    if(check & (1<<1))
+    {
+      if((slave1 & 0xff00) == 0x7300)
+      {
+        client_data[0] = slave0 & 0x00ff;
+        check &= ~(1<<1);
+      }
+    }
+    if(check & (1<<2))
+    {
+      if((slave2 & 0xff00) == 0x7300)
+      {
+        client_data[1] = slave0 & 0x00ff;
+        check &= ~(1<<2);
+      }
+    }
+    if(check & (1<<3))
+    {
+      if((slave3 & 0xff00) == 0x7300)
+      {
+        client_data[2] = slave0 & 0x00ff;
+        check &= ~(1<<3);
+      }
+    }
+  }
+  printk("Slave(s) ACK(ed) ok\n");
+
+  uint8_t handshake_data = 0x11 + client_data[0] + client_data[1] + client_data[2];
+  sendMulti(0x6400 + handshake_data, &slave0, &slave1, &slave2, &slave3);
+  if(client_bit & (1<<1))
+  {
+    if((slave1 & 0xff00) != 0x7300)
+    {
+      printk("Slave1 ACK error (0x%x)\n", slave1);
+      return -1;
+    }
+  }
+  if(client_bit & (1<<2))
+  {
+    if((slave2 & 0xff00) != 0x7300)
+    {
+      printk("Slave2 ACK error (0x%x)\n", slave2);
+      return -1;
+    }
+  }
+  if(client_bit & (1<<3))
+  {
+    if((slave3 & 0xff00) != 0x7300)
+    {
+      printk("Slave3 ACK error (0x%x)\n", slave3);
+      return -1;
+    }
+  }
+  printk("Slave(s) ACK(ed) ok\n");
 
   uint32_t length = (256*1024) - 0xc0;
   length = (length + 0xf) & ~0xf; // 16 byte units
@@ -567,14 +748,19 @@ CGBASerial::multiBoot()
   mbp.boot_srcp      = pData;
   mbp.boot_endp      = (uint8_t *)pData + length;
   mbp.palette_data   = palette_data;
-  mbp.client_data[0] = client_data;
-  mbp.client_data[1] = 0xff;
-  mbp.client_data[2] = 0xff;
+  mbp.client_data[0] = client_data[0];
+  mbp.client_data[1] = client_data[1];
+  mbp.client_data[2] = client_data[2];
   mbp.handshake_data = handshake_data;
 
-  if(MultiBoot(&mbp, MODE16_MULTI) != 0)
+  printk("Sending...");
+  if(MultiBoot(&mbp, MODE16_MULTI) == 0)
   {
-    printk("failed to boot\n");
+    printk("ok\n");
+  }
+  else
+  {
+    printk("error\n");
     return -1;
   }
 
