@@ -50,6 +50,8 @@ public:
   uint32_t sendNormal32(uint32_t data); // NORMAL mode (32bit)
   uint16_t sendMulti   (uint16_t data); // MULTI  mode (16bit)
 
+  int multiBoot();
+
 private:
   bool bInitialized_;
   bool bModeSet_;

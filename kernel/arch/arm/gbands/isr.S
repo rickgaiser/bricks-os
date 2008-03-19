@@ -7,6 +7,7 @@
 @
 .extern isr
 
+.global MultiBoot
 .global local_save_flags
 .global local_irq_restore
 .global local_irq_disable
@@ -21,6 +22,16 @@
 current_thread:     .word 0x0               @ pointer to thread that is running
 bios_return:        .word 0x0
 
+
+@ -----------------------------------------------------------------------------
+@ uint32_t MultiBoot(MultiBootParam * mp, uint32_t mode);
+@ -----------------------------------------------------------------------------
+  .text
+  .code 16
+  .thumb_func
+MultiBoot:
+  swi     37
+  bx      lr
 
 @ -----------------------------------------------------------------------------
 @ unsigned long local_save_flags(void);

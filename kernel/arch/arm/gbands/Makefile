@@ -22,7 +22,6 @@ OBJS-$(CONFIG_DEBUGGING)           += font8x8 debugScreen
 OBJS-$(CONFIG_GBA_KEYBOARD)        += keyboard
 OBJS-$(CONFIG_GBA_SERIAL)          += gbaSerial
 OBJS-$(CONFIG_GBA_SOUND)           += gbaSound modPlayer SndData_s SndData_c
-OBJS-$(CONFIG_GBA_MULTIBOOT)       += gbaMultiboot
 OBJS-$(CONFIG_NDS_IPC)             += dsIPC
 OBJS-$(CONFIG_FILESYSTEM)          += superCardDriver
 
