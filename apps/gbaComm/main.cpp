@@ -22,44 +22,36 @@ appMain(int argc, char * argv[])
 {
   if(cSerial.getDeviceID() == 0)
   {
-    uint8_t slaves;
-
-    printk("Detecting slave for multiboot\n");
-    printk("Press A to begin\n");
-    while(1)
+    bool bDone(false);
+    while(bDone == false)
     {
-      // Locate slaves
-      slaves = cSerial.locateMultiBootSlaves();
-      printk("\rDetected slaves: ");
-      if(slaves & 0x02) printk("1 ");
-      if(slaves & 0x04) printk("2 ");
-      if(slaves & 0x08) printk("3 ");
+      uint8_t slaves;
 
-      // Wait
-      for(vuint32_t i(0); i < 100000; i++)
-        if(getInput() & KEY_A)
-          break;
-      if(getInput() & KEY_A)
-        break;
-    }
-    printk("\n");
-
-    if(slaves != 0)
-    {
-      printk("Booting slaves\n");
-      cSerial.multiBoot();
-      /*
-      printk("Press B to abort\n");
-      while(cSerial.multiBoot() == -1)
+      printk("Detecting slave for multiboot\n");
+      printk("Press A to begin\n");
+      while(true)
       {
+        // Locate slaves
+        slaves = cSerial.locateMultiBootSlaves();
+        printk("\rDetected slaves: ");
+        if(slaves & (1<<1)) printk("1 ");
+        if(slaves & (1<<2)) printk("2 ");
+        if(slaves & (1<<3)) printk("3 ");
+
         // Wait
-        for(vuint32_t i(0); i < 100000; i++);
-          if(getInput() & KEY_B)
+        for(vuint32_t i(0); i < 100000; i++)
+          if((getInput() & KEY_A) && (slaves != 0))
             break;
-        if(getInput() & KEY_B)
+        if((getInput() & KEY_A) && (slaves != 0))
           break;
       }
-      */
+      printk("\n");
+
+      printk("Booting slaves\n");
+      if(cSerial.multiBoot() == 0)
+        bDone = true;
+      else
+        printk("failed\n");
     }
   }
 
