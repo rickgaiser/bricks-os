@@ -1,3 +1,5 @@
+include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch/config.make
+
 #----------------------------------------------------------------------------
 # GBA
 #----------------------------------------------------------------------------
@@ -30,10 +32,15 @@ CXXFLAGS        +=\
 LFLAGS          +=\
                 -mthumb \
                 -mthumb-interwork \
-                -specs=$(BRICKS_ROOT)/include/makeinclude/gba.specs \
                 $(MY_LIBS_PATH) \
 
 #                -nostdlib \
+
+ifeq ($(CONFIG_GBA_MULTIBOOT),y)
+LFLAGS          +=-specs=$(BRICKS_ROOT)/include/makeinclude/gba_mb.specs
+else
+LFLAGS          +=-specs=$(BRICKS_ROOT)/include/makeinclude/gba_cart.specs
+endif
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
