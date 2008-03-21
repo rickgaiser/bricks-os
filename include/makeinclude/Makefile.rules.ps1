@@ -11,10 +11,10 @@ MY_LIBS_PATH    +=\
 CROSS_COMPILE   =mips
 CFLAGS          +=-Xlinker -mpsx
 CXXFLAGS        +=-Xlinker -mpsx
-LFLAGS          +=-Xlinker -mpsx $(MY_LIBS_PATH) -lps /D/dev/env/devkitPSX/lib/htsprint.o
+LDFLAGS         +=-Xlinker -mpsx $(MY_LIBS_PATH) -lps /D/dev/env/devkitPSX/lib/htsprint.o
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS)
 	@echo [CC ] $@
-	$(CXX) $(LFLAGS) $^ $(MY_LIBS) -o $@
+	$(CXX) $(LDFLAGS) $^ $(MY_LIBS) -o $@

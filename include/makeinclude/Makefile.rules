@@ -59,7 +59,6 @@ include $(BRICKS_ROOT)/include/makeinclude/Makefile.rules.$(TARGET)
 AS              =$(CROSS_COMPILE)as
 LD              =$(CROSS_COMPILE)ld
 CC              =$(CROSS_COMPILE)gcc
-CPP             =$(CROSS_COMPILE)g++
 CXX             =$(CROSS_COMPILE)g++
 AR              =$(CROSS_COMPILE)ar
 NM              =$(CROSS_COMPILE)nm

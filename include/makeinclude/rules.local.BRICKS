@@ -8,8 +8,8 @@ all.local: $(MY_OBJS) $(MY_LIB) $(MY_ELF)
 #----------------------------------------------------------------------------
 # Create library file from MY_OBJS + MY_LIBS
 $(MY_LIB): $(MY_OBJS)
-	@echo [LD ] $@
-	$(LD) -r -o $@ $^ $(MY_LIBS_PATH) $(MY_LIBS)
+	@echo [AR ] $@
+	$(AR) -rc $@ $^
 
 # Create object file from .c file
 $(VDIR)%.o: %.c $(VDIR).creation_stamp
@@ -19,19 +19,19 @@ $(VDIR)%.o: %.c $(VDIR).creation_stamp
 
 # Create object file from .cpp file
 $(VDIR)%.o: %.cpp $(VDIR).creation_stamp
-	@echo [CC ] $<
+	@echo [CXX] $<
 	$(CXX) $(CXXFLAGS) $(MY_INCL_PATH) -o $@.S -S $<
 	$(CXX) $(CXXFLAGS) $(MY_INCL_PATH) -o $@ -c $<
 
 # Create object file from .s file
 $(VDIR)%.o: %.s $(VDIR).creation_stamp
 	@echo [CC ] $<
-	$(CC) $(CFLAGS) $(MY_INCL_PATH) -o $@ -c $<
+	$(CC) -x assembler-with-cpp $(ASFLAGS) -o $@ -c $<
 
 # Create object file from .S file
 $(VDIR)%.o: %.S $(VDIR).creation_stamp
 	@echo [CC ] $<
-	$(CC) $(CFLAGS) $(MY_INCL_PATH) -o $@ -c $<
+	$(CC) -x assembler-with-cpp $(ASFLAGS) -o $@ -c $<
 
 
 #----------------------------------------------------------------------------

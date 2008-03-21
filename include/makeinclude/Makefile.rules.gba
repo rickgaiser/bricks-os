@@ -9,6 +9,11 @@ MY_LIBS_PATH    +=\
 
 #----------------------------------------------------------------------------
 CROSS_COMPILE   =arm-eabi-
+
+ASFLAGS         =\
+                -mthumb \
+                -mthumb-interwork \
+
 CFLAGS          +=\
                 -mcpu=arm7tdmi \
                 -mtune=arm7tdmi \
@@ -29,21 +34,19 @@ CXXFLAGS        +=\
                 -mlong-calls \
                 -DGBA \
 
-LFLAGS          +=\
+LDFLAGS         =\
                 -mthumb \
                 -mthumb-interwork \
-                $(MY_LIBS_PATH) \
-
-#                -nostdlib \
-
-ifeq ($(CONFIG_GBA_MULTIBOOT),y)
-LFLAGS          +=-specs=$(BRICKS_ROOT)/include/makeinclude/gba_mb.specs
-else
-LFLAGS          +=-specs=$(BRICKS_ROOT)/include/makeinclude/gba_cart.specs
-endif
+                -Wl,-Map,$@.map \
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
+ifeq ($(CONFIG_GBA_MULTIBOOT),y)
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
-	@echo [CC ] $@
-	$(CXX) $(LFLAGS) $(MY_OBJS) $(MY_LIBS) -o $@ -Wl,-Map,$@.map
+	@echo [LD ] $@
+	$(CXX) -specs=$(BRICKS_ROOT)/include/makeinclude/gba_mb.specs $(LDFLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@
+else
+$(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
+	@echo [LD ] $@
+	$(CXX) -specs=$(BRICKS_ROOT)/include/makeinclude/gba_cart.specs $(LDFLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@
+endif
