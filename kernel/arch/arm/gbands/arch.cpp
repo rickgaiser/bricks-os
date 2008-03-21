@@ -88,6 +88,19 @@ CGBAVideoDevice * pVideoDevice;
 #endif // CONFIG_FRAMEBUFFER
 
 
+extern "C"
+{
+  void __gxx_personality_v0()
+  {
+  }
+  void __aeabi_atexit()
+  {
+  }
+  void __cxa_pure_virtual()
+  {
+  }
+}
+
 // -----------------------------------------------------------------------------
 int
 main(int, char *[])
