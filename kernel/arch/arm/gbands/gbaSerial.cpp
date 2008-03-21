@@ -6,12 +6,10 @@
 
 
 //#define USE_INTERRUPTS
-#define USE_MULTIBOOT_FUNC
 #define TIMEOUT_COUNT 10000
-#define WAIT_62_5_MS()  for(vuint32_t i(0); i < 50000; i++) // FIXME: How much is this?
-#define WAIT_36_US()    for(vuint32_t i(0); i <   500; i++) // FIXME: How much is this?
+#define WAIT_62_5_MS()  for(vuint32_t tmout(0); tmout < 10000; tmout++) // FIXME: How much is this?
+#define WAIT_36_US()    for(vuint32_t tmout(0); tmout <   100; tmout++) // FIXME: How much is this?
 
-#ifdef USE_MULTIBOOT_FUNC
 struct MultiBootParam
 {
   uint32_t   reserved1[5];
@@ -44,11 +42,8 @@ enum MULTIBOOT_MODES
   MODE32_2MHZ   = 2
 };
 
-MultiBootParam mbp;
-#endif // USE_MULTIBOOT_FUNC
-
-uint8_t * pHeader = (uint8_t *)0x8000000;
-uint8_t * pData   = (uint8_t *)0x80000c0;
+#define pHeader ((uint8_t *)0x8000000)
+#define pData   ((uint8_t *)0x80000c0)
 
 char * bootModes[] =
 {
@@ -56,22 +51,6 @@ char * bootModes[] =
   "Joybus",
   "Normal",
   "Multiplay",
-};
-
-const uint8_t goodHeader[] =
-{
-  46,0,0,234,36,255,174,81,105,154,162,33,61,132,130,10,
-  132,228,9,173,17,36,139,152,192,129,127,33,163,82,190,25,
-  147,9,206,32,16,70,74,74,248,39,49,236,88,199,232,51,
-  130,227,206,191,133,244,223,148,206,75,9,193,148,86,138,192,
-  19,114,167,252,159,132,77,115,163,202,154,97,88,151,163,39,
-  252,3,152,118,35,29,199,97,3,4,174,86,191,56,132,0,
-  64,167,14,253,255,82,254,3,111,149,48,241,151,251,192,133,
-  96,214,128,37,169,99,190,3,1,78,56,226,249,162,52,255,
-  187,62,3,68,120,0,144,203,136,17,58,148,101,192,124,99,
-  135,240,60,175,214,37,228,139,56,10,172,114,33,212,248,7,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,48,49,150,0,0,0,0,0,
-  0,0,0,0,0,240,0,0
 };
 
 #ifdef USE_INTERRUPTS
@@ -173,13 +152,6 @@ CGBASerial::isr(int irq)
     default:
       ;
   };
-#else
-  if((eMode_ != SIO_UART_MODE) || (bModeSet_ == false))
-    return 0;
-
-  if((REG_SIOCNT & SIO_UART_RECV_EMPTY) == false)
-    rcvData_ = REG_SIODATA8;
-  bReceived_ = true;
 #endif // USE_INTERRUPTS
 
   //printk("%c\n", rcvData_);
@@ -218,6 +190,7 @@ CGBASerial::setMode(ESerialMode mode)
   {
     case SIO_8BIT_MODE:
     case SIO_32BIT_MODE:
+      bMaster_ = ((REG_SIOCNT & SIO_MULTI_CHILD) != SIO_MULTI_CHILD);
       // Initialize in connectNormal
       break;
     case SIO_MULTI_MODE:
@@ -254,9 +227,6 @@ CGBASerial::connectNormal(bool master)
   if(((eMode_ != SIO_8BIT_MODE) && (eMode_ != SIO_32BIT_MODE)) || (bModeSet_ == false))
     return -1;
 
-  if(bConnected_ == true)
-    return 0;
-
   bMaster_ = master;
   if(bMaster_ == true)
   {
@@ -291,17 +261,9 @@ CGBASerial::connectMulti()
   if((eMode_ != SIO_MULTI_MODE) || (bModeSet_ == false))
     return -1;
 
-  if(bConnected_ == true)
-    return 0;
-
   if((REG_SIOCNT & SIO_MULTI_CONNECTED) == SIO_MULTI_CONNECTED)
   {
-//    printk("Cable connected, we are the ");
-    bMaster_ = ((REG_SIOCNT & SIO_MULTI_CHILD) != SIO_MULTI_CHILD);
-//    if(bMaster_ == true)
-//      printk("master\n");
-//    else
-//      printk("slave\n");
+    bMaster_    = ((REG_SIOCNT & SIO_MULTI_CHILD) != SIO_MULTI_CHILD);
 
     bConnected_ = true;
 
@@ -314,7 +276,6 @@ CGBASerial::connectMulti()
     return iID_;
   }
 
-//  printk("Cable not connected\n");
   return -1;
 }
 
@@ -498,47 +459,33 @@ CGBASerial::multiBoot()
 
   if(deviceID != 0)
   {
-    printk("invalid device\n");
-    return -1;
+//    printk("invalid device\n");
+    return -2;
   }
 
   if(bInitialized_ == false)
   {
-    printk("not initialized\n");
-    return -1;
+//    printk("not initialized\n");
+    return -3;
   }
 
   if(eMode_ != SIO_MULTI_MODE)
   {
     if(setMode(SIO_MULTI_MODE) == -1)
     {
-      printk("unable to set multi mode\n");
-      return -1;
+//      printk("unable to set multi mode\n");
+      return -4;
     }
+  }
 
-    bMaster_ = true;
-    iID_ = 0;
+  if(bMaster_ == false)
+  {
+//      printk("we're not the master\n");
+    return -5;
   }
 
   uint16_t slave0, slave1, slave2, slave3;
   uint8_t  client_bit(0);
-
-/*
-  // Wait for slave to enter multiplay/normal mode
-  while(true)
-  {
-    data = sendMulti(0x6200);
-    if(data == 0x0000)
-    {
-      break;
-    }
-    else
-    {
-      printk("Wait: Got 0x%x\n", data);
-      for(vuint32_t i(0); i < 50000; i++);
-    }
-  }
-*/
 
   // Detect slaves
   for(int i(0); i < 15; i++)
@@ -557,18 +504,10 @@ CGBASerial::multiBoot()
       WAIT_62_5_MS();
     }
   }
-  if(client_bit != 0)
+  if(client_bit == 0)
   {
-    printk("Detected slaves: ");
-    if(client_bit & 0x02) printk("1 ");
-    if(client_bit & 0x04) printk("2 ");
-    if(client_bit & 0x08) printk("3 ");
-    printk("\n");
-  }
-  else
-  {
-    printk("No slaves!\n");
-    return -1;
+//    printk("No slaves!\n");
+    return -6;
   }
 
   // Check all slaves
@@ -577,60 +516,56 @@ CGBASerial::multiBoot()
   {
     if(slave1 != (0x7200 + (1<<1)))
     {
-      printk("Slave1 ACK error (0x%x)\n", slave1);
-      return -1;
+//      printk("Slave1 ACK error (0x%x)\n", slave1);
+      return -7;
     }
   }
   if(client_bit & (1<<2))
   {
     if(slave2 != (0x7200 + (1<<2)))
     {
-      printk("Slave2 ACK error (0x%x)\n", slave2);
-      return -1;
+//      printk("Slave2 ACK error (0x%x)\n", slave2);
+      return -7;
     }
   }
   if(client_bit & (1<<3))
   {
     if(slave3 != (0x7200 + (1<<3)))
     {
-      printk("Slave3 ACK error (0x%x)\n", slave3);
-      return -1;
+//      printk("Slave3 ACK error (0x%x)\n", slave3);
+      return -7;
     }
   }
-  printk("1 - ACK ok\n");
 
   // Send multiboot header
-  sendMulti((pHeader[0*2+1] << 8) + pHeader[0*2], &slave0, &slave1, &slave2, &slave3);
-  sendMulti((pHeader[1*2+1] << 8) + pHeader[1*2], &slave0, &slave1, &slave2, &slave3);
-  for(int i(2); i < 0x60; i++)
+  for(int i(0); i < 0x60; i++)
   {
-    sendMulti((goodHeader[i*2+1] << 8) + goodHeader[i*2], &slave0, &slave1, &slave2, &slave3);
+    sendMulti((pHeader[i*2+1] << 8) + pHeader[i*2], &slave0, &slave1, &slave2, &slave3);
     if(client_bit & (1<<1))
     {
       if(slave1 != (((0x60 - i) << 8) | (1<<1)))
       {
-        printk("Slave1 header invalid response (0x%x)\n", slave1);
-        return -1;
+//        printk("Slave1 header invalid response (0x%x)\n", slave1);
+        return -8;
       }
     }
     if(client_bit & (1<<2))
     {
       if(slave2 != (((0x60 - i) << 8) | (1<<2)))
       {
-        printk("Slave2 header invalid response (0x%x)\n", slave2);
-        return -1;
+//        printk("Slave2 header invalid response (0x%x)\n", slave2);
+        return -8;
       }
     }
     if(client_bit & (1<<3))
     {
       if(slave3 != (((0x60 - i) << 8) | (1<<3)))
       {
-        printk("Slave3 header invalid response (0x%x)\n", slave3);
-        return -1;
+//        printk("Slave3 header invalid response (0x%x)\n", slave3);
+        return -8;
       }
     }
   }
-  printk("Header sent ok\n");
 
   // Check all slaves
   sendMulti(0x6200, &slave0, &slave1, &slave2, &slave3);
@@ -638,27 +573,26 @@ CGBASerial::multiBoot()
   {
     if(slave1 != (0x0000 + (1<<1)))
     {
-      printk("Slave1 ACK error (0x%x)\n", slave1);
-      return -1;
+//      printk("Slave1 ACK error (0x%x)\n", slave1);
+      return -9;
     }
   }
   if(client_bit & (1<<2))
   {
     if(slave2 != (0x0000 + (1<<2)))
     {
-      printk("Slave2 ACK error (0x%x)\n", slave2);
-      return -1;
+//      printk("Slave2 ACK error (0x%x)\n", slave2);
+      return -9;
     }
   }
   if(client_bit & (1<<3))
   {
     if(slave3 != (0x0000 + (1<<3)))
     {
-      printk("Slave3 ACK error (0x%x)\n", slave3);
-      return -1;
+//      printk("Slave3 ACK error (0x%x)\n", slave3);
+      return -9;
     }
   }
-  printk("2 - ACK ok\n");
 
   // Check all slaves
   sendMulti(0x6200 + client_bit, &slave0, &slave1, &slave2, &slave3);
@@ -666,40 +600,39 @@ CGBASerial::multiBoot()
   {
     if(slave1 != (0x7200 + (1<<1)))
     {
-      printk("Slave1 ACK error (0x%x)\n", slave1);
-      return -1;
+//      printk("Slave1 ACK error (0x%x)\n", slave1);
+      return -10;
     }
   }
   if(client_bit & (1<<2))
   {
     if(slave2 != (0x7200 + (1<<2)))
     {
-      printk("Slave2 ACK error (0x%x)\n", slave2);
-      return -1;
+//      printk("Slave2 ACK error (0x%x)\n", slave2);
+      return -10;
     }
   }
   if(client_bit & (1<<3))
   {
     if(slave3 != (0x7200 + (1<<3)))
     {
-      printk("Slave3 ACK error (0x%x)\n", slave3);
-      return -1;
+//      printk("Slave3 ACK error (0x%x)\n", slave3);
+      return -10;
     }
   }
-  printk("3 - ACK ok\n");
 
   // Send palette data and receive client data
   uint8_t palette_data(0xc1);
   uint8_t client_data[3] = {0xff, 0xff, 0xff};
   uint8_t check = client_bit;
-  while(check != 0)
+  for(int i(0); (i < 10) && (check != 0); i++)
   {
     sendMulti(0x6300 + palette_data, &slave0, &slave1, &slave2, &slave3);
     if(check & (1<<1))
     {
       if((slave1 & 0xff00) == 0x7300)
       {
-        client_data[0] = slave0 & 0x00ff;
+        client_data[0] = slave1 & 0x00ff;
         check &= ~(1<<1);
       }
     }
@@ -707,7 +640,7 @@ CGBASerial::multiBoot()
     {
       if((slave2 & 0xff00) == 0x7300)
       {
-        client_data[1] = slave0 & 0x00ff;
+        client_data[1] = slave2 & 0x00ff;
         check &= ~(1<<2);
       }
     }
@@ -715,12 +648,16 @@ CGBASerial::multiBoot()
     {
       if((slave3 & 0xff00) == 0x7300)
       {
-        client_data[2] = slave0 & 0x00ff;
+        client_data[2] = slave3 & 0x00ff;
         check &= ~(1<<3);
       }
     }
   }
-  printk("4 - ACK ok\n");
+  if(check != 0)
+  {
+//    printk("Unable to get client data\n");
+    return -11;
+  }
 
   uint8_t handshake_data = 0x11 + client_data[0] + client_data[1] + client_data[2];
   sendMulti(0x6400 + handshake_data, &slave0, &slave1, &slave2, &slave3);
@@ -728,38 +665,37 @@ CGBASerial::multiBoot()
   {
     if((slave1 & 0xff00) != 0x7300)
     {
-      printk("Slave1 ACK error (0x%x)\n", slave1);
-      return -1;
+//      printk("Slave1 ACK error (0x%x)\n", slave1);
+      return -12;
     }
   }
   if(client_bit & (1<<2))
   {
     if((slave2 & 0xff00) != 0x7300)
     {
-      printk("Slave2 ACK error (0x%x)\n", slave2);
-      return -1;
+//      printk("Slave2 ACK error (0x%x)\n", slave2);
+      return -12;
     }
   }
   if(client_bit & (1<<3))
   {
     if((slave3 & 0xff00) != 0x7300)
     {
-      printk("Slave3 ACK error (0x%x)\n", slave3);
-      return -1;
+//      printk("Slave3 ACK error (0x%x)\n", slave3);
+      return -12;
     }
   }
-  printk("5 - ACK ok\n");
 
-  uint32_t length = (256*1024) - 0xc0;
-//  length = (length + 0xf) & ~0xf; // 16 byte units
-//  if(length < 0x1c0)
-//    length = 0x1c0;
+  extern char __text_start;
+  extern char _end;
+  uint32_t length = (uint32_t)(&_end - &__text_start - 0xc0);
+  length = (length + 0xf) & ~0xf; // 16 byte units
 
-#ifdef USE_MULTIBOOT_FUNC
+  MultiBootParam mbp;
   memset(&mbp, 0, sizeof(MultiBootParam));
   mbp.handshake_data    = handshake_data;
 //  mbp.handshake_timeout = 400;
-  mbp.probe_count       = 0xd1;
+//  mbp.probe_count       = 0xd1;
   mbp.client_data[0]    = client_data[0];
   mbp.client_data[1]    = client_data[1];
   mbp.client_data[2]    = client_data[2];
@@ -774,85 +710,15 @@ CGBASerial::multiBoot()
 //  mbp.check_wait        = 15;
 //  mbp.server_type       = 0;
 
-  printk("Sending...");
-  uint32_t status;
-
-  uint32_t flags = local_save_flags();
-  local_irq_disable();
-  status = MultiBoot(&mbp, MODE16_MULTI);
-  local_irq_restore(flags);
-
-  if(status == 0)
+//  uint32_t flags = local_save_flags();
+//  local_irq_disable();
+  uint32_t status = MultiBoot(&mbp, MODE16_MULTI);
+//  local_irq_restore(flags);
+  if(status != 0)
   {
-    printk("ok\n");
+//    printk("Send error (0x%x)\n", status);
+    return -13;
   }
-  else
-  {
-    printk("error (0x%x)\n", status);
-    return -1;
-  }
-#else
-  // Wait 1/16 sec
-  WAIT_62_5_MS();
-
-  sendMulti((length >> 2), &slave0, &slave1, &slave2, &slave3);
-  if(client_bit & (1<<1))
-  {
-    if((slave1 & 0xff00) != 0x7300)
-    {
-      printk("Slave1 ACK error (0x%x)\n", slave1);
-      return -1;
-    }
-  }
-  if(client_bit & (1<<2))
-  {
-    if((slave2 & 0xff00) != 0x7300)
-    {
-      printk("Slave2 ACK error (0x%x)\n", slave2);
-      return -1;
-    }
-  }
-  if(client_bit & (1<<3))
-  {
-    if((slave3 & 0xff00) != 0x7300)
-    {
-      printk("Slave3 ACK error (0x%x)\n", slave3);
-      return -1;
-    }
-  }
-  printk("6 - ACK ok\n");
-
-  // Send data
-  for(uint32_t i(0); i < (length >> 1); i++)
-  {
-    sendMulti((pData[i*2+1] << 8) + pData[i*2], &slave0, &slave1, &slave2, &slave3);
-    if(client_bit & (1<<1))
-    {
-      if(slave1 != (0x00c0 + (i*2)))
-      {
-        printk("Slave1 data invalid response (0x%x)\n", slave1);
-        return -1;
-      }
-    }
-    if(client_bit & (1<<2))
-    {
-      if(slave2 != (0x00c0 + (i*2)))
-      {
-        printk("Slave2 data invalid response (0x%x)\n", slave2);
-        return -1;
-      }
-    }
-    if(client_bit & (1<<3))
-    {
-      if(slave3 != (0x00c0 + (i*2)))
-      {
-        printk("Slave3 data invalid response (0x%x)\n", slave3);
-        return -1;
-      }
-    }
-  }
-  printk("Data sent ok\n");
-#endif // USE_MULTIBOOT_FUNC
 
   return 0;
 }

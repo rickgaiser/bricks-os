@@ -48,10 +48,11 @@ appMain(int argc, char * argv[])
       printk("\n");
 
       printk("Booting slaves\n");
-      if(cSerial.multiBoot() == 0)
+      int status = cSerial.multiBoot();
+      if(status == 0)
         bDone = true;
       else
-        printk("failed\n");
+        printk("failed (%d)\n", status);
     }
   }
 
