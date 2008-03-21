@@ -20,19 +20,11 @@ CXXFLAGS        +=\
                 -fno-threadsafe-statics \
 
 LDFLAGS         +=\
-                -T $(BRICKS_ROOT)/include/makeinclude/link.pc \
                 -nostdlib \
-                $(CXXFLAGS) \
-                $(MY_LIBS_PATH) \
+                -Wl,-Map,$@.map \
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@
-	$(CXX) $(LDFLAGS) $(MY_OBJS) $(MY_LIBS) -o $@
-
-#----------------------------------------------------------------------------
-# Create object file from .asm file
-$(VDIR)%.o: %.asm $(VDIR).creation_stamp
-	@echo [ASM] $<
-	nasm -f elf -o $@ $<
+	$(CXX) -T$(BRICKS_ROOT)/include/makeinclude/link.pc $(LDFLAGS) $(BRICKS_ROOT)/kernel/arch/i386/pc/obj-pc/entry.o $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@
