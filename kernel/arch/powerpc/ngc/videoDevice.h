@@ -3,7 +3,6 @@
 
 
 #include "kernel/videoManager.h"
-#include <gccore.h>
 
 
 //---------------------------------------------------------------------------
@@ -15,7 +14,7 @@ public:
   virtual ~CNGC2DRenderer();
 
   // Color
-  virtual void       setColor(uint8_t r, uint8_t g, uint8_t b);
+  virtual void setColor(uint8_t r, uint8_t g, uint8_t b);
 };
 
 //---------------------------------------------------------------------------
@@ -39,8 +38,6 @@ public:
 private:
   // Surface we're currently displaying
   CSurface * pSurface_;
-
-  GXRModeObj * rmode_;
 
   const SVideoMode * pCurrentMode_;
 };
