@@ -6,6 +6,9 @@ all: alldirs bin/ngc/Bricks.dol
 clean:
 	make -f Makefile clean ARCH=powerpc TARGET=ngc
 
+run:
+	vrmdsend -ip 192.168.1.11 -f bin/ngc/Bricks.dol
+
 bin/ngc/Bricks.dol: bin/ngc/Bricks.elf
 	@echo [DOL] $@
 	powerpc-gekko-objcopy -O binary $< $@
