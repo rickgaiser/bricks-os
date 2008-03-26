@@ -14,6 +14,11 @@
 #endif // CONFIG_FRAMEBUFFER
 
 
+extern char __ArenaLo, __ArenaHi;
+#define HEAP_START ((uint32_t)(&__ArenaLo))
+#define HEAP_END   ((uint32_t)(&__ArenaHi))
+
+
 #ifdef CONFIG_DEBUGGING
 CNGCDebugScreen cDebug;
 #endif // CONFIG_DEBUGGING
