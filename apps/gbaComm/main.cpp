@@ -6,15 +6,8 @@
 
 
 extern CGBASerial cSerial;
-uint16_t keys(0);
+#define getInput() (~REG_KEYS)
 
-
-// -----------------------------------------------------------------------------
-uint16_t
-getInput()
-{
-  return ~REG_KEYS;
-}
 
 // -----------------------------------------------------------------------------
 extern "C" int
@@ -23,6 +16,7 @@ appMain(int argc, char * argv[])
   if(cSerial.getDeviceID() == 0)
   {
     bool bDone(false);
+    int iRun(0);
     while(bDone == false)
     {
       uint8_t slaves;
@@ -37,6 +31,14 @@ appMain(int argc, char * argv[])
         if(slaves & (1<<1)) printk("1 ");
         if(slaves & (1<<2)) printk("2 ");
         if(slaves & (1<<3)) printk("3 ");
+        switch(iRun & 0x3)
+        {
+          case 0: printk("-"); break;
+          case 1: printk("\\"); break;
+          case 2: printk("|"); break;
+          case 3: printk("/"); break;
+        };
+        iRun++;
 
         // Wait
         for(vuint32_t i(0); i < 100000; i++)

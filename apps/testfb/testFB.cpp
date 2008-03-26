@@ -45,7 +45,7 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
   int loops = 256*5;
   for(int i(0); i < loops; i++)
   {
-    renderer->setColor(i%255, 0, 0);
+    renderer->setColor(i%256, 0, 0);
     renderer->fill();
 
     // Display progress bar
@@ -54,8 +54,8 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
     renderer->setColor(0, 0, 0);
     renderer->fillRect(surface->width() / 4 + 2, surface->height() / 2 + 2, ((surface->width() / 2 - 4) * i) / loops, 10 - 4);
 
-    device->waitVSync();
     renderer->flush();
+    device->waitVSync();
   }
 
   // Pixel test
@@ -63,13 +63,13 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
   renderer->fill();
   for(int i(0); i < loops; i++)
   {
-    renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
+    renderer->setColor(rand() % 256, rand() % 256, rand() % 256);
     renderer->setPixel(
       rand() % surface->width(),
       rand() % surface->height());
 
-    device->waitVSync();
     renderer->flush();
+    device->waitVSync();
   }
 
   // Line test
@@ -77,15 +77,15 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
   renderer->fill();
   for(int i(0); i < loops; i++)
   {
-    renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
+    renderer->setColor(rand() % 256, rand() % 256, rand() % 256);
     renderer->drawLine(
       rand() % surface->width(),
       rand() % surface->height(),
       rand() % surface->width(),
       rand() % surface->height());
 
-    device->waitVSync();
     renderer->flush();
+    device->waitVSync();
   }
 
   // Rect test
@@ -102,11 +102,11 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
     int w  = x1 < x2 ? (x2-x1) : (x1-x2);
     int h  = y1 < y2 ? (y2-y1) : (y1-y2);
 
-    renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
+    renderer->setColor(rand() % 256, rand() % 256, rand() % 256);
     renderer->drawRect(x, y, w, h);
 
-    device->waitVSync();
     renderer->flush();
+    device->waitVSync();
   }
 
   // Filled Rect test
@@ -123,11 +123,11 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
     int w  = x1 < x2 ? (x2-x1) : (x1-x2);
     int h  = y1 < y2 ? (y2-y1) : (y1-y2);
 
-    renderer->setColor(rand() % 255, rand() % 255, rand() % 255);
+    renderer->setColor(rand() % 256, rand() % 256, rand() % 256);
     renderer->fillRect(x, y, w, h);
 
-    device->waitVSync();
     renderer->flush();
+    device->waitVSync();
   }
 }
 
