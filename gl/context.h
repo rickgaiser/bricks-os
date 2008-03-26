@@ -2,7 +2,6 @@
 #define GL_CONTEXT_H
 
 
-#include "EGL/egl.h"
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 #include "kernel/videoManager.h"

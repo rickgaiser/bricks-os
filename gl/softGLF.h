@@ -4,7 +4,6 @@
 
 #include "context.h"
 
-#include "EGL/egl.h"
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 

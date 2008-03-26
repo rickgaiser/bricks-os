@@ -2,11 +2,8 @@
 #include "GLES/gl_extra.h"
 #include "GL/glu.h"
 #include "kernel/videoManager.h"
-#include "EGL/egl.h"
+#include "../gl/context.h"
 
-
-extern EGLDisplay egldisplay;
-extern EGLSurface eglsurface;
 
 extern void initPyramidF();
 extern void drawPyramidF();
@@ -18,12 +15,19 @@ const GLfloat lightPosition[] = {0.0f, 0.0f, 2.0f, 1.0f};
 const GLfloat fogColor[]      = {0.5f, 0.5f, 0.5f, 1.0f};
 
 
+extern IGLESRenderer * context;
 // -----------------------------------------------------------------------------
 void
-testGLF(CSurface * surface)
+testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
 {
   // Background color
   glClearColor(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
+
+  // FIXME: We can only call context after the first gl call, becouse the first
+  //        call creates the context.
+  bool bDisplayB(true);
+  context->setSurface(surface_a);
+  device->displaySurface(surface_b);
 
   // Depth test
   glClearDepthf(1.0f);
@@ -52,10 +56,10 @@ testGLF(CSurface * surface)
   //glEnable(GL_FOG);
 
   // Viewport & Perspective
-  glViewport(0, 0, surface->width(), surface->height());
+  glViewport(0, 0, surface_a->width(), surface_a->height());
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(45.0f, (float)surface->width() / (float)surface->height(), 0.1f, 100.0f);
+  gluPerspective(45.0f, (float)surface_a->width() / (float)surface_a->height(), 0.1f, 100.0f);
 
   // Move up a little
   glTranslatef(0.0f, -2.0f, 0.0f);
@@ -88,6 +92,20 @@ testGLF(CSurface * surface)
 
     glFlush();
 
-    eglSwapBuffers(egldisplay, eglsurface);
+    // Wait for VSync
+    device->waitVSync();
+
+    // Swap display and render buffers
+    if(bDisplayB == true)
+    {
+      context->setSurface(surface_b);
+      device->displaySurface(surface_a);
+    }
+    else
+    {
+      context->setSurface(surface_a);
+      device->displaySurface(surface_b);
+    }
+    bDisplayB = !bDisplayB;
   }
 }

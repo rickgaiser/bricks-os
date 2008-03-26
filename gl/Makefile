@@ -5,7 +5,6 @@ LIB             =gl
 OBJS            =\
                 context \
                 edge \
-                egl \
                 gl \
                 glu \
                 matrix \

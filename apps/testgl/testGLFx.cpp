@@ -3,11 +3,8 @@
 #include "GL/glu.h"
 #include "kernel/videoManager.h"
 #include "../gl/fixedPoint.h"
-#include "EGL/egl.h"
+#include "../gl/context.h"
 
-
-extern EGLDisplay egldisplay;
-extern EGLSurface eglsurface;
 
 extern void initPyramidFx();
 extern void drawPyramidFx();
@@ -19,12 +16,19 @@ const GLfixed lightPosition[] = {gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(
 const GLfixed fogColor[]      = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
 
 
+extern IGLESRenderer * context;
 // -----------------------------------------------------------------------------
 void
-testGLFx(CSurface * surface)
+testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
 {
   // Background color
   glClearColorx(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
+
+  // FIXME: We can only call context after the first gl call, becouse the first
+  //        call creates the context.
+  bool bDisplayB(true);
+  context->setSurface(surface_a);
+  device->displaySurface(surface_b);
 
   // Depth test
   glClearDepthx(gl_fpfromi(1));
@@ -53,10 +57,10 @@ testGLFx(CSurface * surface)
   //glEnable(GL_FOG);
 
   // Viewport & Perspective
-  glViewport(0, 0, surface->width(), surface->height());
+  glViewport(0, 0, surface_a->width(), surface_a->height());
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(45.0f, (float)surface->width() / (float)surface->height(), 0.1f, 100.0f);
+  gluPerspective(45.0f, (float)surface_a->width() / (float)surface_a->height(), 0.1f, 100.0f);
 
   // Move up a little
   glTranslatex(gl_fpfromi(0), gl_fpfromi(-2), gl_fpfromi(0));
@@ -89,6 +93,20 @@ testGLFx(CSurface * surface)
 
     glFlush();
 
-    eglSwapBuffers(egldisplay, eglsurface);
+    // Wait for VSync
+    device->waitVSync();
+
+    // Swap display and render buffers
+    if(bDisplayB == true)
+    {
+      context->setSurface(surface_b);
+      device->displaySurface(surface_a);
+    }
+    else
+    {
+      context->setSurface(surface_a);
+      device->displaySurface(surface_b);
+    }
+    bDisplayB = !bDisplayB;
   }
 }
