@@ -230,7 +230,8 @@ public:
   virtual ~CAVideoDevice();
 
   virtual void listModes(const SVideoMode ** modes, int * modeCount) = 0;
-  virtual void getMode(SVideoMode ** mode) = 0;
+  virtual void getCurrentMode(const SVideoMode ** mode) = 0;
+  virtual void getDefaultMode(const SVideoMode ** mode) = 0;
   virtual void setMode(const SVideoMode * mode) = 0;
 
   virtual void getSurface(CSurface ** surface, ESurfaceType type) = 0;

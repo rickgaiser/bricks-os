@@ -47,9 +47,11 @@ static const uint32_t videoRegs[6][32] =
   },
 };
 
+#define DEFAULT_VIDEO_MODE_PAL  videoModes[1] // PAL:  640x576x32
+#define DEFAULT_VIDEO_MODE_NTSC videoModes[0] // NTSC: 640x480x32
 static const SVideoMode videoModes[] =
 {
-//  {320, 480, 320, 480, 32, cfR8G8B8}, // NTSC 480i60
+  {320, 480, 320, 480, 32, cfR8G8B8}, // NTSC 480i60
   {320, 576, 320, 576, 32, cfR8G8B8}, // PAL  576i50
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
@@ -168,9 +170,19 @@ CNGCVideoDevice::listModes(const SVideoMode ** modes, int * modeCount)
 
 //---------------------------------------------------------------------------
 void
-CNGCVideoDevice::getMode(SVideoMode ** mode)
+CNGCVideoDevice::getCurrentMode(const SVideoMode ** mode)
 {
-//  *mode = pCurrentMode_;
+  *mode = pCurrentMode_;
+}
+
+//---------------------------------------------------------------------------
+void
+CNGCVideoDevice::getDefaultMode(const SVideoMode ** mode)
+{
+  if(BIOS_TV_MODE == BTM_PAL)
+    *mode = &DEFAULT_VIDEO_MODE_PAL;
+  else
+    *mode = &DEFAULT_VIDEO_MODE_NTSC;
 }
 
 //---------------------------------------------------------------------------

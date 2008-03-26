@@ -84,7 +84,8 @@ public:
   virtual ~CPS2VideoDevice();
 
   virtual void listModes(const SVideoMode ** modes, int * modeCount);
-  virtual void getMode(SVideoMode ** mode);
+  virtual void getCurrentMode(const SVideoMode ** mode);
+  virtual void getDefaultMode(const SVideoMode ** mode);
   virtual void setMode(const SVideoMode * mode);
 
   virtual void getSurface(CSurface ** surface, ESurfaceType type);

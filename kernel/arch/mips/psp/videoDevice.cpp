@@ -5,11 +5,12 @@
 #include <pspgu.h>
 
 
+#define DEFAULT_VIDEO_MODE  videoModes[3] // 480x272x32
 static const SVideoMode videoModes[] =
 {
-//  {512, 272, 480, 272, 16, cfB5G6R5},
-//  {512, 272, 480, 272, 16, cfA1B5G5R5},
-//  {512, 272, 480, 272, 16, cfA4B4G4R4},
+  {512, 272, 480, 272, 16, cfB5G6R5},
+  {512, 272, 480, 272, 16, cfA1B5G5R5},
+  {512, 272, 480, 272, 16, cfA4B4G4R4},
   {512, 272, 480, 272, 32, cfA8B8G8R8},
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
@@ -39,8 +40,16 @@ CPSPVideoDevice::listModes(const SVideoMode ** modes, int * modeCount)
 
 //---------------------------------------------------------------------------
 void
-CPSPVideoDevice::getMode(SVideoMode ** mode)
+CPSPVideoDevice::getCurrentMode(const SVideoMode ** mode)
 {
+  *mode = pCurrentMode_;
+}
+
+//---------------------------------------------------------------------------
+void
+CPSPVideoDevice::getDefaultMode(const SVideoMode ** mode)
+{
+  *mode = &DEFAULT_VIDEO_MODE;
 }
 
 //---------------------------------------------------------------------------

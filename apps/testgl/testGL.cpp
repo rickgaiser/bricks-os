@@ -13,43 +13,49 @@ appMain(int argc, char * argv[])
 {
   CAVideoDevice ** devices;
   int iDeviceCount;
+
   videoManager.listDevices(&devices, &iDeviceCount);
   if(iDeviceCount > 0)
   {
+    // Test all devices (normally there is only one)
     for(int iDev(0); iDev < iDeviceCount; iDev++)
     {
-      const SVideoMode * modes;
-      int iModeCount;
-      devices[iDev]->listModes(&modes, &iModeCount);
-      if(iModeCount > 0)
+      const SVideoMode * prevMode = NULL;
+      const SVideoMode * newMode  = NULL;
+      devices[iDev]->getCurrentMode(&prevMode);
+      devices[iDev]->getDefaultMode(&newMode);
+      if(newMode != NULL)
       {
-        for(int iMode(0); iMode < iModeCount; iMode++)
-        {
-          devices[iDev]->setMode(&modes[iMode]);
-          CSurface * pVideoSurfaceA;
-          CSurface * pVideoSurfaceB;
+        CSurface * pVideoSurfaceA = NULL;
+        CSurface * pVideoSurfaceB = NULL;
 
-          // Test 3d with a double buffered surface
-          devices[iDev]->getSurface(&pVideoSurfaceA, stSCREEN);
-          devices[iDev]->getSurface(&pVideoSurfaceB, stOFFSCREEN);
-          devices[iDev]->displaySurface(pVideoSurfaceA);
+        // Set default video mode
+        devices[iDev]->setMode(newMode);
+
+        // Allocate two surfaces for double buffering
+        devices[iDev]->getSurface(&pVideoSurfaceA, stSCREEN);
+        devices[iDev]->getSurface(&pVideoSurfaceB, stOFFSCREEN);
+
+        // Start test
+        if((pVideoSurfaceA != NULL) && (pVideoSurfaceB != NULL))
           testGL(devices[iDev], pVideoSurfaceA, pVideoSurfaceB);
 
-          // Clean up allocated surfaces
+        // Clean up allocated surfaces
+        if(pVideoSurfaceB != NULL)
           delete pVideoSurfaceB;
+        if(pVideoSurfaceA != NULL)
           delete pVideoSurfaceA;
-        }
+
+        // Restore video mode
+        if(prevMode != NULL)
+          devices[iDev]->setMode(prevMode);
       }
       else
-      {
         printk("ERROR: Device has no modes!\n");
-      }
     }
   }
   else
-  {
     printk("ERROR: No video devices!\n");
-  }
 
   return 0;
 }

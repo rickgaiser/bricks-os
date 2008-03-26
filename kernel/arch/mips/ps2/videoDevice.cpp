@@ -6,10 +6,11 @@
 
 
 //---------------------------------------------------------------------------
-#define IS_NTSC() \
-(*((char *)0x1FC80000 - 0xAE) != 'E')
-#define IS_PAL() \
-(*((char *)0x1FC80000 - 0xAE) == 'E')
+#define DRAW_FIELD_EVEN()    (GS_REG_CSR & (1 << 13))
+#define DISPLAY_FIELD_EVEN() (!DRAW_FIELD_EVEN)
+#define WAIT_VSYNC()         {REG_GS_CSR = REG_GS_CSR & 8; while(!(REG_GS_CSR & 8));}
+#define IS_PAL()             (*((char *)0x1fc80000 - 0xae) == 'E')
+#define IS_NTSC()            (!IS_PAL())
 
 //---------------------------------------------------------------------------
 SPS2VideoMode vmodes[] =
@@ -100,50 +101,52 @@ const uint32_t vmode_count(sizeof(vmodes) / sizeof(SPS2VideoMode));
 //               ------- +
 // Total:        4096KiB (Entire GS Memory)
 //---------------------------------------------------------------------------
+#define DEFAULT_VIDEO_MODE_PAL  videoModes[2] // PAL:  640x256x32
+#define DEFAULT_VIDEO_MODE_NTSC videoModes[8] // NTSC: 640x224x32
 static const SVideoMode videoModes[] =
 {
   // PAL
-//  { 640,  256,  640,  256, 16, cfA1R5G5B5}, //  320KiB
-//  { 640,  256,  640,  256, 24, cfB8G8R8},   //  480KiB
+  { 640,  256,  640,  256, 16, cfA1R5G5B5}, //  320KiB
+  { 640,  256,  640,  256, 24, cfB8G8R8},   //  480KiB
   { 640,  256,  640,  256, 32, cfA8B8G8R8}, //  640KiB
-//  { 640,  512,  640,  512, 16, cfA1R5G5B5}, //  640KiB
-//  { 640,  512,  640,  512, 24, cfB8G8R8},   //  960KiB
-//  { 640,  512,  640,  512, 32, cfA8B8G8R8}, // 1280KiB
+  { 640,  512,  640,  512, 16, cfA1R5G5B5}, //  640KiB
+  { 640,  512,  640,  512, 24, cfB8G8R8},   //  960KiB
+  { 640,  512,  640,  512, 32, cfA8B8G8R8}, // 1280KiB
   // NTSC
-//  { 640,  224,  640,  224, 16, cfA1R5G5B5}, //  280KiB
-//  { 640,  224,  640,  224, 24, cfB8G8R8},   //  420KiB
+  { 640,  224,  640,  224, 16, cfA1R5G5B5}, //  280KiB
+  { 640,  224,  640,  224, 24, cfB8G8R8},   //  420KiB
   { 640,  224,  640,  224, 32, cfA8B8G8R8}, //  560KiB
-//  { 640,  448,  640,  448, 16, cfA1R5G5B5}, //  560KiB
-//  { 640,  448,  640,  448, 24, cfB8G8R8},   //  840KiB
-//  { 640,  448,  640,  448, 32, cfA8B8G8R8}, // 1120KiB
+  { 640,  448,  640,  448, 16, cfA1R5G5B5}, //  560KiB
+  { 640,  448,  640,  448, 24, cfB8G8R8},   //  840KiB
+  { 640,  448,  640,  448, 32, cfA8B8G8R8}, // 1120KiB
 
   // EDTV
-//  { 720,  480,  720,  480, 16, cfA1R5G5B5}, //  675KiB
-//  { 720,  480,  720,  480, 24, cfB8G8R8},   // 1012KiB
-//  { 720,  480,  720,  480, 32, cfA8B8G8R8}, // 1350KiB
+  { 720,  480,  720,  480, 16, cfA1R5G5B5}, //  675KiB
+  { 720,  480,  720,  480, 24, cfB8G8R8},   // 1012KiB
+  { 720,  480,  720,  480, 32, cfA8B8G8R8}, // 1350KiB
   // HDTV
-//  {1280,  720, 1280,  720, 16, cfA1R5G5B5}, // 1800KiB
-//  {1280,  720, 1280,  720, 24, cfB8G8R8},   // 2700KiB
-//  {1280,  720, 1280,  720, 32, cfA8B8G8R8}, // 3600KiB
-//  {1920,  540, 1920,  540, 16, cfA1R5G5B5}, // 2025KiB
-//  {1920,  540, 1920,  540, 24, cfB8G8R8},   // 3038KiB
-//  {1920,  540, 1920,  540, 32, cfA8B8G8R8}, // 4050KiB
-//  {1920, 1080, 1920, 1080, 16, cfA1R5G5B5}, // 4050KiB
+  {1280,  720, 1280,  720, 16, cfA1R5G5B5}, // 1800KiB
+  {1280,  720, 1280,  720, 24, cfB8G8R8},   // 2700KiB
+  {1280,  720, 1280,  720, 32, cfA8B8G8R8}, // 3600KiB
+  {1920,  540, 1920,  540, 16, cfA1R5G5B5}, // 2025KiB
+  {1920,  540, 1920,  540, 24, cfB8G8R8},   // 3038KiB
+  {1920,  540, 1920,  540, 32, cfA8B8G8R8}, // 4050KiB
+  {1920, 1080, 1920, 1080, 16, cfA1R5G5B5}, // 4050KiB
 
   // VGA
-//  { 640,  480,  640,  480, 16, cfA1R5G5B5}, //  600KiB
-//  { 640,  480,  640,  480, 24, cfB8G8R8},   //  900KiB
-//  { 640,  480,  640,  480, 32, cfA8B8G8R8}, // 1200KiB
+  { 640,  480,  640,  480, 16, cfA1R5G5B5}, //  600KiB
+  { 640,  480,  640,  480, 24, cfB8G8R8},   //  900KiB
+  { 640,  480,  640,  480, 32, cfA8B8G8R8}, // 1200KiB
   // SVGA
-//  { 800,  600,  800,  600, 16, cfA1R5G5B5}, //  938KiB
-//  { 800,  600,  800,  600, 24, cfB8G8R8},   // 1406KiB
-//  { 800,  600,  800,  600, 32, cfA8B8G8R8}, // 1875KiB
+  { 800,  600,  800,  600, 16, cfA1R5G5B5}, //  938KiB
+  { 800,  600,  800,  600, 24, cfB8G8R8},   // 1406KiB
+  { 800,  600,  800,  600, 32, cfA8B8G8R8}, // 1875KiB
   // XGA
-//  {1024,  768, 1024,  768, 16, cfA1R5G5B5}, // 1536KiB
-//  {1024,  768, 1024,  768, 24, cfB8G8R8},   // 2304KiB
-//  {1024,  768, 1024,  768, 32, cfA8B8G8R8}, // 3072KiB
+  {1024,  768, 1024,  768, 16, cfA1R5G5B5}, // 1536KiB
+  {1024,  768, 1024,  768, 24, cfB8G8R8},   // 2304KiB
+  {1024,  768, 1024,  768, 32, cfA8B8G8R8}, // 3072KiB
   // SXGA
-//  {1280, 1024, 1280, 1024, 16, cfA1R5G5B5}, // 2560KiB
+  {1280, 1024, 1280, 1024, 16, cfA1R5G5B5}, // 2560KiB
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
@@ -339,8 +342,19 @@ CPS2VideoDevice::listModes(const SVideoMode ** modes, int * modeCount)
 
 //---------------------------------------------------------------------------
 void
-CPS2VideoDevice::getMode(SVideoMode ** mode)
+CPS2VideoDevice::getCurrentMode(const SVideoMode ** mode)
 {
+  *mode = pCurrentMode_;
+}
+
+//---------------------------------------------------------------------------
+void
+CPS2VideoDevice::getDefaultMode(const SVideoMode ** mode)
+{
+  if(IS_PAL() == true)
+    *mode = &DEFAULT_VIDEO_MODE_PAL;
+  else
+    *mode = &DEFAULT_VIDEO_MODE_NTSC;
 }
 
 //---------------------------------------------------------------------------
@@ -454,8 +468,7 @@ CPS2VideoDevice::getRenderer(I2DRenderer ** renderer)
 void
 CPS2VideoDevice::waitVSync()
 {
-  REG_GS_CSR = REG_GS_CSR & 8;
-  while(!(REG_GS_CSR & 8));
+  WAIT_VSYNC();
 }
 
 //---------------------------------------------------------------------------
@@ -466,10 +479,7 @@ CPS2VideoDevice::displaySurface(CSurface * surface)
 
   // Always VSync, even if the frame is not new.
   if(vSync_ == true)
-  {
-    REG_GS_CSR = REG_GS_CSR & 8;
-    while(!(REG_GS_CSR & 8));
-  }
+    WAIT_VSYNC();
 
   // Set new surface
   if(pNewSurface != NULL)

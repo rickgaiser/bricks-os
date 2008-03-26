@@ -28,6 +28,8 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
   bool bDisplayB(true);
   context->setSurface(surface_a);
   device->displaySurface(surface_b);
+  // Automatically wait for VSync
+  device->setVSync(true);
 
   // Depth test
   glClearDepthf(1.0f);
@@ -90,10 +92,8 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glRotatef(yrot, 0.0f, 1.0f, 0.0f);
     drawCubeF();
 
+    // Flush everything to surface
     glFlush();
-
-    // Wait for VSync
-    device->waitVSync();
 
     // Swap display and render buffers
     if(bDisplayB == true)

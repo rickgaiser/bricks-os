@@ -5,13 +5,19 @@
 #include "stddef.h"
 
 
+#ifdef GBA
+  #define DEFAULT_VIDEO_MODE  videoModes[1] // 240x160x8
+#endif // GBA
+#ifdef NDS9
+  #define DEFAULT_VIDEO_MODE  videoModes[0] // 256x192x16
+#endif // NDS9
 static const SVideoMode videoModes[] =
 {
 #ifdef GBA
-//  {240, 160, 240, 160, 16, cfX1B5G5R5}, // 3:2
+  {240, 160, 240, 160, 16, cfX1B5G5R5}, // 3:2
   {240, 160, 240, 160,  8, cfR3G3B2},   // 3:2
-//  {160, 128, 160, 128, 16, cfX1B5G5R5}, // 5:4
-//  {160, 128, 120,  80, 16, cfX1B5G5R5}, // 3:2
+  {160, 128, 160, 128, 16, cfX1B5G5R5}, // 5:4
+  {160, 128, 120,  80, 16, cfX1B5G5R5}, // 3:2
 #endif // GBA
 #ifdef NDS9
   {256, 192, 256, 192, 16, cfA1B5G5R5}, // 4:3
@@ -130,8 +136,16 @@ CGBAVideoDevice::listModes(const SVideoMode ** modes, int * modeCount)
 
 //---------------------------------------------------------------------------
 void
-CGBAVideoDevice::getMode(SVideoMode ** mode)
+CGBAVideoDevice::getCurrentMode(const SVideoMode ** mode)
 {
+  *mode = pCurrentMode_;
+}
+
+//---------------------------------------------------------------------------
+void
+CGBAVideoDevice::getDefaultMode(const SVideoMode ** mode)
+{
+  *mode = &DEFAULT_VIDEO_MODE;
 }
 
 //---------------------------------------------------------------------------
@@ -246,25 +260,29 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
     }
     case stOFFSCREEN:
     {
+#ifdef GBA
+      if(pCurrentMode_ != (&videoModes[0]))
+      {
+        CSurface * pSurface = new CSurface;
+        pSurface->mode = *pCurrentMode_;
+        // Allocate back buffer
+        pSurface->p = (uint16_t *)0x600A000;
+        *surface = pSurface;
+      }
+      else
+        *surface = 0;
+#endif // GBA
+#ifdef NDS9
       CSurface * pSurface = new CSurface;
       pSurface->mode = *pCurrentMode_;
       // Allocate back buffer
-#ifdef GBA
-      if(pCurrentMode_->width == 240)
-        pSurface->p = new uint16_t[240*160];
-      else
-        pSurface->p = (uint16_t *)0x600A000;
-#endif // GBA
-#ifdef NDS9
       pSurface->p = (uint16_t *)0x06020000;
-#endif // NDS9
       *surface = pSurface;
+#endif // NDS9
       break;
     }
     default:
-    {
       *surface = 0;
-    }
   };
 }
 
