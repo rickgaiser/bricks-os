@@ -7,8 +7,8 @@
 
 //#define USE_INTERRUPTS
 #define TIMEOUT_COUNT 10000
-#define WAIT_62_5_MS()  for(vuint32_t tmout(0); tmout < 10000; tmout++) // FIXME: How much is this?
-#define WAIT_36_US()    for(vuint32_t tmout(0); tmout <   100; tmout++) // FIXME: How much is this?
+#define WAIT_62_5_MS()  for(vuint32_t tmout(0); tmout < 50000; tmout++) // FIXME: How much is this?
+#define WAIT_36_US()    for(vuint32_t tmout(0); tmout <   500; tmout++) // FIXME: How much is this?
 
 struct MultiBootParam
 {
@@ -53,6 +53,22 @@ char * bootModes[] =
   "Multiplay",
 };
 
+const uint8_t goodHeader[] =
+{
+  46,0,0,234,36,255,174,81,105,154,162,33,61,132,130,10,
+  132,228,9,173,17,36,139,152,192,129,127,33,163,82,190,25,
+  147,9,206,32,16,70,74,74,248,39,49,236,88,199,232,51,
+  130,227,206,191,133,244,223,148,206,75,9,193,148,86,138,192,
+  19,114,167,252,159,132,77,115,163,202,154,97,88,151,163,39,
+  252,3,152,118,35,29,199,97,3,4,174,86,191,56,132,0,
+  64,167,14,253,255,82,254,3,111,149,48,241,151,251,192,133,
+  96,214,128,37,169,99,190,3,1,78,56,226,249,162,52,255,
+  187,62,3,68,120,0,144,203,136,17,58,148,101,192,124,99,
+  135,240,60,175,214,37,228,139,56,10,172,114,33,212,248,7,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,48,49,150,0,0,0,0,0,
+  0,0,0,0,0,240,0,0
+};
+
 #ifdef USE_INTERRUPTS
   #define GET_REPLY() \
     for(timeout = TIMEOUT_COUNT; (timeout != 0) && (bReceived_ == false); timeout--); \
@@ -63,7 +79,13 @@ char * bootModes[] =
     }
   #define GET_REPLY_NORMAL8()   GET_REPLY()
   #define GET_REPLY_NORMAL32()  GET_REPLY()
-  #define GET_REPLY_MULTI()     GET_REPLY()
+  #define GET_REPLY_MULTI() \
+    for(timeout = TIMEOUT_COUNT; (timeout != 0) && (bReceived_ == false); timeout--); \
+    if(timeout != 0) \
+    { \
+      *slave1 = rcvData_; \
+      bReceived_ = false; \
+    }
 #else
   #define GET_REPLY_NORMAL8() \
     for(timeout = TIMEOUT_COUNT; (timeout != 0) && (REG_SIOCNT & SIO_START); timeout--); \
@@ -538,9 +560,11 @@ CGBASerial::multiBoot()
   }
 
   // Send multiboot header
-  for(int i(0); i < 0x60; i++)
+  sendMulti((pHeader[0*2+1] << 8) + pHeader[0*2], &slave0, &slave1, &slave2, &slave3);
+  sendMulti((pHeader[1*2+1] << 8) + pHeader[1*2], &slave0, &slave1, &slave2, &slave3);
+  for(int i(2); i < 0x60; i++)
   {
-    sendMulti((pHeader[i*2+1] << 8) + pHeader[i*2], &slave0, &slave1, &slave2, &slave3);
+    sendMulti((goodHeader[i*2+1] << 8) + goodHeader[i*2], &slave0, &slave1, &slave2, &slave3);
     if(client_bit & (1<<1))
     {
       if(slave1 != (((0x60 - i) << 8) | (1<<1)))
