@@ -31,15 +31,12 @@ public:
   bool frame() const;
 
   // Drawing functions
-  pixel_t & pixel(int x, int y);
+  pixel_t pixel(int x, int y);
   void fill(color_t color);
   void fillRect(const CRect & rect, color_t color);
   void drawHLine(int y, int left, int right, color_t color);
   void drawVLine(int x, int top, int bottom, color_t color);
   void drawText(int x, int y, const char * string, color_t color = clBlack);
-
-  // Screen functions
-  void swap();
 
 private:
   class CPrivateData;

@@ -14,7 +14,6 @@ OBJS            =\
                 font3x5 \
                 font \
                 frame \
-                frameBuffer \
                 mouse \
                 pixmap \
                 pushButton \

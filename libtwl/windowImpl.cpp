@@ -83,7 +83,7 @@ CWindowImpl::frame() const
 }
 
 //---------------------------------------------------------------------------
-pixel_t &
+pixel_t
 CWindowImpl::pixel(int x, int y)
 {
   return pPrivateData_->pWindow_->pixel(x, y);
@@ -122,13 +122,6 @@ void
 CWindowImpl::drawText(int x, int y, const char * string, color_t color)
 {
   pPrivateData_->pWindow_->drawText(x, y, string, color);
-}
-
-//---------------------------------------------------------------------------
-void
-CWindowImpl::swap()
-{
-  pPrivateData_->pWindow_->swap();
 }
 
 

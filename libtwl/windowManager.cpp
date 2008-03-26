@@ -3,7 +3,7 @@
 #include "eventKey.h"
 #include "eventMouse.h"
 #include "eventRedraw.h"
-#include "frameBuffer.h"
+#include "stddef.h"
 
 
 extern const unsigned short mouse[];
@@ -22,12 +22,24 @@ CWindowManager::CWindowManager()
  , bCursorActive_(true)
  , xOff_(0)
  , yOff_(0)
+ , pDevice_(NULL)
+ , pRenderer_(NULL)
+ , pSurface_(NULL)
 {
 }
 
 //---------------------------------------------------------------------------
 CWindowManager::~CWindowManager()
 {
+}
+
+//---------------------------------------------------------------------------
+int
+CWindowManager::init(CAVideoDevice * device)
+{
+  pDevice_ = device;
+
+  return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -48,17 +60,16 @@ CWindowManager::exec()
 {
   while(true)
   {
-/*
-    for(std::vector<CWindow *>::iterator itr(pWindows_.begin()); itr != pWindows_.end(); itr++)
-      (*itr)->event(CEventRedraw());
-*/
-    if(bCursorActive_ == true)
-      drawCursor();
+    for(uint32_t i(0); i < pWindows_.size(); i++)
+      pWindows_[i]->event(CEventRedraw());
 
-    CWindow::swap(true);
+//    if(bCursorActive_ == true)
+//      drawCursor();
 
-    if(bCursorActive_ == true)
-      undrawCursor();
+//    CWindow::swap(true);
+
+//    if(bCursorActive_ == true)
+//      undrawCursor();
   }
 
   return 0;
@@ -79,6 +90,7 @@ CWindowManager::setActive(CWindow * window)
 void
 CWindowManager::drawCursor()
 {
+/*
   int yoff;
   int iWidth(240), iHeight(160);  // FIXME!
   color_t clKey(0x7fff);
@@ -104,12 +116,14 @@ CWindowManager::drawCursor()
       }
     }
   }
+*/
 }
 
 //---------------------------------------------------------------------------
 void
 CWindowManager::undrawCursor()
 {
+/*
   int yoff;
   int iWidth(240), iHeight(160);  // FIXME!
   color_t clKey(0x7fff);
@@ -133,6 +147,7 @@ CWindowManager::undrawCursor()
       }
     }
   }
+*/
 }
 
 

@@ -3,7 +3,8 @@
 
 
 #include "window.h"
-#include <vector>
+#include "kernel/videoManager.h"
+#include "vector"
 
 
 namespace twl
@@ -16,6 +17,8 @@ public:
   CWindowManager();
   virtual ~CWindowManager();
 
+  int init(CAVideoDevice * device);
+
   CWindow * requestNewWindow();
   int exec();
 
@@ -24,12 +27,21 @@ private:
   void drawCursor();
   void undrawCursor();
 
+private:
+  // Windows
   std::vector<CWindow *> pWindows_;
   CWindow * pActiveWindow_;
+
+  // Cursor
   pixel_t underCursor_[16 * 16];
   bool bCursorActive_;
   int xOff_;
   int yOff_;
+
+  // Display surface
+  CAVideoDevice * pDevice_;
+  I2DRenderer   * pRenderer_;
+  CSurface      * pSurface_;
 };
 
 

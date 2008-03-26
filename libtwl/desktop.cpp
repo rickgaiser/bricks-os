@@ -1,5 +1,4 @@
 #include "desktop.h"
-#include "frameBuffer.h"
 
 
 namespace twl
@@ -12,8 +11,8 @@ CDesktop::CDesktop()
  , taskBar_(this, CFrame::ftRaised)
  , startButton_(&taskBar_, "Start")
 {
-  int iWidth(pFB->rect().width());
-  int iHeight(pFB->rect().height());
+  int iWidth(240);  // FIXME
+  int iHeight(160); // FIXME
 
   frame(false);
   rect(0, 0, iWidth, iHeight);

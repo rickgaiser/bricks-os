@@ -1,5 +1,4 @@
 #include "window.h"
-#include "frameBuffer.h"
 
 
 namespace twl
@@ -15,10 +14,10 @@ CWindow::CWindow()
  , bFrame_(true)
 {
   cWindowOnScreenRect_ = cWindowRect_;
-  cWindowOnScreenRect_.clip(pFB->rect());
+//  cWindowOnScreenRect_.clip(pFB->rect());
 
   cClientOnScreenRect_ = cClientRect_;
-  cClientOnScreenRect_.clip(pFB->rect());
+//  cClientOnScreenRect_.clip(pFB->rect());
 }
 
 //---------------------------------------------------------------------------
@@ -30,10 +29,10 @@ CWindow::CWindow(int width, int height)
  , bFrame_(true)
 {
   cWindowOnScreenRect_ = cWindowRect_;
-  cWindowOnScreenRect_.clip(pFB->rect());
+//  cWindowOnScreenRect_.clip(pFB->rect());
 
   cClientOnScreenRect_ = cClientRect_;
-  cClientOnScreenRect_.clip(pFB->rect());
+//  cClientOnScreenRect_.clip(pFB->rect());
 }
 
 //---------------------------------------------------------------------------
@@ -47,14 +46,17 @@ CWindow::event(const CEvent & event)
 {
   if((bFrame_ == true) && (event.type() == CEvent::etRedraw))
   {
-    color_t windowColor(bFocus_ ? clActiveWindow : clInActiveWindow);
+    //color_t windowColor(bFocus_ ? clActiveWindow : clInActiveWindow);
 
-    pFB->fillRect(cWindowRect_.left(), cWindowRect_.top(), cWindowRect_.width(), 10, clPanelFill);
-    pFB->drawVLine(cWindowRect_.left(),  cWindowRect_.top() + 10, cWindowRect_.bottom(), clPanelFill);
-    pFB->drawVLine(cWindowRect_.right(), cWindowRect_.top() + 10, cWindowRect_.bottom(), clPanelFill);
-    pFB->drawHLine(cWindowRect_.bottom(), cWindowRect_.left(), cWindowRect_.right(), clPanelFill);
-    pFB->fillRect(cWindowRect_.left() + 1, cWindowRect_.top() + 1, cWindowRect_.width() - 2, 8, windowColor);
-    pFB->drawText(cWindowRect_.left() + 2, cWindowRect_.top() + 2, "Window", clWhite);
+    //pRenderer_->setColor(clPanelFill);
+    pRenderer_->fillRect(cWindowRect_.left(), cWindowRect_.top(), cWindowRect_.width(), 10);
+    pRenderer_->drawVLine(cWindowRect_.left(),  cWindowRect_.top() + 10, cWindowRect_.bottom());
+    pRenderer_->drawVLine(cWindowRect_.right(), cWindowRect_.top() + 10, cWindowRect_.bottom());
+    pRenderer_->drawHLine(cWindowRect_.bottom(), cWindowRect_.left(), cWindowRect_.right());
+    //pRenderer_->setColor(windowColor);
+    pRenderer_->fillRect(cWindowRect_.left() + 1, cWindowRect_.top() + 1, cWindowRect_.width() - 2, 8);
+    //pRenderer_->setColor(clWhite);
+    //pRenderer_->drawText(cWindowRect_.left() + 2, cWindowRect_.top() + 2, "Window");
   }
 
   if(pEventHandler_ != 0)
@@ -90,11 +92,11 @@ CWindow::rect(const CRect & rect)
 {
   cWindowRect_.rect(rect.left() - 1, rect.top() - 10, rect.width() + 2, rect.height() + 11);
   cWindowOnScreenRect_ = cWindowRect_;
-  cWindowOnScreenRect_.clip(pFB->rect());
+//  cWindowOnScreenRect_.clip(pFB->rect());
 
   cClientRect_ = rect;
   cClientOnScreenRect_ = cClientRect_;
-  cClientOnScreenRect_.clip(pFB->rect());
+//  cClientOnScreenRect_.clip(pFB->rect());
 }
 
 //---------------------------------------------------------------------------
@@ -140,17 +142,18 @@ CWindow::frame() const
 }
 
 //---------------------------------------------------------------------------
-pixel_t &
+pixel_t
 CWindow::pixel(int x, int y)
 {
-  return pFB->pixel(x, y);
+  return 0;//pRenderer_->pixel(x, y);
 }
 
 //---------------------------------------------------------------------------
 void
 CWindow::fill(color_t color)
 {
-  pFB->fillRect(cClientOnScreenRect_.left(), cClientOnScreenRect_.top(), cClientOnScreenRect_.width(), cClientOnScreenRect_.height(), color);
+  //pRenderer_->setColor(color);
+  pRenderer_->fillRect(cClientOnScreenRect_.left(), cClientOnScreenRect_.top(), cClientOnScreenRect_.width(), cClientOnScreenRect_.height());
 }
 
 //---------------------------------------------------------------------------
@@ -160,8 +163,9 @@ CWindow::fillRect(const CRect & rect, color_t color)
   CRect fillRect(rect);
   fillRect.clip(cClientOnScreenRect_);
 
+  //pRenderer_->setColor(color);
   if(fillRect.valid() == true)
-    pFB->fillRect(fillRect.left(), fillRect.top(), fillRect.width(), fillRect.height(), color);
+    pRenderer_->fillRect(fillRect.left(), fillRect.top(), fillRect.width(), fillRect.height());
 }
 
 //---------------------------------------------------------------------------
@@ -175,9 +179,10 @@ CWindow::drawHLine(int y, int left, int right, color_t color)
   if(right > cClientOnScreenRect_.right())
     right = cClientOnScreenRect_.right();
 
+  //pRenderer_->setColor(color);
   // Check y and validate line
   if((right > left) && (cClientOnScreenRect_.contains(left, y) == true))
-    pFB->drawHLine(y, left, right, color);
+    pRenderer_->drawHLine(y, left, right);
 }
 
 //---------------------------------------------------------------------------
@@ -191,23 +196,18 @@ CWindow::drawVLine(int x, int top, int bottom, color_t color)
   if(bottom > cClientOnScreenRect_.bottom())
     bottom = cClientOnScreenRect_.bottom();
 
+  //pRenderer_->setColor(color);
   // Check x and validate line
   if((top < bottom) && (cClientOnScreenRect_.contains(x, top) == true))
-    pFB->drawVLine(x, top, bottom, color);
+    pRenderer_->drawVLine(x, top, bottom);
 }
 
 //---------------------------------------------------------------------------
 void
 CWindow::drawText(int x, int y, const char * string, color_t color)
 {
-  pFB->drawText(x, y, string, color);
-}
-
-//---------------------------------------------------------------------------
-void
-CWindow::swap(bool forceCopy)
-{
-  pFB->swap(forceCopy);
+//  pRenderer_->setColor(color);
+//  pRenderer_->drawText(x, y, string);
 }
 
 
