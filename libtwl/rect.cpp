@@ -7,17 +7,17 @@ namespace twl
 
 //---------------------------------------------------------------------------
 CRect::CRect()
- : iLeft_  (0)
- , iTop_   (0)
+ : iX_     (0)
+ , iY_     (0)
  , iWidth_ (1)
  , iHeight_(1)
 {
 }
 
 //---------------------------------------------------------------------------
-CRect::CRect(int left, int top, int width, int height)
- : iLeft_  (left)
- , iTop_   (top)
+CRect::CRect(int x, int y, int width, int height)
+ : iX_     (x)
+ , iY_     (y)
  , iWidth_ (width)
  , iHeight_(height)
 {
@@ -30,30 +30,16 @@ CRect::~CRect()
 
 //---------------------------------------------------------------------------
 int
-CRect::left() const
+CRect::x() const
 {
-  return iLeft_;
+  return iX_;
 }
 
 //---------------------------------------------------------------------------
 int
-CRect::top() const
+CRect::y() const
 {
-  return iTop_;
-}
-
-//---------------------------------------------------------------------------
-int
-CRect::right() const
-{
-  return iLeft_ + iWidth_ - 1;
-}
-
-//---------------------------------------------------------------------------
-int
-CRect::bottom() const
-{
-  return iTop_ + iHeight_ - 1;
+  return iY_;
 }
 
 //---------------------------------------------------------------------------
@@ -71,35 +57,45 @@ CRect::height() const
 }
 
 //---------------------------------------------------------------------------
-void
-CRect::left(int left)
+int
+CRect::left() const
 {
-  iWidth_ -= left - iLeft_;
+  return iX_;
+}
 
-  iLeft_ = left;
+//---------------------------------------------------------------------------
+int
+CRect::top() const
+{
+  return iY_;
+}
+
+//---------------------------------------------------------------------------
+int
+CRect::right() const
+{
+  return iX_ + iWidth_;
+}
+
+//---------------------------------------------------------------------------
+int
+CRect::bottom() const
+{
+  return iY_ + iHeight_;
 }
 
 //---------------------------------------------------------------------------
 void
-CRect::top(int top)
+CRect::x(int x)
 {
-  iHeight_ -= top - iTop_;
-
-  iTop_ = top;
+  iX_ = x;
 }
 
 //---------------------------------------------------------------------------
 void
-CRect::right(int right)
+CRect::y(int y)
 {
-  iWidth_ = right - iLeft_ + 1;
-}
-
-//---------------------------------------------------------------------------
-void
-CRect::bottom(int bottom)
-{
-  iHeight_ = bottom - iTop_ + 1;
+  iY_ = y;
 }
 
 //---------------------------------------------------------------------------
@@ -118,46 +114,10 @@ CRect::height(int height)
 
 //---------------------------------------------------------------------------
 void
-CRect::move(int right, int down)
+CRect::rect(int x, int y, int width, int height)
 {
-  iLeft_ += right;
-  iTop_ += down;
-}
-
-//---------------------------------------------------------------------------
-void
-CRect::moveUp(int pixels)
-{
-  iTop_ -= pixels;
-}
-
-//---------------------------------------------------------------------------
-void
-CRect::moveDown(int pixels)
-{
-  iTop_ += pixels;
-}
-
-//---------------------------------------------------------------------------
-void
-CRect::moveLeft(int pixels)
-{
-  iLeft_ -= pixels;
-}
-
-//---------------------------------------------------------------------------
-void
-CRect::moveRight(int pixels)
-{
-  iLeft_ += pixels;
-}
-
-//---------------------------------------------------------------------------
-void
-CRect::rect(int left, int top, int width, int height)
-{
-  iLeft_   = left;
-  iTop_    = top;
+  iX_      = x;
+  iY_      = y;
   iWidth_  = width;
   iHeight_ = height;
 }
@@ -173,46 +133,52 @@ CRect::valid()
 bool
 CRect::contains(const CRect & rect)
 {
-  return (contains(rect.left(), rect.top()) && contains(rect.right(), rect.bottom()));
+  return (contains(rect.x(), rect.y()) && contains(rect.right() - 1, rect.bottom() - 1));
 }
 
 //---------------------------------------------------------------------------
 bool
 CRect::contains(int x, int y)
 {
-  return ((x >= iLeft_) && (x < iLeft_ + iWidth_) && (y >= iTop_) && (y < iTop_ + iHeight_));
+  return ((x >= iX_) && (x < iX_ + iWidth_) && (y >= iY_) && (y < iY_ + iHeight_));
 }
 
 //---------------------------------------------------------------------------
 bool
 CRect::intersects(const CRect & rect)
 {
-  return (contains(rect.left(), rect.top()) || contains(rect.right(), rect.bottom()));
+  return (contains(rect.x(), rect.y()) || contains(rect.right() - 1, rect.bottom() - 1));
 }
 
 //---------------------------------------------------------------------------
 void
 CRect::clip(const CRect & rect)
 {
-  if((iLeft_ > rect.right()) || (iTop_ > rect.bottom()))
-  {
+//  if(intersects(rect) == false)
+//  {
     // Invalidate rect
-    *this = CRect(0, 0, 0, 0);
-  }
-  else
+//    *this = CRect(0, 0, 0, 0);
+//  }
+//  else
   {
     // Clip left
-    if(iLeft_ < rect.iLeft_)
-      left(rect.iLeft_);
+    if(iX_ < rect.iX_)
+    {
+      iWidth_ -= (rect.iX_ - iX_);
+      iX_ = rect.iX_;
+    }
     // Clip top
-    if(iTop_ < rect.iTop_)
-      top(rect.iTop_);
+    if(iY_ < rect.iY_)
+    {
+      iHeight_ -= (rect.iY_ - iY_);
+      iY_ = rect.iY_;
+    }
     // Clip right
-    if(right() > rect.right())
-      right(rect.right());
+    if((iX_ + iWidth_) > rect.right())
+      iWidth_ = rect.right() - iX_;
     // Clip bottom
-    if(bottom() > rect.bottom())
-      bottom(rect.bottom());
+    if((iY_ + iHeight_) > rect.bottom())
+      iHeight_ = rect.bottom() - iY_;
   }
 }
 

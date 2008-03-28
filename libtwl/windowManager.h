@@ -33,7 +33,7 @@ private:
   CWindow * pActiveWindow_;
 
   // Cursor
-  pixel_t underCursor_[16 * 16];
+  color_t underCursor_[16 * 16];
   bool bCursorActive_;
   int xOff_;
   int yOff_;

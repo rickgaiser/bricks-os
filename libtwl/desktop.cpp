@@ -17,7 +17,7 @@ CDesktop::CDesktop()
   frame(false);
   rect(0, 0, iWidth, iHeight);
 
-  taskBar_.rect(-1, iHeight - 13, iWidth + 3, 15);
+  taskBar_.rect(0, iHeight - 15, iWidth, 15);
   startButton_.rect(2, 2, 24, 10);
 }
 

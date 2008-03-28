@@ -19,7 +19,7 @@ CPixmap::CPixmap()
 
 //---------------------------------------------------------------------------
 CPixmap::CPixmap(int width, int height)
- : pData_(new pixel_t[width * height])
+ : pData_(new color_t[width * height])
  , iWidth_(width)
  , iHeight_(height)
 {
@@ -39,13 +39,6 @@ CPixmap::~CPixmap()
 {
   if(pData_ != 0)
     delete pData_;
-}
-
-//---------------------------------------------------------------------------
-pixel_t &
-CPixmap::pixel(int x, int y)
-{
-  return pData_[x + (y * iWidth_)];
 }
 
 //---------------------------------------------------------------------------
@@ -147,7 +140,7 @@ CPixmap::bitBlt(int xoff, int yoff, CPixmap & pixmap, EBltType type)
       int iDstIndex(xoff + (yoff * iWidth_));
       for(int y(0); y < iPHeight; y++)
       {
-        memcpy(&(pData_[iDstIndex]), &(pixmap.pData_[iSrcIndex]), iPWidth * sizeof(pixel_t));
+        memcpy(&(pData_[iDstIndex]), &(pixmap.pData_[iSrcIndex]), iPWidth * sizeof(color_t));
         iSrcIndex += pixmap.iWidth_;
         iDstIndex += iWidth_;
       }
@@ -161,9 +154,9 @@ CPixmap::bitBlt(int xoff, int yoff, CPixmap & pixmap, EBltType type)
       {
         for(int x(0); x < iPWidth; x++)
         {
-          pixel_t & dst = pData_[iDstIndex + x];
-          pixel_t & src = pixmap.pData_[iSrcIndex + x];
-          uint8_t    sa  = BxARGB_GET_A(src);
+          color_t & dst = pData_[iDstIndex + x];
+          color_t & src = pixmap.pData_[iSrcIndex + x];
+          uint8_t    sa  = BxColorFormat_GetA(cfA8R8G8B8, src);
           if(sa == 0)
           {
             // Do nothing
@@ -174,10 +167,10 @@ CPixmap::bitBlt(int xoff, int yoff, CPixmap & pixmap, EBltType type)
           }
           else
           {
-            dst = BxARGB(255 - ((255 - BxARGB_GET_A(dst)) * (255 - BxARGB_GET_A(src)) / 255),
-                         (((BxARGB_GET_R(dst) * (255 - sa)) + (BxARGB_GET_R(src) * sa)) / 255),
-                         (((BxARGB_GET_G(dst) * (255 - sa)) + (BxARGB_GET_G(src) * sa)) / 255),
-                         (((BxARGB_GET_B(dst) * (255 - sa)) + (BxARGB_GET_B(src) * sa)) / 255));
+            dst = BxColorFormat_FromRGBA(cfA8R8G8B8, 255 - ((255 - BxColorFormat_GetA(cfA8R8G8B8, dst)) * (255 - BxColorFormat_GetA(cfA8R8G8B8, src)) / 255),
+                         (((BxColorFormat_GetR(cfA8R8G8B8, dst) * (255 - sa)) + (BxColorFormat_GetR(cfA8R8G8B8, src) * sa)) / 255),
+                         (((BxColorFormat_GetG(cfA8R8G8B8, dst) * (255 - sa)) + (BxColorFormat_GetG(cfA8R8G8B8, src) * sa)) / 255),
+                         (((BxColorFormat_GetB(cfA8R8G8B8, dst) * (255 - sa)) + (BxColorFormat_GetB(cfA8R8G8B8, src) * sa)) / 255));
           }
         }
         iSrcIndex += pixmap.iWidth_;

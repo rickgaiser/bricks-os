@@ -101,6 +101,12 @@ enum ESurfaceType
 };
 
 //---------------------------------------------------------------------------
+// Video Modes
+#define VM_PROGRESSIVE      0x00000001 // Full Frames, best quality
+#define VM_INTERLACED       0x00000002 // Very efficient when double buffering, but keep up the framerate!
+#define VM_FULL_INTERLACED  0x00000004 // Uses Full Frames (good for double buffering when framerate can't keep up)
+
+//---------------------------------------------------------------------------
 typedef struct SVideoMode
 {
   uint32_t xpitch;           // Framebuffer width
@@ -108,7 +114,10 @@ typedef struct SVideoMode
   uint32_t width;            // Visible width
   uint32_t height;           // Visible height
   uint32_t bpp;              // Bits per pixel
+//  uint16_t aRatioW;          // Aspect Ratio Width
+//  uint16_t aRatioH;          // Aspect Ratio Height
   EColorFormat format;       // Pixel format
+//  uint32_t flags;
 } SVideoMode;
 
 //---------------------------------------------------------------------------
@@ -164,6 +173,7 @@ public:
   virtual void       flush() = 0;
 
   // Color
+  virtual void       setColor(color_t rgb) = 0; // cfA8R8G8B8 format color
   virtual void       setColor(uint8_t r, uint8_t g, uint8_t b) = 0;
 
   // Drawing
@@ -192,6 +202,7 @@ public:
   virtual void       flush();
 
   // Color
+  virtual void       setColor(color_t rgb); // cfA8R8G8B8 format color
   virtual void       setColor(uint8_t r, uint8_t g, uint8_t b);
 
   // Drawing

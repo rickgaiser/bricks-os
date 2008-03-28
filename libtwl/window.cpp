@@ -6,27 +6,13 @@ namespace twl
 
 
 //---------------------------------------------------------------------------
-CWindow::CWindow()
+CWindow::CWindow(I2DRenderer * renderer)
  : pEventHandler_(0)
  , cWindowRect_(0,  0, 2, 11)
  , cClientRect_(1, 10, 0,  0)
  , bFocus_(true)
  , bFrame_(true)
-{
-  cWindowOnScreenRect_ = cWindowRect_;
-//  cWindowOnScreenRect_.clip(pFB->rect());
-
-  cClientOnScreenRect_ = cClientRect_;
-//  cClientOnScreenRect_.clip(pFB->rect());
-}
-
-//---------------------------------------------------------------------------
-CWindow::CWindow(int width, int height)
- : pEventHandler_(0)
- , cWindowRect_(0,  0, width + 2, height + 11)
- , cClientRect_(1, 10, width,     height)
- , bFocus_(true)
- , bFrame_(true)
+ , pRenderer_(renderer)
 {
   cWindowOnScreenRect_ = cWindowRect_;
 //  cWindowOnScreenRect_.clip(pFB->rect());
@@ -46,15 +32,15 @@ CWindow::event(const CEvent & event)
 {
   if((bFrame_ == true) && (event.type() == CEvent::etRedraw))
   {
-    //color_t windowColor(bFocus_ ? clActiveWindow : clInActiveWindow);
+    color_t windowColor(bFocus_ ? clActiveWindow : clInActiveWindow);
 
-    //pRenderer_->setColor(clPanelFill);
-    pRenderer_->fillRect(cWindowRect_.left(), cWindowRect_.top(), cWindowRect_.width(), 10);
-    pRenderer_->drawVLine(cWindowRect_.left(),  cWindowRect_.top() + 10, cWindowRect_.bottom());
-    pRenderer_->drawVLine(cWindowRect_.right(), cWindowRect_.top() + 10, cWindowRect_.bottom());
-    pRenderer_->drawHLine(cWindowRect_.bottom(), cWindowRect_.left(), cWindowRect_.right());
-    //pRenderer_->setColor(windowColor);
-    pRenderer_->fillRect(cWindowRect_.left() + 1, cWindowRect_.top() + 1, cWindowRect_.width() - 2, 8);
+    pRenderer_->setColor(clPanelFill);
+    pRenderer_->fillRect(cWindowRect_.x(), cWindowRect_.y(), cWindowRect_.width(), 10);
+    pRenderer_->drawVLine(cWindowRect_.x(),  cWindowRect_.y() + 10, cWindowRect_.height() - 10);
+    pRenderer_->drawVLine(cWindowRect_.right() - 1, cWindowRect_.y() + 10, cWindowRect_.height() - 10);
+    pRenderer_->drawHLine(cWindowRect_.x() + 1, cWindowRect_.bottom() - 1, cWindowRect_.width() - 2);
+    pRenderer_->setColor(windowColor);
+    pRenderer_->fillRect(cWindowRect_.x() + 1, cWindowRect_.y() + 1, cWindowRect_.width() - 2, 8);
     //pRenderer_->setColor(clWhite);
     //pRenderer_->drawText(cWindowRect_.left() + 2, cWindowRect_.top() + 2, "Window");
   }
@@ -101,9 +87,9 @@ CWindow::rect(const CRect & rect)
 
 //---------------------------------------------------------------------------
 void
-CWindow::rect(int left, int top, int width, int height)
+CWindow::rect(int x, int y, int width, int height)
 {
-  rect(CRect(left, top, width, height));
+  rect(CRect(x, y, width, height));
 }
 
 //---------------------------------------------------------------------------
@@ -142,17 +128,10 @@ CWindow::frame() const
 }
 
 //---------------------------------------------------------------------------
-pixel_t
-CWindow::pixel(int x, int y)
-{
-  return 0;//pRenderer_->pixel(x, y);
-}
-
-//---------------------------------------------------------------------------
 void
 CWindow::fill(color_t color)
 {
-  //pRenderer_->setColor(color);
+  pRenderer_->setColor(color);
   pRenderer_->fillRect(cClientOnScreenRect_.left(), cClientOnScreenRect_.top(), cClientOnScreenRect_.width(), cClientOnScreenRect_.height());
 }
 
@@ -163,43 +142,49 @@ CWindow::fillRect(const CRect & rect, color_t color)
   CRect fillRect(rect);
   fillRect.clip(cClientOnScreenRect_);
 
-  //pRenderer_->setColor(color);
   if(fillRect.valid() == true)
-    pRenderer_->fillRect(fillRect.left(), fillRect.top(), fillRect.width(), fillRect.height());
+  {
+    pRenderer_->setColor(color);
+    pRenderer_->fillRect(fillRect.x(), fillRect.y(), fillRect.width(), fillRect.height());
+  }
 }
 
 //---------------------------------------------------------------------------
 void
-CWindow::drawHLine(int y, int left, int right, color_t color)
+CWindow::drawHLine(int x, int y, int width, color_t color)
 {
   // Clip left
-  if(left < cClientOnScreenRect_.left())
-    left = cClientOnScreenRect_.left();
+//  if(left < cClientOnScreenRect_.left())
+//    left = cClientOnScreenRect_.left();
   // Clip right
-  if(right > cClientOnScreenRect_.right())
-    right = cClientOnScreenRect_.right();
+//  if(right > cClientOnScreenRect_.right())
+//    right = cClientOnScreenRect_.right();
 
-  //pRenderer_->setColor(color);
   // Check y and validate line
-  if((right > left) && (cClientOnScreenRect_.contains(left, y) == true))
-    pRenderer_->drawHLine(y, left, right);
+//  if((right > left) && (cClientOnScreenRect_.contains(left, y) == true))
+  {
+    pRenderer_->setColor(color);
+    pRenderer_->drawHLine(x, y, width);
+  }
 }
 
 //---------------------------------------------------------------------------
 void
-CWindow::drawVLine(int x, int top, int bottom, color_t color)
+CWindow::drawVLine(int x, int y, int height, color_t color)
 {
   // Clip top
-  if(top < cClientOnScreenRect_.top())
-    top = cClientOnScreenRect_.top();
+//  if(top < cClientOnScreenRect_.top())
+//    top = cClientOnScreenRect_.top();
   // Clip bottom
-  if(bottom > cClientOnScreenRect_.bottom())
-    bottom = cClientOnScreenRect_.bottom();
+//  if(bottom > cClientOnScreenRect_.bottom())
+//    bottom = cClientOnScreenRect_.bottom();
 
-  //pRenderer_->setColor(color);
   // Check x and validate line
-  if((top < bottom) && (cClientOnScreenRect_.contains(x, top) == true))
-    pRenderer_->drawVLine(x, top, bottom);
+//  if((top < bottom) && (cClientOnScreenRect_.contains(x, top) == true))
+  {
+    pRenderer_->setColor(color);
+    pRenderer_->drawVLine(x, y, height);
+  }
 }
 
 //---------------------------------------------------------------------------

@@ -54,32 +54,32 @@ CFrame::eventRedraw(const CEventRedraw & event)
   switch(eType_)
   {
     case ftNone:
-      pWindowImpl_->fillRect(CRect(rect.left(), rect.top(), rect.width(), rect.height()), clPanelFill);
+      pWindowImpl_->fillRect(CRect(rect.x(), rect.y(), rect.width(), rect.height()), clPanelFill);
       break;
     case ftPlain:
-      pWindowImpl_->fillRect(CRect(rect.left() + 1, rect.top() + 1, rect.width() - 2, rect.height() - 2), clPanelFill);
-      pWindowImpl_->drawHLine(rect.top(), rect.left(), rect.right() - 1, clPanelShade1);    // Top
-      pWindowImpl_->drawVLine(rect.right(), rect.top(), rect.bottom() - 1, clPanelShade1);  // Right
-      pWindowImpl_->drawHLine(rect.bottom(), rect.left() + 1, rect.right(), clPanelShade1); // Bottom
-      pWindowImpl_->drawVLine(rect.left(), rect.top() + 1, rect.bottom(), clPanelShade1);   // Left
+      pWindowImpl_->fillRect(CRect(rect.x() + 1, rect.y() + 1, rect.width() - 2, rect.height() - 2), clPanelFill);
+      pWindowImpl_->drawHLine(rect.x(), rect.y(),          rect.width(), clPanelShade1);         // Top
+      pWindowImpl_->drawHLine(rect.x(), rect.bottom() - 1, rect.width(), clPanelShade1);         // Bottom
+      pWindowImpl_->drawVLine(rect.x(),         rect.y() + 1, rect.height() - 2, clPanelShade1); // Left
+      pWindowImpl_->drawVLine(rect.right() - 1, rect.y() + 1, rect.height() - 2, clPanelShade1); // Right
       break;
     case ftRaised:
-      pWindowImpl_->fillRect(CRect(rect.left() + 1, rect.top() + 1, rect.width() - 2, rect.height() - 2), clPanelFill);
-      pWindowImpl_->drawHLine(rect.top(), rect.left(), rect.right() - 1, clPanelLight);             // Top
-      pWindowImpl_->drawVLine(rect.right(), rect.top(), rect.bottom() - 1, clPanelShade1);          // Right
-      pWindowImpl_->drawVLine(rect.right() - 1, rect.top() + 1, rect.bottom() - 2, clPanelShade2);  // Right
-      pWindowImpl_->drawHLine(rect.bottom(), rect.left(), rect.right(), clPanelShade1);             // Bottom
-      pWindowImpl_->drawHLine(rect.bottom() - 1, rect.left() + 1, rect.right() - 1, clPanelShade2); // Bottom
-      pWindowImpl_->drawVLine(rect.left(), rect.top() + 1, rect.bottom() - 1, clPanelLight);        // Left
+      pWindowImpl_->fillRect(CRect(rect.x() + 1, rect.y() + 1, rect.width() - 3, rect.height() - 3), clPanelFill);
+      pWindowImpl_->drawHLine(rect.x(), rect.bottom() - 1, rect.width(), clPanelShade1);         // Bottom
+      pWindowImpl_->drawVLine(rect.right() - 1, rect.y(), rect.height() - 1, clPanelShade1);     // Right
+      pWindowImpl_->drawHLine(rect.x(), rect.y(), rect.width() - 1, clPanelLight);               // Top
+      pWindowImpl_->drawVLine(rect.x(), rect.y() + 1, rect.height() - 2, clPanelLight);          // Left
+      pWindowImpl_->drawHLine(rect.x() + 1, rect.bottom() - 2, rect.width() - 2, clPanelShade2); // Bottom
+      pWindowImpl_->drawVLine(rect.right() - 2, rect.y() + 1, rect.height() - 3, clPanelShade2); // Right
       break;
     case ftSunken:
-      pWindowImpl_->fillRect(CRect(rect.left() + 1, rect.top() + 1, rect.width() - 2, rect.height() - 2), clPanelFill);
-      pWindowImpl_->drawHLine(rect.top(), rect.left(), rect.right() - 1, clPanelShade1);    // Top
-      pWindowImpl_->drawHLine(rect.top() + 1, rect.left() + 1, rect.right() - 2, clPanelShade2);    // Top
-      pWindowImpl_->drawVLine(rect.right(), rect.top(), rect.bottom() - 1, clPanelLight);   // Right
-      pWindowImpl_->drawHLine(rect.bottom(), rect.left(), rect.right(), clPanelLight);  // Bottom
-      pWindowImpl_->drawVLine(rect.left(), rect.top() + 1, rect.bottom() - 1, clPanelShade1);   // Left
-      pWindowImpl_->drawVLine(rect.left() + 1, rect.top() + 1, rect.bottom() - 2, clPanelShade2);   // Left
+      pWindowImpl_->fillRect(CRect(rect.left() + 2, rect.top() + 2, rect.width() - 3, rect.height() - 3), clPanelFill);
+      pWindowImpl_->drawHLine(rect.x(), rect.y(), rect.width(), clPanelShade1);                    // Top
+      pWindowImpl_->drawVLine(rect.x(), rect.y() + 1, rect.height() - 1, clPanelShade1);           // Left
+      pWindowImpl_->drawHLine(rect.x() + 1, rect.bottom() - 1, rect.width() - 1, clPanelLight);    // Bottom
+      pWindowImpl_->drawVLine(rect.right() - 1, rect.y() + 1, rect.height() - 2, clPanelLight);    // Right
+      pWindowImpl_->drawHLine(rect.x() + 1, rect.y() + 1, rect.width() - 2, clPanelShade2);        // Top
+      pWindowImpl_->drawVLine(rect.x() + 1, rect.y() + 2, rect.height() - 3, clPanelShade2);       // Left
       break;
   };
 

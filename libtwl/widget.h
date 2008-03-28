@@ -8,8 +8,7 @@
 #include "eventMouse.h"
 #include "eventRedraw.h"
 #include "windowImpl.h"
-//#include <list>
-#include <vector>
+#include "vector"
 
 
 namespace twl
@@ -29,7 +28,7 @@ public:
   int height();
 
   void rect(const CRect & rect);
-  void rect(int left, int top, int width, int height);
+  void rect(int x, int y, int width, int height);
   CRect rect();
   virtual CRect rectClient();
   virtual CRect rectAbsolute();

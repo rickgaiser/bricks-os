@@ -50,9 +50,9 @@ CWindowImpl::rect(const CRect & rect)
 
 //---------------------------------------------------------------------------
 void
-CWindowImpl::rect(int left, int top, int width, int height)
+CWindowImpl::rect(int x, int y, int width, int height)
 {
-  pPrivateData_->pWindow_->rect(left, top, width, height);
+  pPrivateData_->pWindow_->rect(x, y, width, height);
 }
 
 //---------------------------------------------------------------------------
@@ -83,13 +83,6 @@ CWindowImpl::frame() const
 }
 
 //---------------------------------------------------------------------------
-pixel_t
-CWindowImpl::pixel(int x, int y)
-{
-  return pPrivateData_->pWindow_->pixel(x, y);
-}
-
-//---------------------------------------------------------------------------
 void
 CWindowImpl::fill(color_t color)
 {
@@ -105,16 +98,16 @@ CWindowImpl::fillRect(const CRect & rect, color_t color)
 
 //---------------------------------------------------------------------------
 void
-CWindowImpl::drawHLine(int y, int left, int right, color_t color)
+CWindowImpl::drawHLine(int x, int y, int width, color_t color)
 {
-  pPrivateData_->pWindow_->drawHLine(y, left, right, color);
+  pPrivateData_->pWindow_->drawHLine(x, y, width, color);
 }
 
 //---------------------------------------------------------------------------
 void
-CWindowImpl::drawVLine(int x, int top, int bottom, color_t color)
+CWindowImpl::drawVLine(int x, int y, int height, color_t color)
 {
-  pPrivateData_->pWindow_->drawVLine(x, top, bottom, color);
+  pPrivateData_->pWindow_->drawVLine(x, y, height, color);
 }
 
 //---------------------------------------------------------------------------

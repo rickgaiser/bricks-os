@@ -39,6 +39,17 @@ CWindowManager::init(CAVideoDevice * device)
 {
   pDevice_ = device;
 
+  if(pDevice_ != NULL)
+  {
+    pDevice_->getSurface(&pSurface_, stSCREEN);
+    pDevice_->getRenderer(&pRenderer_);
+
+    pDevice_->displaySurface(pSurface_);
+    pRenderer_->setSurface(pSurface_);
+  }
+  else
+    return -1;
+
   return 0;
 }
 
@@ -46,7 +57,7 @@ CWindowManager::init(CAVideoDevice * device)
 CWindow *
 CWindowManager::requestNewWindow()
 {
-  CWindow * pWindow = new CWindow;
+  CWindow * pWindow = new CWindow(pRenderer_);
 
   pWindows_.push_back(pWindow);
   setActive(pWindow);

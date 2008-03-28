@@ -4,13 +4,15 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 DIRS            =\
                 kernel \
                 libtace \
+                libtwl \
                 apps \
 
 LIBS            =\
                 arch \
                 kernel \
-                tace \
                 apps \
+                tace \
+                twl \
 
 ELF             =Bricks
 

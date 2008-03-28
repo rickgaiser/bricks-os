@@ -1,7 +1,7 @@
 #include "widget.h"
 
 
-#define FORALLWIDGETS   for(std::list<CWidget *>::iterator itr(pChildren_.begin()); itr != pChildren_.end(); itr++)(*itr)
+#define FORALLWIDGETS   for(uint32_t iWidgetIdx(0); iWidgetIdx < pChildren_.size(); iWidgetIdx++)(pChildren_[iWidgetIdx])
 
 
 namespace twl
@@ -68,10 +68,8 @@ CWidget::rect(const CRect & rect)
   rectAbsolute_ = rect;
   if(pParent_ != 0)
   {
-    rectAbsolute_.left(rectAbsolute_.left() + pParent_->rectAbsolute().left());
-    rectAbsolute_.right(rectAbsolute_.right() + pParent_->rectAbsolute().left());
-    rectAbsolute_.top(rectAbsolute_.top() + pParent_->rectAbsolute().top());
-    rectAbsolute_.bottom(rectAbsolute_.bottom() + pParent_->rectAbsolute().top());
+    rectAbsolute_.x(rectAbsolute_.x() + pParent_->rectAbsolute().x());
+    rectAbsolute_.y(rectAbsolute_.y() + pParent_->rectAbsolute().y());
   }
   else
   {
@@ -81,21 +79,9 @@ CWidget::rect(const CRect & rect)
 
 //---------------------------------------------------------------------------
 void
-CWidget::rect(int left, int top, int width, int height)
+CWidget::rect(int x, int y, int width, int height)
 {
-  rectRelative_.rect(left, top, width, height);
-  rectAbsolute_ = rectRelative_;
-  if(pParent_ != 0)
-  {
-    rectAbsolute_.left(rectAbsolute_.left() + pParent_->rectAbsolute().left());
-    rectAbsolute_.right(rectAbsolute_.right() + pParent_->rectAbsolute().left());
-    rectAbsolute_.top(rectAbsolute_.top() + pParent_->rectAbsolute().top());
-    rectAbsolute_.bottom(rectAbsolute_.bottom() + pParent_->rectAbsolute().top());
-  }
-  else
-  {
-    pWindowImpl_->rect(rectAbsolute_);
-  }
+  this->rect(CRect(x, y, width, height));
 }
 
 //---------------------------------------------------------------------------
@@ -123,7 +109,7 @@ CWidget::rectAbsolute()
 void
 CWidget::insertChild(CWidget * widget)
 {
-  //pChildren_.push_back(widget);
+  pChildren_.push_back(widget);
 }
 
 //---------------------------------------------------------------------------
@@ -143,11 +129,11 @@ CWidget::locate(int x, int y)
   if(rectRelative_.contains(x, y) == true)
   {
     pWidget = this;
-/*
+
     // We have the location, is there a child placed on top of it?
-    for(std::list<CWidget *>::iterator itr(pChildren_.begin()); itr != pChildren_.end(); itr++)
+    for(uint32_t iWidgetIdx(0); iWidgetIdx < pChildren_.size(); iWidgetIdx++)
     {
-      CWidget * pChild = (*itr)->locate(x - left(), y - top());
+      CWidget * pChild = pChildren_[iWidgetIdx]->locate(x - left(), y - top());
       if(pChild != 0)
       {
         // Child placed on location
@@ -155,7 +141,6 @@ CWidget::locate(int x, int y)
         break;
       }
     }
-*/
   }
 
   return pWidget;
@@ -207,7 +192,7 @@ CWidget::event(const CEvent & event)
       ;
   };
 
-  //FORALLWIDGETS->event(event);
+  FORALLWIDGETS->event(event);
 
   return bHandled;
 }

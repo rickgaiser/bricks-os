@@ -22,8 +22,7 @@ enum EBltType
 class CWindow
 {
 public:
-  CWindow();
-  CWindow(int width, int height);
+  CWindow(I2DRenderer * renderer);
   virtual ~CWindow();
 
   // Incomming events from OS
@@ -36,7 +35,7 @@ public:
   int width();
   int height();
   void rect(const CRect & rect);
-  void rect(int left, int top, int width, int height);
+  void rect(int x, int y, int width, int height);
   CRect rect();
 
   // Window functions
@@ -46,12 +45,11 @@ public:
   bool frame() const;
 
   // Drawing functions
-  pixel_t pixel(int x, int y);
   void fill(color_t color);
   void fillRect(const CRect & rect, color_t color);
-  void drawHLine(int y, int left, int right, color_t color);
-  void drawVLine(int x, int top, int bottom, color_t color);
-  void drawText(int x, int y, const char * string, color_t color = clBlack);
+  void drawHLine(int x, int y, int width,  color_t color);
+  void drawVLine(int x, int y, int height, color_t color);
+  void drawText (int x, int y, const char * string, color_t color = clBlack);
 
 private:
   // Window
@@ -66,7 +64,7 @@ private:
   bool bFrame_;
 
   // Display surface
-  C2DRenderer * pRenderer_;
+  I2DRenderer * pRenderer_;
 };
 
 

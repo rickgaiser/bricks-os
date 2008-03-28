@@ -173,6 +173,19 @@ C2DRenderer::flush()
 
 //---------------------------------------------------------------------------
 void
+C2DRenderer::setColor(color_t rgb)
+{
+  color_.r = BxColorFormat_GetR(cfA8R8G8B8, rgb);
+  color_.g = BxColorFormat_GetG(cfA8R8G8B8, rgb);
+  color_.b = BxColorFormat_GetB(cfA8R8G8B8, rgb);
+  color_.a = BxColorFormat_GetA(cfA8R8G8B8, rgb);
+
+  if(pSurface_ != NULL)
+    fmtColor_ = BxColorFormat_FromRGB(pSurface_->mode.format, color_.r, color_.g, color_.b);
+}
+
+//---------------------------------------------------------------------------
+void
 C2DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
 {
   color_.r = r;

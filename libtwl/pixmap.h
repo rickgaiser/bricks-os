@@ -19,7 +19,6 @@ public:
   CPixmap(const char * filename);
   virtual ~CPixmap();
 
-  pixel_t & pixel(int x, int y);
   int width();
   int height();
   void fill(color_t color);
@@ -29,7 +28,7 @@ public:
   void bitBlt(int x, int y, CPixmap & pixmap, EBltType type = eBT_COPY);
   void load(const char * filename);
 
-  pixel_t * pData_;
+  color_t * pData_;
 private:
   int iWidth_;
   int iHeight_;
