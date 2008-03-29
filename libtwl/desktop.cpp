@@ -30,8 +30,8 @@ CDesktop::~CDesktop()
 bool
 CDesktop::eventRedraw(const CEventRedraw & event)
 {
-  pWindowImpl_->fill(clDesktop);
-  pWindowImpl_->drawText(0, 0, "Bricks-OS", clWhite);
+  pWindow_->fill(clDesktop);
+  pWindow_->drawText(0, 0, "Bricks-OS", clWhite);
 
   return true;
 }

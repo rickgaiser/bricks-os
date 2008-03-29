@@ -1,4 +1,5 @@
 #include "widget.h"
+#include "windowManager.h"
 
 
 #define FORALLWIDGETS   for(uint32_t iWidgetIdx(0); iWidgetIdx < pChildren_.size(); iWidgetIdx++)(pChildren_[iWidgetIdx])
@@ -17,13 +18,13 @@ CWidget::CWidget(CWidget * parent)
 {
   if(pParent_ != 0)
   {
-    pWindowImpl_ = pParent_->pWindowImpl_;
+    pWindow_ = pParent_->pWindow_;
     pParent_->insertChild(this);
   }
   else
   {
-    pWindowImpl_ = new CWindowImpl;
-    pWindowImpl_->setEventHandler(this);
+    pWindow_ = windowManager.requestNewWindow();
+    pWindow_->setEventHandler(this);
   }
 }
 
@@ -73,7 +74,7 @@ CWidget::rect(const CRect & rect)
   }
   else
   {
-    pWindowImpl_->rect(rectAbsolute_);
+    pWindow_->rect(rectAbsolute_);
   }
 }
 
@@ -150,8 +151,8 @@ CWidget::locate(int x, int y)
 void
 CWidget::frame(bool frame)
 {
-  if(pWindowImpl_ != 0)
-    pWindowImpl_->frame(frame);
+  if(pWindow_ != 0)
+    pWindow_->frame(frame);
 }
 
 //---------------------------------------------------------------------------
@@ -160,8 +161,8 @@ CWidget::frame() const
 {
   bool bRetVal(false);
 
-  if(pWindowImpl_ != 0)
-    bRetVal = pWindowImpl_->frame();
+  if(pWindow_ != 0)
+    bRetVal = pWindow_->frame();
 
   return bRetVal;
 }

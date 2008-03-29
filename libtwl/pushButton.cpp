@@ -57,9 +57,9 @@ CPushButton::eventRedraw(const CEventRedraw & event)
   if(string_ != 0)
   {
     if(bPressed_ == false)
-      pWindowImpl_->drawText(rectAbsolute().left() + 2, rectAbsolute().top() + 2, string_);
+      pWindow_->drawText(rectAbsolute().left() + 2, rectAbsolute().top() + 2, string_);
     else
-      pWindowImpl_->drawText(rectAbsolute().left() + 3, rectAbsolute().top() + 3, string_);
+      pWindow_->drawText(rectAbsolute().left() + 3, rectAbsolute().top() + 3, string_);
   }
 
   return true;

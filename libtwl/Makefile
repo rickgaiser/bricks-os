@@ -20,7 +20,6 @@ OBJS            =\
                 rect \
                 widget \
                 window \
-                windowImpl \
                 windowManager \
 
 

@@ -7,7 +7,7 @@
 #include "eventKey.h"
 #include "eventMouse.h"
 #include "eventRedraw.h"
-#include "windowImpl.h"
+#include "window.h"
 #include "vector"
 
 
@@ -51,7 +51,7 @@ public:
   virtual void redraw();
 
 //protected:
-  CWindowImpl * pWindowImpl_;
+  CWindow * pWindow_;
 
 private:
   // Tree structure
