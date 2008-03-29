@@ -11,10 +11,11 @@ class CEvent
 public:
   enum EEventType
   {
-      etError = 0
+      etError    = 0
     , etKeyboard = 1
-    , etMouse = 2
-    , etRedraw = 3
+    , etMouse    = 2
+    , etRedraw   = 3
+    , etResize   = 4
   };
 
   CEvent(EEventType type = etError);

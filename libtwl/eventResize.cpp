@@ -1,5 +1,4 @@
-#include "application.h"
-#include "windowManager.h"
+#include "eventResize.h"
 
 
 namespace twl
@@ -7,26 +6,30 @@ namespace twl
 
 
 //---------------------------------------------------------------------------
-CApplication::CApplication(int argc, char * argv[])
+CEventResize::CEventResize(int width, int height)
+ : CEvent(CEvent::etResize)
+ , iWidth_(width)
+ , iHeight_(height)
 {
 }
 
 //---------------------------------------------------------------------------
-CApplication::~CApplication()
-{
-}
-
-//---------------------------------------------------------------------------
-void
-CApplication::setMainWidget(CWidget * pMainWidget)
+CEventResize::~CEventResize()
 {
 }
 
 //---------------------------------------------------------------------------
 int
-CApplication::exec()
+CEventResize::width() const
 {
-  return twl::windowManager.exec();
+  return iWidth_;
+}
+
+//---------------------------------------------------------------------------
+int
+CEventResize::height() const
+{
+  return iHeight_;
 }
 
 

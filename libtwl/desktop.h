@@ -19,6 +19,7 @@ public:
   virtual ~CDesktop();
 
   virtual bool eventRedraw(const CEventRedraw & event);
+  virtual bool eventResize(const CEventResize & event);
 
 private:
   CFrame taskBar_;

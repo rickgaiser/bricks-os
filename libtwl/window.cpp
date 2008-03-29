@@ -76,7 +76,7 @@ CWindow::height()
 void
 CWindow::rect(const CRect & rect)
 {
-  cWindowRect_.rect(rect.left() - 1, rect.top() - 10, rect.width() + 2, rect.height() + 11);
+  cWindowRect_.rect(rect.x() - 1, rect.y() - 10, rect.width() + 2, rect.height() + 11);
   cWindowOnScreenRect_ = cWindowRect_;
 //  cWindowOnScreenRect_.clip(pFB->rect());
 

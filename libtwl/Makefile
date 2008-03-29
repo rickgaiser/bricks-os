@@ -11,6 +11,7 @@ OBJS            =\
                 eventKey \
                 eventMouse \
                 eventRedraw \
+                eventResize \
                 font3x5 \
                 font \
                 frame \
