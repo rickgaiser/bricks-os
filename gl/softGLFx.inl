@@ -39,7 +39,7 @@ CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c)
   if(xwidth > 0)
   {
     uint32_t color(fpRGB(c.r, c.g, c.b));
-    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
+    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -51,10 +51,10 @@ CSoftGLESFixed::hline(CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c)
 //        switch(renderSurface->bpp_)
 //        {
 //          case 8:
-            ((uint8_t  *)renderSurface->p)[index] = color;
+//            ((uint8_t  *)renderSurface->p)[index] = color;
 //            break;
 //          case 16:
-//            ((uint16_t *)renderSurface->p)[index] = color;
+            ((uint16_t *)renderSurface->p)[index] = color;
 //            break;
 //          case 32:
 //            ((uint32_t *)renderSurface->p)[index] = color;
@@ -81,7 +81,7 @@ CSoftGLESFixed::hlineZ(CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c)
 
     uint32_t color(fpRGB(c.r, c.g, c.b));
 
-    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
+    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -95,10 +95,10 @@ CSoftGLESFixed::hlineZ(CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c)
 //          switch(renderSurface->bpp_)
 //          {
 //            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = color;
+//              ((uint8_t  *)renderSurface->p)[index] = color;
 //              break;
 //            case 16:
-//              ((uint16_t *)renderSurface->p)[index] = color;
+              ((uint16_t *)renderSurface->p)[index] = color;
 //              break;
 //            case 32:
 //              ((uint32_t *)renderSurface->p)[index] = color;
@@ -131,7 +131,7 @@ CSoftGLESFixed::hlineC(CEdgeFx & from, CEdgeFx & to, GLint y)
     GLfixed mb((to.c_[y].b - b) / xwidth);
 //    GLfixed ma((to.c_[y].a - a) / xwidth);
 
-    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
+    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -143,10 +143,10 @@ CSoftGLESFixed::hlineC(CEdgeFx & from, CEdgeFx & to, GLint y)
 //        switch(renderSurface->bpp_)
 //        {
 //          case 8:
-            ((uint8_t  *)renderSurface->p)[index] = fpRGBFast(r, g, b);
+//            ((uint8_t  *)renderSurface->p)[index] = fpRGBFast(r, g, b);
 //            break;
 //          case 16:
-//            ((uint16_t *)renderSurface->p)[index] = fpRGBFast(r, g, b);
+            ((uint16_t *)renderSurface->p)[index] = fpRGBFast(r, g, b);
 //            break;
 //          case 32:
 //            ((uint32_t *)renderSurface->p)[index] = fpRGBFast(r, g, b);
@@ -185,7 +185,7 @@ CSoftGLESFixed::hlineZC(CEdgeFx & from, CEdgeFx & to, GLint y)
     GLfixed mb((to.c_[y].b - b) / xwidth);
 //    GLfixed ma((to.c_[y].a - a) / xwidth);
 
-    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
+    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -199,10 +199,10 @@ CSoftGLESFixed::hlineZC(CEdgeFx & from, CEdgeFx & to, GLint y)
 //          switch(renderSurface->bpp_)
 //          {
 //            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = fpRGBFast(r, g, b);
+//              ((uint8_t  *)renderSurface->p)[index] = fpRGBFast(r, g, b);
 //              break;
 //            case 16:
-//              ((uint16_t *)renderSurface->p)[index] = fpRGBFast(r, g, b);
+              ((uint16_t *)renderSurface->p)[index] = fpRGBFast(r, g, b);
 //              break;
 //            case 32:
 //              ((uint32_t *)renderSurface->p)[index] = fpRGBFast(r, g, b);
@@ -240,7 +240,7 @@ CSoftGLESFixed::hlineTa(CEdgeFx & from, CEdgeFx & to, GLint y)
     mts = mts * pCurrentTex_->width;
     mtt = mtt * pCurrentTex_->height;
 
-    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
+    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -252,10 +252,10 @@ CSoftGLESFixed::hlineTa(CEdgeFx & from, CEdgeFx & to, GLint y)
 //        switch(renderSurface->bpp_)
 //        {
 //          case 8:
-            ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+//            ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
 //            break;
 //          case 16:
-//            ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+            ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
 //            break;
 //          case 32:
 //            ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
@@ -293,7 +293,7 @@ CSoftGLESFixed::hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y)
     mts = mts * pCurrentTex_->width;
     mtt = mtt * pCurrentTex_->height;
 
-    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
+    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -307,10 +307,10 @@ CSoftGLESFixed::hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y)
 //          switch(renderSurface->bpp_)
 //          {
 //            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+//              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
 //              break;
 //            case 16:
-//              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
 //              break;
 //            case 32:
 //              ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
@@ -347,7 +347,7 @@ CSoftGLESFixed::hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y)
     GLfixed mts((gl_fpmul((to.ts_[y] - from.ts_[y]) * pCurrentTex_->width,  tz)) / xwidth);
     GLfixed mtt((gl_fpmul((to.tt_[y] - from.tt_[y]) * pCurrentTex_->height, tz)) / xwidth);
 
-    GLuint index((y * renderSurface->mode.xpitch) + from.x_[y]);
+    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -364,10 +364,10 @@ CSoftGLESFixed::hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y)
 //          switch(renderSurface->bpp_)
 //          {
 //            case 8:
-              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
+//              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
 //              break;
 //            case 16:
-//              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
+              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
 //              break;
 //            case 32:
 //              ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];

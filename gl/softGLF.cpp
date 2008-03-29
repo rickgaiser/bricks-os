@@ -86,21 +86,21 @@ CSoftGLESFloat::glClear(GLbitfield mask)
       {
         for(uint32_t y(0); y < renderSurface->mode.height; y++)
           for(uint32_t x(0); x < renderSurface->mode.width; x++)
-            ((uint8_t  *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
+            ((uint8_t  *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
         break;
       }
       case 16:
       {
         for(uint32_t y(0); y < renderSurface->mode.height; y++)
           for(uint32_t x(0); x < renderSurface->mode.width; x++)
-            ((uint16_t *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
+            ((uint16_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
         break;
       }
       case 32:
       {
         for(uint32_t y(0); y < renderSurface->mode.height; y++)
           for(uint32_t x(0); x < renderSurface->mode.width; x++)
-            ((uint32_t *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
+            ((uint32_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
         break;
       }
     };
@@ -526,8 +526,8 @@ CSoftGLESFloat::plotPoly(SVertexF * vtx[3])
       v[2] /= v[3];
       // Viewport transformation
       //   from 'normalized device coordinates' to 'window coordinates'
-      vtx[i]->sx = (GLint)(( v[0] + 1.0f) * (viewportWidth  >> 1)) + viewportXOffset;
-      vtx[i]->sy = (GLint)((-v[1] + 1.0f) * (viewportHeight >> 1)) + viewportYOffset;
+      vtx[i]->sx = (GLint)(( v[0] + 1.0f) * (viewportWidth  >> 1));
+      vtx[i]->sy = (GLint)((-v[1] + 1.0f) * (viewportHeight >> 1));
 //      vtx[i]->sz = (GLint)(((zFar - zNear) / (2.0f * v[2])) + ((zNear + zFar) / 2.0f));
 
       vtx[i]->bProcessed = true;

@@ -102,21 +102,21 @@ CSoftGLESFixed::glClear(GLbitfield mask)
       {
         for(uint32_t y(0); y < renderSurface->mode.width; y++)
           for(uint32_t x(0); x < renderSurface->mode.height; x++)
-            ((uint8_t  *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
+            ((uint8_t  *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
         break;
       }
       case 16:
       {
         for(uint32_t y(0); y < renderSurface->mode.width; y++)
           for(uint32_t x(0); x < renderSurface->mode.height; x++)
-            ((uint16_t *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
+            ((uint16_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
         break;
       }
       case 32:
       {
         for(uint32_t y(0); y < renderSurface->mode.width; y++)
           for(uint32_t x(0); x < renderSurface->mode.height; x++)
-            ((uint32_t *)renderSurface->p)[y * renderSurface->mode.xpitch + x] = color;
+            ((uint32_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
         break;
       }
     };
@@ -542,8 +542,8 @@ CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
       v[2] = gl_fpdiv(v[2], v[3]);
       // Viewport transformation
       //   from 'normalized device coordinates' to 'window coordinates'
-      vtx[i]->sx = gl_fptoi(gl_fpmul(( v[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  >> 1))) + viewportXOffset;
-      vtx[i]->sy = gl_fptoi(gl_fpmul((-v[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight >> 1))) + viewportYOffset;
+      vtx[i]->sx = gl_fptoi(gl_fpmul(( v[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  >> 1)));
+      vtx[i]->sy = gl_fptoi(gl_fpmul((-v[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight >> 1)));
 //      vtx[i]->sz = gl_fpdiv(zFar - zNear, v[2] << 1) + ((zNear + zFar)>>1);
 
       vtx[i]->bProcessed = true;

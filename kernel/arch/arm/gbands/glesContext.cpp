@@ -40,7 +40,7 @@ CGBAGLESContext::glClear(GLbitfield mask)
         }
         else
         {
-          unsigned int iBase(0);
+          unsigned int iBase(viewportYOffset * renderSurface->mode.xpitch + viewportXOffset);
           for(unsigned int iY(0); iY < renderSurface->mode.height; iY++)
           {
             dmaFill16(color, &((uint8_t *)renderSurface->p)[iBase], renderSurface->mode.width);
@@ -59,7 +59,7 @@ CGBAGLESContext::glClear(GLbitfield mask)
         }
         else
         {
-          unsigned int iBase(0);
+          unsigned int iBase(viewportYOffset * renderSurface->mode.xpitch + viewportXOffset);
           for(unsigned int iY(0); iY < renderSurface->mode.height; iY++)
           {
             dmaFill16(color, &((uint16_t *)renderSurface->p)[iBase], renderSurface->mode.width);
