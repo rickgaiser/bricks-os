@@ -5,6 +5,7 @@
 #include "frame.h"
 #include "eventRedraw.h"
 #include "pushButton.h"
+#include "glDemo1.h"
 
 
 namespace twl
@@ -24,7 +25,7 @@ public:
 private:
   CFrame taskBar_;
   CPushButton startButton_;
-
+  CGLDemo1 window_;
 };
 
 

@@ -1,9 +1,9 @@
 #include "asm/arch/config.h"
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
-#include "../../libtwl/windowManager.h"
-#include "../../libtwl/application.h"
-#include "../../libtwl/desktop.h"
+#include "windowManager.h"
+#include "application.h"
+#include "desktop.h"
 #include "stdlib.h"
 
 

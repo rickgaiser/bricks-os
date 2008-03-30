@@ -1,3 +1,6 @@
+include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch/config.make
+
+
 #INCL_PATH       =\
 #                ../libpng \
 
@@ -6,7 +9,6 @@ LIB             =twl
 OBJS            =\
                 application \
                 color \
-                desktop \
                 event \
                 eventKey \
                 eventMouse \
@@ -15,6 +17,7 @@ OBJS            =\
                 font3x5 \
                 font \
                 frame \
+                glWidget \
                 mouse \
                 pixmap \
                 pushButton \

@@ -10,12 +10,16 @@ CDesktop::CDesktop()
  : CFrame(0, CFrame::ftNone)
  , taskBar_(this, CFrame::ftRaised)
  , startButton_(&taskBar_, "Start")
+ , window_(0)
 {
   taskBar_.rect(0, height() - 15, width(), 15);
   taskBar_.visible(true);
 
   startButton_.rect(2, 2, 24, 10);
   startButton_.visible(true);
+
+  window_.rect(60, 50, 120, 80);
+  window_.visible(true);
 }
 
 //---------------------------------------------------------------------------
@@ -39,6 +43,7 @@ CDesktop::eventResize(const CEventResize & event)
 {
   taskBar_.rect(0, height() - 15, width(), 15);
   startButton_.rect(2, 2, 24, 10);
+  window_.rect(60, 50, 120, 80);
 
   return true;
 }

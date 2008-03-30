@@ -60,6 +60,7 @@ private:
   CRect cClientRect_;
   CRect cClientOnScreenRect_;
 
+  bool bNeedRedraw_;
   bool bFocus_;
   bool bFrame_;
 

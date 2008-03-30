@@ -10,6 +10,7 @@ CWindow::CWindow(I2DRenderer * renderer)
  : pEventHandler_(0)
  , cWindowRect_(0,  0, 2, 11)
  , cClientRect_(1, 10, 0,  0)
+ , bNeedRedraw_(true)
  , bFocus_(true)
  , bFrame_(true)
  , pRenderer_(renderer)
@@ -30,9 +31,11 @@ CWindow::~CWindow()
 bool
 CWindow::event(const CEvent & event)
 {
-  if((bFrame_ == true) && (event.type() == CEvent::etRedraw))
+  if((bFrame_ == true) && (bNeedRedraw_ == true) && (event.type() == CEvent::etRedraw))
   {
     color_t windowColor(bFocus_ ? clActiveWindow : clInActiveWindow);
+
+    bNeedRedraw_ = false;
 
     pRenderer_->setColor(clPanelFill);
     pRenderer_->fillRect(cWindowRect_.x(), cWindowRect_.y(), cWindowRect_.width(), 10);

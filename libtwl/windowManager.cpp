@@ -7,6 +7,7 @@
 
 
 extern const unsigned short mouse[];
+CSurface * pDisplaySurface;
 
 
 namespace twl
@@ -46,6 +47,7 @@ CWindowManager::init(CAVideoDevice * device)
 
     pDevice_->displaySurface(pSurface_);
     pRenderer_->setSurface(pSurface_);
+    pDisplaySurface = pSurface_;
   }
   else
     return -1;
@@ -71,6 +73,7 @@ CWindowManager::exec()
 {
   while(true)
   {
+    //pDevice_->waitVSync();
     for(uint32_t i(0); i < pWindows_.size(); i++)
       pWindows_[i]->event(CEventRedraw());
 
