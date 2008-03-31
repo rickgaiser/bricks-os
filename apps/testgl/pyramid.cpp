@@ -1,7 +1,9 @@
+#include "asm/arch/config.h"
 #include "GLES/gl.h"
 #include "../gl/fixedPoint.h"
 
 
+#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 const GLfloat pyramidVertF[] =
 {
@@ -19,7 +21,7 @@ const GLfloat pyramidVertF[] =
   -1.0f, -1.0f, -1.0f,
   -1.0f, -1.0f,  1.0f,
 };
-
+#else
 // -----------------------------------------------------------------------------
 const GLfixed pyramidVertFx[] =
 {
@@ -37,7 +39,8 @@ const GLfixed pyramidVertFx[] =
   gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
   gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f)
 };
-
+#endif
+#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 const GLfloat pyramidColF[] =
 {
@@ -55,7 +58,7 @@ const GLfloat pyramidColF[] =
   0.0f, 0.0f, 1.0f, 1.0f,
   0.0f, 1.0f, 0.0f, 1.0f
 };
-
+#else
 // -----------------------------------------------------------------------------
 const GLfixed pyramidColFx[] =
 {
@@ -73,20 +76,22 @@ const GLfixed pyramidColFx[] =
   gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
   gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f)
 };
+#endif
 
-
+#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 void
 initPyramidF()
 {
 }
-
+#else
 // -----------------------------------------------------------------------------
 void
 initPyramidFx()
 {
 }
-
+#endif
+#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 void
 drawPyramidF()
@@ -102,7 +107,7 @@ drawPyramidF()
   //glDrawArrays(GL_TRIANGLE_STRIP,  0, 4); // 'Shade'
   glDrawArrays(GL_TRIANGLE_FAN,    4, 6); // Pyramid
 }
-
+#else
 // -----------------------------------------------------------------------------
 void
 drawPyramidFx()
@@ -118,3 +123,4 @@ drawPyramidFx()
   //glDrawArrays(GL_TRIANGLE_STRIP,  0, 4); // 'Shade'
   glDrawArrays(GL_TRIANGLE_FAN,    4, 6); // Pyramid
 }
+#endif

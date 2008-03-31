@@ -1,3 +1,4 @@
+#include "asm/arch/config.h"
 #include "GLES/gl.h"
 #include "../gl/fixedPoint.h"
 
@@ -8,6 +9,7 @@ extern const unsigned short crate_Bitmap[];
 GLuint textures[1];
 
 
+#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 const GLfloat cubeVertF[] =
 {
@@ -43,7 +45,7 @@ const GLfloat cubeVertF[] =
    1.0f,-1.0f,-1.0f,
    1.0f,-1.0f, 1.0f,
 };
-
+#else
 // -----------------------------------------------------------------------------
 const GLfixed cubeVertFx[] =
 {
@@ -79,7 +81,8 @@ const GLfixed cubeVertFx[] =
   gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
   gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
 };
-
+#endif
+#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 const GLfloat cubeTexF[] =
 {
@@ -115,7 +118,7 @@ const GLfloat cubeTexF[] =
   0.0f, 1.0f,
   1.0f, 1.0f,
 };
-
+#else
 // -----------------------------------------------------------------------------
 const GLfixed cubeTexFx[] =
 {
@@ -151,7 +154,9 @@ const GLfixed cubeTexFx[] =
   gl_fpfromf(0.0f), gl_fpfromf(1.0f),
   gl_fpfromf(1.0f), gl_fpfromf(1.0f),
 };
+#endif
 
+#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 void
 initCubeF()
@@ -170,14 +175,27 @@ initCubeF()
     //glLoadIdentity();
   }
 }
-
+#else
 // -----------------------------------------------------------------------------
 void
 initCubeFx()
 {
-  initCubeF();
-}
+  static bool bInitialized(false);
 
+  if(bInitialized == false)
+  {
+    bInitialized = true;
+
+    // Texture
+    glGenTextures(1, &textures[0]);
+    glBindTexture(GL_TEXTURE_2D, textures[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, crate_Width, crate_Height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crate_Bitmap);
+    //glMatrixMode(GL_TEXTURE);
+    //glLoadIdentity();
+  }
+}
+#endif
+#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 void
 drawCubeF()
@@ -200,7 +218,7 @@ drawCubeF()
   glDrawArrays(GL_TRIANGLE_STRIP, 20, 4); // Right
   glDisable(GL_TEXTURE_2D);
 }
-
+#else
 // -----------------------------------------------------------------------------
 void
 drawCubeFx()
@@ -223,3 +241,4 @@ drawCubeFx()
   glDrawArrays(GL_TRIANGLE_STRIP, 20, 4); // Right
   glDisable(GL_TEXTURE_2D);
 }
+#endif

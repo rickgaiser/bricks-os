@@ -25,7 +25,8 @@ public:
 private:
   CFrame taskBar_;
   CPushButton startButton_;
-  CGLDemo1 window_;
+  CGLDemo1 window1_;
+  CGLDemo1 window2_;
 };
 
 

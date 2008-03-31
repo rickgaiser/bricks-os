@@ -6,8 +6,8 @@
 #include "../gl/context.h"
 
 
-//extern IGLESRenderer * getGLESContext();
-extern IGLESRenderer * context;
+extern IGLESRenderer * getGLESContext();
+extern void glMakeCurrent(IGLESRenderer * ctx);
 extern CSurface * pDisplaySurface;
 
 
@@ -31,14 +31,7 @@ CGLWidget::CGLWidget(CWidget * parent)
 {
   backBuffer_.p = 0;
 
-  // Background color
-  glClearColorx(0, 0, 0, 0);
-
-//  p3DRenderer_ = getGLESContext();
-  p3DRenderer_ = context;
-
-  // FIXME: We can only call context after the first gl call, becouse the first
-  //        call creates the context.
+  p3DRenderer_ = getGLESContext();
   p3DRenderer_->setSurface(&backBuffer_);
 }
 
@@ -61,6 +54,7 @@ CGLWidget::eventRedraw(const CEventRedraw & event)
   }
   else
   {
+    glMakeCurrent(p3DRenderer_);
     this->drawGL();
     twl::bitBlt(pDisplaySurface, x(), y(), width(), height(), &backBuffer_, 0, 0);
   }
@@ -75,12 +69,6 @@ CGLWidget::eventRedraw(const CEventRedraw & event)
 bool
 CGLWidget::eventResize(const CEventResize & event)
 {
-  if(bInitialized_ == false)
-  {
-    this->initializeGL();
-    bInitialized_ = true;
-  }
-
   if(backBuffer_.p != 0)
     delete (uint8_t *)backBuffer_.p;
 
@@ -92,6 +80,12 @@ CGLWidget::eventResize(const CEventResize & event)
   backBuffer_.mode.bpp    = 16;         // FIXME
   backBuffer_.mode.format = cfX1R5G5B5; // FIXME
 
+  glMakeCurrent(p3DRenderer_);
+  if(bInitialized_ == false)
+  {
+    this->initializeGL();
+    bInitialized_ = true;
+  }
   this->resizeGL(width(), height());
 
   return true;

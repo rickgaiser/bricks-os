@@ -16,21 +16,23 @@ const GLfixed lightPosition[] = {gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(
 const GLfixed fogColor[]      = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
 
 
-extern IGLESRenderer * context;
+extern IGLESRenderer * getGLESContext();
+extern void glMakeCurrent(IGLESRenderer * ctx);
 // -----------------------------------------------------------------------------
 void
 testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
 {
-  // Background color
-  glClearColorx(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
-
-  // FIXME: We can only call context after the first gl call, becouse the first
-  //        call creates the context.
   bool bDisplayB(true);
-  context->setSurface(surface_a);
+  IGLESRenderer * p3DRenderer_ = getGLESContext();
+  p3DRenderer_->setSurface(surface_a);
   device->displaySurface(surface_b);
+  glMakeCurrent(p3DRenderer_);
+
   // Automatically wait for VSync
   device->setVSync(true);
+
+  // Background color
+  glClearColorx(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
 
   // Depth test
   glClearDepthx(gl_fpfromi(1));
@@ -99,14 +101,16 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     // Swap display and render buffers
     if(bDisplayB == true)
     {
-      context->setSurface(surface_b);
+      p3DRenderer_->setSurface(surface_b);
       device->displaySurface(surface_a);
     }
     else
     {
-      context->setSurface(surface_a);
+      p3DRenderer_->setSurface(surface_a);
       device->displaySurface(surface_b);
     }
     bDisplayB = !bDisplayB;
   }
+
+  delete p3DRenderer_;
 }

@@ -4,16 +4,18 @@
 #include "asm/arch/config.h"
 
 
-extern IGLESRenderer * getGLESContext();
-
-
-IGLESRenderer * context = 0;
+IGLESRenderer * pCurrentContext = 0;
 #define GLES_GET_CONTEXT(RETVAL) \
-if(context == 0) \
-  context = getGLESContext(); \
-if(context == 0) \
+if(pCurrentContext == 0) \
   return RETVAL;
 
+
+//-----------------------------------------------------------------------------
+void
+glMakeCurrent(IGLESRenderer * ctx)
+{
+  pCurrentContext = ctx;
+}
 
 //-----------------------------------------------------------------------------
 // GL API Macros
@@ -23,7 +25,7 @@ GL_API void \
 GL_APIENTRY name(void) \
 { \
   GLES_GET_CONTEXT(); \
-  context->name(); \
+  pCurrentContext->name(); \
 }
 
 #define GL_APIFUNCTION_1(name,type1,arg1) \
@@ -31,7 +33,7 @@ GL_API void \
 GL_APIENTRY name(type1 arg1) \
 { \
   GLES_GET_CONTEXT(); \
-  context->name(arg1); \
+  pCurrentContext->name(arg1); \
 }
 
 #define GL_APIFUNCTION_2(name,type1,arg1,type2,arg2) \
@@ -39,7 +41,7 @@ GL_API void \
 GL_APIENTRY name(type1 arg1, type2 arg2) \
 { \
   GLES_GET_CONTEXT(); \
-  context->name(arg1, arg2); \
+  pCurrentContext->name(arg1, arg2); \
 }
 
 #define GL_APIFUNCTION_3(name,type1,arg1,type2,arg2,type3,arg3) \
@@ -47,7 +49,7 @@ GL_API void \
 GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3) \
 { \
   GLES_GET_CONTEXT(); \
-  context->name(arg1, arg2, arg3); \
+  pCurrentContext->name(arg1, arg2, arg3); \
 }
 
 #define GL_APIFUNCTION_4(name,type1,arg1,type2,arg2,type3,arg3,type4,arg4) \
@@ -55,7 +57,7 @@ GL_API void \
 GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4) \
 { \
   GLES_GET_CONTEXT(); \
-  context->name(arg1, arg2, arg3, arg4); \
+  pCurrentContext->name(arg1, arg2, arg3, arg4); \
 }
 
 #define GL_APIFUNCTION_5(name,type1,arg1,type2,arg2,type3,arg3,type4,arg4,type5,arg5) \
@@ -63,7 +65,7 @@ GL_API void \
 GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5) \
 { \
   GLES_GET_CONTEXT(); \
-  context->name(arg1, arg2, arg3, arg4, arg5); \
+  pCurrentContext->name(arg1, arg2, arg3, arg4, arg5); \
 }
 
 #define GL_APIFUNCTION_6(name,type1,arg1,type2,arg2,type3,arg3,type4,arg4,type5,arg5,type6,arg6) \
@@ -71,7 +73,7 @@ GL_API void \
 GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, type6 arg6) \
 { \
   GLES_GET_CONTEXT(); \
-  context->name(arg1, arg2, arg3, arg4, arg5, arg6); \
+  pCurrentContext->name(arg1, arg2, arg3, arg4, arg5, arg6); \
 }
 
 #define GL_APIFUNCTION_9(name,type1,arg1,type2,arg2,type3,arg3,type4,arg4,type5,arg5,type6,arg6,type7,arg7,type8,arg8,type9,arg9) \
@@ -79,7 +81,7 @@ GL_API void \
 GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, type6 arg6, type7 arg7, type8 arg8, type9 arg9) \
 { \
   GLES_GET_CONTEXT(); \
-  context->name(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9); \
+  pCurrentContext->name(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9); \
 }
 
 //-----------------------------------------------------------------------------
