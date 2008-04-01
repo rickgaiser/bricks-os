@@ -6,6 +6,7 @@
 #include "eventRedraw.h"
 #include "pushButton.h"
 #include "glDemo1.h"
+#include "glDemo2.h"
 
 
 namespace twl
@@ -26,7 +27,7 @@ private:
   CFrame taskBar_;
   CPushButton startButton_;
   CGLDemo1 window1_;
-  CGLDemo1 window2_;
+  CGLDemo2 window2_;
 };
 
 

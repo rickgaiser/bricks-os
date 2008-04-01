@@ -6,12 +6,44 @@
 #include "../gl/context.h"
 
 
-extern void initPyramidFx();
-extern void drawPyramidFx();
 const GLfixed lightAmbient[]  = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
 const GLfixed lightDiffuse[]  = {gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f)};
 const GLfixed lightPosition[] = {gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(2.0f), gl_fpfromf(1.0f)};
 const GLfixed fogColor[]      = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
+
+const GLfixed pyramidVertFx[] =
+{
+  // Square (strip)
+  gl_fpfromf(-1.0f), gl_fpfromf(-1.5f), gl_fpfromf( 1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf(-1.5f), gl_fpfromf( 1.0f),
+  gl_fpfromf(-1.0f), gl_fpfromf(-1.5f), gl_fpfromf(-1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf(-1.5f), gl_fpfromf(-1.0f),
+
+  // Pyramid (fan)
+  gl_fpfromf( 0.0f), gl_fpfromf( 1.0f), gl_fpfromf( 0.0f),
+  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
+  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
+  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f)
+};
+
+const GLfixed pyramidColFx[] =
+{
+  // Square
+  gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(0.4f), gl_fpfromf(1.0f),
+
+  // Pyramid
+  gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f)
+};
 
 
 //---------------------------------------------------------------------------
@@ -58,8 +90,15 @@ CGLDemo1::initializeGL()
   glFogx(GL_FOG_END, gl_fpfromi(10));
   //glEnable(GL_FOG);
 
-  initPyramidFx();
   glMatrixMode(GL_MODELVIEW);
+
+  glVertexPointer(3, GL_FIXED, 0, pyramidVertFx);
+  glColorPointer(4, GL_FIXED, 0, pyramidColFx);
+
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glEnableClientState(GL_COLOR_ARRAY);
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
 }
 
 //---------------------------------------------------------------------------
@@ -85,25 +124,16 @@ void
 CGLDemo1::drawGL()
 {
   static GLfixed yrot = gl_fpfromi(0);
-  yrot += gl_fpfromi(2);
+  yrot += gl_fpfromi(3);
 
-  //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glClear(GL_COLOR_BUFFER_BIT);
-/*
-  glLoadIdentity();
-  glTranslatex(gl_fpfromi(-2), gl_fpfromi(0), gl_fpfromi(-8));
-  glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-  drawPyramidFx();
 
-  glLoadIdentity();
-  glTranslatex(gl_fpfromi(2), gl_fpfromi(0), gl_fpfromi(-8));
-  glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-  drawPyramidFx();
-*/
   glLoadIdentity();
   glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
   glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-  drawPyramidFx();
+
+  //glDrawArrays(GL_TRIANGLE_STRIP,  0, 4); // 'Shade'
+  glDrawArrays(GL_TRIANGLE_FAN,    4, 6); // Pyramid
 
   // Flush everything to surface
   glFlush();

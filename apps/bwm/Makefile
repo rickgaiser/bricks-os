@@ -6,9 +6,10 @@ INCL_PATH       =\
 
 LIB             =apps
 OBJS            =\
+                crate \
                 desktop \
                 glDemo1 \
-                pyramid \
+                glDemo2 \
                 main \
 
 
