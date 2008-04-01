@@ -1,4 +1,6 @@
 #include "videoDevice.h"
+#include "kernel/2dRenderer.h"
+#include "../../../../gl/softGLF.h"
 #include <pspdebug.h>
 #include <pspdisplay.h>
 #include <pspkernel.h>
@@ -113,6 +115,13 @@ CPSPVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 
 //---------------------------------------------------------------------------
 void
+CPSPVideoDevice::get3DRenderer(I3DRenderer ** renderer)
+{
+  *renderer = new CSoftGLESFloat;
+}
+
+//---------------------------------------------------------------------------
+void
 CPSPVideoDevice::waitVSync()
 {
   sceKernelDcacheWritebackAll();
@@ -131,4 +140,11 @@ CPSPVideoDevice::displaySurface(CSurface * surface)
   {
     pSurface_ = surface;
   }
+}
+
+//---------------------------------------------------------------------------
+void
+CPSPVideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy)
+{
+  // FIXME
 }

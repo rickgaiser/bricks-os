@@ -1,4 +1,5 @@
 #include "videoDevice.h"
+#include "glesContext.h"
 #include "bios.h"
 #include "dma.h"
 #include "gs.h"
@@ -223,6 +224,16 @@ CPS22DRenderer::flush()
     BEGIN_GS_PACKET(GsCmdBuffer);
     GIF_TAG_AD(GsCmdBuffer, 1, 0, 0, 0);
   }
+}
+
+//---------------------------------------------------------------------------
+void
+CPS22DRenderer::setColor(color_t rgb)
+{
+  color_.r = BxColorFormat_GetR(cfA8R8G8B8, rgb);
+  color_.g = BxColorFormat_GetG(cfA8R8G8B8, rgb);
+  color_.b = BxColorFormat_GetB(cfA8R8G8B8, rgb);
+  color_.a = BxColorFormat_GetA(cfA8R8G8B8, rgb);
 }
 
 //---------------------------------------------------------------------------
@@ -466,6 +477,13 @@ CPS2VideoDevice::get2DRenderer(I2DRenderer ** renderer)
 
 //---------------------------------------------------------------------------
 void
+CPS2VideoDevice::get3DRenderer(I3DRenderer ** renderer)
+{
+  *renderer = new CPS2GLESContext;
+}
+
+//---------------------------------------------------------------------------
+void
 CPS2VideoDevice::waitVSync()
 {
   WAIT_VSYNC();
@@ -489,4 +507,11 @@ CPS2VideoDevice::displaySurface(CSurface * surface)
     // Set visible frame
     REG_GS_DISPFB1 = GS_SET_DISPFB((uint32_t)pSurface_->p >> 13, pSurface_->mode.width >> 6, pSurface_->psm_, 0, 0);
   }
+}
+
+//---------------------------------------------------------------------------
+void
+CPS2VideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy)
+{
+  // FIXME
 }

@@ -53,6 +53,7 @@ public:
   virtual void       flush();
 
   // Color
+  virtual void       setColor(color_t rgb); // cfA8R8G8B8 format color
   virtual void       setColor(uint8_t r, uint8_t g, uint8_t b);
 
   // Drawing
@@ -90,9 +91,12 @@ public:
 
   virtual void getSurface(CSurface ** surface, ESurfaceType type);
   virtual void get2DRenderer(I2DRenderer ** renderer);
+  virtual void get3DRenderer(I3DRenderer ** renderer);
 
   virtual void waitVSync();
   virtual void displaySurface(CSurface * surface);
+
+  virtual void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy);
 
 private:
   // Surface we're currently displaying

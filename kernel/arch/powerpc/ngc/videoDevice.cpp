@@ -239,6 +239,13 @@ CNGCVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 
 //---------------------------------------------------------------------------
 void
+CNGCVideoDevice::get3DRenderer(I3DRenderer ** renderer)
+{
+  *renderer = NULL;
+}
+
+//---------------------------------------------------------------------------
+void
 CNGCVideoDevice::waitVSync()
 {
   // Busy waiting for vblank
@@ -262,4 +269,11 @@ CNGCVideoDevice::displaySurface(CSurface * surface)
     REG_VI_XFB1 = (uint32_t)pSurface_->p;
     REG_VI_XFB2 = (uint32_t)pSurface_->p;
   }
+}
+
+//---------------------------------------------------------------------------
+void
+CNGCVideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy)
+{
+  // FIXME
 }
