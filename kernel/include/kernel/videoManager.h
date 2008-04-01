@@ -251,6 +251,8 @@ public:
   virtual void waitVSync() = 0;
   virtual void displaySurface(CSurface * surface) = 0;
 
+  virtual void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy) = 0;
+
   virtual void setVSync(bool vsync = true);
   virtual bool getVSync();
 
@@ -269,6 +271,7 @@ public:
   virtual ~CVideoManager();
 
   void listDevices(CAVideoDevice ** devices[], int * deviceCount);
+  void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy);
 
 private:
   void addDevice(CAVideoDevice * device);

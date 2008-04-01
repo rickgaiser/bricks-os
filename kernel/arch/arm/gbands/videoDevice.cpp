@@ -345,3 +345,30 @@ CGBAVideoDevice::displaySurface(CSurface * surface)
 #endif // NDS9
   }
 }
+
+//---------------------------------------------------------------------------
+void
+CGBAVideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy)
+{
+  unsigned int iSrcBase(sy * source->mode.xpitch + sx);
+  unsigned int iDstBase(dy * dest->mode.xpitch   + dx);
+
+  if(dest->mode.bpp == 8)
+  {
+    for(int iY(0); iY < h; iY++)
+    {
+      dmaCopy(&((uint8_t *)dest->p)[iDstBase], &((uint8_t *)source->p)[iSrcBase], w);
+      iSrcBase += source->mode.xpitch;
+      iDstBase += dest->mode.xpitch;
+    }
+  }
+  else
+  {
+    for(int iY(0); iY < h; iY++)
+    {
+      dmaCopy(&((uint16_t *)source->p)[iSrcBase], &((uint16_t *)dest->p)[iDstBase], w << 1);
+      iSrcBase += source->mode.xpitch;
+      iDstBase += dest->mode.xpitch;
+    }
+  }
+}

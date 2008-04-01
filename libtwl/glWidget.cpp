@@ -16,15 +16,6 @@ namespace twl
 
 
 //---------------------------------------------------------------------------
-void
-bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy)
-{
-  for(int y(0); y < h; y++)
-    for(int x(0); x < w; x++)
-      ((uint16_t *)dest->p)[(dy + y) * dest->mode.xpitch + (dx + x)] = ((uint16_t *)source->p)[(sy + y) * source->mode.xpitch + (sx + x)];
-}
-
-//---------------------------------------------------------------------------
 CGLWidget::CGLWidget(CWidget * parent)
  : CWidget(parent)
  , bInitialized_(false)
@@ -56,7 +47,7 @@ CGLWidget::eventRedraw(const CEventRedraw & event)
   {
     glMakeCurrent(p3DRenderer_);
     this->drawGL();
-    twl::bitBlt(pDisplaySurface, x(), y(), width(), height(), &backBuffer_, 0, 0);
+    videoManager.bitBlt(pDisplaySurface, x(), y(), width(), height(), &backBuffer_, 0, 0);
   }
 
   // Redraw every time!

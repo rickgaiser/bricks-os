@@ -44,6 +44,8 @@ public:
   virtual void waitVSync();
   virtual void displaySurface(CSurface * surface);
 
+  virtual void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy);
+
 private:
   // Surface we're currently displaying
   CSurface * pSurface_;

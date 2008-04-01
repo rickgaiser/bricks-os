@@ -464,6 +464,14 @@ CVideoManager::listDevices(CAVideoDevice ** devices[], int * deviceCount)
 
 //---------------------------------------------------------------------------
 void
+CVideoManager::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy)
+{
+  // FIXME: What device owns the surface?
+  devices_[0]->bitBlt(dest, dx, dy, w, h, source, sx, sy);
+}
+
+//---------------------------------------------------------------------------
+void
 CVideoManager::addDevice(CAVideoDevice * device)
 {
   for(int i(0); i < MAX_VIDEO_DEVICE_COUNT; i++)
