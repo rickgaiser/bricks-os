@@ -494,11 +494,3 @@ CNDSGLESContext::updateFog()
 //  fogDensity_
 //  fogEnd_
 }
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-IGLESRenderer *
-getGLESContext()
-{
-  return new CNDSGLESContext;
-}

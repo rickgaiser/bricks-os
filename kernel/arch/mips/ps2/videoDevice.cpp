@@ -459,7 +459,7 @@ CPS2VideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
 
 //---------------------------------------------------------------------------
 void
-CPS2VideoDevice::getRenderer(I2DRenderer ** renderer)
+CPS2VideoDevice::get2DRenderer(I2DRenderer ** renderer)
 {
   *renderer = new CPS22DRenderer;
 }

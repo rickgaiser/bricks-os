@@ -93,7 +93,4 @@ private:
 };
 
 
-IGLESRenderer * getGLESContext();
-
-
 #endif // NDS_GLESCONTEXTNDS_H

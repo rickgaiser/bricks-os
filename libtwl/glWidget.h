@@ -27,7 +27,7 @@ public:
 
 private:
   CSurface backBuffer_;
-  IGLESRenderer * p3DRenderer_;
+  I3DRenderer * p3DRenderer_;
   bool bInitialized_;
 };
 

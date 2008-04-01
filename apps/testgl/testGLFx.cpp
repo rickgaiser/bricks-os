@@ -16,14 +16,14 @@ const GLfixed lightPosition[] = {gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(
 const GLfixed fogColor[]      = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
 
 
-extern IGLESRenderer * getGLESContext();
-extern void glMakeCurrent(IGLESRenderer * ctx);
+extern void glMakeCurrent(I3DRenderer * ctx);
 // -----------------------------------------------------------------------------
 void
 testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
 {
   bool bDisplayB(true);
-  IGLESRenderer * p3DRenderer_ = getGLESContext();
+  I3DRenderer * p3DRenderer_;
+  device->get3DRenderer(&p3DRenderer_);
   p3DRenderer_->setSurface(surface_a);
   device->displaySurface(surface_b);
   glMakeCurrent(p3DRenderer_);

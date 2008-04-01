@@ -17,7 +17,4 @@ public:
 };
 
 
-IGLESRenderer * getGLESContext();
-
-
 #endif // GBA_GLESCONTEXT_H

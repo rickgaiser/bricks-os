@@ -15,14 +15,14 @@ const GLfloat lightPosition[] = {0.0f, 0.0f, 2.0f, 1.0f};
 const GLfloat fogColor[]      = {0.5f, 0.5f, 0.5f, 1.0f};
 
 
-extern IGLESRenderer * getGLESContext();
-extern void glMakeCurrent(IGLESRenderer * ctx);
+extern void glMakeCurrent(I3DRenderer * ctx);
 // -----------------------------------------------------------------------------
 void
 testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
 {
   bool bDisplayB(true);
-  IGLESRenderer * p3DRenderer_ = getGLESContext();
+  I3DRenderer * p3DRenderer_;
+  device->get3DRenderer(&p3DRenderer_);
   p3DRenderer_->setSurface(surface_a);
   device->displaySurface(surface_b);
   glMakeCurrent(p3DRenderer_);

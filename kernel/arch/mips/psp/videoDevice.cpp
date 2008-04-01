@@ -106,7 +106,7 @@ CPSPVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
 
 //---------------------------------------------------------------------------
 void
-CPSPVideoDevice::getRenderer(I2DRenderer ** renderer)
+CPSPVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 {
   *renderer = new C2DRenderer;
 }

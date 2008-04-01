@@ -4,9 +4,15 @@
 #include "kernel/debug.h"
 #include "stddef.h"
 
+#ifdef GBA
+#include "glesContext.h"
+#endif // GBA
+#ifdef NDS9
+#include "glesContextNDS.h"
+#endif // NDS9
 
 #ifdef GBA
-  #define DEFAULT_VIDEO_MODE  videoModes[1] // 240x160x8
+  #define DEFAULT_VIDEO_MODE  videoModes[0] // 240x160x16
 #endif // GBA
 #ifdef NDS9
   #define DEFAULT_VIDEO_MODE  videoModes[0] // 256x192x16
@@ -288,9 +294,21 @@ CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
 
 //---------------------------------------------------------------------------
 void
-CGBAVideoDevice::getRenderer(I2DRenderer ** renderer)
+CGBAVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 {
   *renderer = new CGBA2DRenderer;
+}
+
+//---------------------------------------------------------------------------
+void
+CGBAVideoDevice::get3DRenderer(I3DRenderer ** renderer)
+{
+#ifdef GBA
+  *renderer = new CGBAGLESContext;
+#endif // GBA
+#ifdef NDS9
+  *renderer = new CNDSGLESContext;
+#endif // NDS9
 }
 
 //---------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 #include "windowManager.h"
+#include "kernel/videoManager.h"
 #include "event.h"
 #include "eventKey.h"
 #include "eventMouse.h"
@@ -7,7 +8,8 @@
 
 
 extern const unsigned short mouse[];
-CSurface * pDisplaySurface;
+CAVideoDevice * pDisplayDevice;
+CSurface      * pDisplaySurface;
 
 
 namespace twl
@@ -43,10 +45,11 @@ CWindowManager::init(CAVideoDevice * device)
   if(pDevice_ != NULL)
   {
     pDevice_->getSurface(&pSurface_, stSCREEN);
-    pDevice_->getRenderer(&pRenderer_);
+    pDevice_->get2DRenderer(&pRenderer_);
 
     pDevice_->displaySurface(pSurface_);
     pRenderer_->setSurface(pSurface_);
+    pDisplayDevice  = pDevice_;
     pDisplaySurface = pSurface_;
   }
   else

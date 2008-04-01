@@ -76,11 +76,3 @@ CGBAGLESContext::glClear(GLbitfield mask)
     dmaFill32(z, zbuffer, viewportPixelCount>>1);
   }
 }
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-IGLESRenderer *
-getGLESContext()
-{
-  return new CGBAGLESContext;
-}

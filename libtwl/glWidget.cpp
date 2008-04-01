@@ -2,13 +2,14 @@
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 #include "GL/glu.h"
+#include "kernel/videoManager.h"
 #include "../gl/fixedPoint.h"
 #include "../gl/context.h"
 
 
-extern IGLESRenderer * getGLESContext();
-extern void glMakeCurrent(IGLESRenderer * ctx);
-extern CSurface * pDisplaySurface;
+extern void glMakeCurrent(I3DRenderer * ctx);
+extern CAVideoDevice * pDisplayDevice;
+extern CSurface      * pDisplaySurface;
 
 
 namespace twl
@@ -22,7 +23,7 @@ CGLWidget::CGLWidget(CWidget * parent)
 {
   backBuffer_.p = 0;
 
-  p3DRenderer_ = getGLESContext();
+  pDisplayDevice->get3DRenderer(&p3DRenderer_);
   p3DRenderer_->setSurface(&backBuffer_);
 }
 

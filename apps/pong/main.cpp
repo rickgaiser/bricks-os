@@ -271,7 +271,7 @@ appMain(int argc, char * argv[])
 
         devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
         devices[iDev]->displaySurface(pVideoSurface);
-        devices[iDev]->getRenderer(&pVideoRenderer);
+        devices[iDev]->get2DRenderer(&pVideoRenderer);
         runGame(devices[iDev], pVideoRenderer, pVideoSurface);
 
         if(pVideoRenderer != NULL)

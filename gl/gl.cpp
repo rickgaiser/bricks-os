@@ -4,7 +4,7 @@
 #include "asm/arch/config.h"
 
 
-IGLESRenderer * pCurrentContext = 0;
+I3DRenderer * pCurrentContext = 0;
 #define GLES_GET_CONTEXT(RETVAL) \
 if(pCurrentContext == 0) \
   return RETVAL;
@@ -12,7 +12,7 @@ if(pCurrentContext == 0) \
 
 //-----------------------------------------------------------------------------
 void
-glMakeCurrent(IGLESRenderer * ctx)
+glMakeCurrent(I3DRenderer * ctx)
 {
   pCurrentContext = ctx;
 }

@@ -232,7 +232,7 @@ CNGCVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
 
 //---------------------------------------------------------------------------
 void
-CNGCVideoDevice::getRenderer(I2DRenderer ** renderer)
+CNGCVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 {
   *renderer = new CNGC2DRenderer;
 }

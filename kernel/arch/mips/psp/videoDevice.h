@@ -21,7 +21,7 @@ public:
   virtual void setMode(const SVideoMode * mode);
 
   virtual void getSurface(CSurface ** surface, ESurfaceType type);
-  virtual void getRenderer(I2DRenderer ** renderer);
+  virtual void get2DRenderer(I2DRenderer ** renderer);
 
   virtual void waitVSync();
   virtual void displaySurface(CSurface * surface);
