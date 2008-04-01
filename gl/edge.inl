@@ -2,11 +2,11 @@
 #include "fixedPoint.h"
 
 
-// Fixed Point Macros
+// Floating Point Macros
 #define DELTA_F_Y() \
   GLfloat dy(1.0f / (GLfloat)(y2 - y1))
 #define INTERPOLATE_F_X() \
-  GLfloat x((GLfloat)x1); \
+  GLfloat x((GLfloat)x1 + 0.5f); \
   GLfloat mx((GLfloat)(x2 - x1) * dy)
 #define INTERPOLATE_F_Z() \
   GLfloat mz((z2 - z1) * dy)
@@ -41,7 +41,7 @@
 #define DELTA_FX_Y() \
   GLfixed dy(y2 - y1)
 #define INTERPOLATE_FX_X() \
-  GLfixed x(gl_fpfromi(x1)); \
+  GLfixed x(gl_fpfromi(x1) + gl_fpfromf(0.5f)); \
   GLfixed mx((gl_fpfromi(x2 - x1)) / dy)
 #define INTERPOLATE_FX_Z() \
   GLfixed mz((z2 - z1) / dy)

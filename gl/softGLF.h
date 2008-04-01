@@ -12,6 +12,8 @@
 #include "textures.h"
 #include "edge.h"
 
+#include "asm/arch/memory.h"
+
 
 //-----------------------------------------------------------------------------
 typedef union
@@ -176,16 +178,16 @@ protected:
   GLsizei     viewportHeight;
 
 private:
-  bool testAndSetDepth(GLfloat z, uint32_t index);
-  void hline   (CEdgeF & from, CEdgeF & to, GLint y, SColorF c);
-  void hlineZ  (CEdgeF & from, CEdgeF & to, GLint y, SColorF c);
-  void hlineC  (CEdgeF & from, CEdgeF & to, GLint y);
-  void hlineZC (CEdgeF & from, CEdgeF & to, GLint y);
-  void hlineTa (CEdgeF & from, CEdgeF & to, GLint y);
-  void hlineZTa(CEdgeF & from, CEdgeF & to, GLint y);
-  void hlineZTp(CEdgeF & from, CEdgeF & to, GLint y);
-  void plotPoly(SVertexF * vtx[3]);
-  void rasterPoly(SVertexF * vtx[3]);
+  bool testAndSetDepth(GLfloat z, uint32_t index)               FAST_CODE;
+  void hline   (CEdgeF & from, CEdgeF & to, GLint y, SColorF c) FAST_CODE;
+  void hlineZ  (CEdgeF & from, CEdgeF & to, GLint y, SColorF c) FAST_CODE;
+  void hlineC  (CEdgeF & from, CEdgeF & to, GLint y)            FAST_CODE;
+  void hlineZC (CEdgeF & from, CEdgeF & to, GLint y)            FAST_CODE;
+  void hlineTa (CEdgeF & from, CEdgeF & to, GLint y)            FAST_CODE;
+  void hlineZTa(CEdgeF & from, CEdgeF & to, GLint y)            FAST_CODE;
+  void hlineZTp(CEdgeF & from, CEdgeF & to, GLint y)            FAST_CODE;
+  void plotPoly(SVertexF * vtx[3])                              FAST_CODE;
+  void rasterPoly(SVertexF * vtx[3])                            FAST_CODE;
 };
 
 
