@@ -9,6 +9,19 @@
 extern const unsigned short crate_Width;
 extern const unsigned short crate_Height;
 extern const unsigned short crate_Bitmap[];
+// MipMap levels (for crate 256x256):
+// 0: 256 x 256
+// 1: 128 x 128
+// 2:  64 x  64
+// 3:  32 x  32
+// 4:  16 x  16
+// 5:   8 x   8
+// 6:   4 x   4
+// 7:   2 x   2
+// 8:   1 x   1
+#define MIPMAP_LEVELS 3 // 64x64
+#define MIPMAP_LEVEL  (MIPMAP_LEVELS-1)
+uint16_t * crateMipMap[MIPMAP_LEVELS];
 GLuint textures[1];
 const GLfixed lightAmbient[]  = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
 const GLfixed lightDiffuse[]  = {gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f)};
@@ -87,6 +100,45 @@ const GLfixed cubeTexFx[] =
 
 
 //---------------------------------------------------------------------------
+void
+createMipMap(uint16_t * dest, uint16_t * source, uint16_t width, uint16_t height)
+{
+  uint16_t destWidth (width  >> 1);
+  uint16_t destHeight(height >> 1);
+
+  uint16_t p00, p01, p10, p11;
+  uint8_t  r, g, b;
+
+  for(uint16_t y(0); y < destHeight; y++)
+  {
+    for(uint16_t x(0); x < destWidth; x++)
+    {
+      p00 = source[((y << 1)    ) * width + (x << 1)    ];
+      p01 = source[((y << 1)    ) * width + (x << 1) + 1];
+      p10 = source[((y << 1) + 1) * width + (x << 1)    ];
+      p11 = source[((y << 1) + 1) * width + (x << 1) + 1];
+
+      r   = (BxColorFormat_GetR(cfX1R5G5B5, p00) +
+             BxColorFormat_GetR(cfX1R5G5B5, p01) +
+             BxColorFormat_GetR(cfX1R5G5B5, p10) +
+             BxColorFormat_GetR(cfX1R5G5B5, p11)) >> 2;
+
+      g   = (BxColorFormat_GetG(cfX1R5G5B5, p00) +
+             BxColorFormat_GetG(cfX1R5G5B5, p01) +
+             BxColorFormat_GetG(cfX1R5G5B5, p10) +
+             BxColorFormat_GetG(cfX1R5G5B5, p11)) >> 2;
+
+      b   = (BxColorFormat_GetB(cfX1R5G5B5, p00) +
+             BxColorFormat_GetB(cfX1R5G5B5, p01) +
+             BxColorFormat_GetB(cfX1R5G5B5, p10) +
+             BxColorFormat_GetB(cfX1R5G5B5, p11)) >> 2;
+
+      dest[y * destWidth + x] = BxColorFormat_FromRGB(cfX1R5G5B5, r, g, b);
+    }
+  }
+}
+
+//---------------------------------------------------------------------------
 CGLDemo2::CGLDemo2(CWidget * parent)
  : CGLWidget(parent)
 {
@@ -130,10 +182,18 @@ CGLDemo2::initializeGL()
   glFogx(GL_FOG_END, gl_fpfromi(10));
   //glEnable(GL_FOG);
 
+  // Create MipMaps
+  crateMipMap[0] = (uint16_t *)crate_Bitmap;
+  for(int i(1); i < MIPMAP_LEVELS; i++)
+  {
+    crateMipMap[i] = new uint16_t[(crate_Width >> i) * (crate_Height >> i)];
+    createMipMap(crateMipMap[i], crateMipMap[i - 1], crate_Width >> (i - 1), crate_Height >> (i - 1));
+  }
+
   // Texture
   glGenTextures(1, &textures[0]);
   glBindTexture(GL_TEXTURE_2D, textures[0]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, crate_Width, crate_Height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crate_Bitmap);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, crate_Width >> MIPMAP_LEVEL, crate_Height >> MIPMAP_LEVEL, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crateMipMap[MIPMAP_LEVEL]);
   //glMatrixMode(GL_TEXTURE);
   //glLoadIdentity();
 
