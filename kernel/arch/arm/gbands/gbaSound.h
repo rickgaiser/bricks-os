@@ -42,10 +42,10 @@ public:
   int init();
 
   void setChannel(uint8_t nr, SSoundChannel * data);
-  void mix(uint32_t samplesToMix) IWRAM_CODE;
+  void mix(uint32_t samplesToMix) FAST_CODE;
 
   // Inherited from IInterruptServiceRoutine
-  virtual int isr(int irq) IWRAM_CODE;
+  virtual int isr(int irq) INTERRUPT_CODE;
 
 private:
   // Input channels

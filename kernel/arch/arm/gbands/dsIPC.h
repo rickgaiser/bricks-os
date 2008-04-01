@@ -4,6 +4,7 @@
 
 #include "kernel/interrupt.h"
 #include "kernel/fs.h"
+#include "asm/arch/memory.h"
 
 
 class CDSIPC
@@ -17,7 +18,7 @@ public:
   int init(IFileIO * output = 0);
 
   // Inherited from IInterruptServiceRoutine
-  virtual int isr(int irq);
+  virtual int isr(int irq) INTERRUPT_CODE;
 
   // Inherited from IFileIO
   virtual ssize_t read (      void * buffer, size_t size, loff_t * = 0);

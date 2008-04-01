@@ -4,6 +4,7 @@
 
 #include "kernel/videoManager.h"
 #include "kernel/interruptManager.h"
+#include "asm/arch/memory.h"
 
 
 //---------------------------------------------------------------------------
@@ -30,7 +31,7 @@ public:
   virtual ~CGBAVideoDevice();
 
   // Inherited from IInterruptServiceRoutine
-  virtual int isr(int irq);
+  virtual int isr(int irq) INTERRUPT_CODE;
 
   virtual void listModes(const SVideoMode ** modes, int * modeCount);
   virtual void getCurrentMode(const SVideoMode ** mode);

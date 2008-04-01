@@ -3,11 +3,14 @@
 #include "kernel/task.h"
 #include "task.h"
 #include "asm/irq.h"
+#include "asm/arch/memory.h"
 
 
 
 // Assembler isr function calling our "C" isr function
 extern "C" void __isr();
+// Function __isr calls
+extern "C" void isr(pt_regs * regs) INTERRUPT_CODE;
 
 
 // -----------------------------------------------------------------------------

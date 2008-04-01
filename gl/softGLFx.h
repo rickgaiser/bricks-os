@@ -13,6 +13,8 @@
 #include "edge.h"
 #include "fixedPoint.h"
 
+#include "asm/arch/memory.h"
+
 
 // Better
 #define fpRGB(r,g,b) \
@@ -193,16 +195,16 @@ protected:
   GLsizei     viewportHeight;
 
 private:
-  bool testAndSetDepth(GLfixed z, uint32_t index);
-  void hline   (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c);
-  void hlineZ  (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c);
-  void hlineC  (CEdgeFx & from, CEdgeFx & to, GLint y);
-  void hlineZC (CEdgeFx & from, CEdgeFx & to, GLint y);
-  void hlineTa (CEdgeFx & from, CEdgeFx & to, GLint y);
-  void hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y);
-  void hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y);
-  void plotPoly(SVertexFx * vtx[3]);
-  void rasterPoly(SVertexFx * vtx[3]);
+  bool testAndSetDepth(GLfixed z, uint32_t index)                  FAST_CODE;
+  void hline   (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c) FAST_CODE;
+  void hlineZ  (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c) FAST_CODE;
+  void hlineC  (CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
+  void hlineZC (CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
+  void hlineTa (CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
+  void hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
+  void hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
+  void plotPoly(SVertexFx * vtx[3])                                FAST_CODE;
+  void rasterPoly(SVertexFx * vtx[3])                              FAST_CODE;
 };
 
 

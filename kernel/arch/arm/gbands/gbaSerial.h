@@ -35,7 +35,7 @@ public:
   virtual int init();
 
   // Inherited from IInterruptServiceRoutine
-  virtual int isr(int irq) IWRAM_CODE;
+  virtual int isr(int irq) INTERRUPT_CODE;
 
   // Inherited from IFileIO (UART mode only)
   virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);

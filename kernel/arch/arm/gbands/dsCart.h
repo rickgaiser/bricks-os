@@ -14,7 +14,9 @@ public:
   virtual ~CDSCart();
 
   int init();
-  virtual int isr(int irq);
+
+  // Inherited from IInterruptServiceRoutine
+  virtual int isr(int irq) INTERRUPT_CODE;
 };
 
 
