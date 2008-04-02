@@ -1,5 +1,6 @@
 #include "windowManager.h"
 #include "kernel/videoManager.h"
+#include "desktop.h"
 #include "event.h"
 #include "eventKey.h"
 #include "eventMouse.h"
@@ -77,6 +78,12 @@ CWindowManager::requestNewWindow()
 int
 CWindowManager::exec()
 {
+  CDesktop desktop;
+
+  desktop.frame(false); // Desktop has no window frame
+  desktop.rect(0, 0, pSurface_->mode.width, pSurface_->mode.height);
+  desktop.visible(true); // Show desktop
+
   while(true)
   {
     //pDevice_->waitVSync();

@@ -1,5 +1,4 @@
 #include "application.h"
-#include "windowManager.h"
 
 
 namespace twl
@@ -26,7 +25,7 @@ CApplication::setMainWidget(CWidget * pMainWidget)
 int
 CApplication::exec()
 {
-  return bwm::windowManager.exec();
+  return 0;
 }
 
 

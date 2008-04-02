@@ -2,24 +2,8 @@
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
 #include "windowManager.h"
-#include "application.h"
-#include "desktop.h"
 #include "stdlib.h"
 
-
-// -----------------------------------------------------------------------------
-int
-guiMain(int argc, char * argv[])
-{
-  twl::CApplication app(argc, argv);
-  bwm::CDesktop desktop;
-
-  desktop.frame(false);         // Desktop has no window frame
-  desktop.rect(0, 0, 240, 160); // FIXME: Size depends on screen resolution
-  desktop.visible(true);        // Show desktop
-
-  return app.exec();
-}
 
 // -----------------------------------------------------------------------------
 extern "C" int
@@ -43,9 +27,9 @@ appMain(int argc, char * argv[])
         // Set default video mode
         devices[iDev]->setMode(newMode);
 
+        // Start the window manager
         bwm::windowManager.init(devices[iDev]);
-
-        guiMain(argc, argv);
+        bwm::windowManager.exec();
 
         // Restore video mode
         if(prevMode != NULL)
