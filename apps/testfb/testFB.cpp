@@ -127,7 +127,7 @@ appMain(int argc, char * argv[])
           I2DRenderer * pVideoRenderer;
 
           // Test 2d with a single buffered surface
-          devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
+          devices[iDev]->getSurface(&pVideoSurface, modes[iMode].width, modes[iMode].height);
           devices[iDev]->displaySurface(pVideoSurface);
           devices[iDev]->get2DRenderer(&pVideoRenderer);
           test2d(devices[iDev], pVideoRenderer, pVideoSurface);

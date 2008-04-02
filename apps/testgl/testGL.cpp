@@ -33,8 +33,8 @@ appMain(int argc, char * argv[])
         devices[iDev]->setMode(newMode);
 
         // Allocate two surfaces for double buffering
-        devices[iDev]->getSurface(&pVideoSurfaceA, stSCREEN);
-        devices[iDev]->getSurface(&pVideoSurfaceB, stOFFSCREEN);
+        devices[iDev]->getSurface(&pVideoSurfaceA, newMode->width, newMode->height);
+        devices[iDev]->getSurface(&pVideoSurfaceB, newMode->width, newMode->height);
 
         // Start test
         if((pVideoSurfaceA != NULL) && (pVideoSurfaceB != NULL))
