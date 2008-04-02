@@ -26,7 +26,7 @@ public:
   virtual void drawGL() = 0;
 
 private:
-  CSurface backBuffer_;
+  CSurface * pBackBuffer_;
   I3DRenderer * p3DRenderer_;
   bool bInitialized_;
 };

@@ -2,7 +2,6 @@
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 #include "GL/glu.h"
-#include "../gl/fixedPoint.h"
 #include "../gl/context.h"
 
 
@@ -141,6 +140,7 @@ createMipMap(uint16_t * dest, uint16_t * source, uint16_t width, uint16_t height
 //---------------------------------------------------------------------------
 CGLDemo2::CGLDemo2(CWidget * parent)
  : CGLWidget(parent)
+ , yrot_(gl_fpfromi(0))
 {
 }
 
@@ -230,14 +230,11 @@ CGLDemo2::resizeGL(int w, int h)
 void
 CGLDemo2::drawGL()
 {
-  static GLfixed yrot = gl_fpfromi(0);
-  yrot += gl_fpfromi(2);
-
   glClear(GL_COLOR_BUFFER_BIT);
 
   glLoadIdentity();
   glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
-  glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
+  glRotatex(yrot_, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
 
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, textures[0]);
@@ -251,4 +248,6 @@ CGLDemo2::drawGL()
 
   // Flush everything to surface
   glFlush();
+
+  yrot_ += gl_fpfromi(2);
 }

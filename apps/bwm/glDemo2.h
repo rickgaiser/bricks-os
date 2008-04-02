@@ -3,6 +3,7 @@
 
 
 #include "glWidget.h"
+#include "../gl/fixedPoint.h"
 
 
 class CGLDemo2
@@ -15,6 +16,9 @@ public:
   virtual void initializeGL();
   virtual void resizeGL(int w, int h);
   virtual void drawGL();
+
+private:
+  GLfixed yrot_;
 };
 
 

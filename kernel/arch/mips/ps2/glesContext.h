@@ -4,6 +4,7 @@
 
 #include "../../../../gl/softGLF.h"
 #include "../../../../gl/matrix.h"
+#include "videoDevice.h"
 #include "textures.h"
 #include "gif.h"
 
@@ -19,6 +20,8 @@ class CPS2GLESContext
 public:
   CPS2GLESContext();
   virtual ~CPS2GLESContext();
+
+  virtual void setSurface(CSurface * surface);
 
   virtual void glClear(GLbitfield mask);
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
@@ -87,7 +90,8 @@ private:
   bool        ps2DepthInvert_;
   uint32_t    ps2ZMax_;
 
-  DECLARE_GS_PACKET(GsCmdBuffer,1000);
+  CPS2Surface * pPS2Surface_;
+  bool          bDataWaiting_;
 };
 
 

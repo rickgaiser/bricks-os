@@ -89,7 +89,7 @@ public:
   virtual void getDefaultMode(const SVideoMode ** mode);
   virtual void setMode(const SVideoMode * mode);
 
-  virtual void getSurface(CSurface ** surface, ESurfaceType type);
+  virtual void getSurface(CSurface ** surface, int width, int height);
   virtual void get2DRenderer(I2DRenderer ** renderer);
   virtual void get3DRenderer(I3DRenderer ** renderer);
 

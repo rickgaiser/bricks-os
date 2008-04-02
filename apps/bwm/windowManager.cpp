@@ -48,7 +48,9 @@ CWindowManager::init(CAVideoDevice * device)
 
   if(pDevice_ != NULL)
   {
-    pDevice_->getSurface(&pSurface_, stSCREEN);
+    const SVideoMode * mode;
+    pDevice_->getDefaultMode(&mode);
+    pDevice_->getSurface(&pSurface_, mode->width, mode->height);
     pDevice_->get2DRenderer(&pRenderer_);
 
     pDevice_->displaySurface(pSurface_);

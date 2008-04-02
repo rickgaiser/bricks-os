@@ -1,5 +1,4 @@
 #include "glesContext.h"
-#include "videoDevice.h"
 #include "bios.h"
 #include "dma.h"
 #include "gs.h"
@@ -8,6 +7,7 @@
 
 #define clamp(f)  (f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f))
 uint32_t          ps2TexturesStart_(0);
+DECLARE_GS_PACKET(Gs3DCmdBuffer,1000);
 
 
 //-----------------------------------------------------------------------------
@@ -44,6 +44,9 @@ CPS2GLESContext::CPS2GLESContext()
  , ps2DepthFunction_(ZTST_GREATER)
  , ps2DepthInvert_(true)
  , ps2ZMax_(0xffff)
+
+ , pPS2Surface_(0)
+ , bDataWaiting_(false)
 {
   clCurrent.r = 0.0f;
   clCurrent.g = 0.0f;
@@ -75,11 +78,11 @@ CPS2GLESContext::CPS2GLESContext()
     lights_[iLight].enabled = false;
   }
 
-  INIT_GS_PACKET(GsCmdBuffer,1000);
+  INIT_GS_PACKET(Gs3DCmdBuffer,1000);
 
   // Initialize the DMA buffer
-  BEGIN_GS_PACKET(GsCmdBuffer);
-  GIF_TAG_AD(GsCmdBuffer, 1, 0, 0, 0);
+  BEGIN_GS_PACKET(Gs3DCmdBuffer);
+  GIF_TAG_AD(Gs3DCmdBuffer, 1, 0, 0, 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -89,11 +92,28 @@ CPS2GLESContext::~CPS2GLESContext()
 
 //-----------------------------------------------------------------------------
 void
+CPS2GLESContext::setSurface(CSurface * surface)
+{
+  pPS2Surface_ = (CPS2Surface *)surface;
+
+  I3DRenderer::setSurface(surface);
+
+  if(pPS2Surface_ != NULL)
+  {
+    // Set destination
+    GIF_DATA_AD(Gs3DCmdBuffer, frame_1, GS_FRAME((uint32_t)(pPS2Surface_->p) >> 13, pPS2Surface_->mode.width >> 6, pPS2Surface_->psm_, 0));
+    // Set clipping
+    GIF_DATA_AD(Gs3DCmdBuffer, scissor_1, GS_SCISSOR(0, pPS2Surface_->mode.width, 0, pPS2Surface_->mode.height));
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
 CPS2GLESContext::glClear(GLbitfield mask)
 {
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    GIF_DATA_AD(GsCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, 1, ZTST_ALWAYS));
+    GIF_DATA_AD(Gs3DCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, 1, ZTST_ALWAYS));
   }
 
   if(mask & GL_COLOR_BUFFER_BIT)
@@ -101,17 +121,19 @@ CPS2GLESContext::glClear(GLbitfield mask)
     uint8_t r = (uint8_t)(clClear.r * 255);
     uint8_t g = (uint8_t)(clClear.g * 255);
     uint8_t b = (uint8_t)(clClear.b * 255);
+    //uint8_t a = (uint8_t)(clClear.a * 255);
 
-    GIF_DATA_AD(GsCmdBuffer, prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-    GIF_DATA_AD(GsCmdBuffer, rgbaq, GS_RGBAQ(r, g, b, 0x80, 0));
-    GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2((GS_X_BASE+0)<<4, (GS_Y_BASE+0)<<4, 0));
-    GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2((GS_X_BASE+viewportWidth+1)<<4, (GS_Y_BASE+viewportHeight+1)<<4, 0));
+    GIF_DATA_AD(Gs3DCmdBuffer, prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+    GIF_DATA_AD(Gs3DCmdBuffer, rgbaq, GS_RGBAQ(r, g, b, 0x80, 0));
+    GIF_DATA_AD(Gs3DCmdBuffer, xyz2, GS_XYZ2((0+GS_X_BASE)<<4, (0+GS_Y_BASE)<<4, 0));
+    GIF_DATA_AD(Gs3DCmdBuffer, xyz2, GS_XYZ2((viewportWidth+GS_X_BASE)<<4, (viewportHeight+GS_Y_BASE)<<4, 0));
   }
 
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    GIF_DATA_AD(GsCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+    GIF_DATA_AD(Gs3DCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
   }
+  bDataWaiting_ = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -195,7 +217,7 @@ CPS2GLESContext::glDepthFunc(GLenum func)
 
   if(depthTestEnabled_ == true)
   {
-    GIF_DATA_AD(GsCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+    GIF_DATA_AD(Gs3DCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
   }
 }
 
@@ -219,9 +241,9 @@ CPS2GLESContext::glDisable(GLenum cap)
     {
       depthTestEnabled_ = false;
       // Z-Buffer
-      GIF_DATA_AD(GsCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_DISABLE));
+      GIF_DATA_AD(Gs3DCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_DISABLE));
       // Z-Buffer test
-      GIF_DATA_AD(GsCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+      GIF_DATA_AD(Gs3DCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
     }
 */
@@ -251,13 +273,13 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   switch(mode)
   {
     case GL_TRIANGLES:
-      GIF_DATA_AD(GsCmdBuffer, prim, GS_PRIM(PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      GIF_DATA_AD(Gs3DCmdBuffer, prim, GS_PRIM(PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
     case GL_TRIANGLE_STRIP:
-      GIF_DATA_AD(GsCmdBuffer, prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      GIF_DATA_AD(Gs3DCmdBuffer, prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
     case GL_TRIANGLE_FAN:
-      GIF_DATA_AD(GsCmdBuffer, prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      GIF_DATA_AD(Gs3DCmdBuffer, prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
   };
 
@@ -403,15 +425,16 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       v.tt /= v.v[3];
       float tq = 1.0f / v.v[3];
 
-      GIF_DATA_AD(GsCmdBuffer, st, GS_ST(*(uint32_t *)(&v.ts), *(uint32_t *)(&v.tt)));
-      GIF_DATA_AD(GsCmdBuffer, rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, *(uint32_t *)(&tq)));
+      GIF_DATA_AD(Gs3DCmdBuffer, st, GS_ST(*(uint32_t *)(&v.ts), *(uint32_t *)(&v.tt)));
+      GIF_DATA_AD(Gs3DCmdBuffer, rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, *(uint32_t *)(&tq)));
     }
     else
     {
-      GIF_DATA_AD(GsCmdBuffer, rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, 0));
+      GIF_DATA_AD(Gs3DCmdBuffer, rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, 0));
     }
-    GIF_DATA_AD(GsCmdBuffer, xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, z));
+    GIF_DATA_AD(Gs3DCmdBuffer, xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, z));
   }
+  bDataWaiting_ = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -438,28 +461,28 @@ CPS2GLESContext::glEnable(GLenum cap)
       {
         case 16:
         {
-          GIF_DATA_AD(GsCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_ENABLE));
+          GIF_DATA_AD(Gs3DCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_ENABLE));
           ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 2);
           ps2ZMax_ = 0xffff;
           break;
         }
         case 24:
         {
-          GIF_DATA_AD(GsCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
+          GIF_DATA_AD(Gs3DCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
           ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 3);
           ps2ZMax_ = 0xffffff;
           break;
         }
         case 32:
         {
-          GIF_DATA_AD(GsCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
+          GIF_DATA_AD(Gs3DCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
           ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 4);
           ps2ZMax_ = 0xffffffff;
           break;
         }
       };
       // Z-Buffer test
-      GIF_DATA_AD(GsCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+      GIF_DATA_AD(Gs3DCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
     }
 */
@@ -482,12 +505,24 @@ CPS2GLESContext::glFinish(void)
 void
 CPS2GLESContext::glFlush(void)
 {
-  // Kick off the DMA transfer to the GS
-  SEND_GS_PACKET(GsCmdBuffer);
+  if(bDataWaiting_ == true)
+  {
+    // Send packet to GS
+    SEND_GS_PACKET(Gs3DCmdBuffer);
+    bDataWaiting_ = false;
 
-  // Initialize the DMA buffer
-  BEGIN_GS_PACKET(GsCmdBuffer);
-  GIF_TAG_AD(GsCmdBuffer, 1, 0, 0, 0);
+    // Create new packet
+    BEGIN_GS_PACKET(Gs3DCmdBuffer);
+    GIF_TAG_AD(Gs3DCmdBuffer, 1, 0, 0, 0);
+
+    if(pPS2Surface_ != 0)
+    {
+      // Set destination
+      GIF_DATA_AD(Gs3DCmdBuffer, frame_1, GS_FRAME((uint32_t)(pPS2Surface_->p) >> 13, pPS2Surface_->mode.width >> 6, pPS2Surface_->psm_, 0));
+      // Set clipping
+      GIF_DATA_AD(Gs3DCmdBuffer, scissor_1, GS_SCISSOR(0, pPS2Surface_->mode.width, 0, pPS2Surface_->mode.height));
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------
