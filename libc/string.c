@@ -82,15 +82,12 @@ memmove(void * s1, const void * s2, size_t n)
 void *
 memset(void * data, int fill_char, size_t size)
 {
-  unsigned char * pData = (unsigned char *)data;
   int i;
 
   for(i = 0; i < size; i++)
-  {
-    pData[i] = fill_char;
-  }
+    ((unsigned char *)data)[i] = fill_char;
 
-  return(data);
+  return data;
 }
 
 // -----------------------------------------------------------------------------
