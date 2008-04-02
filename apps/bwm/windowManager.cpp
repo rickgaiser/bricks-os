@@ -88,17 +88,15 @@ CWindowManager::exec()
 
   while(true)
   {
-    //pDevice_->waitVSync();
+    // Wait for vertical sync
+    pDevice_->waitVSync();
+
+    // Redraw every window that needs to be redrawn
     for(uint32_t i(0); i < pWindows_.size(); i++)
       pWindows_[i]->event(CEventRedraw());
 
-//    if(bCursorActive_ == true)
-//      drawCursor();
-
-//    CWindow::swap(true);
-
-//    if(bCursorActive_ == true)
-//      undrawCursor();
+    // Flush all 2D operations (if not already done)
+    pRenderer_->flush();
   }
 
   return 0;

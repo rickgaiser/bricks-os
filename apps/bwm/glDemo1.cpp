@@ -106,10 +106,10 @@ void
 CGLDemo1::resizeGL(int w, int h)
 {
   // Viewport & Perspective
-  glViewport(0, 0, width(), height());
+  glViewport(0, 0, w, h);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(45.0f, (float)width() / (float)height(), 0.1f, 100.0f);
+  gluPerspective(45.0f, (float)w / (float)h, 0.1f, 100.0f);
 
   // Move up a little
   glTranslatex(gl_fpfromi(0), gl_fpfromi(-2), gl_fpfromi(0));
