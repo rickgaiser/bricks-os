@@ -1,5 +1,5 @@
-#ifndef TWL_WINDOWMANAGER_H
-#define TWL_WINDOWMANAGER_H
+#ifndef BWM_WINDOWMANAGER_H
+#define BWM_WINDOWMANAGER_H
 
 
 #include "window.h"
@@ -7,7 +7,7 @@
 #include "vector"
 
 
-namespace twl
+namespace bwm
 {
 
 

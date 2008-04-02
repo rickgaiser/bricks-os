@@ -1,5 +1,5 @@
-#ifndef TWL_WINDOW_H
-#define TWL_WINDOW_H
+#ifndef BWM_WINDOW_H
+#define BWM_WINDOW_H
 
 
 #include "event.h"
@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 
-namespace twl
+namespace bwm
 {
 
 
@@ -26,17 +26,17 @@ public:
   virtual ~CWindow();
 
   // Incomming events from OS
-  bool event(const CEvent & event);
+  bool event(const twl::CEvent & event);
 
   // Set application event handler
-  void setEventHandler(IWindowEventHandler * eventHandler);
+  void setEventHandler(twl::IWindowEventHandler * eventHandler);
 
   // Geometry functions
   int width();
   int height();
-  void rect(const CRect & rect);
+  void rect(const twl::CRect & rect);
   void rect(int x, int y, int width, int height);
-  CRect rect();
+  twl::CRect rect();
 
   // Window functions
   void focus(bool focus);
@@ -46,19 +46,19 @@ public:
 
   // Drawing functions
   void fill(color_t color);
-  void fillRect(const CRect & rect, color_t color);
+  void fillRect(const twl::CRect & rect, color_t color);
   void drawHLine(int x, int y, int width,  color_t color);
   void drawVLine(int x, int y, int height, color_t color);
   void drawText (int x, int y, const char * string, color_t color = clBlack);
 
 private:
   // Window
-  IWindowEventHandler * pEventHandler_;
-  CRect cWindowRect_;
-  CRect cWindowOnScreenRect_;
+  twl::IWindowEventHandler * pEventHandler_;
+  twl::CRect cWindowRect_;
+  twl::CRect cWindowOnScreenRect_;
   // Client area
-  CRect cClientRect_;
-  CRect cClientOnScreenRect_;
+  twl::CRect cClientRect_;
+  twl::CRect cClientOnScreenRect_;
 
   bool bNeedRedraw_;
   bool bFocus_;

@@ -11,6 +11,10 @@ OBJS            =\
                 glDemo1 \
                 glDemo2 \
                 main \
+                mouse \
+                taskBar \
+                window \
+                windowManager \
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.user

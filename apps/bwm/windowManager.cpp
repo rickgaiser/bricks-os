@@ -12,8 +12,11 @@ CAVideoDevice * pDisplayDevice;
 CSurface      * pDisplaySurface;
 
 
-namespace twl
+namespace bwm
 {
+
+
+using namespace twl;
 
 
 CWindowManager   windowManager;

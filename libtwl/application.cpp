@@ -26,7 +26,7 @@ CApplication::setMainWidget(CWidget * pMainWidget)
 int
 CApplication::exec()
 {
-  return twl::windowManager.exec();
+  return bwm::windowManager.exec();
 }
 
 

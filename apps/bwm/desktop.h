@@ -3,29 +3,27 @@
 
 
 #include "frame.h"
-#include "eventRedraw.h"
-#include "pushButton.h"
+#include "taskBar.h"
 #include "glDemo1.h"
 #include "glDemo2.h"
 
 
-namespace twl
+namespace bwm
 {
 
 
 class CDesktop
- : public CFrame
+ : public twl::CWidget
 {
 public:
   CDesktop();
   virtual ~CDesktop();
 
-  virtual bool eventRedraw(const CEventRedraw & event);
-  virtual bool eventResize(const CEventResize & event);
+  virtual bool eventRedraw(const twl::CEventRedraw & event);
+  virtual bool eventResize(const twl::CEventResize & event);
 
 private:
-  CFrame taskBar_;
-  CPushButton startButton_;
+  CTaskBar taskBar_;
   CGLDemo1 window1_;
   CGLDemo2 window2_;
 };

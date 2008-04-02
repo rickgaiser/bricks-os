@@ -12,7 +12,7 @@ int
 guiMain(int argc, char * argv[])
 {
   twl::CApplication app(argc, argv);
-  twl::CDesktop desktop;
+  bwm::CDesktop desktop;
 
   desktop.frame(false);         // Desktop has no window frame
   desktop.rect(0, 0, 240, 160); // FIXME: Size depends on screen resolution
@@ -43,7 +43,7 @@ appMain(int argc, char * argv[])
         // Set default video mode
         devices[iDev]->setMode(newMode);
 
-        twl::windowManager.init(devices[iDev]);
+        bwm::windowManager.init(devices[iDev]);
 
         guiMain(argc, argv);
 

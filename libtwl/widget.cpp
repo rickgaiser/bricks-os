@@ -24,7 +24,7 @@ CWidget::CWidget(CWidget * parent)
   }
   else
   {
-    pWindow_ = windowManager.requestNewWindow();
+    pWindow_ = bwm::windowManager.requestNewWindow();
     pWindow_->setEventHandler(this);
   }
 }

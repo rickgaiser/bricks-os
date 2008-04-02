@@ -1,8 +1,11 @@
 #include "window.h"
 
 
-namespace twl
+namespace bwm
 {
+
+
+using namespace twl;
 
 
 //---------------------------------------------------------------------------

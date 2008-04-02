@@ -59,7 +59,7 @@ public:
   virtual void redraw();
 
 protected:
-  CWindow * pWindow_;
+  bwm::CWindow * pWindow_;
 
 private:
   // Tree structure
