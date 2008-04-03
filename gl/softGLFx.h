@@ -120,10 +120,18 @@ class CSoftGLESFixed
  , public CAGLESCull
  , public CAGLESMatrixFx
  , public CAGLESTextures
+ , public virtual CASoftwareRenderer
 {
 public:
   CSoftGLESFixed();
   virtual ~CSoftGLESFixed();
+
+  // Surfaces
+  virtual void       setSurface(CSurface * surface){CASoftwareRenderer::setSurface(surface);}
+  virtual CSurface * getSurface()                  {return CASoftwareRenderer::getSurface();}
+
+  // Flush operations to surface
+  virtual void       flush()                       {CASoftwareRenderer::flush();}
 
   virtual void glClear(GLbitfield mask);
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);

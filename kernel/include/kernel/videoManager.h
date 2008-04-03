@@ -160,8 +160,26 @@ public:
 };
 
 //---------------------------------------------------------------------------
+class CASoftwareRenderer
+ : public virtual IRenderer
+{
+public:
+  virtual ~CASoftwareRenderer(){}
+
+  // Surfaces
+  virtual void       setSurface(CSurface * surface){renderSurface = surface;}
+  virtual CSurface * getSurface()                  {return renderSurface;}
+
+  // Flush operations to surface
+  virtual void       flush()                       {}
+
+protected:
+  CSurface  * renderSurface;
+};
+
+//---------------------------------------------------------------------------
 class I2DRenderer
- : public IRenderer
+ : public virtual IRenderer
 {
 public:
   virtual ~I2DRenderer(){}
@@ -189,18 +207,17 @@ public:
 
 //-----------------------------------------------------------------------------
 class I3DRenderer
- : public IRenderer
+ : public virtual IRenderer
 {
 public:
-  I3DRenderer() : renderSurface(0) {}
   virtual ~I3DRenderer(){}
 
   // Surfaces
-  virtual void       setSurface(CSurface * surface){renderSurface = surface;}
-  virtual CSurface * getSurface(){return renderSurface;}
+  virtual void       setSurface(CSurface * surface) = 0;
+  virtual CSurface * getSurface() = 0;
 
   // Flush operations to surface
-  virtual void       flush(){this->glFlush();}
+  virtual void       flush() = 0;
 
 //  virtual void glAlphaFunc(GLenum func, GLclampf ref) = 0;
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) = 0;
@@ -347,9 +364,6 @@ public:
   virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z) = 0;
   virtual void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer) = 0;
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height) = 0;
-
-protected:
-  CSurface  * renderSurface;
 };
 
 //---------------------------------------------------------------------------

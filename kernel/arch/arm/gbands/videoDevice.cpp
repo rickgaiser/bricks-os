@@ -110,6 +110,7 @@ CGBA2DRenderer::drawHLine_i(int x, int y, unsigned int width)
 CGBAVideoDevice::CGBAVideoDevice()
  : CAVideoDevice()
  , pSurface_(NULL)
+ , iSurfacesFree_(0)
  , bSwap_(false)
  , pCurrentMode_(NULL)
 {
@@ -186,6 +187,7 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
     //  - BG2 Only
     //  - 1 frame fits in VRAM! Double buffering needs DMA copy from RAM to VRAM
     REG_DISPCNT = MODE_3 | BG2_ENABLE;
+    iSurfacesFree_ = 0x01;
   }
   else if((mode->width == 240) && (mode->height == 160) && (mode->bpp == 8))
   {
@@ -195,6 +197,7 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
     //  - 2 frames fit in VRAM
     //  - paletted
     REG_DISPCNT = MODE_4 | BG2_ENABLE;
+    iSurfacesFree_ = 0x03;
 
     // Set default palette (cfR3G3B2)
     for(uint32_t i(0); i < 256; i++)
@@ -223,6 +226,7 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
     //REG_BG2_XDX = (2<<8)/3; // 1.50x
     //REG_BG2_YDY = (2<<8)/3; // 1.50x
     REG_DISPCNT = MODE_5 | BG2_ENABLE;
+    iSurfacesFree_ = 0x03;
   }
   else if((mode->width == 120) && (mode->height == 80) && (mode->bpp == 16))
   {
@@ -233,10 +237,12 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
     REG_BG2_XDX = (1<<8)/2; // 2.00x
     REG_BG2_YDY = (1<<8)/2; // 2.00x
     REG_DISPCNT = MODE_5 | BG2_ENABLE;
+    iSurfacesFree_ = 0x03;
   }
 #endif // GBA
 #ifdef NDS9
   REG_DISPCNT   = MODE_5 | BG3_ENABLE;
+  iSurfacesFree_ = 0x03;
 
   // Setup VRAM banks
   REG_VRAM_A_CR = VRAM_ENABLE | VRAM_OFFSET(0) | VRAM_TYPE_MAIN_BG; // 128KiB
@@ -252,44 +258,48 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
 
 //---------------------------------------------------------------------------
 void
-CGBAVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
+CGBAVideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
-  switch(type)
+  *surface = 0;
+
+  if(((uint32_t)width == pCurrentMode_->width) && ((uint32_t)height == pCurrentMode_->height))
   {
-    case stSCREEN:
+    // Allocate one of the two available surfaces in VRAM
+    if(iSurfacesFree_ & (1<<0))
     {
+      iSurfacesFree_ &= ~(1<<0);
       CSurface * pSurface = new CSurface;
       pSurface->mode = *pCurrentMode_;
-      pSurface->p = (uint16_t *)0x6000000;
+      pSurface->p = (uint16_t *)0x06000000;
       *surface = pSurface;
-      break;
     }
-    case stOFFSCREEN:
+    else if(iSurfacesFree_ & (1<<1))
     {
-#ifdef GBA
-      if(pCurrentMode_ != (&videoModes[0]))
-      {
-        CSurface * pSurface = new CSurface;
-        pSurface->mode = *pCurrentMode_;
-        // Allocate back buffer
-        pSurface->p = (uint16_t *)0x600A000;
-        *surface = pSurface;
-      }
-      else
-        *surface = 0;
-#endif // GBA
-#ifdef NDS9
+      iSurfacesFree_ &= ~(1<<1);
       CSurface * pSurface = new CSurface;
       pSurface->mode = *pCurrentMode_;
       // Allocate back buffer
+#ifdef GBA
+      pSurface->p = (uint16_t *)0x0600A000;
+#endif // GBA
+#ifdef NDS9
       pSurface->p = (uint16_t *)0x06020000;
-      *surface = pSurface;
 #endif // NDS9
-      break;
+      *surface = pSurface;
     }
-    default:
-      *surface = 0;
-  };
+  }
+  else
+  {
+    // Allocate a surface in EWRAM/IWRAM
+    CSurface * pSurface = new CSurface;
+    pSurface->mode        = *pCurrentMode_;
+    pSurface->mode.xpitch = width;
+    pSurface->mode.ypitch = height;
+    pSurface->mode.width  = width;
+    pSurface->mode.height = height;
+    pSurface->p = new uint8_t[width * height * (pCurrentMode_->bpp / 8)];
+    *surface = pSurface;
+  }
 }
 
 //---------------------------------------------------------------------------

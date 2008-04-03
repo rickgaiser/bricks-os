@@ -38,12 +38,12 @@ public:
 };
 
 //---------------------------------------------------------------------------
-class CPS22DRenderer
- : public I2DRenderer
+class CAPS2Renderer
+ : public virtual IRenderer
 {
 public:
-  CPS22DRenderer(CSurface * surf = 0);
-  virtual ~CPS22DRenderer();
+  CAPS2Renderer(CSurface * surf = 0);
+  virtual ~CAPS2Renderer();
 
   // Surfaces
   virtual void       setSurface(CSurface * surface);
@@ -51,6 +51,33 @@ public:
 
   // Flush operations to surface
   virtual void       flush();
+
+protected:
+  // Surface we're currently rendering on
+  CPS2Surface * pSurface_;
+
+  // GIF packet for DMA transmission to GS
+  CGIFPacket    packet_;
+
+  // Data for DMA transfer to GS
+  bool bDataWaiting_;
+};
+
+//---------------------------------------------------------------------------
+class CPS22DRenderer
+ : public I2DRenderer
+ , public CAPS2Renderer
+{
+public:
+  CPS22DRenderer(CSurface * surf = 0);
+  virtual ~CPS22DRenderer();
+
+  // Surfaces
+  virtual void       setSurface(CSurface * surface){CAPS2Renderer::setSurface(surface);}
+  virtual CSurface * getSurface()                  {return CAPS2Renderer::getSurface();}
+
+  // Flush operations to surface
+  virtual void       flush()                       {CAPS2Renderer::flush();}
 
   // Color
   virtual void       setColor(color_t rgb); // cfA8R8G8B8 format color
@@ -66,14 +93,8 @@ public:
   virtual void       drawRect(int x, int y, unsigned int width, unsigned int height);
 
 private:
-  // Surface we're currently rendering on
-  CPS2Surface * pSurface_;
-
   // Current drawing color
   SColor color_;
-
-  // Data for DMA transfer to GS
-  bool bDataWaiting_;
 };
 
 //---------------------------------------------------------------------------

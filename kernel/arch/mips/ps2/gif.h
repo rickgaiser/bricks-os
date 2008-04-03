@@ -10,11 +10,100 @@
 #include "inttypes.h"
 #include "asm/arch/registers.h"
 #include "bios.h"
+#include "dma.h"
 
 
 #define GIF_AD   0x0e
 #define GIF_NOP  0x0f
 
+
+#ifdef __cplusplus
+class CGIFPacket
+{
+public:
+  CGIFPacket(uint64_t size)
+   : iPos_(0)
+   , iDMASize_(0)
+   , iHeaderSize_(0)
+  {
+    // Clip max size to 0x7fff (32767)
+    iMAXSize_ = (size <= 0x7fff) ? size : 0x7fff;
+
+    // Determine how much memory to allocate
+    uint64_t allocSize = (iMAXSize_ * 2) + 2 + (64 - 1);
+
+    // Allocate data
+    pRawData_ = new uint64_t[allocSize];
+
+    // Align to 64 byte boundry for DMA
+    pData_    = (uint64_t *)(((uint32_t)pRawData_) & (~(64 - 1)));
+  }
+
+  ~CGIFPacket()
+  {
+    if(pRawData_ != 0)
+      delete pRawData_;
+  }
+
+  void
+  reset()
+  {
+    iPos_        = 0;
+    iDMASize_    = 0;
+    iHeaderSize_ = 0;
+  }
+
+  void
+  tag(uint64_t EOP, uint64_t PRE, uint64_t PRIM, uint64_t FLG)
+  {
+    data(GIF_AD, (EOP  << 15) |
+                 (PRE  << 46) |
+                 (PRIM << 47) |
+                 (FLG  << 58) |
+                 ((uint64_t)1 << 60));
+  }
+
+  inline void
+  data(uint64_t REG, uint64_t DAT)
+  {
+    pData_[iPos_++] = DAT;
+    pData_[iPos_++] = REG;
+    iDMASize_++;
+    if((iDMASize_ - 1) == iMAXSize_)
+      send();
+  }
+
+  inline void
+  send()
+  {
+    pData_[0] |= iDMASize_ - 1; // DMA size minus the tag
+    flushCache(0);
+    SET_QWC(&REG_GIF_QWC, iDMASize_);
+    SET_MADR(&REG_GIF_MADR, pData_, 0);
+    SET_CHCR(&REG_GIF_CHCR, 1, 0, 0, 0, 0, 1, 0);
+    DMA_WAIT(&REG_GIF_CHCR);
+
+    // Reset packet information but preserve tag
+    pData_[0] &= (~0x7fff);
+    iPos_      = iHeaderSize_;
+    iDMASize_  = iHeaderSize_ - 1;
+  }
+
+  void
+  headerSize(uint64_t size)
+  {
+    iHeaderSize_ = size;
+  }
+
+private:
+  uint64_t * pRawData_;    // Not aligned data
+  uint64_t * pData_;       // Aligned data
+  uint64_t   iPos_;        // Current Data Position
+  uint64_t   iDMASize_;    // Current DMA Data Size (iNLoop_*2+2)
+  uint64_t   iMAXSize_;    // Maximum data size
+  uint64_t   iHeaderSize_; // Size to keep after sending (including tag)
+};
+#endif
 
 //---------------------------------------------------------------------------
 // GS_PACKET macros

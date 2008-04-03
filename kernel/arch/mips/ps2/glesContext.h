@@ -4,10 +4,29 @@
 
 #include "../../../../gl/softGLF.h"
 #include "../../../../gl/matrix.h"
+#include "../../../../gl/context.h"
 #include "videoDevice.h"
-#include "textures.h"
 #include "gif.h"
 
+
+#define MAX_TEXTURE_COUNT 32
+
+
+//-----------------------------------------------------------------------------
+struct STexturePS2
+{
+  bool used;
+
+  GLsizei width;
+  GLsizei height;
+
+  GLint texMinFilter;
+  GLint texMagFilter;
+  GLint texWrapS;
+  GLint texWrapT;
+
+  const void * data;
+};
 
 //-----------------------------------------------------------------------------
 class CPS2GLESContext
@@ -15,13 +34,18 @@ class CPS2GLESContext
  , public CAGLESBuffers
  , public CAGLESCull
  , public CAGLESMatrixF
- , public CAGLESTexturesPS2
+ , public CAPS2Renderer
 {
 public:
   CPS2GLESContext();
   virtual ~CPS2GLESContext();
 
-  virtual void setSurface(CSurface * surface);
+  // Surfaces
+  virtual void       setSurface(CSurface * surface){CAPS2Renderer::setSurface(surface);}
+  virtual CSurface * getSurface()                  {return CAPS2Renderer::getSurface();}
+
+  // Flush operations to surface
+  virtual void       flush()                       {CAPS2Renderer::flush();}
 
   virtual void glClear(GLbitfield mask);
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
@@ -42,6 +66,13 @@ public:
   virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
   virtual void glShadeModel(GLenum mode);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
+
+  virtual void glBindTexture(GLenum target, GLuint texture);
+  virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
+  virtual void glGenTextures(GLsizei n, GLuint *textures);
+  virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+  virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
+  virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
 
 protected:
   // Depth testing
@@ -73,6 +104,11 @@ protected:
   GLfloat     fogEnd_;
   SColorF     fogColor_;
 
+  // Textures
+  bool        texturesEnabled_;
+  STexturePS2 * pCurrentTex_;
+  STexturePS2 textures_[MAX_TEXTURE_COUNT];
+
   // Viewport
   GLint       viewportXOffset;
   GLint       viewportYOffset;
@@ -89,10 +125,7 @@ private:
   uint16_t    ps2DepthFunction_;
   bool        ps2DepthInvert_;
   uint32_t    ps2ZMax_;
-
-  CPS2Surface * pPS2Surface_;
-  bool          bDataWaiting_;
 };
 
 
-#endif // GBA_GLESCONTEXT_H
+#endif // PS2_GLESCONTEXT_H

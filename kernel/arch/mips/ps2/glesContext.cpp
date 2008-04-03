@@ -5,11 +5,6 @@
 #include "stdlib.h"
 
 
-#define clamp(f)  (f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f))
-uint32_t          ps2TexturesStart_(0);
-DECLARE_GS_PACKET(Gs3DCmdBuffer,1000);
-
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CPS2GLESContext::CPS2GLESContext()
@@ -17,7 +12,6 @@ CPS2GLESContext::CPS2GLESContext()
  , CAGLESBuffers()
  , CAGLESCull()
  , CAGLESMatrixF()
- , CAGLESTexturesPS2()
 
  , depthTestEnabled_(false)
  , depthFunction_(GL_LESS)
@@ -30,6 +24,9 @@ CPS2GLESContext::CPS2GLESContext()
  , shadingModel_(GL_FLAT)
  , lightingEnabled_(false)
  , fogEnabled_(false)
+ , texturesEnabled_(false)
+ , pCurrentTex_(NULL)
+
  , viewportXOffset(0)
  , viewportYOffset(0)
  , viewportPixelCount(0)
@@ -44,9 +41,6 @@ CPS2GLESContext::CPS2GLESContext()
  , ps2DepthFunction_(ZTST_GREATER)
  , ps2DepthInvert_(true)
  , ps2ZMax_(0xffff)
-
- , pPS2Surface_(0)
- , bDataWaiting_(false)
 {
   clCurrent.r = 0.0f;
   clCurrent.g = 0.0f;
@@ -78,11 +72,8 @@ CPS2GLESContext::CPS2GLESContext()
     lights_[iLight].enabled = false;
   }
 
-  INIT_GS_PACKET(Gs3DCmdBuffer,1000);
-
-  // Initialize the DMA buffer
-  BEGIN_GS_PACKET(Gs3DCmdBuffer);
-  GIF_TAG_AD(Gs3DCmdBuffer, 1, 0, 0, 0);
+  for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
+    textures_[idx].used = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -92,28 +83,11 @@ CPS2GLESContext::~CPS2GLESContext()
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::setSurface(CSurface * surface)
-{
-  pPS2Surface_ = (CPS2Surface *)surface;
-
-  I3DRenderer::setSurface(surface);
-
-  if(pPS2Surface_ != NULL)
-  {
-    // Set destination
-    GIF_DATA_AD(Gs3DCmdBuffer, frame_1, GS_FRAME((uint32_t)(pPS2Surface_->p) >> 13, pPS2Surface_->mode.width >> 6, pPS2Surface_->psm_, 0));
-    // Set clipping
-    GIF_DATA_AD(Gs3DCmdBuffer, scissor_1, GS_SCISSOR(0, pPS2Surface_->mode.width, 0, pPS2Surface_->mode.height));
-  }
-}
-
-//-----------------------------------------------------------------------------
-void
 CPS2GLESContext::glClear(GLbitfield mask)
 {
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    GIF_DATA_AD(Gs3DCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, 1, ZTST_ALWAYS));
+    packet_.data(test_1, GS_TEST(0, 0, 0, 0, 0, 0, 1, ZTST_ALWAYS));
   }
 
   if(mask & GL_COLOR_BUFFER_BIT)
@@ -123,15 +97,15 @@ CPS2GLESContext::glClear(GLbitfield mask)
     uint8_t b = (uint8_t)(clClear.b * 255);
     //uint8_t a = (uint8_t)(clClear.a * 255);
 
-    GIF_DATA_AD(Gs3DCmdBuffer, prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-    GIF_DATA_AD(Gs3DCmdBuffer, rgbaq, GS_RGBAQ(r, g, b, 0x80, 0));
-    GIF_DATA_AD(Gs3DCmdBuffer, xyz2, GS_XYZ2((0+GS_X_BASE)<<4, (0+GS_Y_BASE)<<4, 0));
-    GIF_DATA_AD(Gs3DCmdBuffer, xyz2, GS_XYZ2((viewportWidth+GS_X_BASE)<<4, (viewportHeight+GS_Y_BASE)<<4, 0));
+    packet_.data(prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+    packet_.data(rgbaq, GS_RGBAQ(r, g, b, 0x80, 0));
+    packet_.data(xyz2, GS_XYZ2((0+GS_X_BASE)<<4, (0+GS_Y_BASE)<<4, 0));
+    packet_.data(xyz2, GS_XYZ2((viewportWidth+GS_X_BASE)<<4, (viewportHeight+GS_Y_BASE)<<4, 0));
   }
 
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    GIF_DATA_AD(Gs3DCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+    packet_.data(test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
   }
   bDataWaiting_ = true;
 }
@@ -217,7 +191,7 @@ CPS2GLESContext::glDepthFunc(GLenum func)
 
   if(depthTestEnabled_ == true)
   {
-    GIF_DATA_AD(Gs3DCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+    packet_.data(test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
   }
 }
 
@@ -241,9 +215,9 @@ CPS2GLESContext::glDisable(GLenum cap)
     {
       depthTestEnabled_ = false;
       // Z-Buffer
-      GIF_DATA_AD(Gs3DCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_DISABLE));
+      packet_.data(zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_DISABLE));
       // Z-Buffer test
-      GIF_DATA_AD(Gs3DCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+      packet_.data(test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
     }
 */
@@ -273,13 +247,13 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   switch(mode)
   {
     case GL_TRIANGLES:
-      GIF_DATA_AD(Gs3DCmdBuffer, prim, GS_PRIM(PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      packet_.data(prim, GS_PRIM(PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
     case GL_TRIANGLE_STRIP:
-      GIF_DATA_AD(Gs3DCmdBuffer, prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      packet_.data(prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
     case GL_TRIANGLE_FAN:
-      GIF_DATA_AD(Gs3DCmdBuffer, prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      packet_.data(prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
   };
 
@@ -397,9 +371,9 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
         {
           SColorF & ambient = lights_[iLight].ambient;
           SColorF & diffuse = lights_[iLight].diffuse;
-          v.c.r = clamp((v.c.r * ambient.r) + ((v.c.r * normal) * diffuse.r));
-          v.c.g = clamp((v.c.g * ambient.g) + ((v.c.g * normal) * diffuse.g));
-          v.c.b = clamp((v.c.b * ambient.b) + ((v.c.b * normal) * diffuse.b));
+          v.c.r = clampf((v.c.r * ambient.r) + ((v.c.r * normal) * diffuse.r));
+          v.c.g = clampf((v.c.g * ambient.g) + ((v.c.g * normal) * diffuse.g));
+          v.c.b = clampf((v.c.b * ambient.b) + ((v.c.b * normal) * diffuse.b));
         }
       }
     }
@@ -407,11 +381,11 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // Fog
     if(fogEnabled_ == true)
     {
-      GLfloat partFog   = clamp((abs(v.v[3]) - fogStart_) / (fogEnd_ - fogStart_));
+      GLfloat partFog   = clampf((abs(v.v[3]) - fogStart_) / (fogEnd_ - fogStart_));
       GLfloat partColor = 1.0f - partFog;
-      v.c.r = clamp((v.c.r * partColor) + (fogColor_.r * partFog));
-      v.c.g = clamp((v.c.g * partColor) + (fogColor_.g * partFog));
-      v.c.b = clamp((v.c.b * partColor) + (fogColor_.b * partFog));
+      v.c.r = clampf((v.c.r * partColor) + (fogColor_.r * partFog));
+      v.c.g = clampf((v.c.g * partColor) + (fogColor_.g * partFog));
+      v.c.b = clampf((v.c.b * partColor) + (fogColor_.b * partFog));
     }
 */
 
@@ -425,14 +399,14 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       v.tt /= v.v[3];
       float tq = 1.0f / v.v[3];
 
-      GIF_DATA_AD(Gs3DCmdBuffer, st, GS_ST(*(uint32_t *)(&v.ts), *(uint32_t *)(&v.tt)));
-      GIF_DATA_AD(Gs3DCmdBuffer, rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, *(uint32_t *)(&tq)));
+      packet_.data(st, GS_ST(*(uint32_t *)(&v.ts), *(uint32_t *)(&v.tt)));
+      packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, *(uint32_t *)(&tq)));
     }
     else
     {
-      GIF_DATA_AD(Gs3DCmdBuffer, rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, 0));
+      packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, 0));
     }
-    GIF_DATA_AD(Gs3DCmdBuffer, xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, z));
+    packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, z));
   }
   bDataWaiting_ = true;
 }
@@ -461,28 +435,28 @@ CPS2GLESContext::glEnable(GLenum cap)
       {
         case 16:
         {
-          GIF_DATA_AD(Gs3DCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_ENABLE));
+          packet_.data(zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_ENABLE));
           ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 2);
           ps2ZMax_ = 0xffff;
           break;
         }
         case 24:
         {
-          GIF_DATA_AD(Gs3DCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
+          packet_.data(zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
           ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 3);
           ps2ZMax_ = 0xffffff;
           break;
         }
         case 32:
         {
-          GIF_DATA_AD(Gs3DCmdBuffer, zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
+          packet_.data(zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
           ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 4);
           ps2ZMax_ = 0xffffffff;
           break;
         }
       };
       // Z-Buffer test
-      GIF_DATA_AD(Gs3DCmdBuffer, test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+      packet_.data(test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
     }
 */
@@ -505,24 +479,7 @@ CPS2GLESContext::glFinish(void)
 void
 CPS2GLESContext::glFlush(void)
 {
-  if(bDataWaiting_ == true)
-  {
-    // Send packet to GS
-    SEND_GS_PACKET(Gs3DCmdBuffer);
-    bDataWaiting_ = false;
-
-    // Create new packet
-    BEGIN_GS_PACKET(Gs3DCmdBuffer);
-    GIF_TAG_AD(Gs3DCmdBuffer, 1, 0, 0, 0);
-
-    if(pPS2Surface_ != 0)
-    {
-      // Set destination
-      GIF_DATA_AD(Gs3DCmdBuffer, frame_1, GS_FRAME((uint32_t)(pPS2Surface_->p) >> 13, pPS2Surface_->mode.width >> 6, pPS2Surface_->psm_, 0));
-      // Set clipping
-      GIF_DATA_AD(Gs3DCmdBuffer, scissor_1, GS_SCISSOR(0, pPS2Surface_->mode.width, 0, pPS2Surface_->mode.height));
-    }
-  }
+  flush();
 }
 
 //-----------------------------------------------------------------------------
@@ -615,4 +572,147 @@ CPS2GLESContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportWidth      = width;
   viewportHeight     = height;
   viewportPixelCount = width * height;
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::glBindTexture(GLenum target, GLuint texture)
+{
+  if(target == GL_TEXTURE_2D)
+  {
+    pCurrentTex_ = &textures_[texture];
+
+    packet_.data(tex0_1,
+      GS_TEX0(
+        ((uint32_t)pCurrentTex_->data)>>8,   // base pointer
+        pCurrentTex_->width>>6,              // width
+        0,                                   // 32bit RGBA
+        gs_texture_wh(pCurrentTex_->width),  // width
+        gs_texture_wh(pCurrentTex_->height), // height
+        1,                                   // RGBA
+        TEX_DECAL,                           // just overwrite existing pixels
+        0, 0, 0, 0, 0));
+
+    packet_.data(tex1_1,
+      GS_TEX1(
+        0, 0,
+        pCurrentTex_->texMagFilter != GL_NEAREST,
+        pCurrentTex_->texMinFilter != GL_NEAREST,
+        0, 0, 0));
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::glDeleteTextures(GLsizei n, const GLuint *textures)
+{
+  for(GLsizei i(0); i < n; i++)
+    if(textures[i] < MAX_TEXTURE_COUNT)
+      textures_[textures[i]].used = false;
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::glGenTextures(GLsizei n, GLuint *textures)
+{
+  for(GLsizei i(0); i < n; i++)
+  {
+    bool bFound(false);
+
+    for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
+    {
+      if(textures_[idx].used == false)
+      {
+        textures_[idx].used = true;
+        textures[i] = idx;
+        bFound = true;
+        break;
+      }
+    }
+
+    if(bFound = false)
+      break;
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
+{
+/*
+  if(target == GL_TEXTURE_2D)
+  {
+    if((pCurrentTex_ != 0) && (pCurrentTex_->used == true))
+    {
+      pCurrentTex_->width        = width;
+      pCurrentTex_->height       = height;
+      pCurrentTex_->texMinFilter = GL_LINEAR;
+      pCurrentTex_->texMagFilter = GL_LINEAR;
+      pCurrentTex_->texWrapS     = GL_REPEAT;
+      pCurrentTex_->texWrapT     = GL_REPEAT;
+      pCurrentTex_->data         = (void *)ps2TexturesStart_;
+
+      // Copy to texture memory
+      // Convert everything to cfA8B8G8R8
+      switch(type)
+      {
+        case GL_UNSIGNED_BYTE:
+        {
+          gs_load_texture(0, 0, width, height, (uint32_t)pixels, ps2TexturesStart_, width);
+          break;
+        }
+        case GL_UNSIGNED_SHORT_5_6_5:
+        {
+          uint32_t * newTexture = new uint32_t[width*height];
+          for(int i(0); i < (width*height); i++)
+            newTexture[i] = BxColorFormat_Convert(cfB5G6R5, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
+          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
+          delete newTexture;
+          break;
+        }
+        case GL_UNSIGNED_SHORT_4_4_4_4:
+        {
+          uint32_t * newTexture = new uint32_t[width*height];
+          for(int i(0); i < (width*height); i++)
+            newTexture[i] = BxColorFormat_Convert(cfA4B4G4R4, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
+          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
+          delete newTexture;
+          break;
+        }
+        case GL_UNSIGNED_SHORT_5_5_5_1:
+        {
+          uint32_t * newTexture = new uint32_t[width*height];
+          for(int i(0); i < (width*height); i++)
+            newTexture[i] = BxColorFormat_Convert(cfA1B5G5R5, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
+          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
+          delete newTexture;
+          break;
+        }
+      };
+    }
+  }
+*/
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
+{
+  if((pCurrentTex_ != 0) && (target == GL_TEXTURE_2D))
+  {
+    switch(pname)
+    {
+      case GL_TEXTURE_MIN_FILTER: pCurrentTex_->texMinFilter = (GLint)param; break;
+      case GL_TEXTURE_MAG_FILTER: pCurrentTex_->texMagFilter = (GLint)param; break;
+      case GL_TEXTURE_WRAP_S:     pCurrentTex_->texWrapS     = (GLint)param; break;
+      case GL_TEXTURE_WRAP_T:     pCurrentTex_->texWrapT     = (GLint)param; break;
+    };
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
+{
+  glTexParameterf(target, pname, gl_fptof(param));
 }

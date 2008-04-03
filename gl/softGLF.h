@@ -112,10 +112,18 @@ class CSoftGLESFloat
  , public CAGLESCull
  , public CAGLESMatrixF
  , public CAGLESTextures
+ , public virtual CASoftwareRenderer
 {
 public:
   CSoftGLESFloat();
   virtual ~CSoftGLESFloat();
+
+  // Surfaces
+  virtual void       setSurface(CSurface * surface){CASoftwareRenderer::setSurface(surface);}
+  virtual CSurface * getSurface()                  {return CASoftwareRenderer::getSurface();}
+
+  // Flush operations to surface
+  virtual void       flush()                       {CASoftwareRenderer::flush();}
 
   virtual void glClear(GLbitfield mask);
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);

@@ -14,7 +14,7 @@ OBJS            =\
 
 OBJS-$(CONFIG_DEBUGGING)           += debugScreen
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
-OBJS-$(CONFIG_GL)                  += glesContext textures
+OBJS-$(CONFIG_GL)                  += glesContext
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel

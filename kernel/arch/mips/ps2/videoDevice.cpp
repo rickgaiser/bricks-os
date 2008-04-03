@@ -151,7 +151,7 @@ static const SVideoMode videoModes[] =
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
-DECLARE_GS_PACKET(Gs2DCmdBuffer,1000);
+
 DECLARE_GS_PACKET(GsVideoCmdBuffer,50);
 
 
@@ -170,68 +170,75 @@ CPS2Surface::~CPS2Surface()
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-CPS22DRenderer::CPS22DRenderer(CSurface * surface)
+CAPS2Renderer::CAPS2Renderer(CSurface * surface)
  : pSurface_(NULL)
+ , packet_(1000)
  , bDataWaiting_(false)
 {
-  INIT_GS_PACKET(Gs2DCmdBuffer,1000);
-
-  // Create new packet
-  BEGIN_GS_PACKET(Gs2DCmdBuffer);
-  GIF_TAG_AD(Gs2DCmdBuffer, 1, 0, 0, 0);
+  // Set tag
+  packet_.tag(1, 0, 0, 0);
+  // Preserve this data after sending
+  packet_.headerSize(1);
 
   setSurface(surface);
 }
 
 //---------------------------------------------------------------------------
-CPS22DRenderer::~CPS22DRenderer()
+CAPS2Renderer::~CAPS2Renderer()
 {
+  flush();
 }
 
 //---------------------------------------------------------------------------
 void
-CPS22DRenderer::setSurface(CSurface * surface)
+CAPS2Renderer::setSurface(CSurface * surface)
 {
   pSurface_ = (CPS2Surface *)surface;
 
   if(pSurface_ != NULL)
   {
+    // Reset the packet
+    packet_.reset();
+    // Set tag
+    packet_.tag(1, 0, 0, 0);
     // Set destination
-    GIF_DATA_AD(Gs2DCmdBuffer, frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.width >> 6, pSurface_->psm_, 0));
+    packet_.data(frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.width >> 6, pSurface_->psm_, 0));
     // Set clipping
-    GIF_DATA_AD(Gs2DCmdBuffer, scissor_1, GS_SCISSOR(0, pSurface_->mode.width, 0, pSurface_->mode.height));
+    packet_.data(scissor_1, GS_SCISSOR(0, pSurface_->mode.width, 0, pSurface_->mode.height));
+    // Preserve this data after sending
+    packet_.headerSize(3);
   }
 }
 
 //---------------------------------------------------------------------------
 CSurface *
-CPS22DRenderer::getSurface()
+CAPS2Renderer::getSurface()
 {
   return pSurface_;
 }
 
 //---------------------------------------------------------------------------
 void
-CPS22DRenderer::flush()
+CAPS2Renderer::flush()
 {
   if(bDataWaiting_ == true)
   {
     // Send packet to GS
-    SEND_GS_PACKET(Gs2DCmdBuffer);
+    packet_.send();
     bDataWaiting_ = false;
-
-    // Create new packet
-    BEGIN_GS_PACKET(Gs2DCmdBuffer);
-    GIF_TAG_AD(Gs2DCmdBuffer, 1, 0, 0, 0);
-
-    if(pSurface_ != 0)
-    {
-      // Set destination
-      GIF_DATA_AD(Gs2DCmdBuffer, frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.width >> 6, pSurface_->psm_, 0));
-      // Set clipping
-      GIF_DATA_AD(Gs2DCmdBuffer, scissor_1, GS_SCISSOR(0, pSurface_->mode.width, 0, pSurface_->mode.height));
-    }
   }
+}
+
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+CPS22DRenderer::CPS22DRenderer(CSurface * surface)
+ : CAPS2Renderer(surface)
+{
+}
+
+//---------------------------------------------------------------------------
+CPS22DRenderer::~CPS22DRenderer()
+{
 }
 
 //---------------------------------------------------------------------------
@@ -261,9 +268,9 @@ CPS22DRenderer::setPixel(int x, int y)
   x += GS_X_BASE;
   y += GS_Y_BASE;
 
-  GIF_DATA_AD(Gs2DCmdBuffer, prim, GS_PRIM(PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  packet_.data(prim, GS_PRIM(PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.data(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.data(xyz2, GS_XYZ2(x<<4, y<<4, 0));
   bDataWaiting_ = true;
 }
 
@@ -281,10 +288,10 @@ CPS22DRenderer::fillRect(int x, int y, unsigned int width, unsigned int height)
   x += GS_X_BASE;
   y += GS_Y_BASE;
 
-  GIF_DATA_AD(Gs2DCmdBuffer, prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, xyz2, GS_XYZ2(x<<4, y<<4, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, xyz2, GS_XYZ2((x+width)<<4, (y+height)<<4, 0));
+  packet_.data(prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.data(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.data(xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  packet_.data(xyz2, GS_XYZ2((x+width)<<4, (y+height)<<4, 0));
   bDataWaiting_ = true;
 }
 
@@ -297,10 +304,10 @@ CPS22DRenderer::drawLine(int x1, int y1, int x2, int y2)
   x2 += GS_X_BASE;
   y2 += GS_Y_BASE;
 
-  GIF_DATA_AD(Gs2DCmdBuffer, prim, GS_PRIM(PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, xyz2, GS_XYZ2(x1<<4, y1<<4, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, xyz2, GS_XYZ2(x2<<4, y2<<4, 0));
+  packet_.data(prim, GS_PRIM(PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.data(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.data(xyz2, GS_XYZ2(x1<<4, y1<<4, 0));
+  packet_.data(xyz2, GS_XYZ2(x2<<4, y2<<4, 0));
   bDataWaiting_ = true;
 }
 
@@ -325,13 +332,13 @@ CPS22DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
   x += GS_X_BASE;
   y += GS_Y_BASE;
 
-  GIF_DATA_AD(Gs2DCmdBuffer, prim, GS_PRIM(PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, xyz2, GS_XYZ2(x<<4, y<<4, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, xyz2, GS_XYZ2(x+width<<4, y<<4, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, xyz2, GS_XYZ2(x+width<<4, y+height<<4, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, xyz2, GS_XYZ2(x<<4, y+height<<4, 0));
-  GIF_DATA_AD(Gs2DCmdBuffer, xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  packet_.data(prim, GS_PRIM(PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.data(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.data(xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  packet_.data(xyz2, GS_XYZ2(x+width<<4, y<<4, 0));
+  packet_.data(xyz2, GS_XYZ2(x+width<<4, y+height<<4, 0));
+  packet_.data(xyz2, GS_XYZ2(x<<4, y+height<<4, 0));
+  packet_.data(xyz2, GS_XYZ2(x<<4, y<<4, 0));
   bDataWaiting_ = true;
 }
 
