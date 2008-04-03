@@ -9,13 +9,52 @@
 void
 test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
 {
+  int loops(256*5);
+
   if((renderer == NULL) || (surface == NULL))
     return;
 
   renderer->setSurface(surface);
 
+  // Irritating interlaced test
+  for(uint32_t i(0); i < surface->height(); i++)
+  {
+    if(i < (surface->height() >> 1))
+    {
+      if(i & 1)
+      {
+        // Red line
+        renderer->setColor(255, 0, 0);
+        renderer->drawHLine(0, i, surface->width());
+      }
+      else
+      {
+        // Green line
+        renderer->setColor(0, 255, 0);
+        renderer->drawHLine(0, i, surface->width());
+      }
+    }
+    else
+    {
+      if(i & 1)
+      {
+        // Blue line
+        renderer->setColor(0, 0, 255);
+        renderer->drawHLine(0, i, surface->width());
+      }
+      else
+      {
+        // White line
+        renderer->setColor(255, 255, 255);
+        renderer->drawHLine(0, i, surface->width());
+      }
+    }
+  }
+  renderer->flush();
+  for(int i(0); i < loops; i++)
+    device->waitVSync();
+
   // Full screen fill test
-  int loops = 256*5;
   for(int i(0); i < loops; i++)
   {
     renderer->setColor(i%256, 0, 0);
