@@ -15,6 +15,8 @@ SPS2VideoMode textmode[] =
 extern uint32_t courier_new[];
 extern uint16_t fixed_tc[];
 
+uint64_t pdata[50 * 2 + 2] __attribute__((aligned(64)));
+
 
 //---------------------------------------------------------------------------
 CPS2DebugScreen::CPS2DebugScreen()
@@ -25,14 +27,16 @@ CPS2DebugScreen::CPS2DebugScreen()
  , g2_fontbuf_w(256)
  , g2_fontbuf_h(128)
  , g2_font_tc(0)
- , g2_font_spacing(1)
- , g2_font_mag(1)
+ , packet_(50, pdata)
 {
   frameAddr_[0] = 0;
   frameAddr_[1] = 0;
 
   for(int y(0); y < TEXT_HEIGHT; y++)
     pBuffer_[y][0] = 0;
+
+  packet_.tag(1, 0, 0, 0);
+  packet_.headerSize(1);
 }
 
 //---------------------------------------------------------------------------
@@ -52,9 +56,8 @@ CPS2DebugScreen::init()
   cls();
 
   // Set font
-  g2_set_font(courier_new, 256, 128, fixed_tc);
-  g2_set_font_spacing(0);
-  g2_set_font_mag(1);
+  g2_font_tc = fixed_tc;
+  gs_load_texture(0, 0, 256, 128, (uint32_t)courier_new, g2_fontbuf_addr, g2_fontbuf_w);
 
   return 0;
 }
@@ -101,7 +104,7 @@ CPS2DebugScreen::write(const void * data, size_t size, loff_t *)
 
   // Draw all lines
   for(int y(0); y < TEXT_HEIGHT; y++)
-    g2_out_text(15, 15 * y,  pBuffer_[y]);
+    printLine(15, 15 * y,  pBuffer_[y]);
 
   return 0;
 }
@@ -110,15 +113,11 @@ CPS2DebugScreen::write(const void * data, size_t size, loff_t *)
 void
 CPS2DebugScreen::cls()
 {
-  BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-
-  GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(0, 0, 0, 0x80, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(gs_origin_x<<4, gs_origin_y<<4, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2((gs_origin_x+pCurrentPS2Mode_->width+1)<<4, (gs_origin_y+pCurrentPS2Mode_->height+1)<<4, 0));
-
-  SEND_GS_PACKET(gs_dma_buf);
+  packet_.data(prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.data(rgbaq, GS_RGBAQ(0, 0, 0, 0x80, 0));
+  packet_.data(xyz2, GS_XYZ2(gs_origin_x<<4, gs_origin_y<<4, 0));
+  packet_.data(xyz2, GS_XYZ2((gs_origin_x+pCurrentPS2Mode_->width+1)<<4, (gs_origin_y+pCurrentPS2Mode_->height+1)<<4, 0));
+  packet_.send();
 }
 
 //---------------------------------------------------------------------------
@@ -182,60 +181,30 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
       0xFF  // Alpha Value = 1.0
   );
 
-  g2_set_visible_frame(0);
-  g2_set_active_frame(0);
+  // Display buffer
+  REG_GS_DISPFB1  = GS_SET_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0, 0);
+  // Render buffer
+  packet_.data(frame_1, GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+  packet_.send();
 
   REG_GS_DISPLAY1 = pCurrentPS2Mode_->display;
   //REG_GS_DISPLAY2 = pCurrentPS2Mode_->display;
 
-
-  BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
   // Use drawing parameters from PRIM register
-  GIF_DATA_AD(gs_dma_buf, prmodecont, 1);
+  packet_.data(prmodecont, 1);
   // Setup frame buffers. Point to 0 initially.
-  GIF_DATA_AD(gs_dma_buf, frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+  packet_.data(frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
   // Displacement between Primitive and Window coordinate systems.
-  GIF_DATA_AD(gs_dma_buf, xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
+  packet_.data(xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
   // Clip to frame buffer.
-  GIF_DATA_AD(gs_dma_buf, scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
+  packet_.data(scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
 
-/*
-  // Setup test_1 register to allow transparent texture regions where A=0
-  GIF_DATA_AD(gs_dma_buf, test_1,
-      GS_TEST(
-          1,                        // Alpha Test ON
-          ATST_NOTEQUAL, 0x00,  // Reject pixels with A=0
-          AFAIL_KEEP,               // Don't update frame or Z buffers
-          0, 0, 0, 0));         // No Destination Alpha or Z-Buffer Tests
-
-  // Setup the ALPHA_1 register to correctly blend edges of
-  // pre-antialiased fonts using Alpha Blending stage.
-  // The blending formula is
-  //   PIXEL=(SRC-FRAME)*SRC_ALPHA>>7+FRAME
-  GIF_DATA_AD(gs_dma_buf, alpha_1,
-      GS_ALPHA(
-          0,            // A - source
-          1,            // B - frame buffer
-          0,            // C - alpha from source
-          1,            // D - frame buffer
-          0));      // FIX - not needed
-*/
-
-  SEND_GS_PACKET(gs_dma_buf);
+  packet_.send();
 }
 
 //---------------------------------------------------------------------------
 void
-CPS2DebugScreen::g2_set_font(uint32_t *data, uint16_t w, uint16_t h, uint16_t *tc)
-{
-  g2_font_tc = tc;
-  gs_load_texture(0, 0, w, h, (uint32_t)data, g2_fontbuf_addr, g2_fontbuf_w);
-}
-
-//---------------------------------------------------------------------------
-void
-CPS2DebugScreen::g2_out_text(uint16_t x, uint16_t y, char *str)
+CPS2DebugScreen::printLine(uint16_t x, uint16_t y, char * str)
 {
   char c;                   // current character
   uint16_t * tc;            // current texture coordinates [4]
@@ -258,10 +227,7 @@ CPS2DebugScreen::g2_out_text(uint16_t x, uint16_t y, char *str)
     h  = y1-y0+1;
 
     // Draw a sprite with current character mapped onto it
-    BEGIN_GS_PACKET(gs_dma_buf);
-    GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-
-    GIF_DATA_AD(gs_dma_buf, tex0_1,
+    packet_.data(tex0_1,
       GS_TEX0(
         g2_fontbuf_addr/256,            // base pointer
         (g2_fontbuf_w)/64,              // width
@@ -272,16 +238,16 @@ CPS2DebugScreen::g2_out_text(uint16_t x, uint16_t y, char *str)
         TEX_DECAL,                      // just overwrite existing pixels
         0,0,0,0,0));
 /*
-    GIF_DATA_AD(gs_dma_buf, tex1_1,
+    packet_.data(tex1_1,
       GS_TEX1(
         0, 0,
         FILTER_LINEAR,
         FILTER_LINEAR,
         0, 0, 0));
 
-    GIF_DATA_AD(gs_dma_buf, clamp_1, 0x05);
+    packet_.data(clamp_1, 0x05);
 */
-    GIF_DATA_AD(gs_dma_buf, prim,
+    packet_.data(prim,
       GS_PRIM(PRIM_SPRITE,
         0,                              // flat shading
         1,                              // texture mapping ON
@@ -290,110 +256,17 @@ CPS2DebugScreen::g2_out_text(uint16_t x, uint16_t y, char *str)
         0,
         0));
 
-    GIF_DATA_AD(gs_dma_buf, uv,    GS_UV(x0<<4, y0<<4));
-    GIF_DATA_AD(gs_dma_buf, xyz2,  GS_XYZ2(x<<4, y<<4, 0));
-    GIF_DATA_AD(gs_dma_buf, uv,    GS_UV((x1+1)<<4, (y1+1)<<4));
-    GIF_DATA_AD(gs_dma_buf, xyz2,  GS_XYZ2((x+w*g2_font_mag)<<4, (y+h*g2_font_mag)<<4, 0));
-
-    SEND_GS_PACKET(gs_dma_buf);
+    packet_.data(uv,    GS_UV(x0<<4, y0<<4));
+    packet_.data(xyz2,  GS_XYZ2(x<<4, y<<4, 0));
+    packet_.data(uv,    GS_UV((x1+1)<<4, (y1+1)<<4));
+    packet_.data(xyz2,  GS_XYZ2((x+w)<<4, (y+h)<<4, 0));
+    packet_.send();
 
     // Advance drawing position
-    x += (w + g2_font_spacing) * g2_font_mag;
+    x += w;
 
     // Get next character
     str++;
     c = *str;
   }
-}
-
-//---------------------------------------------------------------------------
-void
-CPS2DebugScreen::g2_set_font_color(uint8_t red, uint8_t green, uint8_t blue)
-{
-  uint64_t x0;
-  uint64_t y0;
-  uint64_t x1;
-  uint64_t y1;
-
-  x0 = gs_origin_x-10;
-  y0 = gs_origin_y-10;
-  x1 = g2_fontbuf_w + gs_origin_x;
-  y1 = g2_fontbuf_h + gs_origin_y;
-
-  BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-
-  // Restore the frame buffer to the current active frame buffer.
-  GIF_DATA_AD(gs_dma_buf, frame_1,
-    GS_FRAME(
-      g2_fontbuf_addr/8192,
-      pCurrentPS2Mode_->width/64,
-      pCurrentPS2Mode_->psm,
-      0));
-
-  // Draw the colored rectangle over the entire Font Bitmap.
-  GIF_DATA_AD(gs_dma_buf, prim, GS_PRIM(PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
-  //GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-
-  GIF_DATA_AD(gs_dma_buf, rgbaq, GS_RGBAQ(red, green, blue, 0x80, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x0<<4, y0<<4, 0));
-  GIF_DATA_AD(gs_dma_buf, xyz2, GS_XYZ2(x1<<4, y1<<4, 0));
-
-  // Restore the frame buffer to the current active frame buffer.
-  GIF_DATA_AD(gs_dma_buf, frame_1,
-    GS_FRAME(
-      frameAddr_[0]/8192,
-      pCurrentPS2Mode_->width/64,
-      pCurrentPS2Mode_->psm,
-      0));
-
-  SEND_GS_PACKET(gs_dma_buf);
-}
-
-//---------------------------------------------------------------------------
-void
-CPS2DebugScreen::g2_set_font_spacing(uint16_t s)
-{
-  g2_font_spacing = s;
-}
-
-//---------------------------------------------------------------------------
-uint16_t
-CPS2DebugScreen::g2_get_font_spacing(void)
-{
-  return(g2_font_spacing);
-}
-
-//---------------------------------------------------------------------------
-void
-CPS2DebugScreen::g2_set_font_mag(uint16_t m)
-{
-  g2_font_mag = m;
-}
-
-//---------------------------------------------------------------------------
-uint16_t
-CPS2DebugScreen::g2_get_font_mag(void)
-{
-  return(g2_font_mag);
-}
-
-//---------------------------------------------------------------------------
-void
-CPS2DebugScreen::g2_set_visible_frame(uint8_t frame)
-{
-  REG_GS_DISPFB1  = GS_SET_DISPFB(frameAddr_[frame] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0, 0);
-//  REG_GS_DISPFB2  = GS_SET_DISPFB(frameAddr_[frame] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0, 0);
-}
-
-//---------------------------------------------------------------------------
-void
-CPS2DebugScreen::g2_set_active_frame(uint8_t frame)
-{
-  BEGIN_GS_PACKET(gs_dma_buf);
-  GIF_TAG_AD(gs_dma_buf, 1, 0, 0, 0);
-
-  GIF_DATA_AD(gs_dma_buf, frame_1, GS_FRAME(frameAddr_[frame] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
-
-  SEND_GS_PACKET(gs_dma_buf);
 }

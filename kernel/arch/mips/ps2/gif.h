@@ -21,7 +21,7 @@
 class CGIFPacket
 {
 public:
-  CGIFPacket(uint64_t size)
+  CGIFPacket(uint64_t size, uint64_t * data = 0)
    : iPos_(0)
    , iDMASize_(0)
    , iHeaderSize_(0)
@@ -29,14 +29,21 @@ public:
     // Clip max size to 0x7fff (32767)
     iMAXSize_ = (size <= 0x7fff) ? size : 0x7fff;
 
-    // Determine how much memory to allocate
-    uint64_t allocSize = (iMAXSize_ * 2) + 2 + (64 - 1);
+    if(data != 0)
+    {
+      pData_ = data;
+    }
+    else
+    {
+      // Determine how much memory to allocate
+      uint64_t allocSize = (iMAXSize_ * 2) + 2 + (64 - 1);
 
-    // Allocate data
-    pRawData_ = new uint64_t[allocSize];
+      // Allocate data
+      pRawData_ = new uint64_t[allocSize];
 
-    // Align to 64 byte boundry for DMA
-    pData_    = (uint64_t *)(((uint32_t)pRawData_) & (~(64 - 1)));
+      // Align to 64 byte boundry for DMA
+      pData_    = (uint64_t *)((((uint32_t)pRawData_) + (64 - 1)) & (~(64 - 1)));
+    }
   }
 
   ~CGIFPacket()
@@ -63,7 +70,7 @@ public:
                  ((uint64_t)1 << 60));
   }
 
-  inline void
+  void
   data(uint64_t REG, uint64_t DAT)
   {
     pData_[iPos_++] = DAT;
@@ -73,7 +80,7 @@ public:
       send();
   }
 
-  inline void
+  void
   send()
   {
     pData_[0] |= iDMASize_ - 1; // DMA size minus the tag
@@ -85,8 +92,8 @@ public:
 
     // Reset packet information but preserve tag
     pData_[0] &= (~0x7fff);
-    iPos_      = iHeaderSize_;
-    iDMASize_  = iHeaderSize_ - 1;
+    iPos_      = iHeaderSize_ << 1;
+    iDMASize_  = iHeaderSize_;
   }
 
   void
@@ -99,7 +106,7 @@ private:
   uint64_t * pRawData_;    // Not aligned data
   uint64_t * pData_;       // Aligned data
   uint64_t   iPos_;        // Current Data Position
-  uint64_t   iDMASize_;    // Current DMA Data Size (iNLoop_*2+2)
+  uint64_t   iDMASize_;    // Current DMA Data Size
   uint64_t   iMAXSize_;    // Maximum data size
   uint64_t   iHeaderSize_; // Size to keep after sending (including tag)
 };

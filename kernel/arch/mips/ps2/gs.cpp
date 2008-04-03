@@ -11,6 +11,10 @@
 #define MAX_TRANSFER  16384
 
 
+uint64_t gifData_Data[50 * 2 + 2] __attribute__((aligned(64)));
+CGIFPacket gifData(50, gifData_Data);
+
+
 //---------------------------------------------------------------------------
 void
 gs_load_texture(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t data_adr, uint32_t dest_adr, uint16_t dest_w)
@@ -20,26 +24,13 @@ gs_load_texture(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t data_ad
   uint32_t current;             // number of pixels to transfer in current DMA
   uint32_t qtotal;              // total number of qwords of data to transfer
 
-  DECLARE_GS_PACKET(GsCmdBuffer,50);
-  INIT_GS_PACKET(GsCmdBuffer,50);
-
-  BEGIN_GS_PACKET(GsCmdBuffer);
-  GIF_TAG_AD(GsCmdBuffer, 1, 0, 0, 0);
-  GIF_DATA_AD(GsCmdBuffer, bitbltbuf,
-    GS_BITBLTBUF(0, 0, 0,
-      dest_adr/256,             // frame buffer address
-      dest_w/64,                // frame buffer width
-      0));
-  GIF_DATA_AD(GsCmdBuffer, trxpos,
-    GS_TRXPOS(
-      0,
-      0,
-      x,
-      y,
-      0));                      // left to right/top to bottom
-  GIF_DATA_AD(GsCmdBuffer, trxreg, GS_TRXREG(w, h));
-  GIF_DATA_AD(GsCmdBuffer, trxdir, GS_TRXDIR(XDIR_EE_GS));
-  SEND_GS_PACKET(GsCmdBuffer);
+  gifData.reset();
+  gifData.tag(1, 0, 0, 0);
+  gifData.data(bitbltbuf, GS_BITBLTBUF(0, 0, 0, dest_adr >> 8, dest_w >> 6, 0));
+  gifData.data(trxpos,    GS_TRXPOS(0, 0, x, y, 0));
+  gifData.data(trxreg, GS_TRXREG(w, h));
+  gifData.data(trxdir, GS_TRXDIR(XDIR_EE_GS));
+  gifData.send();
 
   qtotal = w*h/4;               // total number of quadwords to transfer.
   current = qtotal % MAX_TRANSFER;// work out if a partial buffer transfer is needed.
@@ -49,8 +40,12 @@ gs_load_texture(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t data_ad
     current = MAX_TRANSFER;     // start with a full buffer
     frac=0;                     // and don't do extra partial buffer first
   }
-  for(i=0; i<(qtotal/MAX_TRANSFER)+frac; i++)
+
+  for(i=0; i < (qtotal / MAX_TRANSFER) + frac; i++)
   {
+    DECLARE_GS_PACKET(GsCmdBuffer,50);
+    INIT_GS_PACKET(GsCmdBuffer,50);
+
     BEGIN_GS_PACKET(GsCmdBuffer);
     GIF_TAG_IMG(GsCmdBuffer, current);
     SEND_GS_PACKET(GsCmdBuffer);
@@ -65,18 +60,24 @@ gs_load_texture(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t data_ad
   }
 
   // Access the TEXFLUSH register with anything to flush the texture
-  BEGIN_GS_PACKET(GsCmdBuffer);
-  GIF_TAG_AD(GsCmdBuffer, 1, 0, 0, 0);
-  GIF_DATA_AD(GsCmdBuffer, texflush, 0x42);
-  SEND_GS_PACKET(GsCmdBuffer);
+  gifData.reset();
+  gifData.tag(1, 0, 0, 0);
+  gifData.data(texflush, 0x42);
+  gifData.send();
 }
 
 //---------------------------------------------------------------------------
-uint16_t gs_texture_wh(uint16_t n)
+uint16_t
+gs_texture_wh(uint16_t n)
 {
-  uint16_t l=0;
+  uint16_t l(0);
 
   n--;
-  while(n>0) n>>=1, l++;
-  return(l);
+  while(n > 0)
+  {
+    n >>= 1;
+    l++;
+  }
+
+  return l;
 }

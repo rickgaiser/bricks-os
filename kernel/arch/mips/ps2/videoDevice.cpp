@@ -152,8 +152,9 @@ static const SVideoMode videoModes[] =
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
 
-DECLARE_GS_PACKET(GsVideoCmdBuffer,50);
 
+uint64_t packet_Data[50 * 2 + 2] __attribute__((aligned(64)));
+CGIFPacket packet_(50, packet_Data);
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -175,6 +176,8 @@ CAPS2Renderer::CAPS2Renderer(CSurface * surface)
  , packet_(1000)
  , bDataWaiting_(false)
 {
+  // Reset the packet
+  packet_.reset();
   // Set tag
   packet_.tag(1, 0, 0, 0);
   // Preserve this data after sending
@@ -350,7 +353,6 @@ CPS2VideoDevice::CPS2VideoDevice()
  , pCurrentMode_(NULL)
  , pCurrentPS2Mode_(NULL)
 {
-  INIT_GS_PACKET(GsVideoCmdBuffer,50);
 }
 
 //---------------------------------------------------------------------------
@@ -445,19 +447,17 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
   REG_GS_DISPLAY1 = pCurrentPS2Mode_->display;
   //REG_GS_DISPLAY2 = pCurrentPS2Mode_->display;
 
-  BEGIN_GS_PACKET(GsVideoCmdBuffer);
-  GIF_TAG_AD(GsVideoCmdBuffer, 1, 0, 0, 0);
-
+  packet_.reset();
+  packet_.tag(1, 0, 0, 0);
   // Use drawing parameters from PRIM register
-  GIF_DATA_AD(GsVideoCmdBuffer, prmodecont, 1);
+  packet_.data(prmodecont, 1);
   // Setup frame buffers. Point to 0 initially.
-  GIF_DATA_AD(GsVideoCmdBuffer, frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+  packet_.data(frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
   // Displacement between Primitive and Window coordinate systems.
-  GIF_DATA_AD(GsVideoCmdBuffer, xyoffset_1, GS_XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
+  packet_.data(xyoffset_1, GS_XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
   // Clip to frame buffer.
-  GIF_DATA_AD(GsVideoCmdBuffer, scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
-
-  SEND_GS_PACKET(GsVideoCmdBuffer);
+  packet_.data(scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
+  packet_.send();
 }
 
 //---------------------------------------------------------------------------
@@ -534,29 +534,17 @@ CPS2VideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface 
   CPS2Surface * pDest   = (CPS2Surface *)dest;
   CPS2Surface * pSource = (CPS2Surface *)source;
 
-  BEGIN_GS_PACKET(GsVideoCmdBuffer);
-  GIF_TAG_AD(GsVideoCmdBuffer, 1, 0, 0, 0);
-
-  GIF_DATA_AD(GsVideoCmdBuffer, bitbltbuf,
-    GS_BITBLTBUF(
-      ((uint32_t)pSource->p)>>8,      // source address
-      pSource->mode.width>>6,         // source buffer width
-      pSource->psm_,
-      ((uint32_t)pDest->p)>>8,        // dest address
-      pDest->mode.width>>6,           // dest buffer width
-      pDest->psm_));
-  GIF_DATA_AD(GsVideoCmdBuffer, trxpos,
-    GS_TRXPOS(
-      sx,
-      sy,
-      dx,
-      dy,
-      0));                      // left to right/top to bottom
-  GIF_DATA_AD(GsVideoCmdBuffer, trxreg,
-    GS_TRXREG(
-      w,
-      h));
-  GIF_DATA_AD(GsVideoCmdBuffer, trxdir, GS_TRXDIR(XDIR_GS_GS));
-
-  SEND_GS_PACKET(GsVideoCmdBuffer);
+  packet_.reset();
+  packet_.tag(1, 0, 0, 0);
+  packet_.data(bitbltbuf, GS_BITBLTBUF(
+                            ((uint32_t)pSource->p)>>8,
+                            pSource->mode.width>>6,
+                            pSource->psm_,
+                            ((uint32_t)pDest->p)>>8,
+                            pDest->mode.width>>6,
+                            pDest->psm_));
+  packet_.data(trxpos,    GS_TRXPOS(sx, sy, dx, dy, 0));
+  packet_.data(trxreg,    GS_TRXREG(w, h));
+  packet_.data(trxdir,    GS_TRXDIR(XDIR_GS_GS));
+  packet_.send();
 }
