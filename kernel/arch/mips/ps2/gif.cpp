@@ -68,7 +68,7 @@ CGIFPacket::sendImage(uint32_t source, uint32_t size)
   while(qtotal > 0)
   {
     // Total send size of data
-    uint32_t sendSize = (qtotal < DMA_MAX_QWTRANSFER) ? qtotal : DMA_MAX_QWTRANSFER;
+    uint32_t sendSize = (qtotal > DMA_MAX_QWTRANSFER) ? DMA_MAX_QWTRANSFER : qtotal;
     pData_[0] &= (~0x7fff);
     pData_[0] |= sendSize;
 

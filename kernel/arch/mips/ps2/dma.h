@@ -11,8 +11,8 @@
 
 // Start DMA transfer to GS
 #define DMA_TO_GS_START(data, size) \
-  REG_GIF_QWC  = DMA_QWC(iDMASize_); \
-  REG_GIF_MADR = DMA_MADR(pData_, 0); \
+  REG_GIF_QWC  = DMA_QWC(size); \
+  REG_GIF_MADR = DMA_MADR(data, 0); \
   REG_GIF_CHCR = DMA_CHCR(1, 0, 0, 0, 0, 1, 0)
 // Wait for DMA transfer to complete
 #define DMA_WAIT() \
