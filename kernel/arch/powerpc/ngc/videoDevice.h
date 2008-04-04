@@ -4,6 +4,7 @@
 
 #include "kernel/videoManager.h"
 #include "kernel/2dRenderer.h"
+#include "../../../../gl/softGLF.h"
 
 
 //---------------------------------------------------------------------------
@@ -32,6 +33,19 @@ public:
   // Color
   virtual void setColor(color_t rgb);
   virtual void setColor(uint8_t r, uint8_t g, uint8_t b);
+};
+
+//-----------------------------------------------------------------------------
+class CNGC3DRenderer
+ : public CSoftGLESFloat
+{
+public:
+  CNGC3DRenderer();
+  virtual ~CNGC3DRenderer();
+
+  // Flush operations to surface
+  virtual void flush();
+  virtual void glFlush(){flush();}
 };
 
 //---------------------------------------------------------------------------

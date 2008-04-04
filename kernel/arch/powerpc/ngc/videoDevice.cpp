@@ -1,6 +1,5 @@
 #include "videoDevice.h"
 #include "asm/arch/registers.h"
-#include "../../../../gl/softGLF.h"
 #include <gccore.h>
 
 
@@ -48,8 +47,8 @@ static const uint32_t videoRegs[6][32] =
   },
 };
 
-#define DEFAULT_VIDEO_MODE_PAL  videoModes[3] // PAL:  640x576x32
-#define DEFAULT_VIDEO_MODE_NTSC videoModes[1] // NTSC: 640x480x32
+#define DEFAULT_VIDEO_MODE_PAL  videoModes[2] // PAL:  640x576x32
+#define DEFAULT_VIDEO_MODE_NTSC videoModes[0] // NTSC: 640x480x32
 static const SVideoMode videoModes[] =
 {
   // NTSC 480i60
@@ -208,6 +207,49 @@ CNGC2DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
+CNGC3DRenderer::CNGC3DRenderer()
+{
+}
+
+//---------------------------------------------------------------------------
+CNGC3DRenderer::~CNGC3DRenderer()
+{
+}
+
+//---------------------------------------------------------------------------
+void
+CNGC3DRenderer::flush()
+{
+  if(renderSurface->mode.width == 640)
+  {
+    // BitBlt RGB Surface to Native Surface
+    uint32_t * source = (uint32_t *)(((CNGCSurface *)renderSurface)->p);
+    uint32_t * dest   = (uint32_t *)(((CNGCSurface *)renderSurface)->pn);
+    SColor     pixel1;
+    SColor     pixel2;
+
+    uint32_t height = renderSurface->mode.height;
+    while(height--)
+    {
+      uint32_t width = renderSurface->mode.width >> 1;
+      while(width--)
+      {
+        pixel1.color = *source++;
+        pixel2.color = *source++;
+
+        *dest++ = rgbrgb2yuyv(pixel1.r,
+                              pixel1.g,
+                              pixel1.b,
+                              pixel2.r,
+                              pixel2.g,
+                              pixel2.b);
+      }
+    }
+  }
+}
+
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 CNGCVideoDevice::CNGCVideoDevice()
  : CAVideoDevice()
  , pSurface_(NULL)
@@ -272,7 +314,7 @@ CNGCVideoDevice::setMode(const SVideoMode * mode)
 
 //---------------------------------------------------------------------------
 #define mallocSurface(size) \
-  MEM_K0_TO_K1(((uint32_t)new uint8_t[size + 0x3]) & (~0x3))
+  MEM_K0_TO_K1(((uint32_t)new uint8_t[size + 0x1f]) & (~0x1f))
 //---------------------------------------------------------------------------
 void
 CNGCVideoDevice::getSurface(CSurface ** surface, int width, int height)
@@ -309,7 +351,7 @@ CNGCVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 void
 CNGCVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
-  *renderer = new CSoftGLESFloat;
+  *renderer = new CNGC3DRenderer;
 }
 
 //---------------------------------------------------------------------------
