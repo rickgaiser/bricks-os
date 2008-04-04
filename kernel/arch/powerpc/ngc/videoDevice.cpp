@@ -53,10 +53,10 @@ static const uint32_t videoRegs[6][32] =
 static const SVideoMode videoModes[] =
 {
   // NTSC 480i60
-  {640, 480, 320, 480, 32, cfA8R8G8B8}, // RGB Surface
+  {640, 480, 640, 480, 32, cfA8R8G8B8}, // RGB Surface
   {320, 480, 320, 480, 32, cfR8G8B8},   // Native Surface
   // PAL 576i50
-  {640, 576, 320, 576, 32, cfA8R8G8B8}, // RGB Surface
+  {640, 576, 640, 576, 32, cfA8R8G8B8}, // RGB Surface
   {320, 576, 320, 576, 32, cfR8G8B8},   // Native Surface
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
@@ -156,18 +156,18 @@ CNGC2DRenderer::~CNGC2DRenderer()
 void
 CNGC2DRenderer::flush()
 {
-  if(pSurface_->mode.format != cfR8G8B8)
+  if(pSurface_->mode.width == 640)
   {
     // BitBlt RGB Surface to Native Surface
     uint32_t * source = (uint32_t *)(((CNGCSurface *)pSurface_)->p);
     uint32_t * dest   = (uint32_t *)(((CNGCSurface *)pSurface_)->pn);
-    uint32_t   width  = pSurface_->mode.width >> 1;
-    uint32_t   height = pSurface_->mode.height;
     SColor     pixel1;
     SColor     pixel2;
 
+    uint32_t height = pSurface_->mode.height;
     while(height--)
     {
+      uint32_t width = pSurface_->mode.width >> 1;
       while(width--)
       {
         pixel1.color = *source++;
@@ -191,7 +191,7 @@ CNGC2DRenderer::setColor(color_t rgb)
   C2DRenderer::setColor(rgb);
 
   // Override color if mode is YCbYCr (hidden as a cfR8G8B8 surface)
-  if(pSurface_->mode.format == cfR8G8B8)
+  if(pSurface_->mode.width == 320)
     fmtColor_ = rgb2yuyv(color_.r, color_.g, color_.b);
 }
 
@@ -202,7 +202,7 @@ CNGC2DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
   C2DRenderer::setColor(r, g, b);
 
   // Override color if mode is YCbYCr (hidden as a cfR8G8B8 surface)
-  if(pSurface_->mode.format == cfR8G8B8)
+  if(pSurface_->mode.width == 320)
     fmtColor_ = rgb2yuyv(color_.r, color_.g, color_.b);
 }
 
@@ -289,8 +289,8 @@ CNGCVideoDevice::getSurface(CSurface ** surface, int width, int height)
   {
     CNGCSurface * pSurface = new CNGCSurface;
     pSurface->mode = *pCurrentMode_;
-    pSurface->pn   = mallocSurface(width * height * 2);
     pSurface->p    = mallocSurface(width * height * 4);
+    pSurface->pn   = mallocSurface(width * height * 2);
     *surface = pSurface;
   }
   else // Texture?
@@ -334,8 +334,8 @@ CNGCVideoDevice::displaySurface(CSurface * surface)
   {
     pSurface_ = surface;
 
-    REG_VI_XFB1 = (uint32_t)pSurface_->p;
-    REG_VI_XFB2 = (uint32_t)pSurface_->p;
+    REG_VI_XFB1 = (uint32_t)((CNGCSurface *)pSurface_)->pn;
+    REG_VI_XFB2 = (uint32_t)((CNGCSurface *)pSurface_)->pn;
   }
 }
 
