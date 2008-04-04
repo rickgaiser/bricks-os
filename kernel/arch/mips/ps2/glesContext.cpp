@@ -587,8 +587,8 @@ CPS2GLESContext::glBindTexture(GLenum target, GLuint texture)
         ((uint32_t)pCurrentTex_->data)>>8,   // base pointer
         pCurrentTex_->width>>6,              // width
         0,                                   // 32bit RGBA
-        gs_texture_wh(pCurrentTex_->width),  // width
-        gs_texture_wh(pCurrentTex_->height), // height
+        getBitNr(pCurrentTex_->width),       // width
+        getBitNr(pCurrentTex_->height),      // height
         1,                                   // RGBA
         TEX_DECAL,                           // just overwrite existing pixels
         0, 0, 0, 0, 0));
@@ -658,7 +658,7 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
       {
         case GL_UNSIGNED_BYTE:
         {
-          gs_load_texture(0, 0, width, height, (uint32_t)pixels, ps2TexturesStart_, width);
+          ee_to_gsBitBlt(0, 0, width, height, (uint32_t)pixels, ps2TexturesStart_, width);
           break;
         }
         case GL_UNSIGNED_SHORT_5_6_5:
@@ -666,7 +666,7 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
           uint32_t * newTexture = new uint32_t[width*height];
           for(int i(0); i < (width*height); i++)
             newTexture[i] = BxColorFormat_Convert(cfB5G6R5, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
-          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
+          ee_to_gsBitBlt(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
           delete newTexture;
           break;
         }
@@ -675,7 +675,7 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
           uint32_t * newTexture = new uint32_t[width*height];
           for(int i(0); i < (width*height); i++)
             newTexture[i] = BxColorFormat_Convert(cfA4B4G4R4, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
-          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
+          ee_to_gsBitBlt(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
           delete newTexture;
           break;
         }
@@ -684,7 +684,7 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
           uint32_t * newTexture = new uint32_t[width*height];
           for(int i(0); i < (width*height); i++)
             newTexture[i] = BxColorFormat_Convert(cfA1B5G5R5, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
-          gs_load_texture(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
+          ee_to_gsBitBlt(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
           delete newTexture;
           break;
         }

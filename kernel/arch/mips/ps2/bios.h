@@ -1,5 +1,5 @@
-#ifndef BIOS_H
-#define BIOS_H
+#ifndef PS2_BIOS_H
+#define PS2_BIOS_H
 
 
 #include "stdint.h"

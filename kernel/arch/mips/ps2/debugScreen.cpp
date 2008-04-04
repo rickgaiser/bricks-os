@@ -8,8 +8,8 @@
 
 SPS2VideoMode textmode[] =
 {
-  { 640,  256, 32, 0x03, GRAPH_PSM_32, NON_INTERLACED, 0, GS_SET_DISPLAY(652, 36, 3, 0, 2559,  255)}, // PAL
-  { 640,  224, 32, 0x02, GRAPH_PSM_32, NON_INTERLACED, 0, GS_SET_DISPLAY(632, 25, 3, 0, 2559,  223)}, // NTSC
+  { 640,  256, 32, 0x03, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(652, 36, 3, 0, 2559,  255)}, // PAL
+  { 640,  224, 32, 0x02, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(632, 25, 3, 0, 2559,  223)}, // NTSC
 };
 
 extern uint32_t courier_new[];
@@ -35,14 +35,14 @@ CPS2DebugScreen::CPS2DebugScreen()
   for(int y(0); y < TEXT_HEIGHT; y++)
     pBuffer_[y][0] = 0;
 
-  packet_.tag(1, 0, 0, 0);
+  packet_.tagAd(1, 0, 0, 0);
   packet_.headerSize(1);
 }
 
 //---------------------------------------------------------------------------
 CPS2DebugScreen::~CPS2DebugScreen()
 {
-  GS_RESET();
+  REG_GS_CSR = GS_CSR_RESET();
 }
 
 // -----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ CPS2DebugScreen::init()
 
   // Set font
   g2_font_tc = fixed_tc;
-  gs_load_texture(0, 0, 256, 128, (uint32_t)courier_new, g2_fontbuf_addr, g2_fontbuf_w);
+  ee_to_gsBitBlt(g2_fontbuf_addr, g2_fontbuf_w, 0, 0, 0, 256, 128, (uint32_t)courier_new);
 
   return 0;
 }
@@ -148,7 +148,7 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   dma_reset();
 
   // - Sets the RESET bit if the GS CSR register.
-  GS_RESET();
+  REG_GS_CSR = GS_CSR_RESET();
 
   // - Can someone please tell me what the sync.p
   // instruction does. Synchronizes something :-)
@@ -172,7 +172,7 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   // - I havn't attempted to understand what the Alpha parameters can do. They
   //   have been blindly copied from the 3stars demo (although they don't seem
   //   do have any impact in this simple 2D code.
-  GS_SET_PMODE(
+  REG_GS_PMODE = GS_PMODE(
       1,        // ReadCircuit1 ON
       0,        // ReadCircuit2 OFF
       1,        // Use ALP register for Alpha Blending
@@ -182,7 +182,7 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   );
 
   // Display buffer
-  REG_GS_DISPFB1  = GS_SET_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0, 0);
+  REG_GS_DISPFB1  = GS_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0, 0);
   // Render buffer
   packet_.data(frame_1, GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
   packet_.send();
@@ -232,8 +232,8 @@ CPS2DebugScreen::printLine(uint16_t x, uint16_t y, char * str)
         g2_fontbuf_addr/256,            // base pointer
         (g2_fontbuf_w)/64,              // width
         0,                              // 32bit RGBA
-        gs_texture_wh(g2_fontbuf_w),    // width
-        gs_texture_wh(g2_fontbuf_w),    // height
+        getBitNr(g2_fontbuf_w),         // width
+        getBitNr(g2_fontbuf_w),         // height
         1,                              // RGBA
         TEX_DECAL,                      // just overwrite existing pixels
         0,0,0,0,0));

@@ -1,56 +1,26 @@
-//---------------------------------------------------------------------------
-// File:    dma.h
-// Author:  Tony Saveski, t_saveski@yahoo.com
-// Notes:   Playstation2 DMA Convenience Routines and Macros
-//---------------------------------------------------------------------------
-// * Data is transfered in qword (128bit, 16bytes) units
-// * Data should be aligned on qword boundary (.align 7, aligned(16))
-//---------------------------------------------------------------------------
-#ifndef DMA_H
-#define DMA_H
+#ifndef PS2_DMA_H
+#define PS2_DMA_H
 
 
 #include "inttypes.h"
 #include "asm/arch/registers.h"
 
 
-//---------------------------------------------------------------------------
-// CHCR Register - Channel Control Register
-//---------------------------------------------------------------------------
-#define SET_CHCR(WHICH,DIR,MOD,ASP,TTE,TIE,STR,TAG) \
-  *WHICH = \
-  ((uint32_t)(DIR) << 0) | \
-  ((uint32_t)(MOD) << 2) | \
-  ((uint32_t)(ASP) << 4) | \
-  ((uint32_t)(TTE) << 6) | \
-  ((uint32_t)(TIE) << 7) | \
-  ((uint32_t)(STR) << 8) | \
-  ((uint32_t)(TAG) << 16)
+#define DMA_MAX_QWTRANSFER  (16 * 1024)                  // Max amount of qwords (16 bytes / 128 bits) to transfer  (16K)
+#define DMA_MAX_TRANSFER    (DMA_MAX_QWTRANSFER * 16)    // Max amount of bytes to transfer                        (256KiB)
 
-#define DMA_WAIT(WHICH) \
-  while((*WHICH) & (1<<8))
-
-//---------------------------------------------------------------------------
-// MADR Register - Transfer Address Register
-//---------------------------------------------------------------------------
-#define SET_MADR(WHICH,ADDR,SPR) \
-  *WHICH = \
-  ((uint32_t)(ADDR) << 0) | \
-  ((uint32_t)(SPR)  << 31)
-
-//---------------------------------------------------------------------------
-// TADR Register - Tag Address Register
-//---------------------------------------------------------------------------
-#define SET_TADR(WHICH,ADDR,SPR) \
-  *WHICH = \
-  ((uint32_t)(ADDR) << 0) | \
-  ((uint32_t)(SPR)  << 31)
-
-//---------------------------------------------------------------------------
-// QWC Register - Transfer Data Size Register
-//---------------------------------------------------------------------------
-#define SET_QWC(WHICH,SIZE) \
-  *WHICH = (uint32_t)(SIZE)
+// Start DMA transfer to GS
+#define DMA_TO_GS_START(data, size) \
+  REG_GIF_QWC  = DMA_QWC(iDMASize_); \
+  REG_GIF_MADR = DMA_MADR(pData_, 0); \
+  REG_GIF_CHCR = DMA_CHCR(1, 0, 0, 0, 0, 1, 0)
+// Wait for DMA transfer to complete
+#define DMA_WAIT() \
+  while(REG_GIF_CHCR & (1<<8))
+// Start DMA transfer to GS, and wait for completion
+#define DMA_TO_GS_SEND(data, size) \
+  DMA_TO_GS_START(data, size); \
+  DMA_WAIT()
 
 
 #ifdef __cplusplus
@@ -64,4 +34,4 @@ extern void dma_reset(void);
 #endif
 
 
-#endif // DMA_H
+#endif // PS2_DMA_H
