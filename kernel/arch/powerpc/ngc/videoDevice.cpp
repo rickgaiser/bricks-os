@@ -1,5 +1,6 @@
 #include "videoDevice.h"
 #include "asm/arch/registers.h"
+#include "../../../../gl/softGLF.h"
 #include <gccore.h>
 
 
@@ -47,12 +48,16 @@ static const uint32_t videoRegs[6][32] =
   },
 };
 
-#define DEFAULT_VIDEO_MODE_PAL  videoModes[1] // PAL:  640x576x32
-#define DEFAULT_VIDEO_MODE_NTSC videoModes[0] // NTSC: 640x480x32
+#define DEFAULT_VIDEO_MODE_PAL  videoModes[3] // PAL:  640x576x32
+#define DEFAULT_VIDEO_MODE_NTSC videoModes[1] // NTSC: 640x480x32
 static const SVideoMode videoModes[] =
 {
-  {320, 480, 320, 480, 32, cfR8G8B8}, // NTSC 480i60
-  {320, 576, 320, 576, 32, cfR8G8B8}, // PAL  576i50
+  // NTSC 480i60
+  {640, 480, 320, 480, 32, cfA8R8G8B8}, // RGB Surface
+  {320, 480, 320, 480, 32, cfR8G8B8},   // Native Surface
+  // PAL 576i50
+  {640, 576, 320, 576, 32, cfA8R8G8B8}, // RGB Surface
+  {320, 576, 320, 576, 32, cfR8G8B8},   // Native Surface
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
@@ -124,6 +129,19 @@ rgb2yuyv(uint8_t r, uint8_t g, uint8_t b)
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
+CNGCSurface::CNGCSurface()
+ : CSurface()
+ , pn(NULL)
+{
+}
+
+//---------------------------------------------------------------------------
+CNGCSurface::~CNGCSurface()
+{
+}
+
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 CNGC2DRenderer::CNGC2DRenderer()
  : C2DRenderer()
 {
@@ -136,14 +154,56 @@ CNGC2DRenderer::~CNGC2DRenderer()
 
 //---------------------------------------------------------------------------
 void
+CNGC2DRenderer::flush()
+{
+  if(pSurface_->mode.format != cfR8G8B8)
+  {
+    // BitBlt RGB Surface to Native Surface
+    uint32_t * source = (uint32_t *)(((CNGCSurface *)pSurface_)->p);
+    uint32_t * dest   = (uint32_t *)(((CNGCSurface *)pSurface_)->pn);
+    uint32_t   width  = pSurface_->mode.width >> 1;
+    uint32_t   height = pSurface_->mode.height;
+    SColor     pixel1;
+    SColor     pixel2;
+
+    while(height--)
+    {
+      while(width--)
+      {
+        pixel1.color = *source++;
+        pixel2.color = *source++;
+
+        *dest++ = rgbrgb2yuyv(pixel1.r,
+                              pixel1.g,
+                              pixel1.b,
+                              pixel2.r,
+                              pixel2.g,
+                              pixel2.b);
+      }
+    }
+  }
+}
+
+//---------------------------------------------------------------------------
+void
+CNGC2DRenderer::setColor(color_t rgb)
+{
+  C2DRenderer::setColor(rgb);
+
+  // Override color if mode is YCbYCr (hidden as a cfR8G8B8 surface)
+  if(pSurface_->mode.format == cfR8G8B8)
+    fmtColor_ = rgb2yuyv(color_.r, color_.g, color_.b);
+}
+
+//---------------------------------------------------------------------------
+void
 CNGC2DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
 {
-  color_.r = r;
-  color_.g = g;
-  color_.b = b;
-  color_.a = 255;
+  C2DRenderer::setColor(r, g, b);
 
-  fmtColor_ = rgb2yuyv(r, g, b);
+  // Override color if mode is YCbYCr (hidden as a cfR8G8B8 surface)
+  if(pSurface_->mode.format == cfR8G8B8)
+    fmtColor_ = rgb2yuyv(color_.r, color_.g, color_.b);
 }
 
 //---------------------------------------------------------------------------
@@ -191,6 +251,7 @@ CNGCVideoDevice::setMode(const SVideoMode * mode)
 {
   const uint32_t * pRegs;
 
+  // Use height to determine PAL/NTSC
   if(mode->height == 480)
   {
     // NTSC
@@ -202,6 +263,7 @@ CNGCVideoDevice::setMode(const SVideoMode * mode)
     pRegs = videoRegs[BTM_PAL];
   }
 
+  // Set registers
   for(int i(0); i < 0x20; i++)
     REG_VI_BASE[i] = pRegs[i];
 
@@ -209,25 +271,31 @@ CNGCVideoDevice::setMode(const SVideoMode * mode)
 }
 
 //---------------------------------------------------------------------------
+#define mallocSurface(size) \
+  MEM_K0_TO_K1(((uint32_t)new uint8_t[size + 0x3]) & (~0x3))
+//---------------------------------------------------------------------------
 void
-CNGCVideoDevice::getSurface(CSurface ** surface, ESurfaceType type)
+CNGCVideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
-  switch(type)
+  if(width == 320) // Native Surface
   {
-    case stSCREEN:
-    case stOFFSCREEN:
-    {
-      CSurface * pSurface = new CSurface;
-      pSurface->mode = *pCurrentMode_;
-      pSurface->p = MEM_K0_TO_K1(SYS_AllocateFramebuffer(&TVPal574IntDfScale)); // FIXME
-      *surface = pSurface;
-      break;
-    }
-    default:
-    {
-      *surface = 0;
-    }
-  };
+    CNGCSurface * pSurface = new CNGCSurface;
+    pSurface->mode = *pCurrentMode_;
+    pSurface->p    = mallocSurface(width * height * 4);
+    pSurface->pn   = pSurface->p;
+    *surface = pSurface;
+  }
+  else if(width == 640) // RGB Surface
+  {
+    CNGCSurface * pSurface = new CNGCSurface;
+    pSurface->mode = *pCurrentMode_;
+    pSurface->pn   = mallocSurface(width * height * 2);
+    pSurface->p    = mallocSurface(width * height * 4);
+    *surface = pSurface;
+  }
+  else // Texture?
+  {
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -241,7 +309,7 @@ CNGCVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 void
 CNGCVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
-  *renderer = NULL;
+  *renderer = new CSoftGLESFloat;
 }
 
 //---------------------------------------------------------------------------

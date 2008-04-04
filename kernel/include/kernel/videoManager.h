@@ -10,10 +10,14 @@
 // Main color format type, can hold any color <= 32 bits
 typedef uint32_t color_t;
 // Color struct
-struct SColor
+typedef union
 {
-  uint8_t r, g, b, a;
-};
+  struct
+  {
+    uint8_t r, g, b, a;
+  };
+  color_t color;
+} SColor;
 
 //---------------------------------------------------------------------------
 struct SColorFormatOperations
