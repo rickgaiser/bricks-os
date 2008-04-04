@@ -15,8 +15,8 @@ typedef union
 {
   struct
   {
-    uint8_t r, g, b, a;
-  };
+    uint8_t a, r, g, b;
+  } __attribute__ ((__packed__));
   color_t color;
 } SColor;
 
@@ -25,15 +25,15 @@ class CColor
 {
 public:
   inline CColor(color_t _color = 0) : color(_color) {}
-  inline CColor(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255) : r(_r), g(_g), b(_b), a(_a) {}
+  inline CColor(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255) : a(_a), r(_r), g(_g), b(_b) {}
 
 public:
   union
   {
     struct
     {
-      uint8_t r, g, b, a;
-    };
+      uint8_t a, r, g, b;
+    } __attribute__ ((__packed__));
     color_t color;
   };
 };
