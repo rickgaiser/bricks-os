@@ -4,7 +4,6 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 DIRS            =\
                 kernel \
                 libtace \
-                libtwl \
                 apps \
 
 LIBS            =\
@@ -12,7 +11,6 @@ LIBS            =\
                 kernel \
                 apps \
                 tace \
-                twl \
 
 ELF             =Bricks
 
@@ -28,10 +26,13 @@ ifneq ($(CONFIG_DIRECT_ACCESS_KERNEL_FUNC),y)
 endif
 
 ifeq ($(CONFIG_FRAMEBUFFER),y)
-  ifeq ($(CONFIG_GL),y)
-    DIRS            += gl
-    LIBS            += gl
-  endif
+  DIRS            += libtwl
+  LIBS            += twl
+endif
+
+ifeq ($(CONFIG_GL),y)
+  DIRS            += gl
+  LIBS            += gl
 endif
 
 

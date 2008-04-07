@@ -1,7 +1,11 @@
 include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch/config.make
 
 
-DIRS = halt
+ifeq ($(CONFIG_FRAMEBUFFER),y)
+  DIRS = testfb
+else
+  DIRS = halt
+endif
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.common.GNU
