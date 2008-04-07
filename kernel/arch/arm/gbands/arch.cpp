@@ -99,6 +99,11 @@ extern "C"
   void __cxa_pure_virtual()
   {
   }
+#ifdef NDS
+  void initSystem(void)
+  {
+  }
+#endif // NDS
 }
 
 // -----------------------------------------------------------------------------
