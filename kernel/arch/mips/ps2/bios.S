@@ -1,6 +1,3 @@
-#include "regs.h"
-
-
 .text
 .p2align 3
 .globl gs_set_imr

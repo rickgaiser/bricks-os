@@ -1,12 +1,3 @@
-#------------------------------------------------------------------------
-# File:    dma_asm.s
-# Author:  Tony Saveski, t_saveski@yahoo.com
-# Notes:   DMA routines implemented in assembler
-#------------------------------------------------------------------------
-
-#include "regs.h"
-
-#------------------------------------------------------------------------
 .set noreorder
 
 .text
@@ -15,7 +6,7 @@
 #------------------------------------------------------------------------
 # void dma_reset();
 #------------------------------------------------------------------------
-# Ripped straight from 3stars or something. Will 'clean up later'.
+# From 3stars demo
 #------------------------------------------------------------------------
 .align 7
 .ent dma_reset
@@ -46,8 +37,8 @@ dma_reset:
   sw    $3,0x1000E000
   nop
 
-  daddu v0,zero,zero
-  jr    ra
+  daddu $2,$0,$0
+  jr    $31
   nop
 .end dma_reset
 
