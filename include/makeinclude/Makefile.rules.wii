@@ -5,7 +5,7 @@ MY_INCL_PATH    +=\
                 -I$(DEVKITPRO)/libogc/include
 
 MY_LIBS_PATH    +=\
-                -L$(DEVKITPRO)/libogc/lib/cube
+                -L$(DEVKITPRO)/libogc/lib/wii
 
 #----------------------------------------------------------------------------
 CROSS_COMPILE   =powerpc-gekko-
@@ -14,21 +14,21 @@ CFLAGS          +=\
                 -meabi \
                 -mhard-float \
                 -DGEKKO \
-                -DNGC \
+                -DWII \
 
 CXXFLAGS        +=\
                 -mcpu=750 \
                 -meabi \
                 -mhard-float \
                 -DGEKKO \
-                -DNGC \
+                -DWII \
 
 LDFLAGS         +=\
                 -mcpu=750 \
                 -meabi \
                 -mhard-float \
                 -DGEKKO \
-                -mogc \
+                -mrvl \
                 $(MY_LIBS_PATH) \
                 -logc \
 

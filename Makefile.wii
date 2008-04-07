@@ -1,0 +1,14 @@
+MAKEFLAGS	+=--no-print-directory -s
+
+
+all: alldirs bin/wii/Bricks.dol
+
+clean:
+	make -f Makefile clean ARCH=powerpc TARGET=wii
+
+bin/wii/Bricks.dol: bin/wii/Bricks.elf
+	@echo [DOL] $@
+	powerpc-gekko-objcopy -O binary $< $@
+
+alldirs:
+	make -f Makefile all ARCH=powerpc TARGET=wii
