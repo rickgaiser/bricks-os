@@ -159,7 +159,7 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   //   for example VSync and HSync. We'll use this properly in Tutorial 2.
   // - Does anyone have code to do this without using the 0x71 syscall?
   // - I havn't gotten around to looking at any PS2 bios code yet.
-  setGsIMR(0);
+  bios::GsPutIMR(0);
 
   // - Use syscall 0x02 to setup some video mode stuff.
   // - Pretty self explanatory I think.
@@ -167,7 +167,7 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   //   like it should only set the SMODE2 register, but if I remove this syscall
   //   and set the SMODE2 register myself, it donesn't work. What else does
   //   syscall 0x02 do?
-  setGsCrt(pCurrentPS2Mode_->interlace, pCurrentPS2Mode_->mode, pCurrentPS2Mode_->field);
+  bios::SetGsCrt(pCurrentPS2Mode_->interlace, pCurrentPS2Mode_->mode, pCurrentPS2Mode_->field);
 
   // - I havn't attempted to understand what the Alpha parameters can do. They
   //   have been blindly copied from the 3stars demo (although they don't seem

@@ -45,7 +45,7 @@ CGIFPacket::send()
   pData_[0] |= iDMASize_ - 1; // Data size (DMA - tag)
 
   // Flush caches before transfer
-  flushCache(0);
+  bios::FlushCache(0);
 
   // Send
   DMA_TO_GS_SEND(pData_, iDMASize_);
@@ -73,7 +73,7 @@ CGIFPacket::sendImage(uint32_t source, uint32_t size)
     pData_[0] |= sendSize;
 
     // Flush caches before transfer
-    flushCache(0);
+    bios::FlushCache(0);
 
     // Send tag
     DMA_TO_GS_SEND(pData_, 1);
