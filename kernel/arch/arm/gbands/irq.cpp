@@ -41,16 +41,13 @@ isr(pt_regs * regs)
   // Handle other interrupts
   if(iFlags != 0)
   {
-    unsigned long iIntFlag(0x0001);
     for(int i(0); i < MAX_INTERRUPTS; i++)
     {
-      if((iFlags & iIntFlag) != 0)
+      if(iFlags & (1 << i))
       {
         // Interrupt found! Handle it!
         CInterruptManager::isr(i, 0);
-        break;
       }
-      iIntFlag <<= 1;
     }
   }
 }

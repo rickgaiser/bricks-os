@@ -12,6 +12,8 @@ OBJS            =\
                 gs \
                 task \
 
+#                irq \
+
 
 OBJS-$(CONFIG_DEBUGGING)           += debugScreen
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice

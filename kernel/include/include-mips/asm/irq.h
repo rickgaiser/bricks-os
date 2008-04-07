@@ -3,6 +3,7 @@
 
 
 #include "inttypes.h"
+#include "asm/arch/registers.h"
 
 
 #define INT_GS            0
@@ -40,9 +41,9 @@ public:
 
   int init();
 
-  inline void enable (unsigned int irq){}
-  inline void disable(unsigned int irq){}
-  inline void ack    (unsigned int irq){}
+  inline void enable (unsigned int irq){REG_INT_MASK |=  (1 << irq);}
+  inline void disable(unsigned int irq){REG_INT_MASK &= ~(1 << irq);}
+  inline void ack    (unsigned int irq){REG_INT_STAT  =  (1 << irq);}
   inline void end    (unsigned int irq){}
 };
 
