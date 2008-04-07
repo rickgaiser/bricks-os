@@ -14,10 +14,18 @@ class CNDSGLESContext
  , public CAGLESBuffers
  , public CAGLESMatrixNDSFx
  , public CAGLESTexturesNDS
+ , public virtual CASoftwareRenderer
 {
 public:
   CNDSGLESContext();
   virtual ~CNDSGLESContext();
+
+  // Surfaces
+  virtual void       setSurface(CSurface * surface){CASoftwareRenderer::setSurface(surface);}
+  virtual CSurface * getSurface()                  {return CASoftwareRenderer::getSurface();}
+
+  // Flush operations to surface
+  virtual void       flush()                       {CASoftwareRenderer::flush();}
 
   virtual void glClear(GLbitfield mask);
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
