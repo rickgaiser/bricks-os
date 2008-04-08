@@ -8,23 +8,14 @@
 
 
 //---------------------------------------------------------------------------
-class CNGCSurface
- : public CSurface
-{
-public:
-  CNGCSurface();
-  virtual ~CNGCSurface();
-
-public:
-  void * pn;
-};
+class CNGCVideoDevice;
 
 //---------------------------------------------------------------------------
 class CNGC2DRenderer
  : public C2DRenderer
 {
 public:
-  CNGC2DRenderer();
+  CNGC2DRenderer(CNGCVideoDevice * dev);
   virtual ~CNGC2DRenderer();
 
   // Flush operations to surface
@@ -33,6 +24,9 @@ public:
   // Color
   virtual void setColor(color_t rgb);
   virtual void setColor(uint8_t r, uint8_t g, uint8_t b);
+
+private:
+  CNGCVideoDevice * pDev_;
 };
 
 //-----------------------------------------------------------------------------
@@ -40,12 +34,15 @@ class CNGC3DRenderer
  : public CSoftGLESFloat
 {
 public:
-  CNGC3DRenderer();
+  CNGC3DRenderer(CNGCVideoDevice * dev);
   virtual ~CNGC3DRenderer();
 
   // Flush operations to surface
   virtual void flush();
   virtual void glFlush(){flush();}
+
+private:
+  CNGCVideoDevice * pDev_;
 };
 
 //---------------------------------------------------------------------------
@@ -70,9 +67,15 @@ public:
 
   virtual void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy);
 
+  // Flush RGB buffer to native screen
+  void flush(CSurface * surface);
+
 private:
   // Surface we're currently displaying
   CSurface * pSurface_;
+
+  // Current Native surface (RGB mode only)
+  void * pNativeSurface_;
 
   const SVideoMode * pCurrentMode_;
 };

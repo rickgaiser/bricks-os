@@ -128,21 +128,9 @@ rgb2yuyv(uint8_t r, uint8_t g, uint8_t b)
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-CNGCSurface::CNGCSurface()
- : CSurface()
- , pn(NULL)
-{
-}
-
-//---------------------------------------------------------------------------
-CNGCSurface::~CNGCSurface()
-{
-}
-
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-CNGC2DRenderer::CNGC2DRenderer()
+CNGC2DRenderer::CNGC2DRenderer(CNGCVideoDevice * dev)
  : C2DRenderer()
+ , pDev_(dev)
 {
 }
 
@@ -158,28 +146,7 @@ CNGC2DRenderer::flush()
   if(pSurface_->mode.width == 640)
   {
     // BitBlt RGB Surface to Native Surface
-    uint32_t * source = (uint32_t *)(((CNGCSurface *)pSurface_)->p);
-    uint32_t * dest   = (uint32_t *)(((CNGCSurface *)pSurface_)->pn);
-    SColor     pixel1;
-    SColor     pixel2;
-
-    uint32_t height = pSurface_->mode.height;
-    while(height--)
-    {
-      uint32_t width = pSurface_->mode.width >> 1;
-      while(width--)
-      {
-        pixel1.color = *source++;
-        pixel2.color = *source++;
-
-        *dest++ = rgbrgb2yuyv(pixel1.r,
-                              pixel1.g,
-                              pixel1.b,
-                              pixel2.r,
-                              pixel2.g,
-                              pixel2.b);
-      }
-    }
+    pDev_->flush(pSurface_);
   }
 }
 
@@ -207,7 +174,9 @@ CNGC2DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-CNGC3DRenderer::CNGC3DRenderer()
+CNGC3DRenderer::CNGC3DRenderer(CNGCVideoDevice * dev)
+ : CSoftGLESFloat()
+ , pDev_(dev)
 {
 }
 
@@ -223,28 +192,7 @@ CNGC3DRenderer::flush()
   if(renderSurface->mode.width == 640)
   {
     // BitBlt RGB Surface to Native Surface
-    uint32_t * source = (uint32_t *)(((CNGCSurface *)renderSurface)->p);
-    uint32_t * dest   = (uint32_t *)(((CNGCSurface *)renderSurface)->pn);
-    SColor     pixel1;
-    SColor     pixel2;
-
-    uint32_t height = renderSurface->mode.height;
-    while(height--)
-    {
-      uint32_t width = renderSurface->mode.width >> 1;
-      while(width--)
-      {
-        pixel1.color = *source++;
-        pixel2.color = *source++;
-
-        *dest++ = rgbrgb2yuyv(pixel1.r,
-                              pixel1.g,
-                              pixel1.b,
-                              pixel2.r,
-                              pixel2.g,
-                              pixel2.b);
-      }
-    }
+    pDev_->flush(renderSurface);
   }
 }
 
@@ -253,6 +201,7 @@ CNGC3DRenderer::flush()
 CNGCVideoDevice::CNGCVideoDevice()
  : CAVideoDevice()
  , pSurface_(NULL)
+ , pNativeSurface_(NULL)
  , pCurrentMode_(NULL)
 {
 }
@@ -321,18 +270,18 @@ CNGCVideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
   if(width == 320) // Native Surface
   {
-    CNGCSurface * pSurface = new CNGCSurface;
-    pSurface->mode = *pCurrentMode_;
-    pSurface->p    = mallocSurface(width * height * 4);
-    pSurface->pn   = pSurface->p;
+    CSurface * pSurface = new CSurface;
+    pSurface->mode  = *pCurrentMode_;
+    pSurface->p     = mallocSurface(width * height * 4);
     *surface = pSurface;
   }
   else if(width == 640) // RGB Surface
   {
-    CNGCSurface * pSurface = new CNGCSurface;
-    pSurface->mode = *pCurrentMode_;
-    pSurface->p    = mallocSurface(width * height * 4);
-    pSurface->pn   = mallocSurface(width * height * 2);
+    CSurface * pSurface = new CSurface;
+    pSurface->mode  = *pCurrentMode_;
+    pSurface->p     = mallocSurface(width * height * 4);
+    if(pNativeSurface_ == NULL)
+      pNativeSurface_ = mallocSurface(width * height * 2);
     *surface = pSurface;
   }
   else // Texture?
@@ -344,14 +293,14 @@ CNGCVideoDevice::getSurface(CSurface ** surface, int width, int height)
 void
 CNGCVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 {
-  *renderer = new CNGC2DRenderer;
+  *renderer = new CNGC2DRenderer(this);
 }
 
 //---------------------------------------------------------------------------
 void
 CNGCVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
-  *renderer = new CNGC3DRenderer;
+  *renderer = new CNGC3DRenderer(this);
 }
 
 //---------------------------------------------------------------------------
@@ -376,8 +325,16 @@ CNGCVideoDevice::displaySurface(CSurface * surface)
   {
     pSurface_ = surface;
 
-    REG_VI_XFB1 = (uint32_t)((CNGCSurface *)pSurface_)->pn;
-    REG_VI_XFB2 = (uint32_t)((CNGCSurface *)pSurface_)->pn;
+    if(pSurface_->mode.width == 320)
+    {
+      REG_VI_XFB1 = (uint32_t)pSurface_->p;
+      REG_VI_XFB2 = (uint32_t)pSurface_->p;
+    }
+    else
+    {
+      REG_VI_XFB1 = (uint32_t)pNativeSurface_;
+      REG_VI_XFB2 = (uint32_t)pNativeSurface_;
+    }
   }
 }
 
@@ -386,4 +343,35 @@ void
 CNGCVideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy)
 {
   // FIXME
+}
+
+//---------------------------------------------------------------------------
+void
+CNGCVideoDevice::flush(CSurface * surface)
+{
+  if((surface == pSurface_) && (surface->mode.width == 640))
+  {
+    uint32_t * source = (uint32_t *)surface->p;
+    uint32_t * dest   = (uint32_t *)pNativeSurface_;
+    SColor     pixel1;
+    SColor     pixel2;
+
+    uint32_t height = surface->mode.height;
+    while(height--)
+    {
+      uint32_t width = surface->mode.width >> 1;
+      while(width--)
+      {
+        pixel1.color = *source++;
+        pixel2.color = *source++;
+
+        *dest++ = rgbrgb2yuyv(pixel1.r,
+                              pixel1.g,
+                              pixel1.b,
+                              pixel2.r,
+                              pixel2.g,
+                              pixel2.b);
+      }
+    }
+  }
 }
