@@ -1,8 +1,5 @@
 .text
 .p2align 3
-.globl gs_set_imr
-.globl gs_set_crtc
-.globl ps2_flush_cache
 
 
 # -----------

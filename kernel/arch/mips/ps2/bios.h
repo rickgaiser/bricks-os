@@ -9,8 +9,8 @@ namespace bios
 {
 
 
-#define SIF_DMA_INT_I	0x2
-#define SIF_DMA_INT_O	0x4
+#define SIF_DMA_INT_I 0x2
+#define SIF_DMA_INT_O 0x4
 
 
 struct SifDmaTransfer_t
