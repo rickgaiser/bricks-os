@@ -41,12 +41,10 @@ LDFLAGS         =\
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
-ifeq ($(CONFIG_GBA_MULTIBOOT),y)
-$(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
-	@echo [LD ] $@
-	$(CXX) -specs=$(BRICKS_ROOT)/include/makeinclude/gba_mb.specs $(LDFLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@
-else
-$(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
+%.elf: $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [LD ] $@
 	$(CXX) -specs=$(BRICKS_ROOT)/include/makeinclude/gba_cart.specs $(LDFLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@
-endif
+
+%_mb.elf: $(MY_OBJS) $(MY_LIBS_DEP)
+	@echo [LD ] $@
+	$(CXX) -specs=$(BRICKS_ROOT)/include/makeinclude/gba_mb.specs   $(LDFLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@

@@ -1,7 +1,7 @@
 MAKEFLAGS	+=--no-print-directory -s
 
 
-all: alldirs bin/gba/Bricks.gba
+all: alldirs bin/gba/Bricks.gba bin/gba/Bricks_mb.gba
 
 clean:
 	make -f Makefile clean ARCH=arm TARGET=gba
@@ -9,7 +9,12 @@ clean:
 bin/gba/Bricks.gba: bin/gba/Bricks.elf
 	@echo [GBA] $@
 	arm-eabi-objcopy -O binary $< $@
-	gbafix bin/gba/Bricks.gba -tBricks-OS -cBRKS -mOS
+	gbafix $@ -tBricks-OS -cBRKS -mOS
+
+bin/gba/Bricks_mb.gba: bin/gba/Bricks_mb.elf
+	@echo [GBA] $@
+	arm-eabi-objcopy -O binary $< $@
+	gbafix $@ -tBricks-OS -cBRKS -mOS
 
 alldirs:
 	make -f Makefile all ARCH=arm TARGET=gba

@@ -15,6 +15,10 @@ LIBS            =\
 ELF             =Bricks
 
 
+ifeq ($(TARGET),gba)
+ELF             +=Bricks_mb
+endif
+
 ifeq ($(CONFIG_BUILTIN_LIBC),y)
   DIRS            += libc
   LIBS            += tc

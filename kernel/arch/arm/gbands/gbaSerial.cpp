@@ -711,8 +711,8 @@ CGBASerial::multiBoot()
   }
 
   extern char __text_start;
-  extern char _end;
-  uint32_t length = (uint32_t)(&_end - &__text_start - 0xc0);
+  extern char __end__;
+  uint32_t length = (uint32_t)(&__end__ - &__text_start - 0xc0);
   length = (length + 0xf) & ~0xf; // 16 byte units
 
   MultiBootParam mbp;
