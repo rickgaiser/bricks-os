@@ -445,12 +445,16 @@
 #define REG_GIF_P3CNT         (*(vuint32_t *)(0x10003090)) // PATH3 Count Register
 #define REG_GIF_P3TAG         (*(vuint32_t *)(0x100030a0)) // PATH3 Tag Register
 
-// Graphics InterFace (GIF) DMA channel registers
-#define REG_GIF_CHCR          (*(vuint32_t *)(0x1000a000)) // GIF Channel Control Register
-#define REG_GIF_MADR          (*(vuint32_t *)(0x1000a010)) // Transfer Address Register
-#define REG_GIF_QWC           (*(vuint32_t *)(0x1000a020)) // Transfer Size Register (in qwords)
-#define REG_GIF_TADR          (*(vuint32_t *)(0x1000a030))
-
+// DMA registers: Graphics InterFace (GIF) channel
+#define REG_DMA_GIF_CHCR      (*(vuint32_t *)(0x1000a000)) // GIF Channel Control Register
+#define REG_DMA_GIF_MADR      (*(vuint32_t *)(0x1000a010)) // Transfer Address Register
+#define REG_DMA_GIF_QWC       (*(vuint32_t *)(0x1000a020)) // Transfer Size Register (in qwords)
+#define REG_DMA_GIF_TADR      (*(vuint32_t *)(0x1000a030))
+// DMA registers: Serial InterFace (SIF) channel
+#define REG_DMA_SIF0_CHCR     (*(vuint32_t *)(0x1000c000))
+#define REG_DMA_SIF0_MADR     (*(vuint32_t *)(0x1000c010))
+#define REG_DMA_SIF0_QWC      (*(vuint32_t *)(0x1000c020))
+#define REG_DMA_SIF0_TADR     (*(vuint32_t *)(0x1000c030))
 // DMA registers
 #define REG_DMA_CTRL          (*(vuint32_t *)(0x1000e000)) // DMA Control Register
 #define REG_DMA_STAT          (*(vuint32_t *)(0x1000e010)) // Interrupt Status Register
