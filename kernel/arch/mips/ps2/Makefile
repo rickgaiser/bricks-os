@@ -10,6 +10,7 @@ OBJS            =\
                 fixed_tc \
                 gif \
                 gs \
+                sif \
                 task \
 
 #                irq \

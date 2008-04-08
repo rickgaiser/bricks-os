@@ -6,6 +6,7 @@
 #include "asm/cpu.h"
 #include "asm/irq.h"
 #include "task.h"
+#include "sif.h"
 
 #ifdef CONFIG_DEBUGGING
 #include "debugScreen.h"
@@ -23,6 +24,7 @@ extern char _heap_size;
 
 
 //CIRQ           cIRQ;
+CIOP           cIOP;
 
 #ifdef CONFIG_DEBUGGING
 CPS2DebugScreen cDebug;
@@ -51,6 +53,13 @@ main(int, char *[])
 #endif // CONFIG_FRAMEBUFFER
 
   CPS2Thread::init();
+
+  // Initialize IOP
+  cIOP.init();
+  // Wait for IOP
+  printk("Waiting for IOP...");
+  while(cIOP.sync());
+  printk("ready\n");
 
   printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
 
