@@ -406,10 +406,6 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
   if(pCurrentPS2Mode_ == NULL)
     return;
 
-  // - Initialize the DMA.
-  // - Writes a 0 to most of the DMA registers.
-  dma_reset();
-
   // - Sets the RESET bit if the GS CSR register.
   REG_GS_CSR = GS_CSR_RESET();
 

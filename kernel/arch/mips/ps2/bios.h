@@ -5,13 +5,11 @@
 #include "stdint.h"
 
 
-namespace bios
-{
-
-
 #define SIF_DMA_INT_I 0x2
 #define SIF_DMA_INT_O 0x4
 
+
+typedef int32_t (*dmaCallBack)(int32_t channel);
 
 struct SifDmaTransfer_t
 {
@@ -45,6 +43,10 @@ struct ee_thread_t
 };
 
 
+namespace bios
+{
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -65,7 +67,7 @@ void     SetVInterruptHandler   (int32_t handler_num, void * handler_func);
 int32_t  AddIntcHandler         (int32_t cause, int32_t(*handler_func)(int32_t cause), int32_t next);
 int32_t  AddIntcHandler2        (int32_t cause, int32_t(*handler_func)(int32_t cause, void * arg, void * addr), int32_t next, void * arg);
 int32_t  RemoveIntcHandler      (int32_t cause, int32_t handler_id);
-int32_t  AddDmacHandler         (int32_t channel, int32_t (*handler)(int32_t channel), int32_t next);
+int32_t  AddDmacHandler         (int32_t channel, dmaCallBack handler, int32_t next);
 int32_t  RemoveDmacHandler      (int32_t channel, int32_t handler_id);
 int32_t  _EnableIntc            (int32_t cause);
 int32_t  _DisableIntc           (int32_t cause);

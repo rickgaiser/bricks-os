@@ -6,7 +6,6 @@ OBJS            =\
                 arch \
                 bios \
                 courier_new \
-                dma_asm \
                 fixed_tc \
                 gif \
                 gs \

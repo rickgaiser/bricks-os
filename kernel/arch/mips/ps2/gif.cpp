@@ -48,7 +48,7 @@ CGIFPacket::send()
   bios::FlushCache(0);
 
   // Send
-  DMA_TO_GS_SEND(pData_, iDMASize_);
+  dmaSendSync(DMA_CHANNEL_GIF, pData_, iDMASize_);
 
   // Reset packet information but preserve tag
   pData_[0] &= (~0x7fff);
@@ -76,10 +76,10 @@ CGIFPacket::sendImage(uint32_t source, uint32_t size)
     bios::FlushCache(0);
 
     // Send tag
-    DMA_TO_GS_SEND(pData_, 1);
+    dmaSendSync(DMA_CHANNEL_GIF, pData_, 1);
 
     // Send data
-    DMA_TO_GS_SEND(source, sendSize);
+    dmaSendSync(DMA_CHANNEL_GIF, (void *)source, sendSize);
 
     source += sendSize * 16;
     qtotal -= sendSize;

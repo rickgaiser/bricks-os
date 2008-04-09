@@ -6,6 +6,7 @@
 #include "asm/cpu.h"
 #include "asm/irq.h"
 #include "task.h"
+#include "dma.h"
 #include "sif.h"
 
 #ifdef CONFIG_DEBUGGING
@@ -42,6 +43,10 @@ main(int, char *[])
   init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
 
 //  cIRQ.init();
+
+  // Initialize the DMA controller
+  // Needed for DMA transfer to GS, used by cDebug
+  dmaInitialize();
 
 #ifdef CONFIG_DEBUGGING
   cDebug.init();

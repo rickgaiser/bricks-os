@@ -143,10 +143,6 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   g2_fontbuf_addr = gs_mem_current;
   gs_mem_current += g2_fontbuf_w * g2_fontbuf_h * (pCurrentPS2Mode_->bpp/8);
 
-  // - Initialize the DMA.
-  // - Writes a 0 to most of the DMA registers.
-  dma_reset();
-
   // - Sets the RESET bit if the GS CSR register.
   REG_GS_CSR = GS_CSR_RESET();
 
