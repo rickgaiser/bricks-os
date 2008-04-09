@@ -2,6 +2,7 @@
 #include "bios.h"
 #include "dma.h"
 #include "gs.h"
+#include "matrix.h"
 #include "stdlib.h"
 
 
@@ -257,6 +258,10 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       break;
   };
 
+  // Create PS2 usable matrix objects
+  CPS2Matrix ps2ModelView(matrixModelView);
+  CPS2Matrix ps2Projection(matrixProjection);
+
   // Process all vertices
   for(GLint i(0); i < count; i++)
   {
@@ -341,10 +346,10 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 
     // Model-View matrix
     //   from 'object coordinates' to 'eye coordinates'
-    matrixModelView.transform(v.v, v.v);
+    ps2ModelView.transform(v.v, v.v);
     // Projection matrix
     //   from 'eye coordinates' to 'clip coordinates'
-    matrixProjection.transform(v.v, v.v);
+    ps2Projection.transform(v.v, v.v);
     // Perspective division
     //   from 'clip coordinates' to 'normalized device coordinates'
     v.v[0] /= v.v[3];

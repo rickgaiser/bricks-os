@@ -9,6 +9,7 @@ OBJS            =\
                 fixed_tc \
                 gif \
                 gs \
+                matrix \
                 sif \
                 task \
 
