@@ -40,6 +40,18 @@ enum EBiosTVMode
 //---------------------------------------------------------------------------
 // Register Constructors
 //---------------------------------------------------------------------------
+// Vertical Timing
+#define VI_VTR(height,equ) \
+  ((((height) >> 1) << 4) | (equ))
+
+// Display Configuration
+#define VI_DCR_NTSC 0
+#define VI_DCR_PAL  1
+#define VI_DCR_MPAL 2
+#define VI_DCR_ENB  0x01
+#define VI_DCR(mode,flags) \
+  (((mode) << 8) | (flags))
+
 // Horizontal Timing 0
 #define VI_HTR0(s,e,w) \
   (((s) << 24) | ((e) << 16) | (w))
@@ -49,6 +61,10 @@ enum EBiosTVMode
   (((s) << 17) | ((e) << 7) | (w))
 #define VI_HTR1_CREATE(hbs,hbe,hsw,pos,width) \
   VI_HTR1(hbs + pos - (720 - width), hbe + pos, hsw)
+
+// Odd/Even Field Vertical Timing
+#define VI_VT(postbl,prebl) \
+  (((postbl) << 16) | (prebl))
 
 //---------------------------------------------------------------------------
 // Registers

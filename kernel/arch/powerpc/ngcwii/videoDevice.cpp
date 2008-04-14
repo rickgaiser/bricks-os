@@ -7,8 +7,13 @@
 static const uint32_t videoRegs[6][32] =
 {
   { // NTSC 480i60
-    0x0f060001, 0x476901ad, 0x02ea5140, 0x00030018,
-    0x00020019, 0x410c410c, 0x40ed40ed, 0x00435a4e,
+    ((VI_VTR(574, 6) << 16) |                          // Vertical Timing
+      VI_DCR(VI_DCR_NTSC, VI_DCR_ENB)),                // Display Configuration
+    VI_HTR0(71, 105, 429),                             // Horizontal Timing 0
+    VI_HTR1_CREATE(413, 122, 64, 40, 640), // 0, 720)  // Horizontal Timing 1
+    VI_VT(3, 24),                                      // Odd Field Vertical Timing
+    VI_VT(2, 25),                                      // Even Field Vertical Timing
+    0x410c410c, 0x40ed40ed, 0x00435a4e,
     0x00000000, 0x00435a4e, 0x00000000, 0x00000000,
     0x110701ae, 0x10010001, 0x00010001, 0x00010001,
     0x00000000, 0x00000000, 0x28500100, 0x1ae771f0,
@@ -17,8 +22,13 @@ static const uint32_t videoRegs[6][32] =
     0x02800000, 0x000000ff, 0x00ff00ff, 0x00ff00ff
   },
   { // PAL 576i50
-    0x11f50101, 0x4b6a01b0, 0x02f85640, 0x00010023,
-    0x00000024, 0x4d2b4d6d, 0x4d8a4d4c, 0x00435a4e,
+    ((VI_VTR(574, 5) << 16) |                          // Vertical Timing
+      VI_DCR(VI_DCR_PAL, VI_DCR_ENB)),                 // Display Configuration
+    VI_HTR0(75, 106, 432),                             // Horizontal Timing 0
+    VI_HTR1_CREATE(420, 132, 64, 40, 640), // 0, 720)  // Horizontal Timing 1
+    VI_VT(1, 35),                                      // Odd Field Vertical Timing
+    VI_VT(0, 36),                                      // Even Field Vertical Timing
+    0x4d2b4d6d, 0x4d8a4d4c, 0x00435a4e,
     0x00000000, 0x00435a4e, 0x00000000, 0x013c0144,
     0x113901b1, 0x10010001, 0x00010001, 0x00010001,
     0x00000000, 0x00000000, 0x28500100, 0x1ae771f0,
@@ -26,18 +36,17 @@ static const uint32_t videoRegs[6][32] =
     0x13130f08, 0x00080c0f, 0x00ff0000, 0x00000000,
     0x02800000, 0x000000ff, 0x00ff00ff, 0x00ff00ff
   },
-  { // DEBUG
-    0
-  },
-  { // DEBUG PAL
-    0
-  },
-  { // MPAL 480i60
-    0
-  },
+  {0}, // DEBUG
+  {0}, // DEBUG PAL
+  {0}, // MPAL 480i60
   { // PAL60 480i60
-    0x0f060001, 0x476901ad, 0x02ea5140, 0x00030018,
-    0x00020019, 0x410c410c, 0x40ed40ed, 0x00435a4e,
+    ((VI_VTR(480, 6) << 16) |                          // Vertical Timing
+      VI_DCR(VI_DCR_NTSC, VI_DCR_ENB)),                // Display Configuration
+    VI_HTR0(71, 105, 429),                             // Horizontal Timing 0
+    VI_HTR1_CREATE(413, 122, 64, 40, 640), // 0, 720)  // Horizontal Timing 1
+    VI_VT(3, 24),                                      // Odd Field Vertical Timing
+    VI_VT(2, 25),                                      // Even Field Vertical Timing
+    0x410c410c, 0x40ed40ed, 0x00435a4e,
     0x00000000, 0x00435a4e, 0x00000000, 0x00050176,
     0x110701ae, 0x10010001, 0x00010001, 0x00010001,
     0x00000000, 0x00000000, 0x28500100, 0x1ae771f0,
