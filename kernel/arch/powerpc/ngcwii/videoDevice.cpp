@@ -3,61 +3,60 @@
 #include <gccore.h>
 
 
+#define SCREEN_WIDTH           720
+#define SCREEN_XPOS            (((720 - SCREEN_WIDTH) / 2) + 0)
+// Convert float to 1.8 fixed point scaling value
+#define SCREEN_SCALE(f)        ((uint16_t)((f)*(1<<8)))
+#define SCREEN_SCALE_VALUE     (((float)640)/((float)SCREEN_WIDTH))
+
+
 // Video registers for different modes
+#define VIDEO_REGISTERS_NTSC   0
+#define VIDEO_REGISTERS_PAL    1
+#define VIDEO_REGISTERS_MPAL   0
+#define VIDEO_REGISTERS_PAL60  0
 static const uint32_t videoRegs[6][32] =
 {
   { // NTSC 480i60
-    ((VI_VTR(574, 6) << 16) |                          // Vertical Timing
-      VI_DCR(VI_DCR_NTSC, VI_DCR_ENB)),                // Display Configuration
-    VI_HTR0(71, 105, 429),                             // Horizontal Timing 0
-    VI_HTR1_CREATE(413, 122, 64, 40, 640), // 0, 720)  // Horizontal Timing 1
-    VI_VT(3, 24),                                      // Odd Field Vertical Timing
-    VI_VT(2, 25),                                      // Even Field Vertical Timing
+    ((VI_VTR(480, 6) << 16) |                                // Vertical Timing
+      VI_DCR(VI_DCR_NTSC, VI_DCR_ENB)),                      // Display Configuration
+    VI_HTR0(71, 105, 429),                                   // Horizontal Timing 0
+    VI_HTR1_CREATE(413, 122, 64, SCREEN_XPOS, SCREEN_WIDTH), // Horizontal Timing 1  // 0x02EA5140
+    VI_VT(3, 24),                                            // Odd Field Vertical Timing
+    VI_VT(2, 25),                                            // Even Field Vertical Timing
     0x410c410c, 0x40ed40ed, 0x00435a4e,
     0x00000000, 0x00435a4e, 0x00000000, 0x00000000,
     0x110701ae, 0x10010001, 0x00010001, 0x00010001,
-    0x00000000, 0x00000000, 0x28500100, 0x1ae771f0,
+    0x00000000, 0x00000000,
+    ((0x2850) << 16) | (1<<12) | (SCREEN_SCALE(SCREEN_SCALE_VALUE)),
+    0x1ae771f0,
     0x0db4a574, 0x00c1188e, 0xc4c0cbe2, 0xfcecdecf,
     0x13130f08, 0x00080c0f, 0x00ff0000, 0x00000000,
     0x02800000, 0x000000ff, 0x00ff00ff, 0x00ff00ff
   },
   { // PAL 576i50
-    ((VI_VTR(574, 5) << 16) |                          // Vertical Timing
-      VI_DCR(VI_DCR_PAL, VI_DCR_ENB)),                 // Display Configuration
-    VI_HTR0(75, 106, 432),                             // Horizontal Timing 0
-    VI_HTR1_CREATE(420, 132, 64, 40, 640), // 0, 720)  // Horizontal Timing 1
-    VI_VT(1, 35),                                      // Odd Field Vertical Timing
-    VI_VT(0, 36),                                      // Even Field Vertical Timing
+    ((VI_VTR(576, 5) << 16) |                                // Vertical Timing
+      VI_DCR(VI_DCR_PAL, VI_DCR_ENB)),                       // Display Configuration
+    VI_HTR0(75, 106, 432),                                   // Horizontal Timing 0
+    VI_HTR1_CREATE(420, 132, 64, SCREEN_XPOS, SCREEN_WIDTH), // Horizontal Timing 1
+    VI_VT(1, 35),                                            // Odd Field Vertical Timing
+    VI_VT(0, 36),                                            // Even Field Vertical Timing
     0x4d2b4d6d, 0x4d8a4d4c, 0x00435a4e,
     0x00000000, 0x00435a4e, 0x00000000, 0x013c0144,
     0x113901b1, 0x10010001, 0x00010001, 0x00010001,
-    0x00000000, 0x00000000, 0x28500100, 0x1ae771f0,
-    0x0db4a574, 0x00c1188e, 0xc4c0cbe2, 0xfcecdecf,
-    0x13130f08, 0x00080c0f, 0x00ff0000, 0x00000000,
-    0x02800000, 0x000000ff, 0x00ff00ff, 0x00ff00ff
-  },
-  {0}, // DEBUG
-  {0}, // DEBUG PAL
-  {0}, // MPAL 480i60
-  { // PAL60 480i60
-    ((VI_VTR(480, 6) << 16) |                          // Vertical Timing
-      VI_DCR(VI_DCR_NTSC, VI_DCR_ENB)),                // Display Configuration
-    VI_HTR0(71, 105, 429),                             // Horizontal Timing 0
-    VI_HTR1_CREATE(413, 122, 64, 40, 640), // 0, 720)  // Horizontal Timing 1
-    VI_VT(3, 24),                                      // Odd Field Vertical Timing
-    VI_VT(2, 25),                                      // Even Field Vertical Timing
-    0x410c410c, 0x40ed40ed, 0x00435a4e,
-    0x00000000, 0x00435a4e, 0x00000000, 0x00050176,
-    0x110701ae, 0x10010001, 0x00010001, 0x00010001,
-    0x00000000, 0x00000000, 0x28500100, 0x1ae771f0,
+    0x00000000, 0x00000000,
+    ((0x2850) << 16) | (1<<12) | (SCREEN_SCALE(SCREEN_SCALE_VALUE)),
+    0x1ae771f0,
     0x0db4a574, 0x00c1188e, 0xc4c0cbe2, 0xfcecdecf,
     0x13130f08, 0x00080c0f, 0x00ff0000, 0x00000000,
     0x02800000, 0x000000ff, 0x00ff00ff, 0x00ff00ff
   },
 };
 
-#define DEFAULT_VIDEO_MODE_PAL  videoModes[2] // PAL:  640x576x32
-#define DEFAULT_VIDEO_MODE_NTSC videoModes[0] // NTSC: 640x480x32
+#define DEFAULT_VIDEO_MODE_NTSC   videoModes[0]
+#define DEFAULT_VIDEO_MODE_PAL    videoModes[2]
+#define DEFAULT_VIDEO_MODE_MPAL   videoModes[0]
+#define DEFAULT_VIDEO_MODE_PAL60  videoModes[0]
 static const SVideoMode videoModes[] =
 {
   // NTSC 480i60
@@ -239,10 +238,14 @@ CNGCVideoDevice::getCurrentMode(const SVideoMode ** mode)
 void
 CNGCVideoDevice::getDefaultMode(const SVideoMode ** mode)
 {
-  if(BIOS_TV_MODE == BTM_PAL)
-    *mode = &DEFAULT_VIDEO_MODE_PAL;
-  else
-    *mode = &DEFAULT_VIDEO_MODE_NTSC;
+  switch(BIOS_TV_MODE)
+  {
+    case BTM_NTSC:  *mode = &DEFAULT_VIDEO_MODE_NTSC;  break;
+    case BTM_MPAL:  *mode = &DEFAULT_VIDEO_MODE_MPAL;  break;
+    case BTM_PAL60: *mode = &DEFAULT_VIDEO_MODE_PAL60; break;
+    case BTM_PAL:
+    default:        *mode = &DEFAULT_VIDEO_MODE_PAL;
+  };
 }
 
 //---------------------------------------------------------------------------
@@ -255,12 +258,12 @@ CNGCVideoDevice::setMode(const SVideoMode * mode)
   if(mode->height == 480)
   {
     // NTSC
-    pRegs  = videoRegs[BTM_NTSC];
+    pRegs  = videoRegs[VIDEO_REGISTERS_NTSC];
   }
   else
   {
     // PAL
-    pRegs = videoRegs[BTM_PAL];
+    pRegs = videoRegs[VIDEO_REGISTERS_PAL];
   }
 
   // Set registers
@@ -271,8 +274,11 @@ CNGCVideoDevice::setMode(const SVideoMode * mode)
 }
 
 //---------------------------------------------------------------------------
+//  32 byte aligned?
+// 512 byte aligned?
 #define mallocSurface(size) \
   MEM_K0_TO_K1(((uint32_t)new uint8_t[size + 0x1f]) & (~0x1f))
+//  MEM_K0_TO_K1(((uint32_t)new uint8_t[size + 0x1ff]) & (~0x1ff))
 //---------------------------------------------------------------------------
 void
 CNGCVideoDevice::getSurface(CSurface ** surface, int width, int height)
@@ -337,12 +343,12 @@ CNGCVideoDevice::displaySurface(CSurface * surface)
     if(pSurface_->mode.width == 320)
     {
       REG_VI_XFB1 = (uint32_t)pSurface_->p;
-      REG_VI_XFB2 = (uint32_t)pSurface_->p;
+      REG_VI_XFB2 = ((uint32_t)pSurface_->p) + (pSurface_->mode.width * 4);
     }
     else
     {
       REG_VI_XFB1 = (uint32_t)pNativeSurface_;
-      REG_VI_XFB2 = (uint32_t)pNativeSurface_;
+      REG_VI_XFB2 = ((uint32_t)pNativeSurface_) + (pSurface_->mode.width * 2);
     }
   }
 }
