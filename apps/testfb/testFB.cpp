@@ -19,30 +19,40 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
   // Irritating interlaced test
   for(uint32_t i(0); i < surface->height(); i++)
   {
-    if(i < (surface->height() >> 1))
+    if(i < (1 * (surface->height() / 4)))
     {
-      if(i & 1)
+      // 1st part
+      if((i & 1) == 1)
       {
         // Red line
         renderer->setColor(255, 0, 0);
         renderer->drawHLine(0, i, surface->width());
       }
-      else
+    }
+    else if(i < (2 * (surface->height() / 4)))
+    {
+      // 2nd part
+      if((i & 1) == 0)
       {
         // Green line
         renderer->setColor(0, 255, 0);
         renderer->drawHLine(0, i, surface->width());
       }
     }
-    else
+    else if(i < (3 * (surface->height() / 4)))
     {
-      if(i & 1)
+      // 3rd part
+      if((i & 1) == 1)
       {
         // Blue line
         renderer->setColor(0, 0, 255);
         renderer->drawHLine(0, i, surface->width());
       }
-      else
+    }
+    else
+    {
+      // last part
+      if((i & 1) == 0)
       {
         // White line
         renderer->setColor(255, 255, 255);
@@ -154,33 +164,22 @@ appMain(int argc, char * argv[])
   {
     for(int iDev(0); iDev < iDeviceCount; iDev++)
     {
-      const SVideoMode * modes;
-      int iModeCount;
-      devices[iDev]->listModes(&modes, &iModeCount);
-      if(iModeCount > 0)
-      {
-        for(int iMode(0); iMode < iModeCount; iMode++)
-        {
-          devices[iDev]->setMode(&modes[iMode]);
-          CSurface    * pVideoSurface;
-          I2DRenderer * pVideoRenderer;
+      const SVideoMode * mode;
+      devices[iDev]->getDefaultMode(&mode);
+      devices[iDev]->setMode(mode);
+      CSurface    * pVideoSurface;
+      I2DRenderer * pVideoRenderer;
 
-          // Test 2d with a single buffered surface
-          devices[iDev]->getSurface(&pVideoSurface, modes[iMode].width, modes[iMode].height);
-          devices[iDev]->displaySurface(pVideoSurface);
-          devices[iDev]->get2DRenderer(&pVideoRenderer);
-          test2d(devices[iDev], pVideoRenderer, pVideoSurface);
+      // Test 2d with a single buffered surface
+      devices[iDev]->getSurface(&pVideoSurface, mode->width, mode->height);
+      devices[iDev]->displaySurface(pVideoSurface);
+      devices[iDev]->get2DRenderer(&pVideoRenderer);
+      test2d(devices[iDev], pVideoRenderer, pVideoSurface);
 
-          if(pVideoRenderer != NULL)
-            delete pVideoRenderer;
-          if(pVideoSurface != NULL)
-            delete pVideoSurface;
-        }
-      }
-      else
-      {
-        printk("ERROR: Device has no modes!\n");
-      }
+      if(pVideoRenderer != NULL)
+        delete pVideoRenderer;
+      if(pVideoSurface != NULL)
+        delete pVideoSurface;
     }
   }
   else
