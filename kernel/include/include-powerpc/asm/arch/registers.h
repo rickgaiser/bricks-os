@@ -37,7 +37,22 @@ enum EBiosTVMode
 //#define KEY_L_MASK                0x0000ff00
 //#define KEY_R_MASK                0x000000ff
 
+//---------------------------------------------------------------------------
+// Register Constructors
+//---------------------------------------------------------------------------
+// Horizontal Timing 0
+#define VI_HTR0(s,e,w) \
+  (((s) << 24) | ((e) << 16) | (w))
 
+// Horizontal Timing 1
+#define VI_HTR1(s,e,w) \
+  (((s) << 17) | ((e) << 7) | (w))
+#define VI_HTR1_CREATE(hbs,hbe,hsw,pos,width) \
+  VI_HTR1(hbs + pos - (720 - width), hbe + pos, hsw)
+
+//---------------------------------------------------------------------------
+// Registers
+//---------------------------------------------------------------------------
 #define BIOS_TV_MODE              (*(vuint32_t*)0x800000cc)
 
 #define REG_AI_DMA_STARTH         (*(vuint16_t*)0xcc005030)
@@ -101,10 +116,50 @@ enum EBiosTVMode
 
 #define REG_GC_System_Time        (*(vuint32_t*)0x800030d8)
 
+// VI - Video Interface
+#define REG_VI_VTR                (*(vuint16_t*)0xcc002000) // Vertical Timing
+#define REG_VI_DCR                (*(vuint16_t*)0xcc002002) // Display Configuration
+#define REG_VI_HTR0               (*(vuint32_t*)0xcc002004) // Horizontal Timing 0
+#define REG_VI_HTR1               (*(vuint32_t*)0xcc002008) // Horizontal Timing 0
+#define REG_VI_VTO                (*(vuint32_t*)0xcc00200c) // Odd Field Vertical Timing
+#define REG_VI_VTE                (*(vuint32_t*)0xcc002010) // Even Field Vertical Timing
+#define REG_VI_BBEI               (*(vuint32_t*)0xcc002014) // Odd Field Burst Blanking Interval
+#define REG_VI_BBOI               (*(vuint32_t*)0xcc002018) // Even Field Burst Blanking Interval
+#define REG_VI_TFBL               (*(vuint32_t*)0xcc00201c) // Top Field Base Register (L) (External Framebuffer Half 1)
+#define REG_VI_TFBR               (*(vuint32_t*)0xcc002020) // Top Field Base Register (R) (Only valid in 3D Mode)
+#define REG_VI_BFBL               (*(vuint32_t*)0xcc002024) // Bottom Field Base Register (L) (External Framebuffer Half 2)
+#define REG_VI_BFBR               (*(vuint32_t*)0xcc002028) // Bottom Field Base Register (R) (Only valid in 3D Mode)
+#define REG_VI_DPV                (*(vuint16_t*)0xcc00202c) // Current Vertical Position
+#define REG_VI_DPH                (*(vuint16_t*)0xcc00202e) // Current Horizontal Position
+#define REG_VI_DI0                (*(vuint32_t*)0xcc002030) // Display Interrupt 0
+#define REG_VI_DI1                (*(vuint32_t*)0xcc002034) // Display Interrupt 1
+#define REG_VI_DI2                (*(vuint32_t*)0xcc002038) // Display Interrupt 2
+#define REG_VI_DI3                (*(vuint32_t*)0xcc00203c) // Display Interrupt 3
+#define REG_VI_DL0                (*(vuint32_t*)0xcc002040) // Display Latch 0
+#define REG_VI_DL1                (*(vuint32_t*)0xcc002044) // Display Latch 1
+#define REG_VI_HSW                (*(vuint16_t*)0xcc002048) // Scaling Width
+#define REG_VI_HSR                (*(vuint16_t*)0xcc00204a) // Horizontal Scaling
+#define REG_VI_FTC0               (*(vuint32_t*)0xcc00204c) // Filter Coefficient Table 0
+#define REG_VI_FTC1               (*(vuint32_t*)0xcc002050) // Filter Coefficient Table 1
+#define REG_VI_FTC2               (*(vuint32_t*)0xcc002054) // Filter Coefficient Table 2
+#define REG_VI_FTC3               (*(vuint32_t*)0xcc002058) // Filter Coefficient Table 3
+#define REG_VI_FTC4               (*(vuint32_t*)0xcc00205c) // Filter Coefficient Table 4
+#define REG_VI_FTC5               (*(vuint32_t*)0xcc002060) // Filter Coefficient Table 5
+#define REG_VI_FTC6               (*(vuint32_t*)0xcc002064) // Filter Coefficient Table 6
+//#define REG_VI_                   (*(vuint32_t*)0xcc002068) // ???
+#define REG_VI_VICLK              (*(vuint16_t*)0xcc00206c) // VI Clock Select (for progressive mode)
+#define REG_VI_VISEL              (*(vuint16_t*)0xcc00206e) // VI DTV Status (read io pins)
+//#define REG_VI_                   (*(vuint16_t*)0xcc002070) // ??
+#define REG_VI_HBE                (*(vuint16_t*)0xcc002072) // Border Horizontal Blank End (for debug mode)
+#define REG_VI_HBS                (*(vuint16_t*)0xcc002074) // Border Horizontal Blank Start (for debug mode)
+//#define REG_VI_                   (*(vuint16_t*)0xcc002076) // ???
+//#define REG_VI_                   (*(vuint32_t*)0xcc002078) // ???
+//#define REG_VI_                   (*(vuint32_t*)0xcc00207c) // ???
+// For compatibility
 #define REG_VI_BASE               ( (vuint32_t*)0xcc002000)
-#define REG_VI_XFB1               (*(vuint32_t*)0xcc00201c)
-#define REG_VI_XFB2               (*(vuint32_t*)0xcc002024)
-#define REG_VI_HLINE              (*(vint16_t *)0xcc00202c)
+#define REG_VI_XFB1               REG_VI_TFBL
+#define REG_VI_XFB2               REG_VI_BFBL
+#define REG_VI_HLINE              REG_VI_DPV
 
 
 #endif
