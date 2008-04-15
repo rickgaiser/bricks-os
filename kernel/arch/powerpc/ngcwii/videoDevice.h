@@ -70,6 +70,10 @@ public:
   // Flush RGB buffer to native screen
   void flush(CSurface * surface);
 
+  void setHorizontal(uint16_t xoffset, uint16_t width);
+  void setVertical  (uint16_t yoffset, uint16_t height);
+  void setInterlaced(bool interlaced);
+
 private:
   // Surface we're currently displaying
   CSurface * pSurface_;
