@@ -20,10 +20,10 @@ CGIFPacket::CGIFPacket(uint64_t size, uint64_t * data)
   else
   {
     // Determine how much memory to allocate
-    uint64_t allocSize = (iMAXSize_ * 2) + 2 + (64 - 1);
+    uint64_t allocSize = (iMAXSize_ * 2) + 2;
 
     // Allocate data
-    pRawData_ = new uint64_t[allocSize];
+    pRawData_ = (uint64_t *)new uint8_t[(allocSize * 16) + (64 - 1)];
 
     // Align to 64 byte boundry for DMA
     pData_    = (uint64_t *)((((uint32_t)pRawData_) + (64 - 1)) & (~(64 - 1)));

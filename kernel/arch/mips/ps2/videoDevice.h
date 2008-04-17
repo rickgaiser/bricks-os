@@ -12,17 +12,24 @@
 #define GS_Y_BASE 1024
 
 
+struct SPS2CRTCMode
+{
+  uint8_t biosMode;
+  uint8_t vck;
+};
+
 //---------------------------------------------------------------------------
 struct SPS2VideoMode
 {
   uint16_t width;
   uint16_t height;
   uint16_t bpp;
-  uint16_t mode;
   uint16_t psm;
   uint16_t interlace;
   uint16_t field;
-  uint64_t display;
+  const SPS2CRTCMode * crtcMode;
+  uint16_t xoffset;
+  uint16_t yoffset;
 };
 
 //---------------------------------------------------------------------------
@@ -122,6 +129,9 @@ public:
 private:
   // Surface we're currently displaying
   CPS2Surface * pSurface_;
+
+  // GIF packet for DMA transmission to GS
+  CGIFPacket    packet_;
 
   const SVideoMode    * pCurrentMode_;
   const SPS2VideoMode * pCurrentPS2Mode_;

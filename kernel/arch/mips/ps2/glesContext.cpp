@@ -13,6 +13,7 @@ CPS2GLESContext::CPS2GLESContext()
  , CAGLESBuffers()
  , CAGLESCull()
  , CAGLESMatrixF()
+ , CAPS2Renderer()
 
  , depthTestEnabled_(false)
  , depthFunction_(GL_LESS)

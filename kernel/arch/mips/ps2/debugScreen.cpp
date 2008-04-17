@@ -6,12 +6,7 @@
 #include "string.h"
 
 
-SPS2VideoMode textmode[] =
-{
-  { 640,  256, 32, 0x03, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(652, 36, 3, 0, 2559,  255)}, // PAL
-  { 640,  224, 32, 0x02, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(632, 25, 3, 0, 2559,  223)}, // NTSC
-};
-
+extern SPS2VideoMode vmodes[];
 extern uint32_t courier_new[];
 extern uint16_t fixed_tc[];
 
@@ -50,7 +45,7 @@ int
 CPS2DebugScreen::init()
 {
   // Set video mode
-  this->setMode(&(textmode[0]));
+  this->setMode(&(vmodes[2]));
 
   // Clear screen
   cls();
@@ -143,49 +138,42 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   g2_fontbuf_addr = gs_mem_current;
   gs_mem_current += g2_fontbuf_w * g2_fontbuf_h * (pCurrentPS2Mode_->bpp/8);
 
-  // - Sets the RESET bit if the GS CSR register.
+  // Reset the GS
   REG_GS_CSR = GS_CSR_RESET();
 
-  // - Can someone please tell me what the sync.p
-  // instruction does. Synchronizes something :-)
+  // Sync
   __asm__("sync.p\nnop");
 
-  // - Sets up the GS IMR register (i guess).
-  // - The IMR register is used to mask and unmask certain interrupts,
-  //   for example VSync and HSync. We'll use this properly in Tutorial 2.
-  // - Does anyone have code to do this without using the 0x71 syscall?
-  // - I havn't gotten around to looking at any PS2 bios code yet.
+  // Clear GS interrupt mask register
   bios::GsPutIMR(0);
 
-  // - Use syscall 0x02 to setup some video mode stuff.
-  // - Pretty self explanatory I think.
-  // - Does anyone have code to do this without using the syscall? It looks
-  //   like it should only set the SMODE2 register, but if I remove this syscall
-  //   and set the SMODE2 register myself, it donesn't work. What else does
-  //   syscall 0x02 do?
-  bios::SetGsCrt(pCurrentPS2Mode_->interlace, pCurrentPS2Mode_->mode, pCurrentPS2Mode_->field);
+  // Setup CRTC for video mode
+  bios::SetGsCrt(pCurrentPS2Mode_->interlace, pCurrentPS2Mode_->crtcMode->biosMode, pCurrentPS2Mode_->field);
 
-  // - I havn't attempted to understand what the Alpha parameters can do. They
-  //   have been blindly copied from the 3stars demo (although they don't seem
-  //   do have any impact in this simple 2D code.
+  // Enable read circuit 1
   REG_GS_PMODE = GS_PMODE(
-      1,        // ReadCircuit1 ON
-      0,        // ReadCircuit2 OFF
-      1,        // Use ALP register for Alpha Blending
-      1,        // Alpha Value of ReadCircuit2 for output selection
-      0,        // Blend Alpha with the output of ReadCircuit2
-      0xFF  // Alpha Value = 1.0
+    1,        // ReadCircuit1 ON
+    0,        // ReadCircuit2 OFF
+    1,        // Use ALP register for Alpha Blending
+    1,        // Alpha Value of ReadCircuit2 for output selection
+    0,        // Blend Alpha with the output of ReadCircuit2
+    0xff      // Alpha Value = 1.0
   );
+
+  // Setup read circuit 1
+  REG_GS_DISPLAY1 = GS_DISPLAY_CREATE(pCurrentPS2Mode_->crtcMode->vck,
+                                      pCurrentPS2Mode_->xoffset,
+                                      pCurrentPS2Mode_->yoffset,
+                                      pCurrentPS2Mode_->width,
+                                      pCurrentPS2Mode_->height);
+
+  // Setup read circuit 2
+  //REG_GS_DISPLAY2 = ...;
 
   // Display buffer
   REG_GS_DISPFB1  = GS_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0, 0);
   // Render buffer
   packet_.data(frame_1, GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
-  packet_.send();
-
-  REG_GS_DISPLAY1 = pCurrentPS2Mode_->display;
-  //REG_GS_DISPLAY2 = pCurrentPS2Mode_->display;
-
   // Use drawing parameters from PRIM register
   packet_.data(prmodecont, 1);
   // Setup frame buffers. Point to 0 initially.
@@ -194,7 +182,6 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   packet_.data(xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
   // Clip to frame buffer.
   packet_.data(scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
-
   packet_.send();
 }
 

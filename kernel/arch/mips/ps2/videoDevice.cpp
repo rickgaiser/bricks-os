@@ -14,81 +14,106 @@
 #define IS_NTSC()            (!IS_PAL())
 
 //---------------------------------------------------------------------------
+const SPS2CRTCMode cmodes[] =
+{
+  {0x02, 4}, //       NTSC 0
+  {0x03, 4}, //        PAL 1
+
+  {0x1a, 2}, //  VGA, 60Hz 2
+  {0x1b, 2}, //  VGA, 72Hz 3
+  {0x1c, 2}, //  VGA, 75Hz 4
+  {0x1d, 2}, //  VGA, 85Hz 5
+  {0x2a, 2}, // SVGA, 56Hz 6
+  {0x2b, 2}, // SVGA, 60Hz 7
+  {0x2c, 2}, // SVGA, 72Hz 8
+  {0x2d, 2}, // SVGA, 75Hz 9
+  {0x2e, 2}, // SVGA, 85Hz 10
+  {0x3b, 2}, //  XGA, 60Hz 11
+  {0x3c, 2}, //  XGA, 72Hz 12
+  {0x3d, 2}, //  XGA, 75Hz 13
+  {0x3e, 2}, //  XGA, 85Hz 14
+  {0x4a, 1}, // SXGA, 60Hz 15
+  {0x4b, 1}, // SXGA, 75Hz 16
+
+  {0x50, 2}, //       480p 17
+  {0x51, 1}, //      1080i 18
+  {0x52, 1}, //       720p 19
+};
+
+//---------------------------------------------------------------------------
 SPS2VideoMode vmodes[] =
 {
   // PAL (Why not 704x576 or 720x576 (PAL DVD))
-  { 640,  256, 16, 0x03, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(652, 36, 3, 0, 2559,  255)},
-  { 640,  256, 24, 0x03, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(652, 36, 3, 0, 2559,  255)},
-  { 640,  256, 32, 0x03, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(652, 36, 3, 0, 2559,  255)},
-  { 640,  512, 16, 0x03, GRAPH_PSM_16, INTERLACED, FIELD, GS_DISPLAY(652, 72, 3, 0, 2559,  511)},
-  { 640,  512, 24, 0x03, GRAPH_PSM_24, INTERLACED, FIELD, GS_DISPLAY(652, 72, 3, 0, 2559,  511)},
-  { 640,  512, 32, 0x03, GRAPH_PSM_32, INTERLACED, FIELD, GS_DISPLAY(652, 72, 3, 0, 2559,  511)},
+  { 640,  256, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[ 1], 163, 36},
+  { 640,  256, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[ 1], 163, 36},
+  { 640,  256, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[ 1], 163, 36},
+  { 640,  512, 16, GRAPH_PSM_16, INTERLACED, FIELD, &cmodes[ 1], 163, 72},
+  { 640,  512, 24, GRAPH_PSM_24, INTERLACED, FIELD, &cmodes[ 1], 163, 72},
+  { 640,  512, 32, GRAPH_PSM_32, INTERLACED, FIELD, &cmodes[ 1], 163, 72},
   // NTSC (Why not 640x480 (square) or 720x480 (NTSC DVD))
-  { 640,  224, 16, 0x02, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(632, 25, 3, 0, 2559,  223)},
-  { 640,  224, 24, 0x02, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(632, 25, 3, 0, 2559,  223)},
-  { 640,  224, 32, 0x02, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(632, 25, 3, 0, 2559,  223)},
-  { 640,  448, 16, 0x02, GRAPH_PSM_16, INTERLACED, FIELD, GS_DISPLAY(632, 50, 3, 0, 2559,  447)},
-  { 640,  448, 24, 0x02, GRAPH_PSM_24, INTERLACED, FIELD, GS_DISPLAY(632, 50, 3, 0, 2559,  447)},
-  { 640,  448, 32, 0x02, GRAPH_PSM_32, INTERLACED, FIELD, GS_DISPLAY(632, 50, 3, 0, 2559,  447)},
-
-  // EDTV
-  { 720,  480, 16, 0x50, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(232, 35, 1, 0, 1439,  479)}, // 480p
-  { 720,  480, 24, 0x50, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(232, 35, 1, 0, 1439,  479)}, // 480p
-  { 720,  480, 32, 0x50, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(232, 35, 1, 0, 1439,  479)}, // 480p
-  // HDTV
-  {1280,  720, 16, 0x52, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(302, 24, 0, 0, 1279,  719)}, // 720p
-  {1280,  720, 24, 0x52, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(302, 24, 0, 0, 1279,  719)}, // 720p
-  {1280,  720, 32, 0x52, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(302, 24, 0, 0, 1279,  719)}, // 720p
-  {1920,  540, 16, 0x51, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(238, 20, 0, 0, 1919,  539)},
-  {1920,  540, 24, 0x51, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(238, 20, 0, 0, 1919,  539)},
-  {1920,  540, 32, 0x51, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(238, 20, 0, 0, 1919,  539)},
-  {1920, 1080, 16, 0x51, GRAPH_PSM_16, INTERLACED, FIELD, GS_DISPLAY(238, 40, 0, 0, 1919, 1079)}, // 1080i
-
+  { 640,  224, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[ 0], 158, 25},
+  { 640,  224, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[ 0], 158, 25},
+  { 640,  224, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[ 0], 158, 25},
+  { 640,  448, 16, GRAPH_PSM_16, INTERLACED, FIELD, &cmodes[ 0], 158, 50},
+  { 640,  448, 24, GRAPH_PSM_24, INTERLACED, FIELD, &cmodes[ 0], 158, 50},
+  { 640,  448, 32, GRAPH_PSM_32, INTERLACED, FIELD, &cmodes[ 0], 158, 50},
   // VGA
-//  { 640,  480, 16, 0x1A, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 60Hz
-//  { 640,  480, 24, 0x1A, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 60Hz
-//  { 640,  480, 32, 0x1A, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 60Hz
-//  { 640,  480, 16, 0x1B, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 72Hz
-//  { 640,  480, 24, 0x1B, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 72Hz
-//  { 640,  480, 32, 0x1B, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 72Hz
-  { 640,  480, 16, 0x1C, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 75Hz
-  { 640,  480, 24, 0x1C, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 75Hz
-  { 640,  480, 32, 0x1C, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 75Hz
-//  { 640,  480, 16, 0x1D, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 85Hz
-//  { 640,  480, 24, 0x1D, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 85Hz
-//  { 640,  480, 32, 0x1D, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(276, 34, 1, 0, 1279,  479)}, // 85Hz
+//  { 640,  480, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[ 2], 138, 34}, // 60Hz
+//  { 640,  480, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[ 2], 138, 34}, // 60Hz
+//  { 640,  480, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[ 2], 138, 34}, // 60Hz
+//  { 640,  480, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[ 3], 138, 34}, // 72Hz
+//  { 640,  480, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[ 3], 138, 34}, // 72Hz
+//  { 640,  480, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[ 3], 138, 34}, // 72Hz
+  { 640,  480, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[ 4], 138, 34}, // 75Hz
+  { 640,  480, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[ 4], 138, 34}, // 75Hz
+  { 640,  480, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[ 4], 138, 34}, // 75Hz
+//  { 640,  480, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[ 5], 138, 34}, // 85Hz
+//  { 640,  480, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[ 5], 138, 34}, // 85Hz
+//  { 640,  480, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[ 5], 138, 34}, // 85Hz
   // SVGA
-//  { 800,  600, 16, 0x2A, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 56Hz
-//  { 800,  600, 24, 0x2A, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 56Hz
-//  { 800,  600, 32, 0x2A, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 56Hz
-//  { 800,  600, 16, 0x2B, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 60Hz
-//  { 800,  600, 24, 0x2B, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 60Hz
-//  { 800,  600, 32, 0x2B, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 60Hz
-//  { 800,  600, 16, 0x2C, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 72Hz
-//  { 800,  600, 24, 0x2C, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 72Hz
-//  { 800,  600, 32, 0x2C, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 72Hz
-  { 800,  600, 16, 0x2D, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 75Hz
-  { 800,  600, 24, 0x2D, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 75Hz
-  { 800,  600, 32, 0x2D, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 75Hz
-//  { 800,  600, 16, 0x2E, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 85Hz
-//  { 800,  600, 24, 0x2E, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 85Hz
-//  { 800,  600, 32, 0x2E, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(420, 26, 1, 0, 1599,  599)}, // 85Hz
+//  { 800,  600, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[ 6], 210, 26}, // 56Hz
+//  { 800,  600, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[ 6], 210, 26}, // 56Hz
+//  { 800,  600, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[ 6], 210, 26}, // 56Hz
+//  { 800,  600, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[ 7], 210, 26}, // 60Hz
+//  { 800,  600, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[ 7], 210, 26}, // 60Hz
+//  { 800,  600, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[ 7], 210, 26}, // 60Hz
+//  { 800,  600, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[ 8], 210, 26}, // 72Hz
+//  { 800,  600, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[ 8], 210, 26}, // 72Hz
+//  { 800,  600, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[ 8], 210, 26}, // 72Hz
+  { 800,  600, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[ 9], 210, 26}, // 75Hz
+  { 800,  600, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[ 9], 210, 26}, // 75Hz
+  { 800,  600, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[ 9], 210, 26}, // 75Hz
+//  { 800,  600, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[10], 210, 26}, // 85Hz
+//  { 800,  600, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[10], 210, 26}, // 85Hz
+//  { 800,  600, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[10], 210, 26}, // 85Hz
   // XGA
-//  {1024,  768, 16, 0x3B, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 60Hz
-//  {1024,  768, 24, 0x3B, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 60Hz
-//  {1024,  768, 32, 0x3B, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 60Hz
-//  {1024,  768, 16, 0x3C, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 70Hz
-//  {1024,  768, 24, 0x3C, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 70Hz
-//  {1024,  768, 32, 0x3C, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 70Hz
-  {1024,  768, 16, 0x3D, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 75Hz
-  {1024,  768, 24, 0x3D, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 75Hz
-  {1024,  768, 32, 0x3D, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 75Hz
-//  {1024,  768, 16, 0x3E, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 85Hz
-//  {1024,  768, 24, 0x3E, GRAPH_PSM_24, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 85Hz
-//  {1024,  768, 32, 0x3E, GRAPH_PSM_32, NON_INTERLACED, 0, GS_DISPLAY(580, 34, 1, 0, 2047,  767)}, // 85Hz
+//  {1024,  768, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[11], 270, 34}, // 60Hz
+//  {1024,  768, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[11], 270, 34}, // 60Hz
+//  {1024,  768, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[11], 270, 34}, // 60Hz
+//  {1024,  768, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[12], 270, 34}, // 70Hz
+//  {1024,  768, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[12], 270, 34}, // 70Hz
+//  {1024,  768, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[12], 270, 34}, // 70Hz
+  {1024,  768, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[13], 270, 34}, // 75Hz
+  {1024,  768, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[13], 270, 34}, // 75Hz
+  {1024,  768, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[13], 270, 34}, // 75Hz
+//  {1024,  768, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[14], 270, 34}, // 85Hz
+//  {1024,  768, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[14], 270, 34}, // 85Hz
+//  {1024,  768, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[14], 270, 34}, // 85Hz
   // SXGA
-//  {1280, 1024, 16, 0x4A, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(348, 40, 0, 0, 1279, 1023)}, // 60Hz
-  {1280, 1024, 16, 0x4B, GRAPH_PSM_16, NON_INTERLACED, 0, GS_DISPLAY(348, 40, 0, 0, 1279, 1023)}, // 75Hz
+//  {1280, 1024, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[15], 348, 40}, // 60Hz
+  {1280, 1024, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[16], 348, 40}, // 75Hz
+  // EDTV
+  { 720,  480, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[17], 116, 35}, // 480p
+  { 720,  480, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[17], 116, 35}, // 480p
+  { 720,  480, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[17], 116, 35}, // 480p
+  // HDTV
+  {1920,  540, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[18], 238, 20}, // 1080i / 2
+  {1920,  540, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[18], 238, 20}, // 1080i / 2
+  {1920,  540, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[18], 238, 20}, // 1080i / 2
+  {1920, 1080, 16, GRAPH_PSM_16, INTERLACED, FIELD, &cmodes[18], 238, 40}, // 1080i
+  {1280,  720, 16, GRAPH_PSM_16, NON_INTERLACED, 0, &cmodes[19], 302, 24}, // 720p
+  {1280,  720, 24, GRAPH_PSM_24, NON_INTERLACED, 0, &cmodes[19], 302, 24}, // 720p
+  {1280,  720, 32, GRAPH_PSM_32, NON_INTERLACED, 0, &cmodes[19], 302, 24}, // 720p
 };
 const uint32_t vmode_count(sizeof(vmodes) / sizeof(SPS2VideoMode));
 
@@ -151,10 +176,6 @@ static const SVideoMode videoModes[] =
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
-
-
-uint64_t packet_Data[50 * 2 + 2] __attribute__((aligned(64)));
-CGIFPacket packet_(50, packet_Data);
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -350,9 +371,16 @@ CPS22DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
 CPS2VideoDevice::CPS2VideoDevice()
  : CAVideoDevice()
  , pSurface_(NULL)
+ , packet_(50)
  , pCurrentMode_(NULL)
  , pCurrentPS2Mode_(NULL)
 {
+  // Reset the packet
+  packet_.reset();
+  // Set tag
+  packet_.tagAd(1, 0, 0, 0);
+  // Preserve this data after sending
+  packet_.headerSize(1);
 }
 
 //---------------------------------------------------------------------------
@@ -406,45 +434,38 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
   if(pCurrentPS2Mode_ == NULL)
     return;
 
-  // - Sets the RESET bit if the GS CSR register.
+  // Reset the GS
   REG_GS_CSR = GS_CSR_RESET();
 
-  // - Can someone please tell me what the sync.p
-  // instruction does. Synchronizes something :-)
+  // Sync
   __asm__("sync.p\nnop");
 
-  // - Sets up the GS IMR register (i guess).
-  // - The IMR register is used to mask and unmask certain interrupts,
-  //   for example VSync and HSync. We'll use this properly in Tutorial 2.
-  // - Does anyone have code to do this without using the 0x71 syscall?
-  // - I havn't gotten around to looking at any PS2 bios code yet.
+  // Clear GS interrupt mask register
   bios::GsPutIMR(0);
 
-  // - Use syscall 0x02 to setup some video mode stuff.
-  // - Pretty self explanatory I think.
-  // - Does anyone have code to do this without using the syscall? It looks
-  //   like it should only set the SMODE2 register, but if I remove this syscall
-  //   and set the SMODE2 register myself, it donesn't work. What else does
-  //   syscall 0x02 do?
-  bios::SetGsCrt(pCurrentPS2Mode_->interlace, pCurrentPS2Mode_->mode, pCurrentPS2Mode_->field);
+  // Setup CRTC for video mode
+  bios::SetGsCrt(pCurrentPS2Mode_->interlace, pCurrentPS2Mode_->crtcMode->biosMode, pCurrentPS2Mode_->field);
 
-  // - I havn't attempted to understand what the Alpha parameters can do. They
-  //   have been blindly copied from the 3stars demo (although they don't seem
-  //   do have any impact in this simple 2D code.
+  // Enable read circuit 1
   REG_GS_PMODE = GS_PMODE(
     1,        // ReadCircuit1 ON
     0,        // ReadCircuit2 OFF
     1,        // Use ALP register for Alpha Blending
     1,        // Alpha Value of ReadCircuit2 for output selection
     0,        // Blend Alpha with the output of ReadCircuit2
-    0xFF  // Alpha Value = 1.0
+    0xff      // Alpha Value = 1.0
   );
 
-  REG_GS_DISPLAY1 = pCurrentPS2Mode_->display;
-  //REG_GS_DISPLAY2 = pCurrentPS2Mode_->display;
+  // Setup read circuit 1
+  REG_GS_DISPLAY1 = GS_DISPLAY_CREATE(pCurrentPS2Mode_->crtcMode->vck,
+                                      pCurrentPS2Mode_->xoffset,
+                                      pCurrentPS2Mode_->yoffset,
+                                      pCurrentPS2Mode_->width,
+                                      pCurrentPS2Mode_->height);
 
-  packet_.reset();
-  packet_.tagAd(1, 0, 0, 0);
+  // Setup read circuit 2
+  //REG_GS_DISPLAY2 = ...;
+
   // Use drawing parameters from PRIM register
   packet_.data(prmodecont, 1);
   // Setup frame buffers. Point to 0 initially.
@@ -530,8 +551,6 @@ CPS2VideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface 
   CPS2Surface * pDest   = (CPS2Surface *)dest;
   CPS2Surface * pSource = (CPS2Surface *)source;
 
-  packet_.reset();
-  packet_.tagAd(1, 0, 0, 0);
   packet_.data(bitbltbuf, GS_BITBLTBUF(
                             ((uint32_t)pSource->p)>>8,
                             pSource->mode.width>>6,

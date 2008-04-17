@@ -73,7 +73,7 @@
 // DY   - y pos in display area (raster units)
 // MAGH - magnification in h direction
 // MAGV - magnification in v direction
-// DW   - display area width - 1 (VCK units)
+// DW   - display area width  - 1 (VCK units == pixels * 4)
 // DH   - display area height - 1 (pixel units)
 #define GS_DISPLAY(DX,DY,MAGH,MAGV,DW,DH) \
   ((uint64_t)(DX)   <<  0) | \
@@ -82,7 +82,13 @@
   ((uint64_t)(MAGV) << 27) | \
   ((uint64_t)(DW)   << 32) | \
   ((uint64_t)(DH)   << 44)
-
+#define GS_DISPLAY_CREATE(VCK,DX,DY,DW,DH) \
+  ((uint64_t)(DX*VCK)   <<  0) | \
+  ((uint64_t)(DY)       << 12) | \
+  ((uint64_t)(VCK-1)    << 23) | \
+  ((uint64_t)(0)        << 27) | \
+  ((uint64_t)(DW*VCK-1) << 32) | \
+  ((uint64_t)(DH-1)     << 44)
 // DISPFP Registers
 #define GS_DISPFB(FBP,FBW,PSM,DBX,DBY) \
   ((uint64_t)(FBP) << 0)  | \
