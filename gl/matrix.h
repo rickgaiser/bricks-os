@@ -64,6 +64,11 @@ private:
   static GLfloat fpSin_[360];
   static GLfloat fpCos_[360];
 };
+
+void vecInverseF(GLfloat * vto, const GLfloat * vfrom);
+void vecNormalizeF(GLfloat * vto, const GLfloat * vfrom);
+GLfloat vecInnerProductF(const GLfloat * v0, const GLfloat * v1);
+
 #else
 //---------------------------------------------------------------------------
 class CMatrixFx
@@ -106,6 +111,11 @@ private:
   static Mfixed fpSin_[360];
   static Mfixed fpCos_[360];
 };
+
+void vecInverseFx(GLfixed * vto, const GLfixed * vfrom);
+void vecNormalizeFx(GLfixed * vto, const GLfixed * vfrom);
+GLfixed vecInnerProductFx(const GLfixed * v0, const GLfixed * v1);
+
 #endif // CONFIG_FPU
 
 #ifdef CONFIG_FPU
@@ -133,6 +143,7 @@ protected:
   CMatrixF    matrixModelView;
   CMatrixF    matrixProjection;
   CMatrixF    matrixTexture;
+  CMatrixF    matrixNormal;
   CMatrixF  * pCurrentMatrix_;
 };
 #else
@@ -160,6 +171,7 @@ protected:
   CMatrixFx   matrixModelView;
   CMatrixFx   matrixProjection;
   CMatrixFx   matrixTexture;
+  CMatrixFx   matrixNormal;
   CMatrixFx * pCurrentMatrix_;
 };
 #endif // CONFIG_FPU

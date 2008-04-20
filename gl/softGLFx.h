@@ -99,17 +99,16 @@ struct SVertexFx
 
   // Color
   SColorFx  c;
-
-  // State indicates if the values have been processed already
-  bool bProcessed;
 };
 
 //-----------------------------------------------------------------------------
 struct SLightFx
 {
-  SColorFx diffuse;
-  SColorFx ambient;
-  SColorFx specular;
+  SColorFx   diffuse;
+  SColorFx   ambient;
+  SColorFx   specular;
+  SVertex4Fx position;
+  SVector4Fx direction;
   bool enabled;
 };
 

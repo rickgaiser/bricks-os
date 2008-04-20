@@ -61,15 +61,36 @@ CPS2GLESContext::CPS2GLESContext()
     lights_[iLight].ambient.b = 0.0f;
     lights_[iLight].ambient.a = 1.0f;
 
-    lights_[iLight].diffuse.r = 0.0f;
-    lights_[iLight].diffuse.g = 0.0f;
-    lights_[iLight].diffuse.b = 0.0f;
-    lights_[iLight].diffuse.a = 1.0f;
+    if(iLight == 0)
+    {
+      lights_[iLight].diffuse.r = 1.0f;
+      lights_[iLight].diffuse.g = 1.0f;
+      lights_[iLight].diffuse.b = 1.0f;
+      lights_[iLight].diffuse.a = 1.0f;
 
-    lights_[iLight].specular.r = 0.0f;
-    lights_[iLight].specular.g = 0.0f;
-    lights_[iLight].specular.b = 0.0f;
-    lights_[iLight].specular.a = 1.0f;
+      lights_[iLight].specular.r = 1.0f;
+      lights_[iLight].specular.g = 1.0f;
+      lights_[iLight].specular.b = 1.0f;
+      lights_[iLight].specular.a = 1.0f;
+    }
+    else
+    {
+      lights_[iLight].diffuse.r = 0.0f;
+      lights_[iLight].diffuse.g = 0.0f;
+      lights_[iLight].diffuse.b = 0.0f;
+      lights_[iLight].diffuse.a = 0.0f;
+
+      lights_[iLight].specular.r = 0.0f;
+      lights_[iLight].specular.g = 0.0f;
+      lights_[iLight].specular.b = 0.0f;
+      lights_[iLight].specular.a = 0.0f;
+    }
+
+    lights_[iLight].position.x = 0.0f;
+    lights_[iLight].position.y = 0.0f;
+    lights_[iLight].position.z = 1.0f;
+    lights_[iLight].position.w = 0.0f;
+    vecInverseF(lights_[iLight].direction.v, lights_[iLight].position.v);
 
     lights_[iLight].enabled = false;
   }
@@ -362,26 +383,41 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     v.sy = (GLint)((-v.v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
     v.sz = (GLint)((-v.v[2] + 1.0f) * 0.5f * ps2ZMax_);
 
-/*
     // Lighting
     if(lightingEnabled_ == true)
     {
+      GLfloat r(0.0f), g(0.0f), b(0.0f);
+
       // Normal Rotation
-      matrixRotation.transform(v.n, v.n);
-      // FIXME: Light value of normal
-      GLfloat normal = clampf(-v.n[2]);
+      matrixNormal.transform(v.n, v.n);
 
       for(int iLight(0); iLight < 8; iLight++)
       {
         if(lights_[iLight].enabled == true)
         {
-          SColorF & ambient = lights_[iLight].ambient;
-          SColorF & diffuse = lights_[iLight].diffuse;
-          v.c.r = clampf((v.c.r * ambient.r) + ((v.c.r * normal) * diffuse.r));
-          v.c.g = clampf((v.c.g * ambient.g) + ((v.c.g * normal) * diffuse.g));
-          v.c.b = clampf((v.c.b * ambient.b) + ((v.c.b * normal) * diffuse.b));
+          // Ambient light (it's everywhere!)
+          r += lights_[iLight].ambient.r;
+          g += lights_[iLight].ambient.g;
+          b += lights_[iLight].ambient.b;
+
+          // Inner product of normal and light direction
+          GLfloat ip = vecInnerProductF(v.n, lights_[0].direction.v);
+          if(ip < 0.0f) ip = -ip;
+          // Multiply with light color
+          r += lights_[iLight].diffuse.r * ip;
+          g += lights_[iLight].diffuse.g * ip;
+          b += lights_[iLight].diffuse.b * ip;
         }
       }
+
+      // Multiply vertex color by calculated color
+      v.c.r *= r;
+      v.c.g *= g;
+      v.c.b *= b;
+      // Clamp to 0..1
+      v.c.r = clampf(v.c.r);
+      v.c.g = clampf(v.c.g);
+      v.c.b = clampf(v.c.b);
     }
 
     // Fog
@@ -393,7 +429,6 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       v.c.g = clampf((v.c.g * partColor) + (fogColor_.g * partFog));
       v.c.b = clampf((v.c.b * partColor) + (fogColor_.b * partFog));
     }
-*/
 
     // Calculate Z
     uint32_t z = (ps2DepthInvert_ == false) ? (ps2ZMax_ - v.sz) : v.sz;
@@ -544,9 +579,17 @@ CPS2GLESContext::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
   SColorF * pColor = 0;
   switch(pname)
   {
-    case GL_AMBIENT:  pColor = &pLight->ambient; break;
-    case GL_DIFFUSE:  pColor = &pLight->diffuse; break;
+    case GL_AMBIENT:  pColor = &pLight->ambient;  break;
+    case GL_DIFFUSE:  pColor = &pLight->diffuse;  break;
     case GL_SPECULAR: pColor = &pLight->specular; break;
+    case GL_POSITION:
+      pLight->position.v[0] = params[0];
+      pLight->position.v[1] = params[1];
+      pLight->position.v[2] = params[2];
+      pLight->position.v[3] = params[3];
+      // Invert and normalize
+      vecInverseF(pLight->direction.v, pLight->position.v);
+      vecNormalizeF(pLight->direction.v, pLight->direction.v);
     default:
       return;
   }

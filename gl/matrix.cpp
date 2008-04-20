@@ -563,6 +563,8 @@ void
 CAGLESMatrixF::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
   pCurrentMatrix_->rotate(angle, x, y, z);
+  if(matrixMode_ == GL_MODELVIEW)
+    matrixNormal.rotate(angle, x, y, z);
 }
 
 //---------------------------------------------------------------------------
@@ -584,6 +586,8 @@ void
 CAGLESMatrixF::glLoadIdentity(void)
 {
   pCurrentMatrix_->loadIdentity();
+  if(matrixMode_ == GL_MODELVIEW)
+    matrixNormal.loadIdentity();
 }
 
 //---------------------------------------------------------------------------
@@ -646,6 +650,8 @@ void
 CAGLESMatrixFx::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
   pCurrentMatrix_->rotate(angle, x, y, z);
+  if(matrixMode_ == GL_MODELVIEW)
+    matrixNormal.rotate(angle, x, y, z);
 }
 
 //---------------------------------------------------------------------------
@@ -667,6 +673,8 @@ void
 CAGLESMatrixFx::glLoadIdentity(void)
 {
   pCurrentMatrix_->loadIdentity();
+  if(matrixMode_ == GL_MODELVIEW)
+    matrixNormal.loadIdentity();
 }
 
 //---------------------------------------------------------------------------

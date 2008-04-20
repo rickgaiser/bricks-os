@@ -1,7 +1,7 @@
 #include "matrix.h"
 #include "string.h"
-//typedef unsigned int wint_t;
-//#include <math.h>
+typedef unsigned int wint_t;
+#include <math.h>
 
 
 #define matrixf_copy(mto, mfrom) \
@@ -126,6 +126,42 @@ CMatrixF::operator=(const GLfloat * m)
 
   return(*this);
 }
+
+//---------------------------------------------------------------------------
+inline void
+vecInverseF(GLfloat * vto, const GLfloat * vfrom)
+{
+  vto[0] = -vfrom[0];
+  vto[1] = -vfrom[1];
+  vto[2] = -vfrom[2];
+  vto[3] = -vfrom[3];
+}
+
+//---------------------------------------------------------------------------
+inline void
+vecNormalizeF(GLfloat * vto, const GLfloat * vfrom)
+{
+  float norm, dnorm;
+
+  norm = sqrt(vfrom[0]*vfrom[0] + vfrom[1]*vfrom[1] + vfrom[2]*vfrom[2]);
+
+  if(norm > 0)
+  {
+    dnorm = 1.0 / norm;
+    vto[0] = vfrom[0] * dnorm;
+    vto[1] = vfrom[1] * dnorm;
+    vto[2] = vfrom[2] * dnorm;
+    vto[3] = vfrom[3];
+  }
+}
+
+//-----------------------------------------------------------------------------
+inline GLfloat
+vecInnerProductF(const GLfloat * v0, const GLfloat * v1)
+{
+  return (v0[0]*v1[0] + v0[1]*v1[1] + v0[2]*v1[2]);
+}
+
 #else
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -217,4 +253,40 @@ CMatrixFx::operator=(const Mfixed * m)
 
   return(*this);
 }
+
+//---------------------------------------------------------------------------
+inline void
+vecInverseFx(GLfixed * vto, const GLfixed * vfrom)
+{
+  vto[0] = -vfrom[0];
+  vto[1] = -vfrom[1];
+  vto[2] = -vfrom[2];
+  vto[3] = -vfrom[3];
+}
+
+//---------------------------------------------------------------------------
+inline void
+vecNormalizeFx(GLfixed * vto, const GLfixed * vfrom)
+{
+  GLfixed norm, dnorm;
+
+  norm = m_fpfromf(sqrt(m_fptof(m_fpmul(vfrom[0], vfrom[0]) + m_fpmul(vfrom[1], vfrom[1]) + m_fpmul(vfrom[2], vfrom[2]))));
+
+  if(norm > 0)
+  {
+    dnorm = m_fpdiv(m_fpfromi(1), norm);
+    vto[0] = m_fpmul(vfrom[0], dnorm);
+    vto[1] = m_fpmul(vfrom[1], dnorm);
+    vto[2] = m_fpmul(vfrom[2], dnorm);
+    vto[3] = vfrom[3];
+  }
+}
+
+//-----------------------------------------------------------------------------
+inline GLfixed
+vecInnerProductFx(const GLfixed * v0, const GLfixed * v1)
+{
+  return (m_fpmul(v0[0], v1[0]) + m_fpmul(v0[1], v1[1]) + m_fpmul(v0[2], v1[2]));
+}
+
 #endif // CONFIG_FPU
