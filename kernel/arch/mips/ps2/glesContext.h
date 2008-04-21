@@ -75,6 +75,9 @@ public:
   virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
 
 protected:
+  virtual void vertexShader(SVertexF & v);
+
+protected:
   // Depth testing
   bool        depthTestEnabled_;
   GLenum      depthFunction_;
@@ -95,6 +98,7 @@ protected:
   SLightF     lights_[8];
 
   // Normals
+  bool        normalizeEnabled_;
   GLfloat     normal_[4];
 
   // Fog

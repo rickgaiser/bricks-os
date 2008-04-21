@@ -27,6 +27,7 @@ CSoftGLESFixed::CSoftGLESFixed()
  , shadingModel_(GL_FLAT)
 
  , lightingEnabled_(false)
+ , normalizeEnabled_(false)
  , fogEnabled_(false)
  , edge1(0)
  , edge2(0)
@@ -188,10 +189,8 @@ CSoftGLESFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
   normal_[2] = nz;
   normal_[3] = gl_fpfromi(1);
 
-  //if((enableCapabilities_ & GL_NORMALIZE) == GL_NORMALIZE)
-  //{
-  //  // FIXME: Normalize normal
-  //}
+  if(normalizeEnabled_  == true)
+    vecNormalizeFx(normal_, normal_);
 }
 
 //-----------------------------------------------------------------------------
@@ -221,6 +220,7 @@ CSoftGLESFixed::glDisable(GLenum cap)
     case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
     case GL_FOG:        fogEnabled_       = false; break;
     case GL_TEXTURE_2D: texturesEnabled_  = false; break;
+    case GL_NORMALIZE:  normalizeEnabled_ = false; break;
 
     default:
       ; // Not supported
@@ -289,112 +289,52 @@ CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       };
     }
 
-    // Textures/Colors
-    if(texturesEnabled_ == true)
+    // Color
+    if(bBufColorEnabled_ == true)
     {
-      // Textures
-      if(bBufTexCoordEnabled_ == true)
+      switch(bufColor_.type)
       {
-        switch(bufTexCoord_.type)
-        {
-          case GL_FLOAT:
-            v.ts =                  gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
-            v.tt = (gl_fpfromi(1) - gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]));
-            break;
-          case GL_FIXED:
-            v.ts =                  ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++];
-            v.tt = (gl_fpfromi(1) - ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
-            break;
-        };
-      }
+        case GL_FLOAT:
+          v.cr = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v.cg = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v.cb = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v.ca = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          break;
+        case GL_FIXED:
+          v.cr = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          v.cg = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          v.cb = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          v.ca = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          break;
+      };
     }
     else
+      v.cl = clCurrent;
+
+    // Textures
+    if((texturesEnabled_ == true) && (bBufTexCoordEnabled_ == true))
     {
-      // Color
-      if(bBufColorEnabled_ == true)
+      switch(bufTexCoord_.type)
       {
-        switch(bufColor_.type)
-        {
-          case GL_FLOAT:
-            v.c.r = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-            v.c.g = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-            v.c.b = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-            v.c.a = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-            break;
-          case GL_FIXED:
-            v.c.r = ((GLfixed *)bufColor_.pointer)[idxColor++];
-            v.c.g = ((GLfixed *)bufColor_.pointer)[idxColor++];
-            v.c.b = ((GLfixed *)bufColor_.pointer)[idxColor++];
-            v.c.a = ((GLfixed *)bufColor_.pointer)[idxColor++];
-            break;
-        };
-      }
+        case GL_FLOAT:
+          v.ts =                  gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
+          v.tt = (gl_fpfromi(1) - gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]));
+          break;
+        case GL_FIXED:
+          v.ts =                  ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++];
+          v.tt = (gl_fpfromi(1) - ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+          break;
+      };
     }
 
-    // Model-View matrix
-    //   from 'object coordinates' to 'eye coordinates'
-    matrixModelView.transform(v.v, v.v);
-    // Projection matrix
-    //   from 'eye coordinates' to 'clip coordinates'
-    matrixProjection.transform(v.v, v.v);
-    // Perspective division
-    //   from 'clip coordinates' to 'normalized device coordinates'
-    v.v[0] = gl_fpdiv(v.v[0], v.v[3]);
-    v.v[1] = gl_fpdiv(v.v[1], v.v[3]);
-    v.v[2] = gl_fpdiv(v.v[2], v.v[3]);
-    // Viewport transformation
-    //   from 'normalized device coordinates' to 'window coordinates'
-    v.sx = gl_fptoi(gl_fpmul(( v.v[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  >> 1)));
-    v.sy = gl_fptoi(gl_fpmul((-v.v[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight >> 1)));
-//    v.sz = gl_fpdiv(zFar - zNear, v.v[2] << 1) + ((zNear + zFar)>>1);
+    // -------------
+    // Vertex shader
+    // -------------
+    vertexShader(v);
 
-    // Lighting
-    if(lightingEnabled_ == true)
-    {
-      GLfloat r(0.0f), g(0.0f), b(0.0f);
-
-      // Normal Rotation
-      matrixNormal.transform(v.n, v.n);
-
-      for(int iLight(0); iLight < 8; iLight++)
-      {
-        if(lights_[iLight].enabled == true)
-        {
-          // Ambient light (it's everywhere!)
-          r += lights_[iLight].ambient.r;
-          g += lights_[iLight].ambient.g;
-          b += lights_[iLight].ambient.b;
-
-          // Inner product of normal and light direction
-          GLfixed ip = vecInnerProductFx(v.n, lights_[0].direction.v);
-          if(ip < 0.0f) ip = -ip;
-          // Multiply with light color
-          r += gl_fpmul(lights_[iLight].diffuse.r, ip);
-          g += gl_fpmul(lights_[iLight].diffuse.g, ip);
-          b += gl_fpmul(lights_[iLight].diffuse.b, ip);
-        }
-      }
-
-      // Multiply vertex color by calculated color
-      v.c.r = gl_fpmul(v.c.r, r);
-      v.c.g = gl_fpmul(v.c.g, g);
-      v.c.b = gl_fpmul(v.c.b, b);
-      // Clamp to 0..1
-      v.c.r = clampfx(v.c.r);
-      v.c.g = clampfx(v.c.g);
-      v.c.b = clampfx(v.c.b);
-    }
-
-    // Fog
-    if(fogEnabled_ == true)
-    {
-      GLfixed partFog   = clampfx(gl_fpdiv(abs(v.v[2]) - fogStart_, fogEnd_ - fogStart_));
-      GLfixed partColor = gl_fpfromi(1) - partFog;
-      v.c.r = clampfx(gl_fpmul(v.c.r, partColor) + gl_fpmul(fogColor_.r, partFog));
-      v.c.g = clampfx(gl_fpmul(v.c.g, partColor) + gl_fpmul(fogColor_.g, partFog));
-      v.c.b = clampfx(gl_fpmul(v.c.b, partColor) + gl_fpmul(fogColor_.b, partFog));
-    }
-
+    // ------------------
+    // Primitive Assembly
+    // ------------------
     switch(mode)
     {
       case GL_TRIANGLES:
@@ -471,6 +411,7 @@ CSoftGLESFixed::glEnable(GLenum cap)
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
     case GL_TEXTURE_2D: texturesEnabled_   = true; break;
+    case GL_NORMALIZE:  normalizeEnabled_  = true; break;
 
     default:
       ; // Not supported
@@ -597,6 +538,82 @@ CSoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void
+CSoftGLESFixed::vertexShader(SVertexFx & v)
+{
+  // --------------
+  // Transformation
+  // --------------
+  // Model-View matrix
+  //   from 'object coordinates' to 'eye coordinates'
+  matrixModelView.transform(v.v, v.v);
+  // Projection matrix
+  //   from 'eye coordinates' to 'clip coordinates'
+  matrixProjection.transform(v.v, v.v);
+  // Perspective division
+  //   from 'clip coordinates' to 'normalized device coordinates'
+  v.v[0] = gl_fpdiv(v.v[0], v.v[3]);
+  v.v[1] = gl_fpdiv(v.v[1], v.v[3]);
+  v.v[2] = gl_fpdiv(v.v[2], v.v[3]);
+  // Viewport transformation
+  //   from 'normalized device coordinates' to 'window coordinates'
+  v.sx = gl_fptoi(gl_fpmul(( v.v[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  >> 1)));
+  v.sy = gl_fptoi(gl_fpmul((-v.v[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight >> 1)));
+//  v.sz = gl_fpdiv(zFar - zNear, v.v[2] << 1) + ((zNear + zFar)>>1);
+
+  // --------
+  // Lighting
+  // --------
+  if(lightingEnabled_ == true)
+  {
+    GLfloat r(0.0f), g(0.0f), b(0.0f);
+
+    // Normal Rotation
+    matrixNormal.transform(v.n, v.n);
+
+    for(int iLight(0); iLight < 8; iLight++)
+    {
+      if(lights_[iLight].enabled == true)
+      {
+        // Ambient light (it's everywhere!)
+        r += lights_[iLight].ambient.r;
+        g += lights_[iLight].ambient.g;
+        b += lights_[iLight].ambient.b;
+
+        // Inner product of normal and light direction
+        GLfixed ip = vecInnerProductFx(v.n, lights_[0].direction.v);
+        if(ip < 0.0f) ip = -ip;
+        // Multiply with light color
+        r += gl_fpmul(lights_[iLight].diffuse.r, ip);
+        g += gl_fpmul(lights_[iLight].diffuse.g, ip);
+        b += gl_fpmul(lights_[iLight].diffuse.b, ip);
+      }
+    }
+
+    // Multiply vertex color by calculated color
+    v.cr = gl_fpmul(v.cr, r);
+    v.cg = gl_fpmul(v.cg, g);
+    v.cb = gl_fpmul(v.cb, b);
+    // Clamp to 0..1
+    v.cr = clampfx(v.cr);
+    v.cg = clampfx(v.cg);
+    v.cb = clampfx(v.cb);
+  }
+
+  // ---
+  // Fog
+  // ---
+  if(fogEnabled_ == true)
+  {
+    GLfixed partFog   = clampfx(gl_fpdiv(abs(v.v[2]) - fogStart_, fogEnd_ - fogStart_));
+    GLfixed partColor = gl_fpfromi(1) - partFog;
+    v.cr = clampfx(gl_fpmul(v.cr, partColor) + gl_fpmul(fogColor_.r, partFog));
+    v.cg = clampfx(gl_fpmul(v.cg, partColor) + gl_fpmul(fogColor_.g, partFog));
+    v.cb = clampfx(gl_fpmul(v.cb, partColor) + gl_fpmul(fogColor_.b, partFog));
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
 CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
 {
   // Backface culling
@@ -681,15 +698,15 @@ CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
   {
     if(depthTestEnabled_ == true)
     {
-      edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
-      edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->c, vmi->sx, vmi->sy, vmi->v[3], vmi->c);
-      edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->c, vhi->sx, vhi->sy, vhi->v[3], vhi->c);
+      edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->cl, vhi->sx, vhi->sy, vhi->v[3], vhi->cl);
+      edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->cl, vmi->sx, vmi->sy, vmi->v[3], vmi->cl);
+      edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->cl, vhi->sx, vhi->sy, vhi->v[3], vhi->cl);
     }
     else
     {
-      edge1->addC(vlo->sx, vlo->sy, vlo->c, vhi->sx, vhi->sy, vhi->c);
-      edge2->addC(vlo->sx, vlo->sy, vlo->c, vmi->sx, vmi->sy, vmi->c);
-      edge2->addC(vmi->sx, vmi->sy, vmi->c, vhi->sx, vhi->sy, vhi->c);
+      edge1->addC(vlo->sx, vlo->sy, vlo->cl, vhi->sx, vhi->sy, vhi->cl);
+      edge2->addC(vlo->sx, vlo->sy, vlo->cl, vmi->sx, vmi->sy, vmi->cl);
+      edge2->addC(vmi->sx, vmi->sy, vmi->cl, vhi->sx, vhi->sy, vhi->cl);
     }
   }
   else
@@ -741,9 +758,9 @@ CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
   {
     if(depthTestEnabled_ == true)
       for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineZ(*pEdgeLeft, *pEdgeRight, y, vtx[2]->c);
+        hlineZ(*pEdgeLeft, *pEdgeRight, y, vtx[2]->cl);
     else
       for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hline(*pEdgeLeft, *pEdgeRight, y, vtx[2]->c);
+        hline(*pEdgeLeft, *pEdgeRight, y, vtx[2]->cl);
   }
 }

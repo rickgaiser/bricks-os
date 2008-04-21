@@ -25,6 +25,7 @@ CPS2GLESContext::CPS2GLESContext()
 
  , shadingModel_(GL_FLAT)
  , lightingEnabled_(false)
+ , normalizeEnabled_(false)
  , fogEnabled_(false)
  , texturesEnabled_(false)
  , pCurrentTex_(NULL)
@@ -187,10 +188,8 @@ CPS2GLESContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
   normal_[2] = nz;
   normal_[3] = 1.0f;
 
-  //if((enableCapabilities_ & GL_NORMALIZE) == GL_NORMALIZE)
-  //{
-  //  // FIXME: Normalize normal
-  //}
+  if(normalizeEnabled_  == true)
+    vecNormalizeF(normal_, normal_);
 }
 
 //-----------------------------------------------------------------------------
@@ -244,9 +243,10 @@ CPS2GLESContext::glDisable(GLenum cap)
       break;
     }
 */
-    case GL_CULL_FACE:  cullFaceEnabled_ = false; break;
-    case GL_FOG:        fogEnabled_      = false; break;
-    case GL_TEXTURE_2D: texturesEnabled_ = false; ps2Textures_ = TEXTURES_OFF; break;
+    case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
+    case GL_FOG:        fogEnabled_       = false; break;
+    case GL_TEXTURE_2D: texturesEnabled_  = false; ps2Textures_ = TEXTURES_OFF; break;
+    case GL_NORMALIZE:  normalizeEnabled_ = false; break;
 
     default:
       ; // Not supported
@@ -279,10 +279,6 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       packet_.data(prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
   };
-
-  // Create PS2 usable matrix objects
-  CPS2Matrix ps2ModelView(matrixModelView);
-  CPS2Matrix ps2Projection(matrixProjection);
 
   // Process all vertices
   for(GLint i(0); i < count; i++)
@@ -350,85 +346,26 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufColor_.type)
       {
         case GL_FLOAT:
-          v.c.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.c.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cr = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cg = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cb = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.ca = ((GLfloat *)bufColor_.pointer)[idxColor++];
           break;
         case GL_FIXED:
-          v.c.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.c.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cr = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cg = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cb = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.ca = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
           break;
       };
     }
     else
-      v.c = clCurrent;
+      v.cl = clCurrent;
 
-    // Model-View matrix
-    //   from 'object coordinates' to 'eye coordinates'
-    ps2ModelView.transform(v.v, v.v);
-    // Projection matrix
-    //   from 'eye coordinates' to 'clip coordinates'
-    ps2Projection.transform(v.v, v.v);
-    // Perspective division
-    //   from 'clip coordinates' to 'normalized device coordinates'
-    v.v[0] /= v.v[3];
-    v.v[1] /= v.v[3];
-    v.v[2] /= v.v[3];
-    // Viewport transformation
-    //   from 'normalized device coordinates' to 'window coordinates'
-    v.sx = (GLint)(( v.v[0] + 1.0f) * (viewportWidth  / 2)) + viewportXOffset;
-    v.sy = (GLint)((-v.v[1] + 1.0f) * (viewportHeight / 2)) + viewportYOffset;
-    v.sz = (GLint)((-v.v[2] + 1.0f) * 0.5f * ps2ZMax_);
-
-    // Lighting
-    if(lightingEnabled_ == true)
-    {
-      GLfloat r(0.0f), g(0.0f), b(0.0f);
-
-      // Normal Rotation
-      matrixNormal.transform(v.n, v.n);
-
-      for(int iLight(0); iLight < 8; iLight++)
-      {
-        if(lights_[iLight].enabled == true)
-        {
-          // Ambient light (it's everywhere!)
-          r += lights_[iLight].ambient.r;
-          g += lights_[iLight].ambient.g;
-          b += lights_[iLight].ambient.b;
-
-          // Inner product of normal and light direction
-          GLfloat ip = vecInnerProductF(v.n, lights_[0].direction.v);
-          if(ip < 0.0f) ip = -ip;
-          // Multiply with light color
-          r += lights_[iLight].diffuse.r * ip;
-          g += lights_[iLight].diffuse.g * ip;
-          b += lights_[iLight].diffuse.b * ip;
-        }
-      }
-
-      // Multiply vertex color by calculated color
-      v.c.r *= r;
-      v.c.g *= g;
-      v.c.b *= b;
-      // Clamp to 0..1
-      v.c.r = clampf(v.c.r);
-      v.c.g = clampf(v.c.g);
-      v.c.b = clampf(v.c.b);
-    }
-
-    // Fog
-    if(fogEnabled_ == true)
-    {
-      GLfloat partFog   = clampf((abs(v.v[3]) - fogStart_) / (fogEnd_ - fogStart_));
-      GLfloat partColor = 1.0f - partFog;
-      v.c.r = clampf((v.c.r * partColor) + (fogColor_.r * partFog));
-      v.c.g = clampf((v.c.g * partColor) + (fogColor_.g * partFog));
-      v.c.b = clampf((v.c.b * partColor) + (fogColor_.b * partFog));
-    }
+    // -------------
+    // Vertex shader
+    // -------------
+    vertexShader(v);
 
     // Calculate Z
     uint32_t z = (ps2DepthInvert_ == false) ? (ps2ZMax_ - v.sz) : v.sz;
@@ -441,11 +378,11 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       float tq = 1.0f / v.v[3];
 
       packet_.data(st, GS_ST(*(uint32_t *)(&v.ts), *(uint32_t *)(&v.tt)));
-      packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, *(uint32_t *)(&tq)));
+      packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cr*255), (uint8_t)(v.cg*255), (uint8_t)(v.cb*255), 100, *(uint32_t *)(&tq)));
     }
     else
     {
-      packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), 100, 0));
+      packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cr*255), (uint8_t)(v.cg*255), (uint8_t)(v.cb*255), 100, 0));
     }
     packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, z));
   }
@@ -504,6 +441,7 @@ CPS2GLESContext::glEnable(GLenum cap)
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
     case GL_TEXTURE_2D: texturesEnabled_   = true; ps2Textures_ = TEXTURES_ON; break;
+    case GL_NORMALIZE:  normalizeEnabled_  = true; break;
 
     default:
       ; // Not supported
@@ -764,4 +702,73 @@ void
 CPS2GLESContext::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 {
   glTexParameterf(target, pname, gl_fptof(param));
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::vertexShader(SVertexF & v)
+{
+  // Model-View matrix
+  //   from 'object coordinates' to 'eye coordinates'
+  matrixModelView.transform(v.v, v.v);
+  // Projection matrix
+  //   from 'eye coordinates' to 'clip coordinates'
+  matrixProjection.transform(v.v, v.v);
+  // Perspective division
+  //   from 'clip coordinates' to 'normalized device coordinates'
+  v.v[0] /= v.v[3];
+  v.v[1] /= v.v[3];
+  v.v[2] /= v.v[3];
+  // Viewport transformation
+  //   from 'normalized device coordinates' to 'window coordinates'
+  v.sx = (GLint)(( v.v[0] + 1.0f) * (viewportWidth  >> 1));
+  v.sy = (GLint)((-v.v[1] + 1.0f) * (viewportHeight >> 1));
+  //v.sz = (GLint)(((zFar - zNear) / (2.0f * v.v[2])) + ((zNear + zFar) / 2.0f));
+
+  // Lighting
+  if(lightingEnabled_ == true)
+  {
+    GLfloat r(0.0f), g(0.0f), b(0.0f);
+
+    // Normal Rotation
+    matrixNormal.transform(v.n, v.n);
+
+    for(int iLight(0); iLight < 8; iLight++)
+    {
+      if(lights_[iLight].enabled == true)
+      {
+        // Ambient light (it's everywhere!)
+        r += lights_[iLight].ambient.r;
+        g += lights_[iLight].ambient.g;
+        b += lights_[iLight].ambient.b;
+
+        // Inner product of normal and light direction
+        GLfloat ip = vecInnerProductF(v.n, lights_[0].direction.v);
+        if(ip < 0.0f) ip = -ip;
+        // Multiply with light color
+        r += lights_[iLight].diffuse.r * ip;
+        g += lights_[iLight].diffuse.g * ip;
+        b += lights_[iLight].diffuse.b * ip;
+      }
+    }
+
+    // Multiply vertex color by calculated color
+    v.cr *= r;
+    v.cg *= g;
+    v.cb *= b;
+    // Clamp to 0..1
+    v.cr = clampf(v.cr);
+    v.cg = clampf(v.cg);
+    v.cb = clampf(v.cb);
+  }
+
+  // Fog
+  if(fogEnabled_ == true)
+  {
+    GLfloat partFog   = clampf((abs(v.v[2]) - fogStart_) / (fogEnd_ - fogStart_));
+    GLfloat partColor = 1.0f - partFog;
+    v.cr = clampf((v.cr * partColor) + (fogColor_.r * partFog));
+    v.cg = clampf((v.cg * partColor) + (fogColor_.g * partFog));
+    v.cb = clampf((v.cb * partColor) + (fogColor_.b * partFog));
+  }
 }

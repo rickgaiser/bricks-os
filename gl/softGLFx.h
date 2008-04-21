@@ -76,12 +76,27 @@ struct SVertexFx
     GLfixed n[4];
   };
 
+  // Color
+  union
+  {
+    struct
+    {
+      GLfloat cr, cg, cb, ca;
+    };
+    GLfloat c[4];
+    SColorFx cl;
+  };
+
   // Texture coordinates
   union
   {
     struct
     {
       GLfixed ts, tt;
+    };
+    struct
+    {
+      GLfixed tu, tv;
     };
     GLfixed t[2];
   };
@@ -96,9 +111,6 @@ struct SVertexFx
     };
     GLint s[3];
   };
-
-  // Color
-  SColorFx  c;
 };
 
 //-----------------------------------------------------------------------------
@@ -153,6 +165,9 @@ public:
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
+  virtual void vertexShader(SVertexFx & v);
+
+protected:
   // Depth testing
   bool        depthTestEnabled_;
   GLenum      depthFunction_;
@@ -174,6 +189,7 @@ protected:
   SLightFx    lights_[8];
 
   // Normals
+  bool        normalizeEnabled_;
   GLfixed     normal_[4];
 
   // Fog
