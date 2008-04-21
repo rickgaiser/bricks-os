@@ -24,19 +24,46 @@ m[3*4+0] = 0; m[3*4+1] = 0; m[3*4+2] = 0; m[3*4+3] = 1
 
 #define matrixfx_copy(mto, mfrom) \
 matrixf_copy(mto, mfrom)
-//memcpy(mto, mfrom, sizeof(Mfixed) * 16)
+//memcpy(mto, mfrom, sizeof(GLfixed) * 16)
 #define matrixfx_clear(m) \
 matrixf_clear(m)
-//memset(m, 0, sizeof(Mfixed) * 16)
+//memset(m, 0, sizeof(GLfixed) * 16)
 #define matrixfx_identity(m) \
-m[0*4+0] = m_fpfromi(1); m[0*4+1] = m_fpfromi(0); m[0*4+2] = m_fpfromi(0); m[0*4+3] = m_fpfromi(0); \
-m[1*4+0] = m_fpfromi(0); m[1*4+1] = m_fpfromi(1); m[1*4+2] = m_fpfromi(0); m[1*4+3] = m_fpfromi(0); \
-m[2*4+0] = m_fpfromi(0); m[2*4+1] = m_fpfromi(0); m[2*4+2] = m_fpfromi(1); m[2*4+3] = m_fpfromi(0); \
-m[3*4+0] = m_fpfromi(0); m[3*4+1] = m_fpfromi(0); m[3*4+2] = m_fpfromi(0); m[3*4+3] = m_fpfromi(1)
+m[0*4+0] = gl_fpfromi(1); m[0*4+1] = gl_fpfromi(0); m[0*4+2] = gl_fpfromi(0); m[0*4+3] = gl_fpfromi(0); \
+m[1*4+0] = gl_fpfromi(0); m[1*4+1] = gl_fpfromi(1); m[1*4+2] = gl_fpfromi(0); m[1*4+3] = gl_fpfromi(0); \
+m[2*4+0] = gl_fpfromi(0); m[2*4+1] = gl_fpfromi(0); m[2*4+2] = gl_fpfromi(1); m[2*4+3] = gl_fpfromi(0); \
+m[3*4+0] = gl_fpfromi(0); m[3*4+1] = gl_fpfromi(0); m[3*4+2] = gl_fpfromi(0); m[3*4+3] = gl_fpfromi(1)
 
 
 #ifdef CONFIG_FPU
 //---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+inline
+CMatrixF::CMatrixF(const GLfloat * m)
+{
+  matrixf_copy(matrix, m);
+}
+
+//---------------------------------------------------------------------------
+inline
+CMatrixF::CMatrixF(const CMatrixF & m)
+{
+  matrixf_copy(matrix, m.matrix);
+}
+
+//---------------------------------------------------------------------------
+inline
+CMatrixF::CMatrixF(GLfloat _m00, GLfloat _m01, GLfloat _m02, GLfloat _m03,
+                   GLfloat _m10, GLfloat _m11, GLfloat _m12, GLfloat _m13,
+                   GLfloat _m20, GLfloat _m21, GLfloat _m22, GLfloat _m23,
+                   GLfloat _m30, GLfloat _m31, GLfloat _m32, GLfloat _m33)
+{
+  m00 = _m00; m01 = _m01; m02 = _m02; m03 = _m03;
+  m10 = _m10; m11 = _m11; m12 = _m12; m13 = _m13;
+  m20 = _m20; m21 = _m21; m22 = _m22; m23 = _m23;
+  m30 = _m30; m31 = _m31; m32 = _m32; m33 = _m33;
+}
+
 //---------------------------------------------------------------------------
 inline void
 CMatrixF::clear()
@@ -81,10 +108,10 @@ CMatrixF::transform(const GLfloat * from, GLfloat * to)
   GLfloat z(from[2]);
   GLfloat w(from[3]);
 
-  to[0] = matrix[0*4+0] * x + matrix[0*4+1] * y + matrix[0*4+2] * z + matrix[0*4+3] * w;
-  to[1] = matrix[1*4+0] * x + matrix[1*4+1] * y + matrix[1*4+2] * z + matrix[1*4+3] * w;
-  to[2] = matrix[2*4+0] * x + matrix[2*4+1] * y + matrix[2*4+2] * z + matrix[2*4+3] * w;
-  to[3] = matrix[3*4+0] * x + matrix[3*4+1] * y + matrix[3*4+2] * z + matrix[3*4+3] * w;
+  to[0] = m00 * x + m01 * y + m02 * z + m03 * w;
+  to[1] = m10 * x + m11 * y + m12 * z + m13 * w;
+  to[2] = m20 * x + m21 * y + m22 * z + m23 * w;
+  to[3] = m30 * x + m31 * y + m32 * z + m33 * w;
 }
 
 //---------------------------------------------------------------------------
@@ -128,6 +155,7 @@ CMatrixF::operator=(const GLfloat * m)
 }
 
 //---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 inline void
 vecInverseF(GLfloat * vto, const GLfloat * vfrom)
 {
@@ -161,9 +189,35 @@ vecInnerProductF(const GLfloat * v0, const GLfloat * v1)
 {
   return (v0[0]*v1[0] + v0[1]*v1[1] + v0[2]*v1[2]);
 }
-
-#else
+#else // CONFIG_FPU
 //---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+inline
+CMatrixFx::CMatrixFx(const GLfixed * m)
+{
+  matrixfx_copy(matrix, m);
+}
+
+//---------------------------------------------------------------------------
+inline
+CMatrixFx::CMatrixFx(const CMatrixFx & m)
+{
+  matrixfx_copy(matrix, m.matrix);
+}
+
+//---------------------------------------------------------------------------
+inline
+CMatrixFx::CMatrixFx(GLfixed _m00, GLfixed _m01, GLfixed _m02, GLfixed _m03,
+                     GLfixed _m10, GLfixed _m11, GLfixed _m12, GLfixed _m13,
+                     GLfixed _m20, GLfixed _m21, GLfixed _m22, GLfixed _m23,
+                     GLfixed _m30, GLfixed _m31, GLfixed _m32, GLfixed _m33)
+{
+  m00 = _m00; m01 = _m01; m02 = _m02; m03 = _m03;
+  m10 = _m10; m11 = _m11; m12 = _m12; m13 = _m13;
+  m20 = _m20; m21 = _m21; m22 = _m22; m23 = _m23;
+  m30 = _m30; m31 = _m31; m32 = _m32; m33 = _m33;
+}
+
 //---------------------------------------------------------------------------
 inline void
 CMatrixFx::clear()
@@ -203,15 +257,15 @@ CMatrixFx::rotate(GLfixed * angles)
 inline void
 CMatrixFx::transform(const GLfixed * from, GLfixed * to)
 {
-  Mfixed x(gl_to_m(from[0]));
-  Mfixed y(gl_to_m(from[1]));
-  Mfixed z(gl_to_m(from[2]));
-  Mfixed w(gl_to_m(from[3]));
+  GLfixed x(from[0]);
+  GLfixed y(from[1]);
+  GLfixed z(from[2]);
+  GLfixed w(from[3]);
 
-  to[0] = m_to_gl(m_fpmul(matrix[0*4+0], x) + m_fpmul(matrix[0*4+1], y) + m_fpmul(matrix[0*4+2], z) + m_fpmul(matrix[0*4+3], w));
-  to[1] = m_to_gl(m_fpmul(matrix[1*4+0], x) + m_fpmul(matrix[1*4+1], y) + m_fpmul(matrix[1*4+2], z) + m_fpmul(matrix[1*4+3], w));
-  to[2] = m_to_gl(m_fpmul(matrix[2*4+0], x) + m_fpmul(matrix[2*4+1], y) + m_fpmul(matrix[2*4+2], z) + m_fpmul(matrix[2*4+3], w));
-  to[3] = m_to_gl(m_fpmul(matrix[3*4+0], x) + m_fpmul(matrix[3*4+1], y) + m_fpmul(matrix[3*4+2], z) + m_fpmul(matrix[3*4+3], w));
+  to[0] = gl_fpmul(m00, x) + gl_fpmul(m01, y) + gl_fpmul(m02, z) + gl_fpmul(m03, w);
+  to[1] = gl_fpmul(m10, x) + gl_fpmul(m11, y) + gl_fpmul(m12, z) + gl_fpmul(m13, w);
+  to[2] = gl_fpmul(m20, x) + gl_fpmul(m21, y) + gl_fpmul(m22, z) + gl_fpmul(m23, w);
+  to[3] = gl_fpmul(m30, x) + gl_fpmul(m31, y) + gl_fpmul(m32, z) + gl_fpmul(m33, w);
 }
 
 //---------------------------------------------------------------------------
@@ -227,7 +281,7 @@ CMatrixFx::operator*(const CMatrixFx & m)
 
 //---------------------------------------------------------------------------
 inline CMatrixFx
-CMatrixFx::operator*(const Mfixed * m)
+CMatrixFx::operator*(const GLfixed * m)
 {
   CMatrixFx mReturn(*this);
 
@@ -247,13 +301,14 @@ CMatrixFx::operator=(const CMatrixFx & m)
 
 //---------------------------------------------------------------------------
 inline CMatrixFx &
-CMatrixFx::operator=(const Mfixed * m)
+CMatrixFx::operator=(const GLfixed * m)
 {
   matrixfx_copy(matrix, m);
 
   return(*this);
 }
 
+//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 inline void
 vecInverseFx(GLfixed * vto, const GLfixed * vfrom)
@@ -270,14 +325,14 @@ vecNormalizeFx(GLfixed * vto, const GLfixed * vfrom)
 {
   GLfixed norm, dnorm;
 
-  norm = m_fpfromf(sqrt(m_fptof(m_fpmul(vfrom[0], vfrom[0]) + m_fpmul(vfrom[1], vfrom[1]) + m_fpmul(vfrom[2], vfrom[2]))));
+  norm = gl_fpfromf(sqrt(gl_fptof(gl_fpmul(vfrom[0], vfrom[0]) + gl_fpmul(vfrom[1], vfrom[1]) + gl_fpmul(vfrom[2], vfrom[2]))));
 
   if(norm > 0)
   {
-    dnorm = m_fpdiv(m_fpfromi(1), norm);
-    vto[0] = m_fpmul(vfrom[0], dnorm);
-    vto[1] = m_fpmul(vfrom[1], dnorm);
-    vto[2] = m_fpmul(vfrom[2], dnorm);
+    dnorm = gl_fpdiv(gl_fpfromi(1), norm);
+    vto[0] = gl_fpmul(vfrom[0], dnorm);
+    vto[1] = gl_fpmul(vfrom[1], dnorm);
+    vto[2] = gl_fpmul(vfrom[2], dnorm);
     vto[3] = vfrom[3];
   }
 }
@@ -286,7 +341,6 @@ vecNormalizeFx(GLfixed * vto, const GLfixed * vfrom)
 inline GLfixed
 vecInnerProductFx(const GLfixed * v0, const GLfixed * v1)
 {
-  return (m_fpmul(v0[0], v1[0]) + m_fpmul(v0[1], v1[1]) + m_fpmul(v0[2], v1[2]));
+  return (gl_fpmul(v0[0], v1[0]) + gl_fpmul(v0[1], v1[1]) + gl_fpmul(v0[2], v1[2]));
 }
-
 #endif // CONFIG_FPU

@@ -7,28 +7,19 @@
 #include "asm/arch/config.h"
 
 
-#define MATRIX_PRECISION   16
-#define m_fpfromi(i)   fpfromi(MATRIX_PRECISION,i)
-#define m_fptoi(i)     fptoi(MATRIX_PRECISION,i)
-#define m_fpfromf(i)   fpfromf(MATRIX_PRECISION,i)
-#define m_fptof(i)     fptof(MATRIX_PRECISION,i)
-#define m_fpmul(i1,i2) fpmul32(MATRIX_PRECISION,i1,i2)
-#define m_fpdiv(i1,i2) fpdiv32(MATRIX_PRECISION,i1,i2)
-
-#define m_to_gl(i)     (i)
-#define gl_to_m(i)     (i)
-
-
-typedef GLfixed Mfixed;
-
-
 #ifdef CONFIG_FPU
 //---------------------------------------------------------------------------
-class CMatrixF
+typedef struct CMatrixF
 {
+#ifdef __cplusplus
 public:
-  CMatrixF();
-  ~CMatrixF();
+  CMatrixF(){};
+  CMatrixF(const GLfloat * m);
+  CMatrixF(const CMatrixF & m);
+  CMatrixF(GLfloat _m00, GLfloat _m01, GLfloat _m02, GLfloat _m03,
+           GLfloat _m10, GLfloat _m11, GLfloat _m12, GLfloat _m13,
+           GLfloat _m20, GLfloat _m21, GLfloat _m22, GLfloat _m23,
+           GLfloat _m30, GLfloat _m31, GLfloat _m32, GLfloat _m33);
 
   void clear();
   void loadIdentity();
@@ -55,27 +46,41 @@ public:
 
   CMatrixF & operator= (const CMatrixF & m);
   CMatrixF & operator= (const GLfloat * m);
+#endif // __cplusplus
 
-public:
-  GLfloat matrix[16];
-
-private:
-  static bool bInitialized_;
-  static GLfloat fpSin_[360];
-  static GLfloat fpCos_[360];
+  union
+  {
+    GLfloat matrix[16];
+#ifdef __cplusplus
+    struct
+    {
+      GLfloat m00, m01, m02, m03;
+      GLfloat m10, m11, m12, m13;
+      GLfloat m20, m21, m22, m23;
+      GLfloat m30, m31, m32, m33;
+    };
+#endif // __cplusplus
+  };
 };
 
+//---------------------------------------------------------------------------
 void vecInverseF(GLfloat * vto, const GLfloat * vfrom);
 void vecNormalizeF(GLfloat * vto, const GLfloat * vfrom);
 GLfloat vecInnerProductF(const GLfloat * v0, const GLfloat * v1);
 
-#else
+#else // CONFIG_FPU
 //---------------------------------------------------------------------------
-class CMatrixFx
+typedef struct CMatrixFx
 {
+#ifdef __cplusplus
 public:
-  CMatrixFx();
-  ~CMatrixFx();
+  CMatrixFx(){};
+  CMatrixFx(const GLfixed * m);
+  CMatrixFx(const CMatrixFx & m);
+  CMatrixFx(GLfixed _m00, GLfixed _m01, GLfixed _m02, GLfixed _m03,
+            GLfixed _m10, GLfixed _m11, GLfixed _m12, GLfixed _m13,
+            GLfixed _m20, GLfixed _m21, GLfixed _m22, GLfixed _m23,
+            GLfixed _m30, GLfixed _m31, GLfixed _m32, GLfixed _m33);
 
   void clear();
   void loadIdentity();
@@ -95,23 +100,31 @@ public:
   void transform(const GLfixed * from, GLfixed * to);
 
   CMatrixFx   operator* (const CMatrixFx & m);
-  CMatrixFx   operator* (const Mfixed * m);
+  CMatrixFx   operator* (const GLfixed * m);
 
   CMatrixFx & operator*=(const CMatrixFx & m);
-  CMatrixFx & operator*=(const Mfixed * m);
+  CMatrixFx & operator*=(const GLfixed * m);
 
   CMatrixFx & operator= (const CMatrixFx & m);
-  CMatrixFx & operator= (const Mfixed * m);
+  CMatrixFx & operator= (const GLfixed * m);
+#endif // __cplusplus
 
-public:
-  Mfixed matrix[16];
-
-private:
-  static bool bInitialized_;
-  static Mfixed fpSin_[360];
-  static Mfixed fpCos_[360];
+  union
+  {
+    GLfixed matrix[16];
+#ifdef __cplusplus
+    struct
+    {
+      GLfixed m00, m01, m02, m03;
+      GLfixed m10, m11, m12, m13;
+      GLfixed m20, m21, m22, m23;
+      GLfixed m30, m31, m32, m33;
+    };
+#endif // __cplusplus
+  };
 };
 
+//---------------------------------------------------------------------------
 void vecInverseFx(GLfixed * vto, const GLfixed * vfrom);
 void vecNormalizeFx(GLfixed * vto, const GLfixed * vfrom);
 GLfixed vecInnerProductFx(const GLfixed * v0, const GLfixed * v1);
@@ -146,7 +159,7 @@ protected:
   CMatrixF    matrixNormal;
   CMatrixF  * pCurrentMatrix_;
 };
-#else
+#else // CONFIG_FPU
 //-----------------------------------------------------------------------------
 class CAGLESMatrixFx
  : public virtual I3DRenderer
