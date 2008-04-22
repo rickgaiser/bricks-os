@@ -195,6 +195,25 @@ CAGLESFloatToFxContext::glLoadMatrixf(const GLfloat *m)
 
 //-----------------------------------------------------------------------------
 void
+CAGLESFloatToFxContext::glMaterialf(GLenum face, GLenum pname, GLfloat param)
+{
+  glMaterialx(face, pname, gl_fpfromf(param));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
+{
+  GLfixed xparams[] = {gl_fpfromf(params[0])
+                     , gl_fpfromf(params[1])
+                     , gl_fpfromf(params[2])
+                     , gl_fpfromf(params[3])};
+
+  glMaterialxv(face, pname, xparams);
+}
+
+//-----------------------------------------------------------------------------
+void
 CAGLESFloatToFxContext::glMultMatrixf(const GLfloat *m)
 {
   GLfixed xparams[] = {gl_fpfromf(m[0])
@@ -374,6 +393,25 @@ CAGLESFxToFloatContext::glLoadMatrixx(const GLfixed *m)
                      , gl_fptof(m[15])};
 
   glLoadMatrixf(fparams);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glMaterialx(GLenum face, GLenum pname, GLfixed param)
+{
+  glMaterialf(face, pname, gl_fptof(param));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glMaterialxv(GLenum face, GLenum pname, const GLfixed * params)
+{
+  GLfloat fparams[] = {gl_fptof(params[0])
+                     , gl_fptof(params[1])
+                     , gl_fptof(params[2])
+                     , gl_fptof(params[3])};
+
+  glMaterialfv(face, pname, fparams);
 }
 
 //-----------------------------------------------------------------------------

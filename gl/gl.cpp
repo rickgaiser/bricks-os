@@ -85,7 +85,7 @@ GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, typ
 }
 
 //-----------------------------------------------------------------------------
-// GL API (58 of 145 implemented)
+// GL API
 //-----------------------------------------------------------------------------
 //#ifdef OPENGL_ES
 //GL_API GLenum GL_APIENTRY glGetError (void);
@@ -170,8 +170,8 @@ GL_APIFUNCTION_6(glFrustumx,           GLfixed, left, GLfixed, right, GLfixed, b
 GL_APIFUNCTION_6(glOrthox,             GLfixed, left, GLfixed, right, GLfixed, bottom, GLfixed, top, GLfixed, zNear, GLfixed, zFar);
 //GL_APIFUNCTION_2(glClipPlanex,         GLenum plane, const GLfixed *equation);
 //GL_APIFUNCTION_2(glGetClipPlanex,      GLenum pname, GLfixed eqn[4]);
-//GL_APIFUNCTION_3(glMaterialx,          GLenum face, GLenum pname, GLfixed param);
-//GL_APIFUNCTION_3(glMaterialxv,         GLenum face, GLenum pname, const GLfixed *params);
+GL_APIFUNCTION_3(glMaterialx,          GLenum, face, GLenum, pname, GLfixed, param);
+GL_APIFUNCTION_3(glMaterialxv,         GLenum, face, GLenum, pname, const GLfixed *, params);
 //GL_APIFUNCTION_3(glGetMaterialxv,      GLenum face, GLenum pname, GLfixed *params);
 GL_APIFUNCTION_3(glLightx,             GLenum, light, GLenum, pname, GLfixed, param);
 GL_APIFUNCTION_3(glLightxv,            GLenum, light, GLenum, pname, const GLfixed *, params);
@@ -214,8 +214,8 @@ GL_APIFUNCTION_6(glFrustumf,           GLfloat, left, GLfloat, right, GLfloat, b
 GL_APIFUNCTION_6(glOrthof,             GLfloat, left, GLfloat, right, GLfloat, bottom, GLfloat, top, GLfloat, zNear, GLfloat, zFar);
 //GL_APIFUNCTION_2(glClipPlanef,         GLenum plane, const GLfloat *equation);
 //GL_APIFUNCTION_2(glGetClipPlanef,      GLenum pname, GLfloat eqn[4]);
-//GL_APIFUNCTION_3(glMaterialf,          GLenum face, GLenum pname, GLfloat param);
-//GL_APIFUNCTION_3(glMaterialfv,         GLenum face, GLenum pname, const GLfloat *params);
+GL_APIFUNCTION_3(glMaterialf,          GLenum, face, GLenum, pname, GLfloat, param);
+GL_APIFUNCTION_3(glMaterialfv,         GLenum, face, GLenum, pname, const GLfloat *, params);
 //GL_APIFUNCTION_3(glGetMaterialfv,      GLenum face, GLenum pname, GLfloat *params);
 GL_APIFUNCTION_3(glLightf,             GLenum, light, GLenum, pname, GLfloat, param);
 GL_APIFUNCTION_3(glLightfv,            GLenum, light, GLenum, pname, const GLfloat *, params);

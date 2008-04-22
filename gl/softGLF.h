@@ -152,6 +152,8 @@ public:
   virtual void glFogfv(GLenum pname, const GLfloat *params);
   virtual void glLightf(GLenum light, GLenum pname, GLfloat param);
   virtual void glLightfv(GLenum light, GLenum pname, const GLfloat * params);
+  virtual void glMaterialf(GLenum face, GLenum pname, GLfloat param);
+  virtual void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params);
   virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
   virtual void glShadeModel(GLenum mode);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
@@ -182,6 +184,13 @@ protected:
   // Normals
   bool        normalizeEnabled_;
   GLfloat     normal_[4];
+
+  // Material
+  SColorF     matColorAmbient_;
+  SColorF     matColorDiffuse_;
+  SColorF     matColorSpecular_;
+  SColorF     matColorEmission_;
+  GLfloat     matShininess_;
 
   // Fog
   bool        fogEnabled_;

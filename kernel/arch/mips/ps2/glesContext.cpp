@@ -55,6 +55,7 @@ CPS2GLESContext::CPS2GLESContext()
   clClear.b = 0.0f;
   clClear.a = 1.0f;
 
+  // Light properties
   for(int iLight(0); iLight < 8; iLight++)
   {
     lights_[iLight].ambient.r = 0.0f;
@@ -95,6 +96,29 @@ CPS2GLESContext::CPS2GLESContext()
 
     lights_[iLight].enabled = false;
   }
+
+  // Material properties
+  matColorAmbient_.r  = 0.2f;
+  matColorAmbient_.r  = 0.2f;
+  matColorAmbient_.r  = 0.2f;
+  matColorAmbient_.r  = 1.0f;
+
+  matColorDiffuse_.r  = 0.8f;
+  matColorDiffuse_.r  = 0.8f;
+  matColorDiffuse_.r  = 0.8f;
+  matColorDiffuse_.r  = 1.0f;
+
+  matColorSpecular_.r = 0.0f;
+  matColorSpecular_.r = 0.0f;
+  matColorSpecular_.r = 0.0f;
+  matColorSpecular_.r = 1.0f;
+
+  matColorEmission_.r = 0.0f;
+  matColorEmission_.r = 0.0f;
+  matColorEmission_.r = 0.0f;
+  matColorEmission_.r = 1.0f;
+
+  matShininess_       = 0.0f;
 
   for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
     textures_[idx].used = false;
@@ -536,6 +560,68 @@ CPS2GLESContext::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
   pColor->g = params[1];
   pColor->b = params[2];
   pColor->a = params[3];
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::glMaterialf(GLenum face, GLenum pname, GLfloat param)
+{
+  switch(pname)
+  {
+    case GL_SHININESS:
+      matShininess_ = param;
+      break;
+    default:
+      return;
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
+{
+  switch(pname)
+  {
+    case GL_AMBIENT:
+      matColorAmbient_.r = params[0];
+      matColorAmbient_.g = params[1];
+      matColorAmbient_.b = params[2];
+      matColorAmbient_.a = params[3];
+      break;
+    case GL_DIFFUSE:
+      matColorDiffuse_.r = params[0];
+      matColorDiffuse_.g = params[1];
+      matColorDiffuse_.b = params[2];
+      matColorDiffuse_.a = params[3];
+      break;
+    case GL_SPECULAR:
+      matColorSpecular_.r = params[0];
+      matColorSpecular_.g = params[1];
+      matColorSpecular_.b = params[2];
+      matColorSpecular_.a = params[3];
+      break;
+    case GL_EMISSION:
+      matColorEmission_.r = params[0];
+      matColorEmission_.g = params[1];
+      matColorEmission_.b = params[2];
+      matColorEmission_.a = params[3];
+      break;
+    case GL_SHININESS:
+      matShininess_ = params[0];
+      break;
+    case GL_AMBIENT_AND_DIFFUSE:
+      matColorAmbient_.r = params[0];
+      matColorAmbient_.g = params[1];
+      matColorAmbient_.b = params[2];
+      matColorAmbient_.a = params[3];
+      matColorDiffuse_.r = params[0];
+      matColorDiffuse_.g = params[1];
+      matColorDiffuse_.b = params[2];
+      matColorDiffuse_.a = params[3];
+      break;
+    default:
+      return;
+  }
 }
 
 //-----------------------------------------------------------------------------

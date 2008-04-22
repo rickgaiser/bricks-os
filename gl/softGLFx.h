@@ -160,6 +160,8 @@ public:
   virtual void glFogxv(GLenum pname, const GLfixed *params);
   virtual void glLightx(GLenum light, GLenum pname, GLfixed param);
   virtual void glLightxv(GLenum light, GLenum pname, const GLfixed * params);
+  virtual void glMaterialx(GLenum face, GLenum pname, GLfixed param);
+  virtual void glMaterialxv(GLenum face, GLenum pname, const GLfixed *params);
   virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
   virtual void glShadeModel(GLenum mode);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
@@ -191,6 +193,13 @@ protected:
   // Normals
   bool        normalizeEnabled_;
   GLfixed     normal_[4];
+
+  // Material
+  SColorFx    matColorAmbient_;
+  SColorFx    matColorDiffuse_;
+  SColorFx    matColorSpecular_;
+  SColorFx    matColorEmission_;
+  GLfixed     matShininess_;
 
   // Fog
   bool        fogEnabled_;

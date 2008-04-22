@@ -104,6 +104,8 @@ public:
   virtual void glLightf(GLenum light, GLenum pname, GLfloat param);
   virtual void glLightfv(GLenum light, GLenum pname, const GLfloat * params);
   virtual void glLoadMatrixf(const GLfloat *m);
+  virtual void glMaterialf(GLenum face, GLenum pname, GLfloat param);
+  virtual void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params);
   virtual void glMultMatrixf(const GLfloat *m);
   virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
   virtual void glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
@@ -129,6 +131,8 @@ public:
   virtual void glLightx(GLenum light, GLenum pname, GLfixed param);
   virtual void glLightxv(GLenum light, GLenum pname, const GLfixed * params);
   virtual void glLoadMatrixx(const GLfixed *m);
+  virtual void glMaterialx(GLenum face, GLenum pname, GLfixed param);
+  virtual void glMaterialxv(GLenum face, GLenum pname, const GLfixed *params);
   virtual void glMultMatrixx(const GLfixed *m);
   virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
   virtual void glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
