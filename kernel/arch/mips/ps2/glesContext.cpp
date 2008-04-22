@@ -288,21 +288,9 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   GLint idxColor   (first * bufColor_.size);
   GLint idxNormal  (first * bufNormal_.size);
   GLint idxTexCoord(first * bufTexCoord_.size);
-
   SVertexF v;
 
-  switch(mode)
-  {
-    case GL_TRIANGLES:
-      packet_.data(prim, GS_PRIM(PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
-      break;
-    case GL_TRIANGLE_STRIP:
-      packet_.data(prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
-      break;
-    case GL_TRIANGLE_FAN:
-      packet_.data(prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
-      break;
-  };
+  begin(mode);
 
   // Process all vertices
   for(GLint i(0); i < count; i++)
@@ -391,26 +379,13 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // -------------
     vertexShader(v);
 
-    // Calculate Z
-    uint32_t z = (ps2DepthInvert_ == false) ? (ps2ZMax_ - v.sz) : v.sz;
-
-    // Add to message
-    if(texturesEnabled_ == true)
-    {
-      v.ts /= v.v[3];
-      v.tt /= v.v[3];
-      float tq = 1.0f / v.v[3];
-
-      packet_.data(st, GS_ST(*(uint32_t *)(&v.ts), *(uint32_t *)(&v.tt)));
-      packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cr*255), (uint8_t)(v.cg*255), (uint8_t)(v.cb*255), 100, *(uint32_t *)(&tq)));
-    }
-    else
-    {
-      packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cr*255), (uint8_t)(v.cg*255), (uint8_t)(v.cb*255), 100, 0));
-    }
-    packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, z));
+    // ------------
+    // Raterization
+    // ------------
+    rasterize(v);
   }
-  bDataWaiting_ = true;
+
+  end();
 }
 
 //-----------------------------------------------------------------------------
@@ -857,4 +832,55 @@ CPS2GLESContext::vertexShader(SVertexF & v)
     v.cg = clampf((v.cg * partColor) + (fogColor_.g * partFog));
     v.cb = clampf((v.cb * partColor) + (fogColor_.b * partFog));
   }
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::rasterize(SVertexF & v)
+{
+  // Calculate Z
+  uint32_t z = (ps2DepthInvert_ == false) ? (ps2ZMax_ - v.sz) : v.sz;
+
+  // Add to message
+  if(texturesEnabled_ == true)
+  {
+    v.ts /= v.v[3];
+    v.tt /= v.v[3];
+    float tq = 1.0f / v.v[3];
+
+    packet_.data(st, GS_ST(*(uint32_t *)(&v.ts), *(uint32_t *)(&v.tt)));
+    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cr*255), (uint8_t)(v.cg*255), (uint8_t)(v.cb*255), 100, *(uint32_t *)(&tq)));
+  }
+  else
+  {
+    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cr*255), (uint8_t)(v.cg*255), (uint8_t)(v.cb*255), 100, 0));
+  }
+  packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, z));
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::begin(GLenum mode)
+{
+  rasterMode_ = mode;
+
+  switch(mode)
+  {
+    case GL_TRIANGLES:
+      packet_.data(prim, GS_PRIM(PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      break;
+    case GL_TRIANGLE_STRIP:
+      packet_.data(prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      break;
+    case GL_TRIANGLE_FAN:
+      packet_.data(prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      break;
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::end()
+{
+  bDataWaiting_ = true;
 }

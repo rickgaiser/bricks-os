@@ -77,7 +77,13 @@ public:
   virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
 
 protected:
+  // Vertex shader
   virtual void vertexShader(SVertexF & v);
+
+  // Rasterizer
+  virtual void begin(GLenum mode);
+  virtual void rasterize(SVertexF & v);
+  virtual void end();
 
 protected:
   // Depth testing
@@ -122,7 +128,8 @@ protected:
   STexturePS2 * pCurrentTex_;
   STexturePS2 textures_[MAX_TEXTURE_COUNT];
 
-  // Viewport
+  // Rasterizer
+  GLenum      rasterMode_;
   GLint       viewportXOffset;
   GLint       viewportYOffset;
   GLsizei     viewportPixelCount;

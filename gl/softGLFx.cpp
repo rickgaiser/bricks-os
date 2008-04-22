@@ -262,20 +262,13 @@ CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   GLint idxColor   (first * bufColor_.size);
   GLint idxNormal  (first * bufNormal_.size);
   GLint idxTexCoord(first * bufTexCoord_.size);
+  SVertexFx v;
 
-  SVertexFx * polygon[3];
-  SVertexFx   vertices[3];
-  bool bFlipFlop(true);
-  polygon[0] = &vertices[0];
-  polygon[1] = &vertices[1];
-  polygon[2] = &vertices[2];
-  GLint idx(0);
+  begin(mode);
 
   // Process all vertices
   for(GLint i(0); i < count; i++)
   {
-    SVertexFx & v = *polygon[idx];
-
     // Vertex
     switch(bufVertex_.type)
     {
@@ -356,63 +349,13 @@ CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // -------------
     vertexShader(v);
 
-    // ------------------
-    // Primitive Assembly
-    // ------------------
-    switch(mode)
-    {
-      case GL_TRIANGLES:
-      {
-        if(idx == 2)
-          plotPoly(polygon);
-        idx = (idx + 1) % 3;
-        break;
-      }
-      case GL_TRIANGLE_STRIP:
-      {
-        if(idx == 2)
-        {
-          plotPoly(polygon);
-          if(bFlipFlop == true)
-          {
-            SVertexFx * pTemp = polygon[0];
-            polygon[0] = polygon[2];
-            polygon[2] = pTemp;
-          }
-          else
-          {
-            SVertexFx * pTemp = polygon[1];
-            polygon[1] = polygon[2];
-            polygon[2] = pTemp;
-          }
-        }
-        else
-          idx++;
-        break;
-      }
-      case GL_TRIANGLE_FAN:
-      {
-        if(idx == 2)
-        {
-          plotPoly(polygon);
-          // Swap 3rd and 2nd vertex
-          if(polygon[1] == &vertices[1])
-          {
-            polygon[1] = &vertices[2];
-            polygon[2] = &vertices[1];
-          }
-          else
-          {
-            polygon[1] = &vertices[1];
-            polygon[2] = &vertices[2];
-          }
-        }
-        else
-          idx++;
-        break;
-      }
-    };
+    // ------------
+    // Raterization
+    // ------------
+    rasterize(v);
   }
+
+  end();
 }
 
 //-----------------------------------------------------------------------------
@@ -700,7 +643,92 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
+CSoftGLESFixed::rasterize(SVertexFx & v)
+{
+  // Copy vertex into vertex buffer
+  *polygon[vertIdx_] = v;
+
+  // ------------------
+  // Primitive Assembly
+  // ------------------
+  switch(rasterMode_)
+  {
+    case GL_TRIANGLES:
+    {
+      if(vertIdx_ == 2)
+        rasterPoly(polygon);
+      vertIdx_ = (vertIdx_ + 1) % 3;
+      break;
+    }
+    case GL_TRIANGLE_STRIP:
+    {
+      if(vertIdx_ == 2)
+      {
+        rasterPoly(polygon);
+        if(bFlipFlop_ == true)
+        {
+          SVertexFx * pTemp = polygon[0];
+          polygon[0] = polygon[2];
+          polygon[2] = pTemp;
+        }
+        else
+        {
+          SVertexFx * pTemp = polygon[1];
+          polygon[1] = polygon[2];
+          polygon[2] = pTemp;
+        }
+      }
+      else
+        vertIdx_++;
+      break;
+    }
+    case GL_TRIANGLE_FAN:
+    {
+      if(vertIdx_ == 2)
+      {
+        rasterPoly(polygon);
+        // Swap 3rd and 2nd vertex
+        if(polygon[1] == &vertices[1])
+        {
+          polygon[1] = &vertices[2];
+          polygon[2] = &vertices[1];
+        }
+        else
+        {
+          polygon[1] = &vertices[1];
+          polygon[2] = &vertices[2];
+        }
+      }
+      else
+        vertIdx_++;
+      break;
+    }
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFixed::begin(GLenum mode)
+{
+  rasterMode_ = mode;
+
+  // Initialize for default triangle
+  polygon[0] = &vertices[0];
+  polygon[1] = &vertices[1];
+  polygon[2] = &vertices[2];
+  bFlipFlop_ = true;
+  vertIdx_   = 0;
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFixed::end()
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
 {
   // Backface culling
   if(cullFaceEnabled_ == true)
@@ -729,13 +757,6 @@ CSoftGLESFixed::plotPoly(SVertexFx * vtx[3])
       return; // Triangle invisible
   }
 
-  rasterPoly(vtx);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
-{
   // Bubble sort the 3 vertexes
   SVertexFx * vtemp;
   SVertexFx * vhi(vtx[0]);

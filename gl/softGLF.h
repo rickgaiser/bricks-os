@@ -159,7 +159,13 @@ public:
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
+  // Vertex shader
   virtual void vertexShader(SVertexF & v);
+
+  // Rasterizer
+  virtual void begin(GLenum mode);
+  virtual void rasterize(SVertexF & v);
+  virtual void end();
 
 protected:
   // Depth testing
@@ -202,7 +208,12 @@ protected:
   CEdgeF    * edge1;
   CEdgeF    * edge2;
 
-  // Viewport
+  // Rasterizer
+  GLenum      rasterMode_;
+  SVertexF    vertices[3]; // Vertex buffer for triangles
+  SVertexF  * polygon[3];  // Pointers to vertex buffer
+  bool        bFlipFlop_;  // Triangle strip
+  GLint       vertIdx_;    // Current index into vertex buffer
   GLint       viewportXOffset;
   GLint       viewportYOffset;
   GLsizei     viewportPixelCount;
@@ -218,7 +229,6 @@ private:
   void hlineTa (CEdgeF & from, CEdgeF & to, GLint y)            FAST_CODE;
   void hlineZTa(CEdgeF & from, CEdgeF & to, GLint y)            FAST_CODE;
   void hlineZTp(CEdgeF & from, CEdgeF & to, GLint y)            FAST_CODE;
-  void plotPoly(SVertexF * vtx[3])                              FAST_CODE;
   void rasterPoly(SVertexF * vtx[3])                            FAST_CODE;
 };
 
