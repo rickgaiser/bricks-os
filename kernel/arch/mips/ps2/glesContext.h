@@ -3,7 +3,7 @@
 
 
 #include "../../../../gl/softGLF.h"
-#include "../../../../gl/matrix.h"
+#include "../../../../gl/glMatrix.h"
 #include "../../../../gl/context.h"
 #include "videoDevice.h"
 #include "gif.h"

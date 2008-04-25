@@ -6,6 +6,7 @@ OBJS            =\
                 context \
                 edge \
                 gl \
+                glMatrix \
                 glu \
                 matrix \
                 textures \

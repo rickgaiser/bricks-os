@@ -8,7 +8,7 @@
 #include "GLES/gl_extra.h"
 
 #include "kernel/videoManager.h"
-#include "matrix.h"
+#include "glMatrix.h"
 #include "textures.h"
 #include "edge.h"
 

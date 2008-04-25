@@ -1,5 +1,4 @@
 #include "softGLF.h"
-#include "matrix.h"
 #include "fixedPoint.h"
 
 #include "stdlib.h"
