@@ -593,7 +593,7 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
   // --------
   if(lightingEnabled_ == true)
   {
-    GLfloat r(0.0f), g(0.0f), b(0.0f);
+    GLfixed r(0), g(0), b(0);
 
     // Normal Rotation
     matrixNormal.transform(v.n, v.n);

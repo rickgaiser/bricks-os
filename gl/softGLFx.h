@@ -81,9 +81,9 @@ struct SVertexFx
   {
     struct
     {
-      GLfloat cr, cg, cb, ca;
+      GLfixed cr, cg, cb, ca;
     };
-    GLfloat c[4];
+    GLfixed c[4];
     SColorFx cl;
   };
 

@@ -1,33 +1,38 @@
 #include "vector.h"
+typedef unsigned int wint_t;
+#include "math.h"
 
 
 //---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
+template <class T>
 inline
-CVectorF::CVectorF(const GLfloat * vec)
+TVector<T>::TVector(const T * vec)
  : x(vec[0]), y(vec[1]), z(vec[2]), w(vec[3])
 {
 }
 
 //---------------------------------------------------------------------------
+template <class T>
 inline
-CVectorF::CVectorF(const CVectorF & vec)
+TVector<T>::TVector(const TVector<T> & vec)
  : x(vec.x), y(vec.y), z(vec.z), w(vec.w)
 {
 }
 
 //---------------------------------------------------------------------------
+template <class T>
 inline
-CVectorF::CVectorF(GLfloat _x, GLfloat _y, GLfloat _z, GLfloat _w)
+TVector<T>::TVector(T _x, T _y, T _z, T _w)
  : x(_x), y(_y), z(_z), w(_w)
 {
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF
-CVectorF::operator+(const CVectorF & vec)
+template <class T>
+inline TVector<T>
+TVector<T>::operator+(const TVector & vec) const
 {
-  CVectorF rv(this);
+  TVector rv(*this);
 
   rv += vec;
 
@@ -35,10 +40,11 @@ CVectorF::operator+(const CVectorF & vec)
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF
-CVectorF::operator-(const CVectorF & vec)
+template <class T>
+inline TVector<T>
+TVector<T>::operator-(const TVector & vec) const
 {
-  CVectorF rv(this);
+  TVector rv(*this);
 
   rv -= vec;
 
@@ -46,10 +52,11 @@ CVectorF::operator-(const CVectorF & vec)
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF
-CVectorF::operator*(GLfloat s)
+template <class T>
+inline TVector<T>
+TVector<T>::operator*(T s) const
 {
-  CVectorF rv(this);
+  TVector rv(*this);
 
   rv *= s;
 
@@ -57,10 +64,11 @@ CVectorF::operator*(GLfloat s)
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF
-CVectorF::operator/(GLfloat s)
+template <class T>
+inline TVector<T>
+TVector<T>::operator/(T s) const
 {
-  CVectorF rv(this);
+  TVector rv(*this);
 
   rv /= s;
 
@@ -68,10 +76,11 @@ CVectorF::operator/(GLfloat s)
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF
-CVectorF::getInverted()
+template <class T>
+inline TVector<T>
+TVector<T>::getInverted() const
 {
-  CVectorF rv(this);
+  TVector rv(*this);
 
   rv.invert();
 
@@ -79,10 +88,11 @@ CVectorF::getInverted()
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF
-CVectorF::getNormalized()
+template <class T>
+inline TVector<T>
+TVector<T>::getNormalized() const
 {
-  CVectorF rv(this);
+  TVector rv(*this);
 
   rv.normalize();
 
@@ -90,19 +100,21 @@ CVectorF::getNormalized()
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF
-CVectorF::getCrossProduct(const CVectorF & vec)
+template <class T>
+inline TVector<T>
+TVector<T>::getCrossProduct(const TVector & vec) const
 {
-  CVectorF rv(this);
+  TVector rv(*this);
 
-  rv.reflection();
+  rv.crossProduct(vec);
 
   return rv;
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF &
-CVectorF::operator+=(const CVectorF & vec)
+template <class T>
+inline TVector<T> &
+TVector<T>::operator+=(const TVector & vec)
 {
   x += vec.x;
   y += vec.y;
@@ -113,8 +125,9 @@ CVectorF::operator+=(const CVectorF & vec)
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF &
-CVectorF::operator-=(const CVectorF & vec);
+template <class T>
+inline TVector<T> &
+TVector<T>::operator-=(const TVector & vec)
 {
   x -= vec.x;
   y -= vec.y;
@@ -125,8 +138,9 @@ CVectorF::operator-=(const CVectorF & vec);
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF &
-CVectorF::operator*=(const GLfloat s);
+template <class T>
+inline TVector<T> &
+TVector<T>::operator*=(const T s)
 {
   x *= s;
   y *= s;
@@ -137,12 +151,13 @@ CVectorF::operator*=(const GLfloat s);
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF &
-CVectorF::operator/=(const GLfloat s);
+template <class T>
+inline TVector<T> &
+TVector<T>::operator/=(const T s)
 {
   if(s != 0)
   {
-    GLfloat s2 = 1.0f / s;
+    T s2 = 1.0f / s;
 
     x *= s2;
     y *= s2;
@@ -154,34 +169,38 @@ CVectorF::operator/=(const GLfloat s);
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF &
-CVectorF::invert()
+template <class T>
+inline TVector<T> &
+TVector<T>::invert()
 {
-  x = -x;
-  y = -y;
-  z = -z;
-  w = -w;
+  x = 0 - x;
+  y = 0 - y;
+  z = 0 - z;
+  w = 0 - w;
 
   return (*this);
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF &
-CVectorF::normalize()
+template <class T>
+inline TVector<T> &
+TVector<T>::normalize()
 {
   return *this /= length();
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF &
-CVectorF::crossProduct(const CVectorF & vec)
+template <class T>
+inline TVector<T> &
+TVector<T>::crossProduct(const TVector & vec)
 {
-  return (*this - ((2.0f * vec.innerProduct(*this)) * vec));
+  return (*this -= vec * (this->dotProduct(vec) * 2.0f));
 }
 
 //---------------------------------------------------------------------------
-inline CVectorF &
-CVectorF::operator= (const CVectorF & vec);
+template <class T>
+inline TVector<T> &
+TVector<T>::operator= (const TVector & vec)
 {
   x = vec.x;
   y = vec.y;
@@ -192,15 +211,17 @@ CVectorF::operator= (const CVectorF & vec);
 }
 
 //---------------------------------------------------------------------------
-inline GLfloat
-CVectorF::length()
+template <class T>
+inline T
+TVector<T>::length() const
 {
   return sqrt(x*x + y*y + z*z);
 }
 
 //---------------------------------------------------------------------------
-inline GLfloat
-CVectorF::dotProduct(const CVectorF & vec)
+template <class T>
+inline T
+TVector<T>::dotProduct(const TVector & vec) const
 {
   return (x*vec.x + y*vec.y + z*vec.z);
 }

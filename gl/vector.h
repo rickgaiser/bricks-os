@@ -3,54 +3,45 @@
 
 
 #include "GLES/gl.h"
+#include "fixedPoint.h"
 
 
 //---------------------------------------------------------------------------
-typedef struct CVectorF
+template <class T>
+class TVector
 {
-#ifdef __cplusplus
 public:
-  CVectorF(){}
-  CVectorF(const GLfloat * vec);
-  CVectorF(const CVectorF & vec);
-  CVectorF(GLfloat _x, GLfloat _y, GLfloat _z, GLfloat _w);
+  TVector(){}
+  TVector(const T * vec);
+  TVector(const TVector & vec);
+  TVector(T _x, T _y, T _z, T _w);
 
-  CVectorF   operator+ (const CVectorF & vec);
-  CVectorF   operator- (const CVectorF & vec);
-  CVectorF   operator* (GLfloat s);
-  CVectorF   operator/ (GLfloat s);
-  CVectorF   getInverted();
-  CVectorF   getNormalized(); // Warning: uses sqrt==slow
-  CVectorF   getCrossProduct(const CVectorF & vec); // Reflection
+  TVector   operator+ (const TVector & vec) const;
+  TVector   operator- (const TVector & vec) const;
+  TVector   operator* (T s) const;
+  TVector   operator/ (T s) const;
+  TVector   getInverted() const;
+  TVector   getNormalized() const; // Warning: uses sqrt==slow
+  TVector   getCrossProduct(const TVector & vec) const; // Reflection
 
-  CVectorF & operator+=(const CVectorF & vec);
-  CVectorF & operator-=(const CVectorF & vec);
-  CVectorF & operator*=(GLfloat s);
-  CVectorF & operator/=(GLfloat s);
-  CVectorF & invert();
-  CVectorF & normalize(); // Warning: uses sqrt==slow
-  CVectorF & crossProduct(const CVectorF & vec); // Reflection
+  TVector & operator+=(const TVector & vec);
+  TVector & operator-=(const TVector & vec);
+  TVector & operator*=(T s);
+  TVector & operator/=(T s);
+  TVector & invert();
+  TVector & normalize(); // Warning: uses sqrt==slow
+  TVector & crossProduct(const TVector & vec); // Reflection
 
-  CVectorF & operator= (const CVectorF & vec);
+  TVector & operator= (const TVector & vec);
 
-  GLfloat length(); // Warning: uses sqrt==slow
-  GLfloat dotProduct(const CVectorF & vec);
+  T length() const; // Warning: uses sqrt==slow
+  T dotProduct(const TVector & vec) const;
 
-#endif // __cplusplus
-
-  union
-  {
-    GLfloat v[4];
-#ifdef __cplusplus
-    struct
-    {
-      GLfloat x;
-      GLfloat y;
-      GLfloat z;
-      GLfloat w;
-    };
-#endif // __cplusplus
-  };
+public:
+  T x;
+  T y;
+  T z;
+  T w;
 };
 
 
