@@ -12,6 +12,7 @@
 #include "textures.h"
 #include "edge.h"
 #include "fixedPoint.h"
+#include "vector.h"
 
 #include "asm/arch/memory.h"
 
@@ -24,57 +25,13 @@
 
 
 //-----------------------------------------------------------------------------
-typedef union
-{
-  struct
-  {
-    GLfixed x, y;
-  };
-  GLfixed v[2];
-}SVector2Fx, SVertex2Fx;
-
-//-----------------------------------------------------------------------------
-typedef union
-{
-  struct
-  {
-    GLfixed x, y, z;
-  };
-  GLfixed v[3];
-}SVector3Fx, SVertex3Fx;
-
-//-----------------------------------------------------------------------------
-typedef union
-{
-  struct
-  {
-    GLfixed x, y, z, w;
-  };
-  GLfixed v[4];
-}SVector4Fx, SVertex4Fx;
-
-//-----------------------------------------------------------------------------
 struct SVertexFx
 {
   // Vertex itself
-  union
-  {
-    struct
-    {
-      GLfixed vx, vy, vz, vw;
-    };
-    GLfixed v[4];
-  };
+  CFixed v[4];
 
   // Normal vector
-  union
-  {
-    struct
-    {
-      GLfixed nx, ny, nz, nw;
-    };
-    GLfixed n[4];
-  };
+  CFixed n[4];
 
   // Color
   union
@@ -88,18 +45,7 @@ struct SVertexFx
   };
 
   // Texture coordinates
-  union
-  {
-    struct
-    {
-      GLfixed ts, tt;
-    };
-    struct
-    {
-      GLfixed tu, tv;
-    };
-    GLfixed t[2];
-  };
+  CFixed t[2];
 
   // 2D Point (on screen) x/y
   union
@@ -119,8 +65,8 @@ struct SLightFx
   SColorFx   diffuse;
   SColorFx   ambient;
   SColorFx   specular;
-  SVertex4Fx position;
-  SVector4Fx direction;
+  TVector<CFixed> position;
+  TVector<CFixed> direction;
   bool enabled;
 };
 
@@ -237,7 +183,7 @@ private:
   void hlineZC (CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
   void hlineTa (CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
   void hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
-  void hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
+//  void hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
   void rasterPoly(SVertexFx * vtx[3])                              FAST_CODE;
 };
 

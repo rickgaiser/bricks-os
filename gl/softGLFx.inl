@@ -230,13 +230,13 @@ CSoftGLESFixed::hlineTa(CEdgeFx & from, CEdgeFx & to, GLint y)
   if(xwidth > 0)
   {
     // Texture coordinate interpolation
-    GLfixed ts(from.ts_[y]);
-    GLfixed tt(from.tt_[y]);
-    GLfixed mts((to.ts_[y] - from.ts_[y]) / xwidth);
-    GLfixed mtt((to.tt_[y] - from.tt_[y]) / xwidth);
+    CFixed ts(from.ts_[y]);
+    CFixed tt(from.tt_[y]);
+    CFixed mts((to.ts_[y] - from.ts_[y]) / xwidth);
+    CFixed mtt((to.tt_[y] - from.tt_[y]) / xwidth);
 
-    ts  = ts  * pCurrentTex_->width  + gl_fpfromf(0.5f);
-    tt  = tt  * pCurrentTex_->height + gl_fpfromf(0.5f);
+    ts  = ts  * pCurrentTex_->width  + 0.5f;
+    tt  = tt  * pCurrentTex_->height + 0.5f;
     mts = mts * pCurrentTex_->width;
     mtt = mtt * pCurrentTex_->height;
 
@@ -252,13 +252,13 @@ CSoftGLESFixed::hlineTa(CEdgeFx & from, CEdgeFx & to, GLint y)
 //        switch(renderSurface->bpp_)
 //        {
 //          case 8:
-//            ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+//            ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
 //            break;
 //          case 16:
-            ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+            ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
 //            break;
 //          case 32:
-//            ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+//            ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
 //            break;
 //        };
 //      }
@@ -307,13 +307,13 @@ CSoftGLESFixed::hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y)
 //          switch(renderSurface->bpp_)
 //          {
 //            case 8:
-//              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+//              ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
 //              break;
 //            case 16:
-              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+              ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
 //              break;
 //            case 32:
-//              ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[((gl_fptoi(tt) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(ts) & pCurrentTex_->maskWidth)];
+//              ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
 //              break;
 //          };
         }
@@ -325,7 +325,7 @@ CSoftGLESFixed::hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y)
     }
   }
 }
-
+/*
 //-----------------------------------------------------------------------------
 // Horizontal Line Fill, perspective correct texture mapped
 inline void
@@ -383,3 +383,4 @@ CSoftGLESFixed::hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y)
     }
   }
 }
+*/

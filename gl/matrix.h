@@ -45,19 +45,7 @@ public:
   CMatrixF & operator= (const GLfloat * m);
 #endif // __cplusplus
 
-  union
-  {
-    GLfloat matrix[16];
-#ifdef __cplusplus
-    struct
-    {
-      GLfloat m00, m01, m02, m03;
-      GLfloat m10, m11, m12, m13;
-      GLfloat m20, m21, m22, m23;
-      GLfloat m30, m31, m32, m33;
-    };
-#endif // __cplusplus
-  };
+  GLfloat matrix[16];
 };
 
 //---------------------------------------------------------------------------
@@ -92,6 +80,7 @@ public:
   void rotate   (GLfixed * angles);
 
   void transform(const GLfixed * from, GLfixed * to);
+  void transform(const CFixed  * from, CFixed  * to);
 
   CMatrixFx   operator* (const CMatrixFx & m);
   CMatrixFx   operator* (const GLfixed * m);
@@ -103,19 +92,7 @@ public:
   CMatrixFx & operator= (const GLfixed * m);
 #endif // __cplusplus
 
-  union
-  {
-    GLfixed matrix[16];
-#ifdef __cplusplus
-    struct
-    {
-      GLfixed m00, m01, m02, m03;
-      GLfixed m10, m11, m12, m13;
-      GLfixed m20, m21, m22, m23;
-      GLfixed m30, m31, m32, m33;
-    };
-#endif // __cplusplus
-  };
+  GLfixed matrix[16];
 };
 
 //---------------------------------------------------------------------------

@@ -33,8 +33,8 @@ CEdgeFx::CEdgeFx(uint32_t height)
 {
   x_  = new GLint[iHeight_];
   z_  = new GLfixed[iHeight_];
-  ts_ = new GLfixed[iHeight_];
-  tt_ = new GLfixed[iHeight_];
+  ts_ = new CFixed[iHeight_];
+  tt_ = new CFixed[iHeight_];
   c_  = new SColorFx[iHeight_];
 }
 

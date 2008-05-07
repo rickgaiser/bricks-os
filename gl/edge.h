@@ -48,8 +48,8 @@ public:
   void addZ (GLint x1, GLint y1, GLfixed z1, GLint x2, GLint y2, GLfixed z2);
   void addC (GLint x1, GLint y1, SColorFx & c1, GLint x2, GLint y2, SColorFx & c2);
   void addZC(GLint x1, GLint y1, GLfixed z1, SColorFx & c1, GLint x2, GLint y2, GLfixed z2, SColorFx & c2);
-  void addT (GLint x1, GLint y1, GLfixed ts1, GLfixed tt1, GLint x2, GLint y2, GLfixed ts2, GLfixed tt2);
-  void addZT(GLint x1, GLint y1, GLfixed z1, GLfixed ts1, GLfixed tt1, GLint x2, GLint y2, GLfixed z2, GLfixed ts2, GLfixed tt2);
+  void addT (GLint x1, GLint y1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, CFixed ts2, CFixed tt2);
+  void addZT(GLint x1, GLint y1, GLfixed z1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, GLfixed z2, CFixed ts2, CFixed tt2);
 
 public:
   // Edge x
@@ -57,8 +57,8 @@ public:
   // Edge depth
   GLfixed * z_;
   // Texture coordinates
-  GLfixed * ts_;
-  GLfixed * tt_;
+  CFixed * ts_;
+  CFixed * tt_;
   // Edge color
   SColorFx * c_;
 

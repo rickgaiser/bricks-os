@@ -79,11 +79,12 @@ CSoftGLESFixed::CSoftGLESFixed()
       lights_[iLight].specular.a = gl_fpfromi(0);
     }
 
-    lights_[iLight].position.x = gl_fpfromi(0);
-    lights_[iLight].position.y = gl_fpfromi(0);
-    lights_[iLight].position.z = gl_fpfromi(1);
-    lights_[iLight].position.w = gl_fpfromi(0);
-    vecInverseFx(lights_[iLight].direction.v, lights_[iLight].position.v);
+    lights_[iLight].position.x = 0;
+    lights_[iLight].position.y = 0;
+    lights_[iLight].position.z = 1;
+    lights_[iLight].position.w = 0;
+    lights_[iLight].direction  = lights_[iLight].position;
+    lights_[iLight].direction.invert();
 
     lights_[iLight].enabled = false;
   }
@@ -272,16 +273,16 @@ CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     switch(bufVertex_.type)
     {
       case GL_FLOAT:
-        v.v[0] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
-        v.v[1] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
-        v.v[2] = gl_fpfromf(((GLfloat *)bufVertex_.pointer)[idxVertex++]);
-        v.v[3] = gl_fpfromi(1);
+        v.v[0] = (((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v.v[1] = (((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v.v[2] = (((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v.v[3] = 1;
         break;
       case GL_FIXED:
-        v.v[0] = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.v[1] = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.v[2] = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.v[3] = gl_fpfromi(1);
+        v.v[0].value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
+        v.v[1].value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
+        v.v[2].value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
+        v.v[3] = 1;
         break;
     };
 
@@ -291,16 +292,16 @@ CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufNormal_.type)
       {
         case GL_FLOAT:
-          v.n[0] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
-          v.n[1] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
-          v.n[2] = gl_fpfromf(((GLfloat *)bufNormal_.pointer)[idxNormal++]);
-          v.n[3] = gl_fpfromi(1);
+          v.n[0] = (((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+          v.n[1] = (((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+          v.n[2] = (((GLfloat *)bufNormal_.pointer)[idxNormal++]);
+          v.n[3] = 1;
           break;
         case GL_FIXED:
-          v.n[0] = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
-          v.n[1] = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
-          v.n[2] = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
-          v.n[3] = gl_fpfromi(1);
+          v.n[0].value = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
+          v.n[1].value = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
+          v.n[2].value = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
+          v.n[3] = 1;
           break;
       };
     }
@@ -333,12 +334,12 @@ CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufTexCoord_.type)
       {
         case GL_FLOAT:
-          v.ts =                  gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
-          v.tt = (gl_fpfromi(1) - gl_fpfromf(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]));
+          v.t[0] =     CFixed(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
+          v.t[1] = 1 - CFixed(((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
           break;
         case GL_FIXED:
-          v.ts =                  ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++];
-          v.tt = (gl_fpfromi(1) - ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+          v.t[0].value =                  ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++];
+          v.t[1].value = (gl_fpfromi(1) - ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
           break;
       };
     }
@@ -456,13 +457,14 @@ CSoftGLESFixed::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
     case GL_DIFFUSE:  pColor = &pLight->diffuse; break;
     case GL_SPECULAR: pColor = &pLight->specular; break;
     case GL_POSITION:
-      pLight->position.v[0] = params[0];
-      pLight->position.v[1] = params[1];
-      pLight->position.v[2] = params[2];
-      pLight->position.v[3] = params[3];
+      pLight->position.x.value = params[0];
+      pLight->position.y.value = params[1];
+      pLight->position.z.value = params[2];
+      pLight->position.w.value = params[3];
       // Invert and normalize
-      vecInverseFx(pLight->direction.v, pLight->position.v);
-      vecNormalizeFx(pLight->direction.v, pLight->direction.v);
+      pLight->direction = pLight->position;
+      pLight->direction.invert();
+      pLight->direction.normalize();
     default:
       return;
   }
@@ -579,13 +581,13 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
   matrixProjection.transform(v.v, v.v);
   // Perspective division
   //   from 'clip coordinates' to 'normalized device coordinates'
-  v.v[0] = gl_fpdiv(v.v[0], v.v[3]);
-  v.v[1] = gl_fpdiv(v.v[1], v.v[3]);
-  v.v[2] = gl_fpdiv(v.v[2], v.v[3]);
+  v.v[0] /= v.v[3];
+  v.v[1] /= v.v[3];
+  v.v[2] /= v.v[3];
   // Viewport transformation
   //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = gl_fptoi(gl_fpmul(( v.v[0] + gl_fpfromi(1)), gl_fpfromi(viewportWidth  >> 1)));
-  v.sy = gl_fptoi(gl_fpmul((-v.v[1] + gl_fpfromi(1)), gl_fpfromi(viewportHeight >> 1)));
+  v.sx = (    v.v[0] + 1) * CFixed(viewportWidth  >> 1);
+  v.sy = (0 - v.v[1] + 1) * CFixed(viewportHeight >> 1);
 //  v.sz = gl_fpdiv(zFar - zNear, v.v[2] << 1) + ((zNear + zFar)>>1);
 
   // --------
@@ -593,7 +595,7 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
   // --------
   if(lightingEnabled_ == true)
   {
-    GLfixed r(0), g(0), b(0);
+    CFixed r(0), g(0), b(0);
 
     // Normal Rotation
     matrixNormal.transform(v.n, v.n);
@@ -603,13 +605,13 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
       if(lights_[iLight].enabled == true)
       {
         // Ambient light (it's everywhere!)
-        r += lights_[iLight].ambient.r;
-        g += lights_[iLight].ambient.g;
-        b += lights_[iLight].ambient.b;
+        r.value += lights_[iLight].ambient.r;
+        g.value += lights_[iLight].ambient.g;
+        b.value += lights_[iLight].ambient.b;
 
         // Inner product of normal and light direction
-        GLfixed ip = vecInnerProductFx(v.n, lights_[0].direction.v);
-        if(ip < 0.0f) ip = -ip;
+        CFixed ip = lights_[0].direction.dotProduct(v.n);
+        if(ip < 0.0f) ip = 0 - ip;
         // Multiply with light color
         r += gl_fpmul(lights_[iLight].diffuse.r, ip);
         g += gl_fpmul(lights_[iLight].diffuse.g, ip);
@@ -632,7 +634,7 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
   // ---
   if(fogEnabled_ == true)
   {
-    GLfixed partFog   = clampfx(gl_fpdiv(abs(v.v[2]) - fogStart_, fogEnd_ - fogStart_));
+    GLfixed partFog   = clampfx(gl_fpdiv(abs(v.v[2].value) - fogStart_, fogEnd_ - fogStart_));
     GLfixed partColor = gl_fpfromi(1) - partFog;
     v.cr = clampfx(gl_fpmul(v.cr, partColor) + gl_fpmul(fogColor_.r, partFog));
     v.cg = clampfx(gl_fpmul(v.cg, partColor) + gl_fpmul(fogColor_.g, partFog));
@@ -789,24 +791,24 @@ CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
   {
     if(depthTestEnabled_ == true)
     {
-      edge1->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
-      edge2->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->ts, vlo->tt, vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt);
-      edge2->addZT(vmi->sx, vmi->sy, vmi->v[3], vmi->ts, vmi->tt, vhi->sx, vhi->sy, vhi->v[3], vhi->ts, vhi->tt);
+      edge1->addZT(vlo->sx, vlo->sy, vlo->v[3].value, vlo->t[0], vlo->t[1], vhi->sx, vhi->sy, vhi->v[3].value, vhi->t[0], vhi->t[1]);
+      edge2->addZT(vlo->sx, vlo->sy, vlo->v[3].value, vlo->t[0], vlo->t[1], vmi->sx, vmi->sy, vmi->v[3].value, vmi->t[0], vmi->t[1]);
+      edge2->addZT(vmi->sx, vmi->sy, vmi->v[3].value, vmi->t[0], vmi->t[1], vhi->sx, vhi->sy, vhi->v[3].value, vhi->t[0], vhi->t[1]);
     }
     else
     {
-      edge1->addT(vlo->sx, vlo->sy, vlo->ts, vlo->tt, vhi->sx, vhi->sy, vhi->ts, vhi->tt);
-      edge2->addT(vlo->sx, vlo->sy, vlo->ts, vlo->tt, vmi->sx, vmi->sy, vmi->ts, vmi->tt);
-      edge2->addT(vmi->sx, vmi->sy, vmi->ts, vmi->tt, vhi->sx, vhi->sy, vhi->ts, vhi->tt);
+      edge1->addT(vlo->sx, vlo->sy, vlo->t[0], vlo->t[1], vhi->sx, vhi->sy, vhi->t[0], vhi->t[1]);
+      edge2->addT(vlo->sx, vlo->sy, vlo->t[0], vlo->t[1], vmi->sx, vmi->sy, vmi->t[0], vmi->t[1]);
+      edge2->addT(vmi->sx, vmi->sy, vmi->t[0], vmi->t[1], vhi->sx, vhi->sy, vhi->t[0], vhi->t[1]);
     }
   }
   else if(shadingModel_ == GL_SMOOTH)
   {
     if(depthTestEnabled_ == true)
     {
-      edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->cl, vhi->sx, vhi->sy, vhi->v[3], vhi->cl);
-      edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->cl, vmi->sx, vmi->sy, vmi->v[3], vmi->cl);
-      edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->cl, vhi->sx, vhi->sy, vhi->v[3], vhi->cl);
+      edge1->addZC(vlo->sx, vlo->sy, vlo->v[3].value, vlo->cl, vhi->sx, vhi->sy, vhi->v[3].value, vhi->cl);
+      edge2->addZC(vlo->sx, vlo->sy, vlo->v[3].value, vlo->cl, vmi->sx, vmi->sy, vmi->v[3].value, vmi->cl);
+      edge2->addZC(vmi->sx, vmi->sy, vmi->v[3].value, vmi->cl, vhi->sx, vhi->sy, vhi->v[3].value, vhi->cl);
     }
     else
     {
@@ -819,9 +821,9 @@ CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
   {
     if(depthTestEnabled_ == true)
     {
-      edge1->addZ(vlo->sx, vlo->sy, vlo->v[3], vhi->sx, vhi->sy, vhi->v[3]);
-      edge2->addZ(vlo->sx, vlo->sy, vlo->v[3], vmi->sx, vmi->sy, vmi->v[3]);
-      edge2->addZ(vmi->sx, vmi->sy, vmi->v[3], vhi->sx, vhi->sy, vhi->v[3]);
+      edge1->addZ(vlo->sx, vlo->sy, vlo->v[3].value, vhi->sx, vhi->sy, vhi->v[3].value);
+      edge2->addZ(vlo->sx, vlo->sy, vlo->v[3].value, vmi->sx, vmi->sy, vmi->v[3].value);
+      edge2->addZ(vmi->sx, vmi->sy, vmi->v[3].value, vhi->sx, vhi->sy, vhi->v[3].value);
     }
     else
     {

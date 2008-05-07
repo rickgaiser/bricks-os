@@ -107,6 +107,24 @@ public:
   bool     operator< (const CFixed & fx) const {return (value <  fx.value);}
   bool     operator>=(const CFixed & fx) const {return (value >= fx.value);}
   bool     operator<=(const CFixed & fx) const {return (value <= fx.value);}
+  bool     operator==(float  f)          const {return (value == gl_fpfromf(f));}
+  bool     operator!=(float  f)          const {return (value != gl_fpfromf(f));}
+  bool     operator> (float  f)          const {return (value >  gl_fpfromf(f));}
+  bool     operator< (float  f)          const {return (value <  gl_fpfromf(f));}
+  bool     operator>=(float  f)          const {return (value >= gl_fpfromf(f));}
+  bool     operator<=(float  f)          const {return (value <= gl_fpfromf(f));}
+  bool     operator==(double d)          const {return (value == gl_fpfromd(d));}
+  bool     operator!=(double d)          const {return (value != gl_fpfromd(d));}
+  bool     operator> (double d)          const {return (value >  gl_fpfromd(d));}
+  bool     operator< (double d)          const {return (value <  gl_fpfromd(d));}
+  bool     operator>=(double d)          const {return (value >= gl_fpfromd(d));}
+  bool     operator<=(double d)          const {return (value <= gl_fpfromd(d));}
+  bool     operator==(int32_t i)         const {return (value == gl_fpfromi(i));}
+  bool     operator!=(int32_t i)         const {return (value != gl_fpfromi(i));}
+  bool     operator> (int32_t i)         const {return (value >  gl_fpfromi(i));}
+  bool     operator< (int32_t i)         const {return (value <  gl_fpfromi(i));}
+  bool     operator>=(int32_t i)         const {return (value >= gl_fpfromi(i));}
+  bool     operator<=(int32_t i)         const {return (value <= gl_fpfromi(i));}
 #endif // __cplusplus
 
   volatile GLfixed value;
@@ -114,18 +132,18 @@ public:
 
 
 #ifdef __cplusplus
-inline CFixed operator+ (float   f, const CFixed & fx){return fx + f;}
-inline CFixed operator- (float   f, const CFixed & fx){return fx - f;}
-inline CFixed operator* (float   f, const CFixed & fx){return fx * f;}
-inline CFixed operator/ (float   f, const CFixed & fx){return fx / f;}
-inline CFixed operator+ (double  d, const CFixed & fx){return fx + d;}
-inline CFixed operator- (double  d, const CFixed & fx){return fx - d;}
-inline CFixed operator* (double  d, const CFixed & fx){return fx * d;}
-inline CFixed operator/ (double  d, const CFixed & fx){return fx / d;}
-inline CFixed operator+ (int32_t i, const CFixed & fx){return fx + i;}
-inline CFixed operator- (int32_t i, const CFixed & fx){return fx - i;}
-inline CFixed operator* (int32_t i, const CFixed & fx){return fx * i;}
-inline CFixed operator/ (int32_t i, const CFixed & fx){return fx / i;}
+inline CFixed operator+ (float   f, const CFixed & fx){return CFixed(f) + fx;}
+inline CFixed operator- (float   f, const CFixed & fx){return CFixed(f) - fx;}
+inline CFixed operator* (float   f, const CFixed & fx){return CFixed(f) * fx;}
+inline CFixed operator/ (float   f, const CFixed & fx){return CFixed(f) / fx;}
+inline CFixed operator+ (double  d, const CFixed & fx){return CFixed(d) + fx;}
+inline CFixed operator- (double  d, const CFixed & fx){return CFixed(d) - fx;}
+inline CFixed operator* (double  d, const CFixed & fx){return CFixed(d) * fx;}
+inline CFixed operator/ (double  d, const CFixed & fx){return CFixed(d) / fx;}
+inline CFixed operator+ (int32_t i, const CFixed & fx){return CFixed(i) + fx;}
+inline CFixed operator- (int32_t i, const CFixed & fx){return CFixed(i) - fx;}
+inline CFixed operator* (int32_t i, const CFixed & fx){return CFixed(i) * fx;}
+inline CFixed operator/ (int32_t i, const CFixed & fx){return CFixed(i) / fx;}
 #endif // __cplusplus
 
 

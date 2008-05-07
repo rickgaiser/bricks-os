@@ -4,6 +4,23 @@ typedef unsigned int wint_t;
 #include <math.h>
 
 
+#define m00 matrix[0*4+0]
+#define m01 matrix[0*4+1]
+#define m02 matrix[0*4+2]
+#define m03 matrix[0*4+3]
+#define m10 matrix[1*4+0]
+#define m11 matrix[1*4+1]
+#define m12 matrix[1*4+2]
+#define m13 matrix[1*4+3]
+#define m20 matrix[2*4+0]
+#define m21 matrix[2*4+1]
+#define m22 matrix[2*4+2]
+#define m23 matrix[2*4+3]
+#define m30 matrix[3*4+0]
+#define m31 matrix[3*4+1]
+#define m32 matrix[3*4+2]
+#define m33 matrix[3*4+3]
+
 #define matrixf_copy(mto, mfrom) \
 mto[0*4+0] = mfrom[0*4+0]; mto[0*4+1] = mfrom[0*4+1]; mto[0*4+2] = mfrom[0*4+2]; mto[0*4+3] = mfrom[0*4+3]; \
 mto[1*4+0] = mfrom[1*4+0]; mto[1*4+1] = mfrom[1*4+1]; mto[1*4+2] = mfrom[1*4+2]; mto[1*4+3] = mfrom[1*4+3]; \
@@ -266,6 +283,21 @@ CMatrixFx::transform(const GLfixed * from, GLfixed * to)
   to[1] = gl_fpmul(m10, x) + gl_fpmul(m11, y) + gl_fpmul(m12, z) + gl_fpmul(m13, w);
   to[2] = gl_fpmul(m20, x) + gl_fpmul(m21, y) + gl_fpmul(m22, z) + gl_fpmul(m23, w);
   to[3] = gl_fpmul(m30, x) + gl_fpmul(m31, y) + gl_fpmul(m32, z) + gl_fpmul(m33, w);
+}
+
+//---------------------------------------------------------------------------
+inline void
+CMatrixFx::transform(const CFixed * from, CFixed * to)
+{
+  GLfixed x(from[0].value);
+  GLfixed y(from[1].value);
+  GLfixed z(from[2].value);
+  GLfixed w(from[3].value);
+
+  to[0].value = gl_fpmul(m00, x) + gl_fpmul(m01, y) + gl_fpmul(m02, z) + gl_fpmul(m03, w);
+  to[1].value = gl_fpmul(m10, x) + gl_fpmul(m11, y) + gl_fpmul(m12, z) + gl_fpmul(m13, w);
+  to[2].value = gl_fpmul(m20, x) + gl_fpmul(m21, y) + gl_fpmul(m22, z) + gl_fpmul(m23, w);
+  to[3].value = gl_fpmul(m30, x) + gl_fpmul(m31, y) + gl_fpmul(m32, z) + gl_fpmul(m33, w);
 }
 
 //---------------------------------------------------------------------------

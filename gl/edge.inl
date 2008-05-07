@@ -55,10 +55,10 @@
   GLfixed mb((c2.b - c1.b) / dy); \
   GLfixed ma((c2.a - c1.a) / dy)
 #define INTERPOLATE_FX_T() \
-  GLfixed ts(ts1); \
-  GLfixed tt(tt1); \
-  GLfixed mts((ts2 - ts1) / dy); \
-  GLfixed mtt((tt2 - tt1) / dy)
+  CFixed ts(ts1); \
+  CFixed tt(tt1); \
+  CFixed mts((ts2 - ts1) / dy); \
+  CFixed mtt((tt2 - tt1) / dy)
 #define STORE_FX_X() \
   x_[y1] = gl_fptoi(x)
 #define STORE_FX_Z() \
@@ -358,7 +358,7 @@ CEdgeFx::addZC(GLint x1, GLint y1, GLfixed z1, SColorFx & c1, GLint x2, GLint y2
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeFx::addT(GLint x1, GLint y1, GLfixed ts1, GLfixed tt1, GLint x2, GLint y2, GLfixed ts2, GLfixed tt2)
+CEdgeFx::addT(GLint x1, GLint y1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, CFixed ts2, CFixed tt2)
 {
   if(y1 < y2)
   {
@@ -385,7 +385,7 @@ CEdgeFx::addT(GLint x1, GLint y1, GLfixed ts1, GLfixed tt1, GLint x2, GLint y2, 
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeFx::addZT(GLint x1, GLint y1, GLfixed z1, GLfixed ts1, GLfixed tt1, GLint x2, GLint y2, GLfixed z2, GLfixed ts2, GLfixed tt2)
+CEdgeFx::addZT(GLint x1, GLint y1, GLfixed z1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, GLfixed z2, CFixed ts2, CFixed tt2)
 {
   if(y1 < y2)
   {
