@@ -6,7 +6,7 @@
 #define DELTA_F_Y() \
   GLfloat dy(1.0f / (GLfloat)(y2 - y1))
 #define INTERPOLATE_F_X() \
-  GLfloat x((GLfloat)x1 + 0.5f); \
+  GLfloat x((GLfloat)x1); \
   GLfloat mx((GLfloat)(x2 - x1) * dy)
 #define INTERPOLATE_F_Z() \
   GLfloat mz((z2 - z1) * dy)
@@ -22,52 +22,52 @@
 #define INTERPOLATE_F_T() \
   GLfloat ts(ts1); \
   GLfloat tt(tt1); \
-  GLfloat mts((ts2 - ts1) / (GLfloat)(y2 - y1)); \
-  GLfloat mtt((tt2 - tt1) / (GLfloat)(y2 - y1))
+  GLfloat mts((ts2 - ts1) * dy); \
+  GLfloat mtt((tt2 - tt1) * dy)
 #define STORE_F_X() \
   x_[y1] = (GLint)x
 #define STORE_F_Z() \
   z_[y1] = z1
 #define STORE_F_C() \
-  c_[y1].r = r; \
-  c_[y1].g = g; \
-  c_[y1].b = b; \
-  c_[y1].a = a
+  r_[y1] = r; \
+  g_[y1] = g; \
+  b_[y1] = b; \
+  a_[y1] = a
 #define STORE_F_T() \
   ts_[y1] = ts; \
   tt_[y1] = tt
 
 // Fixed Point Macros
 #define DELTA_FX_Y() \
-  GLfixed dy(y2 - y1)
+  CFixed dy = CFixed(1) / (y2 - y1)
 #define INTERPOLATE_FX_X() \
-  GLfixed x(gl_fpfromi(x1) + gl_fpfromf(0.5f)); \
-  GLfixed mx((gl_fpfromi(x2 - x1)) / dy)
+  CFixed x  = x1; \
+  CFixed mx = CFixed(x2 - x1).ipMul(dy)
 #define INTERPOLATE_FX_Z() \
-  GLfixed mz((z2 - z1) / dy)
+  CFixed mz = (z2 - z1).ipMul(dy)
 #define INTERPOLATE_FX_C() \
   GLfixed r(c1.r); \
   GLfixed g(c1.g); \
   GLfixed b(c1.b); \
   GLfixed a(c1.a); \
-  GLfixed mr((c2.r - c1.r) / dy); \
-  GLfixed mg((c2.g - c1.g) / dy); \
-  GLfixed mb((c2.b - c1.b) / dy); \
-  GLfixed ma((c2.a - c1.a) / dy)
+  GLfixed mr(gl_fpipipmul(c2.r - c1.r, dy.value)); \
+  GLfixed mg(gl_fpipipmul(c2.g - c1.g, dy.value)); \
+  GLfixed mb(gl_fpipipmul(c2.b - c1.b, dy.value)); \
+  GLfixed ma(gl_fpipipmul(c2.a - c1.a, dy.value))
 #define INTERPOLATE_FX_T() \
   CFixed ts(ts1); \
   CFixed tt(tt1); \
-  CFixed mts((ts2 - ts1) / dy); \
-  CFixed mtt((tt2 - tt1) / dy)
+  CFixed mts = (ts2 - ts1).ipMul(dy); \
+  CFixed mtt = (tt2 - tt1).ipMul(dy)
 #define STORE_FX_X() \
-  x_[y1] = gl_fptoi(x)
+  x_[y1] = x
 #define STORE_FX_Z() \
   z_[y1] = z1
 #define STORE_FX_C() \
-  c_[y1].r = r; \
-  c_[y1].g = g; \
-  c_[y1].b = b; \
-  c_[y1].a = a
+  r_[y1].value = r; \
+  g_[y1].value = g; \
+  b_[y1].value = b; \
+  a_[y1].value = a
 #define STORE_FX_T() \
   ts_[y1] = ts; \
   tt_[y1] = tt
@@ -89,6 +89,35 @@
 
 #ifdef CONFIG_FPU
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+inline
+CEdgeF::CEdgeF(uint32_t height)
+ : iHeight_(height)
+{
+  x_  = new GLint[iHeight_];
+  z_  = new GLfloat[iHeight_];
+  ts_ = new GLfloat[iHeight_];
+  tt_ = new GLfloat[iHeight_];
+  r_  = new GLfloat[iHeight_];
+  g_  = new GLfloat[iHeight_];
+  b_  = new GLfloat[iHeight_];
+  a_  = new GLfloat[iHeight_];
+}
+
+//-----------------------------------------------------------------------------
+inline
+CEdgeF::~CEdgeF()
+{
+  delete x_;
+  delete z_;
+  delete ts_;
+  delete tt_;
+  delete r_;
+  delete g_;
+  delete b_;
+  delete a_;
+}
+
 //-----------------------------------------------------------------------------
 inline void
 CEdgeF::add(GLint x1, GLint y1, GLint x2, GLint y2)
@@ -253,6 +282,35 @@ CEdgeF::addZT(GLint x1, GLint y1, GLfloat z1, GLfloat ts1, GLfloat tt1, GLint x2
 #else
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+inline
+CEdgeFx::CEdgeFx(uint32_t height)
+ : iHeight_(height)
+{
+  x_  = new GLint[iHeight_];
+  z_  = new CFixed[iHeight_];
+  ts_ = new CFixed[iHeight_];
+  tt_ = new CFixed[iHeight_];
+  r_  = new CFixed[iHeight_];
+  g_  = new CFixed[iHeight_];
+  b_  = new CFixed[iHeight_];
+  a_  = new CFixed[iHeight_];
+}
+
+//-----------------------------------------------------------------------------
+inline
+CEdgeFx::~CEdgeFx()
+{
+  delete x_;
+  delete z_;
+  delete ts_;
+  delete tt_;
+  delete r_;
+  delete g_;
+  delete b_;
+  delete a_;
+}
+
+//-----------------------------------------------------------------------------
 inline void
 CEdgeFx::add(GLint x1, GLint y1, GLint x2, GLint y2)
 {
@@ -276,7 +334,7 @@ CEdgeFx::add(GLint x1, GLint y1, GLint x2, GLint y2)
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeFx::addZ(GLint x1, GLint y1, GLfixed z1, GLint x2, GLint y2, GLfixed z2)
+CEdgeFx::addZ(GLint x1, GLint y1, CFixed z1, GLint x2, GLint y2, CFixed z2)
 {
   if(y1 < y2)
   {
@@ -328,7 +386,7 @@ CEdgeFx::addC(GLint x1, GLint y1, SColorFx & c1, GLint x2, GLint y2, SColorFx & 
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeFx::addZC(GLint x1, GLint y1, GLfixed z1, SColorFx & c1, GLint x2, GLint y2, GLfixed z2, SColorFx & c2)
+CEdgeFx::addZC(GLint x1, GLint y1, CFixed z1, SColorFx & c1, GLint x2, GLint y2, CFixed z2, SColorFx & c2)
 {
   if(y1 < y2)
   {
@@ -385,7 +443,7 @@ CEdgeFx::addT(GLint x1, GLint y1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, CF
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeFx::addZT(GLint x1, GLint y1, GLfixed z1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, GLfixed z2, CFixed ts2, CFixed tt2)
+CEdgeFx::addZT(GLint x1, GLint y1, CFixed z1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, CFixed z2, CFixed ts2, CFixed tt2)
 {
   if(y1 < y2)
   {

@@ -4,11 +4,9 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 LIB             =gl
 OBJS            =\
                 context \
-                edge \
                 gl \
                 glMatrix \
                 glu \
-                matrix \
                 textures \
 
 

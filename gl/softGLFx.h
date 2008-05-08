@@ -25,52 +25,6 @@
 
 
 //-----------------------------------------------------------------------------
-struct SVertexFx
-{
-  // Vertex itself
-  CFixed v[4];
-
-  // Normal vector
-  CFixed n[4];
-
-  // Color
-  union
-  {
-    struct
-    {
-      GLfixed cr, cg, cb, ca;
-    };
-    GLfixed c[4];
-    SColorFx cl;
-  };
-
-  // Texture coordinates
-  CFixed t[2];
-
-  // 2D Point (on screen) x/y
-  union
-  {
-    struct
-    {
-      GLint sx, sy;
-      uint32_t sz;
-    };
-    GLint s[3];
-  };
-};
-
-//-----------------------------------------------------------------------------
-struct SLightFx
-{
-  SColorFx   diffuse;
-  SColorFx   ambient;
-  SColorFx   specular;
-  TVector<CFixed> position;
-  TVector<CFixed> direction;
-  bool enabled;
-};
-
-//-----------------------------------------------------------------------------
 class CSoftGLESFixed
  : public CAGLESFloatToFxContext
  , public CAGLESBuffers
@@ -114,12 +68,12 @@ public:
 
 protected:
   // Vertex shader
-  virtual void vertexShader(SVertexFx & v);
+  void vertexShader(SVertexFx & v) FAST_CODE;
 
   // Rasterizer
-  virtual void begin(GLenum mode);
-  virtual void rasterize(SVertexFx & v);
-  virtual void end();
+  void begin(GLenum mode) FAST_CODE;
+  void rasterize(SVertexFx & v) FAST_CODE;
+  void end() FAST_CODE;
 
 protected:
   // Depth testing
@@ -144,7 +98,7 @@ protected:
 
   // Normals
   bool        normalizeEnabled_;
-  GLfixed     normal_[4];
+  TVector<CFixed> normal_;
 
   // Material
   SColorFx    matColorAmbient_;

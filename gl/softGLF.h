@@ -11,110 +11,10 @@
 #include "glMatrix.h"
 #include "textures.h"
 #include "edge.h"
+#include "vector.h"
 
 #include "asm/arch/memory.h"
 
-
-//-----------------------------------------------------------------------------
-typedef union
-{
-  struct
-  {
-    GLfloat x, y;
-  };
-  GLfloat v[2];
-}SVector2F, SVertex2F;
-
-//-----------------------------------------------------------------------------
-typedef union
-{
-  struct
-  {
-    GLfloat x, y, z;
-  };
-  GLfloat v[3];
-}SVector3F, SVertex3F;
-
-//-----------------------------------------------------------------------------
-typedef union
-{
-  struct
-  {
-    GLfloat x, y, z, w;
-  };
-  GLfloat v[4];
-}SVector4F, SVertex4F;
-
-//-----------------------------------------------------------------------------
-struct SVertexF
-{
-  // Vertex itself
-  union
-  {
-    struct
-    {
-      GLfloat vx, vy, vz, vw;
-    };
-    GLfloat v[4];
-  };
-
-  // Normal vector
-  union
-  {
-    struct
-    {
-      GLfloat nx, ny, nz, nw;
-    };
-    GLfloat n[4];
-  };
-
-  // Color
-  union
-  {
-    struct
-    {
-      GLfloat cr, cg, cb, ca;
-    };
-    GLfloat c[4];
-    SColorF cl;
-  };
-
-  // Texture coordinates
-  union
-  {
-    struct
-    {
-      GLfloat ts, tt;
-    };
-    struct
-    {
-      GLfloat tu, tv;
-    };
-    GLfloat t[2];
-  };
-
-  // 2D Point (on screen) x/y
-  union
-  {
-    struct
-    {
-      GLint sx, sy;
-      uint32_t sz;
-    };
-    GLint s[3];
-  };
-};
-
-//-----------------------------------------------------------------------------
-struct SLightF
-{
-  SColorF   diffuse;
-  SColorF   ambient;
-  SColorF   specular;
-  SVertex4F position;
-  SVector4F direction;
-  bool enabled;
-};
 
 //-----------------------------------------------------------------------------
 class CSoftGLESFloat
@@ -189,7 +89,7 @@ protected:
 
   // Normals
   bool        normalizeEnabled_;
-  GLfloat     normal_[4];
+  TVector<GLfloat> normal_;
 
   // Material
   SColorF     matColorAmbient_;

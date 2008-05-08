@@ -263,8 +263,8 @@ public:
   virtual void glLightfv(GLenum light, GLenum pname, const GLfloat * params) = 0;
 //  virtual void glLineWidth(GLfloat width) = 0;
   virtual void glLoadMatrixf(const GLfloat *m) = 0;
-//  virtual void glMaterialf(GLenum face, GLenum pname, GLfloat param) = 0;
-//  virtual void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params) = 0;
+  virtual void glMaterialf(GLenum face, GLenum pname, GLfloat param) = 0;
+  virtual void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params) = 0;
   virtual void glMultMatrixf(const GLfloat *m) = 0;
 //  virtual void glMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q) = 0;
   virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz) = 0;
@@ -348,8 +348,8 @@ public:
   virtual void glLoadIdentity(void) = 0;
   virtual void glLoadMatrixx(const GLfixed *m) = 0;
 //  virtual void glLogicOp(GLenum opcode) = 0;
-//  virtual void glMaterialx(GLenum face, GLenum pname, GLfixed param) = 0;
-//  virtual void glMaterialxv(GLenum face, GLenum pname, const GLfixed *params) = 0;
+  virtual void glMaterialx(GLenum face, GLenum pname, GLfixed param) = 0;
+  virtual void glMaterialxv(GLenum face, GLenum pname, const GLfixed *params) = 0;
   virtual void glMatrixMode(GLenum mode) = 0;
   virtual void glMultMatrixx(const GLfixed *m) = 0;
 //  virtual void glMultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, GLfixed q) = 0;

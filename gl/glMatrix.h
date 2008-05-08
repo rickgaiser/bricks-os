@@ -29,12 +29,12 @@ public:
   virtual void glMatrixMode(GLenum mode);
 
 protected:
-  GLenum      matrixMode_;
-  CMatrixF    matrixModelView;
-  CMatrixF    matrixProjection;
-  CMatrixF    matrixTexture;
-  CMatrixF    matrixNormal;
-  CMatrixF  * pCurrentMatrix_;
+  GLenum                matrixMode_;
+  TMatrix4x4<GLfloat>   matrixModelView;
+  TMatrix4x4<GLfloat>   matrixProjection;
+  TMatrix4x4<GLfloat>   matrixTexture;
+  TMatrix4x4<GLfloat>   matrixNormal;
+  TMatrix4x4<GLfloat> * pCurrentMatrix_;
 };
 #else // CONFIG_FPU
 //-----------------------------------------------------------------------------
@@ -57,12 +57,12 @@ public:
   virtual void glMatrixMode(GLenum mode);
 
 protected:
-  GLenum      matrixMode_;
-  CMatrixFx   matrixModelView;
-  CMatrixFx   matrixProjection;
-  CMatrixFx   matrixTexture;
-  CMatrixFx   matrixNormal;
-  CMatrixFx * pCurrentMatrix_;
+  GLenum               matrixMode_;
+  TMatrix4x4<CFixed>   matrixModelView;
+  TMatrix4x4<CFixed>   matrixProjection;
+  TMatrix4x4<CFixed>   matrixTexture;
+  TMatrix4x4<CFixed>   matrixNormal;
+  TMatrix4x4<CFixed> * pCurrentMatrix_;
 };
 #endif // CONFIG_FPU
 

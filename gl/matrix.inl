@@ -4,46 +4,29 @@ typedef unsigned int wint_t;
 #include <math.h>
 
 
-#define m00 matrix[0*4+0]
-#define m01 matrix[0*4+1]
-#define m02 matrix[0*4+2]
-#define m03 matrix[0*4+3]
-#define m10 matrix[1*4+0]
-#define m11 matrix[1*4+1]
-#define m12 matrix[1*4+2]
-#define m13 matrix[1*4+3]
-#define m20 matrix[2*4+0]
-#define m21 matrix[2*4+1]
-#define m22 matrix[2*4+2]
-#define m23 matrix[2*4+3]
-#define m30 matrix[3*4+0]
-#define m31 matrix[3*4+1]
-#define m32 matrix[3*4+2]
-#define m33 matrix[3*4+3]
-
-#define matrixf_copy(mto, mfrom) \
+#define matrix_copy(mto, mfrom) \
 mto[0*4+0] = mfrom[0*4+0]; mto[0*4+1] = mfrom[0*4+1]; mto[0*4+2] = mfrom[0*4+2]; mto[0*4+3] = mfrom[0*4+3]; \
 mto[1*4+0] = mfrom[1*4+0]; mto[1*4+1] = mfrom[1*4+1]; mto[1*4+2] = mfrom[1*4+2]; mto[1*4+3] = mfrom[1*4+3]; \
 mto[2*4+0] = mfrom[2*4+0]; mto[2*4+1] = mfrom[2*4+1]; mto[2*4+2] = mfrom[2*4+2]; mto[2*4+3] = mfrom[2*4+3]; \
 mto[3*4+0] = mfrom[3*4+0]; mto[3*4+1] = mfrom[3*4+1]; mto[3*4+2] = mfrom[3*4+2]; mto[3*4+3] = mfrom[3*4+3]
 //memcpy(mto, mfrom, sizeof(GLfloat) * 16)
-#define matrixf_clear(m) \
+#define matrix_clear(m) \
 m[0*4+0] = 0; m[0*4+1] = 0; m[0*4+2] = 0; m[0*4+3] = 0; \
 m[1*4+0] = 0; m[1*4+1] = 0; m[1*4+2] = 0; m[1*4+3] = 0; \
 m[2*4+0] = 0; m[2*4+1] = 0; m[2*4+2] = 0; m[2*4+3] = 0; \
 m[3*4+0] = 0; m[3*4+1] = 0; m[3*4+2] = 0; m[3*4+3] = 0
 //memset(m, 0, sizeof(GLfloat) * 16)
-#define matrixf_identity(m) \
+#define matrix_identity(m) \
 m[0*4+0] = 1; m[0*4+1] = 0; m[0*4+2] = 0; m[0*4+3] = 0; \
 m[1*4+0] = 0; m[1*4+1] = 1; m[1*4+2] = 0; m[1*4+3] = 0; \
 m[2*4+0] = 0; m[2*4+1] = 0; m[2*4+2] = 1; m[2*4+3] = 0; \
 m[3*4+0] = 0; m[3*4+1] = 0; m[3*4+2] = 0; m[3*4+3] = 1
 
 #define matrixfx_copy(mto, mfrom) \
-matrixf_copy(mto, mfrom)
+matrix_copy(mto, mfrom)
 //memcpy(mto, mfrom, sizeof(GLfixed) * 16)
 #define matrixfx_clear(m) \
-matrixf_clear(m)
+matrix_clear(m)
 //memset(m, 0, sizeof(GLfixed) * 16)
 #define matrixfx_identity(m) \
 m[0*4+0] = gl_fpfromi(1); m[0*4+1] = gl_fpfromi(0); m[0*4+2] = gl_fpfromi(0); m[0*4+3] = gl_fpfromi(0); \
@@ -52,28 +35,34 @@ m[2*4+0] = gl_fpfromi(0); m[2*4+1] = gl_fpfromi(0); m[2*4+2] = gl_fpfromi(1); m[
 m[3*4+0] = gl_fpfromi(0); m[3*4+1] = gl_fpfromi(0); m[3*4+2] = gl_fpfromi(0); m[3*4+3] = gl_fpfromi(1)
 
 
-#ifdef CONFIG_FPU
+template <class T> bool  TMatrix4x4<T>::bInitialized_(false);
+template <class T> T     TMatrix4x4<T>::sinTable_[360];
+template <class T> T     TMatrix4x4<T>::cosTable_[360];
+
+
 //---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
+template <class T>
 inline
-CMatrixF::CMatrixF(const GLfloat * m)
+TMatrix4x4<T>::TMatrix4x4(const TMatrix4x4 & m)
 {
-  matrixf_copy(matrix, m);
+  *this = m;
 }
 
 //---------------------------------------------------------------------------
+template <class T>
 inline
-CMatrixF::CMatrixF(const CMatrixF & m)
+TMatrix4x4<T>::TMatrix4x4(const T * m)
 {
-  matrixf_copy(matrix, m.matrix);
+  *this = m;
 }
 
 //---------------------------------------------------------------------------
+template <class T>
 inline
-CMatrixF::CMatrixF(GLfloat _m00, GLfloat _m01, GLfloat _m02, GLfloat _m03,
-                   GLfloat _m10, GLfloat _m11, GLfloat _m12, GLfloat _m13,
-                   GLfloat _m20, GLfloat _m21, GLfloat _m22, GLfloat _m23,
-                   GLfloat _m30, GLfloat _m31, GLfloat _m32, GLfloat _m33)
+TMatrix4x4<T>::TMatrix4x4(T _m00, T _m01, T _m02, T _m03,
+                          T _m10, T _m11, T _m12, T _m13,
+                          T _m20, T _m21, T _m22, T _m23,
+                          T _m30, T _m31, T _m32, T _m33)
 {
   m00 = _m00; m01 = _m01; m02 = _m02; m03 = _m03;
   m10 = _m10; m11 = _m11; m12 = _m12; m13 = _m13;
@@ -82,297 +71,255 @@ CMatrixF::CMatrixF(GLfloat _m00, GLfloat _m01, GLfloat _m02, GLfloat _m03,
 }
 
 //---------------------------------------------------------------------------
-inline void
-CMatrixF::clear()
+template <class T>
+inline TMatrix4x4<T> &
+TMatrix4x4<T>::operator=(const TMatrix4x4 & m)
 {
-  matrixf_clear(matrix);
+  return (*this = m.matrix);
 }
 
 //---------------------------------------------------------------------------
-inline void
-CMatrixF::loadIdentity()
+template <class T>
+inline TMatrix4x4<T> &
+TMatrix4x4<T>::operator=(const T * m)
 {
-  matrixf_identity(matrix);
+  matrix_copy(matrix, m);
+
+  return (*this);
 }
 
 //---------------------------------------------------------------------------
+template <class T>
 inline void
-CMatrixF::translate(GLfloat * vec)
+TMatrix4x4<T>::clear()
+{
+  matrix_clear(matrix);
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline void
+TMatrix4x4<T>::loadIdentity()
+{
+  matrix_identity(matrix);
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline TMatrix4x4<T> &
+TMatrix4x4<T>::operator*=(const TMatrix4x4 & m)
+{
+  return (*this *= m.matrix);
+}
+
+//---------------------------------------------------------------------------
+// 64 x operator*
+// 48 x operator+
+template <class T>
+inline TMatrix4x4<T> &
+TMatrix4x4<T>::operator*=(const T * m)
+{
+  T   mtemp[16];
+  T * ptemp(mtemp);
+  T * pmatrix(matrix);
+  int iRow = 4;
+
+  while(iRow--)
+  {
+    T mx0 = *pmatrix++;
+    T mx1 = *pmatrix++;
+    T mx2 = *pmatrix++;
+    T mx3 = *pmatrix++;
+    *ptemp++ = mx0 * m[0*4+0] + mx1 * m[1*4+0] + mx2 * m[2*4+0] + mx3 * m[3*4+0];
+    *ptemp++ = mx0 * m[0*4+1] + mx1 * m[1*4+1] + mx2 * m[2*4+1] + mx3 * m[3*4+1];
+    *ptemp++ = mx0 * m[0*4+2] + mx1 * m[1*4+2] + mx2 * m[2*4+2] + mx3 * m[3*4+2];
+    *ptemp++ = mx0 * m[0*4+3] + mx1 * m[1*4+3] + mx2 * m[2*4+3] + mx3 * m[3*4+3];
+  }
+
+  return (*this = mtemp);
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline TMatrix4x4<T>
+TMatrix4x4<T>::operator*(const TMatrix4x4 & m)
+{
+  TMatrix4x4 mReturn(*this);
+
+  mReturn *= m;
+
+  return mReturn;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline TMatrix4x4<T>
+TMatrix4x4<T>::operator*(const T * m)
+{
+  TMatrix4x4 mReturn(*this);
+
+  mReturn *= m;
+
+  return mReturn;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline void
+TMatrix4x4<T>::translate(T x, T y, T z)
+{
+  T m[16];
+  matrix_identity(m);
+  m[0*4+3] = x;
+  m[1*4+3] = y;
+  m[2*4+3] = z;
+  *this *= m;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline void
+TMatrix4x4<T>::translate(const T * vec)
 {
   translate(vec[0], vec[1], vec[2]);
 }
 
 //---------------------------------------------------------------------------
+template <class T>
 inline void
-CMatrixF::scale(GLfloat * vec)
+TMatrix4x4<T>::scale(T x, T y, T z)
+{
+  T m[16];
+  matrix_identity(m);
+  m[0*4+0] = x;
+  m[1*4+1] = y;
+  m[2*4+2] = z;
+  *this *= m;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline void
+TMatrix4x4<T>::scale(const T * vec)
 {
   scale(vec[0], vec[1], vec[2]);
 }
 
 //---------------------------------------------------------------------------
+template <class T>
 inline void
-CMatrixF::rotate(GLfloat * angles)
+TMatrix4x4<T>::rotate(T x, T y, T z)
 {
-  rotate(angles[0], angles[1], angles[2], angles[3]);
+  if(bInitialized_ == false)
+  {
+    bInitialized_ = true;
+    for(int i(0); i < 360; i++)
+    {
+      sinTable_[i] = sin((float)i * M_PI / 180.0f);
+      cosTable_[i] = cos((float)i * M_PI / 180.0f);
+    }
+  }
+
+  if(x != 0)
+    rotatex(x);
+  if(y != 0)
+    rotatey(y);
+  if(z != 0)
+    rotatez(z);
 }
 
 //---------------------------------------------------------------------------
+template <class T>
 inline void
-CMatrixF::transform(const GLfloat * from, GLfloat * to)
+TMatrix4x4<T>::rotatex(T angle)
 {
-  GLfloat x(from[0]);
-  GLfloat y(from[1]);
-  GLfloat z(from[2]);
-  GLfloat w(from[3]);
+  // Normalize the angle
+  angle -= ((int)angle / 360) * 360;
+  if(angle < 0)
+    angle += 360;
+  // Get sin and cos from lookup table
+  T iSin = sinTable_[(int)angle];
+  T iCos = cosTable_[(int)angle];
+
+  T m[16];
+  matrix_identity(m);
+  m[1*4+1] = iCos;
+  m[1*4+2] = 0 - iSin;
+  m[2*4+1] = iSin;
+  m[2*4+2] = iCos;
+  *this *= m;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline void
+TMatrix4x4<T>::rotatey(T angle)
+{
+  // Normalize the angle
+  angle -= ((int)angle / 360) * 360;
+  if(angle < 0)
+    angle += 360;
+  // Get sin and cos from lookup table
+  T iSin = sinTable_[(int)angle];
+  T iCos = cosTable_[(int)angle];
+
+  T m[16];
+  matrix_identity(m);
+  m[0*4+0] = iCos;
+  m[0*4+2] = iSin;
+  m[2*4+0] = 0 - iSin;
+  m[2*4+2] = iCos;
+  *this *= m;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline void
+TMatrix4x4<T>::rotatez(T angle)
+{
+  // Normalize the angle
+  angle -= ((int)angle / 360) * 360;
+  if(angle < 0)
+    angle += 360;
+  // Get sin and cos from lookup table
+  T iSin = sinTable_[(int)angle];
+  T iCos = cosTable_[(int)angle];
+
+  T m[16];
+  matrix_identity(m);
+  m[0*4+0] = iCos;
+  m[0*4+1] = iSin;
+  m[1*4+0] = 0 - iSin;
+  m[1*4+1] = iCos;
+  *this *= m;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline void
+TMatrix4x4<T>::transform3(const T * from, T * to)
+{
+  T x(from[0]);
+  T y(from[1]);
+  T z(from[2]);
+
+  to[0] = m00 * x + m01 * y + m02 * z;
+  to[1] = m10 * x + m11 * y + m12 * z;
+  to[2] = m20 * x + m21 * y + m22 * z;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline void
+TMatrix4x4<T>::transform4(const T * from, T * to)
+{
+  T x(from[0]);
+  T y(from[1]);
+  T z(from[2]);
+  T w(from[3]);
 
   to[0] = m00 * x + m01 * y + m02 * z + m03 * w;
   to[1] = m10 * x + m11 * y + m12 * z + m13 * w;
   to[2] = m20 * x + m21 * y + m22 * z + m23 * w;
   to[3] = m30 * x + m31 * y + m32 * z + m33 * w;
 }
-
-//---------------------------------------------------------------------------
-inline CMatrixF
-CMatrixF::operator*(const CMatrixF & m)
-{
-  CMatrixF mReturn(*this);
-
-  mReturn *= m;
-
-  return mReturn;
-}
-
-//---------------------------------------------------------------------------
-inline CMatrixF
-CMatrixF::operator*(const GLfloat * m)
-{
-  CMatrixF mReturn(*this);
-
-  mReturn *= m;
-
-  return mReturn;
-}
-
-//---------------------------------------------------------------------------
-inline CMatrixF &
-CMatrixF::operator=(const CMatrixF & m)
-{
-  matrixf_copy(matrix, m.matrix);
-
-  return(*this);
-}
-
-//---------------------------------------------------------------------------
-inline CMatrixF &
-CMatrixF::operator=(const GLfloat * m)
-{
-  matrixf_copy(matrix, m);
-
-  return(*this);
-}
-
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-inline void
-vecInverseF(GLfloat * vto, const GLfloat * vfrom)
-{
-  vto[0] = -vfrom[0];
-  vto[1] = -vfrom[1];
-  vto[2] = -vfrom[2];
-  vto[3] = -vfrom[3];
-}
-
-//---------------------------------------------------------------------------
-inline void
-vecNormalizeF(GLfloat * vto, const GLfloat * vfrom)
-{
-  float norm, dnorm;
-
-  norm = sqrt(vfrom[0]*vfrom[0] + vfrom[1]*vfrom[1] + vfrom[2]*vfrom[2]);
-
-  if(norm > 0)
-  {
-    dnorm = 1.0 / norm;
-    vto[0] = vfrom[0] * dnorm;
-    vto[1] = vfrom[1] * dnorm;
-    vto[2] = vfrom[2] * dnorm;
-    vto[3] = vfrom[3];
-  }
-}
-
-//-----------------------------------------------------------------------------
-inline GLfloat
-vecInnerProductF(const GLfloat * v0, const GLfloat * v1)
-{
-  return (v0[0]*v1[0] + v0[1]*v1[1] + v0[2]*v1[2]);
-}
-#else // CONFIG_FPU
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-inline
-CMatrixFx::CMatrixFx(const GLfixed * m)
-{
-  matrixfx_copy(matrix, m);
-}
-
-//---------------------------------------------------------------------------
-inline
-CMatrixFx::CMatrixFx(const CMatrixFx & m)
-{
-  matrixfx_copy(matrix, m.matrix);
-}
-
-//---------------------------------------------------------------------------
-inline
-CMatrixFx::CMatrixFx(GLfixed _m00, GLfixed _m01, GLfixed _m02, GLfixed _m03,
-                     GLfixed _m10, GLfixed _m11, GLfixed _m12, GLfixed _m13,
-                     GLfixed _m20, GLfixed _m21, GLfixed _m22, GLfixed _m23,
-                     GLfixed _m30, GLfixed _m31, GLfixed _m32, GLfixed _m33)
-{
-  m00 = _m00; m01 = _m01; m02 = _m02; m03 = _m03;
-  m10 = _m10; m11 = _m11; m12 = _m12; m13 = _m13;
-  m20 = _m20; m21 = _m21; m22 = _m22; m23 = _m23;
-  m30 = _m30; m31 = _m31; m32 = _m32; m33 = _m33;
-}
-
-//---------------------------------------------------------------------------
-inline void
-CMatrixFx::clear()
-{
-  matrixfx_clear(matrix);
-}
-
-//---------------------------------------------------------------------------
-inline void
-CMatrixFx::loadIdentity()
-{
-  matrixfx_identity(matrix);
-}
-
-//---------------------------------------------------------------------------
-inline void
-CMatrixFx::translate(GLfixed * vec)
-{
-  translate(vec[0], vec[1], vec[2]);
-}
-
-//---------------------------------------------------------------------------
-inline void
-CMatrixFx::scale(GLfixed * vec)
-{
-  scale(vec[0], vec[1], vec[2]);
-}
-
-//---------------------------------------------------------------------------
-inline void
-CMatrixFx::rotate(GLfixed * angles)
-{
-  rotate(angles[0], angles[1], angles[2], angles[3]);
-}
-
-//---------------------------------------------------------------------------
-inline void
-CMatrixFx::transform(const GLfixed * from, GLfixed * to)
-{
-  GLfixed x(from[0]);
-  GLfixed y(from[1]);
-  GLfixed z(from[2]);
-  GLfixed w(from[3]);
-
-  to[0] = gl_fpmul(m00, x) + gl_fpmul(m01, y) + gl_fpmul(m02, z) + gl_fpmul(m03, w);
-  to[1] = gl_fpmul(m10, x) + gl_fpmul(m11, y) + gl_fpmul(m12, z) + gl_fpmul(m13, w);
-  to[2] = gl_fpmul(m20, x) + gl_fpmul(m21, y) + gl_fpmul(m22, z) + gl_fpmul(m23, w);
-  to[3] = gl_fpmul(m30, x) + gl_fpmul(m31, y) + gl_fpmul(m32, z) + gl_fpmul(m33, w);
-}
-
-//---------------------------------------------------------------------------
-inline void
-CMatrixFx::transform(const CFixed * from, CFixed * to)
-{
-  GLfixed x(from[0].value);
-  GLfixed y(from[1].value);
-  GLfixed z(from[2].value);
-  GLfixed w(from[3].value);
-
-  to[0].value = gl_fpmul(m00, x) + gl_fpmul(m01, y) + gl_fpmul(m02, z) + gl_fpmul(m03, w);
-  to[1].value = gl_fpmul(m10, x) + gl_fpmul(m11, y) + gl_fpmul(m12, z) + gl_fpmul(m13, w);
-  to[2].value = gl_fpmul(m20, x) + gl_fpmul(m21, y) + gl_fpmul(m22, z) + gl_fpmul(m23, w);
-  to[3].value = gl_fpmul(m30, x) + gl_fpmul(m31, y) + gl_fpmul(m32, z) + gl_fpmul(m33, w);
-}
-
-//---------------------------------------------------------------------------
-inline CMatrixFx
-CMatrixFx::operator*(const CMatrixFx & m)
-{
-  CMatrixFx mReturn(*this);
-
-  mReturn *= m;
-
-  return mReturn;
-}
-
-//---------------------------------------------------------------------------
-inline CMatrixFx
-CMatrixFx::operator*(const GLfixed * m)
-{
-  CMatrixFx mReturn(*this);
-
-  mReturn *= m;
-
-  return mReturn;
-}
-
-//---------------------------------------------------------------------------
-inline CMatrixFx &
-CMatrixFx::operator=(const CMatrixFx & m)
-{
-  matrixfx_copy(matrix, m.matrix);
-
-  return(*this);
-}
-
-//---------------------------------------------------------------------------
-inline CMatrixFx &
-CMatrixFx::operator=(const GLfixed * m)
-{
-  matrixfx_copy(matrix, m);
-
-  return(*this);
-}
-
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-inline void
-vecInverseFx(GLfixed * vto, const GLfixed * vfrom)
-{
-  vto[0] = -vfrom[0];
-  vto[1] = -vfrom[1];
-  vto[2] = -vfrom[2];
-  vto[3] = -vfrom[3];
-}
-
-//---------------------------------------------------------------------------
-inline void
-vecNormalizeFx(GLfixed * vto, const GLfixed * vfrom)
-{
-  GLfixed norm, dnorm;
-
-  norm = gl_fpfromf(sqrt(gl_fptof(gl_fpmul(vfrom[0], vfrom[0]) + gl_fpmul(vfrom[1], vfrom[1]) + gl_fpmul(vfrom[2], vfrom[2]))));
-
-  if(norm > 0)
-  {
-    dnorm = gl_fpdiv(gl_fpfromi(1), norm);
-    vto[0] = gl_fpmul(vfrom[0], dnorm);
-    vto[1] = gl_fpmul(vfrom[1], dnorm);
-    vto[2] = gl_fpmul(vfrom[2], dnorm);
-    vto[3] = vfrom[3];
-  }
-}
-
-//-----------------------------------------------------------------------------
-inline GLfixed
-vecInnerProductFx(const GLfixed * v0, const GLfixed * v1)
-{
-  return (gl_fpmul(v0[0], v1[0]) + gl_fpmul(v0[1], v1[1]) + gl_fpmul(v0[2], v1[2]));
-}
-#endif // CONFIG_FPU

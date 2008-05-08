@@ -34,13 +34,13 @@ CSoftGLESFloat::testAndSetDepth(GLfloat z, uint32_t index)
 inline void
 CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint y, SColorF c)
 {
-  GLint xwidth(to.x_[y] - from.x_[y]);
+  GLint xwidth((GLint)(to.x_[y] - from.x_[y]));
 
   if(xwidth > 0)
   {
     color_t color = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255), (uint8_t)(c.a * 255));
 
-    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
+    GLuint index((GLuint)(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset)));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -72,7 +72,7 @@ CSoftGLESFloat::hline(CEdgeF & from, CEdgeF & to, GLint y, SColorF c)
 inline void
 CSoftGLESFloat::hlineZ(CEdgeF & from, CEdgeF & to, GLint y, SColorF c)
 {
-  GLint xwidth(to.x_[y] - from.x_[y]);
+  GLint xwidth((GLint)(to.x_[y] - from.x_[y]));
 
   if(xwidth > 0)
   {
@@ -84,7 +84,7 @@ CSoftGLESFloat::hlineZ(CEdgeF & from, CEdgeF & to, GLint y, SColorF c)
 
     color_t color = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(c.r * 255), (uint8_t)(c.g * 255), (uint8_t)(c.b * 255), (uint8_t)(c.a * 255));
 
-    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
+    GLuint index((GLuint)(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset)));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -120,23 +120,23 @@ CSoftGLESFloat::hlineZ(CEdgeF & from, CEdgeF & to, GLint y, SColorF c)
 inline void
 CSoftGLESFloat::hlineC(CEdgeF & from, CEdgeF & to, GLint y)
 {
-  GLint xwidth(to.x_[y] - from.x_[y]);
+  GLint xwidth((GLint)(to.x_[y] - from.x_[y]));
 
   if(xwidth > 0)
   {
     GLfloat dx(1.0f / (GLfloat)(to.x_[y] - from.x_[y]));
 
     // Color interpolation
-    GLfloat r(from.c_[y].r);
-    GLfloat g(from.c_[y].g);
-    GLfloat b(from.c_[y].b);
-    GLfloat a(from.c_[y].a);
-    GLfloat mr((to.c_[y].r - from.c_[y].r) * dx);
-    GLfloat mg((to.c_[y].g - from.c_[y].g) * dx);
-    GLfloat mb((to.c_[y].b - from.c_[y].b) * dx);
-    GLfloat ma((to.c_[y].a - from.c_[y].a) * dx);
+    GLfloat r(from.r_[y]);
+    GLfloat g(from.g_[y]);
+    GLfloat b(from.b_[y]);
+    GLfloat a(from.a_[y]);
+    GLfloat mr((to.r_[y] - from.r_[y]) * dx);
+    GLfloat mg((to.g_[y] - from.g_[y]) * dx);
+    GLfloat mb((to.b_[y] - from.b_[y]) * dx);
+    GLfloat ma((to.a_[y] - from.a_[y]) * dx);
 
-    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
+    GLuint index((GLuint)(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset)));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -172,7 +172,7 @@ CSoftGLESFloat::hlineC(CEdgeF & from, CEdgeF & to, GLint y)
 inline void
 CSoftGLESFloat::hlineZC(CEdgeF & from, CEdgeF & to, GLint y)
 {
-  GLint xwidth(to.x_[y] - from.x_[y]);
+  GLint xwidth((GLint)(to.x_[y] - from.x_[y]));
 
   if(xwidth > 0)
   {
@@ -183,16 +183,16 @@ CSoftGLESFloat::hlineZC(CEdgeF & from, CEdgeF & to, GLint y)
     GLfloat mz((to.z_[y] - from.z_[y]) * dx);
 
     // Color interpolation
-    GLfloat r(from.c_[y].r);
-    GLfloat g(from.c_[y].g);
-    GLfloat b(from.c_[y].b);
-    GLfloat a(from.c_[y].a);
-    GLfloat mr((to.c_[y].r - from.c_[y].r) * dx);
-    GLfloat mg((to.c_[y].g - from.c_[y].g) * dx);
-    GLfloat mb((to.c_[y].b - from.c_[y].b) * dx);
-    GLfloat ma((to.c_[y].a - from.c_[y].a) * dx);
+    GLfloat r(from.r_[y]);
+    GLfloat g(from.g_[y]);
+    GLfloat b(from.b_[y]);
+    GLfloat a(from.a_[y]);
+    GLfloat mr((to.r_[y] - from.r_[y]) * dx);
+    GLfloat mg((to.g_[y] - from.g_[y]) * dx);
+    GLfloat mb((to.b_[y] - from.b_[y]) * dx);
+    GLfloat ma((to.a_[y] - from.a_[y]) * dx);
 
-    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
+    GLuint index((GLuint)(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset)));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -232,7 +232,7 @@ CSoftGLESFloat::hlineZC(CEdgeF & from, CEdgeF & to, GLint y)
 inline void
 CSoftGLESFloat::hlineTa(CEdgeF & from, CEdgeF & to, GLint y)
 {
-  GLint xwidth(to.x_[y] - from.x_[y]);
+  GLint xwidth((GLint)(to.x_[y] - from.x_[y]));
 
   if(xwidth > 0)
   {
@@ -249,7 +249,7 @@ CSoftGLESFloat::hlineTa(CEdgeF & from, CEdgeF & to, GLint y)
     mts *= pCurrentTex_->width;
     mtt *= pCurrentTex_->height;
 
-    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
+    GLuint index((GLuint)(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset)));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -283,7 +283,7 @@ CSoftGLESFloat::hlineTa(CEdgeF & from, CEdgeF & to, GLint y)
 inline void
 CSoftGLESFloat::hlineZTa(CEdgeF & from, CEdgeF & to, GLint y)
 {
-  GLint xwidth(to.x_[y] - from.x_[y]);
+  GLint xwidth((GLint)(to.x_[y] - from.x_[y]));
 
   if(xwidth > 0)
   {
@@ -304,7 +304,7 @@ CSoftGLESFloat::hlineZTa(CEdgeF & from, CEdgeF & to, GLint y)
     mts *= pCurrentTex_->width;
     mtt *= pCurrentTex_->height;
 
-    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
+    GLuint index((GLuint)(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset)));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {
@@ -342,7 +342,7 @@ CSoftGLESFloat::hlineZTa(CEdgeF & from, CEdgeF & to, GLint y)
 inline void
 CSoftGLESFloat::hlineZTp(CEdgeF & from, CEdgeF & to, GLint y)
 {
-  GLint xwidth(to.x_[y] - from.x_[y]);
+  GLint xwidth((GLint)(to.x_[y] - from.x_[y]));
 
   if(xwidth > 0)
   {
@@ -360,7 +360,7 @@ CSoftGLESFloat::hlineZTp(CEdgeF & from, CEdgeF & to, GLint y)
     GLfloat mts(((to.ts_[y] - from.ts_[y]) * pCurrentTex_->width  * tz) * dx);
     GLfloat mtt(((to.tt_[y] - from.tt_[y]) * pCurrentTex_->height * tz) * dx);
 
-    GLuint index(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset));
+    GLuint index((GLuint)(((y + viewportYOffset) * renderSurface->mode.xpitch) + (from.x_[y] + viewportXOffset)));
 //    for(GLint x(from.x_[y]); x < to.x_[y]; x++)
     while(xwidth--)
     {

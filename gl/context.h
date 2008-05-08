@@ -6,6 +6,7 @@
 #include "GLES/gl_extra.h"
 #include "kernel/videoManager.h"
 #include "fixedPoint.h"
+#include "vector.h"
 #include "asm/arch/config.h"
 
 
@@ -14,24 +15,67 @@
 
 
 //-----------------------------------------------------------------------------
-typedef union
+template <class U>
+struct TColor
 {
-  struct
+  union
   {
-    GLfloat r, g, b, a;
+    struct
+    {
+      U r, g, b, a;
+    };
+    U c[4];
   };
-  GLfloat c[4];
-} SColorF;
+};
+typedef TColor<GLfloat> SColorF;
+typedef TColor<GLfixed> SColorFx;
 
 //-----------------------------------------------------------------------------
-typedef union
+template <class T, class U>
+struct TVertex
 {
-  struct
+  // Vertex itself
+  T v[4];
+
+  // Normal vector
+  T n[4];
+
+  // Color
+  union
   {
-    GLfixed r, g, b, a;
+    struct
+    {
+      U cr, cg, cb, ca;
+    };
+    U c[4];
+    TColor<U> cl;
   };
-  GLfixed c[4];
-} SColorFx;
+
+  // Texture coordinates
+  T t[2];
+
+  // 2D Point (on screen) x/y
+  GLint  sx, sy;
+
+  // Depth (on screen)
+  uint32_t sz;
+};
+typedef TVertex<GLfloat, GLfloat> SVertexF;
+typedef TVertex<CFixed,  GLfixed> SVertexFx;
+
+//-----------------------------------------------------------------------------
+template <class T, class U>
+struct TLight
+{
+  TColor<U> diffuse;
+  TColor<U> ambient;
+  TColor<U> specular;
+  TVector<T> position;
+  TVector<T> direction;
+  bool enabled;
+};
+typedef TLight<GLfloat, GLfloat> SLightF;
+typedef TLight<CFixed,  GLfixed> SLightFx;
 
 //-----------------------------------------------------------------------------
 struct SBufferPointer

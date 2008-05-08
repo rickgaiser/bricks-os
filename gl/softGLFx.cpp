@@ -208,13 +208,13 @@ CSoftGLESFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
 void
 CSoftGLESFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 {
-  normal_[0] = nx;
-  normal_[1] = ny;
-  normal_[2] = nz;
-  normal_[3] = gl_fpfromi(1);
+  normal_.x.value = nx;
+  normal_.y.value = ny;
+  normal_.z.value = nz;
+  normal_.w       = 1;
 
   if(normalizeEnabled_  == true)
-    vecNormalizeFx(normal_, normal_);
+    normal_.normalize();
 }
 
 //-----------------------------------------------------------------------------
@@ -575,10 +575,10 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
   // --------------
   // Model-View matrix
   //   from 'object coordinates' to 'eye coordinates'
-  matrixModelView.transform(v.v, v.v);
+  matrixModelView.transform4(v.v, v.v);
   // Projection matrix
   //   from 'eye coordinates' to 'clip coordinates'
-  matrixProjection.transform(v.v, v.v);
+  matrixProjection.transform4(v.v, v.v);
   // Perspective division
   //   from 'clip coordinates' to 'normalized device coordinates'
   v.v[0] /= v.v[3];
@@ -586,8 +586,8 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
   v.v[2] /= v.v[3];
   // Viewport transformation
   //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = (    v.v[0] + 1) * CFixed(viewportWidth  >> 1);
-  v.sy = (0 - v.v[1] + 1) * CFixed(viewportHeight >> 1);
+  v.sx = (    v.v[0] + 1) * CFixed(viewportWidth  >> 1) + 0.5f;
+  v.sy = (0 - v.v[1] + 1) * CFixed(viewportHeight >> 1) + 0.5f;
 //  v.sz = gl_fpdiv(zFar - zNear, v.v[2] << 1) + ((zNear + zFar)>>1);
 
   // --------
@@ -598,7 +598,7 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
     CFixed r(0), g(0), b(0);
 
     // Normal Rotation
-    matrixNormal.transform(v.n, v.n);
+    matrixNormal.transform3(v.n, v.n);
 
     for(int iLight(0); iLight < 8; iLight++)
     {
@@ -610,19 +610,19 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
         b.value += lights_[iLight].ambient.b;
 
         // Inner product of normal and light direction
-        CFixed ip = lights_[0].direction.dotProduct(v.n);
+        CFixed ip = lights_[iLight].direction.dotProduct(v.n);
         if(ip < 0.0f) ip = 0 - ip;
         // Multiply with light color
-        r += gl_fpmul(lights_[iLight].diffuse.r, ip);
-        g += gl_fpmul(lights_[iLight].diffuse.g, ip);
-        b += gl_fpmul(lights_[iLight].diffuse.b, ip);
+        r.value += gl_fpmul(lights_[iLight].diffuse.r, ip.value);
+        g.value += gl_fpmul(lights_[iLight].diffuse.g, ip.value);
+        b.value += gl_fpmul(lights_[iLight].diffuse.b, ip.value);
       }
     }
 
     // Multiply vertex color by calculated color
-    v.cr = gl_fpmul(v.cr, r);
-    v.cg = gl_fpmul(v.cg, g);
-    v.cb = gl_fpmul(v.cb, b);
+    v.cr = gl_fpmul(v.cr, r.value);
+    v.cg = gl_fpmul(v.cg, g.value);
+    v.cb = gl_fpmul(v.cb, b.value);
     // Clamp to 0..1
     v.cr = clampfx(v.cr);
     v.cg = clampfx(v.cg);

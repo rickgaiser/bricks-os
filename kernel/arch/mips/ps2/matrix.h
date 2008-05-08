@@ -10,7 +10,7 @@ class CPS2Matrix
 public:
   inline CPS2Matrix(){}
   CPS2Matrix(const CPS2Matrix & m);
-  CPS2Matrix(const CMatrixF & m);
+  CPS2Matrix(const TMatrix4x4<GLfloat> & m);
 
   inline void transform(const GLfloat * v1, GLfloat * v2);
 

@@ -94,9 +94,13 @@ CAGLESMatrixF::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top
 void
 CAGLESMatrixF::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
-  pCurrentMatrix_->rotate(angle, x, y, z);
+  GLfloat ax = angle * x;
+  GLfloat ay = angle * x;
+  GLfloat az = angle * x;
+
+  pCurrentMatrix_->rotate(ax, ay, az);
   if(matrixMode_ == GL_MODELVIEW)
-    matrixNormal.rotate(angle, x, y, z);
+    matrixNormal.rotate(ax, ay, az);
 }
 
 //---------------------------------------------------------------------------
@@ -153,70 +157,70 @@ CAGLESMatrixFx::~CAGLESMatrixFx()
 void
 CAGLESMatrixFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
-  GLfixed m[16];
+  CFixed m[16];
 
-  m[0*4+0] = gl_fpdiv((zNear << 1), (right - left));
-  m[0*4+1] = gl_fpfromi(0);
-  m[0*4+2] = gl_fpdiv((right + left), (right - left));
-  m[0*4+3] = gl_fpfromi(0);
+  m[0*4+0].value = gl_fpdiv((zNear << 1), (right - left));
+  m[0*4+1].value = gl_fpfromi(0);
+  m[0*4+2].value = gl_fpdiv((right + left), (right - left));
+  m[0*4+3].value = gl_fpfromi(0);
 
-  m[1*4+0] = gl_fpfromi(0);
-  m[1*4+1] = gl_fpdiv((zNear << 1), (top - bottom));
-  m[1*4+2] = gl_fpdiv((top + bottom), (top - bottom));
-  m[1*4+3] = gl_fpfromi(0);
+  m[1*4+0].value = gl_fpfromi(0);
+  m[1*4+1].value = gl_fpdiv((zNear << 1), (top - bottom));
+  m[1*4+2].value = gl_fpdiv((top + bottom), (top - bottom));
+  m[1*4+3].value = gl_fpfromi(0);
 
-  m[2*4+0] = gl_fpfromi(0);
-  m[2*4+1] = gl_fpfromi(0);
-  m[2*4+2] = -gl_fpdiv((zFar + zNear), (zFar - zNear));
-  m[2*4+3] = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear));
+  m[2*4+0].value = gl_fpfromi(0);
+  m[2*4+1].value = gl_fpfromi(0);
+  m[2*4+2].value = -gl_fpdiv((zFar + zNear), (zFar - zNear));
+  m[2*4+3].value = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear));
 
-  m[3*4+0] = gl_fpfromi(0);
-  m[3*4+1] = gl_fpfromi(0);
-  m[3*4+2] = gl_fpfromi(-1);
-  m[3*4+3] = gl_fpfromi(0);
+  m[3*4+0].value = gl_fpfromi(0);
+  m[3*4+1].value = gl_fpfromi(0);
+  m[3*4+2].value = gl_fpfromi(-1);
+  m[3*4+3].value = gl_fpfromi(0);
 
   *pCurrentMatrix_ *= m;
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glLoadMatrixx(const GLfixed *m)
+CAGLESMatrixFx::glLoadMatrixx(const GLfixed * m)
 {
-  *pCurrentMatrix_ = m;
+  *pCurrentMatrix_ = (CFixed *)m;
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glMultMatrixx(const GLfixed *m)
+CAGLESMatrixFx::glMultMatrixx(const GLfixed * m)
 {
-  *pCurrentMatrix_ *= m;
+  *pCurrentMatrix_ *= (CFixed *)m;
 }
 
 //---------------------------------------------------------------------------
 void
 CAGLESMatrixFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
-  GLfixed m[16];
+  CFixed m[16];
 
-  m[0*4+0] = gl_fpdiv(gl_fpfromi(2), (right - left));
-  m[0*4+1] = gl_fpfromi(0);
-  m[0*4+2] = gl_fpfromi(0);
-  m[0*4+3] = -gl_fpdiv((right + left), (right - left));
+  m[0*4+0].value = gl_fpdiv(gl_fpfromi(2), (right - left));
+  m[0*4+1].value = gl_fpfromi(0);
+  m[0*4+2].value = gl_fpfromi(0);
+  m[0*4+3].value = -gl_fpdiv((right + left), (right - left));
 
-  m[1*4+0] = gl_fpfromi(0);
-  m[1*4+1] = gl_fpdiv(gl_fpfromi(2), (top - bottom));
-  m[1*4+2] = gl_fpfromi(0);
-  m[1*4+3] = -gl_fpdiv((top + bottom), (top - bottom));
+  m[1*4+0].value = gl_fpfromi(0);
+  m[1*4+1].value = gl_fpdiv(gl_fpfromi(2), (top - bottom));
+  m[1*4+2].value = gl_fpfromi(0);
+  m[1*4+3].value = -gl_fpdiv((top + bottom), (top - bottom));
 
-  m[2*4+0] = gl_fpfromi(0);
-  m[2*4+1] = gl_fpfromi(0);
-  m[2*4+2] = gl_fpdiv(gl_fpfromi(-2), (zFar - zNear));
-  m[2*4+3] = -gl_fpdiv((zFar + zNear), (zFar - zNear));
+  m[2*4+0].value = gl_fpfromi(0);
+  m[2*4+1].value = gl_fpfromi(0);
+  m[2*4+2].value = gl_fpdiv(gl_fpfromi(-2), (zFar - zNear));
+  m[2*4+3].value = -gl_fpdiv((zFar + zNear), (zFar - zNear));
 
-  m[3*4+0] = gl_fpfromi(0);
-  m[3*4+1] = gl_fpfromi(0);
-  m[3*4+2] = gl_fpfromi(0);
-  m[3*4+3] = gl_fpfromi(1);
+  m[3*4+0].value = gl_fpfromi(0);
+  m[3*4+1].value = gl_fpfromi(0);
+  m[3*4+2].value = gl_fpfromi(0);
+  m[3*4+3].value = gl_fpfromi(1);
 
   *pCurrentMatrix_ *= m;
 }
@@ -225,23 +229,47 @@ CAGLESMatrixFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed to
 void
 CAGLESMatrixFx::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
-  pCurrentMatrix_->rotate(angle, x, y, z);
+  CFixed fx;
+  CFixed fy;
+  CFixed fz;
+
+  fx.value = gl_fpmul(angle, x);
+  fy.value = gl_fpmul(angle, y);
+  fz.value = gl_fpmul(angle, z);
+
+  pCurrentMatrix_->rotate(fx, fy, fz);
   if(matrixMode_ == GL_MODELVIEW)
-    matrixNormal.rotate(angle, x, y, z);
+    matrixNormal.rotate(fx, fy, fz);
 }
 
 //---------------------------------------------------------------------------
 void
 CAGLESMatrixFx::glScalex(GLfixed x, GLfixed y, GLfixed z)
 {
-  pCurrentMatrix_->scale(x, y, z);
+  CFixed fx;
+  CFixed fy;
+  CFixed fz;
+
+  fx.value = x;
+  fy.value = y;
+  fz.value = z;
+
+  pCurrentMatrix_->scale(fx, fy, fz);
 }
 
 //---------------------------------------------------------------------------
 void
 CAGLESMatrixFx::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
-  pCurrentMatrix_->translate(x, y, z);
+  CFixed fx;
+  CFixed fy;
+  CFixed fz;
+
+  fx.value = x;
+  fy.value = y;
+  fz.value = z;
+
+  pCurrentMatrix_->translate(fx, fy, fz);
 }
 
 //---------------------------------------------------------------------------

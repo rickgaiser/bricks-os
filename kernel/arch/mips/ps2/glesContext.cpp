@@ -92,7 +92,8 @@ CPS2GLESContext::CPS2GLESContext()
     lights_[iLight].position.y = 0.0f;
     lights_[iLight].position.z = 1.0f;
     lights_[iLight].position.w = 0.0f;
-    vecInverseF(lights_[iLight].direction.v, lights_[iLight].position.v);
+    lights_[iLight].direction  = lights_[iLight].position;
+    lights_[iLight].direction.invert();
 
     lights_[iLight].enabled = false;
   }
@@ -207,13 +208,13 @@ CPS2GLESContext::glDepthRangef(GLclampf zNear, GLclampf zFar)
 void
 CPS2GLESContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 {
-  normal_[0] = nx;
-  normal_[1] = ny;
-  normal_[2] = nz;
-  normal_[3] = 1.0f;
+  normal_.x = nx;
+  normal_.y = ny;
+  normal_.z = nz;
+  normal_.w = 1.0f;
 
   if(normalizeEnabled_  == true)
-    vecNormalizeF(normal_, normal_);
+    normal_.normalize();
 }
 
 //-----------------------------------------------------------------------------
@@ -341,12 +342,12 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
         switch(bufTexCoord_.type)
         {
           case GL_FLOAT:
-            v.ts =         ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
-            v.tt = (1.0f - ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
+            v.t[0] =         ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
+            v.t[1] = (1.0f - ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
             break;
           case GL_FIXED:
-            v.ts =         gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
-            v.tt = (1.0f - gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]));
+            v.t[0] =         gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+            v.t[1] = (1.0f - gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]));
             break;
         };
       }
@@ -520,13 +521,14 @@ CPS2GLESContext::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
     case GL_DIFFUSE:  pColor = &pLight->diffuse;  break;
     case GL_SPECULAR: pColor = &pLight->specular; break;
     case GL_POSITION:
-      pLight->position.v[0] = params[0];
-      pLight->position.v[1] = params[1];
-      pLight->position.v[2] = params[2];
-      pLight->position.v[3] = params[3];
+      pLight->position.x = params[0];
+      pLight->position.y = params[1];
+      pLight->position.z = params[2];
+      pLight->position.w = params[3];
       // Invert and normalize
-      vecInverseF(pLight->direction.v, pLight->position.v);
-      vecNormalizeF(pLight->direction.v, pLight->direction.v);
+      pLight->direction = pLight->position;
+      pLight->direction.invert();
+      pLight->direction.normalize();
     default:
       return;
   }
@@ -771,10 +773,10 @@ CPS2GLESContext::vertexShader(SVertexF & v)
 {
   // Model-View matrix
   //   from 'object coordinates' to 'eye coordinates'
-  matrixModelView.transform(v.v, v.v);
+  matrixModelView.transform4(v.v, v.v);
   // Projection matrix
   //   from 'eye coordinates' to 'clip coordinates'
-  matrixProjection.transform(v.v, v.v);
+  matrixProjection.transform4(v.v, v.v);
   // Perspective division
   //   from 'clip coordinates' to 'normalized device coordinates'
   v.v[0] /= v.v[3];
@@ -782,8 +784,8 @@ CPS2GLESContext::vertexShader(SVertexF & v)
   v.v[2] /= v.v[3];
   // Viewport transformation
   //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = (GLint)(( v.v[0] + 1.0f) * (viewportWidth  >> 1));
-  v.sy = (GLint)((-v.v[1] + 1.0f) * (viewportHeight >> 1));
+  v.sx = (GLint)(( v.v[0] + 1.0f) * (viewportWidth  >> 1) + 0.5f);
+  v.sy = (GLint)((-v.v[1] + 1.0f) * (viewportHeight >> 1) + 0.5f);
   //v.sz = (GLint)(((zFar - zNear) / (2.0f * v.v[2])) + ((zNear + zFar) / 2.0f));
 
   // Lighting
@@ -792,7 +794,7 @@ CPS2GLESContext::vertexShader(SVertexF & v)
     GLfloat r(0.0f), g(0.0f), b(0.0f);
 
     // Normal Rotation
-    matrixNormal.transform(v.n, v.n);
+    matrixNormal.transform3(v.n, v.n);
 
     for(int iLight(0); iLight < 8; iLight++)
     {
@@ -804,7 +806,7 @@ CPS2GLESContext::vertexShader(SVertexF & v)
         b += lights_[iLight].ambient.b;
 
         // Inner product of normal and light direction
-        GLfloat ip = vecInnerProductF(v.n, lights_[0].direction.v);
+        GLfloat ip = lights_[iLight].direction.dotProduct(v.n);
         if(ip < 0.0f) ip = -ip;
         // Multiply with light color
         r += lights_[iLight].diffuse.r * ip;
@@ -844,11 +846,11 @@ CPS2GLESContext::rasterize(SVertexF & v)
   // Add to message
   if(texturesEnabled_ == true)
   {
-    v.ts /= v.v[3];
-    v.tt /= v.v[3];
+    v.t[0] /= v.v[3];
+    v.t[1] /= v.v[3];
     float tq = 1.0f / v.v[3];
 
-    packet_.data(st, GS_ST(*(uint32_t *)(&v.ts), *(uint32_t *)(&v.tt)));
+    packet_.data(st, GS_ST(*(uint32_t *)(&v.t[0]), *(uint32_t *)(&v.t[1])));
     packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cr*255), (uint8_t)(v.cg*255), (uint8_t)(v.cb*255), 100, *(uint32_t *)(&tq)));
   }
   else

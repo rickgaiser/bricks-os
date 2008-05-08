@@ -27,7 +27,7 @@ CPS2Matrix::CPS2Matrix(const CPS2Matrix & m)
 }
 
 //-----------------------------------------------------------------------------
-CPS2Matrix::CPS2Matrix(const CMatrixF & m)
+CPS2Matrix::CPS2Matrix(const TMatrix4x4<GLfloat> & m)
 {
   // FIXME: We need to use the right format from the start,
   //        This conversion makes it slow

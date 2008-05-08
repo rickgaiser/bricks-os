@@ -5,6 +5,7 @@
 #include "../../../../gl/softGLF.h"
 #include "../../../../gl/glMatrix.h"
 #include "../../../../gl/context.h"
+#include "../../../../gl/vector.h"
 #include "videoDevice.h"
 #include "gif.h"
 
@@ -107,7 +108,7 @@ protected:
 
   // Normals
   bool        normalizeEnabled_;
-  GLfloat     normal_[4];
+  TVector<GLfloat> normal_;
 
   // Material
   SColorF     matColorAmbient_;

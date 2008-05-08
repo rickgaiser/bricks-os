@@ -20,7 +20,9 @@
 
 // Math (Use at own risk)
 //#define fpmul(c,a,b)       (((a)*(b))>>(c))
-#define fpmul(c,a,b)       (((a)>>((c)/2))*((b)>>((c)/2)))
+#define fpmul(c,a,b)       (( ((a)>>((c)/2)) * ((b)>>((c)/2)))             ) // normal multiplication (loses half of the precision on both values)
+#define fpipmul(c,a,b)     (( ((a)>>((c)/2)) * ((b)>>1      ))>>(((c)-1)/2)) // intepolated mul (loses half of the precision on ONLY FIRST value, and 1 bit of precision on the second)
+#define fpipipmul(c,a,b)   (( ((a)>>1      ) * ((b)>>1      ))>>( (c)-2)   ) // 2 interpolation values mul (loses 1 bit of precision on both values)
 #define fpdiv(c,a,b)       (((a)<<(c))/(b))
 // Math (16 bit)
 #define fpmul16(c,a,b)     ((((int32_t)(a))*((int32_t)(b)))>>(c))
@@ -39,7 +41,10 @@
 #define gl_fptoi(i)     fptoi(FP_PRESICION_GL,(i))
 #define gl_fptof(i)     fptof(FP_PRESICION_GL,(i))
 #define gl_fptod(i)     fptod(FP_PRESICION_GL,(i))
+//#define gl_fpmul(i1,i2) fpmul32(FP_PRESICION_GL,(i1),(i2))
 #define gl_fpmul(i1,i2) fpmul(FP_PRESICION_GL,(i1),(i2))
+#define gl_fpipmul(i1,i2) fpipmul(FP_PRESICION_GL,(i1),(i2))
+#define gl_fpipipmul(i1,i2) fpipmul(FP_PRESICION_GL,(i1),(i2))
 #define gl_fpdiv(i1,i2) fpdiv32(FP_PRESICION_GL,(i1),(i2))
 
 
@@ -81,6 +86,8 @@ public:
   CFixed & operator-=(int32_t i)        {value -= gl_fpfromi(i);                 return (*this);}
   CFixed & operator*=(int32_t i)        {value *= i;                             return (*this);}
   CFixed & operator/=(int32_t i)        {value /= i;                             return (*this);}
+  CFixed & ipMulIs   (const CFixed & fx){value = gl_fpipmul(value, fx.value);    return (*this);}
+  CFixed & ipipMulIs (const CFixed & fx){value = gl_fpipipmul(value, fx.value);  return (*this);}
 
   // Binary Arithmetic Operators
   CFixed   operator+ (const CFixed & fx) const {CFixed rv(*this); rv += fx; return rv;}
@@ -99,6 +106,8 @@ public:
   CFixed   operator- (int32_t i)         const {CFixed rv(*this); rv -= i;  return rv;}
   CFixed   operator* (int32_t i)         const {CFixed rv(*this); rv *= i;  return rv;}
   CFixed   operator/ (int32_t i)         const {CFixed rv(*this); rv /= i;  return rv;}
+  CFixed   ipMul     (const CFixed & fx) const {CFixed rv(*this); rv.ipMulIs(fx); return rv;}
+  CFixed   ipipMul   (const CFixed & fx) const {CFixed rv(*this); rv.ipipMulIs(fx); return rv;}
 
   // Comparison Operators
   bool     operator==(const CFixed & fx) const {return (value == fx.value);}
@@ -127,7 +136,7 @@ public:
   bool     operator<=(int32_t i)         const {return (value <= gl_fpfromi(i));}
 #endif // __cplusplus
 
-  volatile GLfixed value;
+  GLfixed value;
 };
 
 
