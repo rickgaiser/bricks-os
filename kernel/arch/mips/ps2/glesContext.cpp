@@ -359,16 +359,16 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufColor_.type)
       {
         case GL_FLOAT:
-          v.cr = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cg = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cb = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.ca = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
           break;
         case GL_FIXED:
-          v.cr = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cg = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cb = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.ca = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cl.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cl.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cl.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cl.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
           break;
       };
     }
@@ -781,6 +781,9 @@ my_pow(GLfloat x, int y)
 void
 CPS2GLESContext::vertexShader(SVertexF & v)
 {
+  // --------------
+  // Transformation
+  // --------------
   // Model-View matrix
   //   from 'object coordinates' to 'eye coordinates'
   matrixModelView.transform4(v.v, v.v);
@@ -794,14 +797,16 @@ CPS2GLESContext::vertexShader(SVertexF & v)
   v.v[2] /= v.v[3];
   // Viewport transformation
   //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = (GLint)(( v.v[0] + 1.0f) * (viewportWidth  >> 1) + 0.5f);
-  v.sy = (GLint)((-v.v[1] + 1.0f) * (viewportHeight >> 1) + 0.5f);
-  v.sz = (GLint)((-v.v[2] + 1.0f) * (ps2ZMax_       >> 1));
+  v.sx = (GLint)((    v.v[0] + 1.0f) * (viewportWidth  >> 1) + 0.5f);
+  v.sy = (GLint)((0 - v.v[1] + 1.0f) * (viewportHeight >> 1) + 0.5f);
+  v.sz = (GLint)((0 - v.v[2] + 1.0f) * (ps2ZMax_       >> 1));
 
+  // --------
   // Lighting
+  // --------
   if(lightingEnabled_ == true)
   {
-    GLfloat r(0.0f), g(0.0f), b(0.0f);
+    SColorF c(0, 0, 0, 0);
 
     // Normal Rotation
     matrixNormal.transform3(v.n, v.n);
@@ -811,17 +816,13 @@ CPS2GLESContext::vertexShader(SVertexF & v)
       if(lights_[iLight].enabled == true)
       {
         // Ambient light (it's everywhere!)
-        r += lights_[iLight].ambient.r * matColorAmbient_.r;
-        g += lights_[iLight].ambient.g * matColorAmbient_.g;
-        b += lights_[iLight].ambient.b * matColorAmbient_.b;
+        c += lights_[iLight].ambient * matColorAmbient_;
 
         // Diffuse light
         GLfloat diffuse = -lights_[iLight].direction.dotProduct(v.n);
         if(diffuse >= 0.0f)
         {
-          r += lights_[iLight].diffuse.r * matColorDiffuse_.r * diffuse;
-          g += lights_[iLight].diffuse.g * matColorDiffuse_.g * diffuse;
-          b += lights_[iLight].diffuse.b * matColorDiffuse_.b * diffuse;
+          c += lights_[iLight].diffuse * matColorDiffuse_ * diffuse;
         }
 
         if(matShininess_ >= 0.5f)
@@ -832,32 +833,25 @@ CPS2GLESContext::vertexShader(SVertexF & v)
           if(specular >= 0.0f)
           {
             specular = my_pow(specular, (int)(matShininess_ + 0.5f));
-            r += lights_[iLight].specular.r * matColorSpecular_.r * specular;
-            g += lights_[iLight].specular.g * matColorSpecular_.g * specular;
-            b += lights_[iLight].specular.b * matColorSpecular_.b * specular;
+            c += lights_[iLight].specular * matColorSpecular_ * specular;
           }
         }
       }
     }
 
     // Multiply vertex color by calculated color
-    v.cr *= r;
-    v.cg *= g;
-    v.cb *= b;
+    v.cl *= c;
     // Clamp to 0..1
-    v.cr = clampf(v.cr);
-    v.cg = clampf(v.cg);
-    v.cb = clampf(v.cb);
+    v.cl.clamp();
   }
 
   // Fog
   if(fogEnabled_ == true)
   {
-    GLfloat partFog   = clampf((abs(v.v[2]) - fogStart_) / (fogEnd_ - fogStart_));
-    GLfloat partColor = 1.0f - partFog;
-    v.cr = clampf((v.cr * partColor) + (fogColor_.r * partFog));
-    v.cg = clampf((v.cg * partColor) + (fogColor_.g * partFog));
-    v.cb = clampf((v.cb * partColor) + (fogColor_.b * partFog));
+    GLfloat partFog, partColor;
+    partFog = clampf((abs(v.v[2]) - fogStart_) / (fogEnd_ - fogStart_));
+    partColor = 1.0f - partFog;
+    v.cl = ((v.cl * partColor) + (fogColor_ * partFog)).getClamped();
   }
 }
 
@@ -876,11 +870,11 @@ CPS2GLESContext::rasterize(SVertexF & v)
     v.t[1] *= tq;
 
     packet_.data(st, GS_ST(*(uint32_t *)(&v.t[0]), *(uint32_t *)(&v.t[1])));
-    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cr*255), (uint8_t)(v.cg*255), (uint8_t)(v.cb*255), 100, *(uint32_t *)(&tq)));
+    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), 100, *(uint32_t *)(&tq)));
   }
   else
   {
-    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cr*255), (uint8_t)(v.cg*255), (uint8_t)(v.cb*255), 100, 0));
+    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), 100, 0));
   }
   packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, z));
 }
