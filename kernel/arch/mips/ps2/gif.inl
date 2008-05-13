@@ -45,6 +45,17 @@ CGIFPacket::data(uint64_t REG, uint64_t DAT)
 
 //-------------------------------------------------------------------------
 void
+CGIFPacket::setSize()
+{
+  // Reset total send size of data
+  pData_[0] &= (~0x7fff);
+
+  // Set total send size of data
+  pData_[0] |= iDMASize_ - 1; // Data size (DMA - tag)
+}
+
+//-------------------------------------------------------------------------
+void
 CGIFPacket::headerSize(uint64_t size)
 {
   iHeaderSize_ = size;

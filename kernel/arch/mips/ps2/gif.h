@@ -15,6 +15,7 @@ public:
   inline void tag(uint64_t EOP, uint64_t PRE, uint64_t PRIM, uint64_t FLG, uint64_t NREG, uint64_t REGS);
   inline void tagAd(uint64_t EOP, uint64_t PRE, uint64_t PRIM, uint64_t FLG);
   inline void data(uint64_t REG, uint64_t DAT);
+  inline void setSize();
   void send();
   void sendImage(uint32_t source, uint32_t size);
   inline void headerSize(uint64_t size);

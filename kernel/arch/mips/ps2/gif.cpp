@@ -41,8 +41,8 @@ CGIFPacket::~CGIFPacket()
 void
 CGIFPacket::send()
 {
-  // Total send size of data
-  pData_[0] |= iDMASize_ - 1; // Data size (DMA - tag)
+  // Finish the packet
+  setSize();
 
   // Flush caches before transfer
   bios::FlushCache(0);
@@ -51,7 +51,6 @@ CGIFPacket::send()
   dmaSendSync(DMA_CHANNEL_GIF, pData_, iDMASize_);
 
   // Reset packet information but preserve tag
-  pData_[0] &= (~0x7fff);
   iPos_      = iHeaderSize_ << 1;
   iDMASize_  = iHeaderSize_;
 }
