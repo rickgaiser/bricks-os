@@ -100,24 +100,24 @@ CPS2GLESContext::CPS2GLESContext()
 
   // Material properties
   matColorAmbient_.r  = 0.2f;
-  matColorAmbient_.r  = 0.2f;
-  matColorAmbient_.r  = 0.2f;
-  matColorAmbient_.r  = 1.0f;
+  matColorAmbient_.g  = 0.2f;
+  matColorAmbient_.b  = 0.2f;
+  matColorAmbient_.a  = 1.0f;
 
   matColorDiffuse_.r  = 0.8f;
-  matColorDiffuse_.r  = 0.8f;
-  matColorDiffuse_.r  = 0.8f;
-  matColorDiffuse_.r  = 1.0f;
+  matColorDiffuse_.g  = 0.8f;
+  matColorDiffuse_.b  = 0.8f;
+  matColorDiffuse_.a  = 1.0f;
 
   matColorSpecular_.r = 0.0f;
-  matColorSpecular_.r = 0.0f;
-  matColorSpecular_.r = 0.0f;
-  matColorSpecular_.r = 1.0f;
+  matColorSpecular_.g = 0.0f;
+  matColorSpecular_.b = 0.0f;
+  matColorSpecular_.a = 1.0f;
 
   matColorEmission_.r = 0.0f;
-  matColorEmission_.r = 0.0f;
-  matColorEmission_.r = 0.0f;
-  matColorEmission_.r = 1.0f;
+  matColorEmission_.g = 0.0f;
+  matColorEmission_.b = 0.0f;
+  matColorEmission_.a = 1.0f;
 
   matShininess_       = 0.0f;
 
@@ -768,6 +768,16 @@ CPS2GLESContext::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 }
 
 //-----------------------------------------------------------------------------
+inline float
+my_pow(GLfloat x, int y)
+{
+  GLfloat rv(x);
+  for(int i(1); i < y; i++)
+    rv *= x;
+  return rv;
+}
+
+//-----------------------------------------------------------------------------
 void
 CPS2GLESContext::vertexShader(SVertexF & v)
 {
@@ -786,7 +796,7 @@ CPS2GLESContext::vertexShader(SVertexF & v)
   //   from 'normalized device coordinates' to 'window coordinates'
   v.sx = (GLint)(( v.v[0] + 1.0f) * (viewportWidth  >> 1) + 0.5f);
   v.sy = (GLint)((-v.v[1] + 1.0f) * (viewportHeight >> 1) + 0.5f);
-  //v.sz = (GLint)(((zFar - zNear) / (2.0f * v.v[2])) + ((zNear + zFar) / 2.0f));
+  v.sz = (GLint)((-v.v[2] + 1.0f) * (ps2ZMax_       >> 1));
 
   // Lighting
   if(lightingEnabled_ == true)
@@ -801,17 +811,32 @@ CPS2GLESContext::vertexShader(SVertexF & v)
       if(lights_[iLight].enabled == true)
       {
         // Ambient light (it's everywhere!)
-        r += lights_[iLight].ambient.r;
-        g += lights_[iLight].ambient.g;
-        b += lights_[iLight].ambient.b;
+        r += lights_[iLight].ambient.r * matColorAmbient_.r;
+        g += lights_[iLight].ambient.g * matColorAmbient_.g;
+        b += lights_[iLight].ambient.b * matColorAmbient_.b;
 
-        // Inner product of normal and light direction
-        GLfloat ip = lights_[iLight].direction.dotProduct(v.n);
-        if(ip < 0.0f) ip = -ip;
-        // Multiply with light color
-        r += lights_[iLight].diffuse.r * ip;
-        g += lights_[iLight].diffuse.g * ip;
-        b += lights_[iLight].diffuse.b * ip;
+        // Diffuse light
+        GLfloat diffuse = -lights_[iLight].direction.dotProduct(v.n);
+        if(diffuse >= 0.0f)
+        {
+          r += lights_[iLight].diffuse.r * matColorDiffuse_.r * diffuse;
+          g += lights_[iLight].diffuse.g * matColorDiffuse_.g * diffuse;
+          b += lights_[iLight].diffuse.b * matColorDiffuse_.b * diffuse;
+        }
+
+        if(matShininess_ >= 0.5f)
+        {
+          // Specular light
+          TVector<GLfloat> eye(0, 0, 1, 1);
+          GLfloat specular = lights_[iLight].direction.getCrossProduct(v.n).dotProduct(eye);
+          if(specular >= 0.0f)
+          {
+            specular = my_pow(specular, (int)(matShininess_ + 0.5f));
+            r += lights_[iLight].specular.r * matColorSpecular_.r * specular;
+            g += lights_[iLight].specular.g * matColorSpecular_.g * specular;
+            b += lights_[iLight].specular.b * matColorSpecular_.b * specular;
+          }
+        }
       }
     }
 
@@ -846,9 +871,9 @@ CPS2GLESContext::rasterize(SVertexF & v)
   // Add to message
   if(texturesEnabled_ == true)
   {
-    v.t[0] /= v.v[3];
-    v.t[1] /= v.v[3];
     float tq = 1.0f / v.v[3];
+    v.t[0] *= tq;
+    v.t[1] *= tq;
 
     packet_.data(st, GS_ST(*(uint32_t *)(&v.t[0]), *(uint32_t *)(&v.t[1])));
     packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cr*255), (uint8_t)(v.cg*255), (uint8_t)(v.cb*255), 100, *(uint32_t *)(&tq)));
