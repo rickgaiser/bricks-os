@@ -36,47 +36,47 @@ CSoftGLESFixed::CSoftGLESFixed()
  , viewportWidth(0)
  , viewportHeight(0)
 {
-  clCurrent.r = gl_fpfromi(0);
-  clCurrent.g = gl_fpfromi(0);
-  clCurrent.b = gl_fpfromi(0);
-  clCurrent.a = gl_fpfromi(1);
+  clCurrent.r = 0;
+  clCurrent.g = 0;
+  clCurrent.b = 0;
+  clCurrent.a = 1;
 
-  clClear.r = gl_fpfromi(0);
-  clClear.g = gl_fpfromi(0);
-  clClear.b = gl_fpfromi(0);
-  clClear.a = gl_fpfromi(1);
+  clClear.r = 0;
+  clClear.g = 0;
+  clClear.b = 0;
+  clClear.a = 1;
 
   // Light properties
   for(int iLight(0); iLight < 8; iLight++)
   {
-    lights_[iLight].ambient.r = gl_fpfromi(0);
-    lights_[iLight].ambient.g = gl_fpfromi(0);
-    lights_[iLight].ambient.b = gl_fpfromi(0);
-    lights_[iLight].ambient.a = gl_fpfromi(1);
+    lights_[iLight].ambient.r = 0;
+    lights_[iLight].ambient.g = 0;
+    lights_[iLight].ambient.b = 0;
+    lights_[iLight].ambient.a = 1;
 
     if(iLight == 0)
     {
-      lights_[iLight].diffuse.r = gl_fpfromi(1);
-      lights_[iLight].diffuse.g = gl_fpfromi(1);
-      lights_[iLight].diffuse.b = gl_fpfromi(1);
-      lights_[iLight].diffuse.a = gl_fpfromi(1);
+      lights_[iLight].diffuse.r = 1;
+      lights_[iLight].diffuse.g = 1;
+      lights_[iLight].diffuse.b = 1;
+      lights_[iLight].diffuse.a = 1;
 
-      lights_[iLight].specular.r = gl_fpfromi(1);
-      lights_[iLight].specular.g = gl_fpfromi(1);
-      lights_[iLight].specular.b = gl_fpfromi(1);
-      lights_[iLight].specular.a = gl_fpfromi(1);
+      lights_[iLight].specular.r = 1;
+      lights_[iLight].specular.g = 1;
+      lights_[iLight].specular.b = 1;
+      lights_[iLight].specular.a = 1;
     }
     else
     {
-      lights_[iLight].diffuse.r = gl_fpfromi(0);
-      lights_[iLight].diffuse.g = gl_fpfromi(0);
-      lights_[iLight].diffuse.b = gl_fpfromi(0);
-      lights_[iLight].diffuse.a = gl_fpfromi(0);
+      lights_[iLight].diffuse.r = 0;
+      lights_[iLight].diffuse.g = 0;
+      lights_[iLight].diffuse.b = 0;
+      lights_[iLight].diffuse.a = 0;
 
-      lights_[iLight].specular.r = gl_fpfromi(0);
-      lights_[iLight].specular.g = gl_fpfromi(0);
-      lights_[iLight].specular.b = gl_fpfromi(0);
-      lights_[iLight].specular.a = gl_fpfromi(0);
+      lights_[iLight].specular.r = 0;
+      lights_[iLight].specular.g = 0;
+      lights_[iLight].specular.b = 0;
+      lights_[iLight].specular.a = 0;
     }
 
     lights_[iLight].position.x = 0;
@@ -90,27 +90,27 @@ CSoftGLESFixed::CSoftGLESFixed()
   }
 
   // Material properties
-  matColorAmbient_.r  = gl_fpfromf(0.2f);
-  matColorAmbient_.r  = gl_fpfromf(0.2f);
-  matColorAmbient_.r  = gl_fpfromf(0.2f);
-  matColorAmbient_.r  = gl_fpfromf(1.0f);
+  matColorAmbient_.r  = 0.2f;
+  matColorAmbient_.g  = 0.2f;
+  matColorAmbient_.b  = 0.2f;
+  matColorAmbient_.a  = 1.0f;
 
-  matColorDiffuse_.r  = gl_fpfromf(0.8f);
-  matColorDiffuse_.r  = gl_fpfromf(0.8f);
-  matColorDiffuse_.r  = gl_fpfromf(0.8f);
-  matColorDiffuse_.r  = gl_fpfromf(1.0f);
+  matColorDiffuse_.r  = 0.8f;
+  matColorDiffuse_.g  = 0.8f;
+  matColorDiffuse_.b  = 0.8f;
+  matColorDiffuse_.a  = 1.0f;
 
-  matColorSpecular_.r = gl_fpfromf(0.0f);
-  matColorSpecular_.r = gl_fpfromf(0.0f);
-  matColorSpecular_.r = gl_fpfromf(0.0f);
-  matColorSpecular_.r = gl_fpfromf(1.0f);
+  matColorSpecular_.r = 0.0f;
+  matColorSpecular_.g = 0.0f;
+  matColorSpecular_.b = 0.0f;
+  matColorSpecular_.a = 1.0f;
 
-  matColorEmission_.r = gl_fpfromf(0.0f);
-  matColorEmission_.r = gl_fpfromf(0.0f);
-  matColorEmission_.r = gl_fpfromf(0.0f);
-  matColorEmission_.r = gl_fpfromf(1.0f);
+  matColorEmission_.r = 0.0f;
+  matColorEmission_.g = 0.0f;
+  matColorEmission_.b = 0.0f;
+  matColorEmission_.a = 1.0f;
 
-  matShininess_       = gl_fpfromf(0.0f);
+  matShininess_       = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -162,10 +162,10 @@ CSoftGLESFixed::glClear(GLbitfield mask)
 void
 CSoftGLESFixed::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
-  clClear.r = clampfx(red);
-  clClear.g = clampfx(green);
-  clClear.b = clampfx(blue);
-  clClear.a = clampfx(alpha);
+  clClear.r.value = clampfx(red);
+  clClear.g.value = clampfx(green);
+  clClear.b.value = clampfx(blue);
+  clClear.a.value = clampfx(alpha);
 }
 
 //-----------------------------------------------------------------------------
@@ -180,20 +180,20 @@ CSoftGLESFixed::glClearDepthx(GLclampx depth)
 void
 CSoftGLESFixed::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 {
-  clCurrent.r = gl_fpfromi(red  ) / 255;
-  clCurrent.g = gl_fpfromi(green) / 255;
-  clCurrent.b = gl_fpfromi(blue ) / 255;
-  clCurrent.a = gl_fpfromi(alpha) / 255;
+  clCurrent.r.value = gl_fpfromi(red  ) / 255;
+  clCurrent.g.value = gl_fpfromi(green) / 255;
+  clCurrent.b.value = gl_fpfromi(blue ) / 255;
+  clCurrent.a.value = gl_fpfromi(alpha) / 255;
 }
 
 //-----------------------------------------------------------------------------
 void
 CSoftGLESFixed::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 {
-  clCurrent.r = red;
-  clCurrent.g = green;
-  clCurrent.b = blue;
-  clCurrent.a = alpha;
+  clCurrent.r.value = red;
+  clCurrent.g.value = green;
+  clCurrent.b.value = blue;
+  clCurrent.a.value = alpha;
 }
 
 //-----------------------------------------------------------------------------
@@ -312,16 +312,16 @@ CSoftGLESFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufColor_.type)
       {
         case GL_FLOAT:
-          v.cr = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-          v.cg = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-          v.cb = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
-          v.ca = gl_fpfromf(((GLfloat *)bufColor_.pointer)[idxColor++]);
+          v.cl.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
           break;
         case GL_FIXED:
-          v.cr = ((GLfixed *)bufColor_.pointer)[idxColor++];
-          v.cg = ((GLfixed *)bufColor_.pointer)[idxColor++];
-          v.cb = ((GLfixed *)bufColor_.pointer)[idxColor++];
-          v.ca = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          v.cl.r.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          v.cl.g.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          v.cl.b.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
+          v.cl.a.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
           break;
       };
     }
@@ -417,10 +417,10 @@ CSoftGLESFixed::glFogxv(GLenum pname, const GLfixed * params)
   switch(pname)
   {
     case GL_FOG_COLOR:
-      fogColor_.r = params[0];
-      fogColor_.g = params[1];
-      fogColor_.b = params[2];
-      fogColor_.a = params[3];
+      fogColor_.r.value = params[0];
+      fogColor_.g.value = params[1];
+      fogColor_.b.value = params[2];
+      fogColor_.a.value = params[3];
       break;
   };
 }
@@ -469,10 +469,10 @@ CSoftGLESFixed::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
       return;
   }
 
-  pColor->r = params[0];
-  pColor->g = params[1];
-  pColor->b = params[2];
-  pColor->a = params[3];
+  pColor->r.value = params[0];
+  pColor->g.value = params[1];
+  pColor->b.value = params[2];
+  pColor->a.value = params[3];
 }
 
 //-----------------------------------------------------------------------------
@@ -482,7 +482,7 @@ CSoftGLESFixed::glMaterialx(GLenum face, GLenum pname, GLfixed param)
   switch(pname)
   {
     case GL_SHININESS:
-      matShininess_ = param;
+      matShininess_.value = param;
       break;
     default:
       return;
@@ -496,41 +496,41 @@ CSoftGLESFixed::glMaterialxv(GLenum face, GLenum pname, const GLfixed *params)
   switch(pname)
   {
     case GL_AMBIENT:
-      matColorAmbient_.r = params[0];
-      matColorAmbient_.g = params[1];
-      matColorAmbient_.b = params[2];
-      matColorAmbient_.a = params[3];
+      matColorAmbient_.r.value = params[0];
+      matColorAmbient_.g.value = params[1];
+      matColorAmbient_.b.value = params[2];
+      matColorAmbient_.a.value = params[3];
       break;
     case GL_DIFFUSE:
-      matColorDiffuse_.r = params[0];
-      matColorDiffuse_.g = params[1];
-      matColorDiffuse_.b = params[2];
-      matColorDiffuse_.a = params[3];
+      matColorDiffuse_.r.value = params[0];
+      matColorDiffuse_.g.value = params[1];
+      matColorDiffuse_.b.value = params[2];
+      matColorDiffuse_.a.value = params[3];
       break;
     case GL_SPECULAR:
-      matColorSpecular_.r = params[0];
-      matColorSpecular_.g = params[1];
-      matColorSpecular_.b = params[2];
-      matColorSpecular_.a = params[3];
+      matColorSpecular_.r.value = params[0];
+      matColorSpecular_.g.value = params[1];
+      matColorSpecular_.b.value = params[2];
+      matColorSpecular_.a.value = params[3];
       break;
     case GL_EMISSION:
-      matColorEmission_.r = params[0];
-      matColorEmission_.g = params[1];
-      matColorEmission_.b = params[2];
-      matColorEmission_.a = params[3];
+      matColorEmission_.r.value = params[0];
+      matColorEmission_.g.value = params[1];
+      matColorEmission_.b.value = params[2];
+      matColorEmission_.a.value = params[3];
       break;
     case GL_SHININESS:
-      matShininess_ = params[0];
+      matShininess_.value = params[0];
       break;
     case GL_AMBIENT_AND_DIFFUSE:
-      matColorAmbient_.r = params[0];
-      matColorAmbient_.g = params[1];
-      matColorAmbient_.b = params[2];
-      matColorAmbient_.a = params[3];
-      matColorDiffuse_.r = params[0];
-      matColorDiffuse_.g = params[1];
-      matColorDiffuse_.b = params[2];
-      matColorDiffuse_.a = params[3];
+      matColorAmbient_.r.value = params[0];
+      matColorAmbient_.g.value = params[1];
+      matColorAmbient_.b.value = params[2];
+      matColorAmbient_.a.value = params[3];
+      matColorDiffuse_.r.value = params[0];
+      matColorDiffuse_.g.value = params[1];
+      matColorDiffuse_.b.value = params[2];
+      matColorDiffuse_.a.value = params[3];
       break;
     default:
       return;
@@ -595,7 +595,7 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
   // --------
   if(lightingEnabled_ == true)
   {
-    CFixed r(0), g(0), b(0);
+    SColorFx c(0, 0, 0, 0);
 
     // Normal Rotation
     matrixNormal.transform3(v.n, v.n);
@@ -605,28 +605,20 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
       if(lights_[iLight].enabled == true)
       {
         // Ambient light (it's everywhere!)
-        r.value += lights_[iLight].ambient.r;
-        g.value += lights_[iLight].ambient.g;
-        b.value += lights_[iLight].ambient.b;
+        c += lights_[iLight].ambient;
 
         // Inner product of normal and light direction
         CFixed ip = lights_[iLight].direction.dotProduct(v.n);
         if(ip < 0.0f) ip = 0 - ip;
         // Multiply with light color
-        r.value += gl_fpmul(lights_[iLight].diffuse.r, ip.value);
-        g.value += gl_fpmul(lights_[iLight].diffuse.g, ip.value);
-        b.value += gl_fpmul(lights_[iLight].diffuse.b, ip.value);
+        c += lights_[iLight].diffuse * ip;
       }
     }
 
     // Multiply vertex color by calculated color
-    v.cr = gl_fpmul(v.cr, r.value);
-    v.cg = gl_fpmul(v.cg, g.value);
-    v.cb = gl_fpmul(v.cb, b.value);
+    v.cl *= c;
     // Clamp to 0..1
-    v.cr = clampfx(v.cr);
-    v.cg = clampfx(v.cg);
-    v.cb = clampfx(v.cb);
+    v.cl.clamp();
   }
 
   // ---
@@ -634,11 +626,10 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
   // ---
   if(fogEnabled_ == true)
   {
-    GLfixed partFog   = clampfx(gl_fpdiv(abs(v.v[2].value) - fogStart_, fogEnd_ - fogStart_));
-    GLfixed partColor = gl_fpfromi(1) - partFog;
-    v.cr = clampfx(gl_fpmul(v.cr, partColor) + gl_fpmul(fogColor_.r, partFog));
-    v.cg = clampfx(gl_fpmul(v.cg, partColor) + gl_fpmul(fogColor_.g, partFog));
-    v.cb = clampfx(gl_fpmul(v.cb, partColor) + gl_fpmul(fogColor_.b, partFog));
+    CFixed partFog, partColor;
+    partFog.value = clampfx(gl_fpdiv(abs(v.v[2].value) - fogStart_, fogEnd_ - fogStart_));
+    partColor = 1 - partFog;
+    v.cl = ((v.cl * partColor) + (fogColor_ * partFog)).getClamped();
   }
 }
 
@@ -791,9 +782,9 @@ CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
   {
     if(depthTestEnabled_ == true)
     {
-      edge1->addZT(vlo->sx, vlo->sy, vlo->v[3].value, vlo->t[0], vlo->t[1], vhi->sx, vhi->sy, vhi->v[3].value, vhi->t[0], vhi->t[1]);
-      edge2->addZT(vlo->sx, vlo->sy, vlo->v[3].value, vlo->t[0], vlo->t[1], vmi->sx, vmi->sy, vmi->v[3].value, vmi->t[0], vmi->t[1]);
-      edge2->addZT(vmi->sx, vmi->sy, vmi->v[3].value, vmi->t[0], vmi->t[1], vhi->sx, vhi->sy, vhi->v[3].value, vhi->t[0], vhi->t[1]);
+      edge1->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->t[0], vlo->t[1], vhi->sx, vhi->sy, vhi->v[3], vhi->t[0], vhi->t[1]);
+      edge2->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->t[0], vlo->t[1], vmi->sx, vmi->sy, vmi->v[3], vmi->t[0], vmi->t[1]);
+      edge2->addZT(vmi->sx, vmi->sy, vmi->v[3], vmi->t[0], vmi->t[1], vhi->sx, vhi->sy, vhi->v[3], vhi->t[0], vhi->t[1]);
     }
     else
     {
@@ -806,9 +797,9 @@ CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
   {
     if(depthTestEnabled_ == true)
     {
-      edge1->addZC(vlo->sx, vlo->sy, vlo->v[3].value, vlo->cl, vhi->sx, vhi->sy, vhi->v[3].value, vhi->cl);
-      edge2->addZC(vlo->sx, vlo->sy, vlo->v[3].value, vlo->cl, vmi->sx, vmi->sy, vmi->v[3].value, vmi->cl);
-      edge2->addZC(vmi->sx, vmi->sy, vmi->v[3].value, vmi->cl, vhi->sx, vhi->sy, vhi->v[3].value, vhi->cl);
+      edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->cl, vhi->sx, vhi->sy, vhi->v[3], vhi->cl);
+      edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->cl, vmi->sx, vmi->sy, vmi->v[3], vmi->cl);
+      edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->cl, vhi->sx, vhi->sy, vhi->v[3], vhi->cl);
     }
     else
     {
@@ -821,9 +812,9 @@ CSoftGLESFixed::rasterPoly(SVertexFx * vtx[3])
   {
     if(depthTestEnabled_ == true)
     {
-      edge1->addZ(vlo->sx, vlo->sy, vlo->v[3].value, vhi->sx, vhi->sy, vhi->v[3].value);
-      edge2->addZ(vlo->sx, vlo->sy, vlo->v[3].value, vmi->sx, vmi->sy, vmi->v[3].value);
-      edge2->addZ(vmi->sx, vmi->sy, vmi->v[3].value, vhi->sx, vhi->sy, vhi->v[3].value);
+      edge1->addZ(vlo->sx, vlo->sy, vlo->v[3], vhi->sx, vhi->sy, vhi->v[3]);
+      edge2->addZ(vlo->sx, vlo->sy, vlo->v[3], vmi->sx, vmi->sy, vmi->v[3]);
+      edge2->addZ(vmi->sx, vmi->sy, vmi->v[3], vhi->sx, vhi->sy, vhi->v[3]);
     }
     else
     {

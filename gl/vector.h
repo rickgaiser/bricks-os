@@ -2,10 +2,6 @@
 #define GL_VECTOR_H
 
 
-#include "GLES/gl.h"
-#include "fixedPoint.h"
-
-
 //---------------------------------------------------------------------------
 template <class T>
 class TVector

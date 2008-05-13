@@ -91,24 +91,24 @@ CSoftGLESFloat::CSoftGLESFloat()
 
   // Material properties
   matColorAmbient_.r  = 0.2f;
-  matColorAmbient_.r  = 0.2f;
-  matColorAmbient_.r  = 0.2f;
-  matColorAmbient_.r  = 1.0f;
+  matColorAmbient_.g  = 0.2f;
+  matColorAmbient_.b  = 0.2f;
+  matColorAmbient_.a  = 1.0f;
 
   matColorDiffuse_.r  = 0.8f;
-  matColorDiffuse_.r  = 0.8f;
-  matColorDiffuse_.r  = 0.8f;
-  matColorDiffuse_.r  = 1.0f;
+  matColorDiffuse_.g  = 0.8f;
+  matColorDiffuse_.b  = 0.8f;
+  matColorDiffuse_.a  = 1.0f;
 
   matColorSpecular_.r = 0.0f;
-  matColorSpecular_.r = 0.0f;
-  matColorSpecular_.r = 0.0f;
-  matColorSpecular_.r = 1.0f;
+  matColorSpecular_.g = 0.0f;
+  matColorSpecular_.b = 0.0f;
+  matColorSpecular_.a = 1.0f;
 
   matColorEmission_.r = 0.0f;
-  matColorEmission_.r = 0.0f;
-  matColorEmission_.r = 0.0f;
-  matColorEmission_.r = 1.0f;
+  matColorEmission_.g = 0.0f;
+  matColorEmission_.b = 0.0f;
+  matColorEmission_.a = 1.0f;
 
   matShininess_       = 0.0f;
 }
@@ -312,16 +312,16 @@ CSoftGLESFloat::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufColor_.type)
       {
         case GL_FLOAT:
-          v.cr = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cg = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cb = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.ca = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
           break;
         case GL_FIXED:
-          v.cr = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cg = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cb = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.ca = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cl.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cl.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cl.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cl.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
           break;
       };
     }
@@ -595,7 +595,7 @@ CSoftGLESFloat::vertexShader(SVertexF & v)
   // --------
   if(lightingEnabled_ == true)
   {
-    GLfloat r(0.0f), g(0.0f), b(0.0f);
+    SColorF c(0);
 
     // Normal Rotation
     matrixNormal.transform3(v.n, v.n);
@@ -605,38 +605,29 @@ CSoftGLESFloat::vertexShader(SVertexF & v)
       if(lights_[iLight].enabled == true)
       {
         // Ambient light (it's everywhere!)
-        r += lights_[iLight].ambient.r;
-        g += lights_[iLight].ambient.g;
-        b += lights_[iLight].ambient.b;
+        c += lights_[iLight].ambient;
 
         // Inner product of normal and light direction
         GLfloat ip = lights_[iLight].direction.dotProduct(v.n);
         if(ip < 0.0f) ip = -ip;
         // Multiply with light color
-        r += lights_[iLight].diffuse.r * ip;
-        g += lights_[iLight].diffuse.g * ip;
-        b += lights_[iLight].diffuse.b * ip;
+        c += lights_[iLight].diffuse * ip;
       }
     }
 
     // Multiply vertex color by calculated color
-    v.cr *= r;
-    v.cg *= g;
-    v.cb *= b;
+    v.cl *= c;
     // Clamp to 0..1
-    v.cr = clampf(v.cr);
-    v.cg = clampf(v.cg);
-    v.cb = clampf(v.cb);
+    v.cl.clamp();
   }
 
   // Fog
   if(fogEnabled_ == true)
   {
-    GLfloat partFog   = clampf((abs(v.v[2]) - fogStart_) / (fogEnd_ - fogStart_));
-    GLfloat partColor = 1.0f - partFog;
-    v.cr = clampf((v.cr * partColor) + (fogColor_.r * partFog));
-    v.cg = clampf((v.cg * partColor) + (fogColor_.g * partFog));
-    v.cb = clampf((v.cb * partColor) + (fogColor_.b * partFog));
+    GLfloat partFog, partColor;
+    partFog = clampf((abs(v.v[2]) - fogStart_) / (fogEnd_ - fogStart_));
+    partColor = 1.0f - partFog;
+    v.cl = ((v.cl * partColor) + (fogColor_ * partFog)).getClamped();
   }
 }
 

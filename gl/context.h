@@ -7,31 +7,20 @@
 #include "kernel/videoManager.h"
 #include "fixedPoint.h"
 #include "vector.h"
+#include "color.h"
 #include "asm/arch/config.h"
 
 
-#define clampf(f)    (f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f))
-#define clampfx(i)   (i < 0 ? 0 : (i > gl_fpfromi(1) ? gl_fpfromi(1) : i))
+#define clampf(f)    ((f) < 0.0f ? 0.0f : ((f) > 1.0f ? 1.0f : (f)))
+#define clampfx(i)   ((i) < 0 ? 0 : ((i) > gl_fpfromi(1) ? gl_fpfromi(1) : (i)))
 
 
 //-----------------------------------------------------------------------------
-template <class U>
-struct TColor
-{
-  union
-  {
-    struct
-    {
-      U r, g, b, a;
-    };
-    U c[4];
-  };
-};
 typedef TColor<GLfloat> SColorF;
-typedef TColor<GLfixed> SColorFx;
+typedef TColor<CFixed>  SColorFx;
 
 //-----------------------------------------------------------------------------
-template <class T, class U>
+template <class T>
 struct TVertex
 {
   // Vertex itself
@@ -41,15 +30,7 @@ struct TVertex
   T n[4];
 
   // Color
-  union
-  {
-    struct
-    {
-      U cr, cg, cb, ca;
-    };
-    U c[4];
-    TColor<U> cl;
-  };
+  TColor<T> cl;
 
   // Texture coordinates
   T t[2];
@@ -60,22 +41,22 @@ struct TVertex
   // Depth (on screen)
   uint32_t sz;
 };
-typedef TVertex<GLfloat, GLfloat> SVertexF;
-typedef TVertex<CFixed,  GLfixed> SVertexFx;
+typedef TVertex<GLfloat> SVertexF;
+typedef TVertex<CFixed>  SVertexFx;
 
 //-----------------------------------------------------------------------------
-template <class T, class U>
+template <class T>
 struct TLight
 {
-  TColor<U> diffuse;
-  TColor<U> ambient;
-  TColor<U> specular;
+  TColor<T> diffuse;
+  TColor<T> ambient;
+  TColor<T> specular;
   TVector<T> position;
   TVector<T> direction;
   bool enabled;
 };
-typedef TLight<GLfloat, GLfloat> SLightF;
-typedef TLight<CFixed,  GLfixed> SLightFx;
+typedef TLight<GLfloat> SLightF;
+typedef TLight<CFixed>  SLightFx;
 
 //-----------------------------------------------------------------------------
 struct SBufferPointer

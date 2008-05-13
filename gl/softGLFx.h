@@ -19,9 +19,9 @@
 
 #define fpRGB(r,g,b) \
   (0x8000 | \
-  (((b*255) >>  9) & 0x7c00) | \
-  (((g*255) >> 14) & 0x03e0) | \
-  (((r*255) >> 19) & 0x001f))
+  (((b.value*255) >>  9) & 0x7c00) | \
+  (((g.value*255) >> 14) & 0x03e0) | \
+  (((r.value*255) >> 19) & 0x001f))
 
 
 //-----------------------------------------------------------------------------
@@ -105,7 +105,7 @@ protected:
   SColorFx    matColorDiffuse_;
   SColorFx    matColorSpecular_;
   SColorFx    matColorEmission_;
-  GLfixed     matShininess_;
+  CFixed      matShininess_;
 
   // Fog
   bool        fogEnabled_;

@@ -4,9 +4,9 @@
 
 #define BxColorFormat_FromFxRGB(format,r,g,b) \
   BxColorFormat_FromRGB(format, \
-                        (r * 255) >> 16, \
-                        (g * 255) >> 16, \
-                        (b * 255) >> 16);
+                        (r.value * 255) >> 16, \
+                        (g.value * 255) >> 16, \
+                        (b.value * 255) >> 16);
 
 
 //-----------------------------------------------------------------------------

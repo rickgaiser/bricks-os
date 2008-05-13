@@ -147,13 +147,13 @@ CSoftGLESFixed::hlineC(CEdgeFx & from, CEdgeFx & to, GLint y)
 //        switch(renderSurface->bpp_)
 //        {
 //          case 8:
-//            ((uint8_t  *)renderSurface->p)[index] = fpRGB(r.value, g.value, b.value);
+//            ((uint8_t  *)renderSurface->p)[index] = fpRGB(r, g, b);
 //            break;
 //          case 16:
-            ((uint16_t *)renderSurface->p)[index] = fpRGB(r.value, g.value, b.value);
+            ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
 //            break;
 //          case 32:
-//            ((uint32_t *)renderSurface->p)[index] = fpRGB(r.value, g.value, b.value);
+//            ((uint32_t *)renderSurface->p)[index] = fpRGB(r, g, b);
 //            break;
 //        };
 //      }
@@ -205,13 +205,13 @@ CSoftGLESFixed::hlineZC(CEdgeFx & from, CEdgeFx & to, GLint y)
 //          switch(renderSurface->bpp_)
 //          {
 //            case 8:
-//              ((uint8_t  *)renderSurface->p)[index] = fpRGB(r.value, g.value, b.value);
+//              ((uint8_t  *)renderSurface->p)[index] = fpRGB(r, g, b);
 //              break;
 //            case 16:
-              ((uint16_t *)renderSurface->p)[index] = fpRGB(r.value, g.value, b.value);
+              ((uint16_t *)renderSurface->p)[index] = fpRGB(r, g, b);
 //              break;
 //            case 32:
-//              ((uint32_t *)renderSurface->p)[index] = fpRGB(r.value, g.value, b.value);
+//              ((uint32_t *)renderSurface->p)[index] = fpRGB(r, g, b);
 //              break;
 //          };
         }

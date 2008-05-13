@@ -46,14 +46,14 @@
 #define INTERPOLATE_FX_Z() \
   CFixed mz = (z2 - z1).ipMul(dy)
 #define INTERPOLATE_FX_C() \
-  GLfixed r(c1.r); \
-  GLfixed g(c1.g); \
-  GLfixed b(c1.b); \
-  GLfixed a(c1.a); \
-  GLfixed mr(gl_fpipipmul(c2.r - c1.r, dy.value)); \
-  GLfixed mg(gl_fpipipmul(c2.g - c1.g, dy.value)); \
-  GLfixed mb(gl_fpipipmul(c2.b - c1.b, dy.value)); \
-  GLfixed ma(gl_fpipipmul(c2.a - c1.a, dy.value))
+  CFixed r(c1.r); \
+  CFixed g(c1.g); \
+  CFixed b(c1.b); \
+  CFixed a(c1.a); \
+  CFixed mr((c2.r - c1.r).ipipMul(dy)); \
+  CFixed mg((c2.g - c1.g).ipipMul(dy)); \
+  CFixed mb((c2.b - c1.b).ipipMul(dy)); \
+  CFixed ma((c2.a - c1.a).ipipMul(dy))
 #define INTERPOLATE_FX_T() \
   CFixed ts(ts1); \
   CFixed tt(tt1); \
@@ -64,10 +64,10 @@
 #define STORE_FX_Z() \
   z_[y1] = z1
 #define STORE_FX_C() \
-  r_[y1].value = r; \
-  g_[y1].value = g; \
-  b_[y1].value = b; \
-  a_[y1].value = a
+  r_[y1] = r; \
+  g_[y1] = g; \
+  b_[y1] = b; \
+  a_[y1] = a
 #define STORE_FX_T() \
   ts_[y1] = ts; \
   tt_[y1] = tt
