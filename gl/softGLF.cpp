@@ -588,14 +588,14 @@ CSoftGLESFloat::vertexShader(SVertexF & v)
   //   from 'normalized device coordinates' to 'window coordinates'
   v.sx = (GLint)((    v.v[0] + 1.0f) * (viewportWidth  >> 1) + 0.5f);
   v.sy = (GLint)((0 - v.v[1] + 1.0f) * (viewportHeight >> 1) + 0.5f);
-  //v.sz = (GLint)(((zFar - zNear) / (2.0f * v.v[2])) + ((zNear + zFar) / 2.0f));
+  v.sz = (GLint)((0 - v.v[2] + 1.0f) * (0xffffffff     >> 1));
 
   // --------
   // Lighting
   // --------
   if(lightingEnabled_ == true)
   {
-    SColorF c(0);
+    SColorF c(0, 0, 0, 0);
 
     // Normal Rotation
     matrixNormal.transform3(v.n, v.n);
@@ -605,13 +605,26 @@ CSoftGLESFloat::vertexShader(SVertexF & v)
       if(lights_[iLight].enabled == true)
       {
         // Ambient light (it's everywhere!)
-        c += lights_[iLight].ambient;
+        c += lights_[iLight].ambient * matColorAmbient_;
 
-        // Inner product of normal and light direction
-        GLfloat ip = lights_[iLight].direction.dotProduct(v.n);
-        if(ip < 0.0f) ip = -ip;
-        // Multiply with light color
-        c += lights_[iLight].diffuse * ip;
+        // Diffuse light
+        GLfloat diffuse = -lights_[iLight].direction.dotProduct(v.n);
+        if(diffuse >= 0.0f)
+        {
+          c += lights_[iLight].diffuse * matColorDiffuse_ * diffuse;
+        }
+
+        if(matShininess_ >= 0.5f)
+        {
+          // Specular light
+          TVector<GLfloat> eye(0, 0, 1, 1);
+          GLfloat specular = lights_[iLight].direction.getCrossProduct(v.n).dotProduct(eye);
+          if(specular >= 0.0f)
+          {
+            specular = my_pow(specular, (int)(matShininess_ + 0.5f));
+            c += lights_[iLight].specular * matColorSpecular_ * specular;
+          }
+        }
       }
     }
 

@@ -600,20 +600,30 @@ CSoftGLESFixed::vertexShader(SVertexFx & v)
     // Normal Rotation
     matrixNormal.transform3(v.n, v.n);
 
-    for(int iLight(0); iLight < 8; iLight++)
-    {
       if(lights_[iLight].enabled == true)
       {
         // Ambient light (it's everywhere!)
-        c += lights_[iLight].ambient;
+        c += lights_[iLight].ambient * matColorAmbient_;
 
-        // Inner product of normal and light direction
-        CFixed ip = lights_[iLight].direction.dotProduct(v.n);
-        if(ip < 0.0f) ip = 0 - ip;
-        // Multiply with light color
-        c += lights_[iLight].diffuse * ip;
+        // Diffuse light
+        CFixed diffuse = -lights_[iLight].direction.dotProduct(v.n);
+        if(diffuse >= 0.0f)
+        {
+          c += lights_[iLight].diffuse * matColorDiffuse_ * diffuse;
+        }
+
+        if(matShininess_ >= 0.5f)
+        {
+          // Specular light
+          TVector<CFixed> eye(0, 0, 1, 1);
+          CFixed specular = lights_[iLight].direction.getCrossProduct(v.n).dotProduct(eye);
+          if(specular >= 0.0f)
+          {
+            specular = my_pow(specular, (int)(matShininess_ + 0.5f));
+            c += lights_[iLight].specular * matColorSpecular_ * specular;
+          }
+        }
       }
-    }
 
     // Multiply vertex color by calculated color
     v.cl *= c;
