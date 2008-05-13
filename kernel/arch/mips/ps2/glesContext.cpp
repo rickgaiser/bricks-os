@@ -45,15 +45,15 @@ CPS2GLESContext::CPS2GLESContext()
  , ps2DepthInvert_(true)
  , ps2ZMax_(0xffff)
 {
-  clCurrent.r = 0.0f;
-  clCurrent.g = 0.0f;
-  clCurrent.b = 0.0f;
+  clCurrent.r = 1.0f;
+  clCurrent.g = 1.0f;
+  clCurrent.b = 1.0f;
   clCurrent.a = 1.0f;
 
   clClear.r = 0.0f;
   clClear.g = 0.0f;
   clClear.b = 0.0f;
-  clClear.a = 1.0f;
+  clClear.a = 0.0f;
 
   // Light properties
   for(int iLight(0); iLight < 8; iLight++)

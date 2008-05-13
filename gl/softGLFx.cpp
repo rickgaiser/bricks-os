@@ -36,15 +36,15 @@ CSoftGLESFixed::CSoftGLESFixed()
  , viewportWidth(0)
  , viewportHeight(0)
 {
-  clCurrent.r = 0;
-  clCurrent.g = 0;
-  clCurrent.b = 0;
+  clCurrent.r = 1;
+  clCurrent.g = 1;
+  clCurrent.b = 1;
   clCurrent.a = 1;
 
   clClear.r = 0;
   clClear.g = 0;
   clClear.b = 0;
-  clClear.a = 1;
+  clClear.a = 0;
 
   // Light properties
   for(int iLight(0); iLight < 8; iLight++)

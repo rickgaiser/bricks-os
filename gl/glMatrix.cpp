@@ -95,8 +95,8 @@ void
 CAGLESMatrixF::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
   GLfloat ax = angle * x;
-  GLfloat ay = angle * x;
-  GLfloat az = angle * x;
+  GLfloat ay = angle * y;
+  GLfloat az = angle * z;
 
   pCurrentMatrix_->rotate(ax, ay, az);
   if(matrixMode_ == GL_MODELVIEW)
