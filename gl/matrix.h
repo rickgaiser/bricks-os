@@ -4,6 +4,7 @@
 
 #include "context.h"
 #include "fixedPoint.h"
+#include "vector.h"
 #include "asm/arch/config.h"
 
 
@@ -67,7 +68,9 @@ public:
   void rotatez   (T angle);
 
   void transform3(const T * from, T * to);
+  void transform3(const TVector<T> & from, TVector<T> & to);
   void transform4(const T * from, T * to);
+  void transform4(const TVector<T> & from, TVector<T> & to);
 
 public:
   T matrix[16];

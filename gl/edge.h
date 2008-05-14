@@ -16,12 +16,12 @@ public:
   CEdgeF(uint32_t height);
   ~CEdgeF();
 
-  void add  (GLint x1, GLint y1, GLint x2, GLint y2);
-  void addZ (GLint x1, GLint y1, GLfloat z1, GLint x2, GLint y2, GLfloat z2);
-  void addC (GLint x1, GLint y1, SColorF & c1, GLint x2, GLint y2, SColorF & c2);
-  void addZC(GLint x1, GLint y1, GLfloat z1, SColorF & c1, GLint x2, GLint y2, GLfloat z2, SColorF & c2);
-  void addT (GLint x1, GLint y1, GLfloat ts1, GLfloat tt1, GLint x2, GLint y2, GLfloat ts2, GLfloat tt2);
-  void addZT(GLint x1, GLint y1, GLfloat z1, GLfloat ts1, GLfloat tt1, GLint x2, GLint y2, GLfloat z2, GLfloat ts2, GLfloat tt2);
+  void add  (const SVertexF & from, const SVertexF & to);
+  void addZ (const SVertexF & from, const SVertexF & to);
+  void addC (const SVertexF & from, const SVertexF & to);
+  void addZC(const SVertexF & from, const SVertexF & to);
+  void addT (const SVertexF & from, const SVertexF & to);
+  void addZT(const SVertexF & from, const SVertexF & to);
 
 public:
   // Edge x
@@ -47,12 +47,12 @@ public:
   CEdgeFx(uint32_t height);
   ~CEdgeFx();
 
-  void add  (GLint x1, GLint y1, GLint x2, GLint y2);
-  void addZ (GLint x1, GLint y1, CFixed z1, GLint x2, GLint y2, CFixed z2);
-  void addC (GLint x1, GLint y1, SColorFx & c1, GLint x2, GLint y2, SColorFx & c2);
-  void addZC(GLint x1, GLint y1, CFixed z1, SColorFx & c1, GLint x2, GLint y2, CFixed z2, SColorFx & c2);
-  void addT (GLint x1, GLint y1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, CFixed ts2, CFixed tt2);
-  void addZT(GLint x1, GLint y1, CFixed z1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, CFixed z2, CFixed ts2, CFixed tt2);
+  void add  (const SVertexFx & from, const SVertexFx & to);
+  void addZ (const SVertexFx & from, const SVertexFx & to);
+  void addC (const SVertexFx & from, const SVertexFx & to);
+  void addZC(const SVertexFx & from, const SVertexFx & to);
+  void addT (const SVertexFx & from, const SVertexFx & to);
+  void addZT(const SVertexFx & from, const SVertexFx & to);
 
 public:
   // Edge x

@@ -4,30 +4,31 @@
 
 // Floating Point Macros
 #define DELTA_F_Y() \
-  GLfloat dy(1.0f / (GLfloat)(y2 - y1))
+  GLfloat dy  = 1.0f / (GLfloat)(to.sy - from.sy)
 #define INTERPOLATE_F_X() \
-  GLfloat x((GLfloat)x1); \
-  GLfloat mx((GLfloat)(x2 - x1) * dy)
+  GLfloat x   = (GLfloat)from.sx; \
+  GLfloat mx  = (GLfloat)(to.sx - from.sx) * dy
 #define INTERPOLATE_F_Z() \
-  GLfloat mz((z2 - z1) * dy)
+  GLfloat z   = from.v[3]; \
+  GLfloat mz  = ((to.v[3] - from.v[3]) * dy)
 #define INTERPOLATE_F_C() \
-  GLfloat r(c1.r); \
-  GLfloat g(c1.g); \
-  GLfloat b(c1.b); \
-  GLfloat a(c1.a); \
-  GLfloat mr((c2.r - c1.r) * dy); \
-  GLfloat mg((c2.g - c1.g) * dy); \
-  GLfloat mb((c2.b - c1.b) * dy); \
-  GLfloat ma((c2.a - c1.a) * dy)
+  GLfloat r   = from.cl.r; \
+  GLfloat g   = from.cl.g; \
+  GLfloat b   = from.cl.b; \
+  GLfloat a   = from.cl.a; \
+  GLfloat mr  = (to.cl.r - from.cl.r) * dy; \
+  GLfloat mg  = (to.cl.g - from.cl.g) * dy; \
+  GLfloat mb  = (to.cl.b - from.cl.b) * dy; \
+  GLfloat ma  = (to.cl.a - from.cl.a) * dy
 #define INTERPOLATE_F_T() \
-  GLfloat ts(ts1); \
-  GLfloat tt(tt1); \
-  GLfloat mts((ts2 - ts1) * dy); \
-  GLfloat mtt((tt2 - tt1) * dy)
+  GLfloat ts  = from.t[0]; \
+  GLfloat tt  = from.t[1]; \
+  GLfloat mts = (to.t[0] - from.t[0]) * dy; \
+  GLfloat mtt = (to.t[1] - from.t[1]) * dy
 #define STORE_F_X() \
   x_[y1] = (GLint)x
 #define STORE_F_Z() \
-  z_[y1] = z1
+  z_[y1] = z
 #define STORE_F_C() \
   r_[y1] = r; \
   g_[y1] = g; \
@@ -39,30 +40,31 @@
 
 // Fixed Point Macros
 #define DELTA_FX_Y() \
-  CFixed dy = CFixed(1) / (y2 - y1)
+  CFixed dy  = CFixed(1) / (to.sy - from.sy)
 #define INTERPOLATE_FX_X() \
-  CFixed x  = x1; \
-  CFixed mx = CFixed(x2 - x1).ipMul(dy)
+  CFixed x   = from.sx; \
+  CFixed mx  = CFixed(to.sx - from.sx).ipMul(dy)
 #define INTERPOLATE_FX_Z() \
-  CFixed mz = (z2 - z1).ipMul(dy)
+  CFixed z   = from.v[3]; \
+  CFixed mz  = (to.v[3] - from.v[3]).ipMul(dy)
 #define INTERPOLATE_FX_C() \
-  CFixed r(c1.r); \
-  CFixed g(c1.g); \
-  CFixed b(c1.b); \
-  CFixed a(c1.a); \
-  CFixed mr((c2.r - c1.r).ipipMul(dy)); \
-  CFixed mg((c2.g - c1.g).ipipMul(dy)); \
-  CFixed mb((c2.b - c1.b).ipipMul(dy)); \
-  CFixed ma((c2.a - c1.a).ipipMul(dy))
+  CFixed r   = from.cl.r; \
+  CFixed g   = from.cl.g; \
+  CFixed b   = from.cl.b; \
+  CFixed a   = from.cl.a; \
+  CFixed mr  = (to.cl.r - from.cl.r).ipipMul(dy); \
+  CFixed mg  = (to.cl.g - from.cl.g).ipipMul(dy); \
+  CFixed mb  = (to.cl.b - from.cl.b).ipipMul(dy); \
+  CFixed ma  = (to.cl.a - from.cl.a).ipipMul(dy)
 #define INTERPOLATE_FX_T() \
-  CFixed ts(ts1); \
-  CFixed tt(tt1); \
-  CFixed mts = (ts2 - ts1).ipMul(dy); \
-  CFixed mtt = (tt2 - tt1).ipMul(dy)
+  CFixed ts  = from.t[0]; \
+  CFixed tt  = from.t[1]; \
+  CFixed mts = (to.t[0] - from.t[0]).ipMul(dy); \
+  CFixed mtt = (to.t[1] - from.t[1]).ipMul(dy)
 #define STORE_FX_X() \
   x_[y1] = x
 #define STORE_FX_Z() \
-  z_[y1] = z1
+  z_[y1] = z
 #define STORE_FX_C() \
   r_[y1] = r; \
   g_[y1] = g; \
@@ -76,7 +78,7 @@
 #define INCREMENT_X() \
   x += mx
 #define INCREMENT_Z() \
-  z1 += mz
+  z += mz
 #define INCREMENT_C() \
   r += mr; \
   g += mg; \
@@ -120,8 +122,11 @@ CEdgeF::~CEdgeF()
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeF::add(GLint x1, GLint y1, GLint x2, GLint y2)
+CEdgeF::add(const SVertexF & from, const SVertexF & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_F_Y();
@@ -143,8 +148,11 @@ CEdgeF::add(GLint x1, GLint y1, GLint x2, GLint y2)
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeF::addZ(GLint x1, GLint y1, GLfloat z1, GLint x2, GLint y2, GLfloat z2)
+CEdgeF::addZ(const SVertexF & from, const SVertexF & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_F_Y();
@@ -169,8 +177,11 @@ CEdgeF::addZ(GLint x1, GLint y1, GLfloat z1, GLint x2, GLint y2, GLfloat z2)
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeF::addC(GLint x1, GLint y1, SColorF & c1, GLint x2, GLint y2, SColorF & c2)
+CEdgeF::addC(const SVertexF & from, const SVertexF & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_F_Y();
@@ -195,8 +206,11 @@ CEdgeF::addC(GLint x1, GLint y1, SColorF & c1, GLint x2, GLint y2, SColorF & c2)
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeF::addZC(GLint x1, GLint y1, GLfloat z1, SColorF & c1, GLint x2, GLint y2, GLfloat z2, SColorF & c2)
+CEdgeF::addZC(const SVertexF & from, const SVertexF & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_F_Y();
@@ -224,8 +238,11 @@ CEdgeF::addZC(GLint x1, GLint y1, GLfloat z1, SColorF & c1, GLint x2, GLint y2, 
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeF::addT(GLint x1, GLint y1, GLfloat ts1, GLfloat tt1, GLint x2, GLint y2, GLfloat ts2, GLfloat tt2)
+CEdgeF::addT(const SVertexF & from, const SVertexF & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_F_Y();
@@ -251,8 +268,11 @@ CEdgeF::addT(GLint x1, GLint y1, GLfloat ts1, GLfloat tt1, GLint x2, GLint y2, G
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeF::addZT(GLint x1, GLint y1, GLfloat z1, GLfloat ts1, GLfloat tt1, GLint x2, GLint y2, GLfloat z2, GLfloat ts2, GLfloat tt2)
+CEdgeF::addZT(const SVertexF & from, const SVertexF & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_F_Y();
@@ -312,8 +332,11 @@ CEdgeFx::~CEdgeFx()
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeFx::add(GLint x1, GLint y1, GLint x2, GLint y2)
+CEdgeFx::add(const SVertexFx & from, const SVertexFx & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_FX_Y();
@@ -334,8 +357,11 @@ CEdgeFx::add(GLint x1, GLint y1, GLint x2, GLint y2)
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeFx::addZ(GLint x1, GLint y1, CFixed z1, GLint x2, GLint y2, CFixed z2)
+CEdgeFx::addZ(const SVertexFx & from, const SVertexFx & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_FX_Y();
@@ -359,8 +385,11 @@ CEdgeFx::addZ(GLint x1, GLint y1, CFixed z1, GLint x2, GLint y2, CFixed z2)
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeFx::addC(GLint x1, GLint y1, SColorFx & c1, GLint x2, GLint y2, SColorFx & c2)
+CEdgeFx::addC(const SVertexFx & from, const SVertexFx & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_FX_Y();
@@ -386,8 +415,11 @@ CEdgeFx::addC(GLint x1, GLint y1, SColorFx & c1, GLint x2, GLint y2, SColorFx & 
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeFx::addZC(GLint x1, GLint y1, CFixed z1, SColorFx & c1, GLint x2, GLint y2, CFixed z2, SColorFx & c2)
+CEdgeFx::addZC(const SVertexFx & from, const SVertexFx & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_FX_Y();
@@ -416,8 +448,11 @@ CEdgeFx::addZC(GLint x1, GLint y1, CFixed z1, SColorFx & c1, GLint x2, GLint y2,
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeFx::addT(GLint x1, GLint y1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, CFixed ts2, CFixed tt2)
+CEdgeFx::addT(const SVertexFx & from, const SVertexFx & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_FX_Y();
@@ -443,8 +478,11 @@ CEdgeFx::addT(GLint x1, GLint y1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, CF
 
 //-----------------------------------------------------------------------------
 inline void
-CEdgeFx::addZT(GLint x1, GLint y1, CFixed z1, CFixed ts1, CFixed tt1, GLint x2, GLint y2, CFixed z2, CFixed ts2, CFixed tt2)
+CEdgeFx::addZT(const SVertexFx & from, const SVertexFx & to)
 {
+  GLint y1 = from.sy;
+  GLint y2 = to.sy;
+
   if(y1 < y2)
   {
     DELTA_FX_Y();

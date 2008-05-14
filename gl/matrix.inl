@@ -311,6 +311,20 @@ TMatrix4x4<T>::transform3(const T * from, T * to)
 //---------------------------------------------------------------------------
 template <class T>
 inline void
+TMatrix4x4<T>::transform3(const TVector<T> & from, TVector<T> & to)
+{
+  T x(from.x);
+  T y(from.y);
+  T z(from.z);
+
+  to.x = m00 * x + m01 * y + m02 * z;
+  to.y = m10 * x + m11 * y + m12 * z;
+  to.z = m20 * x + m21 * y + m22 * z;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline void
 TMatrix4x4<T>::transform4(const T * from, T * to)
 {
   T x(from[0]);
@@ -322,4 +336,20 @@ TMatrix4x4<T>::transform4(const T * from, T * to)
   to[1] = m10 * x + m11 * y + m12 * z + m13 * w;
   to[2] = m20 * x + m21 * y + m22 * z + m23 * w;
   to[3] = m30 * x + m31 * y + m32 * z + m33 * w;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline void
+TMatrix4x4<T>::transform4(const TVector<T> & from, TVector<T> & to)
+{
+  T x(from.x);
+  T y(from.y);
+  T z(from.z);
+  T w(from.w);
+
+  to.x = m00 * x + m01 * y + m02 * z + m03 * w;
+  to.y = m10 * x + m11 * y + m12 * z + m13 * w;
+  to.z = m20 * x + m21 * y + m22 * z + m23 * w;
+  to.w = m30 * x + m31 * y + m32 * z + m33 * w;
 }

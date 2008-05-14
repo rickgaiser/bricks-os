@@ -319,16 +319,16 @@ CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufNormal_.type)
       {
         case GL_FLOAT:
-          v.n[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n[1] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n[2] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n[3] = 1.0f;
+          v.n.x = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n.y = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n.z = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n.w = 1.0f;
           break;
         case GL_FIXED:
-          v.n[0] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n[1] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n[2] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n[3] = 1.0f;
+          v.n.x = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n.y = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n.z = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n.w = 1.0f;
           break;
       };
     }
@@ -768,7 +768,7 @@ CPS2GLESContext::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 }
 
 //-----------------------------------------------------------------------------
-inline float
+inline GLfloat
 my_pow(GLfloat x, int y)
 {
   GLfloat rv(x);

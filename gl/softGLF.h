@@ -121,6 +121,11 @@ protected:
   GLsizei     viewportHeight;
 
 private:
+  void _glDrawArrays(GLenum mode, GLint first, GLsizei count)   FAST_CODE;
+  void _vertexShader(SVertexF & v)                              FAST_CODE;
+  void _rasterize(SVertexF & v)                                 FAST_CODE;
+  void rasterPoly(SVertexF * vtx[3])                            FAST_CODE;
+
   bool testAndSetDepth(GLfloat z, uint32_t index)               FAST_CODE;
   void hline   (CEdgeF & from, CEdgeF & to, GLint y, SColorF c) FAST_CODE;
   void hlineZ  (CEdgeF & from, CEdgeF & to, GLint y, SColorF c) FAST_CODE;
@@ -129,7 +134,6 @@ private:
   void hlineTa (CEdgeF & from, CEdgeF & to, GLint y)            FAST_CODE;
   void hlineZTa(CEdgeF & from, CEdgeF & to, GLint y)            FAST_CODE;
   void hlineZTp(CEdgeF & from, CEdgeF & to, GLint y)            FAST_CODE;
-  void rasterPoly(SVertexF * vtx[3])                            FAST_CODE;
 };
 
 

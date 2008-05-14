@@ -27,7 +27,7 @@ struct TVertex
   T v[4];
 
   // Normal vector
-  T n[4];
+  TVector<T> n;
 
   // Color
   TColor<T> cl;

@@ -255,107 +255,7 @@ CSoftGLESFloat::glDisable(GLenum cap)
 void
 CSoftGLESFloat::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
-  if(bBufVertexEnabled_ == false)
-    return;
-
-  GLint idxVertex  (first * bufVertex_.size);
-  GLint idxColor   (first * bufColor_.size);
-  GLint idxNormal  (first * bufNormal_.size);
-  GLint idxTexCoord(first * bufTexCoord_.size);
-  SVertexF v;
-
-  begin(mode);
-
-  // Process all vertices
-  for(GLint i(0); i < count; i++)
-  {
-    // Vertex
-    switch(bufVertex_.type)
-    {
-      case GL_FLOAT:
-        v.v[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v[3] = 1.0f;
-        break;
-      case GL_FIXED:
-        v.v[0] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v[1] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v[2] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v[3] = 1.0f;
-        break;
-    };
-
-    // Normal
-    if(bBufNormalEnabled_ == true)
-    {
-      switch(bufNormal_.type)
-      {
-        case GL_FLOAT:
-          v.n[0] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n[1] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n[2] = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n[3] = 1.0f;
-          break;
-        case GL_FIXED:
-          v.n[0] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n[1] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n[2] = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n[3] = 1.0f;
-          break;
-      };
-    }
-
-    // Color
-    if(bBufColorEnabled_ == true)
-    {
-      switch(bufColor_.type)
-      {
-        case GL_FLOAT:
-          v.cl.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cl.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cl.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cl.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          break;
-        case GL_FIXED:
-          v.cl.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cl.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cl.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cl.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          break;
-      };
-    }
-    else
-      v.cl = clCurrent;
-
-    // Textures
-    if((texturesEnabled_ == true) && (bBufTexCoordEnabled_ == true))
-    {
-      switch(bufTexCoord_.type)
-      {
-        case GL_FLOAT:
-          v.t[0] =         ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
-          v.t[1] = (1.0f - ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
-          break;
-        case GL_FIXED:
-          v.t[0] =         gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
-          v.t[1] = (1.0f - gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]));
-          break;
-      };
-    }
-
-    // -------------
-    // Vertex shader
-    // -------------
-    vertexShader(v);
-
-    // ------------
-    // Raterization
-    // ------------
-    rasterize(v);
-  }
-
-  end();
+  _glDrawArrays(mode, first, count);
 }
 
 //-----------------------------------------------------------------------------
@@ -566,9 +466,159 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 }
 
 //-----------------------------------------------------------------------------
+inline GLfloat
+my_pow(GLfloat x, int y)
+{
+  GLfloat rv(x);
+  for(int i(1); i < y; i++)
+    rv *= x;
+  return rv;
+}
+
 //-----------------------------------------------------------------------------
 void
 CSoftGLESFloat::vertexShader(SVertexF & v)
+{
+  _vertexShader(v)
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterize(SVertexF & v)
+{
+  _rasterize(v);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::begin(GLenum mode)
+{
+  rasterMode_ = mode;
+
+  // Initialize for default triangle
+  polygon[0] = &vertices[0];
+  polygon[1] = &vertices[1];
+  polygon[2] = &vertices[2];
+  bFlipFlop_ = true;
+  vertIdx_   = 0;
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::end()
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
+{
+  if(bBufVertexEnabled_ == false)
+    return;
+
+  GLint idxVertex  (first * bufVertex_.size);
+  GLint idxColor   (first * bufColor_.size);
+  GLint idxNormal  (first * bufNormal_.size);
+  GLint idxTexCoord(first * bufTexCoord_.size);
+  SVertexF v;
+
+  begin(mode);
+
+  // Process all vertices
+  for(GLint i(0); i < count; i++)
+  {
+    // Vertex
+    switch(bufVertex_.type)
+    {
+      case GL_FLOAT:
+        v.v[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.v[3] = 1.0f;
+        break;
+      case GL_FIXED:
+        v.v[0] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v[1] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v[2] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.v[3] = 1.0f;
+        break;
+    };
+
+    // Normal
+    if(bBufNormalEnabled_ == true)
+    {
+      switch(bufNormal_.type)
+      {
+        case GL_FLOAT:
+          v.n.x = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n.y = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n.z = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n.w = 1.0f;
+          break;
+        case GL_FIXED:
+          v.n.x = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n.y = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n.z = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n.w = 1.0f;
+          break;
+      };
+    }
+
+    // Color
+    if(bBufColorEnabled_ == true)
+    {
+      switch(bufColor_.type)
+      {
+        case GL_FLOAT:
+          v.cl.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          v.cl.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
+          break;
+        case GL_FIXED:
+          v.cl.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cl.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cl.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          v.cl.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+          break;
+      };
+    }
+    else
+      v.cl = clCurrent;
+
+    // Textures
+    if((texturesEnabled_ == true) && (bBufTexCoordEnabled_ == true))
+    {
+      switch(bufTexCoord_.type)
+      {
+        case GL_FLOAT:
+          v.t[0] =         ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
+          v.t[1] = (1.0f - ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
+          break;
+        case GL_FIXED:
+          v.t[0] =         gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+          v.t[1] = (1.0f - gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]));
+          break;
+      };
+    }
+
+    // -------------
+    // Vertex shader
+    // -------------
+    vertexShader(v);
+
+    // ------------
+    // Raterization
+    // ------------
+    rasterize(v);
+  }
+
+  end();
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::_vertexShader(SVertexF & v)
 {
   // --------------
   // Transformation
@@ -646,7 +696,7 @@ CSoftGLESFloat::vertexShader(SVertexF & v)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterize(SVertexF & v)
+CSoftGLESFloat::_rasterize(SVertexF & v)
 {
   // Copy vertex into vertex buffer
   *polygon[vertIdx_] = v;
@@ -707,26 +757,6 @@ CSoftGLESFloat::rasterize(SVertexF & v)
       break;
     }
   };
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::begin(GLenum mode)
-{
-  rasterMode_ = mode;
-
-  // Initialize for default triangle
-  polygon[0] = &vertices[0];
-  polygon[1] = &vertices[1];
-  polygon[2] = &vertices[2];
-  bFlipFlop_ = true;
-  vertIdx_   = 0;
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::end()
-{
 }
 
 //-----------------------------------------------------------------------------
@@ -793,45 +823,45 @@ CSoftGLESFloat::rasterPoly(SVertexF * vtx[3])
   {
     if(depthTestEnabled_ == true)
     {
-      edge1->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->t[0], vlo->t[1], vhi->sx, vhi->sy, vhi->v[3], vhi->t[0], vhi->t[1]);
-      edge2->addZT(vlo->sx, vlo->sy, vlo->v[3], vlo->t[0], vlo->t[1], vmi->sx, vmi->sy, vmi->v[3], vmi->t[0], vmi->t[1]);
-      edge2->addZT(vmi->sx, vmi->sy, vmi->v[3], vmi->t[0], vmi->t[1], vhi->sx, vhi->sy, vhi->v[3], vhi->t[0], vhi->t[1]);
+      edge1->addZT(*vlo, *vhi);
+      edge2->addZT(*vlo, *vmi);
+      edge2->addZT(*vmi, *vhi);
     }
     else
     {
-      edge1->addT(vlo->sx, vlo->sy, vlo->t[0], vlo->t[1], vhi->sx, vhi->sy, vhi->t[0], vhi->t[1]);
-      edge2->addT(vlo->sx, vlo->sy, vlo->t[0], vlo->t[1], vmi->sx, vmi->sy, vmi->t[0], vmi->t[1]);
-      edge2->addT(vmi->sx, vmi->sy, vmi->t[0], vmi->t[1], vhi->sx, vhi->sy, vhi->t[0], vhi->t[1]);
+      edge1->addT(*vlo, *vhi);
+      edge2->addT(*vlo, *vmi);
+      edge2->addT(*vmi, *vhi);
     }
   }
   else if(shadingModel_ == GL_SMOOTH)
   {
     if(depthTestEnabled_ == true)
     {
-      edge1->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->cl, vhi->sx, vhi->sy, vhi->v[3], vhi->cl);
-      edge2->addZC(vlo->sx, vlo->sy, vlo->v[3], vlo->cl, vmi->sx, vmi->sy, vmi->v[3], vmi->cl);
-      edge2->addZC(vmi->sx, vmi->sy, vmi->v[3], vmi->cl, vhi->sx, vhi->sy, vhi->v[3], vhi->cl);
+      edge1->addZC(*vlo, *vhi);
+      edge2->addZC(*vlo, *vmi);
+      edge2->addZC(*vmi, *vhi);
     }
     else
     {
-      edge1->addC(vlo->sx, vlo->sy, vlo->cl, vhi->sx, vhi->sy, vhi->cl);
-      edge2->addC(vlo->sx, vlo->sy, vlo->cl, vmi->sx, vmi->sy, vmi->cl);
-      edge2->addC(vmi->sx, vmi->sy, vmi->cl, vhi->sx, vhi->sy, vhi->cl);
+      edge1->addC(*vlo, *vhi);
+      edge2->addC(*vlo, *vmi);
+      edge2->addC(*vmi, *vhi);
     }
   }
   else
   {
     if(depthTestEnabled_ == true)
     {
-      edge1->addZ(vlo->sx, vlo->sy, vlo->v[3], vhi->sx, vhi->sy, vhi->v[3]);
-      edge2->addZ(vlo->sx, vlo->sy, vlo->v[3], vmi->sx, vmi->sy, vmi->v[3]);
-      edge2->addZ(vmi->sx, vmi->sy, vmi->v[3], vhi->sx, vhi->sy, vhi->v[3]);
+      edge1->addZ(*vlo, *vhi);
+      edge2->addZ(*vlo, *vmi);
+      edge2->addZ(*vmi, *vhi);
     }
     else
     {
-      edge1->add(vlo->sx, vlo->sy, vhi->sx, vhi->sy);
-      edge2->add(vlo->sx, vlo->sy, vmi->sx, vmi->sy);
-      edge2->add(vmi->sx, vmi->sy, vhi->sx, vhi->sy);
+      edge1->add(*vlo, *vhi);
+      edge2->add(*vlo, *vmi);
+      edge2->add(*vmi, *vhi);
     }
   }
 
