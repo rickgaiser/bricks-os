@@ -211,7 +211,6 @@ CSoftGLESFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
   normal_.x.value = nx;
   normal_.y.value = ny;
   normal_.z.value = nz;
-  normal_.w       = 1;
 
   if(normalizeEnabled_  == true)
     normal_.normalize();
@@ -553,13 +552,11 @@ CSoftGLESFixed::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
           v.n.x = (((GLfloat *)bufNormal_.pointer)[idxNormal++]);
           v.n.y = (((GLfloat *)bufNormal_.pointer)[idxNormal++]);
           v.n.z = (((GLfloat *)bufNormal_.pointer)[idxNormal++]);
-          v.n.w = 1;
           break;
         case GL_FIXED:
           v.n.x.value = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
           v.n.y.value = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
           v.n.z.value = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
-          v.n.w = 1;
           break;
       };
     }
@@ -669,7 +666,7 @@ CSoftGLESFixed::_vertexShader(SVertexFx & v)
         if(matShininess_ >= 0.5f)
         {
           // Specular light
-          TVector<CFixed> eye(0, 0, 1, 1);
+          TVector3<CFixed> eye(0, 0, 1);
           CFixed specular = lights_[iLight].direction.getCrossProduct(v.n).dotProduct(eye);
           if(specular >= 0.0f)
           {

@@ -98,7 +98,7 @@ protected:
 
   // Normals
   bool        normalizeEnabled_;
-  TVector<CFixed> normal_;
+  TVector3<CFixed> normal_;
 
   // Material
   SColorFx    matColorAmbient_;

@@ -68,9 +68,10 @@ public:
   void rotatez   (T angle);
 
   void transform3(const T * from, T * to);
-  void transform3(const TVector<T> & from, TVector<T> & to);
+  void transform3(const TVector3<T> & from, TVector3<T> & to);
+  void transform3(const TVector4<T> & from, TVector4<T> & to);
   void transform4(const T * from, T * to);
-  void transform4(const TVector<T> & from, TVector<T> & to);
+  void transform4(const TVector4<T> & from, TVector4<T> & to);
 
 public:
   T matrix[16];

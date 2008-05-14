@@ -108,7 +108,7 @@ protected:
 
   // Normals
   bool        normalizeEnabled_;
-  TVector<GLfloat> normal_;
+  TVector3<GLfloat> normal_;
 
   // Material
   SColorF     matColorAmbient_;

@@ -27,7 +27,7 @@ struct TVertex
   T v[4];
 
   // Normal vector
-  TVector<T> n;
+  TVector3<T> n;
 
   // Color
   TColor<T> cl;
@@ -51,8 +51,8 @@ struct TLight
   TColor<T> diffuse;
   TColor<T> ambient;
   TColor<T> specular;
-  TVector<T> position;
-  TVector<T> direction;
+  TVector4<T> position;
+  TVector3<T> direction;
   bool enabled;
 };
 typedef TLight<GLfloat> SLightF;

@@ -211,7 +211,6 @@ CSoftGLESFloat::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
   normal_.x = nx;
   normal_.y = ny;
   normal_.z = nz;
-  normal_.w = 1.0f;
 
   if(normalizeEnabled_  == true)
     normal_.normalize();
@@ -479,7 +478,7 @@ my_pow(GLfloat x, int y)
 void
 CSoftGLESFloat::vertexShader(SVertexF & v)
 {
-  _vertexShader(v)
+  _vertexShader(v);
 }
 
 //-----------------------------------------------------------------------------
@@ -553,16 +552,16 @@ CSoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
           v.n.x = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
           v.n.y = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
           v.n.z = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n.w = 1.0f;
           break;
         case GL_FIXED:
           v.n.x = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
           v.n.y = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
           v.n.z = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n.w = 1.0f;
           break;
       };
     }
+    else
+      v.n = normal_;
 
     // Color
     if(bBufColorEnabled_ == true)
@@ -667,7 +666,7 @@ CSoftGLESFloat::_vertexShader(SVertexF & v)
         if(matShininess_ >= 0.5f)
         {
           // Specular light
-          TVector<GLfloat> eye(0, 0, 1, 1);
+          TVector3<GLfloat> eye(0, 0, 1);
           GLfloat specular = lights_[iLight].direction.getCrossProduct(v.n).dotProduct(eye);
           if(specular >= 0.0f)
           {
