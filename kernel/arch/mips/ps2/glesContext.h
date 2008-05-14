@@ -95,6 +95,9 @@ protected:
   uint32_t  * zbuffer;
   GLclampf    zNear_;
   GLclampf    zFar_;
+  GLfloat     zA_;
+  GLfloat     zB_;
+  uint32_t    zMax_;
 
   GLenum      shadingModel_;
 
@@ -136,6 +139,10 @@ protected:
   GLsizei     viewportPixelCount;
   GLsizei     viewportWidth;
   GLsizei     viewportHeight;
+  GLfloat     xA_;
+  GLfloat     xB_;
+  GLfloat     yA_;
+  GLfloat     yB_;
 
 private:
   uint16_t    ps2Shading_;
@@ -145,7 +152,6 @@ private:
   uint16_t    ps2Aliasing_;
   uint16_t    ps2DepthFunction_;
   bool        ps2DepthInvert_;
-  uint32_t    ps2ZMax_;
 };
 
 

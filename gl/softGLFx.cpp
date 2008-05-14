@@ -20,8 +20,8 @@ CSoftGLESFixed::CSoftGLESFixed()
  , depthClear_(gl_fpfromi(1))
  , zClearValue_(0xffff)
  , zbuffer(0)
- , zNear_(gl_fpfromi(0))
- , zFar_(gl_fpfromi(1))
+ , zNear_(0)
+ , zFar_(1)
 
  , shadingModel_(GL_FLAT)
 
@@ -111,6 +111,9 @@ CSoftGLESFixed::CSoftGLESFixed()
   matColorEmission_.a = 1.0f;
 
   matShininess_       = 0.0f;
+
+  zA_ = (zFar_ - zNear_) / 2;
+  zB_ = (zFar_ + zNear_) / 2;
 }
 
 //-----------------------------------------------------------------------------
@@ -200,8 +203,11 @@ CSoftGLESFixed::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alph
 void
 CSoftGLESFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
 {
-  zNear_ = clampfx(zNear);
-  zFar_  = clampfx(zFar);
+  zNear_.value = clampfx(zNear);
+  zFar_.value  = clampfx(zFar);
+
+  zA_ = (zFar_ - zNear_) / 2;
+  zB_ = (zFar_ + zNear_) / 2;
 }
 
 //-----------------------------------------------------------------------------
@@ -462,6 +468,11 @@ CSoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   zbuffer            = new uint16_t[width * height];
   edge1              = new CEdgeFx(viewportHeight);
   edge2              = new CEdgeFx(viewportHeight);
+
+  xA_ = (viewportWidth  >> 1);
+  xB_ = CFixed(viewportWidth  >> 1) + 0.5f;
+  yA_ = -(viewportHeight >> 1);
+  yB_ = CFixed(viewportHeight >> 1) + 0.5f;
 }
 
 //-----------------------------------------------------------------------------
@@ -630,14 +641,15 @@ CSoftGLESFixed::_vertexShader(SVertexFx & v)
   matrixProjection.transform4(v.v, v.v);
   // Perspective division
   //   from 'clip coordinates' to 'normalized device coordinates'
-  v.v[0] /= v.v[3];
-  v.v[1] /= v.v[3];
-  v.v[2] /= v.v[3];
+  CFixed iw = 1 / v.v[3];
+  v.v[0] *= iw;
+  v.v[1] *= iw;
+  v.v[2] *= iw;
   // Viewport transformation
   //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = (    v.v[0] + 1) * CFixed(viewportWidth  >> 1) + 0.5f;
-  v.sy = (0 - v.v[1] + 1) * CFixed(viewportHeight >> 1) + 0.5f;
-//  v.sz = gl_fpdiv(zFar - zNear, v.v[2] << 1) + ((zNear + zFar)>>1);
+  v.sx = (GLint)((xA_ * v.v[0]) + xB_);
+  v.sy = (GLint)((yA_ * v.v[1]) + yB_);
+  v.sz =        ((zA_ * v.v[2]) + zB_).value - 1; // 16bit z-buffer
 
   // --------
   // Lighting
@@ -711,7 +723,9 @@ CSoftGLESFixed::_rasterize(SVertexFx & v)
     {
       if(vertIdx_ == 2)
         rasterPoly(polygon);
-      vertIdx_ = (vertIdx_ + 1) % 3;
+      vertIdx_++;
+      if(vertIdx_ > 2)
+        vertIdx_ = 0;
       break;
     }
     case GL_TRIANGLE_STRIP:

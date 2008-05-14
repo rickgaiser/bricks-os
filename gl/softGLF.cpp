@@ -22,6 +22,7 @@ CSoftGLESFloat::CSoftGLESFloat()
  , zbuffer(0)
  , zNear_(0.0f)
  , zFar_(1.0f)
+ , zMax_(0xffffffff) // 32bit z-buffer
 
  , shadingModel_(GL_FLAT)
 
@@ -111,6 +112,9 @@ CSoftGLESFloat::CSoftGLESFloat()
   matColorEmission_.a = 1.0f;
 
   matShininess_       = 0.0f;
+
+  zA_ = (zFar_ - zNear_) / 2;
+  zB_ = (zFar_ + zNear_) / 2;
 }
 
 //-----------------------------------------------------------------------------
@@ -202,6 +206,9 @@ CSoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
 {
   zNear_ = clampf(zNear);
   zFar_  = clampf(zFar);
+
+  zA_ = (zFar_ - zNear_) / 2;
+  zB_ = (zFar_ + zNear_) / 2;
 }
 
 //-----------------------------------------------------------------------------
@@ -462,6 +469,11 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   zbuffer            = new uint32_t[width * height];
   edge1              = new CEdgeF(viewportHeight);
   edge2              = new CEdgeF(viewportHeight);
+
+  xA_ = (viewportWidth  >> 1);
+  xB_ = (GLfloat)(viewportWidth  >> 1) + 0.5f;
+  yA_ = -(viewportHeight >> 1);
+  yB_ = (GLfloat)(viewportHeight >> 1) + 0.5f;
 }
 
 //-----------------------------------------------------------------------------
@@ -630,14 +642,15 @@ CSoftGLESFloat::_vertexShader(SVertexF & v)
   matrixProjection.transform4(v.v, v.v);
   // Perspective division
   //   from 'clip coordinates' to 'normalized device coordinates'
-  v.v[0] /= v.v[3];
-  v.v[1] /= v.v[3];
-  v.v[2] /= v.v[3];
+  GLfloat iw = 1.0f / v.v[3];
+  v.v[0] *= iw;
+  v.v[1] *= iw;
+  v.v[2] *= iw;
   // Viewport transformation
   //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = (GLint)((    v.v[0] + 1.0f) * (viewportWidth  >> 1) + 0.5f);
-  v.sy = (GLint)((0 - v.v[1] + 1.0f) * (viewportHeight >> 1) + 0.5f);
-  v.sz = (GLint)((0 - v.v[2] + 1.0f) * (0xffffffff     >> 1));
+  v.sx = (GLint)    ((xA_ * v.v[0]) + xB_);
+  v.sy = (GLint)    ((yA_ * v.v[1]) + yB_);
+  v.sz = (uint32_t)(((zA_ * v.v[2]) + zB_) * zMax_);
 
   // --------
   // Lighting
@@ -709,7 +722,9 @@ CSoftGLESFloat::_rasterize(SVertexF & v)
     {
       if(vertIdx_ == 2)
         rasterPoly(polygon);
-      vertIdx_ = (vertIdx_ + 1) % 3;
+      vertIdx_++;
+      if(vertIdx_ > 2)
+        vertIdx_ = 0;
       break;
     }
     case GL_TRIANGLE_STRIP:

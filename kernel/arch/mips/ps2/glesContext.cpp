@@ -22,6 +22,7 @@ CPS2GLESContext::CPS2GLESContext()
  , zbuffer(0)
  , zNear_(0.0f)
  , zFar_(1.0f)
+ , zMax_(0xffffffff) // 32bit z-buffer
 
  , shadingModel_(GL_FLAT)
  , lightingEnabled_(false)
@@ -43,7 +44,6 @@ CPS2GLESContext::CPS2GLESContext()
  , ps2Aliasing_(ALIASING_ON)
  , ps2DepthFunction_(ZTST_GREATER)
  , ps2DepthInvert_(true)
- , ps2ZMax_(0xffff)
 {
   clCurrent.r = 1.0f;
   clCurrent.g = 1.0f;
@@ -120,6 +120,9 @@ CPS2GLESContext::CPS2GLESContext()
   matColorEmission_.a = 1.0f;
 
   matShininess_       = 0.0f;
+
+  zA_ = (zFar_ - zNear_) / 2;
+  zB_ = (zFar_ + zNear_) / 2;
 
   for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
     textures_[idx].used = false;
@@ -202,6 +205,9 @@ CPS2GLESContext::glDepthRangef(GLclampf zNear, GLclampf zFar)
 {
   zNear_ = clampf(zNear);
   zFar_  = clampf(zFar);
+
+  zA_ = (zFar_ - zNear_) / 2;
+  zB_ = (zFar_ + zNear_) / 2;
 }
 
 //-----------------------------------------------------------------------------
@@ -414,21 +420,21 @@ CPS2GLESContext::glEnable(GLenum cap)
         {
           packet_.data(zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_ENABLE));
           ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 2);
-          ps2ZMax_ = 0xffff;
+          zMax_ = 0xffff;
           break;
         }
         case 24:
         {
           packet_.data(zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
           ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 3);
-          ps2ZMax_ = 0xffffff;
+          zMax_ = 0xffffff;
           break;
         }
         case 32:
         {
           packet_.data(zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
           ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 4);
-          ps2ZMax_ = 0xffffffff;
+          zMax_ = 0xffffffff;
           break;
         }
       };
@@ -621,6 +627,11 @@ CPS2GLESContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportWidth      = width;
   viewportHeight     = height;
   viewportPixelCount = width * height;
+
+  xA_ = (viewportWidth  >> 1);
+  xB_ = (GLfloat)(viewportWidth  >> 1) + 0.5f;
+  yA_ = -(viewportHeight >> 1);
+  yB_ = (GLfloat)(viewportHeight >> 1) + 0.5f;
 }
 
 //-----------------------------------------------------------------------------
@@ -791,14 +802,17 @@ CPS2GLESContext::vertexShader(SVertexF & v)
   matrixProjection.transform4(v.v, v.v);
   // Perspective division
   //   from 'clip coordinates' to 'normalized device coordinates'
-  v.v[0] /= v.v[3];
-  v.v[1] /= v.v[3];
-  v.v[2] /= v.v[3];
+  GLfloat iw = 1.0f / v.v[3];
+  v.v[0] *= iw;
+  v.v[1] *= iw;
+  v.v[2] *= iw;
   // Viewport transformation
   //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = (GLint)((    v.v[0] + 1.0f) * (viewportWidth  >> 1) + 0.5f);
-  v.sy = (GLint)((0 - v.v[1] + 1.0f) * (viewportHeight >> 1) + 0.5f);
-  v.sz = (GLint)((0 - v.v[2] + 1.0f) * (ps2ZMax_       >> 1));
+  v.sx = (GLint)    ((xA_ * v.v[0]) + xB_);
+  v.sy = (GLint)    ((yA_ * v.v[1]) + yB_);
+  v.sz = (uint32_t)(((zA_ * v.v[2]) + zB_) * zMax_);
+//  if(ps2DepthInvert_ == true)
+//    v.sz = (zMax_ - v.sz);
 
   // --------
   // Lighting
@@ -858,9 +872,6 @@ CPS2GLESContext::vertexShader(SVertexF & v)
 void
 CPS2GLESContext::rasterize(SVertexF & v)
 {
-  // Calculate Z
-  uint32_t z = (ps2DepthInvert_ == false) ? (ps2ZMax_ - v.sz) : v.sz;
-
   // Add to message
   if(texturesEnabled_ == true)
   {
@@ -875,7 +886,7 @@ CPS2GLESContext::rasterize(SVertexF & v)
   {
     packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), 100, 0));
   }
-  packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, z));
+  packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
 }
 
 //-----------------------------------------------------------------------------

@@ -76,6 +76,9 @@ protected:
   uint32_t  * zbuffer;
   GLclampf    zNear_;
   GLclampf    zFar_;
+  GLfloat     zA_;
+  GLfloat     zB_;
+  uint32_t    zMax_;
 
   GLenum      shadingModel_;
 
@@ -119,6 +122,10 @@ protected:
   GLsizei     viewportPixelCount;
   GLsizei     viewportWidth;
   GLsizei     viewportHeight;
+  GLfloat     xA_;
+  GLfloat     xB_;
+  GLfloat     yA_;
+  GLfloat     yB_;
 
 private:
   void _glDrawArrays(GLenum mode, GLint first, GLsizei count)   FAST_CODE;

@@ -83,8 +83,10 @@ protected:
   uint16_t    zClearValue_;
   uint16_t  * zbuffer;
   GLfixed     zLoss_;
-  GLclampx    zNear_;
-  GLclampx    zFar_;
+  CFixed      zNear_;
+  CFixed      zFar_;
+  CFixed      zA_;
+  CFixed      zB_;
 
   GLenum      shadingModel_;
 
@@ -128,6 +130,10 @@ protected:
   GLsizei     viewportPixelCount;
   GLsizei     viewportWidth;
   GLsizei     viewportHeight;
+  CFixed      xA_;
+  CFixed      xB_;
+  CFixed      yA_;
+  CFixed      yB_;
 
 private:
   void _glDrawArrays(GLenum mode, GLint first, GLsizei count)      FAST_CODE;
