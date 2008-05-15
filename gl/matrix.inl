@@ -4,6 +4,8 @@ typedef unsigned int wint_t;
 #include <math.h>
 
 
+#define INVERSE_360 (T(1)/T(360))
+
 #define matrix_copy(mto, mfrom) \
 mto[0*4+0] = mfrom[0*4+0]; mto[0*4+1] = mfrom[0*4+1]; mto[0*4+2] = mfrom[0*4+2]; mto[0*4+3] = mfrom[0*4+3]; \
 mto[1*4+0] = mfrom[1*4+0]; mto[1*4+1] = mfrom[1*4+1]; mto[1*4+2] = mfrom[1*4+2]; mto[1*4+3] = mfrom[1*4+3]; \
@@ -36,8 +38,8 @@ m[3*4+0] = gl_fpfromi(0); m[3*4+1] = gl_fpfromi(0); m[3*4+2] = gl_fpfromi(0); m[
 
 
 template <class T> bool  TMatrix4x4<T>::bInitialized_(false);
-template <class T> T     TMatrix4x4<T>::sinTable_[360];
-template <class T> T     TMatrix4x4<T>::cosTable_[360];
+template <class T> T     TMatrix4x4<T>::sinTable_[360 * DEGREE_PRECISION_MUL];
+template <class T> T     TMatrix4x4<T>::cosTable_[360 * DEGREE_PRECISION_MUL];
 
 
 //---------------------------------------------------------------------------
@@ -213,10 +215,10 @@ TMatrix4x4<T>::rotate(T x, T y, T z)
   if(bInitialized_ == false)
   {
     bInitialized_ = true;
-    for(int i(0); i < 360; i++)
+    for(int i(0); i < (360 * DEGREE_PRECISION_MUL); i++)
     {
-      sinTable_[i] = sin((float)i * M_PI / 180.0f);
-      cosTable_[i] = cos((float)i * M_PI / 180.0f);
+      sinTable_[i] = sin((float)i * (M_PI / (180.0f * DEGREE_PRECISION_MUL)));
+      cosTable_[i] = cos((float)i * (M_PI / (180.0f * DEGREE_PRECISION_MUL)));
     }
   }
 
@@ -234,12 +236,12 @@ inline void
 TMatrix4x4<T>::rotatex(T angle)
 {
   // Normalize the angle
-  angle -= ((int)angle / 360) * 360;
+  angle -= (int)(angle * INVERSE_360) * 360;
   if(angle < 0)
     angle += 360;
   // Get sin and cos from lookup table
-  T iSin = sinTable_[(int)angle];
-  T iCos = cosTable_[(int)angle];
+  T iSin = sinTable_[(int)(angle * DEGREE_PRECISION_MUL)];
+  T iCos = cosTable_[(int)(angle * DEGREE_PRECISION_MUL)];
 
   T m[16];
   matrix_identity(m);
@@ -256,12 +258,12 @@ inline void
 TMatrix4x4<T>::rotatey(T angle)
 {
   // Normalize the angle
-  angle -= ((int)angle / 360) * 360;
+  angle -= (int)(angle * INVERSE_360) * 360;
   if(angle < 0)
     angle += 360;
   // Get sin and cos from lookup table
-  T iSin = sinTable_[(int)angle];
-  T iCos = cosTable_[(int)angle];
+  T iSin = sinTable_[(int)(angle * DEGREE_PRECISION_MUL)];
+  T iCos = cosTable_[(int)(angle * DEGREE_PRECISION_MUL)];
 
   T m[16];
   matrix_identity(m);
@@ -278,12 +280,12 @@ inline void
 TMatrix4x4<T>::rotatez(T angle)
 {
   // Normalize the angle
-  angle -= ((int)angle / 360) * 360;
+  angle -= (int)(angle * INVERSE_360) * 360;
   if(angle < 0)
     angle += 360;
   // Get sin and cos from lookup table
-  T iSin = sinTable_[(int)angle];
-  T iCos = cosTable_[(int)angle];
+  T iSin = sinTable_[(int)(angle * DEGREE_PRECISION_MUL)];
+  T iCos = cosTable_[(int)(angle * DEGREE_PRECISION_MUL)];
 
   T m[16];
   matrix_identity(m);

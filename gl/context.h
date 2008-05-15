@@ -24,25 +24,41 @@ template <class T>
 struct TVertex
 {
   // Vertex itself
-  T v[4];
+  T vo[4]; // Object Coordinates
+  T ve[4]; // Eye Coordinates
+  T vc[4]; // Clip Coordinates
+  T vd[3]; // Normalized Device Coordinates
 
   // Normal vector
   TVector3<T> n;
 
   // Color
-  TColor<T> cl;
+  TColor<T> cl;  // Vertex Color
+  TColor<T> cl2; // Vertex Color + Light + Fog
 
   // Texture coordinates
   T t[2];
 
-  // 2D Point (on screen) x/y
+  // Window coordinates
   GLint  sx, sy;
 
   // Depth (on screen)
   uint32_t sz;
+
+  // Processed by post vertex shader
+  bool processed;
 };
 typedef TVertex<GLfloat> SVertexF;
 typedef TVertex<CFixed>  SVertexFx;
+
+//-----------------------------------------------------------------------------
+template <class T>
+struct TTriangle
+{
+  TVertex<T> * v[3];
+};
+typedef TTriangle<GLfloat> STriangleF;
+typedef TTriangle<CFixed>  STriangleFx;
 
 //-----------------------------------------------------------------------------
 template <class T>

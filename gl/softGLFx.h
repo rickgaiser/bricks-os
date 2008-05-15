@@ -68,12 +68,14 @@ public:
 
 protected:
   // Vertex shader
-  void vertexShader(SVertexFx & v) FAST_CODE;
+  virtual void vertexShaderTransform(SVertexFx & v);
+  virtual void vertexShaderLight(SVertexFx & v);
 
   // Rasterizer
-  void begin(GLenum mode) FAST_CODE;
-  void rasterize(SVertexFx & v) FAST_CODE;
-  void end() FAST_CODE;
+  virtual void begin(GLenum mode);
+  virtual void primitiveAssembly(SVertexFx & v);
+  virtual void rasterTriangle(STriangleFx & tri);
+  virtual void end();
 
 protected:
   // Depth testing
@@ -121,8 +123,8 @@ protected:
 
   // Rasterizer
   GLenum      rasterMode_;
-  SVertexFx   vertices[3]; // Vertex buffer for triangles
-  SVertexFx * polygon[3];  // Pointers to vertex buffer
+  SVertexFx   vertices[3]; // Vertex buffer for primitive assembly
+  STriangleFx triangle_;   // Assembled triangle
   bool        bFlipFlop_;  // Triangle strip
   GLint       vertIdx_;    // Current index into vertex buffer
   GLint       viewportXOffset;
@@ -137,9 +139,10 @@ protected:
 
 private:
   void _glDrawArrays(GLenum mode, GLint first, GLsizei count)      FAST_CODE;
-  void _vertexShader(SVertexFx & v)                                FAST_CODE;
-  void _rasterize(SVertexFx & v)                                   FAST_CODE;
-  void rasterPoly(SVertexFx * vtx[3])                              FAST_CODE;
+  void _vertexShaderTransform(SVertexFx & v)                       FAST_CODE;
+  void _vertexShaderLight(SVertexFx & v)                           FAST_CODE;
+  void _primitiveAssembly(SVertexFx & v)                           FAST_CODE;
+  void _rasterTriangle(STriangleFx & tri)                          FAST_CODE;
 
   bool testAndSetDepth(GLfixed z, uint32_t index)                  FAST_CODE;
   void hline   (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c) FAST_CODE;

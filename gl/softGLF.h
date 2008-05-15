@@ -60,11 +60,13 @@ public:
 
 protected:
   // Vertex shader
-  virtual void vertexShader(SVertexF & v);
+  virtual void vertexShaderTransform(SVertexF & v);
+  virtual void vertexShaderLight(SVertexF & v);
 
   // Rasterizer
   virtual void begin(GLenum mode);
-  virtual void rasterize(SVertexF & v);
+  virtual void primitiveAssembly(SVertexF & v);
+  virtual void rasterTriangle(STriangleF & tri);
   virtual void end();
 
 protected:
@@ -113,8 +115,8 @@ protected:
 
   // Rasterizer
   GLenum      rasterMode_;
-  SVertexF    vertices[3]; // Vertex buffer for triangles
-  SVertexF  * polygon[3];  // Pointers to vertex buffer
+  SVertexF    vertices[3]; // Vertex buffer for primitive assembly
+  STriangleF  triangle_;   // Assembled triangle
   bool        bFlipFlop_;  // Triangle strip
   GLint       vertIdx_;    // Current index into vertex buffer
   GLint       viewportXOffset;
@@ -129,9 +131,10 @@ protected:
 
 private:
   void _glDrawArrays(GLenum mode, GLint first, GLsizei count)   FAST_CODE;
-  void _vertexShader(SVertexF & v)                              FAST_CODE;
-  void _rasterize(SVertexF & v)                                 FAST_CODE;
-  void rasterPoly(SVertexF * vtx[3])                            FAST_CODE;
+  void _vertexShaderTransform(SVertexF & v)                     FAST_CODE;
+  void _vertexShaderLight(SVertexF & v)                         FAST_CODE;
+  void _primitiveAssembly(SVertexF & v)                         FAST_CODE;
+  void _rasterTriangle(STriangleF & tri)                        FAST_CODE;
 
   bool testAndSetDepth(GLfloat z, uint32_t index)               FAST_CODE;
   void hline   (CEdgeF & from, CEdgeF & to, GLint y, SColorF c) FAST_CODE;

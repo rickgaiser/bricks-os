@@ -488,16 +488,30 @@ my_pow(GLfloat x, int y)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::vertexShader(SVertexF & v)
+CSoftGLESFloat::vertexShaderTransform(SVertexF & v)
 {
-  _vertexShader(v);
+  _vertexShaderTransform(v);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterize(SVertexF & v)
+CSoftGLESFloat::vertexShaderLight(SVertexF & v)
 {
-  _rasterize(v);
+  _vertexShaderLight(v);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::primitiveAssembly(SVertexF & v)
+{
+  _primitiveAssembly(v);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterTriangle(STriangleF & tri)
+{
+  _rasterTriangle(tri);
 }
 
 //-----------------------------------------------------------------------------
@@ -507,9 +521,9 @@ CSoftGLESFloat::begin(GLenum mode)
   rasterMode_ = mode;
 
   // Initialize for default triangle
-  polygon[0] = &vertices[0];
-  polygon[1] = &vertices[1];
-  polygon[2] = &vertices[2];
+  triangle_.v[0] = &vertices[0];
+  triangle_.v[1] = &vertices[1];
+  triangle_.v[2] = &vertices[2];
   bFlipFlop_ = true;
   vertIdx_   = 0;
 }
@@ -542,16 +556,16 @@ CSoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
     switch(bufVertex_.type)
     {
       case GL_FLOAT:
-        v.v[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v[3] = 1.0f;
+        v.vo[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.vo[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.vo[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.vo[3] = 1.0f;
         break;
       case GL_FIXED:
-        v.v[0] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v[1] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v[2] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v[3] = 1.0f;
+        v.vo[0] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.vo[1] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.vo[2] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.vo[3] = 1.0f;
         break;
     };
 
@@ -613,15 +627,19 @@ CSoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
       };
     }
 
-    // -------------
-    // Vertex shader
-    // -------------
-    vertexShader(v);
+    v.processed = false;
 
-    // ------------
-    // Raterization
-    // ------------
-    rasterize(v);
+    // --------------
+    // Transformation
+    // --------------
+    // Model-View matrix
+    //   from 'object coordinates' to 'eye coordinates'
+    matrixModelView.transform4(v.vo, v.ve);
+
+    // ------------------
+    // Primitive Assembly
+    // ------------------
+    primitiveAssembly(v);
   }
 
   end();
@@ -629,29 +647,31 @@ CSoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::_vertexShader(SVertexF & v)
+CSoftGLESFloat::_vertexShaderTransform(SVertexF & v)
 {
   // --------------
   // Transformation
   // --------------
-  // Model-View matrix
-  //   from 'object coordinates' to 'eye coordinates'
-  matrixModelView.transform4(v.v, v.v);
   // Projection matrix
   //   from 'eye coordinates' to 'clip coordinates'
-  matrixProjection.transform4(v.v, v.v);
+  matrixProjection.transform4(v.ve, v.vc);
   // Perspective division
   //   from 'clip coordinates' to 'normalized device coordinates'
-  GLfloat iw = 1.0f / v.v[3];
-  v.v[0] *= iw;
-  v.v[1] *= iw;
-  v.v[2] *= iw;
+  GLfloat iw = 1.0f / v.vc[3];
+  v.vd[0] = v.vc[0] * iw;
+  v.vd[1] = v.vc[1] * iw;
+  v.vd[2] = v.vc[2] * iw;
   // Viewport transformation
   //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = (GLint)    ((xA_ * v.v[0]) + xB_);
-  v.sy = (GLint)    ((yA_ * v.v[1]) + yB_);
-  v.sz = (uint32_t)(((zA_ * v.v[2]) + zB_) * zMax_);
+  v.sx = (GLint)    ((xA_ * v.vd[0]) + xB_);
+  v.sy = (GLint)    ((yA_ * v.vd[1]) + yB_);
+  v.sz = (uint32_t)(((zA_ * v.vd[2]) + zB_) * zMax_);
+}
 
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::_vertexShaderLight(SVertexF & v)
+{
   // --------
   // Lighting
   // --------
@@ -691,27 +711,29 @@ CSoftGLESFloat::_vertexShader(SVertexF & v)
     }
 
     // Multiply vertex color by calculated color
-    v.cl *= c;
+    v.cl2 = v.cl * c;
     // Clamp to 0..1
-    v.cl.clamp();
+    v.cl2.clamp();
   }
 
+  // ---
   // Fog
+  // ---
   if(fogEnabled_ == true)
   {
     GLfloat partFog, partColor;
-    partFog = clampf((abs(v.v[2]) - fogStart_) / (fogEnd_ - fogStart_));
+    partFog = clampf((abs(v.ve[2]) - fogStart_) / (fogEnd_ - fogStart_));
     partColor = 1.0f - partFog;
-    v.cl = ((v.cl * partColor) + (fogColor_ * partFog)).getClamped();
+    v.cl2 = ((v.cl2 * partColor) + (fogColor_ * partFog)).getClamped();
   }
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::_rasterize(SVertexF & v)
+CSoftGLESFloat::_primitiveAssembly(SVertexF & v)
 {
   // Copy vertex into vertex buffer
-  *polygon[vertIdx_] = v;
+  *triangle_.v[vertIdx_] = v;
 
   // ------------------
   // Primitive Assembly
@@ -721,7 +743,7 @@ CSoftGLESFloat::_rasterize(SVertexF & v)
     case GL_TRIANGLES:
     {
       if(vertIdx_ == 2)
-        rasterPoly(polygon);
+        rasterTriangle(triangle_);
       vertIdx_++;
       if(vertIdx_ > 2)
         vertIdx_ = 0;
@@ -731,19 +753,21 @@ CSoftGLESFloat::_rasterize(SVertexF & v)
     {
       if(vertIdx_ == 2)
       {
-        rasterPoly(polygon);
+        rasterTriangle(triangle_);
+        // Swap 3rd with 1st or 2nd vertex pointer
         if(bFlipFlop_ == true)
         {
-          SVertexF * pTemp = polygon[0];
-          polygon[0] = polygon[2];
-          polygon[2] = pTemp;
+          SVertexF * pTemp = triangle_.v[0];
+          triangle_.v[0] = triangle_.v[2];
+          triangle_.v[2] = pTemp;
         }
         else
         {
-          SVertexF * pTemp = polygon[1];
-          polygon[1] = polygon[2];
-          polygon[2] = pTemp;
+          SVertexF * pTemp = triangle_.v[1];
+          triangle_.v[1] = triangle_.v[2];
+          triangle_.v[2] = pTemp;
         }
+        bFlipFlop_ = !bFlipFlop_;
       }
       else
         vertIdx_++;
@@ -753,18 +777,11 @@ CSoftGLESFloat::_rasterize(SVertexF & v)
     {
       if(vertIdx_ == 2)
       {
-        rasterPoly(polygon);
-        // Swap 3rd and 2nd vertex
-        if(polygon[1] == &vertices[1])
-        {
-          polygon[1] = &vertices[2];
-          polygon[2] = &vertices[1];
-        }
-        else
-        {
-          polygon[1] = &vertices[1];
-          polygon[2] = &vertices[2];
-        }
+        rasterTriangle(triangle_);
+        // Swap 3rd with 2nd vertex pointer
+        SVertexF * pTemp = triangle_.v[1];
+        triangle_.v[1] = triangle_.v[2];
+        triangle_.v[2] = pTemp;
       }
       else
         vertIdx_++;
@@ -775,40 +792,61 @@ CSoftGLESFloat::_rasterize(SVertexF & v)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterPoly(SVertexF * vtx[3])
+CSoftGLESFloat::_rasterTriangle(STriangleF & tri)
 {
-  // Backface culling
+  // -------
+  // Culling
+  // -------
   if(cullFaceEnabled_ == true)
   {
     // Always invisible when culling both front and back
     if(cullFaceMode_ == GL_FRONT_AND_BACK)
       return;
 
-    // Figure out if we need to cull
-    if((vtx[1]->sx != vtx[0]->sx) && (vtx[2]->sx != vtx[0]->sx))
-    {
-      if(((((gl_fpfromi(vtx[1]->sy - vtx[0]->sy) / (vtx[1]->sx - vtx[0]->sx)) - (gl_fpfromi(vtx[2]->sy - vtx[0]->sy) / (vtx[2]->sx - vtx[0]->sx))) < 0) ^ ((vtx[0]->sx <= vtx[1]->sx) == (vtx[0]->sx > vtx[2]->sx))) == bCullCW_)
-        return;
-    }
-    else if((vtx[2]->sx != vtx[1]->sx) && (vtx[0]->sx != vtx[1]->sx))
-    {
-      if(((((gl_fpfromi(vtx[2]->sy - vtx[1]->sy) / (vtx[2]->sx - vtx[1]->sx)) - (gl_fpfromi(vtx[0]->sy - vtx[1]->sy) / (vtx[0]->sx - vtx[1]->sx))) < 0) ^ ((vtx[1]->sx <= vtx[2]->sx) == (vtx[1]->sx > vtx[0]->sx))) == bCullCW_)
-        return;
-    }
-    else if((vtx[0]->sx != vtx[2]->sx) && (vtx[1]->sx != vtx[2]->sx))
-    {
-      if(((((gl_fpfromi(vtx[0]->sy - vtx[2]->sy) / (vtx[0]->sx - vtx[2]->sx)) - (gl_fpfromi(vtx[1]->sy - vtx[2]->sy) / (vtx[1]->sx - vtx[2]->sx))) < 0) ^ ((vtx[2]->sx <= vtx[0]->sx) == (vtx[2]->sx > vtx[1]->sx))) == bCullCW_)
-        return;
-    }
-    else
-      return; // Triangle invisible
+    TVector3<GLfloat> V0(tri.v[0]->ve);
+    TVector3<GLfloat> V1(tri.v[1]->ve);
+    TVector3<GLfloat> V2(tri.v[2]->ve);
+    TVector3<GLfloat> normal;
+
+    normal = (V0 - V1).crossProduct(V2 - V1);
+    if((normal.z < 0.0f) == bCullCW_)
+      return;
+
+//    normal.normalize();
+//    tri.v[0]->n = normal;
+//    tri.v[1]->n = normal;
+//    tri.v[2]->n = normal;
+  }
+
+  // -------------
+  // Vertex shader
+  // -------------
+  if(tri.v[0]->processed == false)
+  {
+    vertexShaderTransform(*tri.v[0]);
+    if(shadingModel_ == GL_SMOOTH)
+      vertexShaderLight(*tri.v[0]);
+    tri.v[0]->processed = true;
+  }
+  if(tri.v[1]->processed == false)
+  {
+    vertexShaderTransform(*tri.v[1]);
+    if(shadingModel_ == GL_SMOOTH)
+      vertexShaderLight(*tri.v[1]);
+    tri.v[1]->processed = true;
+  }
+  if(tri.v[2]->processed == false)
+  {
+    vertexShaderTransform(*tri.v[2]);
+    vertexShaderLight(*tri.v[2]);
+    tri.v[2]->processed = true;
   }
 
   // Bubble sort the 3 vertexes
   SVertexF * vtemp;
-  SVertexF * vhi(vtx[0]);
-  SVertexF * vmi(vtx[1]);
-  SVertexF * vlo(vtx[2]);
+  SVertexF * vhi(tri.v[0]);
+  SVertexF * vmi(tri.v[1]);
+  SVertexF * vlo(tri.v[2]);
 
   // Swap bottom with middle?
   if(vlo->sy > vmi->sy)
@@ -912,9 +950,9 @@ CSoftGLESFloat::rasterPoly(SVertexF * vtx[3])
   {
     if(depthTestEnabled_ == true)
       for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineZ(*pEdgeLeft, *pEdgeRight, y, vtx[2]->cl);
+        hlineZ(*pEdgeLeft, *pEdgeRight, y, tri.v[2]->cl2);
     else
       for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hline(*pEdgeLeft, *pEdgeRight, y, vtx[2]->cl);
+        hline(*pEdgeLeft, *pEdgeRight, y, tri.v[2]->cl2);
   }
 }

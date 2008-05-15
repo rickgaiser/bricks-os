@@ -8,6 +8,9 @@
 #include "asm/arch/config.h"
 
 
+#define DEGREE_PRECISION_SHIFT 1
+#define DEGREE_PRECISION_MUL   (1<<DEGREE_PRECISION_SHIFT)
+
 #define m00 matrix[0*4+0]
 #define m01 matrix[0*4+1]
 #define m02 matrix[0*4+2]
@@ -78,8 +81,8 @@ public:
 
 private:
   static bool bInitialized_;
-  static T sinTable_[360];
-  static T cosTable_[360];
+  static T sinTable_[360 * DEGREE_PRECISION_MUL];
+  static T cosTable_[360 * DEGREE_PRECISION_MUL];
 };
 
 
