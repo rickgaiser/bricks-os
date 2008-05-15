@@ -715,6 +715,10 @@ CSoftGLESFloat::_vertexShaderLight(SVertexF & v)
     // Clamp to 0..1
     v.cl2.clamp();
   }
+  else
+  {
+    v.cl2 = v.cl;
+  }
 
   // ---
   // Fog
