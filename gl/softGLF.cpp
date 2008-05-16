@@ -680,7 +680,7 @@ CSoftGLESFloat::_vertexShaderLight(SVertexF & v)
     SColorF c(0, 0, 0, 0);
 
     // Normal Rotation
-    matrixNormal.transform3(v.n, v.n);
+    matrixNormal.transform3(v.n, v.n2);
 
     for(int iLight(0); iLight < 8; iLight++)
     {
@@ -690,7 +690,7 @@ CSoftGLESFloat::_vertexShaderLight(SVertexF & v)
         c += lights_[iLight].ambient * matColorAmbient_;
 
         // Diffuse light
-        GLfloat diffuse = -lights_[iLight].direction.dotProduct(v.n);
+        GLfloat diffuse = lights_[iLight].direction.dotProduct(v.n2);
         if(diffuse >= 0.0f)
         {
           c += lights_[iLight].diffuse * matColorDiffuse_ * diffuse;
@@ -700,7 +700,7 @@ CSoftGLESFloat::_vertexShaderLight(SVertexF & v)
         {
           // Specular light
           TVector3<GLfloat> eye(0, 0, 1);
-          GLfloat specular = lights_[iLight].direction.getCrossProduct(v.n).dotProduct(eye);
+          GLfloat specular = lights_[iLight].direction.getCrossProduct(v.n2).dotProduct(eye);
           if(specular >= 0.0f)
           {
             specular = my_pow(specular, (int)(matShininess_ + 0.5f));
@@ -815,11 +815,6 @@ CSoftGLESFloat::_rasterTriangle(STriangleF & tri)
     normal = (V0 - V1).crossProduct(V2 - V1);
     if((normal.z < 0.0f) == bCullCW_)
       return;
-
-//    normal.normalize();
-//    tri.v[0]->n = normal;
-//    tri.v[1]->n = normal;
-//    tri.v[2]->n = normal;
   }
 
   // -------------

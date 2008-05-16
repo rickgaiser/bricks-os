@@ -30,7 +30,8 @@ struct TVertex
   T vd[3]; // Normalized Device Coordinates
 
   // Normal vector
-  TVector3<T> n;
+  TVector3<T> n;  // Vertex Normal
+  TVector3<T> n2; // Vertex Normal, rotated
 
   // Color
   TColor<T> cl;  // Vertex Color

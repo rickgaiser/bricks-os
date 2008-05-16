@@ -233,9 +233,13 @@ template <class T>
 inline TVector3<T> &
 TVector3<T>::crossProduct(const TVector3 & vec)
 {
-  x = ((y * vec.z) - (z * vec.y));
-  y = ((z * vec.x) - (x * vec.z));
-  z = ((x * vec.y) - (y * vec.x));
+  T tx, ty;
+
+  tx = ((y * vec.z) - (z * vec.y));
+  ty = ((z * vec.x) - (x * vec.z));
+  z  = ((x * vec.y) - (y * vec.x));
+  x  = tx;
+  y  = ty;
 
   return (*this);
 }
@@ -495,9 +499,13 @@ template <class T>
 inline TVector4<T> &
 TVector4<T>::crossProduct(const TVector4 & vec)
 {
-  x = ((y * vec.z) - (z * vec.y));
-  y = ((z * vec.x) - (x * vec.z));
-  z = ((x * vec.y) - (y * vec.x));
+  T tx, ty;
+
+  tx = ((y * vec.z) - (z * vec.y));
+  ty = ((z * vec.x) - (x * vec.z));
+  z  = ((x * vec.y) - (y * vec.x));
+  x  = tx;
+  y  = ty;
 
   return (*this);
 }

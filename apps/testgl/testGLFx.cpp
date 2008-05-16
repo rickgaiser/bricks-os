@@ -10,10 +10,11 @@ extern void initPyramidFx();
 extern void drawPyramidFx();
 extern void initCubeFx();
 extern void drawCubeFx();
-const GLfixed lightAmbient[]  = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
-const GLfixed lightDiffuse[]  = {gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f)};
-const GLfixed lightPosition[] = {gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(2.0f), gl_fpfromf(1.0f)};
-const GLfixed fogColor[]      = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
+const GLfixed material[]      = {gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f)};
+const GLfixed lightAmbient[]  = {gl_fpfromf( 0.5f), gl_fpfromf( 0.5f), gl_fpfromf( 0.5f), gl_fpfromf( 1.0f)};
+const GLfixed lightDiffuse[]  = {gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f)};
+const GLfixed lightPosition[] = {gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 2.0f), gl_fpfromf( 1.0f)};
+const GLfixed fogColor[]      = {gl_fpfromf( 0.4f), gl_fpfromf( 0.4f), gl_fpfromf( 0.4f), gl_fpfromf( 1.0f)};
 
 
 extern void glMakeCurrent(I3DRenderer * ctx);
@@ -43,14 +44,14 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
   glCullFace(GL_BACK);
   glEnable(GL_CULL_FACE);
 
-  // Shade model
-  glShadeModel(/*GL_FLAT*/GL_SMOOTH);
+  // Material
+  glMaterialxv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, material);
 
   // Lighting
-  //glLightxv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
-  //glLightxv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
-  //glLightxv(GL_LIGHT0, GL_POSITION, lightPosition);
-  //glEnable(GL_LIGHT0);
+  glLightxv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
+  glLightxv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+  glLightxv(GL_LIGHT0, GL_POSITION, lightPosition);
+  glEnable(GL_LIGHT0);
   //glEnable(GL_LIGHTING);
 
   // Fog
@@ -74,42 +75,98 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
   initPyramidFx();
   initCubeFx();
   glMatrixMode(GL_MODELVIEW);
-  // Show 1 full rotation around y axis
-  for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(2))
+
+  while(true)
   {
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClear(GL_COLOR_BUFFER_BIT);
-/*
-    glLoadIdentity();
-    glTranslatex(gl_fpfromi(-2), gl_fpfromi(0), gl_fpfromi(-8));
-    glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-    drawPyramidFx();
-
-    glLoadIdentity();
-    glTranslatex(gl_fpfromi(2), gl_fpfromi(0), gl_fpfromi(-8));
-    glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-    drawPyramidFx();
-*/
-    glLoadIdentity();
-    glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
-    glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-    drawCubeFx();
-
-    // Flush everything to surface
-    glFlush();
-
-    // Swap display and render buffers
-    if(bDisplayB == true)
+    glEnable(GL_LIGHTING);
+    glShadeModel(GL_FLAT);
+    // Show 1 full rotation around y axis
+    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(2))
     {
-      p3DRenderer_->setSurface(surface_b);
-      device->displaySurface(surface_a);
+      //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      glLoadIdentity();
+      glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
+      glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
+      drawPyramidFx();
+
+      // Flush everything to surface
+      glFlush();
+
+      // Swap display and render buffers
+      if(bDisplayB == true)
+      {
+        p3DRenderer_->setSurface(surface_b);
+        device->displaySurface(surface_a);
+      }
+      else
+      {
+        p3DRenderer_->setSurface(surface_a);
+        device->displaySurface(surface_b);
+      }
+      bDisplayB = !bDisplayB;
     }
-    else
+
+    glEnable(GL_LIGHTING);
+    glShadeModel(GL_SMOOTH);
+    // Show 1 full rotation around y axis
+    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(2))
     {
-      p3DRenderer_->setSurface(surface_a);
-      device->displaySurface(surface_b);
+      //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      glLoadIdentity();
+      glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
+      glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
+      drawPyramidFx();
+
+      // Flush everything to surface
+      glFlush();
+
+      // Swap display and render buffers
+      if(bDisplayB == true)
+      {
+        p3DRenderer_->setSurface(surface_b);
+        device->displaySurface(surface_a);
+      }
+      else
+      {
+        p3DRenderer_->setSurface(surface_a);
+        device->displaySurface(surface_b);
+      }
+      bDisplayB = !bDisplayB;
     }
-    bDisplayB = !bDisplayB;
+
+    glDisable(GL_LIGHTING);
+    glShadeModel(GL_FLAT);
+    // Show 1 full rotation around y axis
+    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(2))
+    {
+      //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      glLoadIdentity();
+      glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
+      glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
+      drawCubeFx();
+
+      // Flush everything to surface
+      glFlush();
+
+      // Swap display and render buffers
+      if(bDisplayB == true)
+      {
+        p3DRenderer_->setSurface(surface_b);
+        device->displaySurface(surface_a);
+      }
+      else
+      {
+        p3DRenderer_->setSurface(surface_a);
+        device->displaySurface(surface_b);
+      }
+      bDisplayB = !bDisplayB;
+    }
   }
 
   delete p3DRenderer_;

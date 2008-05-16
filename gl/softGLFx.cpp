@@ -679,7 +679,7 @@ CSoftGLESFixed::_vertexShaderLight(SVertexFx & v)
     SColorFx c(0, 0, 0, 0);
 
     // Normal Rotation
-    matrixNormal.transform3(v.n, v.n);
+    matrixNormal.transform3(v.n, v.n2);
 
     for(int iLight(0); iLight < 8; iLight++)
     {
@@ -689,7 +689,7 @@ CSoftGLESFixed::_vertexShaderLight(SVertexFx & v)
         c += lights_[iLight].ambient * matColorAmbient_;
 
         // Diffuse light
-        CFixed diffuse = 0 - lights_[iLight].direction.dotProduct(v.n);
+        CFixed diffuse = lights_[iLight].direction.dotProduct(v.n2);
         if(diffuse >= 0.0f)
         {
           c += lights_[iLight].diffuse * matColorDiffuse_ * diffuse;
@@ -699,7 +699,7 @@ CSoftGLESFixed::_vertexShaderLight(SVertexFx & v)
         {
           // Specular light
           TVector3<CFixed> eye(0, 0, 1);
-          CFixed specular = lights_[iLight].direction.getCrossProduct(v.n).dotProduct(eye);
+          CFixed specular = lights_[iLight].direction.getCrossProduct(v.n2).dotProduct(eye);
           if(specular >= 0.0f)
           {
             specular = my_pow(specular, (int)(matShininess_ + 0.5f));
@@ -812,13 +812,8 @@ CSoftGLESFixed::_rasterTriangle(STriangleFx & tri)
     TVector3<CFixed> normal;
 
     normal = (V0 - V1).getCrossProduct(V2 - V1);
-    if((normal.z.value < 0) == bCullCW_)
+    if((normal.z.value > 0) == bCullCW_)
       return;
-
-//    normal.normalize();
-//    tri.v[0]->n = normal;
-//    tri.v[1]->n = normal;
-//    tri.v[2]->n = normal;
   }
 
   // -------------
