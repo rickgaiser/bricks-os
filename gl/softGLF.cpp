@@ -521,26 +521,29 @@ CASoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
       v.n = normal_;
 
     // Color
-    if(bBufColorEnabled_ == true)
+    if(lightingEnabled_ == false)
     {
-      switch(bufColor_.type)
+      if(bBufColorEnabled_ == true)
       {
-        case GL_FLOAT:
-          v.cl.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cl.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cl.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cl.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          break;
-        case GL_FIXED:
-          v.cl.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cl.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cl.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cl.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          break;
-      };
+        switch(bufColor_.type)
+        {
+          case GL_FLOAT:
+            v.cl.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.cl.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.cl.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.cl.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            break;
+          case GL_FIXED:
+            v.cl.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            v.cl.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            v.cl.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            v.cl.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            break;
+        };
+      }
+      else
+        v.cl = clCurrent;
     }
-    else
-      v.cl = clCurrent;
 
     // Textures
     if((texturesEnabled_ == true) && (bBufTexCoordEnabled_ == true))
@@ -563,9 +566,7 @@ CASoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
     // --------------
     // Transformation
     // --------------
-    // Model-View matrix
-    //   from 'object coordinates' to 'eye coordinates'
-    matrixModelView.transform4(v.vo, v.ve);
+    vertexShaderTransform(v);
 
     // ------------------
     // Primitive Assembly
@@ -583,6 +584,9 @@ CASoftGLESFloat::_vertexShaderTransform(SVertexF & v)
   // --------------
   // Transformation
   // --------------
+  // Model-View matrix
+  //   from 'object coordinates' to 'eye coordinates'
+  matrixModelView.transform4(v.vo, v.ve);
   // Projection matrix
   //   from 'eye coordinates' to 'clip coordinates'
   matrixProjection.transform4(v.ve, v.vc);
@@ -641,14 +645,10 @@ CASoftGLESFloat::_vertexShaderLight(SVertexF & v)
       }
     }
 
-    // Multiply vertex color by calculated color
-    v.cl2 = v.cl * c;
     // Clamp to 0..1
-    v.cl2.clamp();
-  }
-  else
-  {
-    v.cl2 = v.cl;
+    c.clamp();
+    // Multiply vertex color by calculated color
+    v.cl = c;
   }
 
   // ---
@@ -659,7 +659,7 @@ CASoftGLESFloat::_vertexShaderLight(SVertexF & v)
     GLfloat partFog, partColor;
     partFog = clampf((abs(v.ve[2]) - fogStart_) / (fogEnd_ - fogStart_));
     partColor = 1.0f - partFog;
-    v.cl2 = ((v.cl2 * partColor) + (fogColor_ * partFog)).getClamped();
+    v.cl = ((v.cl * partColor) + (fogColor_ * partFog)).getClamped();
   }
 }
 
@@ -818,36 +818,59 @@ CSoftGLESFloat::_rasterTriangle(STriangleF & tri)
     if(cullFaceMode_ == GL_FRONT_AND_BACK)
       return;
 
-    TVector3<GLfloat> V0(tri.v[0]->ve);
-    TVector3<GLfloat> V1(tri.v[1]->ve);
-    TVector3<GLfloat> V2(tri.v[2]->ve);
-    TVector3<GLfloat> normal;
+    GLint v1x = tri.v[2]->sx - tri.v[0]->sx;
+    GLint v1y = tri.v[2]->sy - tri.v[0]->sy;
+    GLint v2x = tri.v[2]->sx - tri.v[1]->sx;
+    GLint v2y = tri.v[2]->sy - tri.v[1]->sy;
+    GLint vnz = (v1x * v2y) - (v1y * v2x);
 
-    normal = (V0 - V1).getCrossProduct(V2 - V1);
-    if((normal.z < 0.0f) == bCullCW_)
+    if(vnz == 0)
+      return;
+
+    if((vnz > 0) == bCullCW_)
       return;
   }
 
-  // -------------
-  // Vertex shader
-  // -------------
-  if(tri.v[0]->processed == false)
+  // --------
+  // Clipping
+  // --------
+  for(int iVertex(0); iVertex < 3; iVertex++)
   {
-    vertexShaderTransform(*tri.v[0]);
-    if(shadingModel_ == GL_SMOOTH)
-      vertexShaderLight(*tri.v[0]);
-    tri.v[0]->processed = true;
+    // x
+    if(tri.v[iVertex]->vd[0] > 1.0f)
+      return;
+    else if(tri.v[iVertex]->vd[0] < -1.0f)
+      return;
+    // y
+    if(tri.v[iVertex]->vd[1] > 1.0f)
+      return;
+    else if(tri.v[iVertex]->vd[1] < -1.0f)
+      return;
+    // z
+    if(tri.v[iVertex]->vd[2] > 1.0f)
+      return;
+    else if(tri.v[iVertex]->vd[2] < -1.0f)
+      return;
   }
-  if(tri.v[1]->processed == false)
+
+  // ----------------------
+  // Vertex shader lighting
+  // ----------------------
+  if(shadingModel_ == GL_SMOOTH)
   {
-    vertexShaderTransform(*tri.v[1]);
-    if(shadingModel_ == GL_SMOOTH)
+    if(tri.v[0]->processed == false)
+    {
+      vertexShaderLight(*tri.v[0]);
+      tri.v[0]->processed = true;
+    }
+    if(tri.v[1]->processed == false)
+    {
       vertexShaderLight(*tri.v[1]);
-    tri.v[1]->processed = true;
+      tri.v[1]->processed = true;
+    }
   }
   if(tri.v[2]->processed == false)
   {
-    vertexShaderTransform(*tri.v[2]);
     vertexShaderLight(*tri.v[2]);
     tri.v[2]->processed = true;
   }
@@ -960,9 +983,9 @@ CSoftGLESFloat::_rasterTriangle(STriangleF & tri)
   {
     if(depthTestEnabled_ == true)
       for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineZ(*pEdgeLeft, *pEdgeRight, y, tri.v[2]->cl2);
+        hlineZ(*pEdgeLeft, *pEdgeRight, y, tri.v[2]->cl);
     else
       for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hline(*pEdgeLeft, *pEdgeRight, y, tri.v[2]->cl2);
+        hline(*pEdgeLeft, *pEdgeRight, y, tri.v[2]->cl);
   }
 }
