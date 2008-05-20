@@ -6,6 +6,7 @@ OBJS            =\
                 2dRenderer \
                 bricks \
                 debug \
+                externalMemory \
                 genwait \
                 interrupt \
                 interruptManager \
