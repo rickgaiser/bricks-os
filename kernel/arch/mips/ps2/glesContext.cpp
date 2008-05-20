@@ -18,7 +18,7 @@ CPS2GLESContext::CPS2GLESContext()
  , ps2Textures_(TEXTURES_OFF)
  , ps2Fog_(FOG_OFF)
  , ps2AlphaBlend_(ALPHABLEND_OFF)
- , ps2Aliasing_(ALIASING_ON)
+ , ps2Aliasing_(ALIASING_OFF)
  , ps2DepthFunction_(ZTST_GREATER)
  , ps2DepthInvert_(true)
 {
@@ -136,40 +136,29 @@ CPS2GLESContext::glEnable(GLenum cap)
     case GL_LIGHT5:     lights_[5].enabled = true; break;
     case GL_LIGHT6:     lights_[6].enabled = true; break;
     case GL_LIGHT7:     lights_[7].enabled = true; break;
-/*
     case GL_DEPTH_TEST:
     {
       depthTestEnabled_ = true;
-      // Z-Buffer
-      switch(renderSurface->mode.bpp)
-      {
-        case 16:
-        {
-          packet_.data(zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_ENABLE));
-          ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 2);
-          zMax_ = 0xffff;
-          break;
-        }
-        case 24:
-        {
-          packet_.data(zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
-          ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 3);
-          zMax_ = 0xffffff;
-          break;
-        }
-        case 32:
-        {
-          packet_.data(zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
-          ps2TexturesStart_ = gs_mem_current + (renderSurface->mode.width * renderSurface->mode.height * 4);
-          zMax_ = 0xffffffff;
-          break;
-        }
-      };
+/*
+      // 16bit
+      packet_.data(zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_16S, ZMSK_ENABLE));
+      //ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 2);
+      zMax_ = 0xffff;
+
+      // 24bit
+      packet_.data(zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
+      //ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 3);
+      zMax_ = 0xffffff;
+*/
+      // 32bit
+      packet_.data(zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
+      //ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 4);
+      zMax_ = 0xffffffff;
+
       // Z-Buffer test
       packet_.data(test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
     }
-*/
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
     case GL_TEXTURE_2D: texturesEnabled_   = true; ps2Textures_ = TEXTURES_ON; break;
@@ -340,7 +329,7 @@ CPS2GLESContext::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 void
 CPS2GLESContext::begin(GLenum mode)
 {
-  rasterMode_ = mode;
+  CASoftGLESFloat::begin(mode);
 
   switch(mode)
   {
@@ -358,38 +347,59 @@ CPS2GLESContext::begin(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::primitiveAssembly(SVertexF & v)
-{
-  vertexShaderTransform(v);
-  vertexShaderLight(v);
-
-  // Add to message
-  if(texturesEnabled_ == true)
-  {
-    GLfloat tq = 1.0f / v.vc[3];
-    v.t[0] *= tq;
-    v.t[1] *= tq;
-
-    packet_.data(st, GS_ST(*(uint32_t *)(&v.t[0]), *(uint32_t *)(&v.t[1])));
-    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), 100, *(uint32_t *)(&tq)));
-  }
-  else
-  {
-    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), 100, 0));
-  }
-  packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
-}
-
-//-----------------------------------------------------------------------------
-void
 CPS2GLESContext::end()
 {
+  CASoftGLESFloat::end();
+
   bDataWaiting_ = true;
 }
 
 //-----------------------------------------------------------------------------
-// Dummy
 void
 CPS2GLESContext::rasterTriangle(STriangleF & tri)
 {
+  uint8_t alpha;
+
+  for(int iVertex(0); iVertex < 3; iVertex++)
+  {
+    SVertexF & v = *tri.v[iVertex];
+
+    if(ps2DepthInvert_ == true)
+      v.sz = zMax_ - v.sz;
+
+    // Determine alpha value (for aliasing and alpha blending)
+    // Both off: solid colors
+    if((ps2Aliasing_ == ALIASING_OFF) && (ps2AlphaBlend_ == ALPHABLEND_OFF))
+      alpha = 255;
+    // Only alpha blending: use alpha from color value
+    else if((ps2Aliasing_ == ALIASING_OFF) && (ps2AlphaBlend_ == ALPHABLEND_ON))
+      alpha = (uint8_t)(v.cl.a*255);
+    // Only aliasing: use value 0x80
+    else if((ps2Aliasing_ == ALIASING_ON)  && (ps2AlphaBlend_ == ALPHABLEND_OFF))
+      alpha = 0x80;
+    // Both: Can't do both at the same time!!! Prefer alpha blending then...
+    else
+    {
+      alpha = (uint8_t)(v.cl.a*255);
+      // Don't use 0x80, it's the 'magic' aliasing value
+      if(alpha == 0x80)
+        alpha = 0x81;
+    }
+
+    // Add to message
+    if(texturesEnabled_ == true)
+    {
+      GLfloat tq = 1.0f / v.vc[3];
+      v.t[0] *= tq;
+      v.t[1] *= tq;
+
+      packet_.data(st, GS_ST(*(uint32_t *)(&v.t[0]), *(uint32_t *)(&v.t[1])));
+      packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, *(uint32_t *)(&tq)));
+    }
+    else
+    {
+      packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, 0));
+    }
+    packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
+  }
 }

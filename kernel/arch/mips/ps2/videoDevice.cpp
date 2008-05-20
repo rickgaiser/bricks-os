@@ -28,10 +28,10 @@ const SPS2CRTCMode cmodes[] =
   {0x2c, 2}, // SVGA, 72Hz 8
   {0x2d, 2}, // SVGA, 75Hz 9
   {0x2e, 2}, // SVGA, 85Hz 10
-  {0x3b, 2}, //  XGA, 60Hz 11
-  {0x3c, 2}, //  XGA, 72Hz 12
-  {0x3d, 2}, //  XGA, 75Hz 13
-  {0x3e, 2}, //  XGA, 85Hz 14
+  {0x3b, 1}, //  XGA, 60Hz 11
+  {0x3c, 1}, //  XGA, 72Hz 12
+  {0x3d, 1}, //  XGA, 75Hz 13
+  {0x3e, 1}, //  XGA, 85Hz 14
   {0x4a, 1}, // SXGA, 60Hz 15
   {0x4b, 1}, // SXGA, 75Hz 16
 

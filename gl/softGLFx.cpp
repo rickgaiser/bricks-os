@@ -440,6 +440,20 @@ CASoftGLESFixed::vertexShaderLight(SVertexFx & v)
 
 //-----------------------------------------------------------------------------
 void
+CASoftGLESFixed::fragmentCull(STriangleFx & tri)
+{
+  _fragmentCull(tri);
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::fragmentClip(STriangleFx & tri)
+{
+  _fragmentClip(tri);
+}
+
+//-----------------------------------------------------------------------------
+void
 CASoftGLESFixed::primitiveAssembly(SVertexFx & v)
 {
   _primitiveAssembly(v);
@@ -562,16 +576,7 @@ CASoftGLESFixed::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
     }
 
     v.processed = false;
-
-    // --------------
-    // Transformation
-    // --------------
     vertexShaderTransform(v);
-
-    // ------------------
-    // Primitive Assembly
-    // ------------------
-    primitiveAssembly(v);
   }
 
   end();
@@ -601,6 +606,8 @@ CASoftGLESFixed::_vertexShaderTransform(SVertexFx & v)
   v.sx = (GLint)((xA_ * v.vd[0]) + xB_);
   v.sy = (GLint)((yA_ * v.vd[1]) + yB_);
   v.sz =        ((zA_ * v.vd[2]) + zB_).value - 1; // 16bit z-buffer
+
+  primitiveAssembly(v);
 }
 
 //-----------------------------------------------------------------------------
@@ -626,7 +633,7 @@ CASoftGLESFixed::_vertexShaderLight(SVertexFx & v)
 
         // Diffuse light
         CFixed diffuse = lights_[iLight].direction.dotProduct(v.n2);
-        if(diffuse >= 0.0f)
+        if(diffuse > 0.0f)
         {
           c += lights_[iLight].diffuse * matColorDiffuse_ * diffuse;
         }
@@ -634,9 +641,10 @@ CASoftGLESFixed::_vertexShaderLight(SVertexFx & v)
         if(matShininess_ >= 0.5f)
         {
           // Specular light
-          TVector3<CFixed> eye(0, 0, 1);
-          CFixed specular = lights_[iLight].direction.getCrossProduct(v.n2).dotProduct(eye);
-          if(specular >= 0.0f)
+          TVector3<CFixed> eye(v.ve);
+          eye.normalize();
+          CFixed specular = lights_[iLight].direction.getReflection(v.n2).dotProduct(eye);
+          if(specular > 0.0f)
           {
             specular = my_pow(specular, (int)(matShininess_ + 0.5f));
             c += lights_[iLight].specular * matColorSpecular_ * specular;
@@ -665,6 +673,86 @@ CASoftGLESFixed::_vertexShaderLight(SVertexFx & v)
 
 //-----------------------------------------------------------------------------
 void
+CASoftGLESFixed::_fragmentCull(STriangleFx & tri)
+{
+  // -------
+  // Culling
+  // -------
+  if(cullFaceEnabled_ == true)
+  {
+    // Always invisible when culling both front and back
+    if(cullFaceMode_ == GL_FRONT_AND_BACK)
+      return;
+
+    GLint v1x = tri.v[2]->sx - tri.v[0]->sx;
+    GLint v1y = tri.v[2]->sy - tri.v[0]->sy;
+    GLint v2x = tri.v[2]->sx - tri.v[1]->sx;
+    GLint v2y = tri.v[2]->sy - tri.v[1]->sy;
+    GLint vnz = (v1x * v2y) - (v1y * v2x);
+
+    if(vnz == 0)
+      return;
+
+    if((vnz > 0) == bCullCW_)
+      return;
+  }
+
+  fragmentClip(tri);
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::_fragmentClip(STriangleFx & tri)
+{
+  // --------
+  // Clipping
+  // --------
+  for(int iVertex(0); iVertex < 3; iVertex++)
+  {
+    // x
+    if(tri.v[iVertex]->vd[0] > 1.0f)
+      return;
+    else if(tri.v[iVertex]->vd[0] < -1.0f)
+      return;
+    // y
+    if(tri.v[iVertex]->vd[1] > 1.0f)
+      return;
+    else if(tri.v[iVertex]->vd[1] < -1.0f)
+      return;
+    // z
+    if(tri.v[iVertex]->vd[2] > 1.0f)
+      return;
+    else if(tri.v[iVertex]->vd[2] < -1.0f)
+      return;
+  }
+
+  // ----------------------
+  // Vertex shader lighting
+  // ----------------------
+  if(shadingModel_ == GL_SMOOTH)
+  {
+    if(tri.v[0]->processed == false)
+    {
+      vertexShaderLight(*tri.v[0]);
+      tri.v[0]->processed = true;
+    }
+    if(tri.v[1]->processed == false)
+    {
+      vertexShaderLight(*tri.v[1]);
+      tri.v[1]->processed = true;
+    }
+  }
+  if(tri.v[2]->processed == false)
+  {
+    vertexShaderLight(*tri.v[2]);
+    tri.v[2]->processed = true;
+  }
+
+  rasterTriangle(tri);
+}
+
+//-----------------------------------------------------------------------------
+void
 CASoftGLESFixed::_primitiveAssembly(SVertexFx & v)
 {
   // Copy vertex into vertex buffer
@@ -678,7 +766,7 @@ CASoftGLESFixed::_primitiveAssembly(SVertexFx & v)
     case GL_TRIANGLES:
     {
       if(vertIdx_ == 2)
-        rasterTriangle(triangle_);
+        fragmentCull(triangle_);
       vertIdx_++;
       if(vertIdx_ > 2)
         vertIdx_ = 0;
@@ -688,7 +776,7 @@ CASoftGLESFixed::_primitiveAssembly(SVertexFx & v)
     {
       if(vertIdx_ == 2)
       {
-        rasterTriangle(triangle_);
+        fragmentCull(triangle_);
         // Swap 3rd with 1st or 2nd vertex pointer
         if(bFlipFlop_ == true)
         {
@@ -712,7 +800,7 @@ CASoftGLESFixed::_primitiveAssembly(SVertexFx & v)
     {
       if(vertIdx_ == 2)
       {
-        rasterTriangle(triangle_);
+        fragmentCull(triangle_);
         // Swap 3rd with 2nd vertex pointer
         SVertexFx * pTemp = triangle_.v[1];
         triangle_.v[1] = triangle_.v[2];
@@ -809,73 +897,6 @@ CSoftGLESFixed::rasterTriangle(STriangleFx & tri)
 void
 CSoftGLESFixed::_rasterTriangle(STriangleFx & tri)
 {
-  // -------
-  // Culling
-  // -------
-  if(cullFaceEnabled_ == true)
-  {
-    // Always invisible when culling both front and back
-    if(cullFaceMode_ == GL_FRONT_AND_BACK)
-      return;
-
-    GLint v1x = tri.v[2]->sx - tri.v[0]->sx;
-    GLint v1y = tri.v[2]->sy - tri.v[0]->sy;
-    GLint v2x = tri.v[2]->sx - tri.v[1]->sx;
-    GLint v2y = tri.v[2]->sy - tri.v[1]->sy;
-    GLint vnz = (v1x * v2y) - (v1y * v2x);
-
-    if(vnz == 0)
-      return;
-
-    if((vnz > 0) == bCullCW_)
-      return;
-  }
-
-  // --------
-  // Clipping
-  // --------
-
-  for(int iVertex(0); iVertex < 3; iVertex++)
-  {
-    // x
-    if(tri.v[iVertex]->vd[0] > CFixed(1))
-      return;
-    else if(tri.v[iVertex]->vd[0] < CFixed(-1))
-      return;
-    // y
-    if(tri.v[iVertex]->vd[1] > CFixed(1))
-      return;
-    else if(tri.v[iVertex]->vd[1] < CFixed(-1))
-      return;
-    // z
-    if(tri.v[iVertex]->vd[2] > CFixed(1))
-      return;
-    else if(tri.v[iVertex]->vd[2] < CFixed(-1))
-      return;
-  }
-
-  // ----------------------
-  // Vertex shader lighting
-  // ----------------------
-  if(shadingModel_ == GL_SMOOTH)
-  {
-    if(tri.v[0]->processed == false)
-    {
-      vertexShaderLight(*tri.v[0]);
-      tri.v[0]->processed = true;
-    }
-    if(tri.v[1]->processed == false)
-    {
-      vertexShaderLight(*tri.v[1]);
-      tri.v[1]->processed = true;
-    }
-  }
-  if(tri.v[2]->processed == false)
-  {
-    vertexShaderLight(*tri.v[2]);
-    tri.v[2]->processed = true;
-  }
-
   // Bubble sort the 3 vertexes
   SVertexFx * vtemp;
   SVertexFx * vhi(tri.v[0]);

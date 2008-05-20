@@ -53,6 +53,10 @@ protected:
   virtual void vertexShaderTransform(SVertexF & v);
   virtual void vertexShaderLight(SVertexF & v);
 
+  // Fragment shader
+  virtual void fragmentCull(STriangleF & tri);
+  virtual void fragmentClip(STriangleF & tri);
+
   // Rasterizer
   virtual void begin(GLenum mode);
   virtual void primitiveAssembly(SVertexF & v);
@@ -127,6 +131,8 @@ private:
   void _glDrawArrays(GLenum mode, GLint first, GLsizei count)   FAST_CODE;
   void _vertexShaderTransform(SVertexF & v)                     FAST_CODE;
   void _vertexShaderLight(SVertexF & v)                         FAST_CODE;
+  void _fragmentCull(STriangleF & tri)                          FAST_CODE;
+  void _fragmentClip(STriangleF & tri)                          FAST_CODE;
   void _primitiveAssembly(SVertexF & v)                         FAST_CODE;
 };
 

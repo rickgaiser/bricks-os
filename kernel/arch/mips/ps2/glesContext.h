@@ -38,6 +38,13 @@ public:
   CPS2GLESContext();
   virtual ~CPS2GLESContext();
 
+  // Surfaces
+  virtual void       setSurface(CSurface * surface){CAPS2Renderer::setSurface(surface);}
+  virtual CSurface * getSurface()                  {return CAPS2Renderer::getSurface();}
+
+  // Flush operations to surface
+  virtual void       flush()                       {CAPS2Renderer::flush();}
+
   virtual void glClear(GLbitfield mask);
   virtual void glDepthFunc(GLenum func);
   virtual void glDisable(GLenum cap);
@@ -52,11 +59,8 @@ public:
   virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
 
 protected:
-  // Rasterizer
   virtual void begin(GLenum mode);
-  virtual void primitiveAssembly(SVertexF & v);
   virtual void end();
-
   virtual void rasterTriangle(STriangleF & tri);
 
 private:
