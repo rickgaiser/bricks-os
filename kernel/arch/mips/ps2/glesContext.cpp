@@ -371,11 +371,11 @@ CPS2GLESContext::primitiveAssembly(SVertexF & v)
     v.t[1] *= tq;
 
     packet_.data(st, GS_ST(*(uint32_t *)(&v.t[0]), *(uint32_t *)(&v.t[1])));
-    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl2.r*255), (uint8_t)(v.cl2.g*255), (uint8_t)(v.cl2.b*255), 100, *(uint32_t *)(&tq)));
+    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), 100, *(uint32_t *)(&tq)));
   }
   else
   {
-    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl2.r*255), (uint8_t)(v.cl2.g*255), (uint8_t)(v.cl2.b*255), 100, 0));
+    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), 100, 0));
   }
   packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
 }
