@@ -30,18 +30,10 @@ struct STexture
 //-----------------------------------------------------------------------------
 class CAGLESTextures
  : public virtual I3DRenderer
- , public virtual CASoftwareRenderer
 {
 public:
   CAGLESTextures();
   virtual ~CAGLESTextures();
-
-  // Surfaces
-  virtual void       setSurface(CSurface * surface) = 0;
-  virtual CSurface * getSurface() = 0;
-
-  // Flush operations to surface
-  virtual void       flush() = 0;
 
   virtual void glBindTexture(GLenum target, GLuint texture);
   virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
@@ -51,7 +43,6 @@ public:
   virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
 
 protected:
-  bool        texturesEnabled_;
   STexture  * pCurrentTex_;
 
 private:

@@ -193,7 +193,8 @@ CPS2Surface::~CPS2Surface()
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CAPS2Renderer::CAPS2Renderer(CSurface * surface)
- : pSurface_(NULL)
+ : IRenderer()
+ , pSurface_(NULL)
  , packet_(1000)
  , bDataWaiting_(false)
 {
@@ -217,6 +218,7 @@ CAPS2Renderer::~CAPS2Renderer()
 void
 CAPS2Renderer::setSurface(CSurface * surface)
 {
+  IRenderer::setSurface(surface);
   pSurface_ = (CPS2Surface *)surface;
 
   if(pSurface_ != NULL)

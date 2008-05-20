@@ -9,33 +9,10 @@
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CPS2GLESContext::CPS2GLESContext()
- : CAGLESFxToFloatContext()
- , CAGLESBuffers()
- , CAGLESCull()
- , CAGLESMatrixF()
+ : CASoftGLESFloat()
  , CAPS2Renderer()
 
- , depthTestEnabled_(false)
- , depthFunction_(GL_LESS)
- , depthClear_(1.0f)
- , zClearValue_(0xffffffff)
- , zbuffer(0)
- , zNear_(0.0f)
- , zFar_(1.0f)
- , zMax_(0xffffffff) // 32bit z-buffer
-
- , shadingModel_(GL_FLAT)
- , lightingEnabled_(false)
- , normalizeEnabled_(false)
- , fogEnabled_(false)
- , texturesEnabled_(false)
  , pCurrentTex_(NULL)
-
- , viewportXOffset(0)
- , viewportYOffset(0)
- , viewportPixelCount(0)
- , viewportWidth(0)
- , viewportHeight(0)
 
  , ps2Shading_(SHADE_FLAT)
  , ps2Textures_(TEXTURES_OFF)
@@ -45,85 +22,6 @@ CPS2GLESContext::CPS2GLESContext()
  , ps2DepthFunction_(ZTST_GREATER)
  , ps2DepthInvert_(true)
 {
-  clCurrent.r = 1.0f;
-  clCurrent.g = 1.0f;
-  clCurrent.b = 1.0f;
-  clCurrent.a = 1.0f;
-
-  clClear.r = 0.0f;
-  clClear.g = 0.0f;
-  clClear.b = 0.0f;
-  clClear.a = 0.0f;
-
-  // Light properties
-  for(int iLight(0); iLight < 8; iLight++)
-  {
-    lights_[iLight].ambient.r = 0.0f;
-    lights_[iLight].ambient.g = 0.0f;
-    lights_[iLight].ambient.b = 0.0f;
-    lights_[iLight].ambient.a = 1.0f;
-
-    if(iLight == 0)
-    {
-      lights_[iLight].diffuse.r = 1.0f;
-      lights_[iLight].diffuse.g = 1.0f;
-      lights_[iLight].diffuse.b = 1.0f;
-      lights_[iLight].diffuse.a = 1.0f;
-
-      lights_[iLight].specular.r = 1.0f;
-      lights_[iLight].specular.g = 1.0f;
-      lights_[iLight].specular.b = 1.0f;
-      lights_[iLight].specular.a = 1.0f;
-    }
-    else
-    {
-      lights_[iLight].diffuse.r = 0.0f;
-      lights_[iLight].diffuse.g = 0.0f;
-      lights_[iLight].diffuse.b = 0.0f;
-      lights_[iLight].diffuse.a = 0.0f;
-
-      lights_[iLight].specular.r = 0.0f;
-      lights_[iLight].specular.g = 0.0f;
-      lights_[iLight].specular.b = 0.0f;
-      lights_[iLight].specular.a = 0.0f;
-    }
-
-    lights_[iLight].position.x = 0.0f;
-    lights_[iLight].position.y = 0.0f;
-    lights_[iLight].position.z = 1.0f;
-    lights_[iLight].position.w = 0.0f;
-    lights_[iLight].direction  = lights_[iLight].position;
-    lights_[iLight].direction.invert();
-
-    lights_[iLight].enabled = false;
-  }
-
-  // Material properties
-  matColorAmbient_.r  = 0.2f;
-  matColorAmbient_.g  = 0.2f;
-  matColorAmbient_.b  = 0.2f;
-  matColorAmbient_.a  = 1.0f;
-
-  matColorDiffuse_.r  = 0.8f;
-  matColorDiffuse_.g  = 0.8f;
-  matColorDiffuse_.b  = 0.8f;
-  matColorDiffuse_.a  = 1.0f;
-
-  matColorSpecular_.r = 0.0f;
-  matColorSpecular_.g = 0.0f;
-  matColorSpecular_.b = 0.0f;
-  matColorSpecular_.a = 1.0f;
-
-  matColorEmission_.r = 0.0f;
-  matColorEmission_.g = 0.0f;
-  matColorEmission_.b = 0.0f;
-  matColorEmission_.a = 1.0f;
-
-  matShininess_       = 0.0f;
-
-  zA_ = (zFar_ - zNear_) / 2;
-  zB_ = (zFar_ + zNear_) / 2;
-
   for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
     textures_[idx].used = false;
 }
@@ -164,66 +62,6 @@ CPS2GLESContext::glClear(GLbitfield mask)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
-{
-  clClear.r = red;
-  clClear.g = green;
-  clClear.b = blue;
-  clClear.a = alpha;
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glClearDepthf(GLclampf depth)
-{
-  depthClear_ = depth;
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
-{
-  clCurrent.r = (GLfloat)red   / 255.0f;
-  clCurrent.g = (GLfloat)green / 255.0f;
-  clCurrent.b = (GLfloat)blue  / 255.0f;
-  clCurrent.a = (GLfloat)alpha / 255.0f;
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
-{
-  clCurrent.r = red;
-  clCurrent.g = green;
-  clCurrent.b = blue;
-  clCurrent.a = alpha;
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glDepthRangef(GLclampf zNear, GLclampf zFar)
-{
-  zNear_ = clampf(zNear);
-  zFar_  = clampf(zFar);
-
-  zA_ = (zFar_ - zNear_) / 2;
-  zB_ = (zFar_ + zNear_) / 2;
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
-{
-  normal_.x = nx;
-  normal_.y = ny;
-  normal_.z = nz;
-
-  if(normalizeEnabled_  == true)
-    normal_.normalize();
-}
-
-//-----------------------------------------------------------------------------
-void
 CPS2GLESContext::glDepthFunc(GLenum func)
 {
   depthFunction_ = func;
@@ -253,15 +91,15 @@ CPS2GLESContext::glDisable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_LIGHTING:   lightingEnabled_   = false; break;
-    case GL_LIGHT0:     lights_[0].enabled = false; break;
-    case GL_LIGHT1:     lights_[1].enabled = false; break;
-    case GL_LIGHT2:     lights_[2].enabled = false; break;
-    case GL_LIGHT3:     lights_[3].enabled = false; break;
-    case GL_LIGHT4:     lights_[4].enabled = false; break;
-    case GL_LIGHT5:     lights_[5].enabled = false; break;
-    case GL_LIGHT6:     lights_[6].enabled = false; break;
-    case GL_LIGHT7:     lights_[7].enabled = false; break;
+    case GL_LIGHTING: lightingEnabled_ = false; break;
+    case GL_LIGHT0: lights_[0].enabled = false; break;
+    case GL_LIGHT1: lights_[1].enabled = false; break;
+    case GL_LIGHT2: lights_[2].enabled = false; break;
+    case GL_LIGHT3: lights_[3].enabled = false; break;
+    case GL_LIGHT4: lights_[4].enabled = false; break;
+    case GL_LIGHT5: lights_[5].enabled = false; break;
+    case GL_LIGHT6: lights_[6].enabled = false; break;
+    case GL_LIGHT7: lights_[7].enabled = false; break;
 /*
     case GL_DEPTH_TEST:
     {
@@ -281,117 +119,6 @@ CPS2GLESContext::glDisable(GLenum cap)
     default:
       ; // Not supported
   };
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glDrawArrays(GLenum mode, GLint first, GLsizei count)
-{
-  if(bBufVertexEnabled_ == false)
-    return;
-
-  GLint idxVertex  (first * bufVertex_.size);
-  GLint idxColor   (first * bufColor_.size);
-  GLint idxNormal  (first * bufNormal_.size);
-  GLint idxTexCoord(first * bufTexCoord_.size);
-  SVertexF v;
-
-  begin(mode);
-
-  // Process all vertices
-  for(GLint i(0); i < count; i++)
-  {
-    // Vertex
-    switch(bufVertex_.type)
-    {
-      case GL_FLOAT:
-        v.v[0] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v[1] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v[2] = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.v[3] = 1.0f;
-        break;
-      case GL_FIXED:
-        v.v[0] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v[1] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v[2] = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
-        v.v[3] = 1.0f;
-        break;
-    };
-
-    // Normal
-    if(bBufNormalEnabled_ == true)
-    {
-      switch(bufNormal_.type)
-      {
-        case GL_FLOAT:
-          v.n.x = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n.y = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n.z = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          break;
-        case GL_FIXED:
-          v.n.x = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n.y = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n.z = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          break;
-      };
-    }
-    else
-      v.n = normal_;
-
-    // Textures
-    if(texturesEnabled_ == true)
-    {
-      // Textures
-      if(bBufTexCoordEnabled_ == true)
-      {
-        switch(bufTexCoord_.type)
-        {
-          case GL_FLOAT:
-            v.t[0] =         ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
-            v.t[1] = (1.0f - ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
-            break;
-          case GL_FIXED:
-            v.t[0] =         gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
-            v.t[1] = (1.0f - gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]));
-            break;
-        };
-      }
-    }
-
-    // Color
-    if(bBufColorEnabled_ == true)
-    {
-      switch(bufColor_.type)
-      {
-        case GL_FLOAT:
-          v.cl.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cl.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cl.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          v.cl.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
-          break;
-        case GL_FIXED:
-          v.cl.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cl.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cl.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          v.cl.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
-          break;
-      };
-    }
-    else
-      v.cl = clCurrent;
-
-    // -------------
-    // Vertex shader
-    // -------------
-    vertexShader(v);
-
-    // ------------
-    // Raterization
-    // ------------
-    rasterize(v);
-  }
-
-  end();
 }
 
 //-----------------------------------------------------------------------------
@@ -455,183 +182,15 @@ CPS2GLESContext::glEnable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glFinish(void)
-{
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glFlush(void)
-{
-  flush();
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glFogf(GLenum pname, GLfloat param)
-{
-  switch(pname)
-  {
-    case GL_FOG_DENSITY: fogDensity_ = param; break;
-    case GL_FOG_START:   fogStart_   = param; break;
-    case GL_FOG_END:     fogEnd_     = param; break;
-    case GL_FOG_MODE:                         break;
-  };
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glFogfv(GLenum pname, const GLfloat * params)
-{
-  switch(pname)
-  {
-    case GL_FOG_COLOR:
-      fogColor_.r = params[0];
-      fogColor_.g = params[1];
-      fogColor_.b = params[2];
-      fogColor_.a = params[3];
-      break;
-  };
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glLightf(GLenum light, GLenum pname, GLfloat param)
-{
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
-{
-  SLightF * pLight = 0;
-  switch(light)
-  {
-    case GL_LIGHT0: pLight = &lights_[0]; break;
-    case GL_LIGHT1: pLight = &lights_[1]; break;
-    case GL_LIGHT2: pLight = &lights_[2]; break;
-    case GL_LIGHT3: pLight = &lights_[3]; break;
-    case GL_LIGHT4: pLight = &lights_[4]; break;
-    case GL_LIGHT5: pLight = &lights_[5]; break;
-    case GL_LIGHT6: pLight = &lights_[6]; break;
-    case GL_LIGHT7: pLight = &lights_[7]; break;
-    default:
-      return;
-  }
-
-  SColorF * pColor = 0;
-  switch(pname)
-  {
-    case GL_AMBIENT:  pColor = &pLight->ambient;  break;
-    case GL_DIFFUSE:  pColor = &pLight->diffuse;  break;
-    case GL_SPECULAR: pColor = &pLight->specular; break;
-    case GL_POSITION:
-      pLight->position.x = params[0];
-      pLight->position.y = params[1];
-      pLight->position.z = params[2];
-      pLight->position.w = params[3];
-      // Invert and normalize
-      pLight->direction = pLight->position;
-      pLight->direction.invert();
-      pLight->direction.normalize();
-    default:
-      return;
-  }
-
-  pColor->r = params[0];
-  pColor->g = params[1];
-  pColor->b = params[2];
-  pColor->a = params[3];
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glMaterialf(GLenum face, GLenum pname, GLfloat param)
-{
-  switch(pname)
-  {
-    case GL_SHININESS:
-      matShininess_ = param;
-      break;
-    default:
-      return;
-  }
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
-{
-  switch(pname)
-  {
-    case GL_AMBIENT:
-      matColorAmbient_.r = params[0];
-      matColorAmbient_.g = params[1];
-      matColorAmbient_.b = params[2];
-      matColorAmbient_.a = params[3];
-      break;
-    case GL_DIFFUSE:
-      matColorDiffuse_.r = params[0];
-      matColorDiffuse_.g = params[1];
-      matColorDiffuse_.b = params[2];
-      matColorDiffuse_.a = params[3];
-      break;
-    case GL_SPECULAR:
-      matColorSpecular_.r = params[0];
-      matColorSpecular_.g = params[1];
-      matColorSpecular_.b = params[2];
-      matColorSpecular_.a = params[3];
-      break;
-    case GL_EMISSION:
-      matColorEmission_.r = params[0];
-      matColorEmission_.g = params[1];
-      matColorEmission_.b = params[2];
-      matColorEmission_.a = params[3];
-      break;
-    case GL_SHININESS:
-      matShininess_ = params[0];
-      break;
-    case GL_AMBIENT_AND_DIFFUSE:
-      matColorAmbient_.r = params[0];
-      matColorAmbient_.g = params[1];
-      matColorAmbient_.b = params[2];
-      matColorAmbient_.a = params[3];
-      matColorDiffuse_.r = params[0];
-      matColorDiffuse_.g = params[1];
-      matColorDiffuse_.b = params[2];
-      matColorDiffuse_.a = params[3];
-      break;
-    default:
-      return;
-  }
-}
-
-//-----------------------------------------------------------------------------
-void
 CPS2GLESContext::glShadeModel(GLenum mode)
 {
   shadingModel_ = mode;
+
   switch(mode)
   {
     case GL_FLAT:   ps2Shading_ = SHADE_FLAT;    break;
     case GL_SMOOTH: ps2Shading_ = SHADE_GOURAUD; break;
   }
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-  viewportXOffset    = x;
-  viewportYOffset    = y;
-  viewportWidth      = width;
-  viewportHeight     = height;
-  viewportPixelCount = width * height;
-
-  xA_ = (viewportWidth  >> 1);
-  xB_ = (GLfloat)(viewportWidth  >> 1) + 0.5f;
-  yA_ = -(viewportHeight >> 1);
-  yB_ = (GLfloat)(viewportHeight >> 1) + 0.5f;
 }
 
 //-----------------------------------------------------------------------------
@@ -778,118 +337,6 @@ CPS2GLESContext::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 }
 
 //-----------------------------------------------------------------------------
-inline GLfloat
-my_pow(GLfloat x, int y)
-{
-  GLfloat rv(x);
-  for(int i(1); i < y; i++)
-    rv *= x;
-  return rv;
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::vertexShader(SVertexF & v)
-{
-  // --------------
-  // Transformation
-  // --------------
-  // Model-View matrix
-  //   from 'object coordinates' to 'eye coordinates'
-  matrixModelView.transform4(v.v, v.v);
-  // Projection matrix
-  //   from 'eye coordinates' to 'clip coordinates'
-  matrixProjection.transform4(v.v, v.v);
-  // Perspective division
-  //   from 'clip coordinates' to 'normalized device coordinates'
-  GLfloat iw = 1.0f / v.v[3];
-  v.v[0] *= iw;
-  v.v[1] *= iw;
-  v.v[2] *= iw;
-  // Viewport transformation
-  //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = (GLint)    ((xA_ * v.v[0]) + xB_);
-  v.sy = (GLint)    ((yA_ * v.v[1]) + yB_);
-  v.sz = (uint32_t)(((zA_ * v.v[2]) + zB_) * zMax_);
-//  if(ps2DepthInvert_ == true)
-//    v.sz = (zMax_ - v.sz);
-
-  // --------
-  // Lighting
-  // --------
-  if(lightingEnabled_ == true)
-  {
-    SColorF c(0, 0, 0, 0);
-
-    // Normal Rotation
-    matrixNormal.transform3(v.n, v.n);
-
-    for(int iLight(0); iLight < 8; iLight++)
-    {
-      if(lights_[iLight].enabled == true)
-      {
-        // Ambient light (it's everywhere!)
-        c += lights_[iLight].ambient * matColorAmbient_;
-
-        // Diffuse light
-        GLfloat diffuse = -lights_[iLight].direction.dotProduct(v.n);
-        if(diffuse >= 0.0f)
-        {
-          c += lights_[iLight].diffuse * matColorDiffuse_ * diffuse;
-        }
-
-        if(matShininess_ >= 0.5f)
-        {
-          // Specular light
-          TVector3<GLfloat> eye(0, 0, 1);
-          GLfloat specular = lights_[iLight].direction.getCrossProduct(v.n).dotProduct(eye);
-          if(specular >= 0.0f)
-          {
-            specular = my_pow(specular, (int)(matShininess_ + 0.5f));
-            c += lights_[iLight].specular * matColorSpecular_ * specular;
-          }
-        }
-      }
-    }
-
-    // Multiply vertex color by calculated color
-    v.cl *= c;
-    // Clamp to 0..1
-    v.cl.clamp();
-  }
-
-  // Fog
-  if(fogEnabled_ == true)
-  {
-    GLfloat partFog, partColor;
-    partFog = clampf((abs(v.v[2]) - fogStart_) / (fogEnd_ - fogStart_));
-    partColor = 1.0f - partFog;
-    v.cl = ((v.cl * partColor) + (fogColor_ * partFog)).getClamped();
-  }
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::rasterize(SVertexF & v)
-{
-  // Add to message
-  if(texturesEnabled_ == true)
-  {
-    float tq = 1.0f / v.v[3];
-    v.t[0] *= tq;
-    v.t[1] *= tq;
-
-    packet_.data(st, GS_ST(*(uint32_t *)(&v.t[0]), *(uint32_t *)(&v.t[1])));
-    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), 100, *(uint32_t *)(&tq)));
-  }
-  else
-  {
-    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), 100, 0));
-  }
-  packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
-}
-
-//-----------------------------------------------------------------------------
 void
 CPS2GLESContext::begin(GLenum mode)
 {
@@ -911,7 +358,38 @@ CPS2GLESContext::begin(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
+CPS2GLESContext::primitiveAssembly(SVertexF & v)
+{
+  vertexShaderTransform(v);
+  vertexShaderLight(v);
+
+  // Add to message
+  if(texturesEnabled_ == true)
+  {
+    GLfloat tq = 1.0f / v.vc[3];
+    v.t[0] *= tq;
+    v.t[1] *= tq;
+
+    packet_.data(st, GS_ST(*(uint32_t *)(&v.t[0]), *(uint32_t *)(&v.t[1])));
+    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl2.r*255), (uint8_t)(v.cl2.g*255), (uint8_t)(v.cl2.b*255), 100, *(uint32_t *)(&tq)));
+  }
+  else
+  {
+    packet_.data(rgbaq, GS_RGBAQ((uint8_t)(v.cl2.r*255), (uint8_t)(v.cl2.g*255), (uint8_t)(v.cl2.b*255), 100, 0));
+  }
+  packet_.data(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
+}
+
+//-----------------------------------------------------------------------------
+void
 CPS2GLESContext::end()
 {
   bDataWaiting_ = true;
+}
+
+//-----------------------------------------------------------------------------
+// Dummy
+void
+CPS2GLESContext::rasterTriangle(STriangleF & tri)
+{
 }

@@ -11,7 +11,7 @@ class CGBAGLESContext
 {
 public:
   CGBAGLESContext();
-  virtual ~CGBAGLESContext();
+  ~CGBAGLESContext();
 
   virtual void glClear(GLbitfield mask);
 };

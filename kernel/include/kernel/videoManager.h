@@ -3,6 +3,7 @@
 
 
 #include "inttypes.h"
+#include "stddef.h"
 #include "GL/gl.h"
 
 
@@ -172,22 +173,8 @@ public:
 class IRenderer
 {
 public:
-  virtual ~IRenderer(){}
-
-  // Surfaces
-  virtual void       setSurface(CSurface * surface) = 0;
-  virtual CSurface * getSurface() = 0;
-
-  // Flush operations to surface
-  virtual void       flush() = 0;
-};
-
-//---------------------------------------------------------------------------
-class CASoftwareRenderer
- : public virtual IRenderer
-{
-public:
-  virtual ~CASoftwareRenderer(){}
+  IRenderer() : renderSurface(NULL) {}
+  virtual ~IRenderer() {}
 
   // Surfaces
   virtual void       setSurface(CSurface * surface){renderSurface = surface;}
@@ -202,17 +189,10 @@ protected:
 
 //---------------------------------------------------------------------------
 class I2DRenderer
- : public virtual IRenderer
+ : public IRenderer
 {
 public:
   virtual ~I2DRenderer(){}
-
-  // Surfaces
-  virtual void       setSurface(CSurface * surface) = 0;
-  virtual CSurface * getSurface() = 0;
-
-  // Flush operations to surface
-  virtual void       flush() = 0;
 
   // Color
   virtual void       setColor(color_t rgb) = 0; // cfA8R8G8B8 format color
@@ -230,17 +210,10 @@ public:
 
 //-----------------------------------------------------------------------------
 class I3DRenderer
- : public virtual IRenderer
+ : public IRenderer
 {
 public:
   virtual ~I3DRenderer(){}
-
-  // Surfaces
-  virtual void       setSurface(CSurface * surface) = 0;
-  virtual CSurface * getSurface() = 0;
-
-  // Flush operations to surface
-  virtual void       flush() = 0;
 
 //  virtual void glAlphaFunc(GLenum func, GLclampf ref) = 0;
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) = 0;

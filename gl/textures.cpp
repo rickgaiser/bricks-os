@@ -5,8 +5,7 @@
 
 //-----------------------------------------------------------------------------
 CAGLESTextures::CAGLESTextures()
- : texturesEnabled_(false)
- , pCurrentTex_(NULL)
+ : pCurrentTex_(NULL)
 {
   // Initialize all texture structs
   for(GLuint idxTex(0); idxTex < MAX_TEXTURE_COUNT; idxTex++)

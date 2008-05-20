@@ -17,26 +17,16 @@
 
 
 //-----------------------------------------------------------------------------
-class CSoftGLESFloat
+class CASoftGLESFloat
  : public CAGLESFxToFloatContext
  , public CAGLESBuffers
  , public CAGLESCull
  , public CAGLESMatrixF
- , public CAGLESTextures
- , public virtual CASoftwareRenderer
 {
 public:
-  CSoftGLESFloat();
-  virtual ~CSoftGLESFloat();
+  CASoftGLESFloat();
+  virtual ~CASoftGLESFloat();
 
-  // Surfaces
-  virtual void       setSurface(CSurface * surface){CASoftwareRenderer::setSurface(surface);}
-  virtual CSurface * getSurface()                  {return CASoftwareRenderer::getSurface();}
-
-  // Flush operations to surface
-  virtual void       flush()                       {CASoftwareRenderer::flush();}
-
-  virtual void glClear(GLbitfield mask);
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
   virtual void glClearDepthf(GLclampf depth);
   virtual void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
@@ -66,8 +56,9 @@ protected:
   // Rasterizer
   virtual void begin(GLenum mode);
   virtual void primitiveAssembly(SVertexF & v);
-  virtual void rasterTriangle(STriangleF & tri);
   virtual void end();
+
+  virtual void rasterTriangle(STriangleF & tri) = 0;
 
 protected:
   // Depth testing
@@ -75,7 +66,6 @@ protected:
   GLenum      depthFunction_;
   GLfloat     depthClear_;
   uint32_t    zClearValue_;
-  uint32_t  * zbuffer;
   GLclampf    zNear_;
   GLclampf    zFar_;
   GLfloat     zA_;
@@ -110,30 +100,57 @@ protected:
   GLfloat     fogEnd_;
   SColorF     fogColor_;
 
-  CEdgeF    * edge1;
-  CEdgeF    * edge2;
+  // Textures
+  bool        texturesEnabled_;
 
-  // Rasterizer
+  // Vertex transformations
+  GLfloat     xA_;
+  GLfloat     xB_;
+  GLfloat     yA_;
+  GLfloat     yB_;
+
+  // Primitive assembly
   GLenum      rasterMode_;
   SVertexF    vertices[3]; // Vertex buffer for primitive assembly
   STriangleF  triangle_;   // Assembled triangle
   bool        bFlipFlop_;  // Triangle strip
   GLint       vertIdx_;    // Current index into vertex buffer
+
+  // Rasterizer
   GLint       viewportXOffset;
   GLint       viewportYOffset;
   GLsizei     viewportPixelCount;
   GLsizei     viewportWidth;
   GLsizei     viewportHeight;
-  GLfloat     xA_;
-  GLfloat     xB_;
-  GLfloat     yA_;
-  GLfloat     yB_;
 
 private:
   void _glDrawArrays(GLenum mode, GLint first, GLsizei count)   FAST_CODE;
   void _vertexShaderTransform(SVertexF & v)                     FAST_CODE;
   void _vertexShaderLight(SVertexF & v)                         FAST_CODE;
   void _primitiveAssembly(SVertexF & v)                         FAST_CODE;
+};
+
+//-----------------------------------------------------------------------------
+class CSoftGLESFloat
+ : public CASoftGLESFloat
+ , public CAGLESTextures
+{
+public:
+  CSoftGLESFloat();
+  virtual ~CSoftGLESFloat();
+
+  virtual void glClear(GLbitfield mask);
+  virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
+
+protected:
+  virtual void rasterTriangle(STriangleF & tri);
+
+private:
+  uint32_t  * zbuffer;
+  CEdgeF    * edge1;
+  CEdgeF    * edge2;
+
+private:
   void _rasterTriangle(STriangleF & tri)                        FAST_CODE;
 
   bool testAndSetDepth(GLfloat z, uint32_t index)               FAST_CODE;

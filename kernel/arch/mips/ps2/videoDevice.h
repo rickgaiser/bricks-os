@@ -50,7 +50,7 @@ class CAPS2Renderer
 {
 public:
   CAPS2Renderer(CSurface * surf = 0);
-  virtual ~CAPS2Renderer();
+  ~CAPS2Renderer();
 
   // Surfaces
   virtual void       setSurface(CSurface * surface);

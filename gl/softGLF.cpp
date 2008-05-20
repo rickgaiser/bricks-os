@@ -8,34 +8,24 @@ typedef unsigned int wint_t;
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-CSoftGLESFloat::CSoftGLESFloat()
+CASoftGLESFloat::CASoftGLESFloat()
  : CAGLESFxToFloatContext()
  , CAGLESBuffers()
  , CAGLESCull()
  , CAGLESMatrixF()
- , CAGLESTextures()
 
  , depthTestEnabled_(false)
  , depthFunction_(GL_LESS)
  , depthClear_(1.0f)
  , zClearValue_(0xffffffff)
- , zbuffer(0)
  , zNear_(0.0f)
  , zFar_(1.0f)
  , zMax_(0xffffffff) // 32bit z-buffer
-
  , shadingModel_(GL_FLAT)
-
  , lightingEnabled_(false)
  , normalizeEnabled_(false)
  , fogEnabled_(false)
- , edge1(0)
- , edge2(0)
- , viewportXOffset(0)
- , viewportYOffset(0)
- , viewportPixelCount(0)
- , viewportWidth(0)
- , viewportHeight(0)
+ , texturesEnabled_(false)
 {
   clCurrent.r = 1.0f;
   clCurrent.g = 1.0f;
@@ -84,8 +74,7 @@ CSoftGLESFloat::CSoftGLESFloat()
     lights_[iLight].position.y = 0.0f;
     lights_[iLight].position.z = 1.0f;
     lights_[iLight].position.w = 0.0f;
-    lights_[iLight].direction  = lights_[iLight].position;
-    lights_[iLight].direction.invert();
+    lights_[iLight].direction  = lights_[iLight].position.getInverted();
 
     lights_[iLight].enabled = false;
   }
@@ -118,53 +107,13 @@ CSoftGLESFloat::CSoftGLESFloat()
 }
 
 //-----------------------------------------------------------------------------
-CSoftGLESFloat::~CSoftGLESFloat()
+CASoftGLESFloat::~CASoftGLESFloat()
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glClear(GLbitfield mask)
-{
-  if(mask & GL_COLOR_BUFFER_BIT)
-  {
-    color_t color = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(clClear.r * 255), (uint8_t)(clClear.g * 255), (uint8_t)(clClear.b * 255), (uint8_t)(clClear.a * 255));
-
-    switch(renderSurface->mode.bpp)
-    {
-      case 8:
-      {
-        for(uint32_t y(0); y < renderSurface->mode.height; y++)
-          for(uint32_t x(0); x < renderSurface->mode.width; x++)
-            ((uint8_t  *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
-        break;
-      }
-      case 16:
-      {
-        for(uint32_t y(0); y < renderSurface->mode.height; y++)
-          for(uint32_t x(0); x < renderSurface->mode.width; x++)
-            ((uint16_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
-        break;
-      }
-      case 32:
-      {
-        for(uint32_t y(0); y < renderSurface->mode.height; y++)
-          for(uint32_t x(0); x < renderSurface->mode.width; x++)
-            ((uint32_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
-        break;
-      }
-    };
-  }
-  if(mask & GL_DEPTH_BUFFER_BIT)
-  {
-    for(int i(0); i < viewportPixelCount; i++)
-      zbuffer[i] = zClearValue_;
-  }
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+CASoftGLESFloat::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
   clClear.r = clampf(red);
   clClear.g = clampf(green);
@@ -174,15 +123,15 @@ CSoftGLESFloat::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclam
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glClearDepthf(GLclampf depth)
+CASoftGLESFloat::glClearDepthf(GLclampf depth)
 {
   depthClear_ = clampf(depth);
-  zClearValue_ = (uint32_t)(depthClear_ * 0xffffffff);
+  zClearValue_ = (uint32_t)(depthClear_ * zMax_);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
+CASoftGLESFloat::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
 {
   clCurrent.r = (GLfloat)red   * (1.0f/255.0f);
   clCurrent.g = (GLfloat)green * (1.0f/255.0f);
@@ -192,7 +141,7 @@ CSoftGLESFloat::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alp
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
+CASoftGLESFloat::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
   clCurrent.r = red;
   clCurrent.g = green;
@@ -202,7 +151,7 @@ CSoftGLESFloat::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alph
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
+CASoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
 {
   zNear_ = clampf(zNear);
   zFar_  = clampf(zFar);
@@ -213,7 +162,7 @@ CSoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
+CASoftGLESFloat::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 {
   normal_.x = nx;
   normal_.y = ny;
@@ -225,14 +174,14 @@ CSoftGLESFloat::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glDepthFunc(GLenum func)
+CASoftGLESFloat::glDepthFunc(GLenum func)
 {
   depthFunction_ = func;
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glDisable(GLenum cap)
+CASoftGLESFloat::glDisable(GLenum cap)
 {
   switch(cap)
   {
@@ -259,14 +208,14 @@ CSoftGLESFloat::glDisable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glDrawArrays(GLenum mode, GLint first, GLsizei count)
+CASoftGLESFloat::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
   _glDrawArrays(mode, first, count);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glEnable(GLenum cap)
+CASoftGLESFloat::glEnable(GLenum cap)
 {
   switch(cap)
   {
@@ -293,19 +242,20 @@ CSoftGLESFloat::glEnable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glFinish(void)
+CASoftGLESFloat::glFinish(void)
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glFlush(void)
+CASoftGLESFloat::glFlush(void)
 {
+  flush();
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glFogf(GLenum pname, GLfloat param)
+CASoftGLESFloat::glFogf(GLenum pname, GLfloat param)
 {
   switch(pname)
   {
@@ -318,7 +268,7 @@ CSoftGLESFloat::glFogf(GLenum pname, GLfloat param)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glFogfv(GLenum pname, const GLfloat * params)
+CASoftGLESFloat::glFogfv(GLenum pname, const GLfloat * params)
 {
   switch(pname)
   {
@@ -333,13 +283,13 @@ CSoftGLESFloat::glFogfv(GLenum pname, const GLfloat * params)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glLightf(GLenum light, GLenum pname, GLfloat param)
+CASoftGLESFloat::glLightf(GLenum light, GLenum pname, GLfloat param)
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
+CASoftGLESFloat::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 {
   SLightF * pLight = 0;
   switch(light)
@@ -368,9 +318,7 @@ CSoftGLESFloat::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
       pLight->position.z = params[2];
       pLight->position.w = params[3];
       // Invert and normalize
-      pLight->direction = pLight->position;
-      pLight->direction.invert();
-      pLight->direction.normalize();
+      pLight->direction = pLight->position.getInverted().normalize();
     default:
       return;
   }
@@ -383,7 +331,7 @@ CSoftGLESFloat::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glMaterialf(GLenum face, GLenum pname, GLfloat param)
+CASoftGLESFloat::glMaterialf(GLenum face, GLenum pname, GLfloat param)
 {
   switch(pname)
   {
@@ -397,7 +345,7 @@ CSoftGLESFloat::glMaterialf(GLenum face, GLenum pname, GLfloat param)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
+CASoftGLESFloat::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
 {
   switch(pname)
   {
@@ -445,30 +393,20 @@ CSoftGLESFloat::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glShadeModel(GLenum mode)
+CASoftGLESFloat::glShadeModel(GLenum mode)
 {
   shadingModel_ = mode;
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
+CASoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-  if(zbuffer)
-    delete zbuffer;
-  if(edge1)
-    delete edge1;
-  if(edge2)
-    delete edge2;
-
   viewportXOffset    = x;
   viewportYOffset    = y;
   viewportWidth      = width;
   viewportHeight     = height;
   viewportPixelCount = width * height;
-  zbuffer            = new uint32_t[width * height];
-  edge1              = new CEdgeF(viewportHeight);
-  edge2              = new CEdgeF(viewportHeight);
 
   xA_ = (viewportWidth  >> 1);
   xB_ = (GLfloat)(viewportWidth  >> 1) + 0.5f;
@@ -488,35 +426,28 @@ my_pow(GLfloat x, int y)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::vertexShaderTransform(SVertexF & v)
+CASoftGLESFloat::vertexShaderTransform(SVertexF & v)
 {
   _vertexShaderTransform(v);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::vertexShaderLight(SVertexF & v)
+CASoftGLESFloat::vertexShaderLight(SVertexF & v)
 {
   _vertexShaderLight(v);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::primitiveAssembly(SVertexF & v)
+CASoftGLESFloat::primitiveAssembly(SVertexF & v)
 {
   _primitiveAssembly(v);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterTriangle(STriangleF & tri)
-{
-  _rasterTriangle(tri);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::begin(GLenum mode)
+CASoftGLESFloat::begin(GLenum mode)
 {
   rasterMode_ = mode;
 
@@ -530,13 +461,13 @@ CSoftGLESFloat::begin(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::end()
+CASoftGLESFloat::end()
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
+CASoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
   if(bBufVertexEnabled_ == false)
     return;
@@ -647,7 +578,7 @@ CSoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::_vertexShaderTransform(SVertexF & v)
+CASoftGLESFloat::_vertexShaderTransform(SVertexF & v)
 {
   // --------------
   // Transformation
@@ -670,7 +601,7 @@ CSoftGLESFloat::_vertexShaderTransform(SVertexF & v)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::_vertexShaderLight(SVertexF & v)
+CASoftGLESFloat::_vertexShaderLight(SVertexF & v)
 {
   // --------
   // Lighting
@@ -734,7 +665,7 @@ CSoftGLESFloat::_vertexShaderLight(SVertexF & v)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::_primitiveAssembly(SVertexF & v)
+CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
 {
   // Copy vertex into vertex buffer
   *triangle_.v[vertIdx_] = v;
@@ -795,6 +726,86 @@ CSoftGLESFloat::_primitiveAssembly(SVertexF & v)
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+CSoftGLESFloat::CSoftGLESFloat()
+ : CASoftGLESFloat()
+ , zbuffer(0)
+ , edge1(0)
+ , edge2(0)
+{
+}
+
+//-----------------------------------------------------------------------------
+CSoftGLESFloat::~CSoftGLESFloat()
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::glClear(GLbitfield mask)
+{
+  if(mask & GL_COLOR_BUFFER_BIT)
+  {
+    color_t color = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(clClear.r * 255), (uint8_t)(clClear.g * 255), (uint8_t)(clClear.b * 255), (uint8_t)(clClear.a * 255));
+
+    switch(renderSurface->mode.bpp)
+    {
+      case 8:
+      {
+        for(uint32_t y(0); y < renderSurface->mode.height; y++)
+          for(uint32_t x(0); x < renderSurface->mode.width; x++)
+            ((uint8_t  *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
+        break;
+      }
+      case 16:
+      {
+        for(uint32_t y(0); y < renderSurface->mode.height; y++)
+          for(uint32_t x(0); x < renderSurface->mode.width; x++)
+            ((uint16_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
+        break;
+      }
+      case 32:
+      {
+        for(uint32_t y(0); y < renderSurface->mode.height; y++)
+          for(uint32_t x(0); x < renderSurface->mode.width; x++)
+            ((uint32_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
+        break;
+      }
+    };
+  }
+  if(mask & GL_DEPTH_BUFFER_BIT)
+  {
+    for(int i(0); i < viewportPixelCount; i++)
+      zbuffer[i] = zClearValue_;
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
+{
+  CASoftGLESFloat::glViewport(x, y, width, height);
+
+  if(zbuffer)
+    delete zbuffer;
+  if(edge1)
+    delete edge1;
+  if(edge2)
+    delete edge2;
+
+  zbuffer = new uint32_t[width * height];
+  edge1   = new CEdgeF(viewportHeight);
+  edge2   = new CEdgeF(viewportHeight);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterTriangle(STriangleF & tri)
+{
+  _rasterTriangle(tri);
+}
+
+//-----------------------------------------------------------------------------
 void
 CSoftGLESFloat::_rasterTriangle(STriangleF & tri)
 {
@@ -812,7 +823,7 @@ CSoftGLESFloat::_rasterTriangle(STriangleF & tri)
     TVector3<GLfloat> V2(tri.v[2]->ve);
     TVector3<GLfloat> normal;
 
-    normal = (V0 - V1).crossProduct(V2 - V1);
+    normal = (V0 - V1).getCrossProduct(V2 - V1);
     if((normal.z < 0.0f) == bCullCW_)
       return;
   }
