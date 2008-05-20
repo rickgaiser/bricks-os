@@ -12,14 +12,14 @@
   GLfloat z   = from.ve[2]; \
   GLfloat mz  = ((to.ve[2] - from.ve[2]) * dy)
 #define INTERPOLATE_F_C() \
-  GLfloat r   = from.cl2.r; \
-  GLfloat g   = from.cl2.g; \
-  GLfloat b   = from.cl2.b; \
-  GLfloat a   = from.cl2.a; \
-  GLfloat mr  = (to.cl2.r - from.cl2.r) * dy; \
-  GLfloat mg  = (to.cl2.g - from.cl2.g) * dy; \
-  GLfloat mb  = (to.cl2.b - from.cl2.b) * dy; \
-  GLfloat ma  = (to.cl2.a - from.cl2.a) * dy
+  GLfloat r   = from.cl.r; \
+  GLfloat g   = from.cl.g; \
+  GLfloat b   = from.cl.b; \
+  GLfloat a   = from.cl.a; \
+  GLfloat mr  = (to.cl.r - from.cl.r) * dy; \
+  GLfloat mg  = (to.cl.g - from.cl.g) * dy; \
+  GLfloat mb  = (to.cl.b - from.cl.b) * dy; \
+  GLfloat ma  = (to.cl.a - from.cl.a) * dy
 #define INTERPOLATE_F_T() \
   GLfloat ts  = from.t[0]; \
   GLfloat tt  = from.t[1]; \
@@ -48,14 +48,14 @@
   CFixed z   = from.ve[2]; \
   CFixed mz  = (to.ve[2] - from.ve[2]).ipMul(dy)
 #define INTERPOLATE_FX_C() \
-  CFixed r   = from.cl2.r; \
-  CFixed g   = from.cl2.g; \
-  CFixed b   = from.cl2.b; \
-  CFixed a   = from.cl2.a; \
-  CFixed mr  = (to.cl2.r - from.cl2.r).ipipMul(dy); \
-  CFixed mg  = (to.cl2.g - from.cl2.g).ipipMul(dy); \
-  CFixed mb  = (to.cl2.b - from.cl2.b).ipipMul(dy); \
-  CFixed ma  = (to.cl2.a - from.cl2.a).ipipMul(dy)
+  CFixed r   = from.cl.r; \
+  CFixed g   = from.cl.g; \
+  CFixed b   = from.cl.b; \
+  CFixed a   = from.cl.a; \
+  CFixed mr  = (to.cl.r - from.cl.r).ipipMul(dy); \
+  CFixed mg  = (to.cl.g - from.cl.g).ipipMul(dy); \
+  CFixed mb  = (to.cl.b - from.cl.b).ipipMul(dy); \
+  CFixed ma  = (to.cl.a - from.cl.a).ipipMul(dy)
 #define INTERPOLATE_FX_T() \
   CFixed ts  = from.t[0]; \
   CFixed tt  = from.t[1]; \

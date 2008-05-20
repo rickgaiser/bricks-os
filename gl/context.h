@@ -35,7 +35,6 @@ struct TVertex
 
   // Color
   TColor<T> cl;  // Vertex Color
-  TColor<T> cl2; // Vertex Color + Light + Fog
 
   // Texture coordinates
   T t[2];
