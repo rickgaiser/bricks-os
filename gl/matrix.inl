@@ -38,8 +38,8 @@ m[3*4+0] = gl_fpfromi(0); m[3*4+1] = gl_fpfromi(0); m[3*4+2] = gl_fpfromi(0); m[
 
 
 template <class T> bool  TMatrix4x4<T>::bInitialized_(false);
-template <class T> T     TMatrix4x4<T>::sinTable_[360 * DEGREE_PRECISION_MUL];
-template <class T> T     TMatrix4x4<T>::cosTable_[360 * DEGREE_PRECISION_MUL];
+template <class T> T     TMatrix4x4<T>::sinTable_[DEGREE_COUNT];
+template <class T> T     TMatrix4x4<T>::cosTable_[DEGREE_COUNT];
 
 
 //---------------------------------------------------------------------------
@@ -215,7 +215,7 @@ TMatrix4x4<T>::rotate(T x, T y, T z)
   if(bInitialized_ == false)
   {
     bInitialized_ = true;
-    for(int i(0); i < (360 * DEGREE_PRECISION_MUL); i++)
+    for(int i(0); i < DEGREE_COUNT; i++)
     {
       sinTable_[i] = sin((float)i * (M_PI / (180.0f * DEGREE_PRECISION_MUL)));
       cosTable_[i] = cos((float)i * (M_PI / (180.0f * DEGREE_PRECISION_MUL)));
