@@ -98,6 +98,30 @@ TVector3<T>::operator-(const TVector3 & vec) const
 //---------------------------------------------------------------------------
 template <class T>
 inline TVector3<T>
+TVector3<T>::operator* (const TVector3 & vec) const
+{
+  TVector3 rv(*this);
+
+  rv *= vec;
+
+  return rv;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline TVector3<T>
+TVector3<T>::operator/ (const TVector3 & vec) const
+{
+  TVector3 rv(*this);
+
+  rv /= vec;
+
+  return rv;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline TVector3<T>
 TVector3<T>::operator*(T s) const
 {
   TVector3 rv(*this);
@@ -157,6 +181,18 @@ TVector3<T>::getCrossProduct(const TVector3 & vec) const
 
 //---------------------------------------------------------------------------
 template <class T>
+inline TVector3<T>
+TVector3<T>::getReflection(const TVector3 & vec) const
+{
+  TVector3 rv(*this);
+
+  rv.reflection(vec);
+
+  return rv;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
 inline TVector3<T> &
 TVector3<T>::operator+=(const TVector3 & vec)
 {
@@ -175,6 +211,30 @@ TVector3<T>::operator-=(const TVector3 & vec)
   x -= vec.x;
   y -= vec.y;
   z -= vec.z;
+
+  return (*this);
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline TVector3<T> &
+TVector3<T>::operator*=(const TVector3 & vec)
+{
+  x *= vec.x;
+  y *= vec.y;
+  z *= vec.z;
+
+  return (*this);
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline TVector3<T> &
+TVector3<T>::operator/=(const TVector3 & vec)
+{
+  x /= vec.x;
+  y /= vec.y;
+  z /= vec.z;
 
   return (*this);
 }
@@ -240,6 +300,17 @@ TVector3<T>::crossProduct(const TVector3 & vec)
   z  = ((x * vec.y) - (y * vec.x));
   x  = tx;
   y  = ty;
+
+  return (*this);
+}
+
+//---------------------------------------------------------------------------
+// Reflect this vector around "vec". "vec" will usually be a normal vector.
+template <class T>
+inline TVector3<T> &
+TVector3<T>::reflection(const TVector3 & vec)
+{
+  *this = vec * 2 * (vec.dotProduct(*this)) - *this;
 
   return (*this);
 }
@@ -359,6 +430,30 @@ TVector4<T>::operator-(const TVector4 & vec) const
 //---------------------------------------------------------------------------
 template <class T>
 inline TVector4<T>
+TVector4<T>::operator* (const TVector4 & vec) const
+{
+  TVector4 rv(*this);
+
+  rv *= vec;
+
+  return rv;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline TVector4<T>
+TVector4<T>::operator/ (const TVector4 & vec) const
+{
+  TVector4 rv(*this);
+
+  rv /= vec;
+
+  return rv;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline TVector4<T>
 TVector4<T>::operator*(T s) const
 {
   TVector4 rv(*this);
@@ -418,6 +513,18 @@ TVector4<T>::getCrossProduct(const TVector4 & vec) const
 
 //---------------------------------------------------------------------------
 template <class T>
+inline TVector4<T>
+TVector4<T>::getReflection(const TVector4 & vec) const
+{
+  TVector4 rv(*this);
+
+  rv.reflection(vec);
+
+  return rv;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
 inline TVector4<T> &
 TVector4<T>::operator+=(const TVector4 & vec)
 {
@@ -438,6 +545,32 @@ TVector4<T>::operator-=(const TVector4 & vec)
   y -= vec.y;
   z -= vec.z;
   w -= vec.w;
+
+  return (*this);
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline TVector4<T> &
+TVector4<T>::operator*=(const TVector4 & vec)
+{
+  x *= vec.x;
+  y *= vec.y;
+  z *= vec.z;
+  w *= vec.w;
+
+  return (*this);
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline TVector4<T> &
+TVector4<T>::operator/=(const TVector4 & vec)
+{
+  x /= vec.x;
+  y /= vec.y;
+  z /= vec.z;
+  w /= vec.w;
 
   return (*this);
 }
@@ -506,6 +639,17 @@ TVector4<T>::crossProduct(const TVector4 & vec)
   z  = ((x * vec.y) - (y * vec.x));
   x  = tx;
   y  = ty;
+
+  return (*this);
+}
+
+//---------------------------------------------------------------------------
+// Reflect this vector around "vec". "vec" will usually be a normal vector.
+template <class T>
+inline TVector4<T> &
+TVector4<T>::reflection(const TVector4 & vec)
+{
+  *this = vec * 2 * (vec.dotProduct(*this)) - *this;
 
   return (*this);
 }

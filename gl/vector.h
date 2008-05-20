@@ -23,19 +23,25 @@ public:
 
   TVector3   operator+ (const TVector3 & vec) const;
   TVector3   operator- (const TVector3 & vec) const;
+  TVector3   operator* (const TVector3 & vec) const;
+  TVector3   operator/ (const TVector3 & vec) const;
   TVector3   operator* (T s) const;
   TVector3   operator/ (T s) const;
   TVector3   getInverted() const;
   TVector3   getNormalized() const; // Warning: uses sqrt==slow
-  TVector3   getCrossProduct(const TVector3 & vec) const; // Reflection
+  TVector3   getCrossProduct(const TVector3 & vec) const;
+  TVector3   getReflection(const TVector3 & vec) const;
 
   TVector3 & operator+=(const TVector3 & vec);
   TVector3 & operator-=(const TVector3 & vec);
+  TVector3 & operator*=(const TVector3 & vec);
+  TVector3 & operator/=(const TVector3 & vec);
   TVector3 & operator*=(T s);
   TVector3 & operator/=(T s);
   TVector3 & invert();
   TVector3 & normalize(); // Warning: uses sqrt==slow
-  TVector3 & crossProduct(const TVector3 & vec); // Reflection
+  TVector3 & crossProduct(const TVector3 & vec);
+  TVector3 & reflection(const TVector3 & vec);
 
   T length() const; // Warning: uses sqrt==slow
   T dotProduct(const TVector3 & vec) const;
@@ -63,19 +69,25 @@ public:
 
   TVector4   operator+ (const TVector4 & vec) const;
   TVector4   operator- (const TVector4 & vec) const;
+  TVector4   operator* (const TVector4 & vec) const;
+  TVector4   operator/ (const TVector4 & vec) const;
   TVector4   operator* (T s) const;
   TVector4   operator/ (T s) const;
   TVector4   getInverted() const;
   TVector4   getNormalized() const; // Warning: uses sqrt==slow
-  TVector4   getCrossProduct(const TVector4 & vec) const; // Reflection
+  TVector4   getCrossProduct(const TVector4 & vec) const;
+  TVector4   getReflection(const TVector4 & vec) const;
 
   TVector4 & operator+=(const TVector4 & vec);
   TVector4 & operator-=(const TVector4 & vec);
+  TVector4 & operator*=(const TVector4 & vec);
+  TVector4 & operator/=(const TVector4 & vec);
   TVector4 & operator*=(T s);
   TVector4 & operator/=(T s);
   TVector4 & invert();
   TVector4 & normalize(); // Warning: uses sqrt==slow
-  TVector4 & crossProduct(const TVector4 & vec); // Reflection
+  TVector4 & crossProduct(const TVector4 & vec);
+  TVector4 & reflection(const TVector4 & vec);
 
   T length() const; // Warning: uses sqrt==slow
   T dotProduct(const TVector4 & vec) const;
