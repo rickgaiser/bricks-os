@@ -45,44 +45,7 @@ const GLfloat cubeVertF[] =
    1.0f,-1.0f,-1.0f,
    1.0f,-1.0f, 1.0f,
 };
-#else
-// -----------------------------------------------------------------------------
-const GLfixed cubeVertFx[] =
-{
-  // Cube (6 triangle strips)
-  // Top
-  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
-  // Bottom
-  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
-  // Front
-  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
-  // Back
-  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
-  // Left
-  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
-  // Right
-  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
-  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
-};
-#endif
-#ifdef CONFIG_FPU
+
 // -----------------------------------------------------------------------------
 const GLfloat cubeTexF[] =
 {
@@ -119,6 +82,42 @@ const GLfloat cubeTexF[] =
   1.0f, 1.0f,
 };
 #else
+// -----------------------------------------------------------------------------
+const GLfixed cubeVertFx[] =
+{
+  // Cube (6 triangle strips)
+  // Top
+  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
+  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
+  // Bottom
+  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
+  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
+  // Front
+  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
+  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
+  // Back
+  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
+  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
+  // Left
+  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
+  gl_fpfromf(-1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
+  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
+  gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
+  // Right
+  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf(-1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf(-1.0f),
+  gl_fpfromf( 1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 1.0f),
+};
+
 // -----------------------------------------------------------------------------
 const GLfixed cubeTexFx[] =
 {
@@ -161,41 +160,11 @@ const GLfixed cubeTexFx[] =
 void
 initCubeF()
 {
-  static bool bInitialized(false);
-
-  if(bInitialized == false)
-  {
-    bInitialized = true;
-
-    // Texture
-    glGenTextures(1, &textures[0]);
-    glBindTexture(GL_TEXTURE_2D, textures[0]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, crate_Width, crate_Height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crate_Bitmap);
-    //glMatrixMode(GL_TEXTURE);
-    //glLoadIdentity();
-  }
+  glGenTextures(1, &textures[0]);
+  glBindTexture(GL_TEXTURE_2D, textures[0]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, crate_Width, crate_Height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crate_Bitmap);
 }
-#else
-// -----------------------------------------------------------------------------
-void
-initCubeFx()
-{
-  static bool bInitialized(false);
 
-  if(bInitialized == false)
-  {
-    bInitialized = true;
-
-    // Texture
-    glGenTextures(1, &textures[0]);
-    glBindTexture(GL_TEXTURE_2D, textures[0]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, crate_Width, crate_Height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crate_Bitmap);
-    //glMatrixMode(GL_TEXTURE);
-    //glLoadIdentity();
-  }
-}
-#endif
-#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 void
 drawCubeF()
@@ -208,7 +177,6 @@ drawCubeF()
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
 
-  glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, textures[0]);
   glDrawArrays(GL_TRIANGLE_STRIP,  0, 4); // Top
   glDrawArrays(GL_TRIANGLE_STRIP,  4, 4); // Bottom
@@ -221,6 +189,15 @@ drawCubeF()
 #else
 // -----------------------------------------------------------------------------
 void
+initCubeFx()
+{
+  glGenTextures(1, &textures[0]);
+  glBindTexture(GL_TEXTURE_2D, textures[0]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, crate_Width, crate_Height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crate_Bitmap);
+}
+
+// -----------------------------------------------------------------------------
+void
 drawCubeFx()
 {
   glVertexPointer(3, GL_FIXED, 0, cubeVertFx);
@@ -231,7 +208,6 @@ drawCubeFx()
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
 
-  glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, textures[0]);
   glDrawArrays(GL_TRIANGLE_STRIP,  0, 4); // Top
   glDrawArrays(GL_TRIANGLE_STRIP,  4, 4); // Bottom

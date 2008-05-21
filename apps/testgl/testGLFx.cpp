@@ -29,14 +29,75 @@ const GLfixed fogColor[]      = {gl_fpfromf( 0.4f), gl_fpfromf( 0.4f), gl_fpfrom
 
 // -----------------------------------------------------------------------------
 void
-testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
+renderPyramid(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
 {
   bool bDisplayB(true);
-  I3DRenderer * p3DRenderer_;
-  device->get3DRenderer(&p3DRenderer_);
-  p3DRenderer_->setSurface(surface_a);
-  device->displaySurface(surface_b);
-  glMakeCurrent(p3DRenderer_);
+
+  // Set buffers
+  renderer->setSurface(bDisplayB ? surface_b : surface_a);
+  device->displaySurface(bDisplayB ? surface_a : surface_b);
+  bDisplayB = !bDisplayB;
+
+  // Show 1 full rotation around y axis
+  for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(1))
+  {
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
+    glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
+    drawPyramidFx();
+
+    // Flush everything to surface
+    glFlush();
+
+    // Swap display and render buffers
+    renderer->setSurface(bDisplayB ? surface_b : surface_a);
+    device->displaySurface(bDisplayB ? surface_a : surface_b);
+    bDisplayB = !bDisplayB;
+  }
+}
+
+// -----------------------------------------------------------------------------
+void
+renderCube(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
+{
+  bool bDisplayB(true);
+
+  // Set buffers
+  renderer->setSurface(bDisplayB ? surface_b : surface_a);
+  device->displaySurface(bDisplayB ? surface_a : surface_b);
+  bDisplayB = !bDisplayB;
+
+  // Show 1 full rotation around y axis
+  for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(1))
+  {
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glLoadIdentity();
+    glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
+    glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
+    drawCubeFx();
+
+    // Flush everything to surface
+    glFlush();
+
+    // Swap display and render buffers
+    renderer->setSurface(bDisplayB ? surface_b : surface_a);
+    device->displaySurface(bDisplayB ? surface_a : surface_b);
+    bDisplayB = !bDisplayB;
+  }
+}
+
+// -----------------------------------------------------------------------------
+void
+testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
+{
+  I3DRenderer * renderer;
+  device->get3DRenderer(&renderer);
+  glMakeCurrent(renderer);
 
   // Automatically wait for VSync
   device->setVSync(true);
@@ -91,96 +152,31 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
 
   while(true)
   {
-    glEnable(GL_LIGHTING);
+    // Without Lighting
+    glDisable(GL_LIGHTING);
+    // Flat
     glShadeModel(GL_FLAT);
-    // Show 1 full rotation around y axis
-    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(1))
-    {
-      //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glClear(GL_COLOR_BUFFER_BIT);
-
-      glLoadIdentity();
-      glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
-      glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-      drawPyramidFx();
-
-      // Flush everything to surface
-      glFlush();
-
-      // Swap display and render buffers
-      if(bDisplayB == true)
-      {
-        p3DRenderer_->setSurface(surface_b);
-        device->displaySurface(surface_a);
-      }
-      else
-      {
-        p3DRenderer_->setSurface(surface_a);
-        device->displaySurface(surface_b);
-      }
-      bDisplayB = !bDisplayB;
-    }
-
-    glEnable(GL_LIGHTING);
+    renderPyramid(device, renderer, surface_a, surface_b);
+    // Smooth
     glShadeModel(GL_SMOOTH);
-    // Show 1 full rotation around y axis
-    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(1))
-    {
-      //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glClear(GL_COLOR_BUFFER_BIT);
+    renderPyramid(device, renderer, surface_a, surface_b);
 
-      glLoadIdentity();
-      glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
-      glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-      drawPyramidFx();
+    // With Lighting
+    glEnable(GL_LIGHTING);
+    // Flat
+    glShadeModel(GL_FLAT);
+    renderPyramid(device, renderer, surface_a, surface_b);
+    // Smooth
+    glShadeModel(GL_SMOOTH);
+    renderPyramid(device, renderer, surface_a, surface_b);
 
-      // Flush everything to surface
-      glFlush();
-
-      // Swap display and render buffers
-      if(bDisplayB == true)
-      {
-        p3DRenderer_->setSurface(surface_b);
-        device->displaySurface(surface_a);
-      }
-      else
-      {
-        p3DRenderer_->setSurface(surface_a);
-        device->displaySurface(surface_b);
-      }
-      bDisplayB = !bDisplayB;
-    }
-
+    // With textures
     glDisable(GL_LIGHTING);
     glShadeModel(GL_FLAT);
-    // Show 1 full rotation around y axis
-    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(1))
-    {
-      //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glClear(GL_COLOR_BUFFER_BIT);
-
-      glLoadIdentity();
-      glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
-      glRotatex(yrot, gl_fpfromi(0), gl_fpfromi(1), gl_fpfromi(0));
-      drawCubeFx();
-
-      // Flush everything to surface
-      glFlush();
-
-      // Swap display and render buffers
-      if(bDisplayB == true)
-      {
-        p3DRenderer_->setSurface(surface_b);
-        device->displaySurface(surface_a);
-      }
-      else
-      {
-        p3DRenderer_->setSurface(surface_a);
-        device->displaySurface(surface_b);
-      }
-      bDisplayB = !bDisplayB;
-    }
+    glEnable(GL_TEXTURE_2D);
+    renderCube(device, renderer, surface_a, surface_b);
   }
 
-  delete p3DRenderer_;
+  glMakeCurrent(NULL);
+  delete renderer;
 }
