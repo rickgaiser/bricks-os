@@ -36,6 +36,17 @@ STARTUP_LIBS    =\
                 $(PS2SDK)/ee/lib/libkernel.a \
 
 #----------------------------------------------------------------------------
+# Create object file from .vsm file
+$(VDIR)%.o: %.vsm $(VDIR).creation_stamp
+	@echo [DVP] $<
+	dvp-as -o $@ $<
+
+# Create object file from .vcl file
+%.vsm: %.vcl
+	@echo [VCL] $<
+	vcl -o$@ $<
+	cp $@ $@.bak
+
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@
