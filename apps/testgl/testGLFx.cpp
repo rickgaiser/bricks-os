@@ -6,18 +6,27 @@
 #include "../gl/context.h"
 
 
+extern void glMakeCurrent(I3DRenderer * ctx);
 extern void initPyramidFx();
 extern void drawPyramidFx();
 extern void initCubeFx();
 extern void drawCubeFx();
-const GLfixed material[]      = {gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f)};
-const GLfixed lightAmbient[]  = {gl_fpfromf( 0.5f), gl_fpfromf( 0.5f), gl_fpfromf( 0.5f), gl_fpfromf( 1.0f)};
+
+
+// Material
+const GLfixed matAmbient []   = {gl_fpfromf( 0.4f), gl_fpfromf( 0.2f), gl_fpfromf( 0.0f), gl_fpfromf( 1.0f)};
+const GLfixed matDiffuse []   = {gl_fpfromf( 0.8f), gl_fpfromf( 0.4f), gl_fpfromf( 0.0f), gl_fpfromf( 1.0f)};
+const GLfixed matSpecular[]   = {gl_fpfromf( 0.8f), gl_fpfromf( 0.4f), gl_fpfromf( 0.0f), gl_fpfromf( 1.0f)};
+const GLfixed matShininess    = gl_fpfromf( 8.0f);
+// Light
+const GLfixed lightAmbient[]  = {gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f)};
 const GLfixed lightDiffuse[]  = {gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f)};
-const GLfixed lightPosition[] = {gl_fpfromf(-1.0f), gl_fpfromf(-1.0f), gl_fpfromf( 2.0f), gl_fpfromf( 1.0f)};
+const GLfixed lightSpecular[] = {gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f)};
+const GLfixed lightPosition[] = {gl_fpfromf(-5.0f), gl_fpfromf(10.0f), gl_fpfromf(10.0f), gl_fpfromf( 1.0f)};
+// Fog
 const GLfixed fogColor[]      = {gl_fpfromf( 0.4f), gl_fpfromf( 0.4f), gl_fpfromf( 0.4f), gl_fpfromf( 1.0f)};
 
 
-extern void glMakeCurrent(I3DRenderer * ctx);
 // -----------------------------------------------------------------------------
 void
 testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
@@ -45,11 +54,15 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
   glEnable(GL_CULL_FACE);
 
   // Material
-  glMaterialxv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, material);
+  glMaterialxv(GL_FRONT, GL_AMBIENT,   matAmbient);
+  glMaterialxv(GL_FRONT, GL_DIFFUSE,   matDiffuse);
+  glMaterialxv(GL_FRONT, GL_SPECULAR,  matSpecular);
+  glMaterialx (GL_FRONT, GL_SHININESS, matShininess);
 
   // Lighting
   glLightxv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
   glLightxv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+  glLightxv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
   glLightxv(GL_LIGHT0, GL_POSITION, lightPosition);
   glEnable(GL_LIGHT0);
   //glEnable(GL_LIGHTING);
@@ -81,7 +94,7 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glEnable(GL_LIGHTING);
     glShadeModel(GL_FLAT);
     // Show 1 full rotation around y axis
-    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(2))
+    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(1))
     {
       //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glClear(GL_COLOR_BUFFER_BIT);
@@ -111,7 +124,7 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glEnable(GL_LIGHTING);
     glShadeModel(GL_SMOOTH);
     // Show 1 full rotation around y axis
-    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(2))
+    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(1))
     {
       //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glClear(GL_COLOR_BUFFER_BIT);
@@ -141,7 +154,7 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glDisable(GL_LIGHTING);
     glShadeModel(GL_FLAT);
     // Show 1 full rotation around y axis
-    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(2))
+    for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360); yrot += gl_fpfromi(1))
     {
       //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glClear(GL_COLOR_BUFFER_BIT);

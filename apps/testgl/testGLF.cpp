@@ -5,18 +5,29 @@
 #include "../gl/context.h"
 
 
+extern void glMakeCurrent(I3DRenderer * ctx);
 extern void initPyramidF();
 extern void drawPyramidF();
 extern void initCubeF();
 extern void drawCubeF();
-const GLfloat material[]      = { 1.0f,  1.0f,  1.0f,  1.0f};
-const GLfloat lightAmbient[]  = { 0.5f,  0.5f,  0.5f,  1.0f};
-const GLfloat lightDiffuse[]  = { 1.0f,  1.0f,  1.0f,  1.0f};
-const GLfloat lightPosition[] = {-1.0f, -1.0f,  2.0f,  1.0f};
-const GLfloat fogColor[]      = { 0.5f,  0.5f,  0.5f,  1.0f};
+extern void initTeapotF();
+extern void drawTeapotF();
 
 
-extern void glMakeCurrent(I3DRenderer * ctx);
+// Material
+const GLfloat matAmbient []   = { 0.4f,  0.2f,  0.0f,  1.0f};
+const GLfloat matDiffuse []   = { 0.8f,  0.4f,  0.0f,  1.0f};
+const GLfloat matSpecular[]   = { 0.8f,  0.4f,  0.0f,  1.0f};
+const GLfloat matShininess    = 8.0f;
+// Light
+const GLfloat lightAmbient [] = { 1.0f,  1.0f,  1.0f,  1.0f};
+const GLfloat lightDiffuse [] = { 1.0f,  1.0f,  1.0f,  1.0f};
+const GLfloat lightSpecular[] = { 1.0f,  1.0f,  1.0f,  1.0f};
+const GLfloat lightPosition[] = {-5.0f, 10.0f, 10.0f,  1.0f};
+// Fog
+const GLfloat fogColor[]      = { 0.4f,  0.4f,  0.4f,  1.0f};
+
+
 // -----------------------------------------------------------------------------
 void
 testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
@@ -44,11 +55,15 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
   glEnable(GL_CULL_FACE);
 
   // Material
-  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, material);
+  glMaterialfv(GL_FRONT, GL_AMBIENT,   matAmbient);
+  glMaterialfv(GL_FRONT, GL_DIFFUSE,   matDiffuse);
+  glMaterialfv(GL_FRONT, GL_SPECULAR,  matSpecular);
+  glMaterialf (GL_FRONT, GL_SHININESS, matShininess);
 
   // Lighting
-  glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
-  glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+  glLightfv(GL_LIGHT0, GL_AMBIENT,  lightAmbient);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE,  lightDiffuse);
+  glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
   glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
   glEnable(GL_LIGHT0);
   //glEnable(GL_LIGHTING);
@@ -80,7 +95,7 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glEnable(GL_LIGHTING);
     glShadeModel(GL_FLAT);
     // Show 1 full rotation around y axis
-    for(GLfloat yrot(0.0f); yrot < 360.0f; yrot += 2.0f)
+    for(GLfloat yrot(0.0f); yrot < 360.0f; yrot += 1.0f)
     {
       //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glClear(GL_COLOR_BUFFER_BIT);
@@ -110,7 +125,7 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glEnable(GL_LIGHTING);
     glShadeModel(GL_SMOOTH);
     // Show 1 full rotation around y axis
-    for(GLfloat yrot(0.0f); yrot < 360.0f; yrot += 2.0f)
+    for(GLfloat yrot(0.0f); yrot < 360.0f; yrot += 1.0f)
     {
       //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glClear(GL_COLOR_BUFFER_BIT);
@@ -140,7 +155,7 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glDisable(GL_LIGHTING);
     glShadeModel(GL_FLAT);
     // Show 1 full rotation around y axis
-    for(GLfloat yrot(0.0f); yrot < 360.0f; yrot += 2.0f)
+    for(GLfloat yrot(0.0f); yrot < 360.0f; yrot += 1.0f)
     {
       //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glClear(GL_COLOR_BUFFER_BIT);
