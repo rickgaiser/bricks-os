@@ -34,20 +34,20 @@ const GLfloat pyramidColF[TRIANGLE_COUNT*3*4] =
 {
   // Pyramid
   1.0f, 0.0f, 0.0f, 1.0f,
-  1.0f, 1.0f, 1.0f, 1.0f,
-  1.0f, 1.0f, 1.0f, 1.0f,
+  0.0f, 1.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 1.0f, 1.0f,
 
   1.0f, 0.0f, 0.0f, 1.0f,
-  1.0f, 1.0f, 1.0f, 1.0f,
-  1.0f, 1.0f, 1.0f, 1.0f,
+  0.0f, 0.0f, 1.0f, 1.0f,
+  0.0f, 1.0f, 0.0f, 1.0f,
 
   1.0f, 0.0f, 0.0f, 1.0f,
-  1.0f, 1.0f, 1.0f, 1.0f,
-  1.0f, 1.0f, 1.0f, 1.0f,
+  0.0f, 1.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 1.0f, 1.0f,
 
   1.0f, 0.0f, 0.0f, 1.0f,
-  1.0f, 1.0f, 1.0f, 1.0f,
-  1.0f, 1.0f, 1.0f, 1.0f
+  0.0f, 0.0f, 1.0f, 1.0f,
+  0.0f, 1.0f, 0.0f, 1.0f,
 };
 
 GLfloat pyramidNormalF[TRIANGLE_COUNT*3*3];
@@ -78,20 +78,20 @@ const GLfixed pyramidColFx[TRIANGLE_COUNT*3*4] =
 {
   // Pyramid
   gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
 
   gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
 
   gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
 
   gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
-  gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f)
+  gl_fpfromf(0.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f),
+  gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
 };
 
 GLfixed pyramidNormalFx[TRIANGLE_COUNT*3*3];

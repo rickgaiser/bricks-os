@@ -176,6 +176,7 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glShadeModel(GL_FLAT);
     glEnable(GL_TEXTURE_2D);
     renderCube(device, renderer, surface_a, surface_b);
+    glDisable(GL_TEXTURE_2D);
   }
 
   glMakeCurrent(NULL);

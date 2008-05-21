@@ -184,7 +184,6 @@ drawCubeF()
   glDrawArrays(GL_TRIANGLE_STRIP, 12, 4); // Back
   glDrawArrays(GL_TRIANGLE_STRIP, 16, 4); // Left
   glDrawArrays(GL_TRIANGLE_STRIP, 20, 4); // Right
-  glDisable(GL_TEXTURE_2D);
 }
 #else
 // -----------------------------------------------------------------------------
@@ -215,6 +214,5 @@ drawCubeFx()
   glDrawArrays(GL_TRIANGLE_STRIP, 12, 4); // Back
   glDrawArrays(GL_TRIANGLE_STRIP, 16, 4); // Left
   glDrawArrays(GL_TRIANGLE_STRIP, 20, 4); // Right
-  glDisable(GL_TEXTURE_2D);
 }
 #endif
