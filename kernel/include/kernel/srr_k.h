@@ -31,7 +31,7 @@ declareSysCallKernel4r(int, channelConnectAttach, uint32_t, iNodeID, pid_t, iPro
 declareSysCallKernel1r(int, channelConnectDetach, int, iConnectionID);
 // Names
 declareSysCallKernel2r(int, registerName, int, channelID, const char *, name);
-declareSysCallKernel3r(int, lookupName,   const char *, name, int &, pid, int &, channelID);
+declareSysCallKernel3r(int, lookupName,   const char *, name, int *, pid, int *, channelID);
 // Nodes
 declareSysCallKernel2r(int, registerNodeGateway, int, channelIDControl, int, channelIDData);
 

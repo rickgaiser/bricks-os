@@ -9,6 +9,7 @@ LIB             =srr
 OBJS            =\
                 srr \
                 pthread \
+                unistd \
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.user

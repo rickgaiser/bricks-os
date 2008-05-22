@@ -39,7 +39,7 @@ k_registerName(int channelID, const char * name)
 
 //---------------------------------------------------------------------------
 int
-k_lookupName(const char * name, int & pid, int & channelID)
+k_lookupName(const char * name, int * pid, int * channelID)
 {
   struct SNameEntry * pEntry;
 
@@ -50,8 +50,8 @@ k_lookupName(const char * name, int & pid, int & channelID)
   {
     if(strcmp(pEntry->sName, name) == 0)
     {
-      pid       = pEntry->iPID;
-      channelID = pEntry->iChannelID;
+      *pid       = pEntry->iPID;
+      *channelID = pEntry->iChannelID;
       return 0;
     }
   }

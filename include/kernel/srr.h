@@ -26,7 +26,7 @@ declareSysCallUser4r(int, channelConnectAttach, uint32_t, iNodeID, pid_t, iProce
 declareSysCallUser1r(int, channelConnectDetach, int, iConnectionID);
 // Names
 declareSysCallUser2r(int, registerName, int, channelID, const char *, name);
-declareSysCallUser3r(int, lookupName,   const char *, name, int &, pid, int &, channelID);
+declareSysCallUser3r(int, lookupName, const char *, name, int *, pid, int *, channelID);
 
 
 #endif

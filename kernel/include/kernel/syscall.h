@@ -98,6 +98,8 @@ struct SKernelMessageHeader
 #define __NR_sleep                      25
 #define __NR_usleep                     26
 //#define __NR_write                      27
+#define __NR_registerName               28
+#define __NR_lookupName                 29
 
 //---------------------------------------------------------------------------
 #define sysCallUser1(name,type1,arg1) \

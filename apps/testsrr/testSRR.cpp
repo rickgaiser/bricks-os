@@ -82,7 +82,7 @@ testNamed()
   {
     // Lookup "test"
     int iTestPID, iTestChannelID;
-    if(lookupName("test", iTestPID, iTestChannelID) >= 0)
+    if(lookupName("test", &iTestPID, &iTestChannelID) >= 0)
       printk("\"test\" @ %d-%d\n", iTestPID, iTestChannelID);
     else
       printk("ERROR Trying to lookup \"test\"\n");

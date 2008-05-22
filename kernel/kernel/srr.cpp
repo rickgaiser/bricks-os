@@ -4,6 +4,7 @@
 #include "kernel/srrConnection.h"
 #include "kernel/task.h"
 #include "kernel/pthread_k.h"
+#include "kernel/unistd_k.h"
 #include "kernel/syscall.h"
 #include "asm/cpu.h"
 #include "asm/arch/config.h"
@@ -32,19 +33,26 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
     {
       switch(pHeader->iFunctionID)
       {
+        // Channels
         unwrapfunc1r(channelCreate,          pSndMsg, unsigned, iFlags);
         unwrapfunc1r(channelDestroy,         pSndMsg, int, iChannelID);
         unwrapfunc4r(channelConnectAttach,   pSndMsg, uint32_t, iNodeID, pid_t, iProcessID, int, iChannelID, int, iFlags);
         unwrapfunc1r(channelConnectDetach,   pSndMsg, int, iConnectionID);
-
+        // Names
+        unwrapfunc2r(registerName,           pSndMsg, int, channelID, const char *, name);
+        unwrapfunc3r(lookupName,             pSndMsg, const char *, name, int *, pid, int *, channelID);
+        // Threads
         unwrapfunc4r(pthread_create,         pSndMsg, pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
         unwrapfunc1 (pthread_exit,           pSndMsg, void *, status);
+        unwrapfunc2r(pthread_join,           pSndMsg, pthread_t, thread, void **, value_ptr);
+        // Conditions
         unwrapfunc2r(pthread_cond_init,      pSndMsg, pthread_cond_t *, cond, const pthread_condattr_t *, attr);
         unwrapfunc1r(pthread_cond_destroy,   pSndMsg, pthread_cond_t *, cond);
         unwrapfunc2r(pthread_cond_wait,      pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex);
         unwrapfunc3r(pthread_cond_timedwait, pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex, const struct timespec *, ts);
         unwrapfunc1r(pthread_cond_signal,    pSndMsg, pthread_cond_t *, cond);
         unwrapfunc1r(pthread_cond_broadcast, pSndMsg, pthread_cond_t *, cond);
+        // Mutexes
         unwrapfunc2r(pthread_mutex_init,     pSndMsg, pthread_mutex_t *, mutex, const pthread_mutexattr_t *, attr);
         unwrapfunc1r(pthread_mutex_destroy,  pSndMsg, pthread_mutex_t *, mutex);
         unwrapfunc1r(pthread_mutex_lock,     pSndMsg, pthread_mutex_t *, mutex);
@@ -54,11 +62,11 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
         //unwrapfunc1r(brk,                    pSndMsg, void *, addr);
         //unwrapfunc1r(close,                  pSndMsg, int, iFD);
         //unwrapfunc1 (_exit,                  pSndMsg, int, iStatus);
-//        unwrapfunc0r(getpid);
+        unwrapfunc0r(getpid);
         //unwrapfunc3r(read,                   pSndMsg, int, iFD, void *, pBuf, size_t, size);
         //unwrapfunc1r(sbrk,                   pSndMsg, intptr_t, increment);
-//        unwrapfunc1r(sleep,                  pSndMsg, unsigned int, iSeconds);
-//        unwrapfunc1r(usleep,                 pSndMsg, useconds_t, useconds);
+        unwrapfunc1r(sleep,                  pSndMsg, unsigned int, iSeconds);
+        unwrapfunc1r(usleep,                 pSndMsg, useconds_t, useconds);
         //unwrapfunc3r(write,                  pSndMsg, int, iFD, const void *, pBuf, size_t, size);
 
         default:
