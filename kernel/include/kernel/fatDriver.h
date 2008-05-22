@@ -2,7 +2,8 @@
 #define FATDRIVER_H
 
 
-#include "fileSystem.h"
+#include "kernel/fileSystem.h"
+#include "kernel/driverMountPoint.h"
 
 
 // -----------------------------------------------------------------------------
