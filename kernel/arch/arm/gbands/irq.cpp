@@ -1,9 +1,11 @@
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "kernel/task.h"
+#include "kernel/srr_k.h"
 #include "task.h"
 #include "asm/irq.h"
 #include "asm/arch/memory.h"
+#include "asm/arch/config.h"
 
 
 
@@ -70,7 +72,15 @@ CIRQ::~CIRQ()
 int
 CIRQ::init()
 {
-  REG_INTMAIN = &::__isr;
+  // Initialize function pointers
+  REG_INTMAIN    = &::__isr;
+#ifdef GBA
+#ifndef CONFIG_DIRECT_ACCESS_KERNEL
+  REG_MSGSEND    = &::k_msgSend;
+  REG_MSGRECEIVE = &::k_msgReceive;
+  REG_MSGREPLY   = &::k_msgReply;
+#endif // CONFIG_DIRECT_ACCESS_KERNEL
+#endif // GBA
 
   for(int i(0); i < MAX_INTERRUPTS; i++)
     CInterruptManager::attach(i, this);

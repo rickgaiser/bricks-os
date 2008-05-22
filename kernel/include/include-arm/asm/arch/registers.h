@@ -5,7 +5,13 @@
 #include "inttypes.h"
 
 
-typedef void (*fnptr)();
+// Function pointer definitions
+typedef void (* fnptr        )();
+typedef int  (* pf_msgSend   )(int, const void *, int, void *, int);
+typedef int  (* pf_msgReceive)(int, void *, int);
+typedef int  (* pf_msgReply  )(int, int, const void *, int);
+
+// Link script definitions
 extern uint32_t __itcm_start;
 //extern uint32_t __ewram_end;
 //extern uint32_t __eheap_end;
@@ -346,10 +352,17 @@ enum ESerialMode
 #define CHAR_BASE_BLOCK_SUB(n)   ((void *)(((n)*0x4000)+0x6200000))
 #define SCREEN_BASE_BLOCK(n)     ((void *)(((n)*0x0800)+0x6000000))
 #define SCREEN_BASE_BLOCK_SUB(n) ((void *)(((n)*0x0800)+0x6200000))
+#ifdef GBA
+#define IWRAM_BASE            (0x03000000)
+#define IWRAM_TOP             (IWRAM_BASE + 0x8000)
+#endif // GBA
 
 // Registers
 #ifdef GBA
-#define REG_INTMAIN           (*(fnptr*)(0x03007ffc))
+#define REG_INTMAIN           (*(fnptr         *)(IWRAM_TOP -  4))
+#define REG_MSGSEND           (*(pf_msgSend    *)(IWRAM_TOP -  8))
+#define REG_MSGRECEIVE        (*(pf_msgReceive *)(IWRAM_TOP - 12))
+#define REG_MSGREPLY          (*(pf_msgReply   *)(IWRAM_TOP - 16))
 #define REG_DISPCNT           (*(vuint16_t*)0x04000000) // See bits above
 #endif // GBA
 #ifdef NDS
