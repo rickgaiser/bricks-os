@@ -11,8 +11,9 @@
 #include "glesContextNDS.h"
 #endif // NDS9
 
+
 #ifdef GBA
-  #define DEFAULT_VIDEO_MODE  videoModes[0] // 240x160x16
+  #define DEFAULT_VIDEO_MODE  videoModes[2] // 240x160x16
 #endif // GBA
 #ifdef NDS9
   #define DEFAULT_VIDEO_MODE  videoModes[0] // 256x192x16
@@ -111,10 +112,13 @@ CGBAVideoDevice::CGBAVideoDevice()
  : CAVideoDevice()
  , pSurface_(NULL)
  , iSurfacesFree_(0)
+ , iFrameCount_(0)
  , bSwap_(false)
  , pCurrentMode_(NULL)
 {
   CInterruptManager::attach(0, this);
+  // Enable VBlank interrupt
+  REG_DISPSTAT |= IRQ_VBLANK_ENABLE;
 }
 
 //---------------------------------------------------------------------------
@@ -126,6 +130,8 @@ CGBAVideoDevice::~CGBAVideoDevice()
 int
 CGBAVideoDevice::isr(int irq)
 {
+  iFrameCount_++;
+
   // Notify swap function that we have vertical sync
   if(bSwap_ == true)
     bSwap_ = false;
@@ -315,6 +321,7 @@ CGBAVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
 #ifdef GBA
   *renderer = new CGBAGLESContext;
+//  *renderer = new CSoftGLESFixed;
 #endif // GBA
 #ifdef NDS9
   *renderer = new CNDSGLESContext;
@@ -322,11 +329,20 @@ CGBAVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 }
 
 //---------------------------------------------------------------------------
-void
+uint32_t
+CGBAVideoDevice::getFrameNr()
+{
+  return iFrameCount_;
+}
+
+//---------------------------------------------------------------------------
+uint32_t
 CGBAVideoDevice::waitVSync()
 {
   bSwap_ = true;
   while(bSwap_ == true){}
+
+  return iFrameCount_;
 }
 
 //---------------------------------------------------------------------------

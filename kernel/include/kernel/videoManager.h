@@ -378,7 +378,8 @@ public:
   virtual void get2DRenderer(I2DRenderer ** renderer) = 0;
   virtual void get3DRenderer(I3DRenderer ** renderer) = 0;
 
-  virtual void waitVSync() = 0;
+  virtual uint32_t getFrameNr() = 0; // Returns current frame/field number
+  virtual uint32_t waitVSync() = 0; // Returns current frame/field number, after vsync
   virtual void displaySurface(CSurface * surface) = 0;
 
   virtual void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy) = 0;

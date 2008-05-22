@@ -225,6 +225,7 @@ CNGCVideoDevice::CNGCVideoDevice()
  , pSurface_(NULL)
  , pNativeSurface_(NULL)
  , pCurrentMode_(NULL)
+ , iFrameCount_(0)
 {
 }
 
@@ -342,12 +343,21 @@ CNGCVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 }
 
 //---------------------------------------------------------------------------
-void
+uint32_t
+CNGCVideoDevice::getFrameNr()
+{
+  return iFrameCount_;
+}
+
+//---------------------------------------------------------------------------
+uint32_t
 CNGCVideoDevice::waitVSync()
 {
   // Busy waiting for vblank
   while(REG_VI_HLINE != 200); //0x20A);
   while(REG_VI_HLINE <= 200); //0x20A);
+
+  return iFrameCount_;
 }
 
 //---------------------------------------------------------------------------
@@ -357,6 +367,9 @@ CNGCVideoDevice::displaySurface(CSurface * surface)
   // Always VSync, even if the frame is not new.
   if(vSync_ == true)
     waitVSync();
+
+  // FIXME: isr should update this, but we don't have interrupts
+  iFrameCount_++;
 
   // Set new surface if it changed
   if((surface != NULL) && (surface != pSurface_))

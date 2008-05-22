@@ -121,7 +121,8 @@ public:
   virtual void get2DRenderer(I2DRenderer ** renderer);
   virtual void get3DRenderer(I3DRenderer ** renderer);
 
-  virtual void waitVSync();
+  virtual uint32_t getFrameNr(); // Returns current frame/field number
+  virtual uint32_t waitVSync(); // Returns current frame/field number, after vsync
   virtual void displaySurface(CSurface * surface);
 
   virtual void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy);
@@ -135,6 +136,8 @@ private:
 
   const SVideoMode    * pCurrentMode_;
   const SPS2VideoMode * pCurrentPS2Mode_;
+
+  vuint32_t iFrameCount_; // volatile, becouse the isr updates it
 };
 
 

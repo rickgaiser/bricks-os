@@ -29,9 +29,12 @@ const GLfloat fogColor[]      = { 0.4f,  0.4f,  0.4f,  1.0f};
 
 
 // -----------------------------------------------------------------------------
-void
+int
 renderPyramid(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
 {
+  int iFrameCount(0);
+  int iStartFrame;
+  int iCurrentFrame;
   bool bDisplayB(true);
 
   // Set buffers
@@ -39,8 +42,10 @@ renderPyramid(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface
   device->displaySurface(bDisplayB ? surface_a : surface_b);
   bDisplayB = !bDisplayB;
 
+  iStartFrame = device->getFrameNr();
+
   // Show 1 full rotation around y axis
-  for(GLfloat yrot(0.0f); yrot < 360.0f; yrot += 1.0f)
+  for(GLfloat yrot(0.0f); yrot < 360.0f;)
   {
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -57,14 +62,25 @@ renderPyramid(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface
     renderer->setSurface(bDisplayB ? surface_b : surface_a);
     device->displaySurface(bDisplayB ? surface_a : surface_b);
     bDisplayB = !bDisplayB;
+
+    iFrameCount++;
+    iCurrentFrame = device->getFrameNr();
+    yrot = 1.0f * (iCurrentFrame - iStartFrame);
   }
+
+  return iFrameCount;
 }
 
 // -----------------------------------------------------------------------------
-void
+int
 renderCube(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
 {
+  int iFrameCount(0);
+  int iStartFrame;
+  int iCurrentFrame;
   bool bDisplayB(true);
+
+  iStartFrame = device->getFrameNr();
 
   // Set buffers
   renderer->setSurface(bDisplayB ? surface_b : surface_a);
@@ -72,7 +88,7 @@ renderCube(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a,
   bDisplayB = !bDisplayB;
 
   // Show 1 full rotation around y axis
-  for(GLfloat yrot(0.0f); yrot < 360.0f; yrot += 1.0f)
+  for(GLfloat yrot(0.0f); yrot < 360.0f;)
   {
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -89,7 +105,13 @@ renderCube(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a,
     renderer->setSurface(bDisplayB ? surface_b : surface_a);
     device->displaySurface(bDisplayB ? surface_a : surface_b);
     bDisplayB = !bDisplayB;
+
+    iFrameCount++;
+    iCurrentFrame = device->getFrameNr();
+    yrot = 1.0f * (iCurrentFrame - iStartFrame);
   }
+
+  return iFrameCount;
 }
 
 // -----------------------------------------------------------------------------

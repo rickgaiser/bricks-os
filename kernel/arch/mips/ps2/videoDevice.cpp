@@ -376,6 +376,7 @@ CPS2VideoDevice::CPS2VideoDevice()
  , packet_(50)
  , pCurrentMode_(NULL)
  , pCurrentPS2Mode_(NULL)
+ , iFrameCount_(0)
 {
   // Reset the packet
   packet_.reset();
@@ -520,10 +521,19 @@ CPS2VideoDevice::get3DRenderer(I3DRenderer ** renderer)
 }
 
 //---------------------------------------------------------------------------
-void
+uint32_t
+CPS2VideoDevice::getFrameNr()
+{
+  return iFrameCount_;
+}
+
+//---------------------------------------------------------------------------
+uint32_t
 CPS2VideoDevice::waitVSync()
 {
   WAIT_VSYNC();
+
+  return iFrameCount_;
 }
 
 //---------------------------------------------------------------------------
@@ -535,6 +545,9 @@ CPS2VideoDevice::displaySurface(CSurface * surface)
   // Always VSync, even if the frame is not new.
   if(vSync_ == true)
     WAIT_VSYNC();
+
+  // FIXME: isr should update this, but we don't have interrupts
+  iFrameCount_++;
 
   // Set new surface
   if(pNewSurface != NULL)
