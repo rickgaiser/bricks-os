@@ -5,8 +5,9 @@
 
 
 //---------------------------------------------------------------------------
-CMsgServer::CMsgServer()
- : iChannelID_(0)
+CMsgServer::CMsgServer(const char * name)
+ : sName_(name)
+ , iChannelID_(0)
 {
   iPID_ = getpid();
 }
@@ -25,6 +26,13 @@ CMsgServer::svc()
   {
     int rcvid;
     char recvBuffer[80];
+
+    // Register name is one was passed
+    if(sName_ != 0)
+    {
+      if(registerName(iChannelID_, sName_) < 0)
+        printk("CMsgServer::svc: ERROR: Unable to register name\n");
+    }
 
     while(true)
     {

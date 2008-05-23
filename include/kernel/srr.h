@@ -9,6 +9,11 @@
 #include "inttypes.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 // SRR
 #ifdef CONFIG_DIRECT_ACCESS_KERNEL
   #define msgSend    k_msgSend
@@ -27,6 +32,11 @@ declareSysCallUser1r(int, channelConnectDetach, int, iConnectionID);
 // Names
 declareSysCallUser2r(int, registerName, int, channelID, const char *, name);
 declareSysCallUser3r(int, lookupName, const char *, name, int *, pid, int *, channelID);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

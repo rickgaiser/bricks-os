@@ -10,7 +10,7 @@ class CMsgServer
  : public ACE_Task_Base
 {
 public:
-  CMsgServer();
+  CMsgServer(const char * name = 0);
   virtual ~CMsgServer();
 
   int svc();
@@ -20,6 +20,7 @@ public:
   int getChannelID() const;
 
 protected:
+  const char * sName_;
   int iPID_;
   int iChannelID_;
 };

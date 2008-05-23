@@ -7,9 +7,9 @@ extern "C" {
 #endif
 
 
-//int creat(const char * pPath, Mode_t mode);
-//int fcntl(int iFd, int iCMD, ...);
-int open(const char * pPath, int iOflags, ...);
+//int creat(const char * path, mode_t mode);
+//int fcntl(int fd, int cmd, ...);
+int open(const char * path, int oflag, ...);
 
 
 #ifdef __cplusplus

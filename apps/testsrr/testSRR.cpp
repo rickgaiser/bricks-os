@@ -1,6 +1,7 @@
 #include "kernel/debug.h"
 #include "kernel/srr.h"
 #include "unistd.h"
+#include "fcntl.h"
 #include "pthread.h"
 #include "msgServer.h"
 
@@ -11,7 +12,7 @@ class CTestServer
  : public CMsgServer
 {
 public:
-  CTestServer(){}
+  CTestServer(const char * name = 0) : CMsgServer(name) {}
   virtual ~CTestServer(){}
 
   virtual int process(int iReceiveID, void * pRcvMsg);
@@ -92,6 +93,36 @@ testNamed()
 }
 
 //---------------------------------------------------------------------------
+void
+testNamed2()
+{
+  // Create named server thread
+  CTestServer server("CTestServer");
+
+  // Activate the server thread
+  server.activate();
+
+  // FIXME: Wait for server to activate
+  sleep(1);
+
+  printk(" - Open File...");
+  int fd = open("CTestServer", 0/*O_RDWR*/);
+
+  if(fd >= 0)
+  {
+    printk("OK\n");
+
+    printk(" - Close File...");
+    if(close(fd) >= 0)
+      printk("OK\n");
+    else
+      printk("ERROR\n");
+  }
+  else
+    printk("ERROR\n");
+}
+
+//---------------------------------------------------------------------------
 // Test sleeping
 void
 testSleep()
@@ -126,6 +157,7 @@ testThread(void * arg)
   {
     testSRR();
     testNamed();
+    testNamed2();
   }
 
   // Thread exit

@@ -12,3 +12,11 @@ sysCallUser0r(pid_t,           getpid);
 sysCallUser1r(unsigned int,    sleep, unsigned int, iSeconds);
 sysCallUser1r(int,             usleep, useconds_t, useconds);
 //sysCallUser3r(ssize_t,         write, int, iFD, const void *, pBuf, size_t, size);
+
+
+// -----------------------------------------------------------------------------
+int
+close(int fd)
+{
+  return channelConnectDetach(fd);
+}
