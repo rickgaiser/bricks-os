@@ -70,7 +70,7 @@ struct SKernelMessageHeader
 #define INTERFACE_VERSION(major, minor) ((major<<24)+minor)
 
 //---------------------------------------------------------------------------
-// System Call Function numbers
+// Kernel System Call Function numbers
 #define __NR_channelCreate               1
 #define __NR_channelDestroy              2
 #define __NR_channelConnectAttach        3
@@ -100,6 +100,13 @@ struct SKernelMessageHeader
 //#define __NR_write                      27
 #define __NR_registerName               28
 #define __NR_lookupName                 29
+
+//---------------------------------------------------------------------------
+// Mount Point System Call Function numbers
+#define __NR_open                        1
+#define __NR_close                       2
+#define __NR_read                        3
+#define __NR_write                       4
 
 //---------------------------------------------------------------------------
 #define sysCallUser1(name,type1,arg1) \
@@ -224,29 +231,19 @@ type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4) \
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-#define unwrapfunc0r(name) \
+#define kunwrapfunc0r(name) \
+  unwrapfunc0r(name,k_##name)
+#define unwrapfunc0r(name,cname) \
 case __NR_##name: \
 { \
-  iRetVal = k_##name(); \
+  iRetVal = cname(); \
   break; \
 }
 
 //---------------------------------------------------------------------------
-#define unwrapfunc1(name,data,type1,arg1) \
-case __NR_##name: \
-{ \
-  struct SMsg \
-  { \
-    SKernelMessageHeader hdr; \
-    type1 arg1; \
-  } __attribute__ ((__packed__)); \
-  SMsg * msg = (SMsg *)data; \
-  k_##name(msg->arg1); \
-  break; \
-}
-
-//---------------------------------------------------------------------------
-#define unwrapfunc1r(name,data,type1,arg1) \
+#define kunwrapfunc1(name,data,type1,arg1) \
+  unwrapfunc1(name,k_##name,data,type1,arg1)
+#define unwrapfunc1(name,cname,data,type1,arg1) \
 case __NR_##name: \
 { \
   struct SMsg \
@@ -255,12 +252,30 @@ case __NR_##name: \
     type1 arg1; \
   } __attribute__ ((__packed__)); \
   SMsg * msg = (SMsg *)data; \
-  iRetVal = k_##name(msg->arg1); \
+  cname(msg->arg1); \
   break; \
 }
 
 //---------------------------------------------------------------------------
-#define unwrapfunc2r(name,data,type1,arg1,type2,arg2) \
+#define kunwrapfunc1r(name,data,type1,arg1) \
+  unwrapfunc1r(name,k_##name,data,type1,arg1)
+#define unwrapfunc1r(name,cname,data,type1,arg1) \
+case __NR_##name: \
+{ \
+  struct SMsg \
+  { \
+    SKernelMessageHeader hdr; \
+    type1 arg1; \
+  } __attribute__ ((__packed__)); \
+  SMsg * msg = (SMsg *)data; \
+  iRetVal = cname(msg->arg1); \
+  break; \
+}
+
+//---------------------------------------------------------------------------
+#define kunwrapfunc2r(name,data,type1,arg1,type2,arg2) \
+  unwrapfunc2r(name,k_##name,data,type1,arg1,type2,arg2)
+#define unwrapfunc2r(name,cname,data,type1,arg1,type2,arg2) \
 case __NR_##name: \
 { \
   struct SMsg \
@@ -270,12 +285,14 @@ case __NR_##name: \
     type2 arg2; \
   } __attribute__ ((__packed__)); \
   SMsg * msg = (SMsg *)data; \
-  iRetVal = k_##name(msg->arg1, msg->arg2); \
+  iRetVal = cname(msg->arg1, msg->arg2); \
   break; \
 }
 
 //---------------------------------------------------------------------------
-#define unwrapfunc3r(name,data,type1,arg1,type2,arg2,type3,arg3) \
+#define kunwrapfunc3r(name,data,type1,arg1,type2,arg2,type3,arg3) \
+  unwrapfunc3r(name,k_##name,data,type1,arg1,type2,arg2,type3,arg3)
+#define unwrapfunc3r(name,cname,data,type1,arg1,type2,arg2,type3,arg3) \
 case __NR_##name: \
 { \
   struct SMsg \
@@ -286,12 +303,14 @@ case __NR_##name: \
     type3 arg3; \
   } __attribute__ ((__packed__)); \
   SMsg * msg = (SMsg *)data; \
-  iRetVal = k_##name(msg->arg1, msg->arg2, msg->arg3); \
+  iRetVal = cname(msg->arg1, msg->arg2, msg->arg3); \
   break; \
 }
 
 //---------------------------------------------------------------------------
-#define unwrapfunc4r(name,data,type1,arg1,type2,arg2,type3,arg3,type4,arg4) \
+#define kunwrapfunc4r(name,data,type1,arg1,type2,arg2,type3,arg3,type4,arg4) \
+  unwrapfunc4r(name,k_##name,data,type1,arg1,type2,arg2,type3,arg3,type4,arg4)
+#define unwrapfunc4r(name,cname,data,type1,arg1,type2,arg2,type3,arg3,type4,arg4) \
 case __NR_##name: \
 { \
   struct SMsg \
@@ -303,12 +322,14 @@ case __NR_##name: \
     type4 arg4; \
   } __attribute__ ((__packed__)); \
   SMsg * msg = (SMsg *)data; \
-  iRetVal = k_##name(msg->arg1, msg->arg2, msg->arg3, msg->arg4); \
+  iRetVal = cname(msg->arg1, msg->arg2, msg->arg3, msg->arg4); \
   break; \
 }
 
 //---------------------------------------------------------------------------
-#define unwrapfunc5r(name,data,type1,arg1,type2,arg2,type3,arg3,type4,arg4,type5,arg5) \
+#define kunwrapfunc5r(name,data,type1,arg1,type2,arg2,type3,arg3,type4,arg4,type5,arg5) \
+  unwrapfunc5r(name,k_##name,data,type1,arg1,type2,arg2,type3,arg3,type4,arg4,type5,arg5)
+#define unwrapfunc5r(name,cname,data,type1,arg1,type2,arg2,type3,arg3,type4,arg4,type5,arg5) \
 case __NR_##name: \
 { \
   struct SMsg \
@@ -321,7 +342,7 @@ case __NR_##name: \
     type5 arg5; \
   } __attribute__ ((__packed__)); \
   SMsg * msg = (SMsg *)data; \
-  iRetVal = k_##name(msg->arg1, msg->arg2, msg->arg3, msg->arg4, msg->arg5); \
+  iRetVal = cname(msg->arg1, msg->arg2, msg->arg3, msg->arg4, msg->arg5); \
   break; \
 }
 

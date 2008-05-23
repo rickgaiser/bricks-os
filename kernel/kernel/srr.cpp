@@ -34,40 +34,40 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
       switch(pHeader->iFunctionID)
       {
         // Channels
-        unwrapfunc1r(channelCreate,          pSndMsg, unsigned, iFlags);
-        unwrapfunc1r(channelDestroy,         pSndMsg, int, iChannelID);
-        unwrapfunc4r(channelConnectAttach,   pSndMsg, uint32_t, iNodeID, pid_t, iProcessID, int, iChannelID, int, iFlags);
-        unwrapfunc1r(channelConnectDetach,   pSndMsg, int, iConnectionID);
+        kunwrapfunc1r(channelCreate,          pSndMsg, unsigned, iFlags);
+        kunwrapfunc1r(channelDestroy,         pSndMsg, int, iChannelID);
+        kunwrapfunc4r(channelConnectAttach,   pSndMsg, uint32_t, iNodeID, pid_t, iProcessID, int, iChannelID, int, iFlags);
+        kunwrapfunc1r(channelConnectDetach,   pSndMsg, int, iConnectionID);
         // Names
-        unwrapfunc2r(registerName,           pSndMsg, int, channelID, const char *, name);
-        unwrapfunc3r(lookupName,             pSndMsg, const char *, name, int *, pid, int *, channelID);
+        kunwrapfunc2r(registerName,           pSndMsg, int, channelID, const char *, name);
+        kunwrapfunc3r(lookupName,             pSndMsg, const char *, name, int *, pid, int *, channelID);
         // Threads
-        unwrapfunc4r(pthread_create,         pSndMsg, pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
-        unwrapfunc1 (pthread_exit,           pSndMsg, void *, status);
-        unwrapfunc2r(pthread_join,           pSndMsg, pthread_t, thread, void **, value_ptr);
+        kunwrapfunc4r(pthread_create,         pSndMsg, pthread_t *, thread, const pthread_attr_t *, attr, pthread_func_entry, start_routine, void *, arg);
+        kunwrapfunc1 (pthread_exit,           pSndMsg, void *, status);
+        kunwrapfunc2r(pthread_join,           pSndMsg, pthread_t, thread, void **, value_ptr);
         // Conditions
-        unwrapfunc2r(pthread_cond_init,      pSndMsg, pthread_cond_t *, cond, const pthread_condattr_t *, attr);
-        unwrapfunc1r(pthread_cond_destroy,   pSndMsg, pthread_cond_t *, cond);
-        unwrapfunc2r(pthread_cond_wait,      pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex);
-        unwrapfunc3r(pthread_cond_timedwait, pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex, const struct timespec *, ts);
-        unwrapfunc1r(pthread_cond_signal,    pSndMsg, pthread_cond_t *, cond);
-        unwrapfunc1r(pthread_cond_broadcast, pSndMsg, pthread_cond_t *, cond);
+        kunwrapfunc2r(pthread_cond_init,      pSndMsg, pthread_cond_t *, cond, const pthread_condattr_t *, attr);
+        kunwrapfunc1r(pthread_cond_destroy,   pSndMsg, pthread_cond_t *, cond);
+        kunwrapfunc2r(pthread_cond_wait,      pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex);
+        kunwrapfunc3r(pthread_cond_timedwait, pSndMsg, pthread_cond_t *, cond, pthread_mutex_t *, mutex, const struct timespec *, ts);
+        kunwrapfunc1r(pthread_cond_signal,    pSndMsg, pthread_cond_t *, cond);
+        kunwrapfunc1r(pthread_cond_broadcast, pSndMsg, pthread_cond_t *, cond);
         // Mutexes
-        unwrapfunc2r(pthread_mutex_init,     pSndMsg, pthread_mutex_t *, mutex, const pthread_mutexattr_t *, attr);
-        unwrapfunc1r(pthread_mutex_destroy,  pSndMsg, pthread_mutex_t *, mutex);
-        unwrapfunc1r(pthread_mutex_lock,     pSndMsg, pthread_mutex_t *, mutex);
-        unwrapfunc1r(pthread_mutex_trylock,  pSndMsg, pthread_mutex_t *, mutex);
-        unwrapfunc1r(pthread_mutex_unlock,   pSndMsg, pthread_mutex_t *, mutex);
+        kunwrapfunc2r(pthread_mutex_init,     pSndMsg, pthread_mutex_t *, mutex, const pthread_mutexattr_t *, attr);
+        kunwrapfunc1r(pthread_mutex_destroy,  pSndMsg, pthread_mutex_t *, mutex);
+        kunwrapfunc1r(pthread_mutex_lock,     pSndMsg, pthread_mutex_t *, mutex);
+        kunwrapfunc1r(pthread_mutex_trylock,  pSndMsg, pthread_mutex_t *, mutex);
+        kunwrapfunc1r(pthread_mutex_unlock,   pSndMsg, pthread_mutex_t *, mutex);
 
-        //unwrapfunc1r(brk,                    pSndMsg, void *, addr);
-        //unwrapfunc1r(close,                  pSndMsg, int, iFD);
-        //unwrapfunc1 (_exit,                  pSndMsg, int, iStatus);
-        unwrapfunc0r(getpid);
-        //unwrapfunc3r(read,                   pSndMsg, int, iFD, void *, pBuf, size_t, size);
-        //unwrapfunc1r(sbrk,                   pSndMsg, intptr_t, increment);
-        unwrapfunc1r(sleep,                  pSndMsg, unsigned int, iSeconds);
-        unwrapfunc1r(usleep,                 pSndMsg, useconds_t, useconds);
-        //unwrapfunc3r(write,                  pSndMsg, int, iFD, const void *, pBuf, size_t, size);
+        //kunwrapfunc1r(brk,                    pSndMsg, void *, addr);
+        //kunwrapfunc1r(close,                  pSndMsg, int, iFD);
+        //kunwrapfunc1 (_exit,                  pSndMsg, int, iStatus);
+        kunwrapfunc0r(getpid);
+        //kunwrapfunc3r(read,                   pSndMsg, int, iFD, void *, pBuf, size_t, size);
+        //kunwrapfunc1r(sbrk,                   pSndMsg, intptr_t, increment);
+        kunwrapfunc1r(sleep,                  pSndMsg, unsigned int, iSeconds);
+        kunwrapfunc1r(usleep,                 pSndMsg, useconds_t, useconds);
+        //kunwrapfunc3r(write,                  pSndMsg, int, iFD, const void *, pBuf, size_t, size);
 
         default:
           printk("k_msgSend: Invalid function id: %d\n", pHeader->iFunctionID);
@@ -75,13 +75,20 @@ k_msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg,
     }
     else
     {
-      printk("k_msgSend: Invalid kernel header(0x%x, %d, %d, 0x%x)\n", pHeader, pHeader->iHeaderSize, iSndSize, pHeader->iVersion);
+      printk("k_msgSend: Invalid header(0x%x, %d, %d, 0x%x)\n", pHeader, pHeader->iHeaderSize, iSndSize, pHeader->iVersion);
     }
   }
   else if(iConnectionID < CONNECTION_ID_BASE)
   {
     // Kernel Drivers ID
-    printk("k_msgSend: Invalid connection id: %d\n", iConnectionID);
+    //if(kernelDriver[iConnectionID] != 0)
+    //{
+    //  iRetVal = kernelDriver[iConnectionID]->msgSend(iConnectionID, pSndMsg, iSndSize, pRcvMsg, iRcvSize);
+    //}
+    //else
+    {
+      printk("k_msgSend: Invalid connection id: %d\n", iConnectionID);
+    }
   }
   else
 #endif // CONFIG_DIRECT_ACCESS_KERNEL_FUNC

@@ -52,6 +52,8 @@ public:
   CMountPointDriver(IMountPoint * mountPoint = 0);
   virtual ~CMountPointDriver();
 
+  void setMountPoint(IMountPoint * mountPoint);
+
   virtual int msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize);
 
 private:
