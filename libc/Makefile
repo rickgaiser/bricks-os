@@ -1,13 +1,18 @@
+include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch/config.make
+
+
 LIB             =tc
 OBJS            =\
                 ctype \
                 errno \
                 fcntl \
-                pthread \
-                srr \
                 stdlib \
                 string \
-                unistd \
+
+
+ifneq ($(CONFIG_DIRECT_ACCESS_KERNEL_FUNC),y)
+  OBJS            += pthread srr unistd
+endif
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.user

@@ -24,11 +24,6 @@ ifeq ($(CONFIG_BUILTIN_LIBC),y)
   LIBS            += tc
 endif
 
-ifneq ($(CONFIG_DIRECT_ACCESS_KERNEL_FUNC),y)
-  DIRS            += srr
-  LIBS            += srr
-endif
-
 ifeq ($(CONFIG_FRAMEBUFFER),y)
   DIRS            += libtwl
   LIBS            += twl
