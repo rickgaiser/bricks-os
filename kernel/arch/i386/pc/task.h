@@ -8,6 +8,7 @@
 #include "hal.h"
 
 
+// -----------------------------------------------------------------------------
 class CPCThread
  : public CThread
 {
@@ -32,7 +33,29 @@ private:
   CPCAddressSpace cASpace_;
 
   // Task state
-  STaskStateSegment tss_;
+  STaskStateSegment * pTSS_;
+  selector_t selTSS_;
+
+  uint32_t * pStack_;
+  uint32_t * pSvcStack_;
+};
+
+// -----------------------------------------------------------------------------
+class CV86Thread
+{
+public:
+  CV86Thread();
+  ~CV86Thread();
+
+  void interrupt(uint8_t nr);
+
+public:
+  // Addess space
+  CPCAddressSpace cASpace_;
+
+  // Task state
+  STaskStateSegment * pTSS_;
+  uint32_t iTSSSize_;
   selector_t selTSS_;
 
   uint32_t * pStack_;

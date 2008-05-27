@@ -5,6 +5,16 @@
 #include "inttypes.h"
 
 
+// CPU flags
+#define I386_ON_FLAGS      (0x00000002) // Always on flags
+#define I386_IE_FLAG       (1<< 9)
+#define I386_IOPL_VALUE(v) (((v)&3)<<12)
+#define I386_NT_FLAG       (1<<14)
+#define I386_VM_FLAG       (1<<17)
+
+// v86 addr to linear arrd
+#define from_v86_addr(seg,off) (((seg & 0xffff) << 4)+off)
+
 // Descriptor Types (bits for 6th byte (access) of descriptor)
 typedef enum
 {

@@ -191,6 +191,8 @@ main(unsigned long magic, multiboot_info_t * mbi)
     if(mmap->type == 1)
       physFreeRange(mmap->base_addr_low, mmap->length_low);
 
+  // Allocate interrupt area (start: 0, size: 4KiB)
+  physAllocRange((uint64_t)0x00000000, 0x00001000);
   // Allocate kernel stack (start: 1MiB, size: 4KiB)
   physAllocRange((uint64_t)0x00100000, 0x00001000);
   // Allocate kernel
@@ -361,6 +363,34 @@ main(unsigned long magic, multiboot_info_t * mbi)
   printk("Interrupts...OK\n");
 
   printk("PC arch ready\n");
+
+  {
+    CV86Thread v86thr;
+/*
+    const char * v86_msg = "Hello from V86 mode";
+    char * s = (char *)physAllocPage();
+    strcpy(s, v86_msg);
+
+    printk("Demo 1: int 0x10 ah=0x0e (display text character)\n");
+    printk("s: %s -> %s\n", v86_msg, s);
+    for(; *s != 0; s++)
+    {
+      v86thr.pTSS_->eax = 0x0e00 | *(unsigned char *)s;
+      v86thr.pTSS_->ebx = 0x0000;
+      v86thr.interrupt(0x10);
+    }
+    printk("\nDemo 1: Done\n");
+*/
+    printk("Demo 3: int 0x10 ah=0x00 (VGA mode-set; 80x50 text)\n");
+    // set 80x25 text mode
+    v86thr.pTSS_->eax = 0x0003;
+    v86thr.interrupt(0x10);
+    // set 8x8 font for 80x50 text mode
+    v86thr.pTSS_->eax = 0x1112;
+    v86thr.pTSS_->ebx = 0;
+    v86thr.interrupt(0x10);
+    printk("Demo 3: Done\n");
+  }
 
   return bricks_main();
 }

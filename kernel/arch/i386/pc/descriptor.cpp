@@ -33,7 +33,7 @@ init_gdt(SDescriptor * desc, unsigned int count)
   cGDT.dtr_.base  = (uint32_t)&cGDT.desc_[0];
   cGDT.dtr_.limit = (sizeof(SDescriptor) * cGDT.iCount_) - 1;
   setGDTR(&cGDT.dtr_);
-  
+
   // Reload the segment registers with newly created segments
   setDS(selDataKernel);
   setSS(selDataKernel);
@@ -146,7 +146,7 @@ CDescriptorTable::init(SDescriptor * desc, unsigned int count, EDescriptorTableT
     case dttGlobal:    // Fall through, gdt and ldt have the same max. size
     case dttLocal:     if(iCount_ > 8192) iCount_ = 8192; break;
   };
-  
+
   // Clear entire table (also clears the present flag)
   memset(desc_, 0, sizeof(SDescriptor) * iCount_);
 }
@@ -157,28 +157,28 @@ CDescriptorTable::createSegment(EDescriptorType type, unsigned int privilege, ui
 {
   uint8_t access(DESC_PRESENT | (privilege << 5) | type);
   uint8_t attribs(0x40);
-  
+
   // Validate parameters
   if(privilege > 3)
     return 0;
 
   // Get index for new descriptor entry
   NEW_ENTRY_RETURN(0);
-  
+
   // Check for large segments
   if(limit > 0xfffff)
   {
     attribs |= 0x80;
     limit >>= 12;
   }
-  
+
   desc_[iIndex].limit   = limit;
   desc_[iIndex].base_l  = base;
   desc_[iIndex].base_m  = base >> 16;
   desc_[iIndex].access  = access;
   desc_[iIndex].attribs = (attribs & 0xF0) | ((limit >> 16) & 0x0F);
   desc_[iIndex].base_h  = base >> 24;
-  
+
   return ((iIndex * 8) | privilege);
 }
 
@@ -192,9 +192,9 @@ CDescriptorTable::createCallGate(unsigned int privilege, selector_t selector, un
 
   // Get index for new descriptor entry
   NEW_ENTRY_RETURN(0);
-  
+
   CDescriptorTable::createCallGate(desc_[iIndex], privilege, selector, params);
-  
+
   return ((iIndex * 8) | privilege);
 }
 
@@ -210,7 +210,7 @@ CDescriptorTable::createTaskGate(unsigned int privilege, selector_t selector)
   NEW_ENTRY_RETURN(0);
 
   CDescriptorTable::createTaskGate(desc_[iIndex], privilege, selector);
-  
+
   return ((iIndex * 8) | privilege);
 }
 
@@ -226,7 +226,7 @@ CDescriptorTable::createInterruptGate(unsigned int privilege, selector_t selecto
   NEW_ENTRY_RETURN(0);
 
   CDescriptorTable::createInterruptGate(desc_[iIndex], privilege, selector, offset);
-  
+
   return ((iIndex * 8) | privilege);
 }
 
@@ -242,7 +242,7 @@ CDescriptorTable::createTrapGate(unsigned int privilege, selector_t selector, ui
   NEW_ENTRY_RETURN(0);
 
   CDescriptorTable::createTrapGate(desc_[iIndex], privilege, selector, offset);
-  
+
   return ((iIndex * 8) | privilege);
 }
 
