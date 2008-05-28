@@ -229,8 +229,8 @@ main(unsigned long magic, multiboot_info_t * mbi)
 
   // All static memory has been allocated now. At this point we create our heap for dynamic memory
   // After this we can use new/delete/malloc/free
-  physAllocRange((uint64_t)pFirstFreeByte, 16 * 1024);
-  init_heap(pFirstFreeByte, 16 * 1024);
+  physAllocRange((uint64_t)pFirstFreeByte, 1 * 1024 * 1024);
+  init_heap(pFirstFreeByte, 1 * 1024 * 1024);
 
   // ------------------------------------
   // Parse settings from the command line
@@ -368,7 +368,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
     CV86Thread v86thr;
 /*
     const char * v86_msg = "Hello from V86 mode";
-    char * s = (char *)physAllocPage();
+    char * s = (char *)physAllocPageLow();
     strcpy(s, v86_msg);
 
     printk("Demo 1: int 0x10 ah=0x0e (display text character)\n");

@@ -16,7 +16,8 @@
 
 void     init_mmap(uint8_t * addr, unsigned int pageCount);
 
-uint64_t physAllocPage();
+uint64_t physAllocPageHigh(); // (>= 1088 KiB)
+uint32_t physAllocPageLow();  // (<  1024 KiB)
 void     physFreePage(uint64_t addr);
 uint64_t physAllocRange(uint64_t start, uint64_t length);
 void     physFreeRange(uint64_t start, uint64_t length);

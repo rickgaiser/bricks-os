@@ -1,5 +1,6 @@
 #include "mmap.h"
 #include "string.h"
+#include "kernel/debug.h"
 
 
 uint8_t       * pMemMap = 0;
@@ -18,10 +19,10 @@ init_mmap(uint8_t * addr, unsigned int pageCount)
 
 // -----------------------------------------------------------------------------
 uint64_t
-physAllocPage()
+physAllocPageHigh()
 {
-  // Locate 
-  for(unsigned int index(0); index < iPageCount; index++)
+  // Locate
+  for(unsigned int index(272); index < iPageCount; index++)
   {
     if(pMemMap[index] == 0)
     {
@@ -29,7 +30,30 @@ physAllocPage()
       return (index << 12);
     }
   }
-  
+
+  panic("physAllocPageHigh: No more pages!\n");
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+uint32_t
+physAllocPageLow()
+{
+  unsigned int LastPageIndex = (iPageCount > 256) ? 256 : iPageCount;
+
+  // Locate
+  for(unsigned int index(0); index < LastPageIndex; index++)
+  {
+    if(pMemMap[index] == 0)
+    {
+      pMemMap[index] = 1;
+      return (index << 12);
+    }
+  }
+
+  panic("physAllocPageLow: No more pages!\n");
+
   return 0;
 }
 
@@ -38,7 +62,7 @@ void
 physFreePage(uint64_t addr)
 {
   addr >>= 12;
-  
+
   if(addr < iPageCount)
     pMemMap[addr] = 0;
 }
@@ -49,7 +73,7 @@ physAllocRange(uint64_t start, uint64_t length)
 {
   unsigned int index = PAGE_ALIGN_DOWN_4K(start) >> 12;
   unsigned int end = PAGE_ALIGN_UP_4K(start + length) >> 12;
-  
+
   // Validate range
   if(end > iPageCount)
     return 0;
@@ -57,7 +81,7 @@ physAllocRange(uint64_t start, uint64_t length)
   // Allocate
   while(index < end)
     pMemMap[index++] = 1;
-  
+
   return start;
 }
 
@@ -67,7 +91,7 @@ physFreeRange(uint64_t start, uint64_t length)
 {
   unsigned int index = PAGE_ALIGN_DOWN_4K(start) >> 12;
   unsigned int end = PAGE_ALIGN_DOWN_4K(start + length) >> 12;
-  
+
   // Validate range
   if(end > iPageCount)
     return;
@@ -82,11 +106,11 @@ unsigned int
 usedPageCount()
 {
   unsigned int count(0);
-  
+
   for(unsigned int index(0); index < iPageCount; index++)
     if(pMemMap[index] != 0)
       count++;
-  
+
   return count;
 }
 
@@ -95,11 +119,11 @@ unsigned int
 freePageCount()
 {
   unsigned int count(0);
-  
+
   for(unsigned int index(0); index < iPageCount; index++)
     if(pMemMap[index] == 0)
       count++;
-  
+
   return count;
 }
 

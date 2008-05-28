@@ -8,6 +8,9 @@
 #include "hal.h"
 
 
+#define PAGING_ENABLED
+
+
 // -----------------------------------------------------------------------------
 class CPCThread
  : public CThread
@@ -25,15 +28,20 @@ public:
   //  - Used from interrupt context
   //virtual void runReturn();
 
+#ifdef PAGING_ENABLED
   // Address Space
   CPCAddressSpace & aspace(){return cASpace_;}
+#endif
 
 private:
+#ifdef PAGING_ENABLED
   // Addess space
   CPCAddressSpace cASpace_;
+#endif
 
   // Task state
   STaskStateSegment * pTSS_;
+  uint32_t iTSSSize_;
   selector_t selTSS_;
 
   uint32_t * pStack_;
@@ -47,11 +55,18 @@ public:
   CV86Thread();
   ~CV86Thread();
 
+  // Task switch #1: Jump to task immediately.
+  //  - Used from caller context
+  void runJump();
+
+  // Setup for v86 interrupt and runJump to the v86 task
   void interrupt(uint8_t nr);
 
 public:
+#ifdef PAGING_ENABLED
   // Addess space
   CPCAddressSpace cASpace_;
+#endif
 
   // Task state
   STaskStateSegment * pTSS_;

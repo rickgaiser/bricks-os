@@ -339,7 +339,7 @@ isr(pt_regs * regs)
     case 0x1d:
     case 0x1e:
     case 0x1f:
-      panic("CPU Interrupt(0x%x): %s, addr: 0x%x\n", regs->iIntNumber, msg[regs->iIntNumber], regs->eip);
+      panic("CPU Interrupt(0x%x): %s, addr: 0x%x, error: 0x%x\n", regs->iIntNumber, msg[regs->iIntNumber], regs->eip, regs->iErrorCode);
       break;
     case 0x0d:
       if(regs->eflags & (1<<17))

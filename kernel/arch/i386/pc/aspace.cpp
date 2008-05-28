@@ -12,10 +12,10 @@ CPCAddressSpace::CPCAddressSpace()
   if(bPAEEnabled == true)
   {
     // Locate 16KiB of phisical memory for page directory entries
-    PDPT_.entry[0] = physAllocPage() | 1;
-    PDPT_.entry[1] = physAllocPage() | 1;
-    PDPT_.entry[2] = physAllocPage() | 1;
-    PDPT_.entry[3] = physAllocPage() | 1;
+    PDPT_.entry[0] = physAllocPageHigh() | 1;
+    PDPT_.entry[1] = physAllocPageHigh() | 1;
+    PDPT_.entry[2] = physAllocPageHigh() | 1;
+    PDPT_.entry[3] = physAllocPageHigh() | 1;
 
     // Setup PDEs
     pde64_t * pPDE;
@@ -38,7 +38,7 @@ CPCAddressSpace::CPCAddressSpace()
   else
   {
     // Locate 4KiB of phisical memory for page directory entries
-    pPD_ = (pde32_t *)physAllocPage();
+    pPD_ = (pde32_t *)physAllocPageHigh();
     memset((void *)pPD_, 0, 4096);
     // Map PDE into itself in the last entries, making it accessible in the last 4MiB of virtual memory
     pPD_[1023] = (uint32_t)pPD_ | PG_USER | PG_WRITABLE | PG_PRESENT;
@@ -87,7 +87,7 @@ CPCAddressSpace::identityMap(void * start, uint32_t length)
       // Create PT if not present
       if((pPD[pdidx] & PG_PRESENT) == 0)
       {
-        pPT = (pte64_t *)physAllocPage();
+        pPT = (pte64_t *)physAllocPageHigh();
         memset(pPT, 0, 4096);
         pPD[pdidx] = (uint64_t)pPT | PG_USER | PG_WRITABLE | PG_PRESENT;
       }
@@ -111,7 +111,7 @@ CPCAddressSpace::identityMap(void * start, uint32_t length)
       // Create PT if not present
       if((pPD_[pdidx] & PG_PRESENT) == 0)
       {
-        pPT = (pte32_t *)physAllocPage();
+        pPT = (pte32_t *)physAllocPageHigh();
         memset(pPT, 0, 4096);
         pPD_[pdidx] = (uint32_t)pPT | PG_USER | PG_WRITABLE | PG_PRESENT;
       }
@@ -149,7 +149,7 @@ CPCAddressSpace::addSection(void * to_addr, void * from_addr, uint32_t length)
       // Create PT if not present
       if((pPD[pdidx] & PG_PRESENT) == 0)
       {
-        pPT = (pte64_t *)physAllocPage();
+        pPT = (pte64_t *)physAllocPageHigh();
         memset(pPT, 0, 4096);
         pPD[pdidx] = (uint64_t)pPT | PG_USER | PG_WRITABLE | PG_PRESENT;
       }
@@ -160,7 +160,7 @@ CPCAddressSpace::addSection(void * to_addr, void * from_addr, uint32_t length)
       // Map new empty page if not present
       if((pPT[ptidx] & PG_PRESENT) == 0)
       {
-        pPT[ptidx] = physAllocPage() | PG_USER | PG_WRITABLE | PG_PRESENT;
+        pPT[ptidx] = physAllocPageHigh() | PG_USER | PG_WRITABLE | PG_PRESENT;
       }
     }
   }
@@ -176,7 +176,7 @@ CPCAddressSpace::addSection(void * to_addr, void * from_addr, uint32_t length)
       // Create PT if not present
       if((pPD_[pdidx] & PG_PRESENT) == 0)
       {
-        pPT = (pte32_t *)physAllocPage();
+        pPT = (pte32_t *)physAllocPageHigh();
         memset(pPT, 0, 4096);
         pPD_[pdidx] = (uint32_t)pPT | PG_USER | PG_WRITABLE | PG_PRESENT;
       }
@@ -187,7 +187,7 @@ CPCAddressSpace::addSection(void * to_addr, void * from_addr, uint32_t length)
       // Map new empty page if not present
       if((pPT[ptidx] & PG_PRESENT) == 0)
       {
-        pPT[ptidx] = physAllocPage() | PG_USER | PG_WRITABLE | PG_PRESENT;
+        pPT[ptidx] = physAllocPageHigh() | PG_USER | PG_WRITABLE | PG_PRESENT;
       }
     }
   }
