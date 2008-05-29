@@ -11,8 +11,9 @@
 extern bool bPAEEnabled;
 
 
-CTask      * pMainTask;
-CPCThread  * pMainThread;
+CTask             * pMainTask;
+CPCThread         * pMainThread;
+STaskStateSegment * pCurrentTSS;
 
 
 // -----------------------------------------------------------------------------
@@ -51,7 +52,7 @@ CPCThread::CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, 
   // Initialize TSS
   iTSSSize_ = sizeof(STaskStateSegment);
   pTSS_ = (STaskStateSegment *)new uint8_t[iTSSSize_];
-  memset(pTSS_, 0, sizeof(STaskStateSegment));
+  memset(pTSS_, 0, iTSSSize_);
   // IO permission bitmap
   pTSS_->io_map_addr = sizeof(STaskStateSegment);
   // Create descriptor for TSS
@@ -120,8 +121,23 @@ CPCThread::runJump()
   if(cGDT.desc_[selTSS_ >> 3].access & (1<<1))
     panic("Can't jump to busy task!\n");
 
+  pCurrentTSS = pTSS_;
+
   // Jump to task
   jumpSelector(selTSS_);
+}
+
+// -----------------------------------------------------------------------------
+void
+CPCThread::runCall()
+{
+  if(cGDT.desc_[selTSS_ >> 3].access & (1<<1))
+    panic("Can't call busy task!\n");
+
+  pCurrentTSS = pTSS_;
+
+  // Jump to task
+  callSelector(selTSS_);
 }
 
 // -----------------------------------------------------------------------------
@@ -131,10 +147,9 @@ CV86Thread::CV86Thread()
   // Initialize TSS
   iTSSSize_ = sizeof(STaskStateSegment) + (64*1024/8);
   pTSS_ = (STaskStateSegment *)new uint8_t[iTSSSize_];
-  memset(pTSS_, 0, sizeof(STaskStateSegment));
+  memset(pTSS_, 0, iTSSSize_);
   // IO permission bitmap
-  memset((uint8_t *)pTSS_ + sizeof(STaskStateSegment), 0, (64*1024/8)); // Allow all ports
-  ((uint8_t *)pTSS_)[sizeof(STaskStateSegment) + (64*1024/8) - 1] = 0xff;   // End byte
+  ((uint8_t *)pTSS_)[iTSSSize_ - 1] = 0xff;
   pTSS_->io_map_addr = sizeof(STaskStateSegment);
   // Create descriptor for TSS
   selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)pTSS_, iTSSSize_);
@@ -183,8 +198,23 @@ CV86Thread::runJump()
   if(cGDT.desc_[selTSS_ >> 3].access & (1<<1))
     panic("Can't jump to busy task!\n");
 
+  pCurrentTSS = pTSS_;
+
   // Jump to task
   jumpSelector(selTSS_);
+}
+
+// -----------------------------------------------------------------------------
+void
+CV86Thread::runCall()
+{
+  if(cGDT.desc_[selTSS_ >> 3].access & (1<<1))
+    panic("Can't call busy task!\n");
+
+  pCurrentTSS = pTSS_;
+
+  // Jump to task
+  callSelector(selTSS_);
 }
 
 // -----------------------------------------------------------------------------
@@ -194,12 +224,16 @@ CV86Thread::interrupt(uint8_t nr)
   uint16_t * base = 0;
 
   // Get interrupt vector
-  pTSS_->cs  = base[(nr & 0xff) * 2 + 1];
-  pTSS_->eip = base[(nr & 0xff) * 2 + 0];
+  pTSS_->cs     = base[(nr & 0xff) * 2 + 1];
+  pTSS_->eip    = base[(nr & 0xff) * 2 + 0];
+  // Reset eflags
+  pTSS_->eflags = I386_VM_FLAG | I386_IOPL_VALUE(0) | I386_ON_FLAGS;
+  // Reset busy flag
+  cGDT.desc_[selTSS_ >> 3].access &= ~(1<<1);
 
   //printk("int 0x%x @ %x:%x = 0x%x\n", nr, pTSS_->cs, pTSS_->eip, from_v86_addr(pTSS_->cs, pTSS_->eip));
 
-  runJump();
+  runCall();
 }
 
 // -----------------------------------------------------------------------------

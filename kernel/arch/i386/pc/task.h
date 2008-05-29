@@ -8,7 +8,7 @@
 #include "hal.h"
 
 
-#define PAGING_ENABLED
+//#define PAGING_ENABLED
 
 
 // -----------------------------------------------------------------------------
@@ -24,6 +24,7 @@ public:
   // Task switch #1: Jump to task immediately.
   //  - Used from caller context
   virtual void runJump();
+  void runCall();
   // Task switch #2: Setup stack so interrupt return will couse this task to run.
   //  - Used from interrupt context
   //virtual void runReturn();
@@ -33,7 +34,7 @@ public:
   CPCAddressSpace & aspace(){return cASpace_;}
 #endif
 
-private:
+public:
 #ifdef PAGING_ENABLED
   // Addess space
   CPCAddressSpace cASpace_;
@@ -58,6 +59,7 @@ public:
   // Task switch #1: Jump to task immediately.
   //  - Used from caller context
   void runJump();
+  void runCall();
 
   // Setup for v86 interrupt and runJump to the v86 task
   void interrupt(uint8_t nr);

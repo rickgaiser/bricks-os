@@ -9,6 +9,8 @@ OBJS            =\
                 aspace \
                 cpuid \
                 descriptor \
+                _gpf \
+                gpf \
                 irq \
                 isrWrapper \
                 keyboard \
