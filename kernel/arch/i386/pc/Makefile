@@ -22,6 +22,7 @@ OBJS            =\
 
 OBJS-$(CONFIG_DEBUGGING)           += debugScreen
 OBJS-$(CONFIG_FILESYSTEM)          += ata
+OBJS-$(CONFIG_FRAMEBUFFER)         += vesa
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel

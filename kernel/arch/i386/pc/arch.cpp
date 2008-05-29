@@ -31,6 +31,10 @@
 #include "ata.h"
 #endif // #ifdef CONFIG_FILESYSTEM
 
+#ifdef CONFIG_FRAMEBUFFER
+#include "vesa.h"
+#endif // CONFIG_FRAMEBUFFER
+
 #include "string.h"
 
 
@@ -45,6 +49,10 @@ CI386Serial       cSerial;
 #ifdef CONFIG_DEBUGGING
 CI386DebugScreen  cDebug;
 #endif // #ifdef CONFIG_DEBUGGING
+
+#ifdef CONFIG_FRAMEBUFFER
+CVesaVideoDevice * pVideoDevice;
+#endif // CONFIG_FRAMEBUFFER
 
 bool              bPAEEnabled;
 bool              bAPICEnabled;
@@ -367,6 +375,11 @@ main(unsigned long magic, multiboot_info_t * mbi)
   printk("Interrupts...OK\n");
 
   printk("PC arch ready\n");
+
+#ifdef CONFIG_FRAMEBUFFER
+  // Install VESA driver
+  pVideoDevice = new CVesaVideoDevice;
+#endif // CONFIG_FRAMEBUFFER
 
 /*
   CV86Thread * v86thr = new CV86Thread;
