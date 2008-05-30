@@ -20,7 +20,7 @@
 #define CONFIG_PD_IBM
 
 // Video configuration
-#undef  CONFIG_FRAMEBUFFER
+#define CONFIG_FRAMEBUFFER
 #undef  CONFIG_GL
 
 // Library configuration

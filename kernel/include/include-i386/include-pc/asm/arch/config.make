@@ -14,7 +14,7 @@ CONFIG_FS_FAT=y
 CONFIG_PD_IBM=y
 
 # Video configuration
-#CONFIG_FRAMEBUFFER=y
+CONFIG_FRAMEBUFFER=y
 #CONFIG_GL=y
 
 # Library configuration

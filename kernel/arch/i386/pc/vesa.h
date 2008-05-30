@@ -26,16 +26,35 @@ struct SVBEInfo
 //---------------------------------------------------------------------------
 struct SVBEMode
 {
-  uint16_t mode_attrib; // b5=1 for non-VGA mode
-  uint8_t  win_a_attrib;
-  uint8_t  win_b_attrib;
-  uint16_t k_per_gran;
-  uint16_t win_size;
-  uint16_t win_a_seg;
-  uint16_t win_b_seg;
-  char     reserved1[4];
-  uint16_t bytes_per_row;
-  char     reserved2[494];
+  // All VBE versions
+  uint16_t modeAttributes;
+  uint8_t  winAAttributes;
+  uint8_t  winBAttributes;
+  uint16_t winGranularity;
+  uint16_t winSize;
+  uint16_t winASegment;
+  uint16_t winBSegment;
+  uint32_t winFuncPtr;
+  uint16_t bytesPerScanLine;
+  // VBE 1.2 and above
+  uint16_t xResolution;
+  uint16_t yResolution;
+  uint8_t  xCharSize;
+  uint8_t  yCharSize;
+  uint8_t  numberOfPlanes;
+  uint8_t  bitsPerPixel;
+  uint8_t  numberOfBanks;
+  uint8_t  memoryModel;
+  uint8_t  bankSize;
+  uint8_t  numberOfImagePlanes;
+  uint8_t  reserved1[1];
+  // Direct Color fields
+  uint8_t  reserved2[9];
+  // VBE 2.0 and above
+  uint32_t physBasePtr;
+  uint8_t  reserved3[6];
+  // VBE 3.0 and above
+  uint8_t  reserved4[16+189];
 } __attribute__ ((__packed__));
 
 //---------------------------------------------------------------------------
@@ -68,8 +87,13 @@ private:
   CSurface * pSurface_;
   vuint32_t iFrameCount_; // volatile, becouse the isr updates it
   const SVideoMode * pCurrentMode_;
+  const SVideoMode * pDefaultMode_;
   CV86Thread v86thr_;
   SVBEInfo * pInfo_;
+  int16_t  * pModeNrs_;
+  SVideoMode * pMode_;
+  uint32_t iModeCount_;
+  SVBEMode * pCurrentVBEMode_;
 };
 
 
