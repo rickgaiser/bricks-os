@@ -67,12 +67,13 @@ char E0_keys[128] =
 
 // -----------------------------------------------------------------------------
 CI386Keyboard::CI386Keyboard()
- : bE0_   (false)
- , bShift_(false)
- , bCtrl_ (false)
- , bAlt_  (false)
- , bCaps_ (false)
- , iLeds_ (0x00)
+ : bE0_        (false)
+ , bShift_     (false)
+ , bCtrl_      (false)
+ , bAlt_       (false)
+ , bCapsLock_  (false)
+ , bNumLock_   (false)
+ , bScrollLock_(false)
 {
   // Don't use constructor, use init function instead
 }
@@ -90,16 +91,16 @@ CI386Keyboard::init()
 
   updateLeds();
 
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
 int
 CI386Keyboard::isr(int irq)
 {
-  unsigned char iScanCode;
-  unsigned char iAck;
-  char          cChar(-1);
+  uint8_t iScanCode;
+  uint8_t iAck;
+  char    cChar(-1);
 
   // Read in the Scan Code
   iScanCode = inb(KBD_DATA_REG);
@@ -111,62 +112,54 @@ CI386Keyboard::isr(int irq)
   switch(iScanCode)
   {
     case 0x00:
-    case 0xAA:
-    case 0xAB:
-    case 0xEE:
-    case 0xFA:
-    case 0xFC:
-    case 0xFE:
-    case 0xFF:
+    case 0xaa:
+    case 0xab:
+    case 0xee:
+    case 0xfa:
+    case 0xfc:
+    case 0xfe:
+    case 0xff:
       break;
-    case 0xE0:
+    case 0xe0:
       bE0_ = true;
       break;
     default:
     {
       // Up or down?
-      if(iScanCode & 0x80)
-      {
-        bDown_ = false;
-        iScanCode -= 0x80;
-      }
-      else
-      {
-        bDown_ = true;
-      }
+      bool bDown = !(iScanCode & 0x80);
+      iScanCode &= ~0x80;
 
       // State keys: shift/ctrl/alt/caps-/num-/scroll-lock
       switch(iScanCode)
       {
-      case 0x2A: // Shift
+      case 0x2a: // Shift
       case 0x36: // Shift
-        bShift_ = bDown_;
+        bShift_ = bDown;
         break;
-      case 0x1D: // Ctrl
-        bCtrl_ = bDown_;
+      case 0x1d: // Ctrl
+        bCtrl_ = bDown;
         break;
       case 0x38: // Alt
-        bAlt_ = bDown_;
+        bAlt_ = bDown;
         break;
-      case 0x3A: // Caps Lock
-        if(bDown_ == true)
+      case 0x3a: // Caps Lock
+        if(bDown == true)
         {
-          iLeds_ ^= 0x04;
-          bCaps_  = (iLeds_ & 0x04) != 0;
+          bCapsLock_ = !bCapsLock_;
           updateLeds();
         }
         break;
       case 0x45: // Num Lock
-        if(bDown_ == true)
+        if(bDown == true)
         {
-          iLeds_ ^= 0x02;
+          bNumLock_ = !bNumLock_;
           updateLeds();
         }
         break;
       case 0x46: // Scroll Lock
-        if(bDown_ == true)
+        if(bDown == true)
         {
-          iLeds_ ^= 0x01;
+          bScrollLock_ = !bScrollLock_;
           updateLeds();
         }
         break;
@@ -176,7 +169,7 @@ CI386Keyboard::isr(int irq)
           bE0_ = false;
           cChar = E0_keys[iScanCode];
         }
-        else if(bCaps_ != bShift_)
+        else if(bCapsLock_ != bShift_)
         {
           cChar = shift_keys[iScanCode];
         }
@@ -185,11 +178,11 @@ CI386Keyboard::isr(int irq)
           cChar = normal_keys[iScanCode];
         }
       }
+
+      if((bDown == true) && (cChar != -1))
+        printk("%c", cChar);
     }
   }
-
-  if((bDown_ == true) && (cChar != -1))
-    printk("%c", cChar);
 
   return 0;
 }
@@ -198,9 +191,7 @@ CI386Keyboard::isr(int irq)
 int
 CI386Keyboard::read(void * data, size_t size)
 {
-  while(true){}
-
-  return(0);
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -224,6 +215,10 @@ CI386Keyboard::outb(unsigned char data, unsigned short addr)
 void
 CI386Keyboard::updateLeds()
 {
+  uint8_t iLeds;
+
+  iLeds =  (bCapsLock_ << 2) | (bNumLock_ << 1) | (bScrollLock_);
+
   this->outb(KBD_LEDS, KBD_DATA_REG); // "set LEDs" command
-  this->outb(iLeds_,   KBD_DATA_REG); // bottom 3 bits set LEDs
+  this->outb(iLeds,    KBD_DATA_REG); // bottom 3 bits set LEDs
 }

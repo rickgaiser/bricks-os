@@ -38,13 +38,16 @@ private:
   void outb(unsigned char data, unsigned short addr);
   void updateLeds();
 
+  // Special keycode
   bool bE0_;
-  bool bDown_;
+  // State keys
   bool bShift_;
   bool bCtrl_;
   bool bAlt_;
-  bool bCaps_;
-  unsigned char iLeds_;
+  // Locked state keys (with leds on keyboard)
+  bool bCapsLock_;
+  bool bNumLock_;
+  bool bScrollLock_;
 };
 
 
