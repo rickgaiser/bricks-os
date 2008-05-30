@@ -2,7 +2,7 @@
 #define TWL_COLOR_H
 
 
-#include "kernel/videomanager.h"
+#include "kernel/videoManager.h"
 
 
 namespace twl

@@ -1,5 +1,5 @@
-#ifndef MATH_H
-#define MATH_H
+#ifndef _MATH_H
+#define _MATH_H
 
 
 # define M_E            2.7182818284590452354   // e

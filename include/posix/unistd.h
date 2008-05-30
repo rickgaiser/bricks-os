@@ -21,7 +21,8 @@ extern "C" {
 
 
 //declareSysCallUser1r(int,             brk, void *, addr);
-declareSysCallUser1r(int,             close, int, fd);
+//declareSysCallUser1r(int,             close, int, fd);
+int close(int fd);
 //declareSysCallUser1 (                 _exit, int, iStatus);
 declareSysCallUser0r(pid_t,           getpid);
 //declareSysCallUser3r(ssize_t,         read, int, iFD, void *, pBuf, size_t, size);
