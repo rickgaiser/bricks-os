@@ -46,7 +46,7 @@ CGLWidget::eventRedraw(const CEventRedraw & event)
   {
     glMakeCurrent(p3DRenderer_);
     this->drawGL();
-    videoManager.bitBlt(pDisplaySurface, x(), y(), width(), height(), pBackBuffer_, 0, 0);
+    videoManager.bitBlt(pDisplaySurface, rect().x(), rect().y(), rect().width(), rect().height(), pBackBuffer_, 0, 0);
   }
 
   // Redraw every time!
@@ -62,7 +62,7 @@ CGLWidget::eventResize(const CEventResize & event)
   if(pBackBuffer_ != 0)
     delete pBackBuffer_;
 
-  pDisplayDevice->getSurface(&pBackBuffer_, width(), height());
+  pDisplayDevice->getSurface(&pBackBuffer_, rect().width(), rect().height());
   p3DRenderer_->setSurface(pBackBuffer_);
 
   glMakeCurrent(p3DRenderer_);
@@ -71,7 +71,7 @@ CGLWidget::eventResize(const CEventResize & event)
     this->initializeGL();
     bInitialized_ = true;
   }
-  this->resizeGL(width(), height());
+  this->resizeGL(rect().width(), rect().height());
 
   return true;
 }

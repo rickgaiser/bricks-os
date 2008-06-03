@@ -10,8 +10,11 @@ class CRect
 {
 public:
   CRect();
+  CRect(const CRect & rect);
   CRect(int x, int y, int width, int height);
-  virtual ~CRect();
+  ~CRect();
+
+  CRect & operator=(const CRect & rect);
 
   // Get sizes
   int x     () const;
@@ -46,6 +49,9 @@ private:
 
 
 };
+
+
+#include "rect.inl"
 
 
 #endif

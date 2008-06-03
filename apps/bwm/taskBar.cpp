@@ -36,7 +36,11 @@ CTaskBar::eventRedraw(const CEventRedraw & event)
 bool
 CTaskBar::eventResize(const CEventResize & event)
 {
-  startButton_.rect(2, 2, 24, height() - 3);
+  if(rect().height() == 14)
+    startButton_.rect(1, 1, 27, rectClient().height() - 2); // Tiny mode
+  else
+    startButton_.rect(2, 2, 54, rectClient().height() - 4); // Normal mode
+
   startButton_.visible(true);
 
   return true;

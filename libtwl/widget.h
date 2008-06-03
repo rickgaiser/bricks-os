@@ -23,16 +23,11 @@ public:
   CWidget(CWidget * parent = 0);
   virtual ~CWidget();
 
-  int x();
-  int y();
-  int width();
-  int height();
-
   void rect(const CRect & rect);
   void rect(int x, int y, int width, int height);
-  CRect rect();
-  virtual CRect rectClient();
-  virtual CRect rectAbsolute();
+  const CRect & rect();
+  virtual const CRect & rectClient();
+  virtual const CRect & rectAbsolute();
 
   void insertChild(CWidget * widget);
   void removeChild(CWidget * widget);

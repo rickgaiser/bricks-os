@@ -119,7 +119,8 @@ CWindowManager::drawCursor()
 {
 /*
   int yoff;
-  int iWidth(240), iHeight(160);  // FIXME!
+  int iWidth (pSurface_->mode.width);
+  int iHeight(pSurface_->mode.height);
   color_t clKey(0x7fff);
 
   for(int y(0); y < 16; y++)
@@ -152,7 +153,8 @@ CWindowManager::undrawCursor()
 {
 /*
   int yoff;
-  int iWidth(240), iHeight(160);  // FIXME!
+  int iWidth (pSurface_->mode.width);
+  int iHeight(pSurface_->mode.height);
   color_t clKey(0x7fff);
 
   for(int y(0); y < 16; y++)

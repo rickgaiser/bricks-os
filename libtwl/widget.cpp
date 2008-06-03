@@ -35,34 +35,6 @@ CWidget::~CWidget()
 }
 
 //---------------------------------------------------------------------------
-int
-CWidget::x()
-{
-  return rectRelative_.x();
-}
-
-//---------------------------------------------------------------------------
-int
-CWidget::y()
-{
-  return rectRelative_.y();
-}
-
-//---------------------------------------------------------------------------
-int
-CWidget::width()
-{
-  return rectRelative_.width();
-}
-
-//---------------------------------------------------------------------------
-int
-CWidget::height()
-{
-  return rectRelative_.height();
-}
-
-//---------------------------------------------------------------------------
 void
 CWidget::rect(const CRect & rect)
 {
@@ -90,21 +62,21 @@ CWidget::rect(int x, int y, int width, int height)
 }
 
 //---------------------------------------------------------------------------
-CRect
+const CRect &
 CWidget::rect()
 {
   return rectRelative_;
 }
 
 //---------------------------------------------------------------------------
-CRect
+const CRect &
 CWidget::rectClient()
 {
   return rectRelative_;
 }
 
 //---------------------------------------------------------------------------
-CRect
+const CRect &
 CWidget::rectAbsolute()
 {
   return rectAbsolute_;
@@ -138,7 +110,7 @@ CWidget::locate(int x, int y)
     // We have the location, is there a child placed on top of it?
     for(uint32_t iWidgetIdx(0); iWidgetIdx < pChildren_.size(); iWidgetIdx++)
     {
-      CWidget * pChild = pChildren_[iWidgetIdx]->locate(x - this->x(), y - this->y());
+      CWidget * pChild = pChildren_[iWidgetIdx]->locate(x - this->rect().x(), y - this->rect().y());
       if(pChild != 0)
       {
         // Child placed on location
