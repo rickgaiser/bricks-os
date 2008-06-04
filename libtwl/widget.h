@@ -25,9 +25,11 @@ public:
 
   void rect(const CRect & rect);
   void rect(int x, int y, int width, int height);
+
   const CRect & rect();
-  virtual const CRect & rectClient();
-  virtual const CRect & rectAbsolute();
+  const CRect & rectClient();
+  const CRect & rectAbsolute();
+  const CRect & rectAbsoluteClient();
 
   void insertChild(CWidget * widget);
   void removeChild(CWidget * widget);
@@ -56,14 +58,16 @@ public:
 protected:
   bwm::CWindow * pWindow_;
 
+  // Geometry
+  CRect rectRelative_;
+  CRect rectRelativeClient_;
+  CRect rectAbsolute_;
+  CRect rectAbsoluteClient_;
+
 private:
   // Tree structure
   CWidget * pParent_;
   std::vector<CWidget *> pChildren_;
-
-  // Geometry
-  CRect rectRelative_;
-  CRect rectAbsolute_;
 
   // State
   bool bNeedRedraw_;

@@ -11,9 +11,11 @@ namespace twl
 
 //---------------------------------------------------------------------------
 CWidget::CWidget(CWidget * parent)
- : pParent_(parent)
- , rectRelative_(0, 0, 0, 0)
- , rectAbsolute_(0, 0, 0, 0)
+ : rectRelative_      (0, 0, 0, 0)
+ , rectRelativeClient_(0, 0, 0, 0)
+ , rectAbsolute_      (0, 0, 0, 0)
+ , rectAbsoluteClient_(0, 0, 0, 0)
+ , pParent_(parent)
  , bNeedRedraw_(true) // As soon as we're made visible, we need to redraw
  , bVisible_(false)   // Not visible by default
 {
@@ -38,12 +40,17 @@ CWidget::~CWidget()
 void
 CWidget::rect(const CRect & rect)
 {
-  rectRelative_ = rect;
-  rectAbsolute_ = rect;
+  rectRelative_       = rect;
+  rectRelativeClient_ = rect;
+  rectAbsolute_       = rect;
+  rectAbsoluteClient_ = rect;
+
   if(pParent_ != 0)
   {
-    rectAbsolute_.x(rectAbsolute_.x() + pParent_->rectAbsolute().x());
-    rectAbsolute_.y(rectAbsolute_.y() + pParent_->rectAbsolute().y());
+    rectAbsolute_.x(rectRelative_.x() + pParent_->rectAbsoluteClient().x());
+    rectAbsolute_.y(rectRelative_.y() + pParent_->rectAbsoluteClient().y());
+
+    rectAbsoluteClient_ = rectAbsolute_;
   }
   else
   {
@@ -72,7 +79,7 @@ CWidget::rect()
 const CRect &
 CWidget::rectClient()
 {
-  return rectRelative_;
+  return rectRelativeClient_;
 }
 
 //---------------------------------------------------------------------------
@@ -80,6 +87,13 @@ const CRect &
 CWidget::rectAbsolute()
 {
   return rectAbsolute_;
+}
+
+//---------------------------------------------------------------------------
+const CRect &
+CWidget::rectAbsoluteClient()
+{
+  return rectAbsoluteClient_;
 }
 
 //---------------------------------------------------------------------------
