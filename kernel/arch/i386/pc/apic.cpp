@@ -14,11 +14,12 @@ init_apic()
 {
   if(CPU::hasAPIC())
   {
+#ifdef PAGING_ENABLED
     pMainThread->aspace().identityMap((void *)(0xfee00000), 4 * 1024);  // Identity Map APIC
+#endif
 
     printk("APIC:\n");
     printk(" - ID:      %d\n", *pApicID >> 24);
     printk(" - Version: %d\n", *pApicVersion & 0xff);
   }
 }
-
