@@ -41,21 +41,20 @@ void
 CWidget::rect(const CRect & rect)
 {
   rectRelative_       = rect;
-  rectRelativeClient_ = rect;
   rectAbsolute_       = rect;
-  rectAbsoluteClient_ = rect;
 
   if(pParent_ != 0)
   {
     rectAbsolute_.x(rectRelative_.x() + pParent_->rectAbsoluteClient().x());
     rectAbsolute_.y(rectRelative_.y() + pParent_->rectAbsoluteClient().y());
-
-    rectAbsoluteClient_ = rectAbsolute_;
   }
   else
   {
     pWindow_->rect(rectAbsolute_);
   }
+
+  rectRelativeClient_ = rectRelative_;
+  rectAbsoluteClient_ = rectAbsolute_;
 
   // Send an event to ourselves
   this->event(CEventResize(rect.width(), rect.height()));

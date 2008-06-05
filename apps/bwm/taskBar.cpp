@@ -26,9 +26,11 @@ CTaskBar::eventRedraw(const CEventRedraw & event)
 {
   const CRect & rect = this->rectAbsolute();
 
-  pWindow_->drawHLine(rect.x(), rect.y() + 0, rect.width(), clPanelFill);
-  pWindow_->drawHLine(rect.x(), rect.y() + 1, rect.width(), clPanelLight);
-  pWindow_->fillRect(CRect(rect.x(), rect.y() + 2, rect.width(), rect.height() - 1), clPanelFill);
+  pWindow_->setColor(clPanelLight);
+  pWindow_->drawHLine(rect.x(), rect.y() + 1, rect.width());
+  pWindow_->setColor(clPanelFill);
+  pWindow_->drawHLine(rect.x(), rect.y() + 0, rect.width());
+  pWindow_->fillRect(rect.x(), rect.y() + 2, rect.width(), rect.height() - 1);
 
   return true;
 }

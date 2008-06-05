@@ -47,9 +47,9 @@ public:
   bool visible() const;
 
   // Events
-  virtual bool event(const CEvent & event);
-  virtual bool eventKey(const CEventKey & event);
-  virtual bool eventMouse(const CEventMouse & event);
+  virtual bool event      (const CEvent       & event);
+  virtual bool eventKey   (const CEventKey    & event);
+  virtual bool eventMouse (const CEventMouse  & event);
   virtual bool eventRedraw(const CEventRedraw & event);
   virtual bool eventResize(const CEventResize & event);
 

@@ -31,16 +31,6 @@ public:
 
 private:
   EFrameType eType_;
-/*
-  static CPixmap pxWinTopLeft;
-  static CPixmap pxWinTop;
-  static CPixmap pxWinTopRight;
-  static CPixmap pxWinRight;
-  static CPixmap pxWinBottomRight;
-  static CPixmap pxWinBottom;
-  static CPixmap pxWinBottomLeft;
-  static CPixmap pxWinLeft;
-*/
 };
 
 

@@ -40,7 +40,8 @@ CGLWidget::eventRedraw(const CEventRedraw & event)
 {
   if(bInitialized_ == false)
   {
-    pWindow_->fill(clRed);
+    pWindow_->setColor(clRed);
+    pWindow_->fill();
   }
   else
   {

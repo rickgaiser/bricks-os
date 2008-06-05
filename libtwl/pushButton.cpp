@@ -53,7 +53,7 @@ bool
 CPushButton::eventRedraw(const CEventRedraw & event)
 {
   CFrame::eventRedraw(event);
-
+/*
   if(string_ != 0)
   {
     if(bPressed_ == false)
@@ -61,7 +61,7 @@ CPushButton::eventRedraw(const CEventRedraw & event)
     else
       pWindow_->drawText(rectAbsolute().left() + 3, rectAbsolute().top() + 3, string_);
   }
-
+*/
   return true;
 }
 

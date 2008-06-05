@@ -20,6 +20,7 @@ enum EBltType
 };
 
 class CWindow
+ : public I2DRenderer
 {
 public:
   CWindow(I2DRenderer * renderer);
@@ -44,12 +45,18 @@ public:
   void frame(bool focus);
   bool frame() const;
 
-  // Drawing functions
-  void fill(color_t color);
-  void fillRect(const twl::CRect & rect, color_t color);
-  void drawHLine(int x, int y, int width,  color_t color);
-  void drawVLine(int x, int y, int height, color_t color);
-  void drawText (int x, int y, const char * string, color_t color = clBlack);
+  // Color
+  virtual void       setColor(color_t rgb); // cfA8R8G8B8 format color
+  virtual void       setColor(uint8_t r, uint8_t g, uint8_t b);
+
+  // Drawing
+  virtual void       setPixel(int x, int y);
+  virtual void       fill();
+  virtual void       fillRect(int x, int y, unsigned int width, unsigned int height);
+  virtual void       drawLine(int x1, int y1, int x2, int y2);
+  virtual void       drawHLine(int x, int y, unsigned int width);
+  virtual void       drawVLine(int x, int y, unsigned int height);
+  virtual void       drawRect(int x, int y, unsigned int width, unsigned int height);
 
 private:
   // Window
