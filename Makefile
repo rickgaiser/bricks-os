@@ -19,11 +19,6 @@ ifeq ($(TARGET),gba)
 ELF             +=Bricks_mb
 endif
 
-ifeq ($(CONFIG_BUILTIN_LIBC),y)
-  DIRS            += libc
-  LIBS            += tc
-endif
-
 ifeq ($(CONFIG_FRAMEBUFFER),y)
   DIRS            += libtwl
   LIBS            += twl
@@ -32,6 +27,11 @@ endif
 ifeq ($(CONFIG_GL),y)
   DIRS            += gl
   LIBS            += gl
+endif
+
+ifeq ($(CONFIG_BUILTIN_LIBC),y)
+  DIRS            += libc
+  LIBS            += tc
 endif
 
 

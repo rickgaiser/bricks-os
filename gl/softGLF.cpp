@@ -2,8 +2,7 @@
 #include "fixedPoint.h"
 
 #include "stdlib.h"
-typedef unsigned int wint_t;
-#include <math.h>
+#include "math.h"
 
 
 //-----------------------------------------------------------------------------

@@ -1,7 +1,6 @@
 #include "glMatrix.h"
 #include "string.h"
-typedef unsigned int wint_t;
-#include <math.h>
+#include "math.h"
 
 
 #ifdef CONFIG_FPU

@@ -1,7 +1,6 @@
 #include "GL/glu.h"
 #include "GLES/gl.h"
-typedef unsigned int wint_t;
-#include <math.h>
+#include "math.h"
 
 
 //-----------------------------------------------------------------------------

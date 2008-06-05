@@ -1,8 +1,7 @@
 #include "glesContextNDS.h"
 #include "asm/arch/registers.h"
 #include "asm/arch/macros.h"
-typedef unsigned int wint_t;
-#include <math.h>
+#include "math.h"
 
 
 #define fpFogRGBA(r,g,b,a) \

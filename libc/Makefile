@@ -6,6 +6,7 @@ OBJS            =\
                 ctype \
                 errno \
                 fcntl \
+                math \
                 stdlib \
                 string \
 

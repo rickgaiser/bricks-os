@@ -2,8 +2,7 @@
 #include "asm/arch/registers.h"
 #include "asm/arch/macros.h"
 #include "string.h"
-typedef unsigned int wint_t;
-#include <math.h>
+#include "math.h"
 
 
 
