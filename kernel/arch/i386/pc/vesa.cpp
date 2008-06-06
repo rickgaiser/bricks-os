@@ -3,6 +3,7 @@
 #include "hal.h"
 #include "kernel/debug.h"
 #include "stddef.h"
+#include "../../../../gl/softGLF.h"
 
 
 const char * sVBEFunction[] =
@@ -138,7 +139,7 @@ CVesaVideoDevice::setMode(const SVideoMode * mode)
   if(vbeCall(0x01) == true)
   {
     // Set mode
-    v86thr_.pTSS_->ebx = (1 << 14) | 0x11a;
+    v86thr_.pTSS_->ebx = (1 << 14) | 0x11a; // FIXME
     if(vbeCall(0x02) == true)
     {
       pCurrentMode_ = mode;
@@ -150,11 +151,22 @@ CVesaVideoDevice::setMode(const SVideoMode * mode)
 void
 CVesaVideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
-  *surface = NULL;
-
   CSurface * pSurface = new CSurface;
+
   pSurface->mode = *pCurrentMode_;
-  pSurface->p = (void *)pCurrentVBEMode_->physBasePtr;
+
+  if(((uint32_t)width == pCurrentMode_->width) && ((uint32_t)height == pCurrentMode_->height))
+  {
+    pSurface->p           = (void *)pCurrentVBEMode_->physBasePtr;
+  }
+  else
+  {
+    pSurface->mode.xpitch = width;
+    pSurface->mode.ypitch = height;
+    pSurface->mode.width  = width;
+    pSurface->mode.height = height;
+    pSurface->p           = new uint8_t[width * height * (pCurrentMode_->bpp / 8)];
+  }
 
   *surface = pSurface;
 }
@@ -170,7 +182,7 @@ CVesaVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 void
 CVesaVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
-  *renderer = NULL;
+  *renderer = new CSoftGLESFloat;
 }
 
 //---------------------------------------------------------------------------
@@ -209,6 +221,16 @@ CVesaVideoDevice::displaySurface(CSurface * surface)
 void
 CVesaVideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy)
 {
+  uint8_t         bytespp(source->mode.bpp >> 3);
+  const uint8_t * pSrc = &((uint8_t *)source->p)[(sy * source->mode.xpitch + sx) * bytespp];
+  uint8_t       * pDst = &((uint8_t *)dest->p)  [(dy * dest->mode.xpitch   + dx) * bytespp];
+
+  for(int iY(0); iY < h; iY++)
+  {
+    memcpy(pDst, pSrc, w * bytespp);
+    pSrc += source->mode.xpitch * bytespp;
+    pDst += dest->mode.xpitch   * bytespp;
+  }
 }
 
 //---------------------------------------------------------------------------
