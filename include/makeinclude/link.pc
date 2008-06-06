@@ -1,7 +1,7 @@
 OUTPUT_FORMAT("elf32-i386")
 ENTRY(entry)
 
-physical_load_addr	= 0x00101000;
+physical_load_addr	= 0x00110000;
 /*virtual_load_addr	= 0xC0000000;*/
 /*start = (entry - virtual_load_addr) + physical_load_addr;*/
 

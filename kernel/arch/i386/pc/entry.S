@@ -40,7 +40,7 @@ multiboot_header:
 
 multiboot_entry:
 	// Set stack pointer
-	movl $0x00101000, %esp
+	movl $0x00110000, %esp
 	// call __main(unsigned long magic, multiboot_info_t * mbi)
 	pushl %ebx
 	pushl %eax

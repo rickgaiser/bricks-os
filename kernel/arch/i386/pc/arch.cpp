@@ -202,8 +202,8 @@ main(unsigned long magic, multiboot_info_t * mbi)
 
   // Allocate interrupt area (start: 0, size: 4KiB)
   physAllocRange((uint64_t)0x00000000, 0x00001000);
-  // Allocate kernel stack (start: 1MiB, size: 4KiB)
-  physAllocRange((uint64_t)0x00100000, 0x00001000);
+  // Allocate kernel stack (start: 1MiB, size: 64KiB)
+  physAllocRange((uint64_t)0x00100000, 0x00010000);
   // Allocate kernel
   physAllocRange((uint64_t)&start_text, (unsigned int)&end_bss - (unsigned int)&start_text);
   // Allocate modules
