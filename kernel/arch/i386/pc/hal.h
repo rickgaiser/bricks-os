@@ -121,6 +121,7 @@ typedef uint64_t  pte64_t;
 
 // CR0
 #define CR0_PG           0x80000000
+#define CR0_TS           0x00000008
 // CR4
 #define CR4_PSE          0x00000010
 #define CR4_PAE          0x00000020

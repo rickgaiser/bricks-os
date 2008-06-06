@@ -78,6 +78,17 @@ isr(pt_regs * regs)
   switch(regs->iIntNumber)
   {
     // Handle CPU interrupts
+    case 0x07: // Device Not Available
+    {
+      // Clear the TS (task switch) flag if present
+      uint32_t cr0 = getCR0();
+      if(cr0 & CR0_TS)
+        setCR0(cr0 & (~CR0_TS));
+      else
+        panic("Device Not Available\n");
+
+      break;
+    }
     case 0x00:
     case 0x01:
     case 0x02:
@@ -85,7 +96,6 @@ isr(pt_regs * regs)
     case 0x04:
     case 0x05:
     case 0x06:
-    case 0x07:
     case 0x08:
     case 0x09:
     case 0x0a:
