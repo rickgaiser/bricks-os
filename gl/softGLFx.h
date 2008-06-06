@@ -26,10 +26,10 @@
 
 //-----------------------------------------------------------------------------
 class CASoftGLESFixed
- : public CAGLESFloatToFxContext
- , public CAGLESBuffers
- , public CAGLESCull
- , public CAGLESMatrixFx
+ : public virtual CAGLESFloatToFxContext
+ , public virtual CAGLESBuffers
+ , public virtual CAGLESCull
+ , public virtual CAGLESMatrixFx
 {
 public:
   CASoftGLESFixed();

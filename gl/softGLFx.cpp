@@ -816,6 +816,7 @@ CASoftGLESFixed::_primitiveAssembly(SVertexFx & v)
 //-----------------------------------------------------------------------------
 CSoftGLESFixed::CSoftGLESFixed()
  : CASoftGLESFixed()
+ , CAGLESTextures()
  , zbuffer(0)
  , edge1(0)
  , edge2(0)

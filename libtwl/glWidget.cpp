@@ -66,9 +66,9 @@ CGLWidget::eventResize(const CEventResize & event)
   pDisplayDevice->getSurface(&pBackBuffer_, rect().width(), rect().height());
   p3DRenderer_->setSurface(pBackBuffer_);
 
-  glMakeCurrent(p3DRenderer_);
   if(bInitialized_ == false)
   {
+    glMakeCurrent(p3DRenderer_);
     this->initializeGL();
     bInitialized_ = true;
   }

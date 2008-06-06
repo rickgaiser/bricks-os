@@ -133,6 +133,7 @@ class CAGLESFloatToFxContext
  : public virtual I3DRenderer
 {
 public:
+  CAGLESFloatToFxContext(){}
   virtual ~CAGLESFloatToFxContext(){}
 
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
@@ -160,6 +161,7 @@ class CAGLESFxToFloatContext
  : public virtual I3DRenderer
 {
 public:
+  CAGLESFxToFloatContext(){}
   virtual ~CAGLESFxToFloatContext(){}
 
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);

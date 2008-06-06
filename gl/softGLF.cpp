@@ -816,6 +816,7 @@ CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
 //-----------------------------------------------------------------------------
 CSoftGLESFloat::CSoftGLESFloat()
  : CASoftGLESFloat()
+ , CAGLESTextures()
  , zbuffer(0)
  , edge1(0)
  , edge2(0)

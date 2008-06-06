@@ -18,10 +18,10 @@
 
 //-----------------------------------------------------------------------------
 class CASoftGLESFloat
- : public CAGLESFxToFloatContext
- , public CAGLESBuffers
- , public CAGLESCull
- , public CAGLESMatrixF
+ : public virtual CAGLESFxToFloatContext
+ , public virtual CAGLESBuffers
+ , public virtual CAGLESCull
+ , public virtual CAGLESMatrixF
 {
 public:
   CASoftGLESFloat();

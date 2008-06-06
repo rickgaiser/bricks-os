@@ -1,7 +1,6 @@
 #include "matrix.h"
 #include "string.h"
-typedef unsigned int wint_t;
-#include <math.h>
+#include "math.h"
 
 
 #define INVERSE_360 (T(1)/T(360))
