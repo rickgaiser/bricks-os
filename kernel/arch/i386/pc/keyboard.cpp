@@ -66,8 +66,63 @@ char E0_keys[128] =
 
 
 // -----------------------------------------------------------------------------
-CI386Keyboard::CI386Keyboard()
- : bE0_        (false)
+// -----------------------------------------------------------------------------
+CRingBuffer::CRingBuffer()
+ : size_(128)
+ , inPtr_(0)
+ , outPtr_(0)
+{
+}
+
+// -----------------------------------------------------------------------------
+CRingBuffer::~CRingBuffer()
+{
+}
+
+// -----------------------------------------------------------------------------
+bool
+CRingBuffer::put(uint8_t data)
+{
+  //printk("%c", (char)data);
+
+  // Try to increment in ptr
+  uint32_t in = inPtr_ + 1;
+  if(in >= size_)
+    in = 0;
+
+  // Buffer full
+  if(in == outPtr_)
+    return false;
+
+  // Place data and increment pointer
+  buffer_[inPtr_] = data;
+  inPtr_ = in;
+
+  return true;
+}
+
+// -----------------------------------------------------------------------------
+bool
+CRingBuffer::get(uint8_t * data)
+{
+  // Buffer empty
+  if(inPtr_ == outPtr_)
+    return false;
+
+  // Get data and increment pointer
+  *data = buffer_[outPtr_++];
+  if(outPtr_ >= size_)
+    outPtr_ = 0;
+
+  return true;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+CI8042Keyboard::CI8042Keyboard(C8042 & driver)
+ : driver_     (driver)
+ , buffer_     ()
+ , bE0_        (false)
  , bShift_     (false)
  , bCtrl_      (false)
  , bAlt_       (false)
@@ -79,37 +134,24 @@ CI386Keyboard::CI386Keyboard()
 }
 
 // -----------------------------------------------------------------------------
-CI386Keyboard::~CI386Keyboard()
+CI8042Keyboard::~CI8042Keyboard()
 {
 }
 
 // -----------------------------------------------------------------------------
 int
-CI386Keyboard::init()
+CI8042Keyboard::init()
 {
-  CInterruptManager::attach(0x21, this);
-
-  updateLeds();
+  driver_.registerHandler(0, this);
 
   return 0;
 }
 
 // -----------------------------------------------------------------------------
-int
-CI386Keyboard::isr(int irq)
+void
+CI8042Keyboard::i8042_callBack(uint8_t scancode)
 {
-  uint8_t iScanCode;
-  uint8_t iAck;
-  char    cChar(-1);
-
-  // Read in the Scan Code
-  iScanCode = inb(KBD_DATA_REG);
-  // ACK the scancode
-  iAck = inb(KBD_ACK_REG);
-  ::outb(iAck | 0x80, KBD_ACK_REG);
-  ::outb(iAck , KBD_ACK_REG);
-
-  switch(iScanCode)
+  switch(scancode)
   {
     case 0x00:
     case 0xaa:
@@ -126,11 +168,11 @@ CI386Keyboard::isr(int irq)
     default:
     {
       // Up or down?
-      bool bDown = !(iScanCode & 0x80);
-      iScanCode &= ~0x80;
+      bool bDown = !(scancode & 0x80);
+      scancode &= ~0x80;
 
       // State keys: shift/ctrl/alt/caps-/num-/scroll-lock
-      switch(iScanCode)
+      switch(scancode)
       {
       case 0x2a: // Shift
       case 0x36: // Shift
@@ -167,58 +209,53 @@ CI386Keyboard::isr(int irq)
         if(bE0_ == true)
         {
           bE0_ = false;
-          cChar = E0_keys[iScanCode];
+          if(E0_keys[scancode] != 0)
+            buffer_.put(E0_keys[scancode]);
         }
         else if(bCapsLock_ != bShift_)
         {
-          cChar = shift_keys[iScanCode];
+          if(shift_keys[scancode] != 0)
+            buffer_.put(shift_keys[scancode]);
         }
         else
         {
-          cChar = normal_keys[iScanCode];
+          if(normal_keys[scancode] != 0)
+            buffer_.put(normal_keys[scancode]);
         }
       }
-
-      if((bDown == true) && (cChar != -1))
-        printk("%c", cChar);
     }
   }
-
-  return 0;
 }
 
 // -----------------------------------------------------------------------------
 int
-CI386Keyboard::read(void * data, size_t size)
+CI8042Keyboard::read(void * data, size_t size)
 {
-  return 0;
-}
+  int iRetVal(0);
+  uint8_t * pData = (uint8_t *)data;
 
-// -----------------------------------------------------------------------------
-void
-CI386Keyboard::outb(unsigned char data, unsigned short addr)
-{
-  // loop until 8042 input buffer empty
-  for(int iTimeout(0); iTimeout < 500000; iTimeout++)
+  while(size--)
   {
-    unsigned char iStatus = inb(KBD_STATUS_REG);
+    uint8_t value;
 
-    if((iStatus & 0x02) == 0)
-    {
-      ::outb(data, addr);
+    if(buffer_.get(&value) == false)
       break;
-    }
+
+    *pData++ = value;
+    iRetVal++;
   }
+
+  return iRetVal;
 }
 
 // -----------------------------------------------------------------------------
 void
-CI386Keyboard::updateLeds()
+CI8042Keyboard::updateLeds()
 {
   uint8_t iLeds;
 
   iLeds =  (bCapsLock_ << 2) | (bNumLock_ << 1) | (bScrollLock_);
 
-  this->outb(KBD_LEDS, KBD_DATA_REG); // "set LEDs" command
-  this->outb(iLeds,    KBD_DATA_REG); // bottom 3 bits set LEDs
+  driver_.writeData(0, KBD_LEDS); // "set LEDs" command
+  driver_.writeData(0, iLeds);    // bottom 3 bits set LEDs
 }

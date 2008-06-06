@@ -12,7 +12,9 @@
 
 #include "apic.h"
 #include "cpuid.h"
+#include "i8042.h"
 #include "keyboard.h"
+#include "mouse.h"
 #include "descriptor.h"
 #include "mmap.h"
 #include "multiboot.h"
@@ -42,7 +44,9 @@ extern char       start_text;
 extern char       end_bss;
 
 CIRQ              cIRQ;
-CI386Keyboard     cKeyboard;
+C8042             c8042;
+CI8042Keyboard    cKeyboard(c8042);
+CI8042Mouse       cMouse(c8042);
 //CPCTask           taskTest;
 CI386Serial       cSerial;
 
@@ -102,7 +106,6 @@ loadELF32(void * file, CPCTask & task)
 int
 main(unsigned long magic, multiboot_info_t * mbi)
 {
-  int iRetVal(0);
   unsigned char * pFirstFreeByte = 0;
   uint64_t iMemFree(0);
   uint64_t iMemTop(0);
@@ -111,17 +114,16 @@ main(unsigned long magic, multiboot_info_t * mbi)
   unsigned int iMemPageCount(0);
 
 #ifdef CONFIG_DEBUGGING
-  if(cDebug.init() == -1)
-    iRetVal = -1;
+  cDebug.init();
   pDebug = &cDebug;
 #endif // #ifdef CONFIG_DEBUGGING
 
-  if(cIRQ.init() == -1)
-    iRetVal = -1;
-  if(cKeyboard.init() == -1)
-    iRetVal = -1;
-  if(cSerial.init() == -1)
-    iRetVal = -1;
+  cIRQ.init();
+  c8042.init();
+  cKeyboard.init();
+  cMouse.init();
+  cSerial.init();
+
   cSerial.cCom1_.write("Bricks-OS\n", 10);
   cSerial.cCom1_.write("=========\n", 10);
 

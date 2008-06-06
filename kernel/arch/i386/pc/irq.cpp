@@ -141,8 +141,8 @@ isr(pt_regs * regs)
         outb(EOI_BYTE, PIC_MASTER_BASE);
       }
       break;
-    case 0x21:
-    case 0x22:
+    case 0x21: // i8042 (Keyboard)
+    case 0x22: // Slave PIC
     case 0x23:
     case 0x24:
     case 0x25:
@@ -152,7 +152,7 @@ isr(pt_regs * regs)
     case 0x29:
     case 0x2a:
     case 0x2b:
-    case 0x2c:
+    case 0x2c: // i8042 (Aux)
     case 0x2d:
     case 0x2e:
     case 0x2f:
@@ -244,6 +244,9 @@ CIRQ::init()
   // Register IRQ interruts (0x20 - 0x2f)
   for(int i(0x20); i < 0x30; i++)
     CInterruptManager::attach(i, this);
+
+  // Enable interrupts from slave PIC
+  this->enable(0x22);
 
   return 0;
 }

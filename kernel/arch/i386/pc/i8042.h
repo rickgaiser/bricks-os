@@ -47,7 +47,16 @@
 #define I8042_BUFFER_SIZE     16
 #define I8042_CTL_TIMEOUT     500000
 #define I8042_NUM_MUX_PORTS   4
+#define I8042_NUM_PORTS       (I8042_NUM_MUX_PORTS + 2)
 
+
+class I8042CallBack
+{
+public:
+  virtual ~I8042CallBack(){}
+
+  virtual void i8042_callBack(uint8_t data) = 0;
+};
 
 // -----------------------------------------------------------------------------
 class C8042
@@ -58,6 +67,10 @@ public:
   ~C8042();
 
   int  init();
+
+  void registerHandler(uint8_t portNr, I8042CallBack * handler);
+  bool writeData(uint8_t port, uint8_t data);
+  bool readData(uint8_t port, uint8_t * data);
 
   // Inherited from IInterruptServiceRoutine
   virtual int isr(int irq);
@@ -73,10 +86,14 @@ private:
   bool writeKeyboard(uint8_t data);
   bool writeAux(uint8_t data);
   bool writeMux(uint8_t port, uint8_t data);
+  bool readDataW(uint8_t * data);
+
   bool waitRead();
   bool waitWrite();
+
   uint8_t readData();
   uint8_t readStatus();
+
   void writeData(uint8_t data);
   void writeCommand(uint8_t cmd);
 
@@ -85,9 +102,8 @@ private:
   bool bMuxPresent_;
   uint8_t muxVersion_;
 
-  // Mouse
-  uint8_t iMouseData_[3];
-  uint8_t iMouseByteNr_;
+  // Callback handlers
+  I8042CallBack * pHandler_[I8042_NUM_PORTS];
 };
 
 

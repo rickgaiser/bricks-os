@@ -2,24 +2,21 @@
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "hal.h"
+#include "stddef.h"
 
 
 #define I8042_KBD_PORT_NO 0
 #define I8042_AUX_PORT_NO 1
 #define I8042_MUX_PORT_NO 2
-#define I8042_NUM_PORTS   (I8042_NUM_MUX_PORTS + 2)
-
-#define MOUSE_BUTTON_LEFT   0x01
-#define MOUSE_BUTTON_RIGHT  0x02
-#define MOUSE_BUTTON_CENTER 0x04
 
 
 // -----------------------------------------------------------------------------
 C8042::C8042()
  : bMuxPresent_(false)
  , muxVersion_(0)
- , iMouseByteNr_(0)
 {
+  for(int i(0); i < I8042_NUM_PORTS; i++)
+    pHandler_[i] = NULL;
 }
 
 // -----------------------------------------------------------------------------
@@ -55,6 +52,7 @@ C8042::init()
     return -1;
   }
 
+/*
   // Detect MUX
   if(setMuxMode(1, &muxVersion_) == 0)
   {
@@ -74,18 +72,51 @@ C8042::init()
       return -1;
     }
   }
-
-  //Tell the mouse to use default settings
-  writeAux(0xf6);
-  waitRead();
-  readData();
-
-  //Enable the mouse
-  writeAux(0xf4);
-  waitRead();
-  readData();
+*/
 
   return 0;
+}
+
+// -----------------------------------------------------------------------------
+void
+C8042::registerHandler(uint8_t portNr, I8042CallBack * handler)
+{
+  if(portNr < I8042_NUM_PORTS)
+    pHandler_[portNr] = handler;
+}
+
+// -----------------------------------------------------------------------------
+bool
+C8042::writeData(uint8_t port, uint8_t data)
+{
+  switch(port)
+  {
+    case I8042_KBD_PORT_NO:     return writeKeyboard(data);
+    case I8042_AUX_PORT_NO:     return writeAux(     data);
+    case I8042_MUX_PORT_NO + 0: return writeMux(0,   data);
+    case I8042_MUX_PORT_NO + 1: return writeMux(1,   data);
+    case I8042_MUX_PORT_NO + 2: return writeMux(2,   data);
+    case I8042_MUX_PORT_NO + 3: return writeMux(3,   data);
+  };
+
+  return false;
+}
+
+// -----------------------------------------------------------------------------
+bool
+C8042::readData(uint8_t port, uint8_t * data)
+{
+  switch(port)
+  {
+    case I8042_KBD_PORT_NO:     return readDataW(data);
+    case I8042_AUX_PORT_NO:     return readDataW(data);
+    case I8042_MUX_PORT_NO + 0: return readDataW(data);
+    case I8042_MUX_PORT_NO + 1: return readDataW(data);
+    case I8042_MUX_PORT_NO + 2: return readDataW(data);
+    case I8042_MUX_PORT_NO + 3: return readDataW(data);
+  };
+
+  return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -106,24 +137,8 @@ C8042::isr(int irq)
   else
     portNr = I8042_KBD_PORT_NO;
 
-  //printk("C8042::isr: 0x%x @ port %d\n", data, portNr);
-
-  if(portNr == I8042_KBD_PORT_NO)
-  {
-    // Keyboard
-  }
-  else if(portNr == I8042_AUX_PORT_NO)
-  {
-    // Mouse
-    iMouseData_[iMouseByteNr_] = data;
-    iMouseByteNr_++;
-
-    if(iMouseByteNr_ == 3)
-    {
-      iMouseByteNr_ = 0;
-      printk("Mouse keys=0x%x, x=%d, y=%d\n", iMouseData_[0], (int8_t)iMouseData_[1], (int8_t)iMouseData_[2]);
-    }
-  }
+  if(pHandler_[portNr] != NULL)
+    pHandler_[portNr]->i8042_callBack(data);
 
   return 0;
 }
@@ -276,6 +291,18 @@ C8042::writeMux(uint8_t port, uint8_t data)
     return false;
 
   writeData(data);
+
+  return true;
+}
+
+// -----------------------------------------------------------------------------
+bool
+C8042::readDataW(uint8_t * data)
+{
+  if(waitRead() == false)
+    return false;
+
+  *data = readData();
 
   return true;
 }
