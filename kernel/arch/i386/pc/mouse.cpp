@@ -18,20 +18,25 @@ CI8042Mouse::~CI8042Mouse()
 int
 CI8042Mouse::init()
 {
-  uint8_t dummy;
+  int iRetVal(0);
 
   // Register our callback handler
-  driver_.registerHandler(1, this);
+  if(driver_.registerHandler(1, this) == true)
+  {
+    uint8_t dummy;
 
-  //Tell the mouse to use default settings
-  driver_.writeData(1, 0xf6);
-  driver_.readData(1, &dummy);
+    //Tell the mouse to use default settings
+    driver_.writeData(1, 0xf6);
+    driver_.readData(1, &dummy);
 
-  //Enable the mouse
-  driver_.writeData(1, 0xf4);
-  driver_.readData(1, &dummy);
+    //Enable the mouse
+    driver_.writeData(1, 0xf4);
+    driver_.readData(1, &dummy);
+  }
+  else
+    iRetVal = -1;
 
-  return 0;
+  return iRetVal;
 }
 
 // -----------------------------------------------------------------------------

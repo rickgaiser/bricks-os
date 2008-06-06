@@ -14,9 +14,13 @@
 C8042::C8042()
  : bMuxPresent_(false)
  , muxVersion_(0)
+ , iPortCount_(I8042_NUM_PORTS)
 {
-  for(int i(0); i < I8042_NUM_PORTS; i++)
-    pHandler_[i] = NULL;
+  for(int i(0); i < iPortCount_; i++)
+  {
+    bPortEnabled_[i] = false;
+    pHandler_[i]     = NULL;
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -38,51 +42,59 @@ C8042::init()
     return -1;
   }
 
-  // Enable keyboard port
-  if(enableKeyboardPort() == false)
+  // Disable keyboard interface and interrupt
+  regCTR_ |=  I8042_CTR_KBDDIS;
+  regCTR_ &= ~I8042_CTR_KBDINT;
+
+  // Disable aux interface and interrupt
+  regCTR_ |=  I8042_CTR_AUXDIS;
+  regCTR_ &= ~I8042_CTR_AUXINT;
+
+  // Write CTR register
+  if(command(&regCTR_, I8042_CMD_CTL_WCTR) == false)
   {
-    printk("C8042: Unable to enable keyboard port\n");
+    printk("C8042: Unable to write CTR register\n");
     return -1;
   }
 
-  // Enable aux(mouse) port
-  if(enableAuxPort() == false)
-  {
-    printk("C8042: Unable to enable aux port\n");
-    return -1;
-  }
-
-/*
   // Detect MUX
   if(setMuxMode(1, &muxVersion_) == 0)
   {
     if(muxVersion_ != 0xac) // Don't use MUX v10.12
     {
       printk("C8042: MUX Detected, v%d.%d\n", muxVersion_ >> 4, muxVersion_ & 0xf);
-//      bMuxPresent_ = true;
+      //bMuxPresent_ = true;
     }
   }
 
-  // Enable mux ports
+  // Number of ports
   if(bMuxPresent_ == true)
-  {
-    if(enableMuxPorts() == false)
-    {
-      printk("C8042: Unable to enable mux port\n");
-      return -1;
-    }
-  }
-*/
+    iPortCount_ = I8042_NUM_PORTS;
+  else
+    iPortCount_ = 2;
 
   return 0;
 }
 
 // -----------------------------------------------------------------------------
-void
+bool
 C8042::registerHandler(uint8_t portNr, I8042CallBack * handler)
 {
-  if(portNr < I8042_NUM_PORTS)
-    pHandler_[portNr] = handler;
+  bool bRetVal(false);
+
+  if(portNr < iPortCount_)
+  {
+    if(pHandler_[portNr] == NULL)
+    {
+      if(enablePort(portNr) == true)
+      {
+        pHandler_[portNr] = handler;
+        bRetVal = true;
+      }
+    }
+  }
+
+  return bRetVal;
 }
 
 // -----------------------------------------------------------------------------
@@ -145,37 +157,64 @@ C8042::isr(int irq)
 
 // -----------------------------------------------------------------------------
 bool
+C8042::enablePort(uint8_t portNr)
+{
+  if(portNr == I8042_KBD_PORT_NO)
+    return enableKeyboardPort();
+  else if(portNr == I8042_AUX_PORT_NO)
+    return enableAuxPort();
+  else
+    return enableMuxPorts();
+}
+
+// -----------------------------------------------------------------------------
+bool
 C8042::enableKeyboardPort()
 {
-  regCTR_ &= ~I8042_CTR_KBDDIS;
-  regCTR_ |=  I8042_CTR_KBDINT;
+  if(bPortEnabled_[I8042_KBD_PORT_NO] == false)
+  {
+    regCTR_ &= ~I8042_CTR_KBDDIS;
+    regCTR_ |=  I8042_CTR_KBDINT;
 
-  return command(&regCTR_, I8042_CMD_CTL_WCTR);
+    bPortEnabled_[I8042_KBD_PORT_NO] = command(&regCTR_, I8042_CMD_CTL_WCTR);
+  }
+
+  return bPortEnabled_[I8042_KBD_PORT_NO];
 }
 
 // -----------------------------------------------------------------------------
 bool
 C8042::enableAuxPort()
 {
-  regCTR_ &= ~I8042_CTR_AUXDIS;
-  regCTR_ |=  I8042_CTR_AUXINT;
+  if(bPortEnabled_[I8042_AUX_PORT_NO] == false)
+  {
+    regCTR_ &= ~I8042_CTR_AUXDIS;
+    regCTR_ |=  I8042_CTR_AUXINT;
 
-  return command(&regCTR_, I8042_CMD_CTL_WCTR);
+    bPortEnabled_[I8042_AUX_PORT_NO] = command(&regCTR_, I8042_CMD_CTL_WCTR);
+  }
+
+  return bPortEnabled_[I8042_AUX_PORT_NO];
 }
 
 // -----------------------------------------------------------------------------
 bool
 C8042::enableMuxPorts()
 {
-  uint8_t param;
-
-  for(int i(0); i < I8042_NUM_MUX_PORTS; i++)
+  if(bPortEnabled_[I8042_MUX_PORT_NO] == false)
   {
-    command(&param, I8042_CMD_MUX_PFX + i);
-    command(&param, I8042_CMD_AUX_ENABLE);
+    uint8_t dummy;
+
+    for(int i(0); i < I8042_NUM_MUX_PORTS; i++)
+    {
+      command(&dummy, I8042_CMD_MUX_PFX + i);
+      command(&dummy, I8042_CMD_AUX_ENABLE);
+    }
+
+    bPortEnabled_[I8042_MUX_PORT_NO] = enableAuxPort();
   }
 
-  return enableAuxPort();
+  return bPortEnabled_[I8042_MUX_PORT_NO];
 }
 
 // -----------------------------------------------------------------------------

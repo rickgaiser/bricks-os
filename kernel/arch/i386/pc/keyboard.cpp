@@ -142,9 +142,12 @@ CI8042Keyboard::~CI8042Keyboard()
 int
 CI8042Keyboard::init()
 {
-  driver_.registerHandler(0, this);
+  int iRetVal(0);
 
-  return 0;
+  if(driver_.registerHandler(0, this) == false)
+    iRetVal = -1;
+
+  return iRetVal;
 }
 
 // -----------------------------------------------------------------------------

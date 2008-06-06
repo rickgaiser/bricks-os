@@ -68,7 +68,7 @@ public:
 
   int  init();
 
-  void registerHandler(uint8_t portNr, I8042CallBack * handler);
+  bool registerHandler(uint8_t portNr, I8042CallBack * handler);
   bool writeData(uint8_t port, uint8_t data);
   bool readData(uint8_t port, uint8_t * data);
 
@@ -76,6 +76,7 @@ public:
   virtual int isr(int irq);
 
 private:
+  bool enablePort(uint8_t portNr);
   bool enableKeyboardPort();
   bool enableAuxPort();
   bool enableMuxPorts();
@@ -101,6 +102,8 @@ private:
   uint8_t regCTR_;
   bool bMuxPresent_;
   uint8_t muxVersion_;
+  uint8_t iPortCount_;
+  bool bPortEnabled_[I8042_NUM_PORTS];
 
   // Callback handlers
   I8042CallBack * pHandler_[I8042_NUM_PORTS];
