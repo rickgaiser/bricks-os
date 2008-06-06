@@ -11,8 +11,8 @@
 #define CONFIG_FPU
 
 // Kernel interface
-#define CONFIG_DIRECT_ACCESS_KERNEL
-#define CONFIG_DIRECT_ACCESS_KERNEL_FUNC
+#undef  CONFIG_DIRECT_ACCESS_KERNEL
+#undef  CONFIG_DIRECT_ACCESS_KERNEL_FUNC
 
 // File System
 #define CONFIG_FILESYSTEM
@@ -21,7 +21,7 @@
 
 // Video configuration
 #define CONFIG_FRAMEBUFFER
-#undef  CONFIG_GL
+#define CONFIG_GL
 
 // Library configuration
 #define CONFIG_BUILTIN_MM
