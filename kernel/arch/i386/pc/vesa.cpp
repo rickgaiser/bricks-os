@@ -218,22 +218,6 @@ CVesaVideoDevice::displaySurface(CSurface * surface)
 }
 
 //---------------------------------------------------------------------------
-void
-CVesaVideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy)
-{
-  uint8_t         bytespp(source->mode.bpp >> 3);
-  const uint8_t * pSrc = &((uint8_t *)source->p)[(sy * source->mode.xpitch + sx) * bytespp];
-  uint8_t       * pDst = &((uint8_t *)dest->p)  [(dy * dest->mode.xpitch   + dx) * bytespp];
-
-  for(int iY(0); iY < h; iY++)
-  {
-    memcpy(pDst, pSrc, w * bytespp);
-    pSrc += source->mode.xpitch * bytespp;
-    pDst += dest->mode.xpitch   * bytespp;
-  }
-}
-
-//---------------------------------------------------------------------------
 bool
 CVesaVideoDevice::vbeCall(uint8_t function)
 {

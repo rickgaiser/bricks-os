@@ -382,7 +382,7 @@ public:
   virtual uint32_t waitVSync() = 0; // Returns current frame/field number, after vsync
   virtual void displaySurface(CSurface * surface) = 0;
 
-  virtual void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy) = 0;
+  virtual void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy);
 
   virtual void setVSync(bool vsync = true);
   virtual bool getVSync();

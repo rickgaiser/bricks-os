@@ -66,8 +66,6 @@ public:
   virtual uint32_t waitVSync(); // Returns current frame/field number, after vsync
   virtual void displaySurface(CSurface * surface);
 
-  virtual void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy);
-
   // Flush RGB buffer to native screen
   void flush(CSurface * surface);
 

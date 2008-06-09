@@ -391,13 +391,6 @@ CNGCVideoDevice::displaySurface(CSurface * surface)
 
 //---------------------------------------------------------------------------
 void
-CNGCVideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy)
-{
-  // FIXME
-}
-
-//---------------------------------------------------------------------------
-void
 CNGCVideoDevice::flush(CSurface * surface)
 {
   if((surface == pSurface_) && (surface->mode.width == 640))

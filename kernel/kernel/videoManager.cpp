@@ -107,6 +107,37 @@ CAVideoDevice::~CAVideoDevice()
 
 //---------------------------------------------------------------------------
 void
+CAVideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy)
+{
+  uint8_t         bytespp(source->mode.bpp >> 3);
+  const uint8_t * pSrc = &((uint8_t *)source->p)[(sy * source->mode.xpitch + sx) * bytespp];
+  uint8_t       * pDst = &((uint8_t *)dest->p)  [(dy * dest->mode.xpitch   + dx) * bytespp];
+
+  if(source->mode.format != dest->mode.format)
+  {
+    return;
+    /*
+    // Convert source to destination format
+    for(int iY(0); iY < h; iY++)
+    {
+      for (int iX(0); iX < w; iX++)
+      {
+      }
+    }
+    */
+  }
+
+  // Copy, line by line
+  for(int iY(0); iY < h; iY++)
+  {
+    memcpy(pDst, pSrc, w * bytespp);
+    pSrc += source->mode.xpitch * bytespp;
+    pDst += dest->mode.xpitch   * bytespp;
+  }
+}
+
+//---------------------------------------------------------------------------
+void
 CAVideoDevice::setVSync(bool vsync)
 {
   vSync_ = vsync;
