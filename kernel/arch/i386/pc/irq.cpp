@@ -54,23 +54,23 @@ isr(pt_regs * regs)
     "RESERVED",
     "RESERVED",
     "RESERVED",
-    // (0x20 - 0x2f) IRQ interrupts
-    "Timer (IRQ0)",
-    "Keyboard (IRQ1)",
-    "? (IRQ2)",
-    "? (IRQ3)",
-    "? (IRQ4)",
-    "? (IRQ5)",
-    "? (IRQ6)",
-    "? (IRQ7)",
-    "? (IRQ8)",
-    "? (IRQ9)",
-    "? (IRQ10)",
-    "? (IRQ11)",
-    "? (IRQ12)",
-    "? (IRQ13)",
-    "? (IRQ14)",
-    "? (IRQ15)",
+    // (0x20 - 0x2f, IRQ0 - IRQ15) Intel 8259 IRQ interrupts
+    "Timer",                   // Intel 8253/8254
+    "Keyboard",                // Intel 8042
+    "Cascade",
+    "COM 2/4",                 // 8250
+    "COM 1/3",                 // 8250
+    "LPT2",                    // Intel 8255
+    "Floppy",                  // Intel 82072A
+    "LPT1",                    // Intel 8255
+    "RTC",
+    "?",
+    "?",
+    "?",
+    "Mouse",                   // Intel 8042
+    "Math Coprocessor",
+    "Pimary IDE",
+    "Secondary IDE",
     // (0x30 - 0x30) Soft interrupts
     "Syscall"
   };
@@ -80,6 +80,9 @@ isr(pt_regs * regs)
     // Handle CPU interrupts
     case 0x07: // Device Not Available
     {
+      // FIXME: Save floating point registers
+      // ...
+
       // Clear the TS (task switch) flag if present
       uint32_t cr0 = getCR0();
       if(cr0 & CR0_TS)
@@ -141,21 +144,21 @@ isr(pt_regs * regs)
         outb(EOI_BYTE, PIC_MASTER_BASE);
       }
       break;
-    case 0x21: // i8042 (Keyboard)
-    case 0x22: // Slave PIC
-    case 0x23:
-    case 0x24:
-    case 0x25:
-    case 0x26:
-    case 0x27:
-    case 0x28:
-    case 0x29:
-    case 0x2a:
-    case 0x2b:
-    case 0x2c: // i8042 (Aux)
-    case 0x2d:
-    case 0x2e:
-    case 0x2f:
+    case 0x21: // Keyboard
+    case 0x22: // Cascade
+    case 0x23: // COM 2/4
+    case 0x24: // COM 1/3
+    case 0x25: // LPT2
+    case 0x26: // Floppy
+    case 0x27: // LPT1
+    case 0x28: // RTC
+    case 0x29: // Free
+    case 0x2a: // Free
+    case 0x2b: // Free
+    case 0x2c: // Mouse
+    case 0x2d: // Math Coprocessor
+    case 0x2e: // Pimary IDE
+    case 0x2f: // Secondary IDE
       //printk("IRQ Interrupt(0x%x): %s\n", regs->iIntNumber, msg[regs->iIntNumber]);
       CInterruptManager::isr(regs->iIntNumber, regs);
       break;
@@ -249,13 +252,6 @@ CIRQ::init()
   this->enable(0x22);
 
   return 0;
-}
-
-// -----------------------------------------------------------------------------
-char *
-CIRQ::getDeviceName()
-{
-  return "i8259";
 }
 
 // -----------------------------------------------------------------------------

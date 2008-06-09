@@ -36,8 +36,6 @@ public:
 
   int init();
 
-  char * getDeviceName();
-
   void enable (unsigned int irq);
   void disable(unsigned int irq);
   void ack    (unsigned int irq);
