@@ -7,13 +7,14 @@
 #include "kernel/interrupt.h"
 
 
-class CATADriver
+// -----------------------------------------------------------------------------
+class CATADrive
  : public IBlockDevice
  , public IInterruptServiceRoutine
 {
 public:
-  CATADriver(uint32_t iobase, bool master);
-  virtual ~CATADriver();
+  CATADrive(uint32_t iobase, bool master);
+  virtual ~CATADrive();
 
   virtual int init();
 
@@ -27,6 +28,40 @@ public:
 private:
   uint32_t iIOBase_;
   uint8_t iMaster_;
+};
+
+// -----------------------------------------------------------------------------
+class CATAChannel
+ : public IInterruptServiceRoutine
+{
+public:
+  CATAChannel(uint32_t iobase);
+  virtual ~CATAChannel();
+
+  virtual int init();
+
+  // Inherited from IInterruptServiceRoutine
+  virtual int isr(int irq);
+
+private:
+  uint32_t iIOBase_;
+
+  CATADrive * pMaster_;
+  CATADrive * pSlave_;
+};
+
+// -----------------------------------------------------------------------------
+class CATADriver
+{
+public:
+  CATADriver();
+  virtual ~CATADriver();
+
+  virtual int init();
+
+private:
+  CATAChannel priChannel_;
+  CATAChannel secChannel_;
 };
 
 

@@ -350,17 +350,11 @@ main(unsigned long magic, multiboot_info_t * mbi)
 #ifdef CONFIG_FILESYSTEM
   CIBMPartitionDriver ibmPartitionDriver;
   CFATDriver fatDriver;
-  CATADriver ataPriMaster(0x1f0, true);
-  //CATADriver ataPriSlave (0x1f0, false);
-  //CATADriver ataSecMaster(0x170, true);
-  //CATADriver ataSecSlave (0x170, false);
+  CATADriver ataDriver;
 
   CFileSystem::addPartitionDriver(&ibmPartitionDriver);
   CFileSystem::addFileSystemDriver(&fatDriver);
-  ataPriMaster.init();
-  //ataPriSlave.init();
-  //ataSecMaster.init();
-  //ataSecSlave.init();
+  ataDriver.init();
 #endif // CONFIG_FILESYSTEM
 
   iMemKernel = iMemTop - iMemReserved - (freePageCount() * 4096);

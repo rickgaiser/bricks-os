@@ -52,7 +52,7 @@ enum EATARegisterOffsets
 #define ATA_COMMAND_READ_SECTORS   0x20
 #define ATA_COMMAND_IDENTIFY_DRIVE 0xec
 
-#pragma pack(1)
+
 struct ata_identify_device
 {
   unsigned short words000_009[10];
@@ -70,29 +70,29 @@ struct ata_identify_device
   unsigned short word086;
   unsigned short csf_default;
   unsigned short words088_255[168];
-};
-#pragma pack()
+} __attribute__ ((__packed__));
 
 
 // -----------------------------------------------------------------------------
-CATADriver::CATADriver(uint32_t iobase, bool master)
+// -----------------------------------------------------------------------------
+CATADrive::CATADrive(uint32_t iobase, bool master)
  : iIOBase_(iobase)
  , iMaster_(master ? ATA_DRV_HEAD_MASTER : ATA_DRV_HEAD_SLAVE)
 {
 }
 
 // -----------------------------------------------------------------------------
-CATADriver::~CATADriver()
+CATADrive::~CATADrive()
 {
 }
 
 // -----------------------------------------------------------------------------
 int
-CATADriver::init()
+CATADrive::init()
 {
   ata_identify_device data;
 
-  //printk("CATADriver::init: waiting for busy\n");
+  //printk("CATADrive::init: waiting for busy\n");
   // Wait untill device is no longer busy
   while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_BSY) != 0);
 
@@ -100,7 +100,7 @@ CATADriver::init()
   unsigned long flags = local_save_flags();
   local_irq_disable();
 
-  //printk("CATADriver::init: waiting for ready\n");
+  //printk("CATADrive::init: waiting for ready\n");
   // Wait untill device is ready
   while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_DRDY) == 0);
 
@@ -110,11 +110,11 @@ CATADriver::init()
   // Send "identify drive" command
   outb(ATA_COMMAND_IDENTIFY_DRIVE, iIOBase_ + EARO_COMMAND);
 
-  //printk("CATADriver::init: waiting for data\n");
+  //printk("CATADrive::init: waiting for data\n");
   // Wait for data
   while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_DRQ) == 0);
 
-  //printk("CATADriver::init: transferring data...\n");
+  //printk("CATADrive::init: transferring data...\n");
   // Transfer data
   uint16_t temp;
   for(int i(0); i < 256; i++)
@@ -134,18 +134,16 @@ CATADriver::init()
   data.model[39] = 0;
   printk("ATA HDD Detected: %s\n", data.model);
 
-  CFileSystem::addBlockDevice(this);
-
   return 0;
 }
 
 // -----------------------------------------------------------------------------
 int
-CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
+CATADrive::read(uint32_t startSector, uint32_t sectorCount, void * data)
 {
-  //printk("CATADriver::read(%d, %d)\n", startSector, sectorCount);
+  //printk("CATADrive::read(%d, %d)\n", startSector, sectorCount);
 
-  //printk("CATADriver::init: waiting for busy\n");
+  //printk("CATADrive::init: waiting for busy\n");
   // Wait untill device is no longer busy
   while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_BSY) != 0);
 
@@ -153,7 +151,7 @@ CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
   unsigned long flags = local_save_flags();
   local_irq_disable();
 
-  //printk("CATADriver::init: waiting for ready\n");
+  //printk("CATADrive::init: waiting for ready\n");
   // Wait untill device is ready
   while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_DRDY) == 0);
 
@@ -169,11 +167,11 @@ CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
   // Send "read sectors" command
   outb(ATA_COMMAND_READ_SECTORS, iIOBase_ + EARO_COMMAND);
 
-  //printk("CATADriver::init: waiting for data\n");
+  //printk("CATADrive::init: waiting for data\n");
   // Wait for data
   while((inb(iIOBase_ + EARO_STATUS) & ATA_STATUS_DRQ) == 0);
 
-  //printk("CATADriver::init: transferring data...\n");
+  //printk("CATADrive::init: transferring data...\n");
   // Transfer data
   uint16_t temp;
   for(unsigned int i(0); i < (sectorCount * 256); i++)
@@ -190,16 +188,103 @@ CATADriver::read(uint32_t startSector, uint32_t sectorCount, void * data)
 
 // -----------------------------------------------------------------------------
 int
-CATADriver::write(uint32_t startSector, uint32_t sectorCount, const void * data)
+CATADrive::write(uint32_t startSector, uint32_t sectorCount, const void * data)
 {
-  printk("CATADriver::write(%d, %d)\n", startSector, sectorCount);
+  printk("CATADrive::write(%d, %d)\n", startSector, sectorCount);
 
   return -1;
 }
 
 // -----------------------------------------------------------------------------
 int
-CATADriver::isr(int irq)
+CATADrive::isr(int irq)
 {
+  panic("CATADrive::isr(%d)\n", irq);
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+CATAChannel::CATAChannel(uint32_t iobase)
+ : iIOBase_(iobase)
+ , pMaster_(NULL)
+ , pSlave_(NULL)
+{
+}
+
+// -----------------------------------------------------------------------------
+CATAChannel::~CATAChannel()
+{
+  if(pMaster_ != NULL)
+    delete pMaster_;
+  if(pSlave_ != NULL)
+    delete pSlave_;
+}
+
+// -----------------------------------------------------------------------------
+int
+CATAChannel::init()
+{
+  bool bMasterPresent(false);
+  bool bSlavePresent(false);
+
+  // FIXME: Detect master/slave presence
+
+  if(bMasterPresent == true)
+  {
+    printk("CATAChannel: Master drive detected\n");
+    pMaster_ = new CATADrive(iIOBase_, true);
+    pMaster_->init();
+    CFileSystem::addBlockDevice(pMaster_);
+  }
+
+  if(bSlavePresent == true)
+  {
+    printk("CATAChannel: Slave drive detected\n");
+    pSlave_ = new CATADrive(iIOBase_, false);
+    pSlave_->init();
+    CFileSystem::addBlockDevice(pSlave_);
+  }
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+int
+CATAChannel::isr(int irq)
+{
+  if((pMaster_ == NULL) && (pSlave_ == NULL))
+    panic("CATAChannel::isr(%d)\n", irq);
+
+  if(pMaster_ != NULL)
+    pMaster_->isr(irq);
+
+  if(pSlave_ != NULL)
+    pSlave_->isr(irq);
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+CATADriver::CATADriver()
+ : priChannel_(0x1f0)
+ , secChannel_(0x170)
+{
+}
+
+// -----------------------------------------------------------------------------
+CATADriver::~CATADriver()
+{
+}
+
+// -----------------------------------------------------------------------------
+int
+CATADriver::init()
+{
+  CInterruptManager::attach(0x2e, &priChannel_); // Pimary IDE
+  CInterruptManager::attach(0x2f, &secChannel_); // Secondary IDE
+
   return 0;
 }
