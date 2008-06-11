@@ -1,5 +1,5 @@
 #include "cpuid.h"
-#include "hal.h"
+#include "asm/hal.h"
 #include "string.h"
 #include "kernel/debug.h"
 
@@ -39,6 +39,7 @@ uint32_t iCPUFeatures1 = 0;
 uint32_t iCPUIDExMax = 0;
 char brandString[48] = {0};
 char * pBrandString = brandString;  // Points to first USED (non ' ') character in brandString
+/*
 static const char * type[] =
 {
     "Original OEM Processor"
@@ -46,6 +47,7 @@ static const char * type[] =
   , "Dual Processor"
   , "Intel Reserved"
 };
+*/
 
 
 // -----------------------------------------------------------------------------
@@ -76,7 +78,7 @@ init()
 {
   uint32_t iDummy;
 
-  printk("Processor:\n");
+//  printk("Processor:\n");
 
   // Check if CPUID is supported
   if(hasCPUID() == true)
@@ -85,7 +87,7 @@ init()
     // Get vendorID and max supported CPUID functions
     sVendorID[12] = 0;
     cpuid(0, &iCPUIDMax, (uint32_t *)&sVendorID[0], (uint32_t *)&sVendorID[8], (uint32_t *)&sVendorID[4]);
-    printk(" - Vendor ID: %d\n", sVendorID);
+//    printk(" - Vendor ID: %d\n", sVendorID);
     if(strcmp(sVendorID, "GenuineIntel") == 0)
       eVendorID = VID_INTEL;
     else if((strcmp(sVendorID, "AuthenticAMD") == 0) || (strcmp(sVendorID, "AMD ISBETTER" == 0)))
@@ -134,11 +136,11 @@ init()
       }
 
       // Only Intel defines a cpu type
-      if(eVendorID == VID_INTEL)
-        printk(" - Type:      %s\n", type[iCPUType]);
-      printk(" - Family:    %d\n", iCPUFamily);
-      printk(" - Model:     %d\n", iCPUModel);
-      printk(" - Stepping:  %d\n", iCPUSteppingID);
+//      if(eVendorID == VID_INTEL)
+//        printk(" - Type:      %s\n", type[iCPUType]);
+//      printk(" - Family:    %d\n", iCPUFamily);
+//      printk(" - Model:     %d\n", iCPUModel);
+//      printk(" - Stepping:  %d\n", iCPUSteppingID);
     }
 
     // Extended CPUID
@@ -163,18 +165,18 @@ init()
         pBrandString++;
 
       if(pBrandString[0] != 0)
-        printk(" - Brand:     %s\n", pBrandString);
+        printk("CPU: %s\n", pBrandString);
     }
     else if(iBrandID != 0)
     {
       // Display Brand ID
-      printk(" - Brand:     %d\n", iBrandID);
+      printk("CPU: %d\n", iBrandID);
     }
   }
   else
   {
     // CPUID not supported, must be a 386 or an early 486
-    printk(" - 386/486\n");
+    printk("CPU: 386/486\n");
   }
 }
 

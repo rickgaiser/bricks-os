@@ -2,13 +2,11 @@
 #define PC_TASK_H
 
 
-#include "kernel/task.h"
+#include "asm/arch/config.h"
 #include "asm/irq.h"
-#include "aspace.h"
-#include "hal.h"
-
-
-//#define PAGING_ENABLED
+#include "asm/hal.h"
+#include "asm/aspace.h"
+#include "kernel/task.h"
 
 
 // -----------------------------------------------------------------------------
@@ -29,17 +27,7 @@ public:
   //  - Used from interrupt context
   //virtual void runReturn();
 
-#ifdef PAGING_ENABLED
-  // Address Space
-  CPCAddressSpace & aspace(){return cASpace_;}
-#endif
-
 public:
-#ifdef PAGING_ENABLED
-  // Addess space
-  CPCAddressSpace cASpace_;
-#endif
-
   // Task state
   STaskStateSegment * pTSS_;
   uint32_t iTSSSize_;
@@ -51,10 +39,11 @@ public:
 
 // -----------------------------------------------------------------------------
 class CV86Thread
+ : public CThread
 {
 public:
-  CV86Thread();
-  ~CV86Thread();
+  CV86Thread(CTask * task);
+  virtual ~CV86Thread();
 
   // Task switch #1: Jump to task immediately.
   //  - Used from caller context
@@ -65,9 +54,9 @@ public:
   void interrupt(uint8_t nr);
 
 public:
-#ifdef PAGING_ENABLED
+#ifdef CONFIG_MMU
   // Addess space
-  CPCAddressSpace cASpace_;
+  CAddressSpace FIXME;
 #endif
 
   // Task state
@@ -78,6 +67,10 @@ public:
   uint32_t * pStack_;
   uint32_t * pSvcStack_;
 };
+
+
+extern CTask     * pMainTask;
+extern CPCThread * pMainThread;
 
 
 #endif

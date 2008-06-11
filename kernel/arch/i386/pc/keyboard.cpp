@@ -1,7 +1,7 @@
 #include "keyboard.h"
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
-#include "hal.h"
+#include "asm/hal.h"
 
 
 char normal_keys[128] =

@@ -185,6 +185,11 @@ CTask::CTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[
 
   // Insert in the "all tasks" queue
   TAILQ_INSERT_TAIL(&CTaskManager::task_queue, this, task_qe);
+
+#ifdef CONFIG_MMU
+  // Identity map bottom 4MiB
+  cASpace_.mapIdentity(0, 0x00400000);
+#endif
 }
 
 // -----------------------------------------------------------------------------

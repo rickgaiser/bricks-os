@@ -1,11 +1,12 @@
 #include "apic.h"
 #include "cpuid.h"
-#include "hal.h"
 #include "task.h"
+#include "asm/arch/config.h"
+#include "asm/hal.h"
+#include "kernel/task.h"
 #include "kernel/debug.h"
 
 
-extern CPCThread * pMainThread;
 uint32_t * pApicID = (uint32_t *)(0xfee00020);
 uint32_t * pApicVersion = (uint32_t *)(0xfee00030);
 
@@ -14,8 +15,8 @@ init_apic()
 {
   if(CPU::hasAPIC())
   {
-#ifdef PAGING_ENABLED
-    pMainThread->aspace().identityMap((void *)(0xfee00000), 4 * 1024);  // Identity Map APIC
+#ifdef CONFIG_MMU
+    pMainTask->aspace().mapIdentity((void *)(0xfee00000), 4 * 1024);  // Identity Map APIC
 #endif
 
     printk("APIC:\n");

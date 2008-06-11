@@ -1,5 +1,5 @@
 #include "gpf.h"
-#include "hal.h"
+#include "asm/hal.h"
 #include "task.h"
 #include "descriptor.h"
 #include "kernel/task.h"

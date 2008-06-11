@@ -1,5 +1,5 @@
 #include "ata.h"
-#include "hal.h"
+#include "asm/hal.h"
 #include "asm/cpu.h"
 #include "kernel/debug.h"
 #include "kernel/endian.h"

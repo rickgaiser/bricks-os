@@ -1,7 +1,7 @@
 #include "serial.h"
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
-#include "hal.h"
+#include "asm/hal.h"
 
 
 // From Linux (include/linux/serial_reg.h)

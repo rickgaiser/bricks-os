@@ -10,6 +10,7 @@
 #undef  __BIG_ENDIAN__
 #define __BIG_ENDIAN__
 #define CONFIG_FPU
+//#define CONFIG_MMU
 
 // Kernel interface
 #define CONFIG_DIRECT_ACCESS_KERNEL

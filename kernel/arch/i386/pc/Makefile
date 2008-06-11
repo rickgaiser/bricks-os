@@ -6,7 +6,6 @@ OBJS            =\
                 entry \
                 apic \
                 arch \
-                aspace \
                 cpuid \
                 descriptor \
                 _gpf \
@@ -25,6 +24,7 @@ OBJS            =\
 OBJS-$(CONFIG_DEBUGGING)           += debugScreen
 OBJS-$(CONFIG_FILESYSTEM)          += ata
 OBJS-$(CONFIG_FRAMEBUFFER)         += vesa
+OBJS-$(CONFIG_MMU)                 += aspace
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel

@@ -4,7 +4,7 @@
 #include "kernel/task.h"
 #include "asm/cpu.h"
 #include "asm/irq.h"
-#include "hal.h"
+#include "asm/hal.h"
 
 
 #define PIC_MASTER_BASE 0x20  // Base IO addr

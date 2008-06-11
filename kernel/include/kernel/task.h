@@ -2,12 +2,16 @@
 #define TASK_H
 
 
+#include "asm/arch/config.h"
 #include "kernel/syscall.h"
 #include "kernel/fs.h"
 #include "kernel/queue.h"
 #include "kernel/pthread_k.h"
 #include "kernel/srrChannel.h"
 #include "kernel/srrConnection.h"
+#ifdef CONFIG_MMU
+#include "asm/aspace.h"
+#endif
 #include "inttypes.h"
 
 
@@ -92,7 +96,13 @@ public:
   int channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int iFlags);
   int channelConnectDetach(int iConnectionID);
 
+#ifdef CONFIG_MMU
+  // Address Space
+  inline CAddressSpace & aspace(){return cASpace_;}
+#endif
+
   // Main thread of the task
+  inline CThread & thread(){return *thr_;}
   CThread * thr_;
 
   pid_t iPID_;
@@ -102,6 +112,7 @@ public:
 private:
   int channelConnectAttach(pid_t iProcessID, int iChannelID, int iFlags);
 
+private:
   // Tasks channels (CTask has ownership)
   // NOTE: We are using an array here becouse it is FAST, and we need the
   //       msgReceive function to locate channels FAST.
@@ -116,6 +127,11 @@ private:
   // NOTE: We are using an array here becouse it is FAST, and we need the
   //       msgSend function to locate connections FAST.
   CConnection * pConnectionsIn_[MAX_IN_CONNECTION_COUNT];
+
+#ifdef CONFIG_MMU
+  // Addess space
+  CAddressSpace cASpace_;
+#endif
 };
 
 // -----------------------------------------------------------------------------

@@ -70,17 +70,23 @@
  */
 
 
-class CPCAddressSpace
+// -----------------------------------------------------------------------------
+class CAddressSpace
 {
 public:
-  CPCAddressSpace();
-  virtual ~CPCAddressSpace();
+  CAddressSpace();
+  ~CAddressSpace();
 
-  void identityMap(void * start, uint32_t length);
-  void addSection(void * to_addr, void * from_addr, uint32_t length);
-  void addRange(const CPCAddressSpace & as, void * start, unsigned int length);
+  // Map (random) physical pages
+  void map(void * start, uint32_t length);
 
-  uint32_t cr3();
+  // Identity map physical pages
+  void mapIdentity(void * start, uint32_t length);
+
+  // Map virtual pages from other address space
+  void mapShared(const CAddressSpace & as, void * start, uint32_t length);
+
+  inline uint32_t cr3(){return iCR3_;}
 
 private:
   // Page Directory Pointer (Table)

@@ -1,4 +1,4 @@
-#include "aspace.h"
+#include "asm/aspace.h"
 #include "mmap.h"
 #include "string.h"
 
@@ -7,7 +7,7 @@ extern bool bPAEEnabled;
 
 
 // -----------------------------------------------------------------------------
-CPCAddressSpace::CPCAddressSpace()
+CAddressSpace::CAddressSpace()
 {
   if(bPAEEnabled == true)
   {
@@ -48,7 +48,7 @@ CPCAddressSpace::CPCAddressSpace()
 }
 
 // -----------------------------------------------------------------------------
-CPCAddressSpace::~CPCAddressSpace()
+CAddressSpace::~CAddressSpace()
 {
   if(bPAEEnabled == true)
   {
@@ -65,10 +65,10 @@ CPCAddressSpace::~CPCAddressSpace()
 
 // -----------------------------------------------------------------------------
 void
-CPCAddressSpace::identityMap(void * start, uint32_t length)
+CAddressSpace::map(void * start, uint32_t length)
 {
-  uint32_t iStart((unsigned int)start >> 12);
-  uint32_t iCount(length >> 12);
+  uint32_t iStart(PAGE_ALIGN_DOWN_4K((uint32_t)start) >> 12);
+  uint32_t iCount(PAGE_ALIGN_UP_4K((uint32_t)length) >> 12);
 
   if(bPAEEnabled == true)
   {
@@ -95,8 +95,11 @@ CPCAddressSpace::identityMap(void * start, uint32_t length)
       // Get PT
       pPT = (pte64_t *)(pPD[pdidx] & 0xfffff000);
 
-      // Map Page
-      pPT[ptidx] = (idx << 12) | PG_USER | PG_WRITABLE | PG_PRESENT;
+      // Map new empty page if not present
+      if((pPT[ptidx] & PG_PRESENT) == 0)
+      {
+        pPT[ptidx] = physAllocPageHigh() | PG_USER | PG_WRITABLE | PG_PRESENT;
+      }
     }
   }
   else
@@ -119,18 +122,21 @@ CPCAddressSpace::identityMap(void * start, uint32_t length)
       // Get PT
       pPT = (pte32_t *)(pPD_[pdidx] & 0xfffff000);
 
-      // Map Page
-      pPT[ptidx] = (idx << 12) | PG_USER | PG_WRITABLE | PG_PRESENT;
+      // Map new empty page if not present
+      if((pPT[ptidx] & PG_PRESENT) == 0)
+      {
+        pPT[ptidx] = physAllocPageHigh() | PG_USER | PG_WRITABLE | PG_PRESENT;
+      }
     }
   }
 }
 
 // -----------------------------------------------------------------------------
 void
-CPCAddressSpace::addSection(void * to_addr, void * from_addr, uint32_t length)
+CAddressSpace::mapIdentity(void * start, uint32_t length)
 {
-  uint32_t iStart(PAGE_ALIGN_DOWN_4K((unsigned int)to_addr) >> 12);
-  uint32_t iCount((PAGE_ALIGN_UP_4K((unsigned int)to_addr + length) >> 12) - iStart);
+  uint32_t iStart(PAGE_ALIGN_DOWN_4K((uint32_t)start) >> 12);
+  uint32_t iCount(PAGE_ALIGN_UP_4K((uint32_t)length) >> 12);
 
   if(bPAEEnabled == true)
   {
@@ -157,11 +163,8 @@ CPCAddressSpace::addSection(void * to_addr, void * from_addr, uint32_t length)
       // Get PT
       pPT = (pte64_t *)(pPD[pdidx] & 0xfffff000);
 
-      // Map new empty page if not present
-      if((pPT[ptidx] & PG_PRESENT) == 0)
-      {
-        pPT[ptidx] = physAllocPageHigh() | PG_USER | PG_WRITABLE | PG_PRESENT;
-      }
+      // Map Page
+      pPT[ptidx] = (idx << 12) | PG_USER | PG_WRITABLE | PG_PRESENT;
     }
   }
   else
@@ -184,23 +187,16 @@ CPCAddressSpace::addSection(void * to_addr, void * from_addr, uint32_t length)
       // Get PT
       pPT = (pte32_t *)(pPD_[pdidx] & 0xfffff000);
 
-      // Map new empty page if not present
-      if((pPT[ptidx] & PG_PRESENT) == 0)
-      {
-        pPT[ptidx] = physAllocPageHigh() | PG_USER | PG_WRITABLE | PG_PRESENT;
-      }
+      // Map Page
+      pPT[ptidx] = (idx << 12) | PG_USER | PG_WRITABLE | PG_PRESENT;
     }
   }
-
-  // FIXME: We're swapping address spaces here!!!
-  setCR3(this->cr3());
-  memcpy(to_addr, from_addr, length);
 }
 
 // -----------------------------------------------------------------------------
 // Copy a range of PD entries from an address space to this one
 void
-CPCAddressSpace::addRange(const CPCAddressSpace & as, void * start, unsigned int length)
+CAddressSpace::mapShared(const CAddressSpace & as, void * start, uint32_t length)
 {
   uint32_t iStart;
   uint32_t iCount;
@@ -210,8 +206,8 @@ CPCAddressSpace::addRange(const CPCAddressSpace & as, void * start, unsigned int
     pde64_t * pPD1;
     pde64_t * pPD2;
 
-    iStart = (unsigned int)start >> (12 + 9);
-    iCount = length >> (12 + 9);
+    iStart = PAGE_ALIGN_DOWN_4K((uint32_t)start) >> (12 + 9);
+    iCount = PAGE_ALIGN_UP_4K((uint32_t)length) >> (12 + 9);
 
     for(uint32_t idx(iStart); idx < (iStart + iCount); idx++)
     {
@@ -228,17 +224,10 @@ CPCAddressSpace::addRange(const CPCAddressSpace & as, void * start, unsigned int
   }
   else
   {
-    iStart = (unsigned int)start >> (12 + 10);
-    iCount = length >> (12 + 10);
+    iStart = PAGE_ALIGN_DOWN_4K((uint32_t)start) >> (12 + 10);
+    iCount = PAGE_ALIGN_UP_4K((uint32_t)length) >> (12 + 10);
 
     for(uint32_t idx(iStart); idx < (iStart + iCount); idx++)
       pPD_[idx] = as.pPD_[idx];
   }
-}
-
-// -----------------------------------------------------------------------------
-uint32_t
-CPCAddressSpace::cr3()
-{
-  return iCR3_;
 }

@@ -1,6 +1,6 @@
 #include "vesa.h"
 #include "mmap.h"
-#include "hal.h"
+#include "asm/hal.h"
 #include "kernel/debug.h"
 #include "stddef.h"
 #include "../../../../gl/softGLF.h"
@@ -51,7 +51,7 @@ CVesaVideoDevice::CVesaVideoDevice()
  , iFrameCount_(0)
  , pCurrentMode_(NULL)
  , pDefaultMode_(NULL)
- , v86thr_()
+ , v86thr_(pMainTask) // FIXME! What task do we belong to?
  , pMode_(NULL)
  , iModeCount_(0)
 {

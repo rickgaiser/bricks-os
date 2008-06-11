@@ -47,7 +47,6 @@ CIRQ              cIRQ;
 C8042             c8042;
 CI8042Keyboard    cKeyboard(c8042);
 CI8042Mouse       cMouse(c8042);
-//CPCTask           taskTest;
 CI386Serial       cSerial;
 
 #ifdef CONFIG_DEBUGGING
@@ -66,10 +65,11 @@ SSetting settings[] = {
   , {"APIC", SET_AUTO}
 };
 CSettings cSettings(settings, sizeof(settings) / sizeof(SSetting));
-/*
+
+
 // -----------------------------------------------------------------------------
 int
-loadELF32(void * file, CPCTask & task)
+loadELF32(void * file, CTask & task)
 {
   static const char magic[] = {0x7f, 0x45, 0x4c, 0x46, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   Elf32_Ehdr * hdr = (Elf32_Ehdr *)file;
@@ -87,21 +87,21 @@ loadELF32(void * file, CPCTask & task)
     {
       case SHT_PROGBITS:
         printk(" - vaddr: %d, foff: %d, fsize: %d, msize: %d\n", seg->p_vaddr, seg->p_offset, seg->p_filesz, seg->p_memsz);
-        task.aspace().addSection((char *)seg->p_vaddr, (char *)file + seg->p_offset, seg->p_filesz);
+//        task.aspace().addSection((char *)seg->p_vaddr, (char *)file + seg->p_offset, seg->p_filesz);
         break;
       default:
-        printk("Unable to load segment type: %d\n", seg->p_type);
+        printk(" - Unable to load segment type: %d\n", seg->p_type);
         return -1;
     };
   }
 
   // Set task entry point
-  task.entry((void *)hdr->e_entry);
-  task.state(TS_READY);
+//  task.entry((void *)hdr->e_entry);
+//  task.state(TS_READY);
 
   return 0;
 }
-*/
+
 // -----------------------------------------------------------------------------
 int
 main(unsigned long magic, multiboot_info_t * mbi)
@@ -143,7 +143,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
 
   // -----------------------------
   // Initialize CPU identification
-  //CPU::init();
+  CPU::init();
 
   // --------------------------------
   // Setup Physical Memory Management
@@ -250,6 +250,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
     cSettings.parse((char *)mbi->cmdline);
   }
 
+#ifdef CONFIG_MMU
   // --------
   // Use PAE?
   if(CPU::hasPAE())
@@ -282,8 +283,10 @@ main(unsigned long magic, multiboot_info_t * mbi)
   }
   else
   {
+    printk("PAE not available\n");
     bPAEEnabled = false;
   }
+#endif
 
   // ---------
   // Use APIC?
@@ -309,6 +312,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
   }
   else
   {
+    printk("APIC not available\n");
     bAPICEnabled = false;
   }
 
@@ -320,8 +324,10 @@ main(unsigned long magic, multiboot_info_t * mbi)
   // Setup Task Management
   // ---------------------
   CPCThread::init();
-  printk("Paging Enabled!\n");
-/*
+#ifdef CONFIG_MMU
+  printk("Paging enabled\n");
+#endif
+
   // ------------
   // Load modules
   // ------------
@@ -331,18 +337,17 @@ main(unsigned long magic, multiboot_info_t * mbi)
     module_t * mod = (module_t *) mbi->mods_addr;
     for(unsigned int i(0); i < mbi->mods_count; i++, mod++)
     {
+      CTask * pNewTask = NULL;//new CTask;
+
       printk("Loading: %s\n", (char *)mod->string);
 
       // Try to load as elf32 file
-      taskTest.init();
-      taskTest.aspace().addRange(taskMain.aspace(), 0, 0x00400000);  // Bottom 4MiB
-      if(loadELF32((void *)mod->mod_start, taskTest) == 0)
+      if(loadELF32((void *)mod->mod_start, *pNewTask) == 0)
         printk(" - Done\n");
       else
         printk(" - Unknown File\n");
     }
   }
-*/
 
   // Enable Timer IRQ
   cIRQ.enable(0x20);
@@ -371,39 +376,12 @@ main(unsigned long magic, multiboot_info_t * mbi)
   printk("Interrupts...OK\n");
 
   printk("PC arch ready\n");
+  //while(1);
 
 #ifdef CONFIG_FRAMEBUFFER
   // Install VESA driver
   pVideoDevice = new CVesaVideoDevice;
 #endif // CONFIG_FRAMEBUFFER
-
-/*
-  CV86Thread * v86thr = new CV86Thread;
-
-  const char * v86_msg = "Hello from V86 mode";
-  char * s = (char *)physAllocPageLow();
-  strcpy(s, v86_msg);
-
-  printk("Demo 1: int 0x10 ah=0x0e (display text character)\n");
-  printk("s: %s -> %s\n", v86_msg, s);
-  for(; *s != 0; s++)
-  {
-    v86thr->pTSS_->eax = 0x0e00 | *(unsigned char *)s;
-    v86thr->pTSS_->ebx = 0x0000;
-    v86thr->interrupt(0x10);
-  }
-  printk("\nDemo 1: Done\n");
-
-  printk("Demo 3: int 0x10 ah=0x00 (VGA mode-set; 80x50 text)\n");
-  // set 80x25 text mode
-  v86thr->pTSS_->eax = 0x0003;
-  v86thr->interrupt(0x10);
-  // set 8x8 font for 80x50 text mode
-  v86thr->pTSS_->eax = 0x1112;
-  v86thr->pTSS_->ebx = 0;
-  v86thr->interrupt(0x10);
-  printk("Demo 3: Done\n");
-*/
 
   return bricks_main();
 }

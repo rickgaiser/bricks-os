@@ -4,8 +4,19 @@
 #include "kernel/debug.h"
 #include "string.h"
 #include "asm/arch/config.h"
-#include "hal.h"
+#include "asm/hal.h"
 #include "mmap.h"
+
+
+#ifdef CONFIG_DIRECT_ACCESS_KERNEL
+  // Segments (Ring0 Privilege)
+  #define USER_CODE_SEGMENT_SEL selCodeKernel
+  #define USER_DATA_SEGMENT_SEL selDataKernel
+#else
+  // Segments (Ring3 Privilege)
+  #define USER_CODE_SEGMENT_SEL selCodeUserTmp
+  #define USER_DATA_SEGMENT_SEL selDataUserTmp
+#endif
 
 
 extern bool bPAEEnabled;
@@ -24,13 +35,13 @@ CPCThread::init()
   pMainTask   = new CTask(0, 0, 0);
   pMainThread = (CPCThread *)pMainTask->thr_;
 
-#ifdef PAGING_ENABLED
+#ifdef CONFIG_MMU
   // Enable PAE (36 bit physical addressing)
   if(bPAEEnabled == true)
     setCR4(getCR4() | CR4_PAE);
 
   // Set CR3 (Page-Table Base Address)
-  setCR3(pMainThread->cASpace_.cr3());
+  setCR3(pMainTask->aspace().cr3());
 
   // Enable paging
   setCR0(getCR0() | CR0_PG);
@@ -57,10 +68,6 @@ CPCThread::CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, 
   pTSS_->io_map_addr = sizeof(STaskStateSegment);
   // Create descriptor for TSS
   selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)pTSS_, iTSSSize_);
-#ifdef PAGING_ENABLED
-  // Identity map bottom 4MiB
-  cASpace_.identityMap(0, 0x00400000);
-#endif
 
   // Not the main thread?
   if(entry != NULL)
@@ -83,26 +90,15 @@ CPCThread::CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, 
     ((uint32_t *)pStack_)[(512 >> 2) - 2] = (uint32_t)argc;
     ((uint32_t *)pStack_)[(512 >> 2) - 3] = 0; // Function call return address
     pTSS_->esp  = (uint32_t)pStack_ + stack - 12;
-#ifdef CONFIG_DIRECT_ACCESS_KERNEL
-    // Segments (Ring0 Privilege)
-    pTSS_->es   = selDataKernel;
-    pTSS_->cs   = selCodeKernel;
-    pTSS_->ss   = selDataKernel;
-    pTSS_->ds   = selDataKernel;
-    pTSS_->fs   = selDataKernel;
-    pTSS_->gs   = selDataKernel;
-#else
-    // Segments (Ring3 Privilege)
-    pTSS_->es   = selDataUserTmp;
-    pTSS_->cs   = selCodeUserTmp;
-    pTSS_->ss   = selDataUserTmp;
-    pTSS_->ds   = selDataUserTmp;
-    pTSS_->fs   = selDataUserTmp;
-    pTSS_->gs   = selDataUserTmp;
-#endif
+    pTSS_->es   = USER_DATA_SEGMENT_SEL;
+    pTSS_->cs   = USER_CODE_SEGMENT_SEL;
+    pTSS_->ss   = USER_DATA_SEGMENT_SEL;
+    pTSS_->ds   = USER_DATA_SEGMENT_SEL;
+    pTSS_->fs   = USER_DATA_SEGMENT_SEL;
+    pTSS_->gs   = USER_DATA_SEGMENT_SEL;
     // Other
-#ifdef PAGING_ENABLED
-    pTSS_->cr3  = cASpace_.cr3();
+#ifdef CONFIG_MMU
+    pTSS_->cr3  = pTask_->aspace().cr3();
 #endif
     pTSS_->eip  = (uint32_t)entry;
     pTSS_->eflags = I386_IOPL_VALUE(0) | I386_IE_FLAG | I386_ON_FLAGS;
@@ -142,7 +138,8 @@ CPCThread::runCall()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-CV86Thread::CV86Thread()
+CV86Thread::CV86Thread(CTask * task)
+ : CThread(task)
 {
   // Initialize TSS
   iTSSSize_ = sizeof(STaskStateSegment) + (64*1024/8);
@@ -153,10 +150,6 @@ CV86Thread::CV86Thread()
   pTSS_->io_map_addr = sizeof(STaskStateSegment);
   // Create descriptor for TSS
   selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)pTSS_, iTSSSize_);
-#ifdef PAGING_ENABLED
-  // Identity map bottom 4MiB
-  cASpace_.identityMap(0, 0x00400000);
-#endif
 
   // Stack sizes
   //size_t stack    = 512;
@@ -179,8 +172,8 @@ CV86Thread::CV86Thread()
   pTSS_->fs   = 0;
   pTSS_->gs   = 0;
   // Other
-#ifdef PAGING_ENABLED
-  pTSS_->cr3  = cASpace_.cr3();
+#ifdef CONFIG_MMU
+  pTSS_->cr3  = pTask_->aspace().cr3();
 #endif
 //  pTSS_->eip  = ...;
   pTSS_->eflags = I386_VM_FLAG | I386_IOPL_VALUE(0) | I386_IE_FLAG | I386_ON_FLAGS;

@@ -1,7 +1,7 @@
 #include "i8042.h"
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
-#include "hal.h"
+#include "asm/hal.h"
 #include "stddef.h"
 
 

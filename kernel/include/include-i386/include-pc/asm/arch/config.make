@@ -3,6 +3,7 @@ CONFIG_DEBUGGING=y
 
 # Hardware capabilities
 CONFIG_FPU=y
+CONFIG_MMU=y
 
 # Kernel interface
 #CONFIG_DIRECT_ACCESS_KERNEL=y
