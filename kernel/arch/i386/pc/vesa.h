@@ -2,7 +2,7 @@
 #define I386_VESA_H
 
 
-#include "task.h"
+#include "asm/task.h"
 #include "kernel/videoManager.h"
 #include "kernel/2dRenderer.h"
 #include "inttypes.h"

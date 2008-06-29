@@ -25,7 +25,7 @@ genwait_wait(void * obj, useconds_t useconds)
   CTaskManager::schedule();
 
   // Run next thread
-  CTaskManager::pCurrentThread_->runJump();
+  CTaskManager::pCurrentThread_->impl().runJump();
 
   return CTaskManager::pCurrentThread_->iWaitReturn_;
 }

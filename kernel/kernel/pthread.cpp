@@ -33,7 +33,7 @@ k_pthread_exit(void * status)
   // Schedule next thread
   CTaskManager::schedule();
   // Jump to next task
-  CTaskManager::pCurrentThread_->runJump();
+  CTaskManager::pCurrentThread_->impl().runJump();
 }
 
 // -----------------------------------------------------------------------------

@@ -1,13 +1,14 @@
 #include "gpf.h"
+#include "asm/arch/config.h"
 #include "asm/hal.h"
-#include "task.h"
+#include "asm/task.h"
 #include "descriptor.h"
 #include "kernel/task.h"
 #include "kernel/debug.h"
 
 
 extern STaskStateSegment * pCurrentTSS;
-CPCThread * pGPFThread;
+CThreadImpl * pGPFThread;
 
 
 // -----------------------------------------------------------------------------
@@ -236,7 +237,13 @@ void
 init_gpf()
 {
   // Create GPF Handler task
-  pGPFThread = new CPCThread(0, (void *)_gpf, 0, 0);
+#ifdef CONFIG_MMU
+  pGPFThread = new CThreadImpl(&pMainTask->aspace());
+#else
+  pGPFThread = new CThreadImpl;
+#endif
+  // Initialize GPF handler task
+  pGPFThread->init((void *)_gpf);
   // Setup task-gate in IDT
   CDescriptorTable::createTaskGate(cIDT.desc_[0x0d], 0, pGPFThread->selTSS_);
   // Task will never be deleted

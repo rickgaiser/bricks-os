@@ -12,6 +12,7 @@
 #ifdef CONFIG_MMU
 #include "asm/aspace.h"
 #endif
+#include "asm/task.h"
 #include "inttypes.h"
 
 
@@ -43,19 +44,16 @@ TAILQ_HEAD(SThreadQueue, CThread);
 class CThread
 {
 public:
-  virtual ~CThread();
-
-  // Task switch #1: Jump to task immediately.
-  //  - Used from caller context
-  virtual void runJump();
-  // Task switch #2: Setup stack so interrupt return will couse this task to run.
-  //  - Used from interrupt context
-  virtual void runReturn();
+  CThread(CTask * task);
+  ~CThread();
 
   void state(EThreadState state);
 
   CThread * createChild(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
 
+  inline CThreadImpl & impl(){return impl_;}
+
+public:
   uint32_t iTimeout_;                                // Timeout in us
   void * pWaitObj_;                                  // Object we're waiting on
   int iWaitReturn_;                                  // Return value when waiting
@@ -70,10 +68,9 @@ public:
   SThreadQueue children_queue;                       // Threads children queue
   TAILQ_ENTRY(CThread) children_qe;                  // Threads children queue entry
 
-protected:
-  CThread(CTask * task);
-
 private:
+  CThreadImpl impl_;
+
   EThreadState eState_;
 };
 
@@ -81,8 +78,8 @@ private:
 class CTask
 {
 public:
-  CTask(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
-  virtual ~CTask();
+  CTask();
+  ~CTask();
 
   int msgSend(int iConnectionID, const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize);
   int msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize);
@@ -102,8 +99,7 @@ public:
 #endif
 
   // Main thread of the task
-  inline CThread & thread(){return *thr_;}
-  CThread * thr_;
+  inline CThread & thread(){return thr_;}
 
   pid_t iPID_;
 
@@ -132,6 +128,7 @@ private:
   // Addess space
   CAddressSpace cASpace_;
 #endif
+  CThread thr_;
 };
 
 // -----------------------------------------------------------------------------

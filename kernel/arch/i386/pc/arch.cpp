@@ -9,6 +9,7 @@
 #include "asm/arch/config.h"
 #include "asm/irq.h"
 #include "asm/cpu.h"
+#include "asm/task.h"
 
 #include "apic.h"
 #include "cpuid.h"
@@ -18,7 +19,6 @@
 #include "descriptor.h"
 #include "mmap.h"
 #include "multiboot.h"
-#include "task.h"
 #include "serial.h"
 #include "gpf.h"
 
@@ -323,7 +323,7 @@ main(unsigned long magic, multiboot_info_t * mbi)
   // Setup Paging
   // Setup Task Management
   // ---------------------
-  CPCThread::init();
+  task_init();
 #ifdef CONFIG_MMU
   printk("Paging enabled\n");
 #endif

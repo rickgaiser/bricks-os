@@ -6,22 +6,27 @@
 #include "asm/irq.h"
 #include "asm/hal.h"
 #include "asm/aspace.h"
-#include "kernel/task.h"
 
 
 // -----------------------------------------------------------------------------
-class CPCThread
- : public CThread
+void task_init();
+
+// -----------------------------------------------------------------------------
+class CThreadImpl
 {
 public:
-  CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
-  virtual ~CPCThread();
+#ifndef CONFIG_MMU
+  CThreadImpl();
+#else
+  CThreadImpl(CAddressSpace * pASpace);
+#endif
+  ~CThreadImpl();
 
-  static void init();
+  void init(void * entry, int argc = 0, char * argv[] = 0);
 
   // Task switch #1: Jump to task immediately.
   //  - Used from caller context
-  virtual void runJump();
+  void runJump();
   void runCall();
   // Task switch #2: Setup stack so interrupt return will couse this task to run.
   //  - Used from interrupt context
@@ -33,17 +38,26 @@ public:
   uint32_t iTSSSize_;
   selector_t selTSS_;
 
+#ifdef CONFIG_MMU
+  CAddressSpace * pASpace_;
+#endif
+
   uint32_t * pStack_;
   uint32_t * pSvcStack_;
 };
 
 // -----------------------------------------------------------------------------
 class CV86Thread
- : public CThread
 {
 public:
-  CV86Thread(CTask * task);
-  virtual ~CV86Thread();
+#ifndef CONFIG_MMU
+  CV86Thread();
+#else
+  CV86Thread(CAddressSpace * pASpace);
+#endif
+  ~CV86Thread();
+
+  void init();
 
   // Task switch #1: Jump to task immediately.
   //  - Used from caller context
@@ -54,23 +68,25 @@ public:
   void interrupt(uint8_t nr);
 
 public:
-#ifdef CONFIG_MMU
-  // Addess space
-  CAddressSpace FIXME;
-#endif
-
   // Task state
   STaskStateSegment * pTSS_;
   uint32_t iTSSSize_;
   selector_t selTSS_;
+
+#ifdef CONFIG_MMU
+  CAddressSpace * pASpace_;
+#endif
 
   uint32_t * pStack_;
   uint32_t * pSvcStack_;
 };
 
 
-extern CTask     * pMainTask;
-extern CPCThread * pMainThread;
+class CTask;
+class CThread;
+extern CTask       * pMainTask;
+extern CThread     * pMainThread;
+extern CThreadImpl * pMainThreadImpl;
 
 
 #endif

@@ -1,4 +1,4 @@
-#include "task.h"
+#include "asm/task.h"
 #include "descriptor.h"
 #include "kernel/task.h"
 #include "kernel/debug.h"
@@ -23,17 +23,22 @@ extern bool bPAEEnabled;
 
 
 CTask             * pMainTask;
-CPCThread         * pMainThread;
+CThread           * pMainThread;
+CThreadImpl       * pMainThreadImpl;
 STaskStateSegment * pCurrentTSS;
+#ifdef CONFIG_MMU
+CAddressSpace FIXME;
+#endif
 
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 void
-CPCThread::init()
+task_init()
 {
-  pMainTask   = new CTask(0, 0, 0);
-  pMainThread = (CPCThread *)pMainTask->thr_;
+  pMainTask       = new CTask;
+  pMainThread     = &pMainTask->thread();
+  pMainThreadImpl = &pMainTask->thread().impl();
 
 #ifdef CONFIG_MMU
   // Enable PAE (36 bit physical addressing)
@@ -48,16 +53,22 @@ CPCThread::init()
 #endif
 
   // Set the current running tasks TSS
-  setTR(pMainThread->selTSS_);
+  setTR(pMainThreadImpl->selTSS_);
 
   // Add task to taskmanagers list
   pMainThread->state(TS_RUNNING);
 }
 
 // -----------------------------------------------------------------------------
-CPCThread::CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
- : CThread(task)
+// -----------------------------------------------------------------------------
+#ifndef CONFIG_MMU
+CThreadImpl::CThreadImpl()
+ : pStack_(NULL)
+#else
+CThreadImpl::CThreadImpl(CAddressSpace * pASpace)
+ : pASpace_(pASpace)
  , pStack_(NULL)
+#endif
  , pSvcStack_(NULL)
 {
   // Initialize TSS
@@ -68,51 +79,58 @@ CPCThread::CPCThread(CTask * task, void * entry, size_t stack, size_t svcstack, 
   pTSS_->io_map_addr = sizeof(STaskStateSegment);
   // Create descriptor for TSS
   selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)pTSS_, iTSSSize_);
-
-  // Not the main thread?
-  if(entry != NULL)
-  {
-    // Set default stack values
-    if(stack == 0)    stack    = 512;
-    if(svcstack == 0) svcstack = 512;
-
-    // Allocate stacks
-    pStack_ = new uint32_t[stack];
-    pSvcStack_ = new uint32_t[svcstack];
-
-#ifndef CONFIG_DIRECT_ACCESS_KERNEL
-    // SVC stack
-    pTSS_->esp0 = (uint32_t)(pSvcStack_ + svcstack);
-    pTSS_->ss0  = selDataKernel;
-#endif
-    // User stack
-    ((uint32_t *)pStack_)[(512 >> 2) - 1] = (uint32_t)argv;
-    ((uint32_t *)pStack_)[(512 >> 2) - 2] = (uint32_t)argc;
-    ((uint32_t *)pStack_)[(512 >> 2) - 3] = 0; // Function call return address
-    pTSS_->esp  = (uint32_t)pStack_ + stack - 12;
-    pTSS_->es   = USER_DATA_SEGMENT_SEL;
-    pTSS_->cs   = USER_CODE_SEGMENT_SEL;
-    pTSS_->ss   = USER_DATA_SEGMENT_SEL;
-    pTSS_->ds   = USER_DATA_SEGMENT_SEL;
-    pTSS_->fs   = USER_DATA_SEGMENT_SEL;
-    pTSS_->gs   = USER_DATA_SEGMENT_SEL;
-    // Other
-#ifdef CONFIG_MMU
-    pTSS_->cr3  = pTask_->aspace().cr3();
-#endif
-    pTSS_->eip  = (uint32_t)entry;
-    pTSS_->eflags = I386_IOPL_VALUE(0) | I386_IE_FLAG | I386_ON_FLAGS;
-  }
 }
 
 // -----------------------------------------------------------------------------
-CPCThread::~CPCThread()
+CThreadImpl::~CThreadImpl()
 {
+  if(pStack_ != NULL)
+    delete pStack_;
+  if(pSvcStack_ != NULL)
+    delete pSvcStack_;
+  if(pTSS_ != NULL)
+    delete pTSS_;
+  // FIXME: Free TSS selector
 }
 
 // -----------------------------------------------------------------------------
 void
-CPCThread::runJump()
+CThreadImpl::init(void * entry, int argc, char * argv[])
+{
+  size_t stack(512);
+  size_t svcstack(512);
+
+  // Allocate stacks
+  pStack_    = new uint32_t[stack];
+  pSvcStack_ = new uint32_t[svcstack];
+
+#ifndef CONFIG_DIRECT_ACCESS_KERNEL
+  // SVC stack
+  pTSS_->esp0 = (uint32_t)(pSvcStack_ + svcstack);
+  pTSS_->ss0  = selDataKernel;
+#endif
+  // User stack
+  ((uint32_t *)pStack_)[(stack >> 2) - 1] = (uint32_t)argv;
+  ((uint32_t *)pStack_)[(stack >> 2) - 2] = (uint32_t)argc;
+  ((uint32_t *)pStack_)[(stack >> 2) - 3] = 0; // Function call return address
+  pTSS_->esp  = (uint32_t)pStack_ + stack - 12;
+  pTSS_->es   = USER_DATA_SEGMENT_SEL;
+  pTSS_->cs   = USER_CODE_SEGMENT_SEL;
+  pTSS_->ss   = USER_DATA_SEGMENT_SEL;
+  pTSS_->ds   = USER_DATA_SEGMENT_SEL;
+  pTSS_->fs   = USER_DATA_SEGMENT_SEL;
+  pTSS_->gs   = USER_DATA_SEGMENT_SEL;
+  // Other
+#ifdef CONFIG_MMU
+  pTSS_->cr3  = pASpace_->cr3();
+#endif
+  pTSS_->eip  = (uint32_t)entry;
+  pTSS_->eflags = I386_IOPL_VALUE(0) | I386_IE_FLAG | I386_ON_FLAGS;
+}
+
+// -----------------------------------------------------------------------------
+void
+CThreadImpl::runJump()
 {
   if(cGDT.desc_[selTSS_ >> 3].access & (1<<1))
     panic("Can't jump to busy task!\n");
@@ -125,7 +143,7 @@ CPCThread::runJump()
 
 // -----------------------------------------------------------------------------
 void
-CPCThread::runCall()
+CThreadImpl::runCall()
 {
   if(cGDT.desc_[selTSS_ >> 3].access & (1<<1))
     panic("Can't call busy task!\n");
@@ -138,8 +156,15 @@ CPCThread::runCall()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-CV86Thread::CV86Thread(CTask * task)
- : CThread(task)
+#ifndef CONFIG_MMU
+CV86Thread::CV86Thread()
+ : pStack_(NULL)
+#else
+CV86Thread::CV86Thread(CAddressSpace * pASpace)
+ : pASpace_(pASpace)
+ , pStack_(NULL)
+#endif
+ , pSvcStack_(NULL)
 {
   // Initialize TSS
   iTSSSize_ = sizeof(STaskStateSegment) + (64*1024/8);
@@ -150,10 +175,26 @@ CV86Thread::CV86Thread(CTask * task)
   pTSS_->io_map_addr = sizeof(STaskStateSegment);
   // Create descriptor for TSS
   selTSS_ = cGDT.createSegment(dtTSS, 0, (uint32_t)pTSS_, iTSSSize_);
+}
 
-  // Stack sizes
-  //size_t stack    = 512;
-  size_t svcstack = 512;
+// -----------------------------------------------------------------------------
+CV86Thread::~CV86Thread()
+{
+  if(pStack_ != NULL)
+    physFreePage((uint64_t)pStack_);
+  if(pSvcStack_ != NULL)
+    delete pSvcStack_;
+  if(pTSS_ != NULL)
+    delete pTSS_;
+  // FIXME: Free TSS selector
+}
+
+// -----------------------------------------------------------------------------
+void
+CV86Thread::init()
+{
+  //size_t stack(512);
+  size_t svcstack(512);
 
   // Allocate stacks
   pStack_    = (uint32_t *)physAllocPageLow();
@@ -173,15 +214,10 @@ CV86Thread::CV86Thread(CTask * task)
   pTSS_->gs   = 0;
   // Other
 #ifdef CONFIG_MMU
-  pTSS_->cr3  = pTask_->aspace().cr3();
+  pTSS_->cr3  = pASpace_->cr3();
 #endif
 //  pTSS_->eip  = ...;
   pTSS_->eflags = I386_VM_FLAG | I386_IOPL_VALUE(0) | I386_IE_FLAG | I386_ON_FLAGS;
-}
-
-// -----------------------------------------------------------------------------
-CV86Thread::~CV86Thread()
-{
 }
 
 // -----------------------------------------------------------------------------
@@ -227,14 +263,4 @@ CV86Thread::interrupt(uint8_t nr)
   //printk("int 0x%x @ %x:%x = 0x%x\n", nr, pTSS_->cs, pTSS_->eip, from_v86_addr(pTSS_->cs, pTSS_->eip));
 
   runCall();
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-CThread *
-getNewThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
-{
-  CPCThread * pt = new CPCThread(task, entry, stack, svcstack, argc, argv);
-
-  return pt;
 }

@@ -6,6 +6,7 @@
 #include "kernel/srrConnection.h"
 #include "kernel/srrNodes.h"
 #include "asm/cpu.h"
+#include "asm/task.h"
 #include "string.h"
 
 
@@ -22,17 +23,17 @@ useconds_t     CTaskManager::iCurrentTime_ = 0;
 
 
 // -----------------------------------------------------------------------------
-// To be implemeted in arch
-extern CThread * getNewThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
-
-
-// -----------------------------------------------------------------------------
 CThread::CThread(CTask * task)
  : iTimeout_(0)
  , pWaitObj_(NULL)
  , iWaitReturn_(0)
  , pTask_(task)
  , pParent_(NULL)
+#ifdef CONFIG_MMU
+ , impl_(&task->aspace())
+#else
+ , impl_()
+#endif
  , eState_(TS_UNINITIALIZED)
 {
   TAILQ_INIT(&children_queue);
@@ -46,20 +47,6 @@ CThread::~CThread()
 {
   // Remove from the "all threads" queue
   TAILQ_REMOVE(&CTaskManager::thread_queue, this, thread_qe);
-}
-
-// -----------------------------------------------------------------------------
-void
-CThread::runJump()
-{
-  panic("CThread::runJump: Can't jump to task!\n");
-}
-
-// -----------------------------------------------------------------------------
-void
-CThread::runReturn()
-{
-  panic("CThread::runReturn: Can't return to task!\n");
 }
 
 // -----------------------------------------------------------------------------
@@ -163,33 +150,30 @@ CThread::state(EThreadState state)
 CThread *
 CThread::createChild(void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
 {
-  CThread * pThread;
+  CThread * pThread = new CThread(pTask_);
 
-  pThread = getNewThread(pTask_, entry, stack, svcstack, argc, argv);
   if(pThread != NULL)
+  {
+    pThread->impl().init(entry, argc, argv);
+
     TAILQ_INSERT_TAIL(&children_queue, pThread, children_qe);
+  }
 
   return pThread;
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-CTask::CTask(void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
+CTask::CTask()
  : iPID_(CTaskManager::iPIDCount_++)
+ , thr_(this)
 {
-  thr_ = getNewThread(this, entry, stack, svcstack, argc, argv);
-
   memset(pChannel_,        0, sizeof(pChannel_));
   memset(pConnectionsOut_, 0, sizeof(pConnectionsOut_));
   memset(pConnectionsIn_,  0, sizeof(pConnectionsIn_));
 
   // Insert in the "all tasks" queue
   TAILQ_INSERT_TAIL(&CTaskManager::task_queue, this, task_qe);
-
-#ifdef CONFIG_MMU
-  // Identity map bottom 4MiB
-  cASpace_.mapIdentity(0, 0x00400000);
-#endif
 }
 
 // -----------------------------------------------------------------------------

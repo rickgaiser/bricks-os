@@ -51,7 +51,11 @@ CVesaVideoDevice::CVesaVideoDevice()
  , iFrameCount_(0)
  , pCurrentMode_(NULL)
  , pDefaultMode_(NULL)
- , v86thr_(pMainTask) // FIXME! What task do we belong to?
+#ifdef CONFIG_MMU
+ , v86thr_(0) // FIXME! What addres space do we use?
+#else
+ , v86thr_()
+#endif
  , pMode_(NULL)
  , iModeCount_(0)
 {

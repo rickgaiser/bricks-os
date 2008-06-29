@@ -1,8 +1,8 @@
 #include "apic.h"
 #include "cpuid.h"
-#include "task.h"
 #include "asm/arch/config.h"
 #include "asm/hal.h"
+#include "asm/task.h"
 #include "kernel/task.h"
 #include "kernel/debug.h"
 

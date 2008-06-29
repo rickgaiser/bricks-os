@@ -45,6 +45,9 @@ CAddressSpace::CAddressSpace()
 
     iCR3_ = (uint32_t)pPD_;
   }
+
+  // Map kernel into address space: identity map bottom 4MiB
+  mapIdentity(0, 0x00400000);
 }
 
 // -----------------------------------------------------------------------------

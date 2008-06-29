@@ -136,7 +136,7 @@ isr(pt_regs * regs)
         // Ack interrupt (normally interrupt manager will do this)
         outb(EOI_BYTE, PIC_MASTER_BASE);
         // Load return stack or jump to TSS
-        CTaskManager::pCurrentThread_->runJump();
+        CTaskManager::pCurrentThread_->impl().runJump();
       }
       else
       {
@@ -192,7 +192,7 @@ isr(pt_regs * regs)
           // exit
           CTaskManager::pCurrentThread_->state(TS_DESTROY);
           if(CTaskManager::schedule() == true)
-            CTaskManager::pCurrentThread_->runJump();
+            CTaskManager::pCurrentThread_->impl().runJump();
           break;
         case 4:
           // write
