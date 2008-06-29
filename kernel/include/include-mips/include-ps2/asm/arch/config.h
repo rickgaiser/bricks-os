@@ -25,7 +25,7 @@
 #define CONFIG_GL
 
 // Library configuration
-#define CONFIG_BUILTIN_MM
+#undef  CONFIG_BUILTIN_MM
 #define CONFIG_BUILTIN_LIBC
 
 

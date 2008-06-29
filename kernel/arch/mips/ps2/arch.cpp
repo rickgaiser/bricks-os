@@ -18,10 +18,12 @@
 #endif // CONFIG_FRAMEBUFFER
 
 
+#ifdef CONFIG_BUILTIN_MM
 extern char _end;
 extern char _heap_size;
 #define HEAP_START ((uint32_t)(&_end))
 #define HEAP_END   ((uint32_t)(&_end + 4*1024*1024)) // FIXME: (&_end + &_heap_size))
+#endif // CONFIG_BUILTIN_MM
 
 
 //CIRQ           cIRQ;
@@ -40,7 +42,9 @@ CPS2VideoDevice * pVideoDevice;
 int
 main(int, char *[])
 {
+#ifdef CONFIG_BUILTIN_MM
   init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
+#endif // CONFIG_BUILTIN_MM
 
 //  cIRQ.init();
 
@@ -66,7 +70,9 @@ main(int, char *[])
   while(cIOP.sync());
   printk("ready\n");
 
+#ifdef CONFIG_BUILTIN_MM
   printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
+#endif // CONFIG_BUILTIN_MM
 
   printk("PS2 arch ready\n");
 
