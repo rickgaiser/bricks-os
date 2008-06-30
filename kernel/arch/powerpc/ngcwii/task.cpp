@@ -1,21 +1,26 @@
-#include "task.h"
+#include "asm/task.h"
+#include "kernel/task.h"
 #include "kernel/debug.h"
 
 
 // -----------------------------------------------------------------------------
-CNGCThread::CNGCThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
- : CThread(task)
+CThreadImpl::CThreadImpl()
 {
 }
 
 // -----------------------------------------------------------------------------
-CNGCThread::~CNGCThread()
+CThreadImpl::~CThreadImpl()
 {
 }
 
 // -----------------------------------------------------------------------------
-CThread *
-getNewThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
+void
+CThreadImpl::init(void * entry, int argc, char * argv[])
 {
-  return new CNGCThread(task, entry, stack, svcstack, argc, argv);
+}
+
+// -----------------------------------------------------------------------------
+void
+CThreadImpl::runJump()
+{
 }
