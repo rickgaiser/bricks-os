@@ -1,60 +1,40 @@
-#include "task.h"
+#include "asm/task.h"
 #include "kernel/debug.h"
+#include "kernel/task.h"
 #include "asm/cpu.h"
 
 
 extern pt_regs * current_thread;   // Return state for the current thread, only valid in interrupt
 extern "C" void kill_thread();     // Return function for thread, kills the current thread
 extern "C" void runJump(pt_regs * old_thread, pt_regs * new_thread);
-CTask         * pMainTask;
-CGBANDSThread * pMainThread;
+CTask             * pMainTask;
+CThread           * pMainThread;
+CThreadImpl       * pMainThreadImpl;
 
 
 // -----------------------------------------------------------------------------
 void
-CGBANDSThread::init()
+task_init()
 {
-  pMainTask   = new CTask(0, 0, 0);
-  pMainThread = (CGBANDSThread *)pMainTask->thr_;
+  pMainTask       = new CTask;
+  pMainThread     = &pMainTask->thread();
+  pMainThreadImpl = &pMainTask->thread().impl();
 
-  current_thread = &(pMainThread->threadState_);
+  current_thread = &(pMainThreadImpl->threadState_);
 
   // Add task to taskmanagers list
   pMainThread->state(TS_RUNNING);
 }
 
 // -----------------------------------------------------------------------------
-CGBANDSThread::CGBANDSThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
- : CThread(task)
- , pStack_(NULL)
+CThreadImpl::CThreadImpl()
+ : pStack_(NULL)
  , pSvcStack_(NULL)
 {
-  // Main thread?
-  if(entry != NULL)
-  {
-    // Set default stack values
-    if(stack == 0)    stack    = 512;
-    if(svcstack == 0) svcstack = 512;
-
-    // Allocate stacks
-    pStack_ = new uint32_t[stack];
-    pSvcStack_ = new uint32_t[svcstack];
-
-    threadState_.pc     = reinterpret_cast<uint32_t>(entry) + 8;
-    threadState_.sp     = reinterpret_cast<uint32_t>(pStack_) + stack;
-    threadState_.sp_svc = reinterpret_cast<uint32_t>(pSvcStack_) + svcstack;
-    threadState_.r0     = argc;
-    threadState_.r1     = reinterpret_cast<uint32_t>(argv);
-    threadState_.lr     = reinterpret_cast<uint32_t>(kill);
-    threadState_.cpsr   = CPU_MODE_SYSTEM | CPU_MODE_THUMB;
-
-    if(current_thread == 0)
-      current_thread = &threadState_;
-  }
 }
 
 // -----------------------------------------------------------------------------
-CGBANDSThread::~CGBANDSThread()
+CThreadImpl::~CThreadImpl()
 {
   if(pStack_ != 0)
     delete pStack_;
@@ -64,7 +44,30 @@ CGBANDSThread::~CGBANDSThread()
 
 // -----------------------------------------------------------------------------
 void
-CGBANDSThread::runJump()
+CThreadImpl::init(void * entry, int argc, char * argv[])
+{
+  size_t stack(512);
+  size_t svcstack(512);
+
+  // Allocate stacks
+  pStack_ = new uint32_t[stack];
+  pSvcStack_ = new uint32_t[svcstack];
+
+  threadState_.pc     = reinterpret_cast<uint32_t>(entry) + 8;
+  threadState_.sp     = reinterpret_cast<uint32_t>(pStack_) + stack;
+  threadState_.sp_svc = reinterpret_cast<uint32_t>(pSvcStack_) + svcstack;
+  threadState_.r0     = argc;
+  threadState_.r1     = reinterpret_cast<uint32_t>(argv);
+  threadState_.lr     = reinterpret_cast<uint32_t>(kill);
+  threadState_.cpsr   = CPU_MODE_SYSTEM | CPU_MODE_THUMB;
+
+  if(current_thread == 0)
+    current_thread = &threadState_;
+}
+
+// -----------------------------------------------------------------------------
+void
+CThreadImpl::runJump()
 {
   // Store state in "current_thread" and jump to "pThreadState_"
   ::runJump(current_thread, &threadState_);
@@ -72,7 +75,7 @@ CGBANDSThread::runJump()
 
 // -----------------------------------------------------------------------------
 void
-CGBANDSThread::runReturn()
+CThreadImpl::runReturn()
 {
   // Switch return stack to the stack of this task.
   current_thread = &threadState_;
@@ -89,11 +92,4 @@ kill_thread()
   //        since we might not be called from an interrupt. So instead we
   //        just wait to rescheduled and destroyed.
   ::halt();
-}
-
-// -----------------------------------------------------------------------------
-CThread *
-getNewThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
-{
-  return new CGBANDSThread(task, entry, stack, svcstack, argc, argv);
 }

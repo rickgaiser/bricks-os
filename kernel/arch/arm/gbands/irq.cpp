@@ -2,11 +2,9 @@
 #include "kernel/interruptManager.h"
 #include "kernel/task.h"
 #include "kernel/srr_k.h"
-#include "task.h"
 #include "asm/irq.h"
 #include "asm/arch/memory.h"
 #include "asm/arch/config.h"
-
 
 
 // Assembler isr function calling our "C" isr function
@@ -37,7 +35,7 @@ isr(pt_regs * regs)
     CTaskManager::updateSleepers();
     CTaskManager::removeDestroyed();
     if(CTaskManager::schedule() == true)
-      CTaskManager::pCurrentThread_->runReturn();
+      CTaskManager::pCurrentThread_->impl().runReturn();
   }
 
   // Handle other interrupts

@@ -2,11 +2,13 @@
 #include "kernel/debug.h"
 #include "kernel/memoryManager.h"
 #include "kernel/task.h"
+
 #include "asm/arch/config.h"
 #include "asm/cpu.h"
 #include "asm/irq.h"
+#include "asm/task.h"
+
 #include "timer.h"
-#include "task.h"
 
 #ifdef CONFIG_GBA_SOUND
 #include "gbaSound.h"
@@ -154,7 +156,7 @@ main(int, char *[])
   pVideoDevice = new CGBAVideoDevice;
 #endif // CONFIG_FRAMEBUFFER
 
-  CGBANDSThread::init();
+  task_init();
   setTimerFrequency(2, 100.0f);
   cIRQ.enable(5);
 
