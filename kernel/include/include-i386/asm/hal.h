@@ -161,8 +161,8 @@ typedef struct
 
 // I/O INSTRUCTIONS
 inline void outb(unsigned char  data, unsigned short addr){__asm__ ("outb %%al,  %%dx"::"a" (data),"d" (addr));}
-inline void outw(unsigned short data, unsigned short addr){__asm__ ("outb %%ax,  %%dx"::"a" (data),"d" (addr));}
-inline void outd(unsigned long  data, unsigned short addr){__asm__ ("outb %%eax, %%dx"::"a" (data),"d" (addr));}
+inline void outw(unsigned short data, unsigned short addr){__asm__ ("outw %%ax,  %%dx"::"a" (data),"d" (addr));}
+inline void outd(unsigned long  data, unsigned short addr){__asm__ ("outl %%eax, %%dx"::"a" (data),"d" (addr));}
 #define inb(port) ({ uint8_t _v;  __asm__ __volatile__ ("inb %%dx, %%al":"=a" (_v):"d" (port)); _v; })
 #define inw(port) ({ uint16_t _v; __asm__ __volatile__ ("inw %%dx, %%ax":"=a" (_v):"d" (port)); _v; })
 #define ind(port) ({ uint32_t _v; __asm__ __volatile__ ("inl %%dx,%%eax":"=a" (_v):"d" (port)); _v; })

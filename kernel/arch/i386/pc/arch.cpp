@@ -21,6 +21,7 @@
 #include "multiboot.h"
 #include "serial.h"
 #include "gpf.h"
+#include "pci.h"
 
 #ifdef CONFIG_DEBUGGING
 #include "debugScreen.h"
@@ -351,6 +352,9 @@ main(unsigned long magic, multiboot_info_t * mbi)
 
   // Enable Timer IRQ
   cIRQ.enable(0x20);
+
+  // Initialize PCI bus
+  init_pci();
 
 #ifdef CONFIG_FILESYSTEM
   CIBMPartitionDriver ibmPartitionDriver;

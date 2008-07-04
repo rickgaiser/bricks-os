@@ -16,6 +16,7 @@ OBJS            =\
                 keyboard \
                 mmap \
                 mouse \
+                pci \
                 serial \
                 support \
                 task \
