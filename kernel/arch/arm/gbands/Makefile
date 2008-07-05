@@ -13,7 +13,7 @@ OBJS            =\
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
 
 ifeq ($(TARGET),nds9)
-OBJS-$(CONFIG_GL)                  += glesContextNDS matrixNDS texturesNDS
+OBJS-$(CONFIG_GL)                  += glesContextNDS
 else
 OBJS-$(CONFIG_GL)                  += glesContext
 endif
