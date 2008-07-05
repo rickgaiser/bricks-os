@@ -2,10 +2,12 @@
 #include "kernel/debug.h"
 #include "kernel/memoryManager.h"
 #include "kernel/task.h"
+
 #include "asm/arch/config.h"
 #include "asm/cpu.h"
 #include "asm/irq.h"
-#include "task.h"
+#include "asm/task.h"
+
 #include "dma.h"
 #include "sif.h"
 
@@ -61,7 +63,7 @@ main(int, char *[])
   pVideoDevice = new CPS2VideoDevice;
 #endif // CONFIG_FRAMEBUFFER
 
-  CPS2Thread::init();
+  task_init();
 
   // Initialize IOP
   cIOP.init();
