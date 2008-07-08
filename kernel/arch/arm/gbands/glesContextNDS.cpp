@@ -47,16 +47,17 @@ CNDSGLESContext::CNDSGLESContext()
  , pCurrentTex_(NULL)
 {
   // Power control
-  REG_POWCNT |= POWER_LCD |POWER_2D_TOP |POWER_2D_BOTTOM | POWER_3D_CORE | POWER_3D_MATRIX;
+  REG_POWCNT |= POWER_LCD | POWER_2D_TOP | POWER_2D_BOTTOM | POWER_3D_CORE | POWER_3D_MATRIX;
   // Display control
-  REG_DISPCNT = MODE_0 | BG0_ENABLE | ENABLE_3D;
+  REG_DISPCNT = MODE_0 | BG0_ENABLE | ENABLE_BG03D | DISP_SOURCE_ENGINE;
 
   iNDSGFXControl_ = NDS_SHADING_HIGHLIGHT;
   iNDSPolyFormat_ = NDS_POLY_ALPHA(31) | NDS_CULL_BACK | NDS_PM_MODULATION | NDS_POLY_FOG;
 
   GFX_CONTROL     = iNDSGFXControl_;
   GFX_POLY_FORMAT = iNDSPolyFormat_;
-  GFX_CLEAR_DEPTH = 0x7fff;
+  zMax_ = 0x7fff;
+  GFX_CLEAR_DEPTH = zMax_;
 
   // Set the fog density table
   for(int i(0); i < 32; i++)
@@ -111,7 +112,7 @@ CNDSGLESContext::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLcl
 {
   CASoftGLESFixed::glClearColorx(red, green, blue, alpha);
 
-  //BG_PALETTE[0] = fpRGB(red, green, blue);
+  GFX_CLEAR_COLOR = fpRGB(clClear.r, clClear.g, clClear.b);
 }
 
 //-----------------------------------------------------------------------------
@@ -645,10 +646,24 @@ CNDSGLESContext::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 void
 CNDSGLESContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+  CASoftGLESFixed::glViewport(x, y, width, height);
+
   GFX_VIEWPORT = x + (y << 8) + ((width-1) << 16) + ((height-1) << 24);
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void
+CNDSGLESContext::vertexShaderTransform(SVertexFx & v)
+{
+  if(texturesEnabled_ == true)
+    GFX_TEX_COORD = ((gl_to_ndst(v.t[0]) << 16) & 0xffff0000) | (gl_to_ndst(v.t[1]) & 0xffff);
+  else
+    GFX_COLOR = fpRGB(v.cl.r, v.cl.g, v.cl.b);
+  GFX_VERTEX16 = ((gl_to_ndsv(v.vo[1]) << 16) & 0xffff0000) | (gl_to_ndsv(v.vo[0]) & 0xffff);
+  GFX_VERTEX16 = gl_to_ndsv(v.vo[2]) & 0xffff;
+}
+
 //-----------------------------------------------------------------------------
 void
 CNDSGLESContext::begin(GLenum mode)
@@ -681,17 +696,6 @@ CNDSGLESContext::end()
 void
 CNDSGLESContext::rasterTriangle(STriangleFx & tri)
 {
-  for(int iVertex(0); iVertex < 3; iVertex++)
-  {
-    SVertexFx & v = *tri.v[iVertex];
-
-    if(texturesEnabled_ == true)
-      GFX_TEX_COORD = ((gl_to_ndst(v.t[0]) << 16) & 0xffff0000) | (gl_to_ndst(v.t[1]) & 0xffff);
-    else
-      GFX_COLOR = fpRGB(v.cl.r, v.cl.g, v.cl.b);
-    GFX_VERTEX16 = ((gl_to_ndsv(v.vo[1]) << 16) & 0xffff0000) | (gl_to_ndsv(v.vo[0]) & 0xffff);
-    GFX_VERTEX16 = gl_to_ndsv(v.vo[2]) & 0xffff;
-  }
 }
 
 //-----------------------------------------------------------------------------

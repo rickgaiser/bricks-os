@@ -167,8 +167,9 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
 {
 //  printk("Mode set to: %dx%dx%d\n", mode->xres, mode->yres, mode->bitsPerPixel);
 
+#ifdef GBA
   // Setup BG2
-  REG_BG3CNT  = BG_BMP16_256x256;
+  REG_BG2CNT  = BG_BMP16_256x256;
   REG_BG2_XDX = 1 << 8;
   REG_BG2_XDY = 0;
   REG_BG2_YDX = 0;
@@ -176,16 +177,6 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
   REG_BG2_CX  = 0;
   REG_BG2_CY  = 0;
 
-  // Setup BG3
-  REG_BG3CNT  = BG_BMP16_256x256;
-  REG_BG3_XDX = 1 << 8;
-  REG_BG3_XDY = 0;
-  REG_BG3_YDX = 0;
-  REG_BG3_YDY = 1 << 8;
-  REG_BG3_CX  = 0;
-  REG_BG3_CY  = 0;
-
-#ifdef GBA
   if((mode->width == 240) && (mode->height == 160) && (mode->bpp == 16))
   {
     // Mode 3:
@@ -247,14 +238,30 @@ CGBAVideoDevice::setMode(const SVideoMode * mode)
   }
 #endif // GBA
 #ifdef NDS9
-  REG_DISPCNT   = MODE_5 | BG3_ENABLE;
-  iSurfacesFree_ = 0x03;
+  // Setup BG3
+  REG_BG3_XDX = 1 << 8;
+  REG_BG3_XDY = 0;
+  REG_BG3_YDX = 0;
+  REG_BG3_YDY = 1 << 8;
+  REG_BG3_CX  = 0;
+  REG_BG3_CY  = 0;
+
+  // Top display
+  //REG_DISPCNT     = DISP_SOURCE_VRAM | DISP_VRAMA;
+  REG_DISPCNT     = MODE_5 | BG3_ENABLE | DISP_SOURCE_ENGINE;
+  REG_BG3CNT      = BG_BMP16_256x256; // 0x06000000 // | 0x0800 for 0x06020000
+
+  // Bottom display
+  REG_SUB_DISPCNT = MODE_5 | BG3_ENABLE | DISP_SOURCE_ENGINE;
+  REG_SUB_BG3CNT  = BG_BMP16_256x256; // 0x06200000
 
   // Setup VRAM banks
-  REG_VRAM_A_CR = VRAM_ENABLE | VRAM_OFFSET(0) | VRAM_TYPE_MAIN_BG; // 128KiB
-  REG_VRAM_B_CR = VRAM_ENABLE | VRAM_OFFSET(1) | VRAM_TYPE_MAIN_BG; // 128KiB
-  REG_VRAM_C_CR = VRAM_ENABLE | VRAM_OFFSET(2) | VRAM_TYPE_MAIN_BG; // 128KiB
-  REG_VRAM_D_CR = VRAM_ENABLE | VRAM_OFFSET(3) | VRAM_TYPE_MAIN_BG; // 128KiB
+  REG_VRAM_A_CR = VRAM_ENABLE | VRAM_OFFSET(0) | VRAM_TYPE_MAIN_BG; // 128KiB @ 0x06000000 (EngineA)
+  REG_VRAM_B_CR = VRAM_ENABLE | VRAM_OFFSET(1) | VRAM_TYPE_MAIN_BG; // 128KiB @ 0x06020000 (EngineA)
+  REG_VRAM_C_CR = VRAM_ENABLE | 4;                                  // 128KiB @ 0x06200000 (EngineB)
+  REG_VRAM_D_CR = VRAM_ENABLE | VRAM_OFFSET(2) | VRAM_TYPE_MAIN_BG; // 128KiB @ 0x06040000 (EngineA)
+
+  iSurfacesFree_ = 0x07;
 #endif // NDS9
   // Enable VBlank interrupt
   REG_DISPSTAT |= IRQ_VBLANK_ENABLE;
@@ -270,28 +277,39 @@ CGBAVideoDevice::getSurface(CSurface ** surface, int width, int height)
 
   if(((uint32_t)width == pCurrentMode_->width) && ((uint32_t)height == pCurrentMode_->height))
   {
-    // Allocate one of the two available surfaces in VRAM
-    if(iSurfacesFree_ & (1<<0))
+    if(iSurfacesFree_ != 0)
     {
-      iSurfacesFree_ &= ~(1<<0);
-      CSurface * pSurface = new CSurface;
-      pSurface->mode = *pCurrentMode_;
-      pSurface->p = (uint16_t *)0x06000000;
-      *surface = pSurface;
-    }
-    else if(iSurfacesFree_ & (1<<1))
-    {
-      iSurfacesFree_ &= ~(1<<1);
-      CSurface * pSurface = new CSurface;
-      pSurface->mode = *pCurrentMode_;
-      // Allocate back buffer
+      *surface = new CSurface;
+      (*surface)->mode = *pCurrentMode_;
+
+      // Allocate one of the available surfaces in VRAM
+      if(iSurfacesFree_ & (1<<0))
+      {
+        iSurfacesFree_ &= ~(1<<0);
+        (*surface)->p = (uint16_t *)0x06000000;
+      }
+      else if(iSurfacesFree_ & (1<<1))
+      {
+        iSurfacesFree_ &= ~(1<<1);
 #ifdef GBA
-      pSurface->p = (uint16_t *)0x0600A000;
+        (*surface)->p = (uint16_t *)0x0600A000;
 #endif // GBA
 #ifdef NDS9
-      pSurface->p = (uint16_t *)0x06020000;
+        (*surface)->p = (uint16_t *)0x06020000;
 #endif // NDS9
-      *surface = pSurface;
+      }
+#ifdef NDS9
+      else if(iSurfacesFree_ & (1<<2))
+      {
+        iSurfacesFree_ &= ~(1<<2);
+        (*surface)->p = (uint16_t *)0x06040000;
+      }
+      else if(iSurfacesFree_ & (1<<3))
+      {
+        iSurfacesFree_ &= ~(1<<3);
+        (*surface)->p = (uint16_t *)0x06060000;
+      }
+#endif // NDS9
     }
   }
   else
@@ -360,32 +378,19 @@ CGBAVideoDevice::displaySurface(CSurface * surface)
 
 #ifdef GBA
     if(pSurface_->p == (uint16_t *)0x6000000)
-    {
       REG_DISPCNT &= ~0x0010; // Clear bit
-    }
     else if (pSurface_->p == (uint16_t *)0x600A000)
-    {
       REG_DISPCNT |= 0x0010; // Set bit
-    }
-    else
-    {
-      // Copy?
-    }
 #endif // GBA
-
 #ifdef NDS9
-    if(pSurface_->p == (uint16_t *)0x6000000)
-    {
-      REG_BG3CNT &= ~0x0800; // Clear bit
-    }
+    if(pSurface_->p == (uint16_t *)0x06000000)
+      REG_DISPCNT = DISP_SOURCE_VRAM | DISP_VRAMA;
     else if (pSurface_->p == (uint16_t *)0x06020000)
-    {
-      REG_BG3CNT |= 0x0800; // Set bit
-    }
-    else
-    {
-      // Copy?
-    }
+      REG_DISPCNT = DISP_SOURCE_VRAM | DISP_VRAMB;
+    else if (pSurface_->p == (uint16_t *)0x06040000)
+      REG_DISPCNT = DISP_SOURCE_VRAM | DISP_VRAMC;
+    else if (pSurface_->p == (uint16_t *)0x06060000)
+      REG_DISPCNT = DISP_SOURCE_VRAM | DISP_VRAMD;
 #endif // NDS9
   }
 }

@@ -14,10 +14,12 @@
 #define nds_fpmul(i1,i2) fpmul32(NDS_MATRIX_PRECISION,i1,i2)
 #define nds_fpdiv(i1,i2) fpdiv32(NDS_MATRIX_PRECISION,i1,i2)
 
-#define nds_to_gl(i)     (i>>4)
 #define gl_to_ndsv(i)    (i>>4)  // Vertex format 4.12
 #define gl_to_ndst(i)    (i>>12) // Texture format 12.4
 #define gl_to_ndsz(i)    (i>>13) // Depth format 12.3
+#define ndsv_to_gl(i)    (i<<4)
+#define ndst_to_gl(i)    (i<<12)
+#define ndsz_to_gl(i)    (i<<13)
 
 #define MAX_TEXTURE_COUNT 32
 
@@ -83,6 +85,8 @@ public:
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
+  virtual void vertexShaderTransform(SVertexFx & v);
+
   virtual void begin(GLenum mode);
   virtual void end();
   virtual void rasterTriangle(STriangleFx & tri);

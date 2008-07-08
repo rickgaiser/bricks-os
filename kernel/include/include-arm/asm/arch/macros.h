@@ -72,25 +72,15 @@ dmaCopy(const void * source, void * dest, uint32_t size)
 inline void
 dmaFill16(uint16_t data, void * dest, uint32_t count)
 {
-#ifdef GBA
   DMA3WAIT();
   DMA3FILL(data, dest, DMA_DST_INC | DMA_SRC_FIXED | DMA16 | count);
-#else
-  for(uint32_t i(0); i < count; i++)
-    ((uint16_t *)dest)[i] = data;
-#endif // GBA
 }
 
 inline void
 dmaFill32(uint32_t data, void * dest, uint32_t count)
 {
-#ifdef GBA
   DMA3WAIT();
   DMA3FILL(data, dest, DMA_DST_INC | DMA_SRC_FIXED | DMA32 | count);
-#else
-  for(uint32_t i(0); i < count; i++)
-    ((uint32_t *)dest)[i] = data;
-#endif // GBA
 }
 
 

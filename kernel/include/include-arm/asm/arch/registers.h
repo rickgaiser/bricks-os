@@ -30,22 +30,14 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 #endif
 
 // "REG_DISPCNT" bits
-#ifdef GBA
 #define MODE_0                0
 #define MODE_1                1
 #define MODE_2                2
 #define MODE_3                3
 #define MODE_4                4
 #define MODE_5                5
-#endif // GBA
 #ifdef NDS
-#define MODE_0                0x10000
-#define MODE_1                0x10001
-#define MODE_2                0x10002
-#define MODE_3                0x10003
-#define MODE_4                0x10004
-#define MODE_5                0x10005
-#define ENABLE_3D             (1<<3)
+#define ENABLE_BG03D          (1<<3)
 #endif // NDS
 #define BG0_ENABLE            (1<<8)
 #define BG1_ENABLE            (1<<9)
@@ -55,6 +47,19 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 #define WIN0_ENABLE           (1<<13)
 #define WIN1_ENABLE           (1<<14)
 #define SPRITE_WIN_ENABLE     (1<<15)
+#ifdef NDS
+#define DISP_SOURCE(x)        (x<<16)
+#define DISP_SOURCE_OFF       DISP_SOURCE(0) // White screen?
+#define DISP_SOURCE_ENGINE    DISP_SOURCE(1) // (BGx + OBJ) | 3D
+#define DISP_SOURCE_DMA       DISP_SOURCE(3)
+#define DISP_VRAM(x)          ((x)<<18)
+#define DISP_VRAMA            DISP_VRAM(0)
+#define DISP_VRAMB            DISP_VRAM(1)
+#define DISP_VRAMC            DISP_VRAM(2)
+#define DISP_VRAMD            DISP_VRAM(3)
+#define DISP_TILE_BASE(base)  ((base)<<24)
+#define DISP_MAP_BASE(base)   ((base)<<27)
+#endif // NDS
 // "REG_DISPSTAT" bits
 #define IRQ_VBLANK_ENABLE     (1<<3)
 #define IRQ_HBLANK_ENABLE     (1<<4)
@@ -64,7 +69,6 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 #define BG_16_COLOR           (0)
 #define BG_TILE_BASE(base)    ((base)<<2)
 #define BG_MAP_BASE(base)     ((base)<<8)
-#define BG_BMP_BASE(base)     ((base)<<8)
 #define BG_32x32              (0<<14)
 #define BG_64x32              (1<<14)
 #define BG_32x64              (2<<14)
@@ -344,18 +348,24 @@ enum ESerialMode
 
 
 // Memory Locations
+// Background palette
 #define BG_PALETTE            ( (uint16_t*)0x05000000)
-#define SPRITE_PALETTE        ( (uint16_t*)0x05000200)
 #define BG_PALETTE_SUB        ( (uint16_t*)0x05000400)
+// Sprite palette
+#define SPRITE_PALETTE        ( (uint16_t*)0x05000200)
 #define SPRITE_PALETTE_SUB    ( (uint16_t*)0x05000600)
+// Background tile data
 #define CHAR_BASE_BLOCK(n)       ((void *)(((n)*0x4000)+0x6000000))
 #define CHAR_BASE_BLOCK_SUB(n)   ((void *)(((n)*0x4000)+0x6200000))
+// Background tile map
 #define SCREEN_BASE_BLOCK(n)     ((void *)(((n)*0x0800)+0x6000000))
 #define SCREEN_BASE_BLOCK_SUB(n) ((void *)(((n)*0x0800)+0x6200000))
+
 #ifdef GBA
 #define IWRAM_BASE            (0x03000000)
 #define IWRAM_TOP             (IWRAM_BASE + 0x8000)
 #endif // GBA
+
 
 // Registers
 #ifdef GBA
