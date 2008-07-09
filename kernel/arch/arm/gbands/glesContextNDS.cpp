@@ -247,6 +247,38 @@ CNDSGLESContext::glFogxv(GLenum pname, const GLfixed * params)
   };
 }
 
+//-----------------------------------------------------------------------------
+void
+CNDSGLESContext::glLightx(GLenum light, GLenum pname, GLfixed param)
+{
+  CASoftGLESFixed::glLightx(light, pname, param);
+
+  updateLights();
+}
+
+//-----------------------------------------------------------------------------
+void
+CNDSGLESContext::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
+{
+  CASoftGLESFixed::glLightxv(light, pname, params);
+
+  updateLights();
+}
+
+//-----------------------------------------------------------------------------
+void
+CNDSGLESContext::glMaterialx(GLenum face, GLenum pname, GLfixed param)
+{
+  CASoftGLESFixed::glMaterialx(face, pname, param);
+}
+
+//-----------------------------------------------------------------------------
+void
+CNDSGLESContext::glMaterialxv(GLenum face, GLenum pname, const GLfixed * params)
+{
+  CASoftGLESFixed::glMaterialxv(face, pname, params);
+}
+
 //---------------------------------------------------------------------------
 void
 CNDSGLESContext::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
@@ -702,10 +734,20 @@ CNDSGLESContext::updateLights()
   iNDSPolyFormat_ &= ~(NDS_LIGHT0 | NDS_LIGHT1 | NDS_LIGHT2 | NDS_LIGHT3);
   if(lightingEnabled_ == true)
   {
-    if(lights_[0].enabled == true) iNDSPolyFormat_ |= NDS_LIGHT0;
-    if(lights_[1].enabled == true) iNDSPolyFormat_ |= NDS_LIGHT1;
-    if(lights_[2].enabled == true) iNDSPolyFormat_ |= NDS_LIGHT2;
-    if(lights_[3].enabled == true) iNDSPolyFormat_ |= NDS_LIGHT3;
+    for(int iLight(0); iLight < 4; iLight++)
+    {
+      if(lights_[iLight].enabled == true)
+      {
+        iNDSPolyFormat_ |= 1 << iLight;
+
+        GFX_LIGHT_VECTOR = (iLight << 30) |
+                           (((lights_[iLight].direction.z.value >> 6) & 0x3ff) << 20) |
+                           (((lights_[iLight].direction.y.value >> 6) & 0x3ff) << 10) |
+                           (((lights_[iLight].direction.x.value >> 6) & 0x3ff)      );
+        GFX_LIGHT_COLOR  = (iLight << 30) |
+                           fp_to_ndsRGB555(lights_[iLight].ambient.r, lights_[iLight].ambient.g, lights_[iLight].ambient.b);
+      }
+    }
   }
   GFX_POLY_FORMAT = iNDSPolyFormat_;
 }

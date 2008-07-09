@@ -68,6 +68,10 @@ public:
   virtual void glFlush(void);
   virtual void glFogx(GLenum pname, GLfixed param);
   virtual void glFogxv(GLenum pname, const GLfixed *params);
+  virtual void glLightx(GLenum light, GLenum pname, GLfixed param);
+  virtual void glLightxv(GLenum light, GLenum pname, const GLfixed * params);
+  virtual void glMaterialx(GLenum face, GLenum pname, GLfixed param);
+  virtual void glMaterialxv(GLenum face, GLenum pname, const GLfixed *params);
   virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
   virtual void glGenTextures(GLsizei n, GLuint *textures);
   virtual void glLoadIdentity(void);

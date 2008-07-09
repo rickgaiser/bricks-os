@@ -51,6 +51,7 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 #define DISP_SOURCE(x)        (x<<16)
 #define DISP_SOURCE_OFF       DISP_SOURCE(0) // White screen?
 #define DISP_SOURCE_ENGINE    DISP_SOURCE(1) // (BGx + OBJ) | 3D
+#define DISP_SOURCE_VRAM      DISP_SOURCE(2)
 #define DISP_SOURCE_DMA       DISP_SOURCE(3)
 #define DISP_VRAM(x)          ((x)<<18)
 #define DISP_VRAMA            DISP_VRAM(0)
