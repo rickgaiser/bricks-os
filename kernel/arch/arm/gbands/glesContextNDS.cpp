@@ -4,12 +4,15 @@
 #include "math.h"
 
 
-#define fpFogRGBA(r,g,b,a) \
-  (0x8000 | \
-  (((a*255) >>  3) & 0x001f0000) | \
-  (((b*255) >>  9) & 0x00007c00) | \
-  (((g*255) >> 14) & 0x000003e0) | \
-  (((r*255) >> 19) & 0x0000001f))
+#define fp_to_ndsRGB555(r,g,b) \
+  ((((b.value*31) >>  6) & 0x00007c00) | \
+   (((g.value*31) >> 11) & 0x000003e0) | \
+   (((r.value*31) >> 16) & 0x0000001f))
+#define fp_to_ndsRGBA5555(r,g,b,a) \
+  ((((a.value*31)      ) & 0x001f0000) | \
+   (((b.value*31) >>  6) & 0x00007c00) | \
+   (((g.value*31) >> 11) & 0x000003e0) | \
+   (((r.value*31) >> 16) & 0x0000001f))
 
 // mode bits
 #define NDS_RGB32_A3   1 // 32 color palette, 3 bits of alpha
@@ -43,20 +46,20 @@ CNDSGLESContext::CNDSGLESContext()
  : CASoftGLESFixed()
  , matrixMode_(GL_MODELVIEW)
  , ndsCurrentMatrixId_(NDS_MODELVIEW)
- , texturesEnabled_(false)
  , pCurrentTex_(NULL)
 {
+  zMax_ = 0x7fff;
+
   // Power control
   REG_POWCNT |= POWER_LCD | POWER_2D_TOP | POWER_2D_BOTTOM | POWER_3D_CORE | POWER_3D_MATRIX;
   // Display control
   REG_DISPCNT = MODE_0 | BG0_ENABLE | ENABLE_BG03D | DISP_SOURCE_ENGINE;
 
-  iNDSGFXControl_ = NDS_SHADING_HIGHLIGHT;
-  iNDSPolyFormat_ = NDS_POLY_ALPHA(31) | NDS_CULL_BACK | NDS_PM_MODULATION | NDS_POLY_FOG;
+  iNDSGFXControl_ = 0;//NDS_SHADING_HIGHLIGHT;
+  iNDSPolyFormat_ = NDS_POLY_ALPHA(31) | NDS_CULL_BACK;// | NDS_PM_MODULATION | NDS_POLY_FOG;
 
   GFX_CONTROL     = iNDSGFXControl_;
   GFX_POLY_FORMAT = iNDSPolyFormat_;
-  zMax_ = 0x7fff;
   GFX_CLEAR_DEPTH = zMax_;
 
   // Set the fog density table
@@ -97,13 +100,6 @@ CNDSGLESContext::glBindTexture(GLenum target, GLuint texture)
 void
 CNDSGLESContext::glClear(GLbitfield mask)
 {
-  if(mask & GL_COLOR_BUFFER_BIT)
-  {
-  }
-
-  if(mask & GL_DEPTH_BUFFER_BIT)
-  {
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -112,7 +108,7 @@ CNDSGLESContext::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLcl
 {
   CASoftGLESFixed::glClearColorx(red, green, blue, alpha);
 
-  GFX_CLEAR_COLOR = fpRGB(clClear.r, clClear.g, clClear.b);
+  GFX_CLEAR_COLOR = fp_to_ndsRGBA5555(clClear.r, clClear.g, clClear.b, clClear.a);
 }
 
 //-----------------------------------------------------------------------------
@@ -130,7 +126,7 @@ CNDSGLESContext::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte al
 {
   CASoftGLESFixed::glColor4ub(red, green, blue, alpha);
 
-  GFX_COLOR = fpRGB(clCurrent.r, clCurrent.g, clCurrent.b);
+  GFX_COLOR = fp_to_ndsRGB555(clCurrent.r, clCurrent.g, clCurrent.b);
 }
 
 //-----------------------------------------------------------------------------
@@ -139,7 +135,7 @@ CNDSGLESContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alp
 {
   CASoftGLESFixed::glColor4x(red, green, blue, alpha);
 
-  GFX_COLOR = fpRGB(clCurrent.r, clCurrent.g, clCurrent.b);
+  GFX_COLOR = fp_to_ndsRGB555(clCurrent.r, clCurrent.g, clCurrent.b);
 }
 
 //-----------------------------------------------------------------------------
@@ -246,7 +242,7 @@ CNDSGLESContext::glFogxv(GLenum pname, const GLfixed * params)
   switch(pname)
   {
     case GL_FOG_COLOR:
-      GFX_FOG_COLOR = fpFogRGBA(fogColor_.r, fogColor_.g, fogColor_.b, fogColor_.a);
+      GFX_FOG_COLOR = fp_to_ndsRGBA5555(fogColor_.r, fogColor_.g, fogColor_.b, fogColor_.a);
       break;
   };
 }
@@ -659,16 +655,16 @@ CNDSGLESContext::vertexShaderTransform(SVertexFx & v)
   if(texturesEnabled_ == true)
     GFX_TEX_COORD = ((gl_to_ndst(v.t[0]) << 16) & 0xffff0000) | (gl_to_ndst(v.t[1]) & 0xffff);
   else
-    GFX_COLOR = fpRGB(v.cl.r, v.cl.g, v.cl.b);
-  GFX_VERTEX16 = ((gl_to_ndsv(v.vo[1]) << 16) & 0xffff0000) | (gl_to_ndsv(v.vo[0]) & 0xffff);
-  GFX_VERTEX16 = gl_to_ndsv(v.vo[2]) & 0xffff;
+    GFX_COLOR = fp_to_ndsRGB555(v.cl.r, v.cl.g, v.cl.b);
+  GFX_VERTEX16 = ((gl_to_ndsv(v.vo[1].value) << 16) & 0xffff0000) | (gl_to_ndsv(v.vo[0].value) & 0xffff);
+  GFX_VERTEX16 = gl_to_ndsv(v.vo[2].value) & 0xffff;
 }
 
 //-----------------------------------------------------------------------------
 void
 CNDSGLESContext::begin(GLenum mode)
 {
-  shadingModel_ = mode;
+  rasterMode_ = mode;
 
   switch(mode)
   {
@@ -704,7 +700,7 @@ void
 CNDSGLESContext::updateLights()
 {
   iNDSPolyFormat_ &= ~(NDS_LIGHT0 | NDS_LIGHT1 | NDS_LIGHT2 | NDS_LIGHT3);
-  if(lightingEnabled_ = true)
+  if(lightingEnabled_ == true)
   {
     if(lights_[0].enabled == true) iNDSPolyFormat_ |= NDS_LIGHT0;
     if(lights_[1].enabled == true) iNDSPolyFormat_ |= NDS_LIGHT1;

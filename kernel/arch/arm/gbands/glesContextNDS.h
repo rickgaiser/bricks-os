@@ -106,7 +106,6 @@ private:
   static NDSfixed    fpSin_[];
   static NDSfixed    fpCos_[];
 
-  bool        texturesEnabled_;
   STextureNDS * pCurrentTex_;
 
   STextureNDS textures_[MAX_TEXTURE_COUNT];
