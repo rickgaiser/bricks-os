@@ -4,6 +4,10 @@
 #include "math.h"
 
 
+#define fpgl_to_ndsRGB555(r,g,b) \
+  ((((b*31) >>  6) & 0x00007c00) | \
+   (((g*31) >> 11) & 0x000003e0) | \
+   (((r*31) >> 16) & 0x0000001f))
 #define fp_to_ndsRGB555(r,g,b) \
   ((((b.value*31) >>  6) & 0x00007c00) | \
    (((g.value*31) >> 11) & 0x000003e0) | \
@@ -13,6 +17,13 @@
    (((b.value*31) >>  6) & 0x00007c00) | \
    (((g.value*31) >> 11) & 0x000003e0) | \
    (((r.value*31) >> 16) & 0x0000001f))
+#define fp_to_ndsNormal(x,y,z) \
+  (((gl_to_ndsn(z.value) & 0x3ff) << 20) | \
+   ((gl_to_ndsn(y.value) & 0x3ff) << 10) | \
+   ((gl_to_ndsn(x.value) & 0x3ff)      ))
+#define fp_to_ndsTexCoord(s,t) \
+  (((gl_to_ndst(s.value) & 0xffff) << 16) | \
+   ((gl_to_ndst(t.value) & 0xffff)      ))
 
 // mode bits
 #define NDS_RGB32_A3   1 // 32 color palette, 3 bits of alpha
@@ -194,7 +205,7 @@ CNDSGLESContext::glDisable(GLenum cap)
 void
 CNDSGLESContext::glEnable(GLenum cap)
 {
-  CASoftGLESFixed::glDisable(cap);
+  CASoftGLESFixed::glEnable(cap);
 
   switch(cap)
   {
@@ -269,14 +280,49 @@ CNDSGLESContext::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
 void
 CNDSGLESContext::glMaterialx(GLenum face, GLenum pname, GLfixed param)
 {
-  CASoftGLESFixed::glMaterialx(face, pname, param);
+  if(pname == GL_SHININESS)
+  {
+    // Setup shinyness table
+    uint8_t * shiny8 = (uint8_t *)ndsMatShinyness_;
+    for(int i(0); i < (128 * 2); i += 2)
+      shiny8[i>>1] = i;
+    for(int i(0); i < (128 / 4); i++)
+      GFX_SHININESS = ndsMatShinyness_[i];
+  }
 }
 
 //-----------------------------------------------------------------------------
 void
 CNDSGLESContext::glMaterialxv(GLenum face, GLenum pname, const GLfixed * params)
 {
-  CASoftGLESFixed::glMaterialxv(face, pname, params);
+  switch(pname)
+  {
+    case GL_AMBIENT:
+      ndsMatColorAmbient_ = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
+      GFX_DIFFUSE_AMBIENT = (ndsMatColorDiffuse_  << 16) | ndsMatColorAmbient_;
+      break;
+    case GL_DIFFUSE:
+      ndsMatColorDiffuse_ = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
+      GFX_DIFFUSE_AMBIENT = (ndsMatColorDiffuse_  << 16) | ndsMatColorAmbient_;
+      break;
+    case GL_SPECULAR:
+      ndsMatColorSpecular_  = 0x8000 | fpgl_to_ndsRGB555(params[0], params[1], params[2]);
+      GFX_SPECULAR_EMISSION = (ndsMatColorSpecular_ << 16) | ndsMatColorEmission_;
+      break;
+    case GL_EMISSION:
+      ndsMatColorEmission_  = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
+      GFX_SPECULAR_EMISSION = (ndsMatColorSpecular_ << 16) | ndsMatColorEmission_;
+      break;
+    case GL_SHININESS:
+//      matShininess_.value = params[0];
+      break;
+    case GL_AMBIENT_AND_DIFFUSE:
+      ndsMatColorAmbient_ = ndsMatColorDiffuse_ = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
+      GFX_DIFFUSE_AMBIENT = (ndsMatColorDiffuse_  << 16) | ndsMatColorAmbient_;
+      break;
+    default:
+      return;
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -684,10 +730,17 @@ CNDSGLESContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 void
 CNDSGLESContext::vertexShaderTransform(SVertexFx & v)
 {
-  if(texturesEnabled_ == true)
-    GFX_TEX_COORD = ((gl_to_ndst(v.t[0]) << 16) & 0xffff0000) | (gl_to_ndst(v.t[1]) & 0xffff);
+  // Color or normal
+  if(lightingEnabled_ == true)
+    GFX_NORMAL = fp_to_ndsNormal(v.n.x,  v.n.y,  v.n.z);
   else
-    GFX_COLOR = fp_to_ndsRGB555(v.cl.r, v.cl.g, v.cl.b);
+    GFX_COLOR  = fp_to_ndsRGB555(v.cl.r, v.cl.g, v.cl.b);
+
+  // Textures
+  if(texturesEnabled_ == true)
+    GFX_TEX_COORD = fp_to_ndsTexCoord(v.t[0], v.t[1]);
+
+  // Vertex
   GFX_VERTEX16 = ((gl_to_ndsv(v.vo[1].value) << 16) & 0xffff0000) | (gl_to_ndsv(v.vo[0].value) & 0xffff);
   GFX_VERTEX16 = gl_to_ndsv(v.vo[2].value) & 0xffff;
 }
@@ -734,18 +787,17 @@ CNDSGLESContext::updateLights()
   iNDSPolyFormat_ &= ~(NDS_LIGHT0 | NDS_LIGHT1 | NDS_LIGHT2 | NDS_LIGHT3);
   if(lightingEnabled_ == true)
   {
+    // Set color to white
+    GFX_COLOR = 0x7fff;
+
     for(int iLight(0); iLight < 4; iLight++)
     {
       if(lights_[iLight].enabled == true)
       {
         iNDSPolyFormat_ |= 1 << iLight;
 
-        GFX_LIGHT_VECTOR = (iLight << 30) |
-                           (((lights_[iLight].direction.z.value >> 6) & 0x3ff) << 20) |
-                           (((lights_[iLight].direction.y.value >> 6) & 0x3ff) << 10) |
-                           (((lights_[iLight].direction.x.value >> 6) & 0x3ff)      );
-        GFX_LIGHT_COLOR  = (iLight << 30) |
-                           fp_to_ndsRGB555(lights_[iLight].ambient.r, lights_[iLight].ambient.g, lights_[iLight].ambient.b);
+        GFX_LIGHT_VECTOR = (iLight << 30) | fp_to_ndsNormal(lights_[iLight].direction.x, lights_[iLight].direction.y, lights_[iLight].direction.z);
+        GFX_LIGHT_COLOR  = (iLight << 30) | fp_to_ndsRGB555(lights_[iLight].ambient.r,   lights_[iLight].ambient.g,   lights_[iLight].ambient.b);
       }
     }
   }
@@ -756,7 +808,7 @@ CNDSGLESContext::updateLights()
 void
 CNDSGLESContext::updateFog()
 {
-  GFX_FOG_OFFSET = gl_to_ndsz(fogStart_);
+//  GFX_FOG_OFFSET = fogStart_ --> 0..0x7fff;
 
 //  fogDensity_
 //  fogEnd_

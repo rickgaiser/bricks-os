@@ -14,12 +14,12 @@
 #define nds_fpmul(i1,i2) fpmul32(NDS_MATRIX_PRECISION,i1,i2)
 #define nds_fpdiv(i1,i2) fpdiv32(NDS_MATRIX_PRECISION,i1,i2)
 
-#define gl_to_ndsv(i)    (i>>4)  // Vertex format 4.12
-#define gl_to_ndst(i)    (i>>12) // Texture format 12.4
-#define gl_to_ndsz(i)    (i>>13) // Depth format 12.3
-#define ndsv_to_gl(i)    (i<<4)
-#define ndst_to_gl(i)    (i<<12)
-#define ndsz_to_gl(i)    (i<<13)
+#define gl_to_ndsv(i)    ((i)>>4)  // Vertex  format  4.12
+#define gl_to_ndst(i)    ((i)>>12) // Texture format 12.4
+#define gl_to_ndsn(i)    (((i) >= gl_fpfromi(1)) ? 0x1ff : ((i) >> 7))  // Normal  format  1.9
+#define ndsv_to_gl(i)    ((i)<<4)
+#define ndst_to_gl(i)    ((i)<<12)
+#define ndsn_to_gl(i)    ((i)<<7)
 
 #define MAX_TEXTURE_COUNT 32
 
@@ -113,6 +113,13 @@ private:
   STextureNDS * pCurrentTex_;
 
   STextureNDS textures_[MAX_TEXTURE_COUNT];
+
+  // NDS Material colors
+  uint16_t ndsMatColorAmbient_;
+  uint16_t ndsMatColorDiffuse_;
+  uint16_t ndsMatColorSpecular_;
+  uint16_t ndsMatColorEmission_;
+  uint32_t ndsMatShinyness_[128/4];
 };
 
 
