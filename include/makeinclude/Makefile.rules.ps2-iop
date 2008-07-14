@@ -1,0 +1,33 @@
+#----------------------------------------------------------------------------
+# PS2
+#----------------------------------------------------------------------------
+MY_INCL_PATH    +=\
+                -I$(PS2SDK)/iop/kernel/include \
+                -I$(PS2SDK)/common/include \
+
+MY_LIBS_PATH    +=\
+                -L$(PS2SDK)/iop/lib \
+
+#----------------------------------------------------------------------------
+CROSS_COMPILE   =iop-
+CFLAGS          +=\
+                -fno-builtin \
+                -G0 \
+
+CXXFLAGS        +=\
+                -fno-builtin \
+                -G0 \
+
+LDFLAGS         +=\
+                -fno-builtin \
+                -nostdlib \
+                -s \
+
+#----------------------------------------------------------------------------
+STARTUP_LIBS    =\
+
+#----------------------------------------------------------------------------
+# Create .elf file from MY_OBJS + MY_LIBS
+$(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
+	@echo [CC ] $@.irx
+	$(CC) $(LDFLAGS) -o $@.irx $(BRICKS_ROOT)/kernel/arch/mips/ps2-iop/obj-ps2-iop/arch.o $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) $(STARTUP_LIBS)
