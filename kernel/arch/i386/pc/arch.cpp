@@ -125,9 +125,6 @@ main(unsigned long magic, multiboot_info_t * mbi)
   cMouse.init();
   cSerial.init();
 
-  cSerial.cCom1_.write("Bricks-OS\n", 10);
-  cSerial.cCom1_.write("=========\n", 10);
-
   // ---------------------------------------
   // Miltiboot loader and memorymap required
   if(magic == MULTIBOOT_BOOTLOADER_MAGIC)

@@ -6,6 +6,7 @@
 #include "kernel/fs.h"
 #include "kernel/interrupt.h"
 #include "sys/types.h"
+#include "keyboard.h"
 
 
 // -----------------------------------------------------------------------------
@@ -28,6 +29,7 @@ public:
 
 private:
   unsigned int iBaseAddr_;
+  CRingBuffer buffer_;
 };
 
 // -----------------------------------------------------------------------------

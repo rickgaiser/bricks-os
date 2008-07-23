@@ -71,6 +71,7 @@ CRingBuffer::CRingBuffer()
  : size_(128)
  , inPtr_(0)
  , outPtr_(0)
+ , bLock_(false)
 {
 }
 
@@ -84,6 +85,9 @@ bool
 CRingBuffer::put(uint8_t data)
 {
   //printk("%c", (char)data);
+
+  // Get lock (released automatically)
+  CLock lock(&bLock_);
 
   // Try to increment in ptr
   uint32_t in = inPtr_ + 1;
@@ -105,6 +109,9 @@ CRingBuffer::put(uint8_t data)
 bool
 CRingBuffer::get(uint8_t * data)
 {
+  // Get lock (released automatically)
+  CLock lock(&bLock_);
+
   // Buffer empty
   if(inPtr_ == outPtr_)
     return false;
@@ -213,17 +220,20 @@ CI8042Keyboard::i8042_callBack(uint8_t scancode)
         {
           bE0_ = false;
           if(E0_keys[scancode] != 0)
-            buffer_.put(E0_keys[scancode]);
+            if(bDown == true)
+              buffer_.put(E0_keys[scancode]);
         }
         else if(bCapsLock_ != bShift_)
         {
           if(shift_keys[scancode] != 0)
-            buffer_.put(shift_keys[scancode]);
+            if(bDown == true)
+              buffer_.put(shift_keys[scancode]);
         }
         else
         {
           if(normal_keys[scancode] != 0)
-            buffer_.put(normal_keys[scancode]);
+            if(bDown == true)
+              buffer_.put(normal_keys[scancode]);
         }
       }
     }
@@ -232,19 +242,16 @@ CI8042Keyboard::i8042_callBack(uint8_t scancode)
 
 // -----------------------------------------------------------------------------
 int
-CI8042Keyboard::read(void * data, size_t size)
+CI8042Keyboard::read(void * buffer, size_t size, loff_t *)
 {
   int iRetVal(0);
-  uint8_t * pData = (uint8_t *)data;
+  uint8_t * data((uint8_t *)buffer);
 
-  while(size--)
+  for(size_t i(0); i < size; i++)
   {
-    uint8_t value;
-
-    if(buffer_.get(&value) == false)
+    if(buffer_.get(data) == false)
       break;
-
-    *pData++ = value;
+    data++;
     iRetVal++;
   }
 

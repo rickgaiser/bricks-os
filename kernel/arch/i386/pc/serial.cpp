@@ -44,6 +44,7 @@
 // -----------------------------------------------------------------------------
 CI8250::CI8250(unsigned int baseAddr)
  : iBaseAddr_(baseAddr)
+ , buffer_()
 {
 }
 
@@ -88,26 +89,19 @@ CI8250::isr(int irq)
 {
   //printk("CI8250::isr\n");
 
-  read(0, 0);
-
-  return 0;
-}
-
-// -----------------------------------------------------------------------------
-// FIXME: What is status 0xff?
-ssize_t
-CI8250::read(void * buffer, size_t size, loff_t *)
-{
   uint8_t status, data;
 
   while(true)
   {
     status = inb(iBaseAddr_ + UART_LSR);
+    // FIXME: What is status 0xff?
     if((status != 0xff) && ((status & UART_LSR_DR) == UART_LSR_DR))
     {
       data = inb(iBaseAddr_ + UART_RX);
       //printk("CI8250::read: status = 0x%x, data = %c\n", status, data);
-      printk("%c", data);
+      //printk("%c", data);
+      if(buffer_.put(data) == false)
+        printk("CI8250::isr: Buffer overflow\n");
     }
     else
       break;
@@ -118,15 +112,33 @@ CI8250::read(void * buffer, size_t size, loff_t *)
 
 // -----------------------------------------------------------------------------
 ssize_t
+CI8250::read(void * buffer, size_t size, loff_t *)
+{
+  int iRetVal(0);
+  uint8_t * data((uint8_t *)buffer);
+
+  for(size_t i(0); i < size; i++)
+  {
+    if(buffer_.get(data) == false)
+      break;
+    data++;
+    iRetVal++;
+  }
+
+  return iRetVal;
+}
+
+// -----------------------------------------------------------------------------
+ssize_t
 CI8250::write(const void * buffer, size_t size, loff_t *)
 {
   for(size_t i(0); i < size; i++)
   {
     whileTxNotReady();
-    outb(((char *)buffer)[i], iBaseAddr_ + UART_TX);
+    outb(((const char *)buffer)[i], iBaseAddr_ + UART_TX);
   }
 
-  return 0;
+  return size;
 }
 
 // -----------------------------------------------------------------------------

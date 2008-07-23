@@ -110,6 +110,18 @@ enum EKeyCode
 };
 
 // -----------------------------------------------------------------------------
+// FIXME: Need a real lock/mutex/...
+class CLock
+{
+public:
+  CLock(bool * bLockVar) : bLockVar_(bLockVar) {while((volatile bool)*bLockVar_ == true); *bLockVar_ = true;}
+  ~CLock(){*bLockVar_ = false;}
+
+private:
+  bool * bLockVar_;
+};
+
+// -----------------------------------------------------------------------------
 class CRingBuffer
 {
 public:
@@ -124,6 +136,7 @@ private:
   uint32_t size_;
   uint32_t inPtr_;
   uint32_t outPtr_;
+  bool bLock_;
 };
 
 // -----------------------------------------------------------------------------
@@ -141,7 +154,7 @@ public:
   virtual void i8042_callBack(uint8_t scancode);
 
   // Inherited from IFileIO
-  virtual int read(void * data, size_t size);
+  virtual int read(void * buffer, size_t size, loff_t * = 0);
 
 private:
   void updateLeds();
