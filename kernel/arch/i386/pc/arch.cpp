@@ -22,6 +22,7 @@
 #include "serial.h"
 #include "gpf.h"
 #include "pci.h"
+#include "i8254.h"
 
 #ifdef CONFIG_DEBUGGING
 #include "debugScreen.h"
@@ -49,6 +50,7 @@ C8042             c8042;
 CI8042Keyboard    cKeyboard(c8042);
 CI8042Mouse       cMouse(c8042);
 CI386Serial       cSerial;
+CI8254            c8254(0x40);
 
 #ifdef CONFIG_DEBUGGING
 CI386DebugScreen  cDebug;
@@ -124,6 +126,8 @@ main(unsigned long magic, multiboot_info_t * mbi)
   cKeyboard.init();
   cMouse.init();
   cSerial.init();
+  c8254.init();
+  c8254.setTimerFrequency(100.0f);
 
   // ---------------------------------------
   // Miltiboot loader and memorymap required
@@ -346,9 +350,6 @@ main(unsigned long magic, multiboot_info_t * mbi)
         printk(" - Unknown File\n");
     }
   }
-
-  // Enable Timer IRQ
-  cIRQ.enable(0x20);
 
   // Initialize PCI bus
   init_pci();

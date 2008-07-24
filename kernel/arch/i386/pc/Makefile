@@ -11,6 +11,7 @@ OBJS            =\
                 _gpf \
                 gpf \
                 i8042 \
+                i8254 \
                 irq \
                 isrWrapper \
                 keyboard \
