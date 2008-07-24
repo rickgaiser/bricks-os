@@ -142,6 +142,7 @@ public:
 
   static CTask * pCurrentTask_;
   static CThread * pCurrentThread_;
+  static CThread * pIdleThread_;
   static STaskQueue task_queue;        // All tasks
   static SThreadQueue thread_queue;    // All threads
   static SThreadQueue ready_queue;     // Ready to run threads

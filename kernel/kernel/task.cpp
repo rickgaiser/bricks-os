@@ -10,8 +10,9 @@
 #include "string.h"
 
 
-CTask        * CTaskManager::pCurrentTask_ = 0;
-CThread      * CTaskManager::pCurrentThread_ = 0;
+CTask        * CTaskManager::pCurrentTask_ = NULL;
+CThread      * CTaskManager::pCurrentThread_ = NULL;
+CThread      * CTaskManager::pIdleThread_  = NULL;
 STaskQueue     CTaskManager::task_queue    = TAILQ_HEAD_INITIALIZER(CTaskManager::task_queue);
 SThreadQueue   CTaskManager::thread_queue  = TAILQ_HEAD_INITIALIZER(CTaskManager::thread_queue);
 SThreadQueue   CTaskManager::ready_queue   = TAILQ_HEAD_INITIALIZER(CTaskManager::ready_queue);
@@ -93,7 +94,10 @@ CThread::state(EThreadState state)
     switch(eState_)
     {
     case TS_READY:
-      TAILQ_INSERT_TAIL(&CTaskManager::ready_queue, this, state_qe);
+      if(this != CTaskManager::pIdleThread_)
+      {
+        TAILQ_INSERT_TAIL(&CTaskManager::ready_queue, this, state_qe);
+      }
       break;
     case TS_RUNNING:
       if(CTaskManager::pCurrentThread_ != NULL)
@@ -546,7 +550,12 @@ CTaskManager::schedule()
     TAILQ_FIRST(&ready_queue)->state(TS_RUNNING);
 
   if(pCurrentThread_ == NULL)
-    panic("CTaskManager::schedule: ERROR: No task to run\n");
+  {
+    if(pIdleThread_ != NULL)
+      pCurrentThread_ = pIdleThread_;
+    else
+      panic("CTaskManager::schedule: ERROR: No task to run\n");
+  }
 
   return pPrevThread != pCurrentThread_;
 }
