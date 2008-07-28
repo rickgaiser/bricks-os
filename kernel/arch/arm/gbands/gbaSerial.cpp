@@ -183,7 +183,7 @@ CGBASerial::isr(int irq)
 
 // -----------------------------------------------------------------------------
 ssize_t
-CGBASerial::write(const void * buffer, size_t size, loff_t *)
+CGBASerial::write(const void * buffer, size_t size, bool block)
 {
   if((eMode_ != SIO_UART_MODE) || (bModeSet_ == false))
     return -1;

@@ -59,7 +59,7 @@ CPS2DebugScreen::init()
 
 //---------------------------------------------------------------------------
 ssize_t
-CPS2DebugScreen::write(const void * data, size_t size, loff_t *)
+CPS2DebugScreen::write(const void * data, size_t size, bool block)
 {
   while((*((const char *)data) != 0) && (size > 0))
   {

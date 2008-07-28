@@ -55,7 +55,7 @@ CI8042Mouse::i8042_callBack(uint8_t data)
 
 // -----------------------------------------------------------------------------
 int
-CI8042Mouse::read(void * data, size_t size)
+CI8042Mouse::read(void * buffer, size_t size, bool block)
 {
   return 0;
 }

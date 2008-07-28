@@ -35,7 +35,7 @@ public:
   virtual void i8042_callBack(uint8_t data);
 
   // Inherited from IFileIO
-  virtual int read(void * data, size_t size);
+  virtual int read(void * buffer, size_t size, bool block = false);
 
 private:
   C8042 & driver_;

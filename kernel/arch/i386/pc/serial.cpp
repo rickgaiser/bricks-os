@@ -90,6 +90,7 @@ CI8250::isr(int irq)
   //printk("CI8250::isr\n");
 
   uint8_t status, data;
+  int iCount(0);
 
   while(true)
   {
@@ -102,24 +103,31 @@ CI8250::isr(int irq)
       //printk("%c", data);
       if(buffer_.put(data) == false)
         printk("CI8250::isr: Buffer overflow\n");
+
+      iCount++;
     }
     else
       break;
   }
+
+  if(iCount > 0)
+    buffer_.notifyGetters();
 
   return 0;
 }
 
 // -----------------------------------------------------------------------------
 ssize_t
-CI8250::read(void * buffer, size_t size, loff_t *)
+CI8250::read(void * buffer, size_t size, bool block)
 {
   int iRetVal(0);
   uint8_t * data((uint8_t *)buffer);
 
   for(size_t i(0); i < size; i++)
   {
-    if(buffer_.get(data) == false)
+    if((i == 0) && (block == true))
+      buffer_.get(data, true);
+    else if(buffer_.get(data, false) == false)
       break;
     data++;
     iRetVal++;
@@ -130,7 +138,7 @@ CI8250::read(void * buffer, size_t size, loff_t *)
 
 // -----------------------------------------------------------------------------
 ssize_t
-CI8250::write(const void * buffer, size_t size, loff_t *)
+CI8250::write(const void * buffer, size_t size, bool block)
 {
   for(size_t i(0); i < size; i++)
   {

@@ -42,7 +42,7 @@ CNGCDebugScreen::init()
   }
 
   xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
-      
+
   VIDEO_Configure(rmode);
   VIDEO_SetNextFramebuffer(xfb);
   VIDEO_SetBlack(FALSE);
@@ -58,7 +58,7 @@ CNGCDebugScreen::init()
 
 // -----------------------------------------------------------------------------
 ssize_t
-CNGCDebugScreen::write(const void * buffer, size_t size, loff_t *)
+CNGCDebugScreen::write(const void * buffer, size_t size, bool block)
 {
   for(size_t i(0); i < size; i++)
     printf("%c", ((const char *)buffer)[i]);

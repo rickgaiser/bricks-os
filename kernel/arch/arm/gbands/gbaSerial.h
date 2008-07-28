@@ -38,7 +38,7 @@ public:
   virtual int isr(int irq) INTERRUPT_CODE;
 
   // Inherited from IFileIO (UART mode only)
-  virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);
+  virtual ssize_t write(const void * buffer, size_t size, bool block = false);
 
   int setMode(ESerialMode mode);
   int connectNormal(bool master);       // NORMAL mode

@@ -33,9 +33,7 @@ CConnection::connect(CChannel * channel)
     if(channel_ != NULL)
       this->disconnect();
 
-    channel_ = channel;
-    iReceiveID_ = channel_->addConnection(this);
-    if(iReceiveID_ >= 0)
+    if(channel->addConnection(this) >= 0)
     {
       channel_ = channel;
       bRetVal = true;

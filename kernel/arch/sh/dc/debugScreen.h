@@ -16,7 +16,7 @@ public:
   virtual int init();
 
   // Inherited from IFileIO
-  virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);
+  virtual ssize_t write(const void * buffer, size_t size, bool block = false);
 };
 
 

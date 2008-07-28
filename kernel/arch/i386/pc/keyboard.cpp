@@ -66,66 +66,6 @@ char E0_keys[128] =
 
 
 // -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-CRingBuffer::CRingBuffer()
- : size_(128)
- , inPtr_(0)
- , outPtr_(0)
- , bLock_(false)
-{
-}
-
-// -----------------------------------------------------------------------------
-CRingBuffer::~CRingBuffer()
-{
-}
-
-// -----------------------------------------------------------------------------
-bool
-CRingBuffer::put(uint8_t data)
-{
-  //printk("%c", (char)data);
-
-  // Get lock (released automatically)
-  CLock lock(&bLock_);
-
-  // Try to increment in ptr
-  uint32_t in = inPtr_ + 1;
-  if(in >= size_)
-    in = 0;
-
-  // Buffer full
-  if(in == outPtr_)
-    return false;
-
-  // Place data and increment pointer
-  buffer_[inPtr_] = data;
-  inPtr_ = in;
-
-  return true;
-}
-
-// -----------------------------------------------------------------------------
-bool
-CRingBuffer::get(uint8_t * data)
-{
-  // Get lock (released automatically)
-  CLock lock(&bLock_);
-
-  // Buffer empty
-  if(inPtr_ == outPtr_)
-    return false;
-
-  // Get data and increment pointer
-  *data = buffer_[outPtr_++];
-  if(outPtr_ >= size_)
-    outPtr_ = 0;
-
-  return true;
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
 CI8042Keyboard::CI8042Keyboard(C8042 & driver)
  : driver_     (driver)
  , buffer_     ()
@@ -220,20 +160,35 @@ CI8042Keyboard::i8042_callBack(uint8_t scancode)
         {
           bE0_ = false;
           if(E0_keys[scancode] != 0)
+          {
             if(bDown == true)
+            {
               buffer_.put(E0_keys[scancode]);
+              buffer_.notifyGetters();
+            }
+          }
         }
         else if(bCapsLock_ != bShift_)
         {
           if(shift_keys[scancode] != 0)
+          {
             if(bDown == true)
+            {
               buffer_.put(shift_keys[scancode]);
+              buffer_.notifyGetters();
+            }
+          }
         }
         else
         {
           if(normal_keys[scancode] != 0)
+          {
             if(bDown == true)
+            {
               buffer_.put(normal_keys[scancode]);
+              buffer_.notifyGetters();
+            }
+          }
         }
       }
     }
@@ -242,14 +197,16 @@ CI8042Keyboard::i8042_callBack(uint8_t scancode)
 
 // -----------------------------------------------------------------------------
 int
-CI8042Keyboard::read(void * buffer, size_t size, loff_t *)
+CI8042Keyboard::read(void * buffer, size_t size, bool block)
 {
   int iRetVal(0);
   uint8_t * data((uint8_t *)buffer);
 
   for(size_t i(0); i < size; i++)
   {
-    if(buffer_.get(data) == false)
+    if((i == 0) && (block == true))
+      buffer_.get(data, true);
+    else if(buffer_.get(data, false) == false)
       break;
     data++;
     iRetVal++;

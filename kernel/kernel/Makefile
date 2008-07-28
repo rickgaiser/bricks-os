@@ -12,6 +12,7 @@ OBJS            =\
                 interrupt \
                 interruptManager \
                 pthread \
+                ringBuffer \
                 settings \
                 srr \
                 srrChannel \

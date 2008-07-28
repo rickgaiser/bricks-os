@@ -49,7 +49,7 @@ public:
 
   void state(EThreadState state);
 
-  CThread * createChild(void * entry, size_t stack, size_t svcstack, int argc = 0, char * argv[] = 0);
+  CThread * createChild(void * entry, int argc = 0, char * argv[] = 0);
 
   inline CThreadImpl & impl(){return impl_;}
 

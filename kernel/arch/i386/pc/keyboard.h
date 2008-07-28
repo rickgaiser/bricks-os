@@ -4,6 +4,7 @@
 
 #include "i8042.h"
 #include "kernel/fs.h"
+#include "kernel/ringBuffer.h"
 #include "inttypes.h"
 
 
@@ -109,35 +110,6 @@ enum EKeyCode
   KEY_Z = 'Z',
 };
 
-// -----------------------------------------------------------------------------
-// FIXME: Need a real lock/mutex/...
-class CLock
-{
-public:
-  CLock(bool * bLockVar) : bLockVar_(bLockVar) {while((volatile bool)*bLockVar_ == true); *bLockVar_ = true;}
-  ~CLock(){*bLockVar_ = false;}
-
-private:
-  bool * bLockVar_;
-};
-
-// -----------------------------------------------------------------------------
-class CRingBuffer
-{
-public:
-  CRingBuffer();
-  ~CRingBuffer();
-
-  bool put(uint8_t data);
-  bool get(uint8_t * data);
-
-private:
-  uint8_t buffer_[128];
-  uint32_t size_;
-  uint32_t inPtr_;
-  uint32_t outPtr_;
-  bool bLock_;
-};
 
 // -----------------------------------------------------------------------------
 class CI8042Keyboard
@@ -154,7 +126,7 @@ public:
   virtual void i8042_callBack(uint8_t scancode);
 
   // Inherited from IFileIO
-  virtual int read(void * buffer, size_t size, loff_t * = 0);
+  virtual int read(void * buffer, size_t size, bool block = false);
 
 private:
   void updateLeds();

@@ -76,7 +76,7 @@ CGBAKeyboard::isr(int irq)
 
 // -----------------------------------------------------------------------------
 ssize_t
-CGBAKeyboard::read(void * buffer, size_t size, loff_t *)
+CGBAKeyboard::read(void * buffer, size_t size, bool block)
 {
   int    iRetVal(-1);
   char * string = static_cast<char *>(buffer);

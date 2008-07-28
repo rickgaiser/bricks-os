@@ -24,7 +24,7 @@ CPSPDebugScreen::init()
 
 // -----------------------------------------------------------------------------
 ssize_t
-CPSPDebugScreen::write(const void * buffer, size_t size, loff_t *)
+CPSPDebugScreen::write(const void * buffer, size_t size, bool block)
 {
   for(size_t i(0); i < size; i++)
     pspDebugScreenPrintf("%c", ((const char *)buffer)[i]);

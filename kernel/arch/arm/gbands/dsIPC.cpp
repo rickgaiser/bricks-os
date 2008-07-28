@@ -75,7 +75,7 @@ CDSIPC::isr(int irq)
 
 // -----------------------------------------------------------------------------
 ssize_t
-CDSIPC::read (void * buffer, size_t size, loff_t *)
+CDSIPC::read (void * buffer, size_t size, bool block)
 {
   int    iRetVal(-1);
   char * string = static_cast<char *>(buffer);
@@ -99,7 +99,7 @@ CDSIPC::read (void * buffer, size_t size, loff_t *)
 
 // -----------------------------------------------------------------------------
 ssize_t
-CDSIPC::write(const void * buffer, size_t size, loff_t *)
+CDSIPC::write(const void * buffer, size_t size, bool block)
 {
   int iRetVal(0);
 

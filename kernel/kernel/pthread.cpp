@@ -13,7 +13,7 @@ k_pthread_create(pthread_t * thread, const pthread_attr_t * attr, void *(*start_
 {
   int iRetVal(-1);
 
-  CThread * pThread = CTaskManager::pCurrentThread_->createChild((void *)start_routine, 512, 512, (int)arg, 0);
+  CThread * pThread = CTaskManager::pCurrentThread_->createChild((void *)start_routine, (int)arg, 0);
   if(pThread != 0)
   {
     pThread->state(TS_READY);

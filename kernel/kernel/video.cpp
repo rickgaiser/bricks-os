@@ -30,7 +30,7 @@ CAVideo::cls()
 
 // -----------------------------------------------------------------------------
 ssize_t
-CAVideo::write(const void * buffer, size_t size, loff_t *)
+CAVideo::write(const void * buffer, size_t size, bool block)
 {
   for(size_t i(0); i < size; i++)
   {

@@ -13,7 +13,7 @@ public:
   virtual ~CAVideo();
 
   // Inherited from IFileIO
-  virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0);
+  virtual ssize_t write(const void * buffer, size_t size, bool block = false);
 
   virtual void cls();
   virtual void put(char c);

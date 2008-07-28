@@ -44,8 +44,8 @@ class IFileIO
 public:
   virtual ~IFileIO(){}
 
-  virtual ssize_t read (      void * buffer, size_t size, loff_t * = 0){return -EINVAL;}
-  virtual ssize_t write(const void * buffer, size_t size, loff_t * = 0){return -EINVAL;}
+  virtual ssize_t read (      void * buffer, size_t size, bool block = false){return -EINVAL;}
+  virtual ssize_t write(const void * buffer, size_t size, bool block = false){return -EINVAL;}
 //  virtual int readdir  (void *, filldir_t){return -EINVAL;}
 //  virtual int ioctl    (inode *, unsigned int, unsigned long){return -EINVAL;}
 //  virtual int mmap     (vm_area_struct *){return -EINVAL;}

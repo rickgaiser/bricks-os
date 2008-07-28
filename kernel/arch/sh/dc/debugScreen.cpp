@@ -21,7 +21,7 @@ CDCDebugScreen::init()
 
 // -----------------------------------------------------------------------------
 ssize_t
-CDCDebugScreen::write(const void * buffer, size_t size, loff_t *)
+CDCDebugScreen::write(const void * buffer, size_t size, bool block)
 {
   return 0;
 }

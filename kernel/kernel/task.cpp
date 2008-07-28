@@ -152,7 +152,7 @@ CThread::state(EThreadState state)
 
 // -----------------------------------------------------------------------------
 CThread *
-CThread::createChild(void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
+CThread::createChild(void * entry, int argc, char * argv[])
 {
   CThread * pThread = new CThread(pTask_);
 
