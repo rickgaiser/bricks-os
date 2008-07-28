@@ -31,7 +31,7 @@ CI8254::init()
 void
 CI8254::setTimerFrequency(float hz)
 {
-  uint16_t iCounterTimeout = maxTimerFreq / hz;
+  uint16_t iCounterTimeout = (maxTimerFreq / hz) + 0.5f;
 
   outb((iCounterTimeout     ) & 0x00ff, iBaseAddr_ + I8254_COUNTER0_OFF);
   outb((iCounterTimeout >> 8) & 0x00ff, iBaseAddr_ + I8254_COUNTER0_OFF);
