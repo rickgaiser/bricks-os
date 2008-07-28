@@ -13,31 +13,17 @@
 
 #include "apic.h"
 #include "cpuid.h"
-#include "i8042.h"
-#include "keyboard.h"
-#include "mouse.h"
 #include "descriptor.h"
+#include "drivers.h"
+#include "gpf.h"
+#include "i8254.h"
 #include "mmap.h"
 #include "multiboot.h"
-#include "serial.h"
-#include "gpf.h"
 #include "pci.h"
-#include "i8254.h"
 
 #ifdef CONFIG_DEBUGGING
 #include "debugScreen.h"
 #endif // #ifdef CONFIG_DEBUGGING
-
-#ifdef CONFIG_FILESYSTEM
-#include "kernel/fileSystem.h"
-#include "kernel/ibmPartitionDriver.h"
-#include "kernel/fatDriver.h"
-#include "ata.h"
-#endif // #ifdef CONFIG_FILESYSTEM
-
-#ifdef CONFIG_FRAMEBUFFER
-#include "vesa.h"
-#endif // CONFIG_FRAMEBUFFER
 
 #include "string.h"
 
@@ -46,19 +32,11 @@ extern char       start_text;
 extern char       end_bss;
 
 CIRQ              cIRQ;
-C8042             c8042;
-CI8042Keyboard    cKeyboard(c8042);
-CI8042Mouse       cMouse(c8042);
-CI386Serial       cSerial;
 CI8254            c8254(0x40);
 
 #ifdef CONFIG_DEBUGGING
 CI386DebugScreen  cDebug;
 #endif // #ifdef CONFIG_DEBUGGING
-
-#ifdef CONFIG_FRAMEBUFFER
-CVesaVideoDevice * pVideoDevice;
-#endif // CONFIG_FRAMEBUFFER
 
 bool              bPAEEnabled;
 bool              bAPICEnabled;
@@ -122,10 +100,6 @@ main(unsigned long magic, multiboot_info_t * mbi)
 #endif // #ifdef CONFIG_DEBUGGING
 
   cIRQ.init();
-  c8042.init();
-  cKeyboard.init();
-  cMouse.init();
-  cSerial.init();
   c8254.init();
   c8254.setTimerFrequency(100.0f);
 
@@ -351,19 +325,6 @@ main(unsigned long magic, multiboot_info_t * mbi)
     }
   }
 
-  // Initialize PCI bus
-  init_pci();
-
-#ifdef CONFIG_FILESYSTEM
-  CIBMPartitionDriver ibmPartitionDriver;
-  CFATDriver fatDriver;
-  CATADriver ataDriver;
-
-  CFileSystem::addPartitionDriver(&ibmPartitionDriver);
-  CFileSystem::addFileSystemDriver(&fatDriver);
-  ataDriver.init();
-#endif // CONFIG_FILESYSTEM
-
   iMemKernel = iMemTop - iMemReserved - (freePageCount() * 4096);
   printk("Memory size:     %dKiB\n", iMemTop/1024);
   printk("Memory reserved: %dKiB\n", iMemReserved/1024);
@@ -373,17 +334,18 @@ main(unsigned long magic, multiboot_info_t * mbi)
   // Initialize GPF handler task
   init_gpf();
 
+  // Initialize PCI bus
+  init_pci();
+
+  // Initialize drivers
+  init_drivers();
+
   // Enable interrupts
   local_irq_enable();
   printk("Interrupts...OK\n");
 
   printk("PC arch ready\n");
   //while(1);
-
-#ifdef CONFIG_FRAMEBUFFER
-  // Install VESA driver
-  pVideoDevice = new CVesaVideoDevice;
-#endif // CONFIG_FRAMEBUFFER
 
   return bricks_main();
 }

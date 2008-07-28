@@ -8,6 +8,7 @@ OBJS            =\
                 arch \
                 cpuid \
                 descriptor \
+                drivers \
                 _gpf \
                 gpf \
                 i8042 \
