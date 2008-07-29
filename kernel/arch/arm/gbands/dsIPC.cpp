@@ -107,14 +107,14 @@ CDSIPC::write(const void * buffer, size_t size, bool block)
   // When interrupts are disabled, this loop will hang, so check
   if(REG_IME != 0)
   {
-    for(size_t i(0); i < size;)
+    for(size_t i(0); i < size; i++)
     {
-      if(!(REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL))
-      {
-        // fifo send
-        REG_IPC_FIFO_TX = ((char *)buffer)[i];
-        i++;
-      }
+      // Wait untill fifo is not full
+      while(REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL)
+      // Send
+      REG_IPC_FIFO_TX = ((char *)buffer)[i];
+
+      iRetVal++;
     }
   }
   else

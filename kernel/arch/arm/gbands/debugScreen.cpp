@@ -17,7 +17,7 @@
 // -----------------------------------------------------------------------------
 CGBADebugScreen::CGBADebugScreen()
  : CAVideo(CHARS_PER_LINE, LINE_COUNT)
- , pVideo_(reinterpret_cast<uint16_t *>(SCREEN_BASE_BLOCK(31)))
+ , pVideo_(NULL)
 {
   // Don't use constructor, use init function instead
 }
@@ -44,11 +44,15 @@ CGBADebugScreen::init(int screen)
 #endif
 
     // Set the background and object palette
-    memcpy(BG_PALETTE, font8x8_pal, font8x8_pal_size);                     // BG palette to   0x05000000
-    memcpy(SPRITE_PALETTE, font8x8_pal, font8x8_pal_size);                 // Font palette to 0x05000200
+    // NOTE: We need to copy whole words per cycle, a byte gives strange results!
+    for(unsigned int i(0); i < (font8x8_pal_size / 2); i++)
+    {
+      BG_PALETTE[i]     = ((uint16_t *)font8x8_pal)[i];                    // BG palette to   0x05000000
+      SPRITE_PALETTE[i] = ((uint16_t *)font8x8_pal)[i];                    // Font palette to 0x05000200
+    }
     // Set our text font
-    // Somehow need to copy whole words per cycle, a byte gives strange results!
-    for(unsigned int i(0); i < font8x8_size/2; i++)                        // Font to         0x06000000
+    // NOTE: We need to copy whole words per cycle, a byte gives strange results!
+    for(unsigned int i(0); i < (font8x8_size / 2); i++)                    // Font to         0x06000000
       reinterpret_cast<uint16_t *>(CHAR_BASE_BLOCK(0))[i] = ((uint16_t *)font8x8)[i];
 
     pVideo_ = reinterpret_cast<uint16_t *>(SCREEN_BASE_BLOCK(31));         // Map at          0x0600f800
@@ -62,10 +66,14 @@ CGBADebugScreen::init(int screen)
     REG_VRAM_C_CR = VRAM_ENABLE | 4;                                       // 128KiB @ 0x06200000 (EngineB)
 
     // Set the background and object palette
-    memcpy(BG_PALETTE_SUB, font8x8_pal, font8x8_pal_size);                 // BG palette to   0x05000400
-    memcpy(SPRITE_PALETTE_SUB, font8x8_pal, font8x8_pal_size);             // Font palette to 0x05000600
+    // NOTE: We need to copy whole words per cycle, a byte gives strange results!
+    for(unsigned int i(0); i < (font8x8_pal_size / 2); i++)
+    {
+      BG_PALETTE_SUB[i]     = ((uint16_t *)font8x8_pal)[i];                // BG palette to   0x05000400
+      SPRITE_PALETTE_SUB[i] = ((uint16_t *)font8x8_pal)[i];                // Font palette to 0x05000600
+    }
     // Set our text font
-    // Somehow need to copy whole words per cycle, a byte gives strange results!
+    // NOTE: We need to copy whole words per cycle, a byte gives strange results!
     for(unsigned int i(0); i < font8x8_size/2; i++)                        // Font to         0x06200000
       reinterpret_cast<uint16_t *>(CHAR_BASE_BLOCK_SUB(0))[i] = ((uint16_t *)font8x8)[i];
 
@@ -82,12 +90,16 @@ CGBADebugScreen::init(int screen)
 void
 CGBADebugScreen::put(int x, int y, char c)
 {
-  pVideo_[y * 32 + x] = c;
+  if(pVideo_ != NULL)
+    pVideo_[y * 32 + x] = c;
 }
 
 // -----------------------------------------------------------------------------
 char
 CGBADebugScreen::get(int x, int y)
 {
-  return pVideo_[y * 32 + x];
+  if(pVideo_ != NULL)
+    return pVideo_[y * 32 + x];
+  else
+    return -1;
 }

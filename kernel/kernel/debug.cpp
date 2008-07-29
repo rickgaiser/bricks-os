@@ -134,15 +134,15 @@ reswitch:
 void
 putk(char c)
 {
-  pDebug->write(&c, 1);
+  if(pDebug != 0)
+    pDebug->write(&c, 1);
 }
 
 // -----------------------------------------------------------------------------
 void
 vprintk(const char *fmt, va_list ap)
 {
-  if(pDebug != 0)
-    doprintk(putk, fmt, ap);
+  doprintk(putk, fmt, ap);
 }
 
 // -----------------------------------------------------------------------------
@@ -159,14 +159,16 @@ printk(const char * fmt, ...)
 void
 panic(const char * fmt, ...)
 {
-  pDebug->write("Kernel Panic: ", 14);
+  if(pDebug != 0)
+    pDebug->write("Kernel Panic: ", 14);
 
   va_list ap;
   va_start(ap, fmt);
   vprintk(fmt, ap);
   va_end(ap);
 
-  pDebug->write("\nSystem Halted", 15);
+  if(pDebug != 0)
+    pDebug->write("\nSystem Halted", 15);
 
   local_irq_disable();
   ::halt();
