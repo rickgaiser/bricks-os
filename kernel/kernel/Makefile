@@ -1,9 +1,8 @@
 include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch/config.make
 
 
-LIB             =kernel
+OBJ             =kernel
 OBJS            =\
-                2dRenderer \
                 bricks \
                 debug \
                 driverMountPoint \
@@ -26,7 +25,7 @@ OBJS            =\
                 video \
 
 
-OBJS-$(CONFIG_FRAMEBUFFER)         += videoManager
+OBJS-$(CONFIG_FRAMEBUFFER)         += videoManager 2dRenderer
 OBJS-$(CONFIG_BUILTIN_MM)          += memoryManager
 
 OBJS-$(CONFIG_FILESYSTEM)          += fileSystem

@@ -1,12 +1,17 @@
 #----------------------------------------------------------------------------
 clean.local:
-	$(RM) $(MY_OBJS) $(MY_LIB) $(MY_ELF)
+	$(RM) $(MY_OBJS) $(MY_OBJ) $(MY_LIB) $(MY_ELF)
 
-all.local: $(MY_OBJS) $(MY_LIB) $(MY_ELF)
+all.local: $(MY_OBJS) $(MY_OBJ) $(MY_LIB) $(MY_ELF)
 
 
 #----------------------------------------------------------------------------
-# Create library file from MY_OBJS + MY_LIBS
+# Create object file from MY_OBJS
+$(MY_OBJ): $(MY_OBJS)
+	@echo [LD ] $@
+	$(LD) -r -o $@ $^
+
+# Create library file from MY_OBJS
 $(MY_LIB): $(MY_OBJS)
 	@echo [AR ] $@
 	$(AR) -rc $@ $^

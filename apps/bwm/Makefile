@@ -4,7 +4,7 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 INCL_PATH       =\
                 ../../libtwl \
 
-LIB             =apps
+OBJ             =apps
 OBJS            =\
                 crate \
                 desktop \

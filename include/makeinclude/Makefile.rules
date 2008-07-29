@@ -28,6 +28,7 @@ MY_LIB          =$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(LIB)))
 MY_LIBS         =$(addprefix -l,$(LIBS))
 MY_LIBS_DEP     =$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(LIBS)))
 MY_LIBS_PATH    =$(addprefix -L,$(LIBS_PATH))
+MY_OBJ          =$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(OBJ)))
 MY_OBJS         =$(addprefix $(VDIR),$(addsuffix .o,$(OBJS)))
 MY_OBJS         +=$(addprefix $(VDIR),$(addsuffix .o,$(OBJS-y)))
 
