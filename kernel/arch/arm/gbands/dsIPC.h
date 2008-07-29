@@ -2,9 +2,10 @@
 #define DSIPC_H
 
 
-#include "kernel/interrupt.h"
-#include "kernel/fs.h"
 #include "asm/arch/memory.h"
+#include "kernel/fs.h"
+#include "kernel/interrupt.h"
+#include "kernel/ringBuffer.h"
 
 
 class CDSIPC
@@ -15,7 +16,7 @@ public:
   CDSIPC();
   virtual ~CDSIPC();
 
-  int init(IFileIO * output = 0);
+  int init();
 
   // Inherited from IInterruptServiceRoutine
   virtual int isr(int irq) INTERRUPT_CODE;
@@ -25,9 +26,7 @@ public:
   virtual ssize_t write(const void * buffer, size_t size, bool block = false);
 
 private:
-  IFileIO * pOutput_;
-  volatile int iBufferCount_;
-  int iKey_;
+  CRingBuffer buffer_;
 };
 
 

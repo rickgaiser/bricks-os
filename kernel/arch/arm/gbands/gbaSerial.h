@@ -21,6 +21,7 @@
 #include "asm/arch/memory.h"
 #include "kernel/interrupt.h"
 #include "kernel/fs.h"
+#include "kernel/ringBuffer.h"
 #include "unistd.h"
 
 
@@ -38,6 +39,7 @@ public:
   virtual int isr(int irq) INTERRUPT_CODE;
 
   // Inherited from IFileIO (UART mode only)
+  virtual ssize_t read (      void * buffer, size_t size, bool block = false);
   virtual ssize_t write(const void * buffer, size_t size, bool block = false);
 
   int setMode(ESerialMode mode);
@@ -66,6 +68,8 @@ private:
 
   volatile bool bReceived_;
   uint32_t rcvData_;
+
+  CRingBuffer buffer_;                   // Buffer for receved data in uart mode
 };
 
 

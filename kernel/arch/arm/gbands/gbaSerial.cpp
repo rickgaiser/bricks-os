@@ -9,6 +9,7 @@
 #define TIMEOUT_COUNT 10000
 #define WAIT_62_5_MS()  for(vuint32_t tmout(0); tmout < 50000; tmout++) // FIXME: How much is this?
 #define WAIT_36_US()    for(vuint32_t tmout(0); tmout <   500; tmout++) // FIXME: How much is this?
+#define whileTxNotReady()  while(REG_SIOCNT & SIO_UART_SEND_FULL)
 
 struct MultiBootParam
 {
@@ -141,9 +142,6 @@ CGBASerial::init()
 int
 CGBASerial::isr(int irq)
 {
-  if(bReceived_ == true)
-    printk("too fast!\n");
-
   // Receive data
 #ifdef USE_INTERRUPTS
   switch(eMode_)
@@ -168,8 +166,12 @@ CGBASerial::isr(int irq)
       break;
     case SIO_UART_MODE:
       if((REG_SIOCNT & SIO_UART_RECV_EMPTY) == false)
-        rcvData_ = REG_SIODATA8;
-      bReceived_ = true;
+      {
+        uint8_t data = REG_SIODATA8;
+        if(buffer_.put(data) == false)
+          printk("CGBASerial::isr: Buffer overflow\n");
+        buffer_.notifyGetters();
+      }
       break;
     default:
       ;
@@ -183,6 +185,26 @@ CGBASerial::isr(int irq)
 
 // -----------------------------------------------------------------------------
 ssize_t
+CGBASerial::read(void * buffer, size_t size, bool block)
+{
+  int iRetVal(0);
+  uint8_t * data((uint8_t *)buffer);
+
+  for(size_t i(0); i < size; i++)
+  {
+    if((i == 0) && (block == true))
+      buffer_.get(data, true);
+    else if(buffer_.get(data, false) == false)
+      break;
+    data++;
+    iRetVal++;
+  }
+
+  return iRetVal;
+}
+
+// -----------------------------------------------------------------------------
+ssize_t
 CGBASerial::write(const void * buffer, size_t size, bool block)
 {
   if((eMode_ != SIO_UART_MODE) || (bModeSet_ == false))
@@ -190,7 +212,7 @@ CGBASerial::write(const void * buffer, size_t size, bool block)
 
   for(size_t i(0); i < size; i++)
   {
-    while(REG_SIOCNT & SIO_UART_SEND_FULL){}
+    whileTxNotReady();
     REG_SIODATA8 = ((const uint8_t *)buffer)[i];
   }
 

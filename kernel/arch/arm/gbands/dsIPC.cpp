@@ -7,9 +7,7 @@
 
 // -----------------------------------------------------------------------------
 CDSIPC::CDSIPC()
- : pOutput_(NULL)
- , iBufferCount_(0)
- , iKey_('~')
+ : buffer_()
 {
 }
 
@@ -20,10 +18,8 @@ CDSIPC::~CDSIPC()
 
 // -----------------------------------------------------------------------------
 int
-CDSIPC::init(IFileIO * output)
+CDSIPC::init()
 {
-  pOutput_ = output;
-
   // Register ISRs
   CInterruptManager::attach(16, this); // ipc
   CInterruptManager::attach(17, this); // send buf empty
@@ -47,6 +43,9 @@ CDSIPC::init(IFileIO * output)
 int
 CDSIPC::isr(int irq)
 {
+  uint8_t data;
+  int iCount(0);
+
 //  printk("CDSIPC::isr\n");
 
   switch(irq)
@@ -60,38 +59,40 @@ CDSIPC::isr(int irq)
     case 18:
       while(!(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY))
       {
-        iKey_ = REG_IPC_FIFO_RX;
-        iBufferCount_ = 1;
-        if(pOutput_ != NULL)
-          pOutput_->write(&iKey_, 1);
+        data = REG_IPC_FIFO_RX;
+
+        //printk("%c", data);
+        if(buffer_.put(data) == false)
+          printk("CDSIPC::isr: Buffer overflow\n");
+
+        iCount++;
       }
       break;
     default:
       printk("CDSIPC::isr: ERROR: unknown interrupt\n");
   }
 
+  if(iCount > 0)
+    buffer_.notifyGetters();
+
   return 0;
 }
 
 // -----------------------------------------------------------------------------
 ssize_t
-CDSIPC::read (void * buffer, size_t size, bool block)
+CDSIPC::read(void * buffer, size_t size, bool block)
 {
-  int    iRetVal(-1);
-  char * string = static_cast<char *>(buffer);
+  int iRetVal(0);
+  uint8_t * data((uint8_t *)buffer);
 
-  if(size >= 2)
+  for(size_t i(0); i < size; i++)
   {
-    // Wait for key
-    while(iBufferCount_ == 0){}
-
-    // Copy key
-    string[0] = iKey_;
-    string[1] = 0;
-    iRetVal   = 2;
-
-    // Allow next key
-    iBufferCount_ = 0;
+    if((i == 0) && (block == true))
+      buffer_.get(data, true);
+    else if(buffer_.get(data, false) == false)
+      break;
+    data++;
+    iRetVal++;
   }
 
   return iRetVal;
@@ -132,8 +133,8 @@ CDSIPC::write(const void * buffer, size_t size, bool block)
   int count(0);
   while(true)
   {
-	while(!(REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL))
-	{
+    while(!(REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL))
+    {
       // fifo send
       REG_IPC_FIFO_TX = ++count;
 
@@ -141,7 +142,7 @@ CDSIPC::write(const void * buffer, size_t size, bool block)
       for(int i(0); i != 1000000; i++){}
     }
 
-	// Wait
+    // Wait
     for(int i(0); i != 1000000; i++){}
   }
 */
