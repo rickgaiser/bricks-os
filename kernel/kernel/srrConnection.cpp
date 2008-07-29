@@ -7,45 +7,26 @@
 
 
 //------------------------------------------------------------------------------
-CConnection::CConnection()
- : channel_(NULL)
+//------------------------------------------------------------------------------
+CConnectionUser::CConnectionUser(CChannelUser * pChannel)
+ : channel_(pChannel)
  , iReceiveID_(-1)
  , iState_(COS_FREE)
 {
 }
 
 //------------------------------------------------------------------------------
-CConnection::~CConnection()
+CConnectionUser::~CConnectionUser()
 {
-  this->disconnect();
-}
-
-//------------------------------------------------------------------------------
-bool
-CConnection::connect(CChannel * channel)
-{
-  bool bRetVal(false);
-
-  // Validate parameter
-  if(channel != NULL)
+  if(channel_ != NULL)
   {
-    // Disconnect first if we're already connected
-    if(channel_ != NULL)
-      this->disconnect();
-
-    if(channel->addConnection(this) >= 0)
-    {
-      channel_ = channel;
-      bRetVal = true;
-    }
+    channel_->removeConnection(this);
   }
-
-  return bRetVal;
 }
 
 //------------------------------------------------------------------------------
 void
-CConnection::disconnect()
+CConnectionUser::disconnect()
 {
   // Wait for connection to become free
   k_pthread_mutex_lock(&mutex_);
@@ -66,30 +47,32 @@ CConnection::disconnect()
 
 //------------------------------------------------------------------------------
 void
-CConnection::setReceiveID(int iReceiveID)
+CConnectionUser::setReceiveID(int iReceiveID)
 {
   iReceiveID_ = iReceiveID;
 }
 
 //------------------------------------------------------------------------------
 int
-CConnection::getReceiveID()
+CConnectionUser::getReceiveID()
 {
   return iReceiveID_;
 }
 
 //------------------------------------------------------------------------------
 int
-CConnection::msgSend(const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize)
+CConnectionUser::msgSend(const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize)
 {
   int iRetVal(-1);
 
-  //printk("CConnection::msgSend\n");
+  //printk("CConnectionUser::msgSend\n");
+
+  // Lock the connection
+  k_pthread_mutex_lock(&mutex_);
 
   if(channel_ != NULL)
   {
     // Wait for connection to become free
-    k_pthread_mutex_lock(&mutex_);
     while(iState_ != COS_FREE)
       k_pthread_cond_wait(&stateCond_, &mutex_);
 
@@ -112,29 +95,31 @@ CConnection::msgSend(const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRc
     // Free the connection
     iState_ = COS_FREE;
     k_pthread_cond_broadcast(&stateCond_);
-    k_pthread_mutex_unlock(&mutex_);
   }
   else
   {
-    printk("CConnection::msgSend: ERROR: Not connected\n");
+    printk("CConnectionUser::msgSend: ERROR: Not connected\n");
   }
+
+  // Unlock the connection
+  k_pthread_mutex_unlock(&mutex_);
 
   return iRetVal;
 }
 
 //------------------------------------------------------------------------------
 int
-CConnection::msgReply(int iStatus, const void * pReplyMsg, int iReplySize)
+CConnectionUser::msgReply(int iStatus, const void * pReplyMsg, int iReplySize)
 {
   int iRetVal(-1);
 
-  //printk("CConnection::msgReply\n");
+  //printk("CConnectionUser::msgReply\n");
+
+  // Lock the connection
+  k_pthread_mutex_lock(&mutex_);
 
   if(channel_ != NULL)
   {
-    // Lock the connection
-    k_pthread_mutex_lock(&mutex_);
-
     if(iState_ == COS_MSG_SENT)
     {
       // Copy reply data and return status
@@ -151,16 +136,98 @@ CConnection::msgReply(int iStatus, const void * pReplyMsg, int iReplySize)
     }
     else
     {
-      printk("CConnection::msgReply: Can't reply, no message sent\n");
+      printk("CConnectionUser::msgReply: Can't reply, no message sent\n");
     }
-
-    // Unlock the connection
-    k_pthread_mutex_unlock(&mutex_);
   }
   else
   {
-    printk("CConnection::msgReply: ERROR: Not connected\n");
+    printk("CConnectionUser::msgReply: ERROR: Not connected\n");
   }
 
+  // Unlock the connection
+  k_pthread_mutex_unlock(&mutex_);
+
   return iRetVal;
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+CConnectionKernel::CConnectionKernel(CAChannelKernel * pChannel)
+ : channel_(pChannel)
+{
+}
+
+//------------------------------------------------------------------------------
+CConnectionKernel::~CConnectionKernel()
+{
+  if(channel_ != NULL)
+  {
+    channel_->removeConnection(this);
+  }
+}
+
+//------------------------------------------------------------------------------
+void
+CConnectionKernel::disconnect()
+{
+  // Wait for connection to become free
+  k_pthread_mutex_lock(&mutex_);
+
+  if(channel_ != NULL)
+  {
+    channel_->removeConnection(this);
+    channel_ = NULL;
+  }
+
+  // Free the connection
+  k_pthread_mutex_unlock(&mutex_);
+}
+
+//------------------------------------------------------------------------------
+void
+CConnectionKernel::setReceiveID(int iReceiveID)
+{
+}
+
+//------------------------------------------------------------------------------
+int
+CConnectionKernel::getReceiveID()
+{
+  return -1;
+}
+
+//------------------------------------------------------------------------------
+int
+CConnectionKernel::msgSend(const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize)
+{
+  int iRetVal(-1);
+
+  //printk("CConnectionKernel::msgSend\n");
+
+  // Lock the connection
+  k_pthread_mutex_lock(&mutex_);
+
+  if(channel_ != NULL)
+  {
+    // Send message to channel
+    iRetVal = channel_->msgSend(pSndMsg, iSndSize, pRcvMsg, iRcvSize);
+  }
+  else
+  {
+    printk("CConnectionKernel::msgSend: ERROR: Not connected\n");
+  }
+
+  // Unlock the connection
+  k_pthread_mutex_unlock(&mutex_);
+
+  return iRetVal;
+}
+
+//------------------------------------------------------------------------------
+int
+CConnectionKernel::msgReply(int iStatus, const void * pReplyMsg, int iReplySize)
+{
+  panic("CConnectionKernel::msgReply: Can't reply on kernel connection\n");
+
+  return -1;
 }

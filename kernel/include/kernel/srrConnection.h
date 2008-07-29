@@ -18,18 +18,34 @@ enum EConnectionState
 
 // -----------------------------------------------------------------------------
 // Early declarations
-class CChannel;
+class IChannel;
+class CChannelUser;
+class CAChannelKernel;
 
 // -----------------------------------------------------------------------------
-class CConnection
+class IConnection
 {
-  friend class CChannel;
+public:
+  virtual ~IConnection(){}
+
+  virtual void disconnect() = 0;
+
+  virtual void setReceiveID(int iReceiveID) = 0;
+  virtual int  getReceiveID() = 0;
+
+  virtual int  msgSend(const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize) = 0;
+  virtual int  msgReply(int iStatus, const void * pReplyMsg, int iReplySize) = 0;
+};
+
+// -----------------------------------------------------------------------------
+class CConnectionUser
+ : public IConnection
+{
+  friend class CChannelUser;
 
 public:
-  CConnection();
-  virtual ~CConnection();
+  virtual ~CConnectionUser();
 
-  bool connect(CChannel * channel);
   void disconnect();
 
   void setReceiveID(int iReceiveID);
@@ -39,7 +55,10 @@ public:
   int  msgReply(int iStatus, const void * pReplyMsg, int iReplySize);
 
 private:
-  CChannel * channel_;
+  CConnectionUser(CChannelUser * pChannel);
+
+private:
+  CChannelUser * channel_;
   int iReceiveID_;              // msgReceive will return this id
 
   pthread_mutex_t mutex_;       // Mutex to notify us of a replied message
@@ -51,6 +70,31 @@ private:
   void * pRcvMsg_;              // Location where return message can be stored
   int iRcvSize_;                // Size of the return message buffer
   int iRetVal_;                 // Return value for the msgSend function
+};
+
+// -----------------------------------------------------------------------------
+class CConnectionKernel
+ : public IConnection
+{
+  friend class CAChannelKernel;
+
+public:
+  virtual ~CConnectionKernel();
+
+  void disconnect();
+
+  void setReceiveID(int iReceiveID);
+  int  getReceiveID();
+
+  int  msgSend(const void * pSndMsg, int iSndSize, void * pRcvMsg, int iRcvSize);
+  int  msgReply(int iStatus, const void * pReplyMsg, int iReplySize);
+
+private:
+  CConnectionKernel(CAChannelKernel * pChannel);
+
+private:
+  CAChannelKernel * channel_;
+  pthread_mutex_t mutex_;
 };
 
 

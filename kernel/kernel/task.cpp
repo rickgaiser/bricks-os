@@ -257,7 +257,7 @@ CTask::msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplyS
 
 //------------------------------------------------------------------------------
 int
-CTask::addInConnection(CConnection * connection)
+CTask::addInConnection(IConnection * connection)
 {
   int iRetVal(-1);
 
@@ -281,7 +281,7 @@ CTask::addInConnection(CConnection * connection)
 
 //------------------------------------------------------------------------------
 int
-CTask::addOutConnection(CConnection * connection)
+CTask::addOutConnection(IConnection * connection)
 {
   int iRetVal(-1);
 
@@ -316,7 +316,7 @@ CTask::channelCreate(unsigned iFlags)
   {
     if(pChannel_[iChannel] == NULL)
     {
-      pChannel_[iChannel] = new CChannel;
+      pChannel_[iChannel] = new CChannelUser;
       iRetVal = CHANNEL_IDX_TO_ID(iChannel);
       break;
     }
@@ -405,8 +405,8 @@ CTask::channelConnectAttach(pid_t iProcessID, int iChannelID, int iFlags)
   int iRetVal(-1);
   int iChannelIDX = CHANNEL_ID_TO_IDX(iChannelID);
   CTask       * pTask;        // Destination task
-  CChannel    * pChannel;     // Destination channel
-  CConnection * pConnection;  // New connection to channel
+  IChannel    * pChannel;     // Destination channel
+  IConnection * pConnection;  // New connection to channel
 
   //printk("CTask::channelConnectAttach\n");
 
@@ -421,11 +421,8 @@ CTask::channelConnectAttach(pid_t iProcessID, int iChannelID, int iFlags)
     {
       pChannel = pTask->pChannel_[iChannelIDX];
 
-      // Create new connection
-      pConnection = new CConnection;
-
       // Connect to the channel
-      if(pConnection->connect(pChannel) == true)
+      if(pChannel->createConnection(&pConnection) == true)
       {
         int iCOIDXOut = this->addOutConnection(pConnection);
         if(iCOIDXOut >= 0)

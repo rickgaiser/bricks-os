@@ -23,7 +23,7 @@ public:
 
 private:
   // Connection to the control channel
-  CConnection * ctrl_;
+  IConnection * ctrl_;
 
   int iPID_;
   int iChannelIDControl_;

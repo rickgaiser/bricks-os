@@ -85,8 +85,8 @@ public:
   int msgReceive(int iChannelID, void * pRcvMsg, int iRcvSize);
   int msgReply(int iReceiveID, int iStatus, const void * pReplyMsg, int iReplySize);
 
-  int addInConnection(CConnection * connection);
-  int addOutConnection(CConnection * connection);
+  int addInConnection(IConnection * connection);
+  int addOutConnection(IConnection * connection);
 
   int channelCreate(unsigned iFlags);
   int channelDestroy(int iChannelID);
@@ -112,17 +112,17 @@ private:
   // Tasks channels (CTask has ownership)
   // NOTE: We are using an array here becouse it is FAST, and we need the
   //       msgReceive function to locate channels FAST.
-  CChannel * pChannel_[MAX_CHANNEL_COUNT];
+  IChannel * pChannel_[MAX_CHANNEL_COUNT];
 
   // Tasks connections (to other tasks channel) (CTask has ownership)
   // NOTE: We are using an array here becouse it is FAST, and we need the
   //       msgSend function to locate connections FAST.
-  CConnection * pConnectionsOut_[MAX_OUT_CONNECTION_COUNT];
+  IConnection * pConnectionsOut_[MAX_OUT_CONNECTION_COUNT];
 
   // Tasks connections (to this tasks channels) (CTask::pConnectionsOut_ has ownership)
   // NOTE: We are using an array here becouse it is FAST, and we need the
   //       msgSend function to locate connections FAST.
-  CConnection * pConnectionsIn_[MAX_IN_CONNECTION_COUNT];
+  IConnection * pConnectionsIn_[MAX_IN_CONNECTION_COUNT];
 
 #ifdef CONFIG_MMU
   // Addess space

@@ -7,26 +7,25 @@
 
 
 //------------------------------------------------------------------------------
-CChannel::CChannel()
- : pMsgWaiting_(NULL)
- , iState_(CHS_FREE)
+//------------------------------------------------------------------------------
+CAChannel::CAChannel()
 {
   memset(pConnectionsIn_, 0, sizeof(pConnectionsIn_));
 }
 
 //------------------------------------------------------------------------------
-CChannel::~CChannel()
+CAChannel::~CAChannel()
 {
   // FIXME: Connections need to be disconnected!
 }
 
 //------------------------------------------------------------------------------
 int
-CChannel::addConnection(CConnection * connection)
+CAChannel::addConnection(IConnection * connection)
 {
   int iRetVal(-1);
 
-  //printk("CChannel::addConnection\n");
+  //printk("CChannelUser::addConnection\n");
 
   // Find empty connection in channel
   for(int iCOIDX(0); iCOIDX < MAX_IN_CONNECTION_COUNT; iCOIDX++)
@@ -44,14 +43,14 @@ CChannel::addConnection(CConnection * connection)
   }
 
   if(iRetVal < 0)
-    printk("CChannel::addConnection: ERROR: Max connections reached\n");
+    printk("CChannelUser::addConnection: ERROR: Max connections reached\n");
 
   return iRetVal;
 }
 
 //------------------------------------------------------------------------------
 void
-CChannel::removeConnection(CConnection * connection)
+CAChannel::removeConnection(IConnection * connection)
 {
   for(int iCOIDX(0); iCOIDX < MAX_IN_CONNECTION_COUNT; iCOIDX++)
     if(pConnectionsIn_[iCOIDX] == connection)
@@ -59,10 +58,41 @@ CChannel::removeConnection(CConnection * connection)
 }
 
 //------------------------------------------------------------------------------
-void
-CChannel::msgSend(CConnection & connection)
+//------------------------------------------------------------------------------
+CChannelUser::CChannelUser()
+ : CAChannel()
+ , pMsgWaiting_(NULL)
+ , iState_(CHS_FREE)
 {
-  //printk("CChannel::msgSend\n");
+}
+
+//------------------------------------------------------------------------------
+CChannelUser::~CChannelUser()
+{
+}
+
+//------------------------------------------------------------------------------
+bool
+CChannelUser::createConnection(IConnection ** connection)
+{
+  *connection = new CConnectionUser(this);
+  if(*connection != NULL)
+  {
+    this->addConnection(*connection);
+    return true;
+  }
+  else
+  {
+    panic("Out of memory!\n");
+    return true;
+  }
+}
+
+//------------------------------------------------------------------------------
+void
+CChannelUser::msgSend(CConnectionUser & connection)
+{
+  //printk("CChannelUser::msgSend\n");
 
   // Wait for channel to become free
   k_pthread_mutex_lock(&mutex_);
@@ -78,11 +108,11 @@ CChannel::msgSend(CConnection & connection)
 
 //------------------------------------------------------------------------------
 int
-CChannel::msgReceive(void * pRcvMsg, int iRcvSize)
+CChannelUser::msgReceive(void * pRcvMsg, int iRcvSize)
 {
   int iRetVal;
 
-  //printk("CChannel::msgReceive\n");
+  //printk("CChannelUser::msgReceive\n");
 
   // Wait for a message
   k_pthread_mutex_lock(&mutex_);
@@ -101,4 +131,42 @@ CChannel::msgReceive(void * pRcvMsg, int iRcvSize)
   k_pthread_mutex_unlock(&mutex_);
 
   return iRetVal;
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+CAChannelKernel::CAChannelKernel()
+ : CAChannel()
+{
+}
+
+//------------------------------------------------------------------------------
+CAChannelKernel::~CAChannelKernel()
+{
+}
+
+//------------------------------------------------------------------------------
+bool
+CAChannelKernel::createConnection(IConnection ** connection)
+{
+  *connection = new CConnectionKernel(this);
+  if(*connection != NULL)
+  {
+    this->addConnection(*connection);
+    return true;
+  }
+  else
+  {
+    panic("Out of memory!\n");
+    return true;
+  }
+}
+
+//------------------------------------------------------------------------------
+int
+CAChannelKernel::msgReceive(void * pRcvMsg, int iRcvSize)
+{
+  panic("CChannelKernel::msgReceive: Can't receive on kernel channel\n");
+
+  return -1;
 }
