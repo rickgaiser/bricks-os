@@ -16,13 +16,22 @@ typedef struct FILE
   int fd;
 } FILE;
 
+extern FILE * stdin;
+extern FILE * stdout;
+extern FILE * stderr;
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 int printf(const char * format, ...);
 
 
-extern FILE * stdin;
-extern FILE * stdout;
-extern FILE * stderr;
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

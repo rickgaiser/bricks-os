@@ -1,19 +1,44 @@
-#include "unistd.h"
-#include "kernel/syscall.h"
 #include "kernel/srr.h"
+#include "kernel/fileDriver.h"
+#include "fcntl.h"
 #include "string.h"
+#include "unistd.h"
 
 
-//sysCallUser1r(int,             brk, void *, addr);
-//sysCallUser1r(int,             close, int, iFD);
-//sysCallUser1 (                 _exit, int, iStatus);
-sysCallUser0r(pid_t,           getpid);
-//sysCallUser3r(ssize_t,         read, int, iFD, void *, pBuf, size_t, size);
-//sysCallUser1r(char *,          sbrk, intptr_t, increment);
-sysCallUser1r(unsigned int,    sleep, unsigned int, iSeconds);
-sysCallUser1r(int,             usleep, useconds_t, useconds);
-//sysCallUser3r(ssize_t,         write, int, iFD, const void *, pBuf, size_t, size);
+#define va_list         __builtin_va_list
+//#define va_start(v,l)   __builtin_va_start(v,l)
+#define va_start(v,l)   __builtin_stdarg_start(v,l)
+#define va_end(v)       __builtin_va_end(v)
+#define va_arg(v,l)     __builtin_va_arg(v,l)
 
+
+// -----------------------------------------------------------------------------
+int
+vopen(const char * path, int oflag, va_list ap)
+{
+  int iRetVal, iNID = 0, iPID, iChannelID;
+
+  iRetVal = lookupName(path, &iPID, &iChannelID);
+
+  if(iRetVal >= 0)
+    iRetVal = channelConnectAttach(iNID, iPID, iChannelID, 0);
+
+  return iRetVal;
+}
+
+// -----------------------------------------------------------------------------
+int
+open(const char * path, int oflag, ...)
+{
+  va_list ap;
+  int     fd;
+
+  va_start(ap, oflag);
+  fd = vopen(path, oflag, ap);
+  va_end(ap);
+
+  return fd;
+}
 
 // -----------------------------------------------------------------------------
 int

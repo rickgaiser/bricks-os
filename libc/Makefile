@@ -5,14 +5,14 @@ LIB             =tc
 OBJS            =\
                 ctype \
                 errno \
-                fcntl \
+                fileio \
                 math \
                 stdlib \
                 string \
 
 
 ifneq ($(CONFIG_DIRECT_ACCESS_KERNEL_FUNC),y)
-  OBJS            += pthread srr unistd
+  OBJS            += srr
 endif
 
 
