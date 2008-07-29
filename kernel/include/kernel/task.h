@@ -88,6 +88,8 @@ public:
   int addInConnection(IConnection * connection);
   int addOutConnection(IConnection * connection);
 
+  int channelRegister(IChannel * channel, unsigned iFlags);
+
   int channelCreate(unsigned iFlags);
   int channelDestroy(int iChannelID);
   int channelConnectAttach(uint32_t iNodeID, pid_t iProcessID, int iChannelID, int iFlags);

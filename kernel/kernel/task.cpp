@@ -305,6 +305,31 @@ CTask::addOutConnection(IConnection * connection)
 
 //------------------------------------------------------------------------------
 int
+CTask::channelRegister(IChannel * channel, unsigned iFlags)
+{
+  int iRetVal(-1);
+
+  //printk("CTask::channelRegister\n");
+
+  // Locate empty channel
+  for(int iChannel(0); iChannel < MAX_CHANNEL_COUNT; iChannel++)
+  {
+    if(pChannel_[iChannel] == NULL)
+    {
+      pChannel_[iChannel] = channel;
+      iRetVal = CHANNEL_IDX_TO_ID(iChannel);
+      break;
+    }
+  }
+
+  if(iRetVal == -1)
+    panic("CTask::channelRegister: Max channels reached!\n");
+
+  return iRetVal;
+}
+
+//------------------------------------------------------------------------------
+int
 CTask::channelCreate(unsigned iFlags)
 {
   int iRetVal(-1);
@@ -323,9 +348,7 @@ CTask::channelCreate(unsigned iFlags)
   }
 
   if(iRetVal == -1)
-  {
-    printk("CTask::channelCreate: Max channels reached!\n");
-  }
+    panic("CTask::channelCreate: Max channels reached!\n");
 
   return iRetVal;
 }

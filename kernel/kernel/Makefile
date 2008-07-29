@@ -8,6 +8,7 @@ OBJS            =\
                 debug \
                 driverMountPoint \
                 externalMemory \
+                fileDriver \
                 genwait \
                 interrupt \
                 interruptManager \
