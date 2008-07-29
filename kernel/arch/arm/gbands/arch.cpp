@@ -8,38 +8,12 @@
 #include "asm/irq.h"
 #include "asm/task.h"
 
+#include "drivers.h"
 #include "timer.h"
-
-#ifdef CONFIG_GBA_SOUND
-#include "gbaSound.h"
-#endif // CONFIG_GBA_SOUND
 
 #ifdef CONFIG_DEBUGGING
 #include "debugScreen.h"
 #endif // CONFIG_DEBUGGING
-
-#ifdef CONFIG_GBA_KEYBOARD
-#include "keyboard.h"
-#endif // CONFIG_GBA_KEYBOARD
-
-#ifdef CONFIG_GBA_SERIAL
-#include "gbaSerial.h"
-#endif // CONFIG_GBA_SERIAL
-
-#ifdef CONFIG_NDS_IPC
-#include "dsIPC.h"
-#endif // CONFIG_NDS_IPC
-
-#ifdef CONFIG_FRAMEBUFFER
-#include "videoDevice.h"
-#endif // CONFIG_FRAMEBUFFER
-
-#ifdef CONFIG_FILESYSTEM
-#include "kernel/fileSystem.h"
-#include "kernel/ibmPartitionDriver.h"
-#include "kernel/fatDriver.h"
-#include "superCardDriver.h"
-#endif // #ifdef CONFIG_FILESYSTEM
 
 
 #ifdef GBA
@@ -60,10 +34,6 @@ extern char _end, __eheap_end;
 
 CIRQ           cIRQ;
 
-#ifdef CONFIG_GBA_SOUND
-CGBASound      cSound;
-#endif // CONFIG_GBA_SOUND
-
 #ifdef CONFIG_DEBUGGING
 #if defined(GBA) || defined(NDS9)
 CGBADebugScreen cDebug;
@@ -72,22 +42,6 @@ CGBADebugScreen cDebugARM7;
 #endif // NDS9
 #endif // defined(GBA) || defined(NDS9)
 #endif // CONFIG_DEBUGGING
-
-#ifdef CONFIG_GBA_KEYBOARD
-CGBAKeyboard   cKeyboard;
-#endif // CONFIG_GBA_KEYBOARD
-
-#ifdef CONFIG_GBA_SERIAL
-CGBASerial     cSerial;
-#endif // CONFIG_GBA_SERIAL
-
-#ifdef CONFIG_NDS_IPC
-CDSIPC         cIPC;
-#endif // CONFIG_NDS_IPC
-
-#ifdef CONFIG_FRAMEBUFFER
-CGBAVideoDevice * pVideoDevice;
-#endif // CONFIG_FRAMEBUFFER
 
 
 extern "C"
@@ -121,58 +75,17 @@ main(int, char *[])
 
 #ifdef CONFIG_DEBUGGING
 #if defined(GBA) || defined(NDS9)
-  if(cDebug.init() == -1)
-    iRetVal = -1;
+  cDebug.init();
   pDebug = &cDebug;
+#ifdef NDS9
+  cDebugARM7.init(BOTTOM_SCREEN);
+#endif // NDS9
 #endif // defined(GBA) || defined(NDS9)
 #endif // CONFIG_DEBUGGING
-
-#ifdef CONFIG_GBA_KEYBOARD
-  if(cKeyboard.init() == -1)
-    iRetVal = -1;
-  //CTaskManager::setStandardInput(&cKeyboard);
-#endif // CONFIG_GBA_KEYBOARD
-
-#ifdef CONFIG_GBA_SERIAL
-  if(cSerial.init() == -1)
-    iRetVal = -1;
-#endif // CONFIG_GBA_SERIAL
-
-#ifdef CONFIG_NDS_IPC
-#ifdef NDS7
-  if(cIPC.init() == -1)
-    iRetVal = -1;
-  pDebug = &cIPC;
-#endif // NDS7
-#ifdef NDS9
-  if(cDebugARM7.init(BOTTOM_SCREEN) == -1)
-    iRetVal = -1;
-  if(cIPC.init(&cDebugARM7) == -1)
-    iRetVal = -1;
-#endif // NDS9
-#endif // CONFIG_NDS_IPC
-
-#ifdef CONFIG_FRAMEBUFFER
-  pVideoDevice = new CGBAVideoDevice;
-#endif // CONFIG_FRAMEBUFFER
 
   task_init();
   setTimerFrequency(2, 100.0f);
   cIRQ.enable(5);
-
-#ifdef CONFIG_GBA_SOUND
-  cSound.init();
-#endif // CONFIG_GBA_SOUND
-
-#ifdef CONFIG_FILESYSTEM
-  CIBMPartitionDriver ibmPartitionDriver;
-  CFATDriver fatDriver;
-  CSuperCardDriver scDriver;
-
-  CFileSystem::addPartitionDriver(&ibmPartitionDriver);
-  CFileSystem::addFileSystemDriver(&fatDriver);
-  scDriver.init();
-#endif // CONFIG_FILESYSTEM
 
   // Let CPU flag control interrupt state
   local_irq_disable();  // Disable in cpu interrupt enable flag
@@ -184,10 +97,8 @@ main(int, char *[])
   local_irq_enable();
   printk("Interrupts...OK\n");
 
-#if defined(CONFIG_NDS_IPC) && defined(NDS9)
-  // Notify ARM7 CPU that we are ready to receive debugging information
-  cIPC.write("ready", 6);
-#endif
+  // Initialize drivers
+  init_drivers();
 
 #ifdef GBA
   printk("GBA arch ready\n");
