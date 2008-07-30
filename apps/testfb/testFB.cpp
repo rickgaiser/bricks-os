@@ -15,7 +15,7 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
     return;
 
   renderer->setSurface(surface);
-
+/*
   // Irritating interlaced test
   for(uint32_t i(0); i < surface->height(); i++)
   {
@@ -63,7 +63,7 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
   renderer->flush();
   for(int i(0); i < loops; i++)
     device->waitVSync();
-
+*/
   // Full screen fill test
   for(int i(0); i < loops; i++)
   {
