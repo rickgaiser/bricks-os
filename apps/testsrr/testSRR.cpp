@@ -4,6 +4,7 @@
 #include "fcntl.h"
 #include "pthread.h"
 #include "msgServer.h"
+#include "fileStream.h"
 
 
 //---------------------------------------------------------------------------
@@ -163,45 +164,14 @@ testFile()
 void
 testFile2()
 {
-  char buffer[80];
-  int fdKeyboard;
-  int fdDebug;
+  CFileStream stream("/dev/keyboard", "/dev/debug");
 
-  fdKeyboard = open("/dev/keyboard", O_RDONLY);
-  if(fdKeyboard < 0)
+  if(stream.start() == true)
   {
-    printk("Unable to open keyboard\n");
-    return;
+    printk("Running:\n");
+    while(true)
+      sleep(1);
   }
-
-  fdDebug = open("/dev/debug", O_WRONLY);
-  if(fdDebug < 0)
-  {
-    close(fdKeyboard);
-    printk("Unable to open debug\n");
-    return;
-  }
-
-  printk("Running:\n");
-  while(true)
-  {
-    int iSize = read(fdKeyboard, buffer, 80);
-    if(iSize <= 0)
-    {
-      printk("Unable to read from keyboard\n");
-      break;
-    }
-
-    int iSize2 = write(fdDebug, buffer, iSize);
-    if(iSize2 != iSize)
-    {
-      printk("Unable to write to debug\n");
-      break;
-    }
-  }
-
-  close(fdDebug);
-  close(fdKeyboard);
 }
 
 //---------------------------------------------------------------------------
