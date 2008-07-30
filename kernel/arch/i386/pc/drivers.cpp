@@ -1,10 +1,12 @@
 #include "drivers.h"
+#include "debugScreen.h"
 #include "i8042.h"
 #include "keyboard.h"
 #include "mouse.h"
 #include "serial.h"
 #include "asm/arch/config.h"
 #include "kernel/debug.h"
+#include "kernel/fileDriver.h"
 
 #ifdef CONFIG_FILESYSTEM
 #include "kernel/fileSystem.h"
@@ -18,20 +20,26 @@
 #endif // CONFIG_FRAMEBUFFER
 
 
+#ifdef CONFIG_DEBUGGING
+extern CI386DebugScreen  cDebug;
+#endif // #ifdef CONFIG_DEBUGGING
+
+
 class CDrivers
 {
 public:
-  CDrivers()
-   : c8042()
-   , cKeyboard(c8042)
-   , cMouse(c8042)
-  {
-  }
+  CDrivers();
+
+public:
+  CKernelFileDriver fdDebug;
 
   C8042             c8042;
   CI8042Keyboard    cKeyboard;
+  CKernelFileDriver fdKeyboard;
   CI8042Mouse       cMouse;
+  CKernelFileDriver fdMouse;
   CI386Serial       cSerial;
+  CKernelFileDriver fdSerial;
 
 #ifdef CONFIG_FILESYSTEM
   CIBMPartitionDriver cIBMPartitionDriver;
@@ -48,6 +56,21 @@ public:
 CDrivers * pDrivers = NULL;
 
 
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+CDrivers::CDrivers()
+ : fdDebug(cDebug, "/dev/debug")
+ , c8042()
+ , cKeyboard(c8042)
+ , fdKeyboard(cKeyboard, "/dev/keyboard")
+ , cMouse(c8042)
+ , fdMouse(cMouse, "/dev/mouse")
+ , cSerial()
+ , fdSerial(cSerial.cCom1_, "/dev/serial")
+{
+}
+
+// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 void
 init_drivers()
