@@ -4,34 +4,57 @@
 
 #include "msgServer.h"
 #include "kernel/fs.h"
+#include "kernel/fileDriver.h"
 
 
 //---------------------------------------------------------------------------
-enum EFileCommand
+class CReadServer
+ : public ACE_Task_Base
 {
-  FC_READ  = 1,
-  FC_WRITE = 2,
-};
+public:
+  CReadServer(IFileIO & file);
+  virtual ~CReadServer();
 
-struct SFileHeader
-{
-  uint32_t command;
-};
+  int svc();
+  void read(int iReceiveID, size_t size, bool block);
 
-struct SFileReadHeader
-{
-  SFileHeader commonHeader;
-  uint32_t size;
-};
+private:
+  void _read(int iReceiveID, size_t size, bool block);
 
-struct SFileWriteHeader
-{
-  SFileHeader commonHeader;
-  uint32_t size;
+  IFileIO & file_;
+  volatile int iReceiveID_;
+  volatile size_t size_;
+  pthread_mutex_t mutex_;
+  volatile bool bExit_;
 };
-
 
 //---------------------------------------------------------------------------
+class CWriteServer
+ : public ACE_Task_Base
+{
+public:
+  CWriteServer(IFileIO & file);
+  virtual ~CWriteServer();
+
+  int svc();
+  void write(int iReceiveID, const void * data, size_t size, bool block);
+
+private:
+  void _write(int iReceiveID, const void * data, size_t size, bool block);
+
+  IFileIO & file_;
+  volatile int iReceiveID_;
+  const void * data_;
+  volatile size_t size_;
+  pthread_mutex_t mutex_;
+  volatile bool bExit_;
+};
+
+//---------------------------------------------------------------------------
+// Our user space file server needs 3 threads:
+//  1 - Process incomming messages      (CMsgServer)
+//  2 - Process blocking read requests  (CReadServer)
+//  3 - Process blocking write requests (CWriteServer)
 class CFileServer
  : public CMsgServer
 {
@@ -41,19 +64,11 @@ public:
 
   virtual int process(int iReceiveID, void * pRcvMsg);
 
-  virtual int read (      void * buffer, size_t size);
-  virtual int write(const void * buffer, size_t size);
-
 private:
   IFileIO & file_;
-};
-
-
-//---------------------------------------------------------------------------
-namespace test
-{
-  int read (int fd,       void * buffer, size_t size);
-  int write(int fd, const void * buffer, size_t size);
+  CReadServer thrRead_;
+  CWriteServer thrWrite_;
+  uint32_t flags_[MAX_OPEN_FILES];
 };
 
 
