@@ -31,11 +31,6 @@ CDSIPC::init()
   // fifo init
   REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR | IPC_FIFO_RECV_IRQ | IPC_FIFO_ERROR; // IPC_FIFO_SEND_IRQ
 
-#ifdef NDS7
-  // Wait for "ready" from ARM9
-  while(REG_IPC_FIFO_RX != 'y');
-#endif
-
   return 0;
 }
 
@@ -104,22 +99,15 @@ CDSIPC::write(const void * buffer, size_t size, bool block)
 {
   int iRetVal(0);
 
-  // When interrupts are disabled, this loop will hang, so check
-  if(REG_IME != 0)
+  for(size_t i(0); i < size; i++)
   {
-    for(size_t i(0); i < size; i++)
-    {
-      // Wait untill fifo is not full
-      while(REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL)
-      // Send
-      REG_IPC_FIFO_TX = ((char *)buffer)[i];
+    // Wait untill fifo is not full
+    while(REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL);
 
-      iRetVal++;
-    }
-  }
-  else
-  {
-    iRetVal = -1;
+    // Send
+    REG_IPC_FIFO_TX = ((char *)buffer)[i];
+
+    iRetVal++;
   }
 
   return iRetVal;

@@ -27,7 +27,9 @@ public:
 private:
   CRingBuffer buffer_;
   uint16_t iKeys_;
+#ifdef NDS7
   uint16_t iKeysXY_;
+#endif
 };
 
 

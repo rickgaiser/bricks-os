@@ -117,16 +117,33 @@ CDrivers::CDrivers()
 #endif // CONFIG_GBA_SERIAL
  , iDummyEnd_(0)
 {
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void
+init_drivers()
+{
+  pDrivers = new CDrivers;
+  if(pDrivers == NULL)
+    panic("Out of memory!\n");
+
 #ifdef CONFIG_NDS_IPC
 #ifdef NDS7
   // ARM7 outputs debugging information to IPC
   pDrivers->cIPC.init();
   pDebug = &(pDrivers->cIPC);
+  // Wait for "ready" from ARM9
+  char c;
+  do
+  {
+    // NOTE: DON'T BLOCK, we don't have an idle thread yet
+    pDrivers->cIPC.read(&c, 1, false);
+  }
+  while(c != 'y');
 #endif // NDS7
 #ifdef NDS9
-  // ARM9 displays incomming IPC data to bottom screen
   pDrivers->cIPC.init();
-  pDrivers->cIPC.write("ready", 6);
 #endif // NDS9
 #endif // CONFIG_NDS_IPC
 
@@ -147,14 +164,4 @@ CDrivers::CDrivers()
   CFileSystem::addFileSystemDriver(&(pDrivers->cFATDriver));
   pDrivers->cSCDriver.init();
 #endif // CONFIG_FILESYSTEM
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-void
-init_drivers()
-{
-  pDrivers = new CDrivers;
-  if(pDrivers == NULL)
-    panic("Out of memory!\n");
 }

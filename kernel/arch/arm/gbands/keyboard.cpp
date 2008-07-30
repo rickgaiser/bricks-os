@@ -8,7 +8,9 @@
 CGBAKeyboard::CGBAKeyboard()
  : buffer_()
  , iKeys_(0x0000)
- , iKeysXY_(0x0000)
+#ifdef NDS7
+ , iKeysXY_(0x0000 | KEY_LID) // Lid is opened by default
+#endif
 {
   // Don't use constructor, use init function instead
 }
@@ -89,6 +91,10 @@ CGBAKeyboard::isr(int irq)
     buffer_.put('X');
   if(iChangedUpXY & KEY_Y)
     buffer_.put('Y');
+  if(iChangedUpXY & KEY_TOUCH)
+    buffer_.put('T');
+  if(iChangedUpXY & KEY_LID)
+    buffer_.put('L');
 #endif
 
   buffer_.notifyGetters();
