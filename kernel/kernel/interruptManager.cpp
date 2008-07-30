@@ -58,12 +58,6 @@ CInterruptManager::detach(unsigned int irq, CIRQ * irqhardware)
 unsigned int
 CInterruptManager::isr(unsigned int irq, pt_regs * regs)
 {
-  unsigned long flags;
-
-  // First disable interrupts
-  flags = local_save_flags();
-  local_irq_disable();
-
   if(irq < MAX_INTERRUPTS)
   {
     if(interrupt_[irq].isrCount() != 0)
@@ -80,9 +74,6 @@ CInterruptManager::isr(unsigned int irq, pt_regs * regs)
   {
     printk("CInterruptManager::isr: ERROR: Interrupt out of range(int=%d)\n", (int)irq);
   }
-
-  // Restore interrupt and return
-  local_irq_restore(flags);
 
   return 0;
 }
