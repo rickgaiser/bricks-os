@@ -21,34 +21,34 @@ enum EFileCommand
 struct SFileHeader
 {
   uint32_t command;
-};
+} __attribute__ ((__packed__));
 
 // -----------------------------------------------------------------------------
 struct SFileOpenHeader
 {
   SFileHeader commonHeader;
   uint32_t flags;
-};
+} __attribute__ ((__packed__));
 
 // -----------------------------------------------------------------------------
 struct SFileCloseHeader
 {
   SFileHeader commonHeader;
-};
+} __attribute__ ((__packed__));
 
 // -----------------------------------------------------------------------------
 struct SFileReadHeader
 {
   SFileHeader commonHeader;
   uint32_t size; // Max Read Size
-};
+} __attribute__ ((__packed__));
 
 // -----------------------------------------------------------------------------
 struct SFileWriteHeader
 {
   SFileHeader commonHeader;
   uint32_t size; // Max Write Size
-};
+} __attribute__ ((__packed__));
 
 // -----------------------------------------------------------------------------
 class CKernelFileDriver
