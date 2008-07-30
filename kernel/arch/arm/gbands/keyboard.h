@@ -4,6 +4,7 @@
 
 #include "kernel/fs.h"
 #include "kernel/interrupt.h"
+#include "kernel/ringBuffer.h"
 #include "asm/arch/memory.h"
 
 
@@ -24,8 +25,9 @@ public:
   virtual ssize_t read(void * buffer, size_t size, bool block = false);
 
 private:
-  volatile int iBufferCount_;
-  int iKey_;
+  CRingBuffer buffer_;
+  uint16_t iKeys_;
+  uint16_t iKeysXY_;
 };
 
 

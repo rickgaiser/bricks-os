@@ -1,12 +1,14 @@
 #include "keyboard.h"
+#include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "asm/arch/registers.h"
 
 
 // -----------------------------------------------------------------------------
 CGBAKeyboard::CGBAKeyboard()
- : iBufferCount_(0)
- , iKey_('~')
+ : buffer_()
+ , iKeys_(0x0000)
+ , iKeysXY_(0x0000)
 {
   // Don't use constructor, use init function instead
 }
@@ -20,6 +22,13 @@ CGBAKeyboard::~CGBAKeyboard()
 int
 CGBAKeyboard::init()
 {
+/*
+  // NOTE: Interrupt ONLY come when a button is PRESSED!
+  // NOTE: Interrupt is intended for waking up from (the low power) stop mode
+  // NOTE: Use VBlank instead
+  // Attach to keypad IRQ
+  CInterruptManager::attach(12, this);
+  // Enable interrupt from all keys
   REG_KEYCNT = KEY_CNT_OR
              | KEY_CNT_IRQ
              | KEY_A
@@ -32,8 +41,12 @@ CGBAKeyboard::init()
              | KEY_DOWN
              | KEY_R
              | KEY_L;
+*/
 
-  CInterruptManager::attach(12, this);
+  // Attach to VBlank IRQ
+  CInterruptManager::attach(0, this);
+  // Enable VBlank interrupt
+  REG_DISPSTAT |= IRQ_VBLANK_ENABLE;
 
   return 0;
 }
@@ -42,34 +55,48 @@ CGBAKeyboard::init()
 int
 CGBAKeyboard::isr(int irq)
 {
-  if(~REG_KEYS & KEY_A)
-    iKey_ = 'A';
-  if(~REG_KEYS & KEY_B)
-    iKey_ = 'B';
-  if(~REG_KEYS & KEY_SELECT)
-    iKey_ = 'S';
-  if(~REG_KEYS & KEY_START)
-    iKey_ = 'S';
-  if(~REG_KEYS & KEY_RIGHT)
-    iKey_ = 'R';
-  if(~REG_KEYS & KEY_LEFT)
-    iKey_ = 'L';
-  if(~REG_KEYS & KEY_UP)
-    iKey_ = 'U';
-  if(~REG_KEYS & KEY_DOWN)
-    iKey_ = 'D';
-  if(~REG_KEYS & KEY_R)
-    iKey_ = '>';
-  if(~REG_KEYS & KEY_L)
-    iKey_ = '<';
+  uint16_t iNewKeys       = ~REG_KEYS;
+  uint16_t iChangedKeys   = iNewKeys   ^ iKeys_;
+  uint16_t iChangedUp     = iNewKeys   & iChangedKeys;
 #ifdef NDS7
-  if(~REG_KEYSXY & KEY_X)
-    iKey_ = 'X';
-  if(~REG_KEYSXY & KEY_Y)
-    iKey_ = 'Y';
+  uint16_t iNewKeysXY     = ~REG_KEYSXY;
+  uint16_t iChangedKeysXY = iNewKeysXY ^ iKeysXY_;
+  uint16_t iChangedUpXY   = iNewKeysXY & iChangedKeysXY;
 #endif
 
-  iBufferCount_ = 1;
+  if(iChangedUp & KEY_A)
+    buffer_.put('A');
+  if(iChangedUp & KEY_B)
+    buffer_.put('B');
+  if(iChangedUp & KEY_SELECT)
+    buffer_.put('S');
+  if(iChangedUp & KEY_START)
+    buffer_.put('S');
+  if(iChangedUp & KEY_RIGHT)
+    buffer_.put('R');
+  if(iChangedUp & KEY_LEFT)
+    buffer_.put('L');
+  if(iChangedUp & KEY_UP)
+    buffer_.put('U');
+  if(iChangedUp & KEY_DOWN)
+    buffer_.put('D');
+  if(iChangedUp & KEY_R)
+    buffer_.put('>');
+  if(iChangedUp & KEY_L)
+    buffer_.put('<');
+#ifdef NDS7
+  if(iChangedUpXY & KEY_X)
+    buffer_.put('X');
+  if(iChangedUpXY & KEY_Y)
+    buffer_.put('Y');
+#endif
+
+  buffer_.notifyGetters();
+
+  iKeys_   = iNewKeys;
+#ifdef NDS7
+  iKeysXY_ = iNewKeysXY;
+#endif
 
   return 0;
 }
@@ -78,21 +105,17 @@ CGBAKeyboard::isr(int irq)
 ssize_t
 CGBAKeyboard::read(void * buffer, size_t size, bool block)
 {
-  int    iRetVal(-1);
-  char * string = static_cast<char *>(buffer);
+  int iRetVal(0);
+  uint8_t * data((uint8_t *)buffer);
 
-  if(size >= 2)
+  for(size_t i(0); i < size; i++)
   {
-    // Wait for key
-    while(iBufferCount_ == 0){}
-
-    // Copy key
-    string[0] = iKey_;
-    string[1] = 0;
-    iRetVal   = 2;
-
-    // Allow next key
-    iBufferCount_ = 0;
+    if((i == 0) && (block == true))
+      buffer_.get(data, true);
+    else if(buffer_.get(data, false) == false)
+      break;
+    data++;
+    iRetVal++;
   }
 
   return iRetVal;
