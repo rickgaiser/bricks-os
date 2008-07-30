@@ -32,12 +32,15 @@ CAVideo::cls()
 ssize_t
 CAVideo::write(const void * buffer, size_t size, bool block)
 {
+  ssize_t iRetVal(0);
+
   for(size_t i(0); i < size; i++)
   {
     this->put(((const char *)buffer)[i]);
+    iRetVal++;
   }
 
-  return(0);
+  return iRetVal;
 }
 
 // -----------------------------------------------------------------------------
