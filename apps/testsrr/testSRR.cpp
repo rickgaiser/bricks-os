@@ -123,6 +123,88 @@ testNamed2()
 }
 
 //---------------------------------------------------------------------------
+void
+testFile()
+{
+  char c;
+  int iRetVal;
+  int fd;
+
+  printk(" - Open File...");
+  fd = open("/dev/debug", O_RDWR);
+  if(fd >= 0)
+  {
+    printk("OK\n");
+
+    printk(" - Read File...");
+    iRetVal = read(fd, &c, 1);
+    if(iRetVal == 1)
+      printk("OK");
+    else
+      printk("ERROR(%d)\n", iRetVal);
+
+    printk(" - Write File...");
+    iRetVal = write(fd, "OK\n", 4);
+    if(iRetVal != 4)
+      printk("ERROR(%d)\n", iRetVal);
+
+    printk(" - Close File...");
+    iRetVal = close(fd);
+    if(iRetVal >= 0)
+      printk("OK\n");
+    else
+      printk("ERROR(%d)\n", iRetVal);
+  }
+  else
+    printk("ERROR(%d)\n", fd);
+}
+
+//---------------------------------------------------------------------------
+void
+testFile2()
+{
+  char buffer[80];
+  int fdKeyboard;
+  int fdDebug;
+
+  fdKeyboard = open("/dev/keyboard", O_RDONLY);
+  if(fdKeyboard < 0)
+  {
+    printk("Unable to open keyboard\n");
+    return;
+  }
+
+  fdDebug = open("/dev/debug", O_WRONLY);
+  if(fdDebug < 0)
+  {
+    close(fdKeyboard);
+    printk("Unable to open debug\n");
+    return;
+  }
+
+  printk("Running:\n");
+  while(true)
+  {
+    int iSize = read(fdKeyboard, buffer, 80);
+    if(iSize <= 0)
+    {
+      printk("Unable to read from keyboard\n");
+      break;
+    }
+
+    int iSize2 = write(fdDebug, buffer, iSize);
+    if(iSize2 != iSize)
+    {
+      printk("Unable to write to debug\n");
+      break;
+    }
+  }
+
+  close(fdDebug);
+  close(fdKeyboard);
+}
+
+//---------------------------------------------------------------------------
 // Test sleeping
 void
 testSleep()
@@ -158,6 +240,8 @@ testThread(void * arg)
     testSRR();
     testNamed();
     testNamed2();
+    testFile();
+    testFile2();
   }
 
   // Thread exit
@@ -199,7 +283,11 @@ appMain(int argc, char * argv[])
     }
   }
 
-  while(1);
+  // Forever sleep
+  while(true)
+  {
+    sleep(1);
+  }
 
   return 0;
 }
