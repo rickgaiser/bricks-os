@@ -12,8 +12,7 @@ OBJS            =\
                 matrix \
                 sif \
                 task \
-
-#                irq \
+                vu \
 
 
 OBJS-$(CONFIG_DEBUGGING)           += debugScreen
