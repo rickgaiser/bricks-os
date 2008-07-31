@@ -26,7 +26,7 @@
 
 // Library configuration
 #undef  CONFIG_BUILTIN_MM
-#undef  CONFIG_BUILTIN_LIBC
+#define CONFIG_BUILTIN_LIBC
 
 
 #endif

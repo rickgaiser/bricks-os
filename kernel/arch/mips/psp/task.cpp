@@ -1,21 +1,32 @@
 #include "asm/task.h"
+#include "kernel/task.h"
 #include "kernel/debug.h"
 
 
 // -----------------------------------------------------------------------------
-CPSPThread::CPSPThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
- : CThread(task)
+void
+task_init()
 {
 }
 
 // -----------------------------------------------------------------------------
-CPSPThread::~CPSPThread()
+CThreadImpl::CThreadImpl()
 {
 }
 
 // -----------------------------------------------------------------------------
-CThread *
-getNewThread(CTask * task, void * entry, size_t stack, size_t svcstack, int argc, char * argv[])
+CThreadImpl::~CThreadImpl()
 {
-  return new CPSPThread(task, entry, stack, svcstack, argc, argv);
+}
+
+// -----------------------------------------------------------------------------
+void
+CThreadImpl::init(void * entry, int argc, char * argv[])
+{
+}
+
+// -----------------------------------------------------------------------------
+void
+CThreadImpl::runJump()
+{
 }
