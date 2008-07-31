@@ -92,9 +92,9 @@ CGBAKeyboard::isr(int irq)
   if(iChangedUpXY & KEY_Y)
     bufferRead_.put('Y');
   if(iChangedUpXY & KEY_TOUCH)
-    buffer_.put('T');
+    bufferRead_.put('T');
   if(iChangedUpXY & KEY_LID)
-    buffer_.put('L');
+    bufferRead_.put('L');
 #endif
 
   bufferRead_.notifyGetters();
