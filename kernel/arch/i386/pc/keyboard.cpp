@@ -67,8 +67,8 @@ char E0_keys[128] =
 
 // -----------------------------------------------------------------------------
 CI8042Keyboard::CI8042Keyboard(C8042 & driver)
- : driver_     (driver)
- , buffer_     ()
+ : CAFileIOBufferedRead()
+ , driver_     (driver)
  , bE0_        (false)
  , bShift_     (false)
  , bCtrl_      (false)
@@ -163,8 +163,8 @@ CI8042Keyboard::i8042_callBack(uint8_t scancode)
           {
             if(bDown == true)
             {
-              buffer_.put(E0_keys[scancode]);
-              buffer_.notifyGetters();
+              bufferRead_.put(E0_keys[scancode]);
+              bufferRead_.notifyGetters();
             }
           }
         }
@@ -174,8 +174,8 @@ CI8042Keyboard::i8042_callBack(uint8_t scancode)
           {
             if(bDown == true)
             {
-              buffer_.put(shift_keys[scancode]);
-              buffer_.notifyGetters();
+              bufferRead_.put(shift_keys[scancode]);
+              bufferRead_.notifyGetters();
             }
           }
         }
@@ -185,34 +185,14 @@ CI8042Keyboard::i8042_callBack(uint8_t scancode)
           {
             if(bDown == true)
             {
-              buffer_.put(normal_keys[scancode]);
-              buffer_.notifyGetters();
+              bufferRead_.put(normal_keys[scancode]);
+              bufferRead_.notifyGetters();
             }
           }
         }
       }
     }
   }
-}
-
-// -----------------------------------------------------------------------------
-int
-CI8042Keyboard::read(void * buffer, size_t size, bool block)
-{
-  int iRetVal(0);
-  uint8_t * data((uint8_t *)buffer);
-
-  for(size_t i(0); i < size; i++)
-  {
-    if((i == 0) && (block == true))
-      buffer_.get(data, true);
-    else if(buffer_.get(data, false) == false)
-      break;
-    data++;
-    iRetVal++;
-  }
-
-  return iRetVal;
 }
 
 // -----------------------------------------------------------------------------

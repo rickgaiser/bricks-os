@@ -110,7 +110,8 @@ const uint8_t goodHeader[] =
 
 // -----------------------------------------------------------------------------
 CGBASerial::CGBASerial()
- : bInitialized_(false)
+ : CAFileIOBufferedRead()
+ , bInitialized_(false)
  , bModeSet_(false)
  , bConnected_(false)
  , bReceived_(false)
@@ -168,9 +169,9 @@ CGBASerial::isr(int irq)
       if((REG_SIOCNT & SIO_UART_RECV_EMPTY) == false)
       {
         uint8_t data = REG_SIODATA8;
-        if(buffer_.put(data) == false)
+        if(bufferRead_.put(data) == false)
           printk("CGBASerial::isr: Buffer overflow\n");
-        buffer_.notifyGetters();
+        bufferRead_.notifyGetters();
       }
       break;
     default:
@@ -181,26 +182,6 @@ CGBASerial::isr(int irq)
   //printk("%c\n", rcvData_);
 
   return 0;
-}
-
-// -----------------------------------------------------------------------------
-ssize_t
-CGBASerial::read(void * buffer, size_t size, bool block)
-{
-  int iRetVal(0);
-  uint8_t * data((uint8_t *)buffer);
-
-  for(size_t i(0); i < size; i++)
-  {
-    if((i == 0) && (block == true))
-      buffer_.get(data, true);
-    else if(buffer_.get(data, false) == false)
-      break;
-    data++;
-    iRetVal++;
-  }
-
-  return iRetVal;
 }
 
 // -----------------------------------------------------------------------------

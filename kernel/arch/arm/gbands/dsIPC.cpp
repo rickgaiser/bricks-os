@@ -7,7 +7,7 @@
 
 // -----------------------------------------------------------------------------
 CDSIPC::CDSIPC()
- : buffer_()
+ : CAFileIOBufferedRead()
 {
 }
 
@@ -57,7 +57,7 @@ CDSIPC::isr(int irq)
         data = REG_IPC_FIFO_RX;
 
         //printk("%c", data);
-        if(buffer_.put(data) == false)
+        if(bufferRead_.put(data) == false)
           printk("CDSIPC::isr: Buffer overflow\n");
 
         iCount++;
@@ -68,29 +68,9 @@ CDSIPC::isr(int irq)
   }
 
   if(iCount > 0)
-    buffer_.notifyGetters();
+    bufferRead_.notifyGetters();
 
   return 0;
-}
-
-// -----------------------------------------------------------------------------
-ssize_t
-CDSIPC::read(void * buffer, size_t size, bool block)
-{
-  int iRetVal(0);
-  uint8_t * data((uint8_t *)buffer);
-
-  for(size_t i(0); i < size; i++)
-  {
-    if((i == 0) && (block == true))
-      buffer_.get(data, true);
-    else if(buffer_.get(data, false) == false)
-      break;
-    data++;
-    iRetVal++;
-  }
-
-  return iRetVal;
 }
 
 // -----------------------------------------------------------------------------

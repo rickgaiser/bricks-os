@@ -2,7 +2,7 @@
 #define FILE_H
 
 
-//#include "unistd.h"
+#include "kernel/ringBuffer.h"
 #include "sys/types.h"
 
 
@@ -54,6 +54,20 @@ public:
 
 //protected:
 //  loff_t iOffset_;
+};
+
+// -----------------------------------------------------------------------------
+class CAFileIOBufferedRead
+ : public IFileIO
+{
+public:
+  CAFileIOBufferedRead();
+  virtual ~CAFileIOBufferedRead();
+
+  virtual ssize_t read(void * buffer, size_t size, bool block = false);
+
+protected:
+  CRingBuffer bufferRead_;
 };
 
 

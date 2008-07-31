@@ -43,8 +43,8 @@
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 CI8250::CI8250(unsigned int baseAddr)
- : iBaseAddr_(baseAddr)
- , buffer_()
+ : CAFileIOBufferedRead()
+ , iBaseAddr_(baseAddr)
 {
 }
 
@@ -101,7 +101,7 @@ CI8250::isr(int irq)
       data = inb(iBaseAddr_ + UART_RX);
       //printk("CI8250::read: status = 0x%x, data = %c\n", status, data);
       //printk("%c", data);
-      if(buffer_.put(data) == false)
+      if(bufferRead_.put(data) == false)
         printk("CI8250::isr: Buffer overflow\n");
 
       iCount++;
@@ -111,29 +111,9 @@ CI8250::isr(int irq)
   }
 
   if(iCount > 0)
-    buffer_.notifyGetters();
+    bufferRead_.notifyGetters();
 
   return 0;
-}
-
-// -----------------------------------------------------------------------------
-ssize_t
-CI8250::read(void * buffer, size_t size, bool block)
-{
-  int iRetVal(0);
-  uint8_t * data((uint8_t *)buffer);
-
-  for(size_t i(0); i < size; i++)
-  {
-    if((i == 0) && (block == true))
-      buffer_.get(data, true);
-    else if(buffer_.get(data, false) == false)
-      break;
-    data++;
-    iRetVal++;
-  }
-
-  return iRetVal;
 }
 
 // -----------------------------------------------------------------------------

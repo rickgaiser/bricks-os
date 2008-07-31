@@ -4,7 +4,6 @@
 
 #include "i8042.h"
 #include "kernel/fs.h"
-#include "kernel/ringBuffer.h"
 #include "inttypes.h"
 
 
@@ -113,7 +112,7 @@ enum EKeyCode
 
 // -----------------------------------------------------------------------------
 class CI8042Keyboard
- : public IFileIO
+ : public CAFileIOBufferedRead
  , public I8042CallBack
 {
 public:
@@ -125,15 +124,11 @@ public:
   // Inherited from ...
   virtual void i8042_callBack(uint8_t scancode);
 
-  // Inherited from IFileIO
-  virtual int read(void * buffer, size_t size, bool block = false);
-
 private:
   void updateLeds();
 
 private:
   C8042 & driver_;
-  CRingBuffer buffer_;
 
   // Special keycode
   bool bE0_;

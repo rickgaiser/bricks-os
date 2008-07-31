@@ -22,7 +22,7 @@ struct SMouseData
 
 // -----------------------------------------------------------------------------
 class CI8042Mouse
- : public IFileIO
+ : public CAFileIOBufferedRead
  , public I8042CallBack
 {
 public:
@@ -33,9 +33,6 @@ public:
 
   // Inherited from ...
   virtual void i8042_callBack(uint8_t data);
-
-  // Inherited from IFileIO
-  virtual int read(void * buffer, size_t size, bool block = false);
 
 private:
   C8042 & driver_;

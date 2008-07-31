@@ -6,7 +6,7 @@
 
 // -----------------------------------------------------------------------------
 CGBAKeyboard::CGBAKeyboard()
- : buffer_()
+ : CAFileIOBufferedRead()
  , iKeys_(0x0000)
 #ifdef NDS7
  , iKeysXY_(0x0000 | KEY_LID) // Lid is opened by default
@@ -67,37 +67,37 @@ CGBAKeyboard::isr(int irq)
 #endif
 
   if(iChangedUp & KEY_A)
-    buffer_.put('A');
+    bufferRead_.put('A');
   if(iChangedUp & KEY_B)
-    buffer_.put('B');
+    bufferRead_.put('B');
   if(iChangedUp & KEY_SELECT)
-    buffer_.put('S');
+    bufferRead_.put('S');
   if(iChangedUp & KEY_START)
-    buffer_.put('S');
+    bufferRead_.put('S');
   if(iChangedUp & KEY_RIGHT)
-    buffer_.put('R');
+    bufferRead_.put('R');
   if(iChangedUp & KEY_LEFT)
-    buffer_.put('L');
+    bufferRead_.put('L');
   if(iChangedUp & KEY_UP)
-    buffer_.put('U');
+    bufferRead_.put('U');
   if(iChangedUp & KEY_DOWN)
-    buffer_.put('D');
+    bufferRead_.put('D');
   if(iChangedUp & KEY_R)
-    buffer_.put('>');
+    bufferRead_.put('>');
   if(iChangedUp & KEY_L)
-    buffer_.put('<');
+    bufferRead_.put('<');
 #ifdef NDS7
   if(iChangedUpXY & KEY_X)
-    buffer_.put('X');
+    bufferRead_.put('X');
   if(iChangedUpXY & KEY_Y)
-    buffer_.put('Y');
+    bufferRead_.put('Y');
   if(iChangedUpXY & KEY_TOUCH)
     buffer_.put('T');
   if(iChangedUpXY & KEY_LID)
     buffer_.put('L');
 #endif
 
-  buffer_.notifyGetters();
+  bufferRead_.notifyGetters();
 
   iKeys_   = iNewKeys;
 #ifdef NDS7
@@ -105,24 +105,4 @@ CGBAKeyboard::isr(int irq)
 #endif
 
   return 0;
-}
-
-// -----------------------------------------------------------------------------
-ssize_t
-CGBAKeyboard::read(void * buffer, size_t size, bool block)
-{
-  int iRetVal(0);
-  uint8_t * data((uint8_t *)buffer);
-
-  for(size_t i(0); i < size; i++)
-  {
-    if((i == 0) && (block == true))
-      buffer_.get(data, true);
-    else if(buffer_.get(data, false) == false)
-      break;
-    data++;
-    iRetVal++;
-  }
-
-  return iRetVal;
 }

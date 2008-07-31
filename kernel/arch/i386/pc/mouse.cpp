@@ -4,7 +4,8 @@
 
 // -----------------------------------------------------------------------------
 CI8042Mouse::CI8042Mouse(C8042 & driver)
- : driver_(driver)
+ : CAFileIOBufferedRead()
+ , driver_(driver)
  , iMouseByteNr_(0)
 {
 }
@@ -51,11 +52,4 @@ CI8042Mouse::i8042_callBack(uint8_t data)
     iMouseByteNr_ = 0;
     //printk("Mouse keys=0x%x, x=%d, y=%d\n", sMouseData_.keys, sMouseData_.x, sMouseData_.y);
   }
-}
-
-// -----------------------------------------------------------------------------
-int
-CI8042Mouse::read(void * buffer, size_t size, bool block)
-{
-  return 0;
 }
