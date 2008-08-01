@@ -27,7 +27,6 @@ public:
 public:
   pt_regs    threadState_;
   uint32_t * pStack_;
-  uint32_t * pSvcStack_;
 };
 
 

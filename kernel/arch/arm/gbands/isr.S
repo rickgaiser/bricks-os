@@ -13,6 +13,7 @@
 .global local_irq_disable
 .global local_irq_enable
 .global runJump
+.global interruptReturn
 .global __gba_isr
 .global __isr
 .global current_thread
@@ -104,8 +105,11 @@ local_irq_enableARM:
   bx      lr
 
 @ -----------------------------------------------------------------------------
-@ void runJump(pt_regs * old_thread, pt_regs * new_thread);
+@ void runJump(pt_regs * current_thread, pt_regs * new_thread);
+@   Special function for task switching WITHOUT interrupt. Saves the current
+@   state and loads the state of the new task.
 @  - code: THUMB
+@  - mode: System/User
 @  - r0 = old_thread / current_thread
 @  - r1 = new_thread
 @ -----------------------------------------------------------------------------
@@ -120,35 +124,17 @@ runJump:
 runJumpARM:
   @ Save r0-r12,r14
   stmia   r0!, {r1-r12}               @ Save r1-r12
-  stmia   r0!, {r0}                   @ Save r0 (garbage)
-  ldr     r2, =runJumpReturn          @ Task will continue at runJumpReturn
+  stmia   r0!, {r0}                   @ Save r0
+  ldr     r2, =runJumpReturn
   stmia   r0!, {r2}                   @ Save pc
 
-  @ Save current mode cpsr as irq mode spsr
   mrs     r4, cpsr
-  str     r4, [r0], #4
+  str     r4, [r0], #4                @ Save cpsr
+  str     lr, [r0], #4                @ Save lr
+  str     sp, [r0], #4                @ Save sp
 
-  @ Prepare registers r2-r4 for changing the cpu mode
-  bic     r4, r4, #0x1f               @ clear state code
-  orr     r2, r4, #0x13               @ supervisor mode
-  orr     r3, r4, #0x1f               @ system mode
-  orr     r4, r4, #0x12               @ irq mode
-
-  @ Save supervisor mode spsr, lr & sp
-  msr     cpsr, r2
-  mrs     r5, spsr
-  str     r5, [r0], #4
-  str     lr, [r0], #4
-  str     sp, [r0], #4
-
-  @ Save system mode lr & sp
-  msr     cpsr, r3
-  str     lr, [r0], #4
-  str     sp, [r0], #4
-
-  msr     cpsr, r4                    @ Get in irq mode
-  str     r1, current_thread          @ Make new_thread the new current_thread
-  b       isr_ret
+  str     r1, current_thread
+  b       interruptReturn
 
   nop
 runJumpReturn:
@@ -171,91 +157,68 @@ __gba_isr:
 
 @ ---------------------------------------------------------------------------
 @ ARM ISR
+@   Saves the current context to "current_thread" and calls isr.
+@  - code: ARM
+@  - mode: IRQ
 @ ---------------------------------------------------------------------------
 @  .code 32
 __isr:
-  @ Save r0-r12,r14
-  stmfd   sp!, {r0}                   @ push r0
-  ldr     r0, current_thread          @ load pointer to current task state in r0
-  stmia   r0!, {r1-r12}               @ save r1-r12
-  ldmfd   sp!, {r1}                   @ pop r0
-  stmia   r0!, {r1}                   @ save r0
-  stmia   r0!, {r14}                  @ save r14/pc
+  stmfd   sp!, {r0}
+  ldr     r0, current_thread
+  stmia   r0!, {r1-r12}               @ Save r1-r12
+  ldmfd   sp!, {r1}
+  stmia   r0!, {r1}                   @ Save r0
+  stmia   r0!, {r14}                  @ Save r14/pc
 
-  @ Save irq mode spsr
-  mrs     r5, spsr                    @ get the stored CPU state
-  str     r5, [r0], #4                @ store value for cpsr
+  mrs     r5, spsr
+  str     r5, [r0], #4                @ Save cpsr
 
-  @ Prepare registers r2-r4 for changing the cpu mode
+  @ Switch to system mode
   mrs     r4, cpsr                    @ get cpu flags
   bic     r4, r4, #0x1f               @ clear state code
-  orr     r2, r4, #0x13               @ supervisor mode
-  orr     r3, r4, #0x1f               @ system mode
-  orr     r4, r4, #0x12               @ irq mode
-
-  @ Save supervisor mode spsr, lr & sp
-  msr     cpsr, r2
-  mrs     r5, spsr
-  str     r5, [r0], #4
-  str     lr, [r0], #4
-  str     sp, [r0], #4
-
-  @ Save system mode lr & sp
-  msr     cpsr, r3
-  str     lr, [r0], #4
-  str     sp, [r0], #4
-
-  @ Call generic interrupt handler in irq mode
+  orr     r4, r4, #0x1f               @ system mode
   msr     cpsr, r4
 
+  str     lr, [r0], #4                @ Save lr
+  str     sp, [r0], #4                @ Save sp
+
   @ Call generic interrupt handler, THUMB mode
-  ldr     lr, =isr_ret
+  ldr     lr, =interruptReturn
   ldr     r0, current_thread
   ldr     r1, =isr
   bx      r1
 
 @ -----------------------------------------------------------------------------
-@ Return from interrupt
+@ void interruptReturn();
+@   Return from interrupt. Loads "current_state" and returns to it.
+@   NOTE: Current context is destoyed!
+@  - code: ARM
+@  - mode: System/User
 @ -----------------------------------------------------------------------------
   .code 32
-isr_ret:
-  @ Load pointer to current task state in r0
-  ldr     r0, current_thread          @ load pointer to current task state in r0
-  add     r0, r0, #80                 @ set pointer to end of current task state
+interruptReturn:
+  ldr     r0, current_thread
+  add     r0, r0, #68                 @ set pointer to end of current task state
 
-  @ Prepare registers r2-r4 for changing the cpu mode
+  ldr     sp, [r0, #-4]!              @ Restore sp
+  ldr     lr, [r0, #-4]!              @ Restore lr
+
+  @ Switch to irq mode
   mrs     r4, cpsr                    @ get cpu flags
   bic     r4, r4, #0x1f               @ clear state code
-  orr     r2, r4, #0x13               @ supervisor mode
-  orr     r3, r4, #0x1f               @ system mode
   orr     r4, r4, #0x12               @ irq mode
-
-  @ Restore system mode sp & lr
-  msr     cpsr, r3
-  ldr     sp, [r0, #-4]!
-  ldr     lr, [r0, #-4]!
-
-  @ Restore supervisor mode sp, lr & sprs
-  msr     cpsr, r2
-  ldr     sp, [r0, #-4]!
-  ldr     lr, [r0, #-4]!
-  ldr     r5, [r0, #-4]!
-  msr     spsr, r5
-
-  @ Restore irq mode sprs
   msr     cpsr, r4
-  ldr     r5, [r0, #-4]!
-  msr     spsr, r5
 
-  @ Restore r0-r12,r14
-  ldmdb   r0!, {r14}                  @ Load r14/pc
+  ldr     r5, [r0, #-4]!
+  msr     spsr, r5                    @ Restore cprs
+
+  ldmdb   r0!, {r14}                  @ Restore r14/pc
   ldmdb   r0!, {r1}                   @ Load r0
   stmfd   sp!, {r1}                   @ Push r0
-  ldmdb   r0!, {r1-r12}               @ Restore r1-r12,r14
-  ldmfd   sp!, {r0}                   @ Pop r0
+  ldmdb   r0!, {r1-r12}               @ Restore r1-r12
+  ldmfd   sp!, {r0}                   @ Restore r0
 
-  @ Return to task
-  subs    pc, lr, #4
+  subs    pc, lr, #4                  @ interrupt return to task
 
 
   .pool
