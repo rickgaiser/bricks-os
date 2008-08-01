@@ -8,8 +8,9 @@
 
 
 // Assembler isr function calling our "C" isr function
-extern "C" void __isr();
-// Function __isr calls
+//extern "C" void __isr();
+extern "C" void __gba_isr();
+// Function __gba_isr calls
 extern "C" void isr(pt_regs * regs) INTERRUPT_CODE;
 
 
@@ -71,7 +72,7 @@ int
 CIRQ::init()
 {
   // Initialize function pointers
-  REG_INTMAIN    = &::__isr;
+  REG_INTMAIN    = &::__gba_isr;
 #ifdef GBA
 #ifndef CONFIG_DIRECT_ACCESS_KERNEL
   REG_MSGSEND    = &::k_msgSend;
