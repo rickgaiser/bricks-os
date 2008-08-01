@@ -53,13 +53,31 @@ CThreadImpl::init(void * entry, int argc, char * argv[])
   pStack_ = new uint32_t[stack];
   pSvcStack_ = new uint32_t[svcstack];
 
-  threadState_.pc     = reinterpret_cast<uint32_t>(entry) + 8;
-  threadState_.sp     = reinterpret_cast<uint32_t>(pStack_) + stack;
-  threadState_.sp_svc = reinterpret_cast<uint32_t>(pSvcStack_) + svcstack;
-  threadState_.r0     = argc;
-  threadState_.r1     = reinterpret_cast<uint32_t>(argv);
-  threadState_.lr     = reinterpret_cast<uint32_t>(kill);
-  threadState_.cpsr   = CPU_MODE_SYSTEM | CPU_MODE_THUMB;
+  // Registers
+  threadState_.r0        = argc;
+  threadState_.r1        = reinterpret_cast<uint32_t>(argv);
+  threadState_.r2        = 0;
+  threadState_.r3        = 0;
+  threadState_.r4        = 0;
+  threadState_.r5        = 0;
+  threadState_.r6        = 0;
+  threadState_.r7        = 0;
+  threadState_.r8        = 0;
+  threadState_.r9        = 0;
+  threadState_.r10       = 0;
+  threadState_.r11       = 0;
+  threadState_.r12       = 0;
+  // PC
+  threadState_.pc        = reinterpret_cast<uint32_t>(entry) + 8;
+  // IRQ mode banked registerd
+  threadState_.spsr_irq  = CPU_MODE_SYSTEM | CPU_MODE_THUMB; // Mode on irq return
+  // Supervisor mode banked registers
+  threadState_.spsr_svc  = 0;
+  threadState_.sp_svc    = reinterpret_cast<uint32_t>(pSvcStack_) + svcstack;
+  threadState_.lr_svc    = 0;
+  // System mode banked registers (mode we use)
+  threadState_.sp_system = reinterpret_cast<uint32_t>(pStack_) + stack;
+  threadState_.lr_system = reinterpret_cast<uint32_t>(kill);
 
   if(current_thread == 0)
     current_thread = &threadState_;

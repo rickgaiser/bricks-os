@@ -31,15 +31,13 @@ extern "C" void kill();
 struct pt_regs
 {
   // Tasks Registers
-  uint32_t r4, r5, r6, r7, r8, r9, r10, r11;
-  // Tasks registers (saved by bios)
-  uint32_t r0, r1, r2, r3, r12, pc;
-  // IRQ state (banked regs), as we get called by bios
-  uint32_t cpsr;
-  // Supervisor state (banked regs), as the task was when it got interrupted
+  uint32_t r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r0, pc;
+  // IRQ mode banked registers
+  uint32_t spsr_irq;
+  // Supervisor mode banked registers
   uint32_t spsr_svc, lr_svc, sp_svc;
-  // System/User state (banked regs), used by bios
-  uint32_t lr, sp;
+  // System/User mode banked registers
+  uint32_t lr_system, sp_system;
 };
 
 #define CPU_MODE_USER        0x00000010
