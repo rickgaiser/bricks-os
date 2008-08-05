@@ -164,7 +164,13 @@ testFile()
 void
 testFile2()
 {
+#ifdef NDS7
+  CFileStream stream("/dev/keyboard", "/dev/ipc");
+#elif NDS9
+  CFileStream stream("/dev/ipc", "/dev/debug2");
+#else
   CFileStream stream("/dev/keyboard", "/dev/debug");
+#endif
 
   if(stream.start() == true)
   {
