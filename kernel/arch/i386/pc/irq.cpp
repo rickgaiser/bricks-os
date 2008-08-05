@@ -17,6 +17,8 @@
 extern "C" void
 isr(pt_regs * regs)
 {
+  bool bTimeout(false);
+
   //printk("isr 0x%x\n", regs->iIntNumber);
 
   static const char * msg[] =
@@ -128,21 +130,13 @@ isr(pt_regs * regs)
 
     // Handle IRQs
     case 0x20:  // Timer
-      // Task/Thread stuff
-      CTaskManager::updateSleepers();
-      CTaskManager::removeDestroyed();
-      if(CTaskManager::schedule() == true)
-      {
-        // Ack interrupt (normally interrupt manager will do this)
-        outb(EOI_BYTE, PIC_MASTER_BASE);
-        // Load return stack or jump to TSS
-        CTaskManager::pCurrentThread_->impl().runJump();
-      }
-      else
-      {
-        // Ack interrupt (normally interrupt manager will do this)
-        outb(EOI_BYTE, PIC_MASTER_BASE);
-      }
+      // Handle timer interrupt for scheduler separately (faster)
+
+      // Ack interrupt (normally interrupt manager will do this)
+      outb(EOI_BYTE, PIC_MASTER_BASE);
+
+      bTimeout = true;
+
       break;
     case 0x21: // Keyboard
     case 0x22: // Cascade
@@ -208,6 +202,15 @@ isr(pt_regs * regs)
     default:
       panic("Unknown Interrupt(0x%x)\n", regs->iIntNumber);
   };
+
+  // Run scheduler
+  if(CTaskManager::schedule(true) == true)
+  {
+    // Load return stack
+    //CTaskManager::pCurrentThread_->impl().runReturn();
+    // Jump to task
+    CTaskManager::pCurrentThread_->impl().runJump();
+  }
 }
 
 // -----------------------------------------------------------------------------

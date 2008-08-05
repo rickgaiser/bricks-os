@@ -25,7 +25,7 @@ CAChannel::addConnection(IConnection * connection)
 {
   int iRetVal(-1);
 
-  //printk("CChannelUser::addConnection\n");
+  //printk("CAChannel::addConnection\n");
 
   // Find empty connection in channel
   for(int iCOIDX(0); iCOIDX < MAX_IN_CONNECTION_COUNT; iCOIDX++)
@@ -64,6 +64,8 @@ CChannelUser::CChannelUser()
  , pMsgWaiting_(NULL)
  , iState_(CHS_FREE)
 {
+  k_pthread_mutex_init(&mutex_, NULL);
+  k_pthread_cond_init(&stateCond_, NULL);
 }
 
 //------------------------------------------------------------------------------

@@ -139,7 +139,7 @@ class CTaskManager
 public:
   static void updateSleepers();
   static void removeDestroyed();
-  static bool schedule();
+  static bool schedule(bool timeout = false);
   static CTask * getTaskFromPID(pid_t pid);
 
   static CTask * pCurrentTask_;

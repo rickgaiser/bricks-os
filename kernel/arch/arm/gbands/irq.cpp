@@ -19,24 +19,22 @@ extern "C" void isr(pt_regs * regs) INTERRUPT_CODE;
 extern "C" void
 isr(pt_regs * regs)
 {
+  bool bTimeout(false);
   // Find out who triggered the interrupt
   unsigned long iFlags(REG_IF & REG_IE);
 
   //printk("isr(0x%x)\n", iFlags);
   //printk(".");
 
-  // Handle timer interrupt for scheduler
+  // Handle timer interrupt for scheduler separately (faster)
   if(iFlags & (1 << 5))
   {
     // Remove flag
     iFlags &= ~(1 << 5);
     // Acknowledge interrupt
     REG_IF |= (1 << 5);
-    // Task/Thread stuff
-    CTaskManager::updateSleepers();
-    CTaskManager::removeDestroyed();
-    if(CTaskManager::schedule() == true)
-      CTaskManager::pCurrentThread_->impl().runReturn();
+
+    bTimeout = true;
   }
 
   // Handle other interrupts
@@ -47,9 +45,18 @@ isr(pt_regs * regs)
       if(iFlags & (1 << i))
       {
         // Interrupt found! Handle it!
-        CInterruptManager::isr(i, 0);
+        CInterruptManager::isr(i, regs);
       }
     }
+  }
+
+  // Run the scheduler
+  if(CTaskManager::schedule(bTimeout) == true)
+  {
+    // Load return stack
+    CTaskManager::pCurrentThread_->impl().runReturn();
+    // Jump to task
+    //CTaskManager::pCurrentThread_->impl().runJump();
   }
 }
 

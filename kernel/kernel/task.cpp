@@ -559,16 +559,26 @@ CTaskManager::removeDestroyed()
 
 // -----------------------------------------------------------------------------
 bool
-CTaskManager::schedule()
+CTaskManager::schedule(bool timeout)
 {
+  bool bSchedule(false);
   CThread * pPrevThread = pCurrentThread_;
 
   //printk("CTaskManager::schedule\n");
 
-  // Run the first task in the ready queue
+  // FIXME: We can only use the timeout (100Hz) for timed waits
+  if(timeout == true)
+  {
+    CTaskManager::updateSleepers();
+    // Remove destroyed thread
+    CTaskManager::removeDestroyed();
+  }
+
+  // Run the first thread in the ready queue
   if(TAILQ_FIRST(&ready_queue) != NULL)
     TAILQ_FIRST(&ready_queue)->state(TS_RUNNING);
 
+  // No thread to run? Run idle thread!
   if(pCurrentThread_ == NULL)
   {
     if(pIdleThread_ != NULL)
@@ -577,7 +587,24 @@ CTaskManager::schedule()
       panic("CTaskManager::schedule: ERROR: No task to run\n");
   }
 
-  return pPrevThread != pCurrentThread_;
+  // Did we get another thread? Update timeout timer
+  if(pPrevThread != pCurrentThread_)
+  {
+    if(pCurrentThread_ == pIdleThread_)
+    {
+      // Disable the timeout timer
+      //timer::disable();
+    }
+    else
+    {
+      // Enable and reset timout timer
+      //timer::enable(100.0f); // 100Hz
+    }
+
+    bSchedule = true;
+  }
+
+  return bSchedule;
 }
 
 // -----------------------------------------------------------------------------

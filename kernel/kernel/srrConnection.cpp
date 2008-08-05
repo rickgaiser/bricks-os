@@ -13,6 +13,8 @@ CConnectionUser::CConnectionUser(CChannelUser * pChannel)
  , iReceiveID_(-1)
  , iState_(COS_FREE)
 {
+  k_pthread_mutex_init(&mutex_, NULL);
+  k_pthread_cond_init(&stateCond_, NULL);
 }
 
 //------------------------------------------------------------------------------
@@ -155,6 +157,7 @@ CConnectionUser::msgReply(int iStatus, const void * pReplyMsg, int iReplySize)
 CConnectionKernel::CConnectionKernel(CAChannelKernel * pChannel)
  : channel_(pChannel)
 {
+  k_pthread_mutex_init(&mutex_, NULL);
 }
 
 //------------------------------------------------------------------------------
