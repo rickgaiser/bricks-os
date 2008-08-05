@@ -2,9 +2,10 @@
 #define GBANDS_VIDEODEVICE_H
 
 
-#include "kernel/videoManager.h"
 #include "kernel/2dRenderer.h"
 #include "kernel/interruptManager.h"
+#include "kernel/pthread_k.h"
+#include "kernel/videoManager.h"
 #include "asm/arch/memory.h"
 
 
@@ -55,7 +56,8 @@ private:
   uint8_t iSurfacesFree_;
   vuint32_t iFrameCount_; // volatile, becouse the isr updates it
 
-  volatile bool bSwap_; // volatile, becouse the isr updates it
+  pthread_mutex_t mutex_;       // The locking mutex
+  pthread_cond_t condVSync_;    // State change condition
 
   const SVideoMode * pCurrentMode_;
 };
