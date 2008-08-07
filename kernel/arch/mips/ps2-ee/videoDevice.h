@@ -4,6 +4,7 @@
 
 #include "kernel/videoManager.h"
 #include "kernel/fs.h"
+#include "dma.h"
 #include "gif.h"
 
 

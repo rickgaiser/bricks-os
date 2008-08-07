@@ -7,21 +7,66 @@
 #include "asm/arch/registers.h"
 
 
-#define DMA_CHANNEL_VIF0        0x00
-#define DMA_CHANNEL_VIF1        0x01
-#define DMA_CHANNEL_GIF         0x02
-#define DMA_CHANNEL_fromIPU     0x03
-#define DMA_CHANNEL_toIPU       0x04
-#define DMA_CHANNEL_SIF0        0x05
-#define DMA_CHANNEL_SIF1        0x06
-#define DMA_CHANNEL_SIF2        0x07
-#define DMA_CHANNEL_fromSPR     0x08
-#define DMA_CHANNEL_toSPR       0x09
+namespace DMAC
+{
+  namespace Channel
+  {
+    enum Id
+    {
+      VIF0    = 0,
+      VIF1    = 1,
+      GIF     = 2,
+      fromIPU = 3,
+      toIPU   = 4,
+      SIF0    = 5,
+      SIF1    = 6,
+      SIF2    = 7,
+      fromSPR = 8,
+      toSPR   = 9
+    };
+    enum Direction
+    {
+      toMemory    = 0,
+      fromMemory  = 1,
+    };
+    enum Mode
+    {
+      normal      = 0,
+      chain       = 1,
+      interactive = 2
+    };
+  };
 
-//#define DMA_FLAG_NORMAL         0x00
-//#define DMA_FLAG_CHAIN          0x01
-//#define DMA_FLAG_SCRATCHPAD     0x02
-//#define DMA_FLAG_INTERRUPTSAFE  0x04
+  namespace Tag
+  {
+    enum Id
+    {
+      refe = 0,
+      cnt  = 1,
+      next = 2,
+      ref  = 3,
+      refs = 4,
+      call = 5,
+      ret  = 6,
+      end  = 7
+    };
+  };
+};
+typedef DMAC::Channel::Id EDMAChannel;
+
+typedef struct
+{
+  uint64_t QWC  :16; // Quad Word Count
+  uint64_t pad  :10; // Not used
+  uint64_t PCE  : 2; // Priority Control Enable
+  uint64_t ID   : 3; // ID: tag type
+  uint64_t IRQ  : 1; // Interrupt on end of packet
+  uint64_t ADDR :31; // Address
+  uint64_t SPR  : 1; // Scratchpad/Main Memory
+  uint32_t opt1;
+  uint32_t opt2;
+} SDMATag __attribute__ ((aligned(16)));
+
 
 #define DMA_MAX_QWTRANSFER  (16 * 1024)                  // Max amount of qwords (16 bytes / 128 bits) to transfer  (16K)
 #define DMA_MAX_TRANSFER    (DMA_MAX_QWTRANSFER * 16)    // Max amount of bytes to transfer                        (256KiB)
@@ -30,15 +75,73 @@
 // Initialize the DMA comtroller
 inline void dmaInitialize();
 // Inititialize DMA channel
-inline void dmaInitialize(int channel, dmaCallBack handler);
+inline void dmaInitialize(EDMAChannel channel, dmaCallBack handler);
 // Shutdown DMA channel
-inline void dmaShutdown  (int channel);
+inline void dmaShutdown  (EDMAChannel channel);
 // Send data over channel
-inline void dmaSendASync (int channel, void * data, int size);
-// Send data over channel, and wait for transfer to complete
-inline void dmaSendSync  (int channel, void * data, int size);
+inline void dmaSend      (EDMAChannel channel, void * data, int size, bool chain = false);
 // Wait for trasfer to complete
-inline void dmaWait      (int channel);
+inline void dmaWait      (EDMAChannel channel);
+
+
+// -----------------------------------------------------------------------------
+class CDMAPacket
+{
+public:
+  CDMAPacket(uint32_t qwSize, EDMAChannel channelId);
+  CDMAPacket(void * buffer, uint32_t qwSize, EDMAChannel channelId);
+  virtual ~CDMAPacket();
+
+  // Reset packet
+  inline void reset();
+
+  // Add data to packet
+  template<class T> inline void add(const T data);
+
+  // Send data to dma channel
+  virtual void send(bool waitComplete = true);
+
+//protected:
+//  inline void setSize();
+
+protected:
+  uint8_t   * pRawData_;      // Not aligned data
+  uint8_t   * pData_;         // Aligned data
+  uint8_t   * pCurrent_;      // Pointer to next free position
+  uint8_t   * pEnd_;          // Pointer to end of data
+  uint32_t    iQWSize_;       // Size of data in QWords
+  bool        bHasOwnership_; // Delete buffer in destructor if we own the buffer
+  EDMAChannel eChannelId_;    // DMA channel ID
+};
+
+// -----------------------------------------------------------------------------
+// Source Chain DMA packets
+class CSCDMAPacket
+ : public CDMAPacket
+{
+public:
+  CSCDMAPacket(uint32_t qwSize, EDMAChannel channelId);
+  CSCDMAPacket(void * buffer, uint32_t qwSize, EDMAChannel channelId);
+  virtual ~CSCDMAPacket();
+/*
+  // DMA Tags in Source Chain mode
+  inline CSCDMAPacket & cnt ();
+  inline CSCDMAPacket & next(const SDMATag * nextTag);
+  inline CSCDMAPacket & ref (const void * data, uint32_t qwSize);
+  inline CSCDMAPacket & refs(const void * data, uint32_t qwSize);
+  inline CSCDMAPacket & refe(const void * data, uint32_t qwSize);
+  inline CSCDMAPacket & call(const SDMATag * nextTag);
+  inline CSCDMAPacket & call(const CSCDMAPacket & packet);
+  inline CSCDMAPacket & ret ();
+  inline CSCDMAPacket & end ();
+
+  // Close DMA Tag in Source Chain mode (sets data size in tag)
+  inline CSCDMAPacket & closeTag();
+
+  // Pad to 128bit (for faster operation)
+  CSCDmaPacket & pad128(uint32_t data);
+*/
+};
 
 
 #include "dma.inl"

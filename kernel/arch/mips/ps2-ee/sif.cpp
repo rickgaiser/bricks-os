@@ -117,7 +117,7 @@ CIOP::~CIOP()
 {
   if(bInitialized_ == true)
   {
-    dmaShutdown(DMA_CHANNEL_SIF0);
+    dmaShutdown(DMAC::Channel::SIF0);
     bInitialized_ = false;
   }
 }
@@ -159,7 +159,7 @@ CIOP::init()
   if(!(REG_DMA_SIF0_CHCR & CHCR_STR))
     bios::SifSetDChain();
 
-  dmaInitialize(DMA_CHANNEL_SIF0, callBackHandler);
+  dmaInitialize(DMAC::Channel::SIF0, callBackHandler);
   bInitialized_ = true;
 
   sCmdData.iopbuf = (void *)bios::SifGetReg(0x80000000);

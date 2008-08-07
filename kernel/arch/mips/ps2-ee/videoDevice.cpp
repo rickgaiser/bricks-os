@@ -195,15 +195,12 @@ CPS2Surface::~CPS2Surface()
 CAPS2Renderer::CAPS2Renderer(CSurface * surface)
  : IRenderer()
  , pSurface_(NULL)
- , packet_(1000)
+ , packet_(1000, DMAC::Channel::GIF)
  , bDataWaiting_(false)
 {
   // Reset the packet
   packet_.reset();
-  // Set tag
   packet_.tagAd(1, 0, 0, 0);
-  // Preserve this data after sending
-  packet_.headerSize(1);
 
   setSurface(surface);
 }
@@ -223,16 +220,10 @@ CAPS2Renderer::setSurface(CSurface * surface)
 
   if(pSurface_ != NULL)
   {
-    // Reset the packet
-    packet_.reset();
-    // Set tag
-    packet_.tagAd(1, 0, 0, 0);
-    // Set destination
-    packet_.data(frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.width >> 6, pSurface_->psm_, 0));
-    // Set clipping
-    packet_.data(scissor_1, GS_SCISSOR(0, pSurface_->mode.width, 0, pSurface_->mode.height));
-    // Preserve this data after sending
-    packet_.headerSize(3);
+    flush();
+
+    packet_.addSetGSReg(frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.width >> 6, pSurface_->psm_, 0));
+    packet_.addSetGSReg(scissor_1, GS_SCISSOR(0, pSurface_->mode.width, 0, pSurface_->mode.height));
   }
 }
 
@@ -251,6 +242,8 @@ CAPS2Renderer::flush()
   {
     // Send packet to GS
     packet_.send();
+    packet_.reset();
+    packet_.tagAd(1, 0, 0, 0);
     bDataWaiting_ = false;
   }
 }
@@ -294,9 +287,9 @@ CPS22DRenderer::setPixel(int x, int y)
   x += GS_X_BASE;
   y += GS_Y_BASE;
 
-  packet_.data(prim, GS_PRIM(PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.data(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  packet_.data(xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  packet_.addSetGSReg(prim, GS_PRIM(PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.addSetGSReg(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.addSetGSReg(xyz2, GS_XYZ2(x<<4, y<<4, 0));
   bDataWaiting_ = true;
 }
 
@@ -314,10 +307,10 @@ CPS22DRenderer::fillRect(int x, int y, unsigned int width, unsigned int height)
   x += GS_X_BASE;
   y += GS_Y_BASE;
 
-  packet_.data(prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.data(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  packet_.data(xyz2, GS_XYZ2(x<<4, y<<4, 0));
-  packet_.data(xyz2, GS_XYZ2((x+width)<<4, (y+height)<<4, 0));
+  packet_.addSetGSReg(prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.addSetGSReg(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.addSetGSReg(xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  packet_.addSetGSReg(xyz2, GS_XYZ2((x+width)<<4, (y+height)<<4, 0));
   bDataWaiting_ = true;
 }
 
@@ -330,10 +323,10 @@ CPS22DRenderer::drawLine(int x1, int y1, int x2, int y2)
   x2 += GS_X_BASE;
   y2 += GS_Y_BASE;
 
-  packet_.data(prim, GS_PRIM(PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.data(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  packet_.data(xyz2, GS_XYZ2(x1<<4, y1<<4, 0));
-  packet_.data(xyz2, GS_XYZ2(x2<<4, y2<<4, 0));
+  packet_.addSetGSReg(prim, GS_PRIM(PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.addSetGSReg(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.addSetGSReg(xyz2, GS_XYZ2(x1<<4, y1<<4, 0));
+  packet_.addSetGSReg(xyz2, GS_XYZ2(x2<<4, y2<<4, 0));
   bDataWaiting_ = true;
 }
 
@@ -358,13 +351,13 @@ CPS22DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
   x += GS_X_BASE;
   y += GS_Y_BASE;
 
-  packet_.data(prim, GS_PRIM(PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.data(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  packet_.data(xyz2, GS_XYZ2(x<<4, y<<4, 0));
-  packet_.data(xyz2, GS_XYZ2(x+width<<4, y<<4, 0));
-  packet_.data(xyz2, GS_XYZ2(x+width<<4, y+height<<4, 0));
-  packet_.data(xyz2, GS_XYZ2(x<<4, y+height<<4, 0));
-  packet_.data(xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  packet_.addSetGSReg(prim, GS_PRIM(PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.addSetGSReg(rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.addSetGSReg(xyz2, GS_XYZ2(x<<4, y<<4, 0));
+  packet_.addSetGSReg(xyz2, GS_XYZ2(x+width<<4, y<<4, 0));
+  packet_.addSetGSReg(xyz2, GS_XYZ2(x+width<<4, y+height<<4, 0));
+  packet_.addSetGSReg(xyz2, GS_XYZ2(x<<4, y+height<<4, 0));
+  packet_.addSetGSReg(xyz2, GS_XYZ2(x<<4, y<<4, 0));
   bDataWaiting_ = true;
 }
 
@@ -373,17 +366,14 @@ CPS22DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
 CPS2VideoDevice::CPS2VideoDevice()
  : CAVideoDevice()
  , pSurface_(NULL)
- , packet_(50)
+ , packet_(50, DMAC::Channel::GIF)
  , pCurrentMode_(NULL)
  , pCurrentPS2Mode_(NULL)
  , iFrameCount_(0)
 {
   // Reset the packet
   packet_.reset();
-  // Set tag
   packet_.tagAd(1, 0, 0, 0);
-  // Preserve this data after sending
-  packet_.headerSize(1);
 }
 
 //---------------------------------------------------------------------------
@@ -470,14 +460,16 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
   //REG_GS_DISPLAY2 = ...;
 
   // Use drawing parameters from PRIM register
-  packet_.data(prmodecont, 1);
+  packet_.addSetGSReg(prmodecont, 1);
   // Setup frame buffers. Point to 0 initially.
-  packet_.data(frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+  packet_.addSetGSReg(frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
   // Displacement between Primitive and Window coordinate systems.
-  packet_.data(xyoffset_1, GS_XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
+  packet_.addSetGSReg(xyoffset_1, GS_XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
   // Clip to frame buffer.
-  packet_.data(scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
+  packet_.addSetGSReg(scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
   packet_.send();
+  packet_.reset();
+  packet_.tagAd(1, 0, 0, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -566,15 +558,17 @@ CPS2VideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface 
   CPS2Surface * pDest   = (CPS2Surface *)dest;
   CPS2Surface * pSource = (CPS2Surface *)source;
 
-  packet_.data(bitbltbuf, GS_BITBLTBUF(
-                            ((uint32_t)pSource->p)>>8,
-                            pSource->mode.width>>6,
-                            pSource->psm_,
-                            ((uint32_t)pDest->p)>>8,
-                            pDest->mode.width>>6,
-                            pDest->psm_));
-  packet_.data(trxpos,    GS_TRXPOS(sx, sy, dx, dy, 0));
-  packet_.data(trxreg,    GS_TRXREG(w, h));
-  packet_.data(trxdir,    GS_TRXDIR(XDIR_GS_GS));
+  packet_.addSetGSReg(bitbltbuf, GS_BITBLTBUF(
+                                 ((uint32_t)pSource->p)>>8,
+                                 pSource->mode.width>>6,
+                                 pSource->psm_,
+                                 ((uint32_t)pDest->p)>>8,
+                                 pDest->mode.width>>6,
+                                 pDest->psm_));
+  packet_.addSetGSReg(trxpos,    GS_TRXPOS(sx, sy, dx, dy, 0));
+  packet_.addSetGSReg(trxreg,    GS_TRXREG(w, h));
+  packet_.addSetGSReg(trxdir,    GS_TRXDIR(XDIR_GS_GS));
   packet_.send();
+  packet_.reset();
+  packet_.tagAd(1, 0, 0, 0);
 }

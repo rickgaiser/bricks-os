@@ -4,8 +4,8 @@
 #include "dma.h"
 
 
-uint64_t gifData_Data[50 * 2 + 2] __attribute__((aligned(64)));
-CGIFPacket gifData(50, gifData_Data);
+uint64_t gifData_Data[50 * 2] __attribute__((aligned(64)));
+CGIFPacket gifData(gifData_Data, 50, DMAC::Channel::GIF);
 
 
 //---------------------------------------------------------------------------
@@ -17,11 +17,12 @@ ee_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, u
 
   // BitBlt from EE to GS
   gifData.tagAd(1, 0, 0, 0);
-  gifData.data(bitbltbuf, GS_BITBLTBUF(0, 0, 0, daddr >> 8, dw >> 6, dpsm));
-  gifData.data(trxpos,    GS_TRXPOS(0, 0, dx, dy, 0));
-  gifData.data(trxreg,    GS_TRXREG(w, h));
-  gifData.data(trxdir,    GS_TRXDIR(XDIR_EE_GS));
+  gifData.addSetGSReg(bitbltbuf, GS_BITBLTBUF(0, 0, 0, daddr >> 8, dw >> 6, dpsm));
+  gifData.addSetGSReg(trxpos,    GS_TRXPOS(0, 0, dx, dy, 0));
+  gifData.addSetGSReg(trxreg,    GS_TRXREG(w, h));
+  gifData.addSetGSReg(trxdir,    GS_TRXDIR(XDIR_EE_GS));
   gifData.send();
+  gifData.reset();
 
   // Send image data
   switch(dpsm)
@@ -49,8 +50,9 @@ ee_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, u
 
   // Access the TEXFLUSH register with anything to flush the texture
   gifData.tagAd(1, 0, 0, 0);
-  gifData.data(texflush, 0x42);
+  gifData.addSetGSReg(texflush, 0x42);
   gifData.send();
+  gifData.reset();
 }
 
 //---------------------------------------------------------------------------
@@ -59,11 +61,12 @@ gs_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, u
 {
   gifData.reset();
   gifData.tagAd(1, 0, 0, 0);
-  gifData.data(bitbltbuf, GS_BITBLTBUF(source>>8, sw>>6, spsm, daddr>>8, dw>>6, dpsm));
-  gifData.data(trxpos,    GS_TRXPOS(sx, sy, dx, dy, 0));
-  gifData.data(trxreg,    GS_TRXREG(w, h));
-  gifData.data(trxdir,    GS_TRXDIR(XDIR_GS_GS));
+  gifData.addSetGSReg(bitbltbuf, GS_BITBLTBUF(source>>8, sw>>6, spsm, daddr>>8, dw>>6, dpsm));
+  gifData.addSetGSReg(trxpos,    GS_TRXPOS(sx, sy, dx, dy, 0));
+  gifData.addSetGSReg(trxreg,    GS_TRXREG(w, h));
+  gifData.addSetGSReg(trxdir,    GS_TRXDIR(XDIR_GS_GS));
   gifData.send();
+  gifData.reset();
 }
 
 //---------------------------------------------------------------------------

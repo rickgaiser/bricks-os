@@ -38,7 +38,7 @@ dmaInitialize()
 
 // -----------------------------------------------------------------------------
 void
-dmaInitialize(int channel, dmaCallBack handler)
+dmaInitialize(EDMAChannel channel, dmaCallBack handler)
 {
   if(dmaChannel_[channel].initialized == false)
   {
@@ -55,7 +55,7 @@ dmaInitialize(int channel, dmaCallBack handler)
 
 // -----------------------------------------------------------------------------
 void
-dmaShutdown(int channel)
+dmaShutdown(EDMAChannel channel)
 {
   if(dmaChannel_[channel].initialized == true)
   {
@@ -75,26 +75,47 @@ dmaShutdown(int channel)
 
 // -----------------------------------------------------------------------------
 void
-dmaSendASync(int channel, void * data, int size)
+dmaSend(EDMAChannel channel, void * data, int size, bool chain)
 {
   bios::_SyncDCache(data, (uint8_t *)data + size);
 
-  *dmaChannel_[channel].qwc  = DMA_QWC(size);
-  *dmaChannel_[channel].madr = DMA_MADR(data, 0);
-  *dmaChannel_[channel].chcr = DMA_CHCR(1, 0, 0, 0, 0, 1, 0);
+  if(chain == false)
+  {
+    *dmaChannel_[channel].qwc  = DMA_QWC(size);
+    *dmaChannel_[channel].madr = DMA_MADR(data, 0);
+    *dmaChannel_[channel].tadr = DMA_TADR(0, 0);
+    *dmaChannel_[channel].chcr = DMA_CHCR(DMAC::Channel::fromMemory, DMAC::Channel::normal, 0, 0, 0, 1, 0);
+  }
+  else
+  {
+    *dmaChannel_[channel].qwc  = DMA_QWC(0);
+    *dmaChannel_[channel].madr = DMA_MADR(0, 0);
+    *dmaChannel_[channel].tadr = DMA_TADR(data, 0);
+    *dmaChannel_[channel].chcr = DMA_CHCR(DMAC::Channel::fromMemory, DMAC::Channel::chain,  0, 0, 0, 1, 0);
+  }
 }
 
 // -----------------------------------------------------------------------------
 void
-dmaSendSync(int channel, void * data, int size)
-{
-  dmaSendASync(channel, data, size);
-  dmaWait(channel);
-}
-
-// -----------------------------------------------------------------------------
-void
-dmaWait(int channel)
+dmaWait(EDMAChannel channel)
 {
   while(*dmaChannel_[channel].chcr & (1<<8));
+}
+
+//-------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+inline void
+CDMAPacket::reset()
+{
+  pCurrent_ = pData_;
+}
+
+//-------------------------------------------------------------------------
+#define ADD_DATA(__TYPE, __DATA) *((__TYPE *)pCurrent_) = __DATA; pCurrent_ += sizeof(__TYPE);
+
+//-------------------------------------------------------------------------
+template<class T> inline void
+CDMAPacket::add(const T data)
+{
+  ADD_DATA(T, data);
 }
