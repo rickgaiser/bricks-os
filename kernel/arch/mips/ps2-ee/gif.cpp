@@ -7,12 +7,14 @@
 //-------------------------------------------------------------------------
 CGIFPacket::CGIFPacket(uint32_t qwSize, EDMAChannel channelId)
  : CSCDMAPacket(qwSize, channelId)
+ , pGIFTag_(NULL)
 {
 }
 
 //-------------------------------------------------------------------------
 CGIFPacket::CGIFPacket(void * buffer, uint32_t qwSize, EDMAChannel channelId)
  : CSCDMAPacket(buffer, qwSize, channelId)
+ , pGIFTag_(NULL)
 {
 }
 

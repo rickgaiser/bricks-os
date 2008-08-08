@@ -104,7 +104,7 @@ dmaWait(EDMAChannel channel)
 
 //-------------------------------------------------------------------------
 //-------------------------------------------------------------------------
-inline void
+void
 CDMAPacket::reset()
 {
   pCurrent_ = pData_;
@@ -114,8 +114,53 @@ CDMAPacket::reset()
 #define ADD_DATA(__TYPE, __DATA) *((__TYPE *)pCurrent_) = __DATA; pCurrent_ += sizeof(__TYPE);
 
 //-------------------------------------------------------------------------
-template<class T> inline void
+template<class T> void
 CDMAPacket::add(const T data)
 {
   ADD_DATA(T, data);
+}
+
+//-------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+#define DMA_SC_TAG(QWC, PCE, ID, IRQ, ADDR, SPR) \
+  ((uint64_t)(QWC)    <<  0)  | \
+  ((uint64_t)(PCE)    << 26)  | \
+  ((uint64_t)(ID)     << 28)  | \
+  ((uint64_t)(IRQ)    << 31)  | \
+  ((uint64_t)(ADDR)   << 32)  | \
+  ((uint64_t)(SPR)    << 63)
+
+//-------------------------------------------------------------------------
+void
+CSCDMAPacket::reset()
+{
+  CDMAPacket::reset();
+
+  pSCTag_ = NULL;
+}
+
+//-------------------------------------------------------------------------
+CSCDMAPacket &
+CSCDMAPacket::scTagOpenEnd()
+{
+  if(pSCTag_ == NULL)
+  {
+    pSCTag_ = (SDMATag *)pCurrent_;
+    this->add(DMA_SC_TAG(0, 0, DMAC::Tag::end, 0, 0, false));
+  }
+
+  return *this;
+}
+
+//-------------------------------------------------------------------------
+CSCDMAPacket &
+CSCDMAPacket::scTagClose()
+{
+  if((pSCTag_ != NULL) && (((uint32_t)pCurrent_ & 0xf) == 0))
+  {
+    pSCTag_->QWC = ((uint32_t)pCurrent_ - (uint32_t)pSCTag_) / 16 - 1;
+    pSCTag_ = NULL;
+  }
+
+  return *this;
 }

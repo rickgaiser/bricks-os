@@ -123,24 +123,34 @@ public:
   CSCDMAPacket(uint32_t qwSize, EDMAChannel channelId);
   CSCDMAPacket(void * buffer, uint32_t qwSize, EDMAChannel channelId);
   virtual ~CSCDMAPacket();
-/*
+
+  // Reset packet
+  inline void reset();
+
+  // Send data to dma channel
+  virtual void send(bool waitComplete = true);
+
   // DMA Tags in Source Chain mode
-  inline CSCDMAPacket & cnt ();
-  inline CSCDMAPacket & next(const SDMATag * nextTag);
-  inline CSCDMAPacket & ref (const void * data, uint32_t qwSize);
-  inline CSCDMAPacket & refs(const void * data, uint32_t qwSize);
-  inline CSCDMAPacket & refe(const void * data, uint32_t qwSize);
-  inline CSCDMAPacket & call(const SDMATag * nextTag);
-  inline CSCDMAPacket & call(const CSCDMAPacket & packet);
-  inline CSCDMAPacket & ret ();
-  inline CSCDMAPacket & end ();
+/*
+  inline CSCDMAPacket & scTagOpenCnt ();
+  inline CSCDMAPacket & scTagOpenNext(const SDMATag * nextTag);
+  inline CSCDMAPacket & scTagOpenRef (const void * data, uint32_t qwSize);
+  inline CSCDMAPacket & scTagOpenRefs(const void * data, uint32_t qwSize);
+  inline CSCDMAPacket & scTagOpenRefe(const void * data, uint32_t qwSize);
+  inline CSCDMAPacket & scTagOpenCall(const SDMATag * nextTag);
+  inline CSCDMAPacket & scTagOpenCall(const CSCDMAPacket & packet);
+  inline CSCDMAPacket & scTagOpenRet ();
+*/
+  inline CSCDMAPacket & scTagOpenEnd ();
 
   // Close DMA Tag in Source Chain mode (sets data size in tag)
-  inline CSCDMAPacket & closeTag();
+  inline CSCDMAPacket & scTagClose();
 
   // Pad to 128bit (for faster operation)
-  CSCDmaPacket & pad128(uint32_t data);
-*/
+//  CSCDmaPacket & pad128(uint32_t data);
+
+protected:
+  SDMATag * pSCTag_;
 };
 
 

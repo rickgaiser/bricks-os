@@ -49,18 +49,13 @@ CDMAPacket::~CDMAPacket()
 void
 CDMAPacket::send(bool waitComplete)
 {
-  // Reset total send size of data
-  ((uint64_t *)pData_)[0] &= (~0x7fff);
-  // Calculate amount of qwords to transfer
-  uint32_t size = ((uint32_t)pCurrent_ - (uint32_t)pData_) / 16;
-  // Set total send size of data (-1)
-  ((uint64_t *)pData_)[0] |= size - 1;
+  uint32_t qwc = ((uint32_t)pCurrent_ - (uint32_t)pData_) / 16 - 1;
 
   // Flush caches before transfer
   bios::FlushCache(0);
 
   // Send
-  dmaSend(eChannelId_, pData_, size);
+  dmaSend(eChannelId_, pData_, qwc, false);
 
   // Wait for completion
   if(waitComplete == true)
@@ -71,16 +66,35 @@ CDMAPacket::send(bool waitComplete)
 //-------------------------------------------------------------------------
 CSCDMAPacket::CSCDMAPacket(uint32_t qwSize, EDMAChannel channelId)
  : CDMAPacket(qwSize, channelId)
+ , pSCTag_(NULL)
 {
 }
 
 //-------------------------------------------------------------------------
 CSCDMAPacket::CSCDMAPacket(void * buffer, uint32_t qwSize, EDMAChannel channelId)
  : CDMAPacket(buffer, qwSize, channelId)
+ , pSCTag_(NULL)
 {
 }
 
 //-------------------------------------------------------------------------
 CSCDMAPacket::~CSCDMAPacket()
 {
+}
+
+//-------------------------------------------------------------------------
+void
+CSCDMAPacket::send(bool waitComplete)
+{
+  uint32_t qwc = ((uint32_t)pCurrent_ - (uint32_t)pData_) / 16 - 1;
+
+  // Flush caches before transfer
+  bios::FlushCache(0);
+
+  // Send
+  dmaSend(eChannelId_, pData_, qwc, true);
+
+  // Wait for completion
+  if(waitComplete == true)
+    dmaWait(eChannelId_);
 }
