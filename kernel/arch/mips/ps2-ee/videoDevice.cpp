@@ -198,9 +198,10 @@ CAPS2Renderer::CAPS2Renderer(CSurface * surface)
  , packet_(1000, DMAC::Channel::GIF)
  , bDataWaiting_(false)
 {
-  // Reset the packet
+  // Create new packet
   packet_.reset();
-  packet_.tagAd(1, 0, 0, 0);
+  packet_.scTagOpenEnd();
+  packet_.gifTagOpen();
 
   setSurface(surface);
 }
@@ -240,10 +241,18 @@ CAPS2Renderer::flush()
 {
   if(bDataWaiting_ == true)
   {
+    // Close GIF & DMA tags
+    packet_.gifTagClose();
+    packet_.scTagClose();
+
     // Send packet to GS
     packet_.send();
+
+    // Create new packet
     packet_.reset();
-    packet_.tagAd(1, 0, 0, 0);
+    packet_.scTagOpenEnd();
+    packet_.gifTagOpen();
+
     bDataWaiting_ = false;
   }
 }
@@ -371,9 +380,6 @@ CPS2VideoDevice::CPS2VideoDevice()
  , pCurrentPS2Mode_(NULL)
  , iFrameCount_(0)
 {
-  // Reset the packet
-  packet_.reset();
-  packet_.tagAd(1, 0, 0, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -459,17 +465,20 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
   // Setup read circuit 2
   //REG_GS_DISPLAY2 = ...;
 
-  // Use drawing parameters from PRIM register
-  packet_.addSetGSReg(prmodecont, 1);
-  // Setup frame buffers. Point to 0 initially.
-  packet_.addSetGSReg(frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
-  // Displacement between Primitive and Window coordinate systems.
-  packet_.addSetGSReg(xyoffset_1, GS_XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
-  // Clip to frame buffer.
-  packet_.addSetGSReg(scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
+  packet_.scTagOpenEnd();
+    packet_.gifTagOpen();
+      // Use drawing parameters from PRIM register
+      packet_.addSetGSReg(prmodecont, 1);
+      // Setup frame buffers. Point to 0 initially.
+      packet_.addSetGSReg(frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+      // Displacement between Primitive and Window coordinate systems.
+      packet_.addSetGSReg(xyoffset_1, GS_XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
+      // Clip to frame buffer.
+      packet_.addSetGSReg(scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
+    packet_.gifTagClose();
+  packet_.scTagClose();
   packet_.send();
   packet_.reset();
-  packet_.tagAd(1, 0, 0, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -558,17 +567,20 @@ CPS2VideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface 
   CPS2Surface * pDest   = (CPS2Surface *)dest;
   CPS2Surface * pSource = (CPS2Surface *)source;
 
-  packet_.addSetGSReg(bitbltbuf, GS_BITBLTBUF(
-                                 ((uint32_t)pSource->p)>>8,
-                                 pSource->mode.width>>6,
-                                 pSource->psm_,
-                                 ((uint32_t)pDest->p)>>8,
-                                 pDest->mode.width>>6,
-                                 pDest->psm_));
-  packet_.addSetGSReg(trxpos,    GS_TRXPOS(sx, sy, dx, dy, 0));
-  packet_.addSetGSReg(trxreg,    GS_TRXREG(w, h));
-  packet_.addSetGSReg(trxdir,    GS_TRXDIR(XDIR_GS_GS));
+  packet_.scTagOpenEnd();
+    packet_.gifTagOpen();
+      packet_.addSetGSReg(bitbltbuf, GS_BITBLTBUF(
+                                     ((uint32_t)pSource->p)>>8,
+                                     pSource->mode.width>>6,
+                                     pSource->psm_,
+                                     ((uint32_t)pDest->p)>>8,
+                                     pDest->mode.width>>6,
+                                     pDest->psm_));
+      packet_.addSetGSReg(trxpos,    GS_TRXPOS(sx, sy, dx, dy, 0));
+      packet_.addSetGSReg(trxreg,    GS_TRXREG(w, h));
+      packet_.addSetGSReg(trxdir,    GS_TRXDIR(XDIR_GS_GS));
+    packet_.gifTagClose();
+  packet_.scTagClose();
   packet_.send();
   packet_.reset();
-  packet_.tagAd(1, 0, 0, 0);
 }

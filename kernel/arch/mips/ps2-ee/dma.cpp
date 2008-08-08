@@ -49,7 +49,7 @@ CDMAPacket::~CDMAPacket()
 void
 CDMAPacket::send(bool waitComplete)
 {
-  uint32_t qwc = ((uint32_t)pCurrent_ - (uint32_t)pData_) / 16 - 1;
+  uint32_t qwc = ((uint32_t)pCurrent_ - (uint32_t)pData_) / 16;
 
   // Flush caches before transfer
   bios::FlushCache(0);
@@ -86,7 +86,7 @@ CSCDMAPacket::~CSCDMAPacket()
 void
 CSCDMAPacket::send(bool waitComplete)
 {
-  uint32_t qwc = ((uint32_t)pCurrent_ - (uint32_t)pData_) / 16 - 1;
+  uint32_t qwc = ((uint32_t)pCurrent_ - (uint32_t)pData_) / 16;
 
   // Flush caches before transfer
   bios::FlushCache(0);

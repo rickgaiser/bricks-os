@@ -131,16 +131,14 @@ public:
   virtual void send(bool waitComplete = true);
 
   // DMA Tags in Source Chain mode
-/*
   inline CSCDMAPacket & scTagOpenCnt ();
-  inline CSCDMAPacket & scTagOpenNext(const SDMATag * nextTag);
+//  inline CSCDMAPacket & scTagOpenNext(const SDMATag * nextTag);
   inline CSCDMAPacket & scTagOpenRef (const void * data, uint32_t qwSize);
-  inline CSCDMAPacket & scTagOpenRefs(const void * data, uint32_t qwSize);
-  inline CSCDMAPacket & scTagOpenRefe(const void * data, uint32_t qwSize);
-  inline CSCDMAPacket & scTagOpenCall(const SDMATag * nextTag);
-  inline CSCDMAPacket & scTagOpenCall(const CSCDMAPacket & packet);
-  inline CSCDMAPacket & scTagOpenRet ();
-*/
+//  inline CSCDMAPacket & scTagOpenRefs(const void * data, uint32_t qwSize);
+//  inline CSCDMAPacket & scTagOpenRefe(const void * data, uint32_t qwSize);
+//  inline CSCDMAPacket & scTagOpenCall(const SDMATag * nextTag);
+//  inline CSCDMAPacket & scTagOpenCall(const CSCDMAPacket & packet);
+//  inline CSCDMAPacket & scTagOpenRet ();
   inline CSCDMAPacket & scTagOpenEnd ();
 
   // Close DMA Tag in Source Chain mode (sets data size in tag)

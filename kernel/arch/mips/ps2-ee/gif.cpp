@@ -25,35 +25,26 @@ CGIFPacket::~CGIFPacket()
 
 //-------------------------------------------------------------------------
 void
-CGIFPacket::sendImage(uint32_t source, uint32_t size)
+CGIFPacket::addSendImage(const void * source, uint32_t size)
 {
   uint32_t qtotal = size / 16; // total number of quadwords to transfer.
-
-  this->reset(); // Just to be sure
-  this->tag(1, 0, 0, 2, 0, 0);
 
   while(qtotal > 0)
   {
     // Total send size of data
     uint32_t sendSize = (qtotal > DMA_MAX_QWTRANSFER) ? DMA_MAX_QWTRANSFER : qtotal;
 
-    ((uint64_t *)pData_)[0] &= (~0x7fff);
-    ((uint64_t *)pData_)[0] |= sendSize;
-
-    // Flush caches before transfer
-    bios::FlushCache(0);
-
-    // Send tag
-    dmaSend(eChannelId_, pData_, 1);
-    dmaWait(eChannelId_);
+    // Send GIF tag
+    this->scTagOpenCnt();
+      this->add(DMA_GIF_TAG(sendSize, 1, 0, 0, GIF::DataFormat::image, 0));
+      this->add((uint64_t)0);
+    this->scTagClose();
 
     // Send data
-    dmaSend(eChannelId_, (void *)source, sendSize);
-    dmaWait(eChannelId_);
+    this->scTagOpenRef(source, sendSize);
+    this->scTagClose();
 
-    source += sendSize * 16;
+    (uint8_t *)source += sendSize * 16;
     qtotal -= sendSize;
   }
-
-  this->reset();
 }

@@ -1,19 +1,6 @@
 #include "gif.h"
 
 
-#define GIF_AD   0x0e
-#define GIF_NOP  0x0f
-
-
-//-------------------------------------------------------------------------
-#define DMA_GIF_TAG(QWC, EOP, PRE, PRIM, FLG, NREG) \
-  ((uint64_t)(QWC)  <<  0) | \
-  ((uint64_t)(EOP)  << 15) | \
-  ((uint64_t)(PRE)  << 46) | \
-  ((uint64_t)(PRIM) << 47) | \
-  ((uint64_t)(FLG)  << 58) | \
-  ((uint64_t)(NREG) << 60)
-
 //-------------------------------------------------------------------------
 void
 CGIFPacket::reset()
@@ -30,9 +17,8 @@ CGIFPacket::gifTagOpen()
   if(pGIFTag_ == NULL)
   {
     pGIFTag_ = pCurrent_;
-    //this->add(DMA_GIF_TAG(0, 1, 0, 0, 0, 1));
-    //this->add((uint64_t)GIF_AD);
-    this->tagAd(1, 0, 0, 0);
+    this->add(DMA_GIF_TAG(0, 1, 0, 0, GIF::DataFormat::packed, 1));
+    this->add((uint64_t)GIF::REG::AD);
   }
 
   return *this;
@@ -51,24 +37,6 @@ CGIFPacket::gifTagClose()
   }
 
   return *this;
-}
-
-//-------------------------------------------------------------------------
-void
-CGIFPacket::tag(uint64_t EOP, uint64_t PRE, uint64_t PRIM, uint64_t FLG, uint64_t NREG, uint64_t REGS)
-{
-  addSetGSReg(REGS, (EOP  << 15) |
-                    (PRE  << 46) |
-                    (PRIM << 47) |
-                    (FLG  << 58) |
-                    (NREG << 60));
-}
-
-//-------------------------------------------------------------------------
-void
-CGIFPacket::tagAd(uint64_t EOP, uint64_t PRE, uint64_t PRIM, uint64_t FLG)
-{
-  tag(EOP, PRE, PRIM, FLG, 1, GIF_AD);
 }
 
 //-------------------------------------------------------------------------

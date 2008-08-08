@@ -29,8 +29,6 @@ CPS2DebugScreen::CPS2DebugScreen()
 
   for(int y(0); y < TEXT_HEIGHT; y++)
     pBuffer_[y][0] = 0;
-
-  packet_.tagAd(1, 0, 0, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -107,13 +105,16 @@ CPS2DebugScreen::write(const void * data, size_t size, bool block)
 void
 CPS2DebugScreen::cls()
 {
-  packet_.addSetGSReg(prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.addSetGSReg(rgbaq, GS_RGBAQ(0, 0, 0, 0x80, 0));
-  packet_.addSetGSReg(xyz2, GS_XYZ2(gs_origin_x<<4, gs_origin_y<<4, 0));
-  packet_.addSetGSReg(xyz2, GS_XYZ2((gs_origin_x+pCurrentPS2Mode_->width+1)<<4, (gs_origin_y+pCurrentPS2Mode_->height+1)<<4, 0));
+  packet_.scTagOpenEnd();
+    packet_.gifTagOpen();
+      packet_.addSetGSReg(prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+      packet_.addSetGSReg(rgbaq, GS_RGBAQ(0, 0, 0, 0x80, 0));
+      packet_.addSetGSReg(xyz2, GS_XYZ2(gs_origin_x<<4, gs_origin_y<<4, 0));
+      packet_.addSetGSReg(xyz2, GS_XYZ2((gs_origin_x+pCurrentPS2Mode_->width+1)<<4, (gs_origin_y+pCurrentPS2Mode_->height+1)<<4, 0));
+    packet_.gifTagClose();
+  packet_.scTagClose();
   packet_.send();
   packet_.reset();
-  packet_.tagAd(1, 0, 0, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -173,19 +174,23 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
 
   // Display buffer
   REG_GS_DISPFB1  = GS_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0, 0);
-  // Render buffer
-  packet_.addSetGSReg(frame_1, GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
-  // Use drawing parameters from PRIM register
-  packet_.addSetGSReg(prmodecont, 1);
-  // Setup frame buffers. Point to 0 initially.
-  packet_.addSetGSReg(frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
-  // Displacement between Primitive and Window coordinate systems.
-  packet_.addSetGSReg(xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
-  // Clip to frame buffer.
-  packet_.addSetGSReg(scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
+
+  packet_.scTagOpenEnd();
+    packet_.gifTagOpen();
+      // Render buffer
+      packet_.addSetGSReg(frame_1, GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+      // Use drawing parameters from PRIM register
+      packet_.addSetGSReg(prmodecont, 1);
+      // Setup frame buffers. Point to 0 initially.
+      packet_.addSetGSReg(frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+      // Displacement between Primitive and Window coordinate systems.
+      packet_.addSetGSReg(xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
+      // Clip to frame buffer.
+      packet_.addSetGSReg(scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
+    packet_.gifTagClose();
+  packet_.scTagClose();
   packet_.send();
   packet_.reset();
-  packet_.tagAd(1, 0, 0, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -212,43 +217,47 @@ CPS2DebugScreen::printLine(uint16_t x, uint16_t y, char * str)
     w  = x1-x0+1;
     h  = y1-y0+1;
 
-    // Draw a sprite with current character mapped onto it
-    packet_.addSetGSReg(tex0_1,
-      GS_TEX0(
-        g2_fontbuf_addr/256,            // base pointer
-        (g2_fontbuf_w)/64,              // width
-        0,                              // 32bit RGBA
-        getBitNr(g2_fontbuf_w),         // width
-        getBitNr(g2_fontbuf_w),         // height
-        1,                              // RGBA
-        TEX_DECAL,                      // just overwrite existing pixels
-        0,0,0,0,0));
+    packet_.scTagOpenEnd();
+      packet_.gifTagOpen();
+
+        // Draw a sprite with current character mapped onto it
+        packet_.addSetGSReg(tex0_1,
+          GS_TEX0(
+            g2_fontbuf_addr/256,            // base pointer
+            (g2_fontbuf_w)/64,              // width
+            0,                              // 32bit RGBA
+            getBitNr(g2_fontbuf_w),         // width
+            getBitNr(g2_fontbuf_w),         // height
+            1,                              // RGBA
+            TEX_DECAL,                      // just overwrite existing pixels
+            0,0,0,0,0));
 /*
-    packet_.addSetGSReg(tex1_1,
-      GS_TEX1(
-        0, 0,
-        FILTER_LINEAR,
-        FILTER_LINEAR,
-        0, 0, 0));
+        packet_.addSetGSReg(tex1_1,
+          GS_TEX1(
+            0, 0,
+            FILTER_LINEAR,
+            FILTER_LINEAR,
+            0, 0, 0));
 
-    packet_.addSetGSReg(clamp_1, 0x05);
+        packet_.addSetGSReg(clamp_1, 0x05);
 */
-    packet_.addSetGSReg(prim,
-      GS_PRIM(PRIM_SPRITE,
-        0,                              // flat shading
-        1,                              // texture mapping ON
-        0, 1, 0,                        // no fog or antialiasing, but use alpha
-        1,                              // use UV register for coordinates.
-        0,
-        0));
+        packet_.addSetGSReg(prim,
+          GS_PRIM(PRIM_SPRITE,
+            0,                              // flat shading
+            1,                              // texture mapping ON
+            0, 1, 0,                        // no fog or antialiasing, but use alpha
+            1,                              // use UV register for coordinates.
+            0,
+            0));
 
-    packet_.addSetGSReg(uv,    GS_UV(x0<<4, y0<<4));
-    packet_.addSetGSReg(xyz2,  GS_XYZ2(x<<4, y<<4, 0));
-    packet_.addSetGSReg(uv,    GS_UV((x1+1)<<4, (y1+1)<<4));
-    packet_.addSetGSReg(xyz2,  GS_XYZ2((x+w)<<4, (y+h)<<4, 0));
+        packet_.addSetGSReg(uv,    GS_UV(x0<<4, y0<<4));
+        packet_.addSetGSReg(xyz2,  GS_XYZ2(x<<4, y<<4, 0));
+        packet_.addSetGSReg(uv,    GS_UV((x1+1)<<4, (y1+1)<<4));
+        packet_.addSetGSReg(xyz2,  GS_XYZ2((x+w)<<4, (y+h)<<4, 0));
+      packet_.gifTagClose();
+    packet_.scTagClose();
     packet_.send();
     packet_.reset();
-    packet_.tagAd(1, 0, 0, 0);
 
     // Advance drawing position
     x += w;

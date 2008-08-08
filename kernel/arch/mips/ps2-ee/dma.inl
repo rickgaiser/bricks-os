@@ -127,7 +127,7 @@ CDMAPacket::add(const T data)
   ((uint64_t)(PCE)    << 26)  | \
   ((uint64_t)(ID)     << 28)  | \
   ((uint64_t)(IRQ)    << 31)  | \
-  ((uint64_t)(ADDR)   << 32)  | \
+  ((uint64_t)((uint32_t)(ADDR))   << 32)  | \
   ((uint64_t)(SPR)    << 63)
 
 //-------------------------------------------------------------------------
@@ -141,12 +141,41 @@ CSCDMAPacket::reset()
 
 //-------------------------------------------------------------------------
 CSCDMAPacket &
+CSCDMAPacket::scTagOpenCnt()
+{
+  if(pSCTag_ == NULL)
+  {
+    pSCTag_ = (SDMATag *)pCurrent_;
+    this->add(DMA_SC_TAG(0, 0, DMAC::Tag::cnt, 0, 0, false));
+    this->add((uint64_t)0);
+  }
+
+  return *this;
+}
+
+//-------------------------------------------------------------------------
+CSCDMAPacket &
+CSCDMAPacket::scTagOpenRef(const void * data, uint32_t qwSize)
+{
+  if(pSCTag_ == NULL)
+  {
+    pSCTag_ = (SDMATag *)pCurrent_;
+    this->add(DMA_SC_TAG(qwSize, 0, DMAC::Tag::ref, 0, data, false));
+    this->add((uint64_t)0);
+  }
+
+  return *this;
+}
+
+//-------------------------------------------------------------------------
+CSCDMAPacket &
 CSCDMAPacket::scTagOpenEnd()
 {
   if(pSCTag_ == NULL)
   {
     pSCTag_ = (SDMATag *)pCurrent_;
     this->add(DMA_SC_TAG(0, 0, DMAC::Tag::end, 0, 0, false));
+    this->add((uint64_t)0);
   }
 
   return *this;
@@ -158,7 +187,9 @@ CSCDMAPacket::scTagClose()
 {
   if((pSCTag_ != NULL) && (((uint32_t)pCurrent_ & 0xf) == 0))
   {
-    pSCTag_->QWC = ((uint32_t)pCurrent_ - (uint32_t)pSCTag_) / 16 - 1;
+    uint32_t qwc = ((uint32_t)pCurrent_ - (uint32_t)pSCTag_) / 16 - 1;
+    *((uint64_t *)pSCTag_) |= qwc;
+
     pSCTag_ = NULL;
   }
 

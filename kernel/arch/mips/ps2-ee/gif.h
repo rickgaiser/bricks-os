@@ -6,6 +6,31 @@
 #include "dma.h"
 
 
+namespace GIF
+{
+  namespace DataFormat
+  {
+    enum EGIFDataFormat {packed, reglist, image, disable};
+  };
+
+  namespace REG
+  {
+    enum EGIFREG {PRIM, RGBAQ, ST, UV, XYZF2, XYZ2, TEX0_1, TEX0_2, CLAMP_1, CLAMP_2, FOG, RESERVED, XYZF3, XYZ3, AD, NOP};
+  };
+};
+
+
+//-------------------------------------------------------------------------
+#define DMA_GIF_TAG(QWC, EOP, PRE, PRIM, FLG, NREG) \
+  ((uint64_t)(QWC)  <<  0) | \
+  ((uint64_t)(EOP)  << 15) | \
+  ((uint64_t)(PRE)  << 46) | \
+  ((uint64_t)(PRIM) << 47) | \
+  ((uint64_t)(FLG)  << 58) | \
+  ((uint64_t)(NREG) << 60)
+
+
+//-------------------------------------------------------------------------
 class CGIFPacket
  : public CSCDMAPacket
 {
@@ -22,10 +47,8 @@ public:
   // Close GIF Tag
   inline CGIFPacket & gifTagClose();
 
-  inline void tag(uint64_t EOP, uint64_t PRE, uint64_t PRIM, uint64_t FLG, uint64_t NREG, uint64_t REGS);
-  inline void tagAd(uint64_t EOP, uint64_t PRE, uint64_t PRIM, uint64_t FLG);
   inline void addSetGSReg(uint64_t reg, uint64_t data);
-  void sendImage(uint32_t source, uint32_t size);
+  void addSendImage(const void * source, uint32_t size);
 
 protected:
   void * pGIFTag_;
