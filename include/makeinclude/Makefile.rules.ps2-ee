@@ -44,14 +44,12 @@ $(VDIR)%.o: %.vsm $(VDIR).creation_stamp
 # Create object file from .vcl file
 %.vsm: %.vcl
 	@echo [VCL] $<
-	OpenVCL --gasp "gasp" -g -o$@ $<
-	cp $@ $@.bak
+	OpenVCL --gasp "gasp" -g -I vcl_include -o$@ $<
 
 # Create .vcl file from .vuc file
 %.vcl: %.vuc
 	@echo [VUC] $<
 	vuc $< $@
-	cp $@ $@.bak
 
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
