@@ -37,7 +37,7 @@ CPS2GLESContext::glClear(GLbitfield mask)
 {
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    packet_.addSetGSReg(test_1, GS_TEST(0, 0, 0, 0, 0, 0, 1, ZTST_ALWAYS));
+    packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, 1, ZTST_ALWAYS));
   }
 
   if(mask & GL_COLOR_BUFFER_BIT)
@@ -47,15 +47,15 @@ CPS2GLESContext::glClear(GLbitfield mask)
     uint8_t b = (uint8_t)(clClear.b * 255);
     //uint8_t a = (uint8_t)(clClear.a * 255);
 
-    packet_.addSetGSReg(prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-    packet_.addSetGSReg(rgbaq, GS_RGBAQ(r, g, b, 0x80, 0));
-    packet_.addSetGSReg(xyz2, GS_XYZ2((0+GS_X_BASE)<<4, (0+GS_Y_BASE)<<4, 0));
-    packet_.addSetGSReg(xyz2, GS_XYZ2((viewportWidth+GS_X_BASE)<<4, (viewportHeight+GS_Y_BASE)<<4, 0));
+    packet_.gifAddPackedAD(GIF::REG::prim,  GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+    packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ(r, g, b, 0x80, 0));
+    packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2((0+GS_X_BASE)<<4, (0+GS_Y_BASE)<<4, 0));
+    packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2((viewportWidth+GS_X_BASE)<<4, (viewportHeight+GS_Y_BASE)<<4, 0));
   }
 
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    packet_.addSetGSReg(test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+    packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
   }
   bDataWaiting_ = true;
 }
@@ -81,7 +81,7 @@ CPS2GLESContext::glDepthFunc(GLenum func)
 
   if(depthTestEnabled_ == true)
   {
-    packet_.addSetGSReg(test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+    packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
   }
 }
 
@@ -105,9 +105,9 @@ CPS2GLESContext::glDisable(GLenum cap)
     {
       depthTestEnabled_ = false;
       // Z-Buffer
-      packet_.addSetGSReg(zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_DISABLE));
+      packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_DISABLE));
       // Z-Buffer test
-      packet_.addSetGSReg(test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+      packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
     }
 */
@@ -141,22 +141,22 @@ CPS2GLESContext::glEnable(GLenum cap)
       depthTestEnabled_ = true;
 /*
       // 16bit
-      packet_.addSetGSReg(zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_16S, ZMSK_ENABLE));
+      packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_16S, ZMSK_ENABLE));
       //ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 2);
       zMax_ = 0xffff;
 
       // 24bit
-      packet_.addSetGSReg(zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
+      packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
       //ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 3);
       zMax_ = 0xffffff;
 */
       // 32bit
-      packet_.addSetGSReg(zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
+      packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
       //ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 4);
       zMax_ = 0xffffffff;
 
       // Z-Buffer test
-      packet_.addSetGSReg(test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+      packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
       break;
     }
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
@@ -190,7 +190,7 @@ CPS2GLESContext::glBindTexture(GLenum target, GLuint texture)
   {
     pCurrentTex_ = &textures_[texture];
 
-    packet_.addSetGSReg(tex0_1,
+    packet_.gifAddPackedAD(GIF::REG::tex0_1,
       GS_TEX0(
         ((uint32_t)pCurrentTex_->data)>>8,   // base pointer
         pCurrentTex_->width>>6,              // width
@@ -201,7 +201,7 @@ CPS2GLESContext::glBindTexture(GLenum target, GLuint texture)
         TEX_DECAL,                           // just overwrite existing pixels
         0, 0, 0, 0, 0));
 
-    packet_.addSetGSReg(tex1_1,
+    packet_.gifAddPackedAD(GIF::REG::tex1_1,
       GS_TEX1(
         0, 0,
         pCurrentTex_->texMagFilter != GL_NEAREST,
@@ -334,13 +334,13 @@ CPS2GLESContext::begin(GLenum mode)
   switch(mode)
   {
     case GL_TRIANGLES:
-      packet_.addSetGSReg(prim, GS_PRIM(PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
     case GL_TRIANGLE_STRIP:
-      packet_.addSetGSReg(prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
     case GL_TRIANGLE_FAN:
-      packet_.addSetGSReg(prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
       break;
   };
 }
@@ -393,13 +393,13 @@ CPS2GLESContext::rasterTriangle(STriangleF & tri)
       v.t[0] *= tq;
       v.t[1] *= tq;
 
-      packet_.addSetGSReg(st, GS_ST(*(uint32_t *)(&v.t[0]), *(uint32_t *)(&v.t[1])));
-      packet_.addSetGSReg(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, *(uint32_t *)(&tq)));
+      packet_.gifAddPackedAD(GIF::REG::st, GS_ST(*(uint32_t *)(&v.t[0]), *(uint32_t *)(&v.t[1])));
+      packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, *(uint32_t *)(&tq)));
     }
     else
     {
-      packet_.addSetGSReg(rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, 0));
+      packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, 0));
     }
-    packet_.addSetGSReg(xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
+    packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
   }
 }

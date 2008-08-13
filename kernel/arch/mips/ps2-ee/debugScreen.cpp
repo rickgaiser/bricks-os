@@ -106,11 +106,11 @@ void
 CPS2DebugScreen::cls()
 {
   packet_.scTagOpenEnd();
-    packet_.gifTagOpen();
-      packet_.addSetGSReg(prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-      packet_.addSetGSReg(rgbaq, GS_RGBAQ(0, 0, 0, 0x80, 0));
-      packet_.addSetGSReg(xyz2, GS_XYZ2(gs_origin_x<<4, gs_origin_y<<4, 0));
-      packet_.addSetGSReg(xyz2, GS_XYZ2((gs_origin_x+pCurrentPS2Mode_->width+1)<<4, (gs_origin_y+pCurrentPS2Mode_->height+1)<<4, 0));
+    packet_.gifTagOpenPacked();
+      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+      packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ(0, 0, 0, 0x80, 0));
+      packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2(gs_origin_x<<4, gs_origin_y<<4, 0));
+      packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2((gs_origin_x+pCurrentPS2Mode_->width+1)<<4, (gs_origin_y+pCurrentPS2Mode_->height+1)<<4, 0));
     packet_.gifTagClose();
   packet_.scTagClose();
   packet_.send();
@@ -176,17 +176,17 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   REG_GS_DISPFB1  = GS_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0, 0);
 
   packet_.scTagOpenEnd();
-    packet_.gifTagOpen();
+    packet_.gifTagOpenPacked();
       // Render buffer
-      packet_.addSetGSReg(frame_1, GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+      packet_.gifAddPackedAD(GIF::REG::frame_1,    GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
       // Use drawing parameters from PRIM register
-      packet_.addSetGSReg(prmodecont, 1);
+      packet_.gifAddPackedAD(GIF::REG::prmodecont, 1);
       // Setup frame buffers. Point to 0 initially.
-      packet_.addSetGSReg(frame_1, GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+      packet_.gifAddPackedAD(GIF::REG::frame_1,    GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
       // Displacement between Primitive and Window coordinate systems.
-      packet_.addSetGSReg(xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
+      packet_.gifAddPackedAD(GIF::REG::xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
       // Clip to frame buffer.
-      packet_.addSetGSReg(scissor_1, GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
+      packet_.gifAddPackedAD(GIF::REG::scissor_1,  GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
     packet_.gifTagClose();
   packet_.scTagClose();
   packet_.send();
@@ -218,10 +218,10 @@ CPS2DebugScreen::printLine(uint16_t x, uint16_t y, char * str)
     h  = y1-y0+1;
 
     packet_.scTagOpenEnd();
-      packet_.gifTagOpen();
+      packet_.gifTagOpenPacked();
 
         // Draw a sprite with current character mapped onto it
-        packet_.addSetGSReg(tex0_1,
+        packet_.gifAddPackedAD(GIF::REG::tex0_1,
           GS_TEX0(
             g2_fontbuf_addr/256,            // base pointer
             (g2_fontbuf_w)/64,              // width
@@ -232,16 +232,16 @@ CPS2DebugScreen::printLine(uint16_t x, uint16_t y, char * str)
             TEX_DECAL,                      // just overwrite existing pixels
             0,0,0,0,0));
 /*
-        packet_.addSetGSReg(tex1_1,
+        packet_.gifAddPackedAD(tex1_1,
           GS_TEX1(
             0, 0,
             FILTER_LINEAR,
             FILTER_LINEAR,
             0, 0, 0));
 
-        packet_.addSetGSReg(clamp_1, 0x05);
+        packet_.gifAddPackedAD(GIF::REG::clamp_1, 0x05);
 */
-        packet_.addSetGSReg(prim,
+        packet_.gifAddPackedAD(GIF::REG::prim,
           GS_PRIM(PRIM_SPRITE,
             0,                              // flat shading
             1,                              // texture mapping ON
@@ -250,10 +250,10 @@ CPS2DebugScreen::printLine(uint16_t x, uint16_t y, char * str)
             0,
             0));
 
-        packet_.addSetGSReg(uv,    GS_UV(x0<<4, y0<<4));
-        packet_.addSetGSReg(xyz2,  GS_XYZ2(x<<4, y<<4, 0));
-        packet_.addSetGSReg(uv,    GS_UV((x1+1)<<4, (y1+1)<<4));
-        packet_.addSetGSReg(xyz2,  GS_XYZ2((x+w)<<4, (y+h)<<4, 0));
+        packet_.gifAddPackedAD(GIF::REG::uv,    GS_UV(x0<<4, y0<<4));
+        packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x<<4, y<<4, 0));
+        packet_.gifAddPackedAD(GIF::REG::uv,    GS_UV((x1+1)<<4, (y1+1)<<4));
+        packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2((x+w)<<4, (y+h)<<4, 0));
       packet_.gifTagClose();
     packet_.scTagClose();
     packet_.send();

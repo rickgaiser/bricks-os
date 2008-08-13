@@ -97,12 +97,17 @@ public:
 
   // Add data to packet
   template<class T> inline void add(const T data);
+  inline void add8  (const uint8_t   data){this->add(data);}
+  inline void add16 (const uint16_t  data){this->add(data);}
+  inline void add32 (const uint32_t  data){this->add(data);}
+  inline void add64 (const uint64_t  data){this->add(data);}
+//  inline void add128(const uint128_t data){this->add(data)}
 
   // Send data to dma channel
   virtual void send(bool waitComplete = true);
 
-//protected:
-//  inline void setSize();
+  // Pad to 128bit (for faster operation)
+  inline void pad128(uint32_t data);
 
 protected:
   uint8_t   * pRawData_;      // Not aligned data
@@ -143,9 +148,6 @@ public:
 
   // Close DMA Tag in Source Chain mode (sets data size in tag)
   inline CSCDMAPacket & scTagClose();
-
-  // Pad to 128bit (for faster operation)
-//  CSCDmaPacket & pad128(uint32_t data);
 
 protected:
   SDMATag * pSCTag_;
