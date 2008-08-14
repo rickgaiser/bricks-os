@@ -73,6 +73,14 @@ TMatrix4x4<T>::TMatrix4x4(T _m00, T _m01, T _m02, T _m03,
 
 //---------------------------------------------------------------------------
 template <class T>
+inline T *
+TMatrix4x4<T>::operator[](uint8_t row)
+{
+  return matrix[row*4];
+}
+
+//---------------------------------------------------------------------------
+template <class T>
 inline TMatrix4x4<T> &
 TMatrix4x4<T>::operator=(const TMatrix4x4 & m)
 {

@@ -39,9 +39,12 @@ public:
   TMatrix4x4(const TMatrix4x4 & m);
   TMatrix4x4(const T * m);
   TMatrix4x4(T _m00, T _m01, T _m02, T _m03,
-          T _m10, T _m11, T _m12, T _m13,
-          T _m20, T _m21, T _m22, T _m23,
-          T _m30, T _m31, T _m32, T _m33);
+             T _m10, T _m11, T _m12, T _m13,
+             T _m20, T _m21, T _m22, T _m23,
+             T _m30, T _m31, T _m32, T _m33);
+
+  // Row accessor. Use: mtx[row][col]
+  T * operator[](uint8_t row);
 
   // Assignment Operators
   TMatrix4x4 & operator= (const TMatrix4x4 & m);
