@@ -25,6 +25,7 @@ namespace VU0
     virtual TMatrix4x4<GLfloat> & operator*=(const GLfloat * m);
 
     virtual void transform4(const GLfloat * from, GLfloat * to);
+    virtual void transform4list(const GLfloat * from, int fromInc, GLfloat * to, int toInc, int count);
   };
 
 
