@@ -14,6 +14,7 @@ OBJS            =\
                 sif \
                 task \
                 vu \
+                vu0 \
 
 
 OBJS-$(CONFIG_DEBUGGING)           += debugScreen
