@@ -13,7 +13,7 @@ void
 ee_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, uint32_t source)
 {
   // BitBlt from EE to GS
-  gifData.scTagOpenEnd();
+  gifData.scTagOpenCnt();
   {
     gifData.gifTagOpenPacked();
     {

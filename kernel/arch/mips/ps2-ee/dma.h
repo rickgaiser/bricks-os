@@ -102,6 +102,8 @@ public:
   inline void add32 (const uint32_t  data){this->add(data);}
   inline void add64 (const uint64_t  data){this->add(data);}
 //  inline void add128(const uint128_t data){this->add(data)}
+  inline void addFloat (float f){this->add(f);}
+  inline void addFloat4(float f1, float f2, float f3, float f4){this->add(f1);this->add(f2);this->add(f3);this->add(f4);}
 
   // Send data to dma channel
   virtual void send(bool waitComplete = true);
@@ -138,7 +140,7 @@ public:
   // DMA Tags in Source Chain mode
   inline CSCDMAPacket & scTagOpenCnt ();
 //  inline CSCDMAPacket & scTagOpenNext(const SDMATag * nextTag);
-  inline CSCDMAPacket & scTagOpenRef (const void * data, uint32_t qwSize);
+  inline CSCDMAPacket & scTagRef(const void * data, uint32_t qwSize);
 //  inline CSCDMAPacket & scTagOpenRefs(const void * data, uint32_t qwSize);
 //  inline CSCDMAPacket & scTagOpenRefe(const void * data, uint32_t qwSize);
 //  inline CSCDMAPacket & scTagOpenCall(const SDMATag * nextTag);

@@ -26,6 +26,8 @@ CGIFPacket::~CGIFPacket()
 //-------------------------------------------------------------------------
 void
 CGIFPacket::gifTagOpenPacked(
+  bool embedPrim,
+  uint16_t prim,
   uint8_t regCount,
   uint8_t reg1,
   uint8_t reg2,
@@ -47,7 +49,7 @@ CGIFPacket::gifTagOpenPacked(
   if(pGIFTag_ == NULL)
   {
     pGIFTag_ = pCurrent_;
-    this->add64(DMA_GIF_TAG(0, 1, 0, 0, GIF::DataFormat::packed, regCount));
+    this->add64(DMA_GIF_TAG(0, 1, embedPrim, prim, GIF::DataFormat::packed, regCount));
     this->add64(
       (uint64_t)reg1  << ( 0 * 4) |
       (uint64_t)reg2  << ( 1 * 4) |
@@ -74,6 +76,8 @@ CGIFPacket::gifTagOpenPacked(
 //-------------------------------------------------------------------------
 void
 CGIFPacket::gifTagOpenReglist(
+  bool embedPrim,
+  uint16_t prim,
   uint8_t regCount,
   uint8_t reg1,
   uint8_t reg2,
@@ -95,7 +99,7 @@ CGIFPacket::gifTagOpenReglist(
   if(pGIFTag_ == NULL)
   {
     pGIFTag_ = pCurrent_;
-    this->add64(DMA_GIF_TAG(0, 1, 0, 0, GIF::DataFormat::reglist, regCount));
+    this->add64(DMA_GIF_TAG(0, 1, embedPrim, prim, GIF::DataFormat::reglist, regCount));
     this->add64(
       (uint64_t)reg1  << ( 0 * 4) |
       (uint64_t)reg2  << ( 1 * 4) |
@@ -152,8 +156,7 @@ CGIFPacket::gifAddSendImage(const void * source, uint32_t size)
     this->scTagClose();
 
     // Send data
-    this->scTagOpenRef(source, sendSize);
-    this->scTagClose();
+    this->scTagRef(source, sendSize);
 
     (uint8_t *)source += sendSize * 16;
     qtotal -= sendSize;

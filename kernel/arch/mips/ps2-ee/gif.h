@@ -87,6 +87,8 @@ public:
 
   // Open GIF Tag
   void gifTagOpenPacked(
+    bool embedPrim = false,
+    uint16_t prim = 0,
     uint8_t regCount = 1,
     uint8_t reg1  = GIF::REG::ad,
     uint8_t reg2  = GIF::REG::nop,
@@ -105,6 +107,8 @@ public:
     uint8_t reg15 = GIF::REG::nop,
     uint8_t reg16 = GIF::REG::nop);
   void gifTagOpenReglist(
+    bool embedPrim,
+    uint16_t prim,
     uint8_t regCount,
     uint8_t reg1,
     uint8_t reg2  = GIF::REG::nop,

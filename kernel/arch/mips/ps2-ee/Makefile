@@ -9,6 +9,7 @@ OBJS            =\
                 dma \
                 fixed_tc \
                 gif \
+                vif \
                 gs \
                 matrix \
                 sif \

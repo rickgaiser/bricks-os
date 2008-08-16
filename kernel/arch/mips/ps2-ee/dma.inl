@@ -154,8 +154,8 @@ CSCDMAPacket::scTagOpenCnt()
   if(pSCTag_ == NULL)
   {
     pSCTag_ = (SDMATag *)pCurrent_;
-    this->add(DMA_SC_TAG(0, 0, DMAC::Tag::cnt, 0, 0, false));
-    this->add((uint64_t)0);
+    this->add64(DMA_SC_TAG(0, 0, DMAC::Tag::cnt, 0, 0, false));
+    this->add64(0);
   }
 
   return *this;
@@ -163,13 +163,12 @@ CSCDMAPacket::scTagOpenCnt()
 
 //-------------------------------------------------------------------------
 CSCDMAPacket &
-CSCDMAPacket::scTagOpenRef(const void * data, uint32_t qwSize)
+CSCDMAPacket::scTagRef(const void * data, uint32_t qwSize)
 {
   if(pSCTag_ == NULL)
   {
-    pSCTag_ = (SDMATag *)pCurrent_;
-    this->add(DMA_SC_TAG(qwSize, 0, DMAC::Tag::ref, 0, data, false));
-    this->add((uint64_t)0);
+    this->add64(DMA_SC_TAG(qwSize, 0, DMAC::Tag::ref, 0, data, false));
+    this->add64(0);
   }
 
   return *this;
@@ -182,8 +181,8 @@ CSCDMAPacket::scTagOpenEnd()
   if(pSCTag_ == NULL)
   {
     pSCTag_ = (SDMATag *)pCurrent_;
-    this->add(DMA_SC_TAG(0, 0, DMAC::Tag::end, 0, 0, false));
-    this->add((uint64_t)0);
+    this->add64(DMA_SC_TAG(0, 0, DMAC::Tag::end, 0, 0, false));
+    this->add64(0);
   }
 
   return *this;
