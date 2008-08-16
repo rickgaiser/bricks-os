@@ -621,7 +621,7 @@ CASoftGLESFixed::_vertexShaderLight(SVertexFx & v)
     SColorFx c(0, 0, 0, 0);
 
     // Normal Rotation
-    matrixNormal.transform3(v.n, v.n2);
+    matrixModelView.transform3(v.n, v.n2);
 
     for(int iLight(0); iLight < 8; iLight++)
     {

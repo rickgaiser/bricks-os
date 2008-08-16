@@ -33,7 +33,6 @@ protected:
   TMatrix4x4<GLfloat>   matrixModelView;
   TMatrix4x4<GLfloat>   matrixProjection;
   TMatrix4x4<GLfloat>   matrixTexture;
-  TMatrix4x4<GLfloat>   matrixNormal;
   TMatrix4x4<GLfloat> * pCurrentMatrix_;
 };
 #else // CONFIG_FPU
@@ -61,7 +60,6 @@ protected:
   TMatrix4x4<CFixed>   matrixModelView;
   TMatrix4x4<CFixed>   matrixProjection;
   TMatrix4x4<CFixed>   matrixTexture;
-  TMatrix4x4<CFixed>   matrixNormal;
   TMatrix4x4<CFixed> * pCurrentMatrix_;
 };
 #endif // CONFIG_FPU
