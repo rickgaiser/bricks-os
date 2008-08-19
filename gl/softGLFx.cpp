@@ -710,20 +710,23 @@ CASoftGLESFixed::_fragmentClip(STriangleFx & tri)
   {
     // x
     if(tri.v[iVertex]->vd[0] > 1.0f)
-      return;
+      tri.v[iVertex]->clip |= CLIP_X_MAX;
     else if(tri.v[iVertex]->vd[0] < -1.0f)
-      return;
+      tri.v[iVertex]->clip |= CLIP_X_MIN;
     // y
     if(tri.v[iVertex]->vd[1] > 1.0f)
-      return;
+      tri.v[iVertex]->clip |= CLIP_Y_MAX;
     else if(tri.v[iVertex]->vd[1] < -1.0f)
-      return;
+      tri.v[iVertex]->clip |= CLIP_Y_MIN;
     // z
     if(tri.v[iVertex]->vd[2] > 1.0f)
-      return;
+      tri.v[iVertex]->clip |= CLIP_Z_MAX;
     else if(tri.v[iVertex]->vd[2] < -1.0f)
-      return;
+      tri.v[iVertex]->clip |= CLIP_Z_MIN;
   }
+
+  if(tri.v[0]->clip & tri.v[1]->clip & tri.v[2]->clip)
+    return; // Not visible
 
   // ----------------------
   // Vertex shader lighting
@@ -897,6 +900,10 @@ CSoftGLESFixed::rasterTriangle(STriangleFx & tri)
 void
 CSoftGLESFixed::_rasterTriangle(STriangleFx & tri)
 {
+  // Clipping not supported
+  if(tri.v[0]->clip | tri.v[1]->clip | tri.v[2]->clip)
+    return;
+
   // Bubble sort the 3 vertexes
   SVertexFx * vtemp;
   SVertexFx * vhi(tri.v[0]);

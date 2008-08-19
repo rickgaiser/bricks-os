@@ -14,6 +14,14 @@
 #define clampf(f)    ((f) < 0.0f ? 0.0f : ((f) > 1.0f ? 1.0f : (f)))
 #define clampfx(i)   ((i) < 0 ? 0 : ((i) > gl_fpfromi(1) ? gl_fpfromi(1) : (i)))
 
+// Clipping flags
+#define CLIP_X_MIN (1<<0)
+#define CLIP_X_MAX (1<<1)
+#define CLIP_Y_MIN (1<<2)
+#define CLIP_Y_MAX (1<<3)
+#define CLIP_Z_MIN (1<<4)
+#define CLIP_Z_MAX (1<<5)
+
 
 //-----------------------------------------------------------------------------
 typedef TColor<GLfloat> SColorF;
@@ -44,6 +52,9 @@ struct TVertex
 
   // Depth (on screen)
   uint32_t sz;
+
+  // Clipping flags
+  uint32_t clip;
 
   // Processed by post vertex shader
   bool processed;
