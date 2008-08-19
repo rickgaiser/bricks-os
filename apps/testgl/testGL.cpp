@@ -1,10 +1,14 @@
-#include "asm/arch/config.h"
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
 #include "stdlib.h"
+#include "glconfig.h"
 
 
-extern void testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b);
+#ifdef USE_FLOATING_POINT
+extern void testGLF (CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b);
+#else
+extern void testGLFx(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b);
+#endif
 
 
 // -----------------------------------------------------------------------------
@@ -38,7 +42,13 @@ appMain(int argc, char * argv[])
 
         // Start test
         if((pVideoSurfaceA != NULL) && (pVideoSurfaceB != NULL))
-          testGL(devices[iDev], pVideoSurfaceA, pVideoSurfaceB);
+        {
+#ifdef USE_FLOATING_POINT
+          testGLF (devices[iDev], pVideoSurfaceA, pVideoSurfaceB);
+#else
+          testGLFx(devices[iDev], pVideoSurfaceA, pVideoSurfaceB);
+#endif
+        }
 
         // Clean up allocated surfaces
         if(pVideoSurfaceB != NULL)

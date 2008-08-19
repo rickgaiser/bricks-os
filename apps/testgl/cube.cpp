@@ -1,4 +1,3 @@
-#include "asm/arch/config.h"
 #include "GLES/gl.h"
 #include "../gl/fixedPoint.h"
 
@@ -9,7 +8,6 @@ extern const unsigned short crate_Bitmap[];
 GLuint textures[1];
 
 
-#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 const GLfloat cubeVertF[] =
 {
@@ -81,7 +79,7 @@ const GLfloat cubeTexF[] =
   0.0f, 1.0f,
   1.0f, 1.0f,
 };
-#else
+
 // -----------------------------------------------------------------------------
 const GLfixed cubeVertFx[] =
 {
@@ -153,9 +151,7 @@ const GLfixed cubeTexFx[] =
   gl_fpfromf(0.0f), gl_fpfromf(1.0f),
   gl_fpfromf(1.0f), gl_fpfromf(1.0f),
 };
-#endif
 
-#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 void
 initCubeF()
@@ -185,7 +181,7 @@ drawCubeF()
   glDrawArrays(GL_TRIANGLE_STRIP, 16, 4); // Left
   glDrawArrays(GL_TRIANGLE_STRIP, 20, 4); // Right
 }
-#else
+
 // -----------------------------------------------------------------------------
 void
 initCubeFx()
@@ -215,4 +211,3 @@ drawCubeFx()
   glDrawArrays(GL_TRIANGLE_STRIP, 16, 4); // Left
   glDrawArrays(GL_TRIANGLE_STRIP, 20, 4); // Right
 }
-#endif

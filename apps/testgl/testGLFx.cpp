@@ -2,6 +2,7 @@
 #include "GLES/gl_extra.h"
 #include "GL/glu.h"
 #include "kernel/videoManager.h"
+#include "glconfig.h"
 #include "../gl/fixedPoint.h"
 #include "../gl/context.h"
 
@@ -9,10 +10,13 @@
 extern void glMakeCurrent(I3DRenderer * ctx);
 extern void initPyramidFx();
 extern void drawPyramidFx();
+#ifdef ENABLE_TEXTURES
 extern void initCubeFx();
 extern void drawCubeFx();
+#endif
 
 
+#ifdef ENABLE_LIGHTING
 // Material
 const GLfixed matAmbient []   = {gl_fpfromf( 0.4f), gl_fpfromf( 0.2f), gl_fpfromf( 0.0f), gl_fpfromf( 1.0f)};
 const GLfixed matDiffuse []   = {gl_fpfromf( 0.8f), gl_fpfromf( 0.4f), gl_fpfromf( 0.0f), gl_fpfromf( 1.0f)};
@@ -23,7 +27,8 @@ const GLfixed lightAmbient[]  = {gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfrom
 const GLfixed lightDiffuse[]  = {gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f)};
 const GLfixed lightSpecular[] = {gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f)};
 const GLfixed lightPosition[] = {gl_fpfromf(-5.0f), gl_fpfromf(10.0f), gl_fpfromf(10.0f), gl_fpfromf( 1.0f)};
-// Fog
+#endif
+// Fog/Clear color
 const GLfixed fogColor[]      = {gl_fpfromf( 0.4f), gl_fpfromf( 0.4f), gl_fpfromf( 0.4f), gl_fpfromf( 1.0f)};
 
 
@@ -34,20 +39,26 @@ renderPyramid(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface
   int iFrameCount(0);
   int iStartFrame;
   int iCurrentFrame;
+
+#ifdef ENABLE_DOUBLE_BUFFERED
   bool bDisplayB(true);
 
   // Set buffers
   renderer->setSurface(bDisplayB ? surface_b : surface_a);
   device->displaySurface(bDisplayB ? surface_a : surface_b);
   bDisplayB = !bDisplayB;
+#endif
 
   iStartFrame = device->getFrameNr();
 
   // Show 1 full rotation around y axis
   for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360);)
   {
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#ifdef ENABLE_DEPTH_TEST
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#else
     glClear(GL_COLOR_BUFFER_BIT);
+#endif
 
     glLoadIdentity();
     glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
@@ -58,9 +69,11 @@ renderPyramid(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface
     glFlush();
 
     // Swap display and render buffers
+#ifdef ENABLE_DOUBLE_BUFFERED
     renderer->setSurface(bDisplayB ? surface_b : surface_a);
     device->displaySurface(bDisplayB ? surface_a : surface_b);
     bDisplayB = !bDisplayB;
+#endif
 
     iFrameCount++;
     iCurrentFrame = device->getFrameNr();
@@ -70,6 +83,7 @@ renderPyramid(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface
   return iFrameCount;
 }
 
+#ifdef ENABLE_TEXTURES
 // -----------------------------------------------------------------------------
 int
 renderCube(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
@@ -77,20 +91,26 @@ renderCube(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a,
   int iFrameCount(0);
   int iStartFrame;
   int iCurrentFrame;
+
+#ifdef ENABLE_DOUBLE_BUFFERED
   bool bDisplayB(true);
 
   // Set buffers
   renderer->setSurface(bDisplayB ? surface_b : surface_a);
   device->displaySurface(bDisplayB ? surface_a : surface_b);
   bDisplayB = !bDisplayB;
+#endif
 
   iStartFrame = device->getFrameNr();
 
   // Show 1 full rotation around y axis
   for(GLfixed yrot = gl_fpfromi(0); yrot < gl_fpfromi(360);)
   {
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#ifdef ENABLE_DEPTH_TEST
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#else
     glClear(GL_COLOR_BUFFER_BIT);
+#endif
 
     glLoadIdentity();
     glTranslatex(gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(-6));
@@ -101,9 +121,11 @@ renderCube(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a,
     glFlush();
 
     // Swap display and render buffers
+#ifdef ENABLE_DOUBLE_BUFFERED
     renderer->setSurface(bDisplayB ? surface_b : surface_a);
     device->displaySurface(bDisplayB ? surface_a : surface_b);
     bDisplayB = !bDisplayB;
+#endif
 
     iFrameCount++;
     iCurrentFrame = device->getFrameNr();
@@ -112,30 +134,44 @@ renderCube(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a,
 
   return iFrameCount;
 }
+#endif
 
 // -----------------------------------------------------------------------------
 void
-testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
+testGLFx(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
 {
   I3DRenderer * renderer;
   device->get3DRenderer(&renderer);
   glMakeCurrent(renderer);
 
+#ifndef ENABLE_DOUBLE_BUFFERED
+  // Set buffers
+  renderer->setSurface(surface_a);
+  device->displaySurface(surface_a);
+#endif
+
   // Automatically wait for VSync
+#ifdef ENABLE_VSYNC
   device->setVSync(true);
+#else
+  device->setVSync(false);
+#endif
 
   // Background color
   glClearColorx(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
 
+#ifdef ENABLE_DEPTH_TEST
   // Depth test
   glClearDepthx(gl_fpfromi(1));
   glDepthFunc(GL_LEQUAL);
-  //glEnable(GL_DEPTH_TEST);
+  glEnable(GL_DEPTH_TEST);
+#endif
 
   // Backface culling
   glCullFace(GL_BACK);
   glEnable(GL_CULL_FACE);
 
+#ifdef ENABLE_LIGHTING
   // Material
   glMaterialxv(GL_FRONT, GL_AMBIENT,   matAmbient);
   glMaterialxv(GL_FRONT, GL_DIFFUSE,   matDiffuse);
@@ -149,13 +185,16 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
   glLightxv(GL_LIGHT0, GL_POSITION, lightPosition);
   glEnable(GL_LIGHT0);
   //glEnable(GL_LIGHTING);
+#endif
 
+#ifdef ENABLE_FOG
   // Fog
   glFogxv(GL_FOG_COLOR, fogColor);
   glFogx(GL_FOG_DENSITY, gl_fpfromf(0.35f));
   glFogx(GL_FOG_START, gl_fpfromi(1));
   glFogx(GL_FOG_END, gl_fpfromi(10));
-  //glEnable(GL_FOG);
+  glEnable(GL_FOG);
+#endif
 
   // Viewport & Perspective
   glViewport(0, 0, surface_a->width(), surface_a->height());
@@ -169,8 +208,12 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
   glRotatex(gl_fpfromi(23), gl_fpfromi(1), gl_fpfromi(0), gl_fpfromi(0));
 
   initPyramidFx();
+#ifdef ENABLE_TEXTURES
   initCubeFx();
+#endif
+
   glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
 
   while(true)
   {
@@ -183,6 +226,7 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glShadeModel(GL_SMOOTH);
     renderPyramid(device, renderer, surface_a, surface_b);
 
+#ifdef ENABLE_LIGHTING
     // With Lighting
     glEnable(GL_LIGHTING);
     // Flat
@@ -191,12 +235,16 @@ testGL(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     // Smooth
     glShadeModel(GL_SMOOTH);
     renderPyramid(device, renderer, surface_a, surface_b);
+#endif
 
-    // With textures
+#ifdef ENABLE_TEXTURES
+    // With textures (without lighting)
     glDisable(GL_LIGHTING);
     glShadeModel(GL_FLAT);
     glEnable(GL_TEXTURE_2D);
     renderCube(device, renderer, surface_a, surface_b);
+    glDisable(GL_TEXTURE_2D);
+#endif
   }
 
   glMakeCurrent(NULL);

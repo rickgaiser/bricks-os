@@ -1,13 +1,12 @@
-#include "asm/arch/config.h"
 #include "GLES/gl.h"
 #include "../gl/fixedPoint.h"
 #include "../gl/vector.h"
+#include "glconfig.h"
 
 
 #define TRIANGLE_COUNT 4
 
 
-#ifdef CONFIG_FPU
 // -----------------------------------------------------------------------------
 const GLfloat pyramidVertF[TRIANGLE_COUNT*3*3] =
 {
@@ -50,8 +49,6 @@ const GLfloat pyramidColF[TRIANGLE_COUNT*3*4] =
   0.0f, 1.0f, 0.0f, 1.0f,
 };
 
-GLfloat pyramidNormalF[TRIANGLE_COUNT*3*3];
-#else
 // -----------------------------------------------------------------------------
 const GLfixed pyramidVertFx[TRIANGLE_COUNT*3*3] =
 {
@@ -94,14 +91,15 @@ const GLfixed pyramidColFx[TRIANGLE_COUNT*3*4] =
   gl_fpfromf(0.0f), gl_fpfromf(1.0f), gl_fpfromf(0.0f), gl_fpfromf(1.0f),
 };
 
-GLfixed pyramidNormalFx[TRIANGLE_COUNT*3*3];
-#endif
 
-#ifdef CONFIG_FPU
+#ifdef ENABLE_LIGHTING
+GLfloat pyramidNormalF[TRIANGLE_COUNT*3*3];
+#endif
 // -----------------------------------------------------------------------------
 void
 initPyramidF()
 {
+#ifdef ENABLE_LIGHTING
   TVector3<GLfloat> V0;
   TVector3<GLfloat> V1;
   TVector3<GLfloat> V2;
@@ -141,6 +139,7 @@ initPyramidF()
     pyramidNormalF[i*3*3+7] = normal.y;
     pyramidNormalF[i*3*3+8] = normal.z;
   }
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -149,20 +148,30 @@ drawPyramidF()
 {
   glVertexPointer(3, GL_FLOAT, 0, pyramidVertF);
   glColorPointer (4, GL_FLOAT, 0, pyramidColF);
+#ifdef ENABLE_LIGHTING
   glNormalPointer(   GL_FLOAT, 0, pyramidNormalF);
+#endif
 
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_COLOR_ARRAY);
   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#ifdef ENABLE_LIGHTING
   glEnableClientState(GL_NORMAL_ARRAY);
+#else
+  glDisableClientState(GL_NORMAL_ARRAY);
+#endif
 
   glDrawArrays(GL_TRIANGLES, 0, TRIANGLE_COUNT*3); // Pyramid
 }
-#else
+
+#ifdef ENABLE_LIGHTING
+GLfixed pyramidNormalFx[TRIANGLE_COUNT*3*3];
+#endif
 // -----------------------------------------------------------------------------
 void
 initPyramidFx()
 {
+#ifdef ENABLE_LIGHTING
   TVector3<CFixed> V0;
   TVector3<CFixed> V1;
   TVector3<CFixed> V2;
@@ -204,6 +213,7 @@ initPyramidFx()
     pyramidNormalFx[iBase+7] = normal.y.value;
     pyramidNormalFx[iBase+8] = normal.z.value;
   }
+#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -212,13 +222,18 @@ drawPyramidFx()
 {
   glVertexPointer(3, GL_FIXED, 0, pyramidVertFx);
   glColorPointer (4, GL_FIXED, 0, pyramidColFx);
+#ifdef ENABLE_LIGHTING
   glNormalPointer(   GL_FIXED, 0, pyramidNormalFx);
+#endif
 
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_COLOR_ARRAY);
   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#ifdef ENABLE_LIGHTING
   glEnableClientState(GL_NORMAL_ARRAY);
+#else
+  glDisableClientState(GL_NORMAL_ARRAY);
+#endif
 
   glDrawArrays(GL_TRIANGLES, 0, TRIANGLE_COUNT*3); // Pyramid
 }
-#endif
