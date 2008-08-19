@@ -33,7 +33,7 @@ const GLfloat fogColor[]      = { 0.4f,  0.4f,  0.4f,  1.0f};
 
 // -----------------------------------------------------------------------------
 int
-renderPyramid(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
+renderPyramidF(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
 {
   int iFrameCount(0);
   int iStartFrame;
@@ -85,7 +85,7 @@ renderPyramid(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface
 #ifdef ENABLE_TEXTURES
 // -----------------------------------------------------------------------------
 int
-renderCube(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
+renderCubeF(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
 {
   int iFrameCount(0);
   int iStartFrame;
@@ -220,20 +220,20 @@ testGLF(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glDisable(GL_LIGHTING);
     // Flat
     glShadeModel(GL_FLAT);
-    renderPyramid(device, renderer, surface_a, surface_b);
+    renderPyramidF(device, renderer, surface_a, surface_b);
     // Smooth
     glShadeModel(GL_SMOOTH);
-    renderPyramid(device, renderer, surface_a, surface_b);
+    renderPyramidF(device, renderer, surface_a, surface_b);
 
 #ifdef ENABLE_LIGHTING
     // With Lighting
     glEnable(GL_LIGHTING);
     // Flat
     glShadeModel(GL_FLAT);
-    renderPyramid(device, renderer, surface_a, surface_b);
+    renderPyramidF(device, renderer, surface_a, surface_b);
     // Smooth
     glShadeModel(GL_SMOOTH);
-    renderPyramid(device, renderer, surface_a, surface_b);
+    renderPyramidF(device, renderer, surface_a, surface_b);
 #endif
 
 #ifdef ENABLE_TEXTURES
@@ -241,7 +241,7 @@ testGLF(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glDisable(GL_LIGHTING);
     glShadeModel(GL_FLAT);
     glEnable(GL_TEXTURE_2D);
-    renderCube(device, renderer, surface_a, surface_b);
+    renderCubeF(device, renderer, surface_a, surface_b);
     glDisable(GL_TEXTURE_2D);
 #endif
   }

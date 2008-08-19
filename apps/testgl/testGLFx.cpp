@@ -34,7 +34,7 @@ const GLfixed fogColor[]      = {gl_fpfromf( 0.4f), gl_fpfromf( 0.4f), gl_fpfrom
 
 // -----------------------------------------------------------------------------
 int
-renderPyramid(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
+renderPyramidFx(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
 {
   int iFrameCount(0);
   int iStartFrame;
@@ -86,7 +86,7 @@ renderPyramid(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface
 #ifdef ENABLE_TEXTURES
 // -----------------------------------------------------------------------------
 int
-renderCube(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
+renderCubeFx(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a, CSurface * surface_b)
 {
   int iFrameCount(0);
   int iStartFrame;
@@ -221,20 +221,20 @@ testGLFx(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glDisable(GL_LIGHTING);
     // Flat
     glShadeModel(GL_FLAT);
-    renderPyramid(device, renderer, surface_a, surface_b);
+    renderPyramidFx(device, renderer, surface_a, surface_b);
     // Smooth
     glShadeModel(GL_SMOOTH);
-    renderPyramid(device, renderer, surface_a, surface_b);
+    renderPyramidFx(device, renderer, surface_a, surface_b);
 
 #ifdef ENABLE_LIGHTING
     // With Lighting
     glEnable(GL_LIGHTING);
     // Flat
     glShadeModel(GL_FLAT);
-    renderPyramid(device, renderer, surface_a, surface_b);
+    renderPyramidFx(device, renderer, surface_a, surface_b);
     // Smooth
     glShadeModel(GL_SMOOTH);
-    renderPyramid(device, renderer, surface_a, surface_b);
+    renderPyramidFx(device, renderer, surface_a, surface_b);
 #endif
 
 #ifdef ENABLE_TEXTURES
@@ -242,7 +242,7 @@ testGLFx(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
     glDisable(GL_LIGHTING);
     glShadeModel(GL_FLAT);
     glEnable(GL_TEXTURE_2D);
-    renderCube(device, renderer, surface_a, surface_b);
+    renderCubeFx(device, renderer, surface_a, surface_b);
     glDisable(GL_TEXTURE_2D);
 #endif
   }
