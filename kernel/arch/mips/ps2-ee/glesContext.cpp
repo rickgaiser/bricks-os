@@ -356,13 +356,14 @@ CPS2GLESContext::end()
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::rasterTriangle(STriangleF & tri)
+CPS2GLESContext::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
+  SVertexF * va[3] = {&v0, &v1, &v2};
   uint8_t alpha;
 
   for(int iVertex(0); iVertex < 3; iVertex++)
   {
-    SVertexF & v = *tri.v[iVertex];
+    SVertexF & v = *va[iVertex];
 
     if(ps2DepthInvert_ == true)
       v.sz = zMax_ - v.sz;

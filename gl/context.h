@@ -64,15 +64,6 @@ typedef TVertex<CFixed>  SVertexFx;
 
 //-----------------------------------------------------------------------------
 template <class T>
-struct TTriangle
-{
-  TVertex<T> * v[3];
-};
-typedef TTriangle<GLfloat> STriangleF;
-typedef TTriangle<CFixed>  STriangleFx;
-
-//-----------------------------------------------------------------------------
-template <class T>
 struct TLight
 {
   TColor<T> diffuse;

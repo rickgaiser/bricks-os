@@ -775,7 +775,7 @@ CNDSGLESContext::end()
 
 //-----------------------------------------------------------------------------
 void
-CNDSGLESContext::rasterTriangle(STriangleFx & tri)
+CNDSGLESContext::rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
 {
 }
 

@@ -439,16 +439,16 @@ CASoftGLESFloat::vertexShaderLight(SVertexF & v)
 
 //-----------------------------------------------------------------------------
 void
-CASoftGLESFloat::fragmentCull(STriangleF & tri)
+CASoftGLESFloat::fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
-  _fragmentCull(tri);
+  _fragmentCull(v0, v1, v2);
 }
 
 //-----------------------------------------------------------------------------
 void
-CASoftGLESFloat::fragmentClip(STriangleF & tri)
+CASoftGLESFloat::fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
-  _fragmentClip(tri);
+  _fragmentClip(v0, v1, v2);
 }
 
 //-----------------------------------------------------------------------------
@@ -465,9 +465,9 @@ CASoftGLESFloat::begin(GLenum mode)
   rasterMode_ = mode;
 
   // Initialize for default triangle
-  triangle_.v[0] = &vertices[0];
-  triangle_.v[1] = &vertices[1];
-  triangle_.v[2] = &vertices[2];
+  triangle_[0] = &vertices[0];
+  triangle_[1] = &vertices[1];
+  triangle_[2] = &vertices[2];
   bFlipFlop_ = true;
   vertIdx_   = 0;
 }
@@ -672,7 +672,7 @@ CASoftGLESFloat::_vertexShaderLight(SVertexF & v)
 
 //-----------------------------------------------------------------------------
 void
-CASoftGLESFloat::_fragmentCull(STriangleF & tri)
+CASoftGLESFloat::_fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
   // -------
   // Culling
@@ -683,10 +683,10 @@ CASoftGLESFloat::_fragmentCull(STriangleF & tri)
     if(cullFaceMode_ == GL_FRONT_AND_BACK)
       return;
 
-    GLint v1x = tri.v[2]->sx - tri.v[0]->sx;
-    GLint v1y = tri.v[2]->sy - tri.v[0]->sy;
-    GLint v2x = tri.v[2]->sx - tri.v[1]->sx;
-    GLint v2y = tri.v[2]->sy - tri.v[1]->sy;
+    GLint v1x = v2.sx - v0.sx;
+    GLint v1y = v2.sy - v0.sy;
+    GLint v2x = v2.sx - v1.sx;
+    GLint v2y = v2.sy - v1.sy;
     GLint vnz = (v1x * v2y) - (v1y * v2x);
 
     if(vnz == 0)
@@ -696,36 +696,38 @@ CASoftGLESFloat::_fragmentCull(STriangleF & tri)
       return;
   }
 
-  fragmentClip(tri);
+  fragmentClip(v0, v1, v2);
 }
 
 //-----------------------------------------------------------------------------
 void
-CASoftGLESFloat::_fragmentClip(STriangleF & tri)
+CASoftGLESFloat::_fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
+  SVertexF * v[3] = {&v0, &v1, &v2};
+
   // --------
   // Clipping
   // --------
   for(int iVertex(0); iVertex < 3; iVertex++)
   {
     // x
-    if(tri.v[iVertex]->vd[0] > 1.0f)
-      tri.v[iVertex]->clip |= CLIP_X_MAX;
-    else if(tri.v[iVertex]->vd[0] < -1.0f)
-      tri.v[iVertex]->clip |= CLIP_X_MIN;
+    if(v[iVertex]->vd[0] > 1.0f)
+      v[iVertex]->clip |= CLIP_X_MAX;
+    else if(v[iVertex]->vd[0] < -1.0f)
+      v[iVertex]->clip |= CLIP_X_MIN;
     // y
-    if(tri.v[iVertex]->vd[1] > 1.0f)
-      tri.v[iVertex]->clip |= CLIP_Y_MAX;
-    else if(tri.v[iVertex]->vd[1] < -1.0f)
-      tri.v[iVertex]->clip |= CLIP_Y_MIN;
+    if(v[iVertex]->vd[1] > 1.0f)
+      v[iVertex]->clip |= CLIP_Y_MAX;
+    else if(v[iVertex]->vd[1] < -1.0f)
+      v[iVertex]->clip |= CLIP_Y_MIN;
     // z
-    if(tri.v[iVertex]->vd[2] > 1.0f)
-      tri.v[iVertex]->clip |= CLIP_Z_MAX;
-    else if(tri.v[iVertex]->vd[2] < -1.0f)
-      tri.v[iVertex]->clip |= CLIP_Z_MIN;
+    if(v[iVertex]->vd[2] > 1.0f)
+      v[iVertex]->clip |= CLIP_Z_MAX;
+    else if(v[iVertex]->vd[2] < -1.0f)
+      v[iVertex]->clip |= CLIP_Z_MIN;
   }
 
-  if(tri.v[0]->clip & tri.v[1]->clip & tri.v[2]->clip)
+  if(v0.clip & v1.clip & v2.clip)
     return; // Not visible
 
   // ----------------------
@@ -733,24 +735,24 @@ CASoftGLESFloat::_fragmentClip(STriangleF & tri)
   // ----------------------
   if(shadingModel_ == GL_SMOOTH)
   {
-    if(tri.v[0]->processed == false)
+    if(v0.processed == false)
     {
-      vertexShaderLight(*tri.v[0]);
-      tri.v[0]->processed = true;
+      vertexShaderLight(v0);
+      v0.processed = true;
     }
-    if(tri.v[1]->processed == false)
+    if(v1.processed == false)
     {
-      vertexShaderLight(*tri.v[1]);
-      tri.v[1]->processed = true;
+      vertexShaderLight(v1);
+      v1.processed = true;
     }
   }
-  if(tri.v[2]->processed == false)
+  if(v2.processed == false)
   {
-    vertexShaderLight(*tri.v[2]);
-    tri.v[2]->processed = true;
+    vertexShaderLight(v2);
+    v2.processed = true;
   }
 
-  rasterTriangle(tri);
+  rasterTriangle(v0, v1, v2);
 }
 
 //-----------------------------------------------------------------------------
@@ -758,7 +760,7 @@ void
 CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
 {
   // Copy vertex into vertex buffer
-  *triangle_.v[vertIdx_] = v;
+  *triangle_[vertIdx_] = v;
 
   // ------------------
   // Primitive Assembly
@@ -768,7 +770,7 @@ CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
     case GL_TRIANGLES:
     {
       if(vertIdx_ == 2)
-        fragmentCull(triangle_);
+        fragmentCull(*triangle_[0], *triangle_[1], *triangle_[2]);
       vertIdx_++;
       if(vertIdx_ > 2)
         vertIdx_ = 0;
@@ -778,19 +780,19 @@ CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
     {
       if(vertIdx_ == 2)
       {
-        fragmentCull(triangle_);
+        fragmentCull(*triangle_[0], *triangle_[1], *triangle_[2]);
         // Swap 3rd with 1st or 2nd vertex pointer
         if(bFlipFlop_ == true)
         {
-          SVertexF * pTemp = triangle_.v[0];
-          triangle_.v[0] = triangle_.v[2];
-          triangle_.v[2] = pTemp;
+          SVertexF * pTemp = triangle_[0];
+          triangle_[0] = triangle_[2];
+          triangle_[2] = pTemp;
         }
         else
         {
-          SVertexF * pTemp = triangle_.v[1];
-          triangle_.v[1] = triangle_.v[2];
-          triangle_.v[2] = pTemp;
+          SVertexF * pTemp = triangle_[1];
+          triangle_[1] = triangle_[2];
+          triangle_[2] = pTemp;
         }
         bFlipFlop_ = !bFlipFlop_;
       }
@@ -802,11 +804,11 @@ CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
     {
       if(vertIdx_ == 2)
       {
-        fragmentCull(triangle_);
+        fragmentCull(*triangle_[0], *triangle_[1], *triangle_[2]);
         // Swap 3rd with 2nd vertex pointer
-        SVertexF * pTemp = triangle_.v[1];
-        triangle_.v[1] = triangle_.v[2];
-        triangle_.v[2] = pTemp;
+        SVertexF * pTemp = triangle_[1];
+        triangle_[1] = triangle_[2];
+        triangle_[2] = pTemp;
       }
       else
         vertIdx_++;
@@ -891,24 +893,24 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterTriangle(STriangleF & tri)
+CSoftGLESFloat::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
-  _rasterTriangle(tri);
+  _rasterTriangle(v0, v1, v2);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::_rasterTriangle(STriangleF & tri)
+CSoftGLESFloat::_rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
   // Clipping not supported
-  if(tri.v[0]->clip | tri.v[1]->clip | tri.v[2]->clip)
+  if(v0.clip | v1.clip | v2.clip)
     return;
 
   // Bubble sort the 3 vertexes
   SVertexF * vtemp;
-  SVertexF * vhi(tri.v[0]);
-  SVertexF * vmi(tri.v[1]);
-  SVertexF * vlo(tri.v[2]);
+  SVertexF * vhi(&v0);
+  SVertexF * vmi(&v1);
+  SVertexF * vlo(&v2);
 
   // Swap bottom with middle?
   if(vlo->sy > vmi->sy)
@@ -1012,9 +1014,9 @@ CSoftGLESFloat::_rasterTriangle(STriangleF & tri)
   {
     if(depthTestEnabled_ == true)
       for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineZ(*pEdgeLeft, *pEdgeRight, y, tri.v[2]->cl);
+        hlineZ(*pEdgeLeft, *pEdgeRight, y, v2.cl);
     else
       for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hline(*pEdgeLeft, *pEdgeRight, y, tri.v[2]->cl);
+        hline(*pEdgeLeft, *pEdgeRight, y, v2.cl);
   }
 }

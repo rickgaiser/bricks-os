@@ -93,7 +93,7 @@ protected:
 
   virtual void begin(GLenum mode);
   virtual void end();
-  virtual void rasterTriangle(STriangleFx & tri);
+  virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
 
 private:
   void plotPoly(SVertexFx * vtx[3]);

@@ -61,7 +61,7 @@ public:
 protected:
   virtual void begin(GLenum mode);
   virtual void end();
-  virtual void rasterTriangle(STriangleF & tri);
+  virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2);
 
 private:
   STexturePS2 * pCurrentTex_;

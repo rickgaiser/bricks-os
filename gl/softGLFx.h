@@ -62,15 +62,15 @@ protected:
   virtual void vertexShaderLight(SVertexFx & v);
 
   // Fragment shader
-  virtual void fragmentCull(STriangleFx & tri);
-  virtual void fragmentClip(STriangleFx & tri);
+  virtual void fragmentCull(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
+  virtual void fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
 
   // Rasterizer
   virtual void begin(GLenum mode);
   virtual void primitiveAssembly(SVertexFx & v);
   virtual void end();
 
-  virtual void rasterTriangle(STriangleFx & tri) = 0;
+  virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) = 0;
 
 protected:
   // Depth testing
@@ -124,10 +124,10 @@ protected:
 
   // Primitive assembly
   GLenum      rasterMode_;
-  SVertexFx   vertices[3]; // Vertex buffer for primitive assembly
-  STriangleFx triangle_;   // Assembled triangle
-  bool        bFlipFlop_;  // Triangle strip
-  GLint       vertIdx_;    // Current index into vertex buffer
+  SVertexFx   vertices[3];  // Vertex buffer for primitive assembly
+  SVertexFx * triangle_[3]; // Assembled triangle
+  bool        bFlipFlop_;   // Triangle strip
+  GLint       vertIdx_;     // Current index into vertex buffer
 
   // Rasterizer
   GLint       viewportXOffset;
@@ -137,12 +137,12 @@ protected:
   GLsizei     viewportHeight;
 
 private:
-  void _glDrawArrays(GLenum mode, GLint first, GLsizei count)      FAST_CODE;
-  void _vertexShaderTransform(SVertexFx & v)                       FAST_CODE;
-  void _vertexShaderLight(SVertexFx & v)                           FAST_CODE;
-  void _fragmentCull(STriangleFx & tri)                            FAST_CODE;
-  void _fragmentClip(STriangleFx & tri)                            FAST_CODE;
-  void _primitiveAssembly(SVertexFx & v)                           FAST_CODE;
+  void _glDrawArrays(GLenum mode, GLint first, GLsizei count)        FAST_CODE;
+  void _vertexShaderTransform(SVertexFx & v)                         FAST_CODE;
+  void _vertexShaderLight(SVertexFx & v)                             FAST_CODE;
+  void _fragmentCull(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) FAST_CODE;
+  void _fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) FAST_CODE;
+  void _primitiveAssembly(SVertexFx & v)                             FAST_CODE;
 };
 
 //-----------------------------------------------------------------------------
@@ -158,7 +158,7 @@ public:
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
-  virtual void rasterTriangle(STriangleFx & tri);
+  virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
 
 protected:
   uint16_t  * zbuffer;
@@ -166,16 +166,16 @@ protected:
   CEdgeFx   * edge2;
 
 private:
-  void _rasterTriangle(STriangleFx & tri)                          FAST_CODE;
+  void _rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) FAST_CODE;
 
-  bool testAndSetDepth(GLfixed z, uint32_t index)                  FAST_CODE;
-  void hline   (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c) FAST_CODE;
-  void hlineZ  (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c) FAST_CODE;
-  void hlineC  (CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
-  void hlineZC (CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
-  void hlineTa (CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
-  void hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
-//  void hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y)             FAST_CODE;
+  bool testAndSetDepth(GLfixed z, uint32_t index)                      FAST_CODE;
+  void hline   (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c)     FAST_CODE;
+  void hlineZ  (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c)     FAST_CODE;
+  void hlineC  (CEdgeFx & from, CEdgeFx & to, GLint y)                 FAST_CODE;
+  void hlineZC (CEdgeFx & from, CEdgeFx & to, GLint y)                 FAST_CODE;
+  void hlineTa (CEdgeFx & from, CEdgeFx & to, GLint y)                 FAST_CODE;
+  void hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y)                 FAST_CODE;
+//  void hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y)                 FAST_CODE;
 };
 
 
