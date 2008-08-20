@@ -52,16 +52,9 @@ public:
   T dotProduct(const TVector3 & vec) const;
 
 public:
-  union
-  {
-    T vector[3];
-    struct
-    {
-      T x;
-      T y;
-      T z;
-    };
-  };
+  T x;
+  T y;
+  T z;
 };
 
 //---------------------------------------------------------------------------
@@ -110,17 +103,10 @@ public:
   T dotProduct(const TVector4 & vec) const;
 
 public:
-  union
-  {
-    T vector[4];
-    struct
-    {
-      T x;
-      T y;
-      T z;
-      T w;
-    };
-  };
+  T x;
+  T y;
+  T z;
+  T w;
 };
 
 

@@ -40,7 +40,9 @@ template <class T>
 inline T &
 TVector3<T>::operator[](uint8_t item)
 {
-  return vector[item];
+  static T * vector[3] = {&x, &y, &z};
+
+  return *vector[item];
 }
 
 //---------------------------------------------------------------------------
@@ -48,7 +50,9 @@ template <class T>
 inline T
 TVector3<T>::operator[](uint8_t item) const
 {
-  return vector[item];
+  static T * vector[3] = {&x, &y, &z};
+
+  return *vector[item];
 }
 
 //---------------------------------------------------------------------------
@@ -385,7 +389,9 @@ template <class T>
 inline T &
 TVector4<T>::operator[](uint8_t item)
 {
-  return vector[item];
+  static T * vector[4] = {&x, &y, &z, &w};
+
+  return *vector[item];
 }
 
 //---------------------------------------------------------------------------
@@ -393,7 +399,9 @@ template <class T>
 inline T
 TVector4<T>::operator[](uint8_t item) const
 {
-  return vector[item];
+  const static T * vector[4] = {&x, &y, &z, &w};
+
+  return *vector[item];
 }
 
 //---------------------------------------------------------------------------
