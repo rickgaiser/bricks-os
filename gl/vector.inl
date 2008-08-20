@@ -37,6 +37,22 @@ TVector3<T>::TVector3(T _x, T _y, T _z)
 
 //---------------------------------------------------------------------------
 template <class T>
+inline T &
+TVector3<T>::operator[](uint8_t item)
+{
+  return vector[item];
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline T
+TVector3<T>::operator[](uint8_t item) const
+{
+  return vector[item];
+}
+
+//---------------------------------------------------------------------------
+template <class T>
 inline TVector3<T> &
 TVector3<T>::operator= (const T * vec)
 {
@@ -362,6 +378,22 @@ inline
 TVector4<T>::TVector4(T _x, T _y, T _z, T _w)
  : x(_x), y(_y), z(_z), w(_w)
 {
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline T &
+TVector4<T>::operator[](uint8_t item)
+{
+  return vector[item];
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline T
+TVector4<T>::operator[](uint8_t item) const
+{
+  return vector[item];
 }
 
 //---------------------------------------------------------------------------

@@ -32,10 +32,10 @@ template <class T>
 struct TVertex
 {
   // Vertex itself
-  T vo[4]; // Object Coordinates
-  T ve[4]; // Eye Coordinates
-  T vc[4]; // Clip Coordinates
-  T vd[3]; // Normalized Device Coordinates
+  TVector4<T> vo; // Object Coordinates
+  TVector4<T> ve; // Eye Coordinates
+  TVector4<T> vc; // Clip Coordinates
+  TVector4<T> vd; // Normalized Device Coordinates
 
   // Normal vector
   TVector3<T> n;  // Vertex Normal

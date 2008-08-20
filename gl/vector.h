@@ -11,11 +11,16 @@ template <class T>
 class TVector3
 {
 public:
+  // Constructors
   TVector3(){}
   TVector3(const T * vec);
   TVector3(const TVector3 & vec);
   TVector3(const TVector4<T> & vec);
   TVector3(T _x, T _y, T _z);
+
+  // Accessor
+  T & operator[](uint8_t item);
+  T   operator[](uint8_t item) const;
 
   TVector3 & operator= (const T * vec);
   TVector3 & operator= (const TVector3 & vec);
@@ -47,9 +52,16 @@ public:
   T dotProduct(const TVector3 & vec) const;
 
 public:
-  T x;
-  T y;
-  T z;
+  union
+  {
+    T vector[3];
+    struct
+    {
+      T x;
+      T y;
+      T z;
+    };
+  };
 };
 
 //---------------------------------------------------------------------------
@@ -57,11 +69,16 @@ template <class T>
 class TVector4
 {
 public:
+  // Constructors
   TVector4(){}
   TVector4(const T * vec);
   TVector4(const TVector3<T> & vec);
   TVector4(const TVector4 & vec);
   TVector4(T _x, T _y, T _z, T _w);
+
+  // Accessor
+  T & operator[](uint8_t item);
+  T   operator[](uint8_t item) const;
 
   TVector4 & operator= (const T * vec);
   TVector4 & operator= (const TVector3<T> & vec);
@@ -93,10 +110,17 @@ public:
   T dotProduct(const TVector4 & vec) const;
 
 public:
-  T x;
-  T y;
-  T z;
-  T w;
+  union
+  {
+    T vector[4];
+    struct
+    {
+      T x;
+      T y;
+      T z;
+      T w;
+    };
+  };
 };
 
 
