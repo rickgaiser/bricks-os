@@ -244,3 +244,24 @@ GL_APIFUNCTION_1(glClearDepthf,        GLclampf, depth);
 //#endif // OPENGL_ES_COMMON
 
 //#endif // OPENGL_ES
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val)
+{
+  glFrustumf(left, right, bottom, top, near_val, far_val);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val)
+{
+  glOrthof(left, right, bottom, top, near_val, far_val);
+}
+
+//-----------------------------------------------------------------------------
+GL_API void
+GL_APIENTRY glDepthRange(GLclampd near_val, GLclampd far_val)
+{
+  glDepthRangef(near_val, far_val);
+}
