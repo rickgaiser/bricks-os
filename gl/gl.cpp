@@ -108,8 +108,8 @@ GL_APIFUNCTION_4(glViewport,           GLint, x, GLint, y, GLsizei, width, GLsiz
 GL_APIFUNCTION_1(glMatrixMode,         GLenum, mode);
 GL_APIFUNCTION_0(glLoadIdentity);
 //GL_APIFUNCTION_1(glActiveTexture,      GLenum texture);
-//GL_APIFUNCTION_0(glPushMatrix);
-//GL_APIFUNCTION_0(glPopMatrix);
+GL_APIFUNCTION_0(glPushMatrix);
+GL_APIFUNCTION_0(glPopMatrix);
 GL_APIFUNCTION_1(glDisable,            GLenum, cap);
 GL_APIFUNCTION_1(glEnable,             GLenum, cap);
 GL_APIFUNCTION_1(glFrontFace,          GLenum, mode);

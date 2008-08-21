@@ -8,8 +8,15 @@
 //---------------------------------------------------------------------------
 CAGLESMatrixF::CAGLESMatrixF()
  : matrixMode_(GL_MODELVIEW)
+ , iCurrentModelView_(1)
+ , iCurrentProjection_(1)
+ , iCurrentTexture_(1)
  , pCurrentMatrix_(&matrixModelView)
 {
+  // All stacks contain 1 identity matrix
+  stackModelView[0].loadIdentity();
+  stackProjection[0].loadIdentity();
+  stackTexture[0].loadIdentity();
 }
 
 //---------------------------------------------------------------------------
@@ -116,6 +123,66 @@ CAGLESMatrixF::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 
 //---------------------------------------------------------------------------
 void
+CAGLESMatrixF::glPopMatrix(void)
+{
+  switch(matrixMode_)
+  {
+    case GL_MODELVIEW:
+      if(iCurrentModelView_ > 0)
+      {
+        iCurrentModelView_--;
+        matrixModelView = stackModelView[iCurrentModelView_];
+      }
+      break;
+    case GL_PROJECTION:
+      if(iCurrentProjection_ > 0)
+      {
+        iCurrentProjection_--;
+        matrixProjection = stackProjection[iCurrentProjection_];
+      }
+      break;
+    case GL_TEXTURE:
+      if(iCurrentTexture_ > 0)
+      {
+        iCurrentTexture_--;
+        matrixTexture = stackTexture[iCurrentTexture_];
+      }
+      break;
+  };
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixF::glPushMatrix(void)
+{
+  switch(matrixMode_)
+  {
+    case GL_MODELVIEW:
+      if(iCurrentModelView_ < 16)
+      {
+        stackModelView[iCurrentModelView_] = matrixModelView;
+        iCurrentModelView_++;
+      }
+      break;
+    case GL_PROJECTION:
+      if(iCurrentProjection_ < 2)
+      {
+        stackProjection[iCurrentProjection_] = matrixProjection;
+        iCurrentProjection_++;
+      }
+      break;
+    case GL_TEXTURE:
+      if(iCurrentTexture_ < 2)
+      {
+        stackTexture[iCurrentTexture_] = matrixTexture;
+        iCurrentTexture_++;
+      }
+      break;
+  };
+}
+
+//---------------------------------------------------------------------------
+void
 CAGLESMatrixF::glLoadIdentity(void)
 {
   pCurrentMatrix_->loadIdentity();
@@ -139,8 +206,15 @@ CAGLESMatrixF::glMatrixMode(GLenum mode)
 //---------------------------------------------------------------------------
 CAGLESMatrixFx::CAGLESMatrixFx()
  : matrixMode_(GL_MODELVIEW)
+ , iCurrentModelView_(1)
+ , iCurrentProjection_(1)
+ , iCurrentTexture_(1)
  , pCurrentMatrix_(&matrixModelView)
 {
+  // All stacks contain 1 identity matrix
+  stackModelView[0].loadIdentity();
+  stackProjection[0].loadIdentity();
+  stackTexture[0].loadIdentity();
 }
 
 //---------------------------------------------------------------------------
@@ -263,6 +337,66 @@ CAGLESMatrixFx::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
   fz.value = z;
 
   pCurrentMatrix_->translate(fx, fy, fz);
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixFx::glPopMatrix(void)
+{
+  switch(matrixMode_)
+  {
+    case GL_MODELVIEW:
+      if(iCurrentModelView_ > 0)
+      {
+        iCurrentModelView_--;
+        matrixModelView = stackModelView[iCurrentModelView_];
+      }
+      break;
+    case GL_PROJECTION:
+      if(iCurrentProjection_ > 0)
+      {
+        iCurrentProjection_--;
+        matrixProjection = stackProjection[iCurrentProjection_];
+      }
+      break;
+    case GL_TEXTURE:
+      if(iCurrentTexture_ > 0)
+      {
+        iCurrentTexture_--;
+        matrixTexture = stackTexture[iCurrentTexture_];
+      }
+      break;
+  };
+}
+
+//---------------------------------------------------------------------------
+void
+CAGLESMatrixFx::glPushMatrix(void)
+{
+  switch(matrixMode_)
+  {
+    case GL_MODELVIEW:
+      if(iCurrentModelView_ < 16)
+      {
+        stackModelView[iCurrentModelView_] = matrixModelView;
+        iCurrentModelView_++;
+      }
+      break;
+    case GL_PROJECTION:
+      if(iCurrentProjection_ < 2)
+      {
+        stackProjection[iCurrentProjection_] = matrixProjection;
+        iCurrentProjection_++;
+      }
+      break;
+    case GL_TEXTURE:
+      if(iCurrentTexture_ < 2)
+      {
+        stackTexture[iCurrentTexture_] = matrixTexture;
+        iCurrentTexture_++;
+      }
+      break;
+  };
 }
 
 //---------------------------------------------------------------------------

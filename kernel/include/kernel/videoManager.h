@@ -334,8 +334,8 @@ public:
 //  virtual void glPointParameterxv(GLenum pname, const GLfixed *params) = 0;
 //  virtual void glPointSizex(GLfixed size) = 0;
 //  virtual void glPolygonOffsetx(GLfixed factor, GLfixed units) = 0;
-//  virtual void glPopMatrix(void) = 0;
-//  virtual void glPushMatrix(void) = 0;
+  virtual void glPopMatrix(void) = 0;
+  virtual void glPushMatrix(void) = 0;
 //  virtual void glReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels) = 0;
   virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z) = 0;
 //  virtual void glSampleCoverage(GLclampf value, GLboolean invert) = 0;
