@@ -500,16 +500,16 @@ CASoftGLESFixed::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
     switch(bufVertex_.type)
     {
       case GL_FLOAT:
-        v.vo[0] = (((GLfloat *)bufVertex_.pointer)[idxVertex++]);
-        v.vo[1] = (((GLfloat *)bufVertex_.pointer)[idxVertex++]);
-        v.vo[2] = (((GLfloat *)bufVertex_.pointer)[idxVertex++]);
-        v.vo[3] = 1;
+        v.vo.x = (((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v.vo.y = (((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v.vo.z = (((GLfloat *)bufVertex_.pointer)[idxVertex++]);
+        v.vo.w = 1;
         break;
       case GL_FIXED:
-        v.vo[0].value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.vo[1].value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.vo[2].value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.vo[3] = 1;
+        v.vo.x.value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
+        v.vo.y.value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
+        v.vo.z.value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
+        v.vo.w = 1;
         break;
     };
 
@@ -596,15 +596,12 @@ CASoftGLESFixed::_vertexShaderTransform(SVertexFx & v)
   matrixProjection.transform4(v.ve, v.vc);
   // Perspective division
   //   from 'clip coordinates' to 'normalized device coordinates'
-  CFixed iw = 1 / v.vc[3];
-  v.vd[0] = v.vc[0] * iw;
-  v.vd[1] = v.vc[1] * iw;
-  v.vd[2] = v.vc[2] * iw;
+  v.vd = v.vc / v.vc.w;
   // Viewport transformation
   //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = (GLint)((xA_ * v.vd[0]) + xB_);
-  v.sy = (GLint)((yA_ * v.vd[1]) + yB_);
-  v.sz =        ((zA_ * v.vd[2]) + zB_).value - 1; // 16bit z-buffer
+  v.sx = (GLint)((xA_ * v.vd.x) + xB_);
+  v.sy = (GLint)((yA_ * v.vd.y) + yB_);
+  v.sz =        ((zA_ * v.vd.z) + zB_).value - 1; // 16bit z-buffer
 
   primitiveAssembly(v);
 }
@@ -664,7 +661,7 @@ CASoftGLESFixed::_vertexShaderLight(SVertexFx & v)
   if(fogEnabled_ == true)
   {
     CFixed partFog, partColor;
-    partFog.value = clampfx(gl_fpdiv(abs(v.ve[2].value) - fogStart_, fogEnd_ - fogStart_));
+    partFog.value = clampfx(gl_fpdiv(abs(v.ve.z.value) - fogStart_, fogEnd_ - fogStart_));
     partColor = 1 - partFog;
     v.cl = ((v.cl * partColor) + (fogColor_ * partFog)).getClamped();
   }
@@ -711,19 +708,19 @@ CASoftGLESFixed::_fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
   for(int iVertex(0); iVertex < 3; iVertex++)
   {
     // x
-    if(v[iVertex]->vd[0] > 1.0f)
+    if(v[iVertex]->vd.x > 1.0f)
       v[iVertex]->clip |= CLIP_X_MAX;
-    else if(v[iVertex]->vd[0] < -1.0f)
+    else if(v[iVertex]->vd.x < -1.0f)
       v[iVertex]->clip |= CLIP_X_MIN;
     // y
-    if(v[iVertex]->vd[1] > 1.0f)
+    if(v[iVertex]->vd.y > 1.0f)
       v[iVertex]->clip |= CLIP_Y_MAX;
-    else if(v[iVertex]->vd[1] < -1.0f)
+    else if(v[iVertex]->vd.y < -1.0f)
       v[iVertex]->clip |= CLIP_Y_MIN;
     // z
-    if(v[iVertex]->vd[2] > 1.0f)
+    if(v[iVertex]->vd.z > 1.0f)
       v[iVertex]->clip |= CLIP_Z_MAX;
-    else if(v[iVertex]->vd[2] < -1.0f)
+    else if(v[iVertex]->vd.z < -1.0f)
       v[iVertex]->clip |= CLIP_Z_MIN;
   }
 

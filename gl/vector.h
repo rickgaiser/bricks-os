@@ -20,7 +20,7 @@ public:
 
   // Accessor
   T & operator[](uint8_t item);
-  T   operator[](uint8_t item) const;
+  const T & operator[](uint8_t item) const;
 
   TVector3 & operator= (const T * vec);
   TVector3 & operator= (const TVector3 & vec);
@@ -71,7 +71,7 @@ public:
 
   // Accessor
   T & operator[](uint8_t item);
-  T   operator[](uint8_t item) const;
+  const T & operator[](uint8_t item) const;
 
   TVector4 & operator= (const T * vec);
   TVector4 & operator= (const TVector3<T> & vec);

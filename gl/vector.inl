@@ -47,7 +47,7 @@ TVector3<T>::operator[](uint8_t item)
 
 //---------------------------------------------------------------------------
 template <class T>
-inline T
+inline const T &
 TVector3<T>::operator[](uint8_t item) const
 {
   static T * vector[3] = {&x, &y, &z};
@@ -396,7 +396,7 @@ TVector4<T>::operator[](uint8_t item)
 
 //---------------------------------------------------------------------------
 template <class T>
-inline T
+inline const T &
 TVector4<T>::operator[](uint8_t item) const
 {
   const static T * vector[4] = {&x, &y, &z, &w};
