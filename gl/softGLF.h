@@ -62,9 +62,12 @@ protected:
   virtual void primitiveAssembly(SVertexF & v);
   virtual void end();
 
+  virtual void rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit = 0);
   virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2) = 0;
 
 protected:
+  void interpolateVertex(SVertexF & vNew, SVertexF & vOld, SVertexF & vFrom, GLfloat t);
+
   // Depth testing
   bool        depthTestEnabled_;
   GLenum      depthFunction_;

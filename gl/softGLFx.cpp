@@ -707,6 +707,8 @@ CASoftGLESFixed::_fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
   // --------
   for(int iVertex(0); iVertex < 3; iVertex++)
   {
+    v[iVertex]->clip = 0;
+
     // x
     if(v[iVertex]->vd.x > 1.0f)
       v[iVertex]->clip |= CLIP_X_MAX;
@@ -749,7 +751,7 @@ CASoftGLESFixed::_fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
     v2.processed = true;
   }
 
-  rasterTriangle(v0, v1, v2);
+  rasterTriangleClip(v0, v1, v2);
 }
 
 //-----------------------------------------------------------------------------
@@ -815,6 +817,200 @@ CASoftGLESFixed::_primitiveAssembly(SVertexFx & v)
 }
 
 //-----------------------------------------------------------------------------
+// Clipping based on code from TinyGL
+// t = -(plane.dotProduct(from) + planeDistance) / plane.dotProduct(delta);
+#define clip_func(name,sign,dir,dir1,dir2)         \
+inline CFixed                                      \
+name(TVector4<CFixed> & from, TVector4<CFixed> & delta) \
+{                                                  \
+  CFixed t, den;                                   \
+  den = 0 sign delta.dir;                          \
+  if(den == 0)                                     \
+    t = 0;                                         \
+  else                                             \
+    t = (0 - (0 sign from.dir - 1)) / den;         \
+  return t;                                        \
+}
+
+clip_func(clip_xmin,-,x,y,z)
+clip_func(clip_xmax,+,x,y,z)
+clip_func(clip_ymin,-,y,x,z)
+clip_func(clip_ymax,+,y,x,z)
+clip_func(clip_zmin,-,z,x,y)
+clip_func(clip_zmax,+,z,x,y)
+
+CFixed (*clip_proc[6])(TVector4<CFixed> &, TVector4<CFixed> &) =
+{
+  clip_xmin,
+  clip_xmax,
+  clip_ymin,
+  clip_ymax,
+  clip_zmin,
+  clip_zmax
+};
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2, uint32_t clipBit)
+{
+  uint32_t cc[3] =
+  {
+    v0.clip,
+    v1.clip,
+    v2.clip
+  };
+  uint32_t clipOr = cc[0] | cc[1] | cc[2];
+
+  if(clipOr == 0)
+  {
+    // Completely inside
+    this->rasterTriangle(v0, v1, v2);
+  }
+  else
+  {
+    if(cc[0] & cc[1] & cc[2])
+      return; // Completely outside
+
+    // find the next clip bit
+    while(clipBit < 6 && (clipOr & (1 << clipBit)) == 0)
+    {
+      clipBit++;
+    }
+
+    uint32_t clipMask = (1 << clipBit);
+    uint32_t clipXor  = (cc[0] ^ cc[1] ^ cc[2]) & clipMask;
+
+    if(clipXor != 0)
+    {
+      // 1 vertex outside
+      SVertexFx * v[3]; // Rearrange vertices
+      SVertexFx vNew1;  // Intersection of 1 line
+      SVertexFx vNew2;  // Intersection of 1 line
+      CFixed tt;
+
+      if(cc[0] & clipMask)
+      {
+        // v[0] == outside
+        v[0] = &v0;
+        v[1] = &v1;
+        v[2] = &v2;
+      }
+      else if(cc[1] & clipMask)
+      {
+        // v[1] == outside
+        v[0] = &v1;
+        v[1] = &v2;
+        v[2] = &v0;
+      }
+      else
+      {
+        // v[2] == outside
+        v[0] = &v2;
+        v[1] = &v0;
+        v[2] = &v1;
+      }
+
+      // Clear clipping bits in vertex
+      v[0]->clip &= ~clipMask;
+
+      TVector4<CFixed> vRay;
+
+      // Interpolate 1-0
+      vRay = v[0]->vd - v[1]->vd;
+      tt = clip_proc[clipBit](v[1]->vd, vRay);
+      vNew1.vd = v[1]->vd + (vRay * tt);
+      interpolateVertex(vNew1, *v[0], *v[1], tt);
+
+      // Interpolate 2-0
+      vRay = v[0]->vd - v[2]->vd;
+      tt = clip_proc[clipBit](v[2]->vd, vRay);
+      vNew2.vd = v[2]->vd + (vRay * tt);
+      interpolateVertex(vNew2, *v[0], *v[2], tt);
+
+      this->rasterTriangleClip(vNew1, *v[1], *v[2], clipBit + 1);
+      this->rasterTriangleClip(vNew2, vNew1, *v[2], clipBit + 1);
+    }
+    else
+    {
+      // 2 vertices outside
+      SVertexFx * v[3]; // Rearrange vertices
+      SVertexFx vNew1;  // Intersection of 1 line
+      SVertexFx vNew2;  // Intersection of 1 line
+      CFixed tt;
+
+      if((cc[0] & clipMask) == 0)
+      {
+        // v[0] == inside
+        v[0] = &v0;
+        v[1] = &v1;
+        v[2] = &v2;
+      }
+      else if((cc[1] & clipMask) == 0)
+      {
+        // v[1] == inside
+        v[0] = &v1;
+        v[1] = &v2;
+        v[2] = &v0;
+      } 
+      else
+      {
+        // v[2] == inside
+        v[0] = &v2;
+        v[1] = &v0;
+        v[2] = &v1;
+      }
+
+      // Clear clipping bits in vertex
+      v[1]->clip &= ~clipMask;
+      v[2]->clip &= ~clipMask;
+
+      TVector4<CFixed> vRay;
+
+      // Interpolate 0-1
+      vRay = v[1]->vd - v[0]->vd;
+      tt = clip_proc[clipBit](v[0]->vd, vRay);
+      vNew1.vd = v[0]->vd + (vRay * tt);
+      interpolateVertex(vNew1, *v[1], *v[0], tt);
+
+      // Interpolate 0-2
+      vRay = v[2]->vd - v[0]->vd;
+      tt = clip_proc[clipBit](v[0]->vd, vRay);
+      vNew2.vd = v[0]->vd + (vRay * tt);
+      interpolateVertex(vNew2, *v[2], *v[0], tt);
+
+      this->rasterTriangleClip(*v[0], vNew1, vNew2, clipBit + 1);
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::interpolateVertex(SVertexFx & vNew, SVertexFx & vOld, SVertexFx & vFrom, CFixed t)
+{
+  if(shadingModel_ == GL_SMOOTH)
+  {
+    // Interpolate color
+    vNew.cl = vFrom.cl + ((vOld.cl - vFrom.cl) * t);
+  }
+  else
+  {
+    // Copy color
+    vNew.cl = vOld.cl;
+  }
+
+  // Copy clipping flags
+  vNew.clip = vOld.clip;
+
+  if(vNew.clip == 0)
+  {
+    // Calculate new screen values
+    vNew.sx = (GLint)((xA_ * vNew.vd.x) + xB_);
+    vNew.sy = (GLint)((yA_ * vNew.vd.y) + yB_);
+    vNew.sz =        ((zA_ * vNew.vd.z) + zB_).value - 1; // 16bit z-buffer
+  }
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CSoftGLESFixed::CSoftGLESFixed()
  : CASoftGLESFixed()
@@ -842,22 +1038,22 @@ CSoftGLESFixed::glClear(GLbitfield mask)
     {
       case 8:
       {
-        for(uint32_t y(0); y < renderSurface->mode.width; y++)
-          for(uint32_t x(0); x < renderSurface->mode.height; x++)
+        for(int32_t y(0); y < viewportHeight; y++)
+          for(int32_t x(0); x < viewportWidth; x++)
             ((uint8_t  *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
         break;
       }
       case 16:
       {
-        for(uint32_t y(0); y < renderSurface->mode.width; y++)
-          for(uint32_t x(0); x < renderSurface->mode.height; x++)
+        for(int32_t y(0); y < viewportHeight; y++)
+          for(int32_t x(0); x < viewportWidth; x++)
             ((uint16_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
         break;
       }
       case 32:
       {
-        for(uint32_t y(0); y < renderSurface->mode.width; y++)
-          for(uint32_t x(0); x < renderSurface->mode.height; x++)
+        for(int32_t y(0); y < viewportHeight; y++)
+          for(int32_t x(0); x < viewportWidth; x++)
             ((uint32_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
         break;
       }
@@ -899,10 +1095,6 @@ CSoftGLESFixed::rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
 void
 CSoftGLESFixed::_rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
 {
-  // Clipping not supported
-  if(v0.clip | v1.clip | v2.clip)
-    return;
-
   // Bubble sort the 3 vertexes
   SVertexFx * vtemp;
   SVertexFx * vhi(&v0);
