@@ -9,8 +9,7 @@
 //-----------------------------------------------------------------------------
 CASoftGLESFixed::CASoftGLESFixed()
  : CAGLESFloatToFxContext()
- , CAGLESBuffers()
- , CAGLESCull()
+ , CAGLESBase()
  , CAGLESMatrixFx()
 
  , depthTestEnabled_(false)
@@ -25,12 +24,6 @@ CASoftGLESFixed::CASoftGLESFixed()
  , normalizeEnabled_(false)
  , fogEnabled_(false)
  , texturesEnabled_(false)
- , hintFog_(GL_DONT_CARE)
- , hintLineSmooth_(GL_DONT_CARE)
- , hintPerspectiveCorrection_(GL_DONT_CARE)
- , hintPointSmooth_(GL_DONT_CARE)
- , errorCode_(GL_NO_ERROR)
- , bError_(false)
 {
   clCurrent.r = 1;
   clCurrent.g = 1;
@@ -292,59 +285,6 @@ CASoftGLESFixed::glFogxv(GLenum pname, const GLfixed * params)
       setError(GL_INVALID_ENUM);
       return;
   };
-}
-
-//-----------------------------------------------------------------------------
-GLenum
-CASoftGLESFixed::glGetError(void)
-{
-  GLenum err(errorCode_);
-
-  bError_ = false;
-  errorCode_ = GL_NO_ERROR;
-
-  return err;
-}
-
-//-----------------------------------------------------------------------------
-void
-CASoftGLESFixed::glHint(GLenum target, GLenum mode)
-{
-  GLenum * pHint;
-
-  switch(target)
-  {
-    case GL_FOG_HINT:
-      pHint = &hintFog_;
-      break;
-    case GL_LINE_SMOOTH_HINT:
-      pHint = &hintLineSmooth_;
-      break;
-    case GL_PERSPECTIVE_CORRECTION_HINT:
-      pHint = &hintPerspectiveCorrection_;
-      break;
-    case GL_POINT_SMOOTH_HINT:
-      pHint = &hintPointSmooth_;
-      break;
-    default:
-      setError(GL_INVALID_ENUM);
-      return;
-  };
-
-  switch(mode)
-  {
-    case GL_FASTEST:
-      break;
-    case GL_NICEST:
-      break;
-    case GL_DONT_CARE:
-      break;
-    default:
-      setError(GL_INVALID_ENUM);
-      return;
-  };
-
-  *pHint = mode;
 }
 
 //-----------------------------------------------------------------------------
@@ -1078,17 +1018,6 @@ CASoftGLESFixed::interpolateVertex(SVertexFx & vNew, SVertexFx & vOld, SVertexFx
     vNew.sx = (GLint)((xA_ * vNew.vd.x) + xB_);
     vNew.sy = (GLint)((yA_ * vNew.vd.y) + yB_);
     vNew.sz =        ((zA_ * vNew.vd.z) + zB_).value - 1; // 16bit z-buffer
-  }
-}
-
-//-----------------------------------------------------------------------------
-void
-CASoftGLESFixed::setError(GLenum error)
-{
-  if(bError_ == false)
-  {
-    bError_ = true;
-    errorCode_ = error;
   }
 }
 

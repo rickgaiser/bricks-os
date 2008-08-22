@@ -4,23 +4,52 @@
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-CAGLESBuffers::CAGLESBuffers()
+CAGLESBase::CAGLESBase()
  : bBufColorEnabled_(false)
  , bBufNormalEnabled_(false)
  , bBufTexCoordEnabled_(false)
  , bBufVertexEnabled_(false)
+ , cullFaceEnabled_(false)
+ , cullFaceMode_(GL_BACK)
+ , frontFace_(GL_CCW)
+ , bCullCW_(true)
+ , hintFog_(GL_DONT_CARE)
+ , hintLineSmooth_(GL_DONT_CARE)
+ , hintPerspectiveCorrection_(GL_DONT_CARE)
+ , hintPointSmooth_(GL_DONT_CARE)
+ , errorCode_(GL_NO_ERROR)
+ , bError_(false)
 {
 }
 
 //-----------------------------------------------------------------------------
-CAGLESBuffers::~CAGLESBuffers()
+CAGLESBase::~CAGLESBase()
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBuffers::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+CAGLESBase::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
+  if((size != 4) || (stride < 0))
+  {
+    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  switch(type)
+  {
+//    case GL_UNSIGNED_BYTE:
+//      break;
+    case GL_FIXED:
+      break;
+    case GL_FLOAT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
   bufColor_.size    = size;
   bufColor_.type    = type;
   bufColor_.stride  = stride;
@@ -29,7 +58,7 @@ CAGLESBuffers::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLv
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBuffers::glDisableClientState(GLenum array)
+CAGLESBase::glDisableClientState(GLenum array)
 {
   switch(array)
   {
@@ -38,13 +67,14 @@ CAGLESBuffers::glDisableClientState(GLenum array)
     case GL_TEXTURE_COORD_ARRAY: bBufTexCoordEnabled_ = false; break;
     case GL_VERTEX_ARRAY:        bBufVertexEnabled_   = false; break;
     default:
-      ; // Not supported
+      setError(GL_INVALID_ENUM);
+      return;
   };
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBuffers::glEnableClientState(GLenum array)
+CAGLESBase::glEnableClientState(GLenum array)
 {
   switch(array)
   {
@@ -53,14 +83,36 @@ CAGLESBuffers::glEnableClientState(GLenum array)
     case GL_TEXTURE_COORD_ARRAY: bBufTexCoordEnabled_ = true; break;
     case GL_VERTEX_ARRAY:        bBufVertexEnabled_   = true; break;
     default:
-      ; // Not supported
+      setError(GL_INVALID_ENUM);
+      return;
   };
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBuffers::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
+CAGLESBase::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 {
+  if(stride < 0)
+  {
+    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  switch(type)
+  {
+//    case GL_BYTE:
+//      break;
+//    case GL_SHORT:
+//      break;
+    case GL_FIXED:
+      break;
+    case GL_FLOAT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
   bufNormal_.size    = 3;  // x,y,z
   bufNormal_.type    = type;
   bufNormal_.stride  = stride;
@@ -69,8 +121,29 @@ CAGLESBuffers::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * point
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBuffers::glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+CAGLESBase::glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
+  if((size < 2) || (size > 4) || (stride < 0))
+  {
+    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  switch(type)
+  {
+//    case GL_BYTE:
+//      break;
+//    case GL_SHORT:
+//      break;
+    case GL_FIXED:
+      break;
+    case GL_FLOAT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
   bufTexCoord_.size    = size;
   bufTexCoord_.type    = type;
   bufTexCoord_.stride  = stride;
@@ -79,8 +152,29 @@ CAGLESBuffers::glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const 
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBuffers::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+CAGLESBase::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
+  if((size < 2) || (size > 4) || (stride < 0))
+  {
+    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  switch(type)
+  {
+//    case GL_BYTE:
+//      break;
+//    case GL_SHORT:
+//      break;
+    case GL_FIXED:
+      break;
+    case GL_FLOAT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
   bufVertex_.size    = size;
   bufVertex_.type    = type;
   bufVertex_.stride  = stride;
@@ -88,23 +182,8 @@ CAGLESBuffers::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GL
 }
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-CAGLESCull::CAGLESCull()
- : cullFaceEnabled_(false)
- , cullFaceMode_(GL_BACK)
- , frontFace_(GL_CCW)
- , bCullCW_(true)
-{
-}
-
-//-----------------------------------------------------------------------------
-CAGLESCull::~CAGLESCull()
-{
-}
-
-//-----------------------------------------------------------------------------
 void
-CAGLESCull::glCullFace(GLenum mode)
+CAGLESBase::glCullFace(GLenum mode)
 {
   cullFaceMode_ = mode;
 
@@ -113,11 +192,75 @@ CAGLESCull::glCullFace(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESCull::glFrontFace(GLenum mode)
+CAGLESBase::glFrontFace(GLenum mode)
 {
   frontFace_ = mode;
 
   bCullCW_ = (frontFace_ == GL_CCW) == (cullFaceMode_ == GL_BACK);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESBase::glHint(GLenum target, GLenum mode)
+{
+  GLenum * pHint;
+
+  switch(target)
+  {
+    case GL_FOG_HINT:
+      pHint = &hintFog_;
+      break;
+    case GL_LINE_SMOOTH_HINT:
+      pHint = &hintLineSmooth_;
+      break;
+    case GL_PERSPECTIVE_CORRECTION_HINT:
+      pHint = &hintPerspectiveCorrection_;
+      break;
+    case GL_POINT_SMOOTH_HINT:
+      pHint = &hintPointSmooth_;
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(mode)
+  {
+    case GL_FASTEST:
+      break;
+    case GL_NICEST:
+      break;
+    case GL_DONT_CARE:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  *pHint = mode;
+}
+
+//-----------------------------------------------------------------------------
+GLenum
+CAGLESBase::glGetError(void)
+{
+  GLenum err(errorCode_);
+
+  bError_ = false;
+  errorCode_ = GL_NO_ERROR;
+
+  return err;
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESBase::setError(GLenum error)
+{
+  if(bError_ == false)
+  {
+    bError_ = true;
+    errorCode_ = error;
+  }
 }
 
 #ifndef CONFIG_FPU

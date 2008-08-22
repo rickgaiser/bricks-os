@@ -86,12 +86,12 @@ struct SBufferPointer
 };
 
 //-----------------------------------------------------------------------------
-class CAGLESBuffers
+class CAGLESBase
  : public virtual I3DRenderer
 {
 public:
-  CAGLESBuffers();
-  virtual ~CAGLESBuffers();
+  CAGLESBase();
+  virtual ~CAGLESBase();
 
   virtual void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
   virtual void glDisableClientState(GLenum array);
@@ -100,7 +100,18 @@ public:
   virtual void glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
   virtual void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
 
+  virtual void glCullFace(GLenum mode);
+  virtual void glFrontFace(GLenum mode);
+
+  virtual void glHint(GLenum target, GLenum mode);
+
+  virtual GLenum glGetError(void);
+
 protected:
+  void setError(GLenum error);
+
+protected:
+  // Buffers
   bool bBufColorEnabled_;
   bool bBufNormalEnabled_;
   bool bBufTexCoordEnabled_;
@@ -109,24 +120,22 @@ protected:
   SBufferPointer bufNormal_;
   SBufferPointer bufTexCoord_;
   SBufferPointer bufVertex_;
-};
 
-//-----------------------------------------------------------------------------
-class CAGLESCull
- : public virtual I3DRenderer
-{
-public:
-  CAGLESCull();
-  virtual ~CAGLESCull();
-
-  virtual void glCullFace(GLenum mode);
-  virtual void glFrontFace(GLenum mode);
-
-protected:
+  // Culling
   bool        cullFaceEnabled_;
   GLenum      cullFaceMode_;
   GLenum      frontFace_;
   bool        bCullCW_;
+
+  // Hints
+  GLenum      hintFog_;
+  GLenum      hintLineSmooth_;
+  GLenum      hintPerspectiveCorrection_;
+  GLenum      hintPointSmooth_;
+
+  // Error
+  GLenum      errorCode_;
+  bool        bError_;
 };
 
 #ifndef CONFIG_FPU

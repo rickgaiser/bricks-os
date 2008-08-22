@@ -9,8 +9,7 @@
 //-----------------------------------------------------------------------------
 CASoftGLESFloat::CASoftGLESFloat()
  : CAGLESFxToFloatContext()
- , CAGLESBuffers()
- , CAGLESCull()
+ , CAGLESBase()
  , CAGLESMatrixF()
 
  , depthTestEnabled_(false)
@@ -25,12 +24,6 @@ CASoftGLESFloat::CASoftGLESFloat()
  , normalizeEnabled_(false)
  , fogEnabled_(false)
  , texturesEnabled_(false)
- , hintFog_(GL_DONT_CARE)
- , hintLineSmooth_(GL_DONT_CARE)
- , hintPerspectiveCorrection_(GL_DONT_CARE)
- , hintPointSmooth_(GL_DONT_CARE)
- , errorCode_(GL_NO_ERROR)
- , bError_(false)
 {
   clCurrent.r = 1.0f;
   clCurrent.g = 1.0f;
@@ -292,59 +285,6 @@ CASoftGLESFloat::glFogfv(GLenum pname, const GLfloat * params)
       setError(GL_INVALID_ENUM);
       return;
   };
-}
-
-//-----------------------------------------------------------------------------
-GLenum
-CASoftGLESFloat::glGetError(void)
-{
-  GLenum err(errorCode_);
-
-  bError_ = false;
-  errorCode_ = GL_NO_ERROR;
-
-  return err;
-}
-
-//-----------------------------------------------------------------------------
-void
-CASoftGLESFloat::glHint(GLenum target, GLenum mode)
-{
-  GLenum * pHint;
-
-  switch(target)
-  {
-    case GL_FOG_HINT:
-      pHint = &hintFog_;
-      break;
-    case GL_LINE_SMOOTH_HINT:
-      pHint = &hintLineSmooth_;
-      break;
-    case GL_PERSPECTIVE_CORRECTION_HINT:
-      pHint = &hintPerspectiveCorrection_;
-      break;
-    case GL_POINT_SMOOTH_HINT:
-      pHint = &hintPointSmooth_;
-      break;
-    default:
-      setError(GL_INVALID_ENUM);
-      return;
-  };
-
-  switch(mode)
-  {
-    case GL_FASTEST:
-      break;
-    case GL_NICEST:
-      break;
-    case GL_DONT_CARE:
-      break;
-    default:
-      setError(GL_INVALID_ENUM);
-      return;
-  };
-
-  *pHint = mode;
 }
 
 //-----------------------------------------------------------------------------
@@ -1078,17 +1018,6 @@ CASoftGLESFloat::interpolateVertex(SVertexF & vNew, SVertexF & vOld, SVertexF & 
     vNew.sx = (GLint)    ((xA_ * vNew.vd.x) + xB_);
     vNew.sy = (GLint)    ((yA_ * vNew.vd.y) + yB_);
     vNew.sz = (uint32_t)(((zA_ * vNew.vd.z) + zB_) * zMax_);
-  }
-}
-
-//-----------------------------------------------------------------------------
-void
-CASoftGLESFloat::setError(GLenum error)
-{
-  if(bError_ == false)
-  {
-    bError_ = true;
-    errorCode_ = error;
   }
 }
 
