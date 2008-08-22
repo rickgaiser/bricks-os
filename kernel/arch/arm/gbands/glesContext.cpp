@@ -27,6 +27,8 @@ CGBAGLESContext::glClear(GLbitfield mask)
 {
   if(mask & GL_COLOR_BUFFER_BIT)
   {
+    unsigned int iBase(viewportYOffset * renderSurface->mode.xpitch + viewportXOffset);
+
     switch(renderSurface->mode.bpp)
     {
       case 8:
@@ -34,16 +36,16 @@ CGBAGLESContext::glClear(GLbitfield mask)
         // FIXME!
         uint32_t color = BxColorFormat_FromFxRGB(renderSurface->mode.format, clClear.r, clClear.g, clClear.b);
         color = (color << 24) | (color << 16) | (color << 8) | color;
-        if(renderSurface->mode.xpitch == renderSurface->mode.width)
+
+        if((int)renderSurface->mode.xpitch == viewportWidth)
         {
-          dmaFill32(color, renderSurface->p, viewportPixelCount>>2);
+          dmaFill32(color, &((uint8_t *)renderSurface->p)[iBase], viewportPixelCount>>2);
         }
         else
         {
-          unsigned int iBase(viewportYOffset * renderSurface->mode.xpitch + viewportXOffset);
-          for(unsigned int iY(0); iY < renderSurface->mode.height; iY++)
+          for(int iY(0); iY < viewportHeight; iY++)
           {
-            dmaFill16(color, &((uint8_t *)renderSurface->p)[iBase], renderSurface->mode.width);
+            dmaFill16(color, &((uint8_t *)renderSurface->p)[iBase], viewportWidth);
             iBase += renderSurface->mode.xpitch;
           }
         }
@@ -53,16 +55,15 @@ CGBAGLESContext::glClear(GLbitfield mask)
       {
         uint32_t color = BxColorFormat_FromFxRGB(renderSurface->mode.format, clClear.r, clClear.g, clClear.b);
         color = (color << 16) | color;
-        if(renderSurface->mode.xpitch == renderSurface->mode.width)
+        if((int)renderSurface->mode.xpitch == viewportWidth)
         {
-          dmaFill32(color, renderSurface->p, viewportPixelCount>>1);
+          dmaFill32(color, &((uint8_t *)renderSurface->p)[iBase], viewportPixelCount>>1);
         }
         else
         {
-          unsigned int iBase(viewportYOffset * renderSurface->mode.xpitch + viewportXOffset);
-          for(unsigned int iY(0); iY < renderSurface->mode.height; iY++)
+          for(int iY(0); iY < viewportHeight; iY++)
           {
-            dmaFill16(color, &((uint16_t *)renderSurface->p)[iBase], renderSurface->mode.width);
+            dmaFill16(color, &((uint16_t *)renderSurface->p)[iBase], viewportWidth);
             iBase += renderSurface->mode.xpitch;
           }
         }
