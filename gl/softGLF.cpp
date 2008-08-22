@@ -25,6 +25,12 @@ CASoftGLESFloat::CASoftGLESFloat()
  , normalizeEnabled_(false)
  , fogEnabled_(false)
  , texturesEnabled_(false)
+ , hintFog_(GL_DONT_CARE)
+ , hintLineSmooth_(GL_DONT_CARE)
+ , hintPerspectiveCorrection_(GL_DONT_CARE)
+ , hintPointSmooth_(GL_DONT_CARE)
+ , errorCode_(GL_NO_ERROR)
+ , bError_(false)
 {
   clCurrent.r = 1.0f;
   clCurrent.g = 1.0f;
@@ -201,7 +207,8 @@ CASoftGLESFloat::glDisable(GLenum cap)
     case GL_NORMALIZE:  normalizeEnabled_ = false; break;
 
     default:
-      ; // Not supported
+      setError(GL_INVALID_ENUM);
+      return;
   };
 }
 
@@ -235,7 +242,8 @@ CASoftGLESFloat::glEnable(GLenum cap)
     case GL_NORMALIZE:  normalizeEnabled_  = true; break;
 
     default:
-      ; // Not supported
+      setError(GL_INVALID_ENUM);
+      return;
   };
 }
 
@@ -262,6 +270,9 @@ CASoftGLESFloat::glFogf(GLenum pname, GLfloat param)
     case GL_FOG_START:   fogStart_   = param; break;
     case GL_FOG_END:     fogEnd_     = param; break;
     case GL_FOG_MODE:                         break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
   };
 }
 
@@ -277,7 +288,63 @@ CASoftGLESFloat::glFogfv(GLenum pname, const GLfloat * params)
       fogColor_.b = params[2];
       fogColor_.a = params[3];
       break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
   };
+}
+
+//-----------------------------------------------------------------------------
+GLenum
+CASoftGLESFloat::glGetError(void)
+{
+  GLenum err(errorCode_);
+
+  bError_ = false;
+  errorCode_ = GL_NO_ERROR;
+
+  return err;
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glHint(GLenum target, GLenum mode)
+{
+  GLenum * pHint;
+
+  switch(target)
+  {
+    case GL_FOG_HINT:
+      pHint = &hintFog_;
+      break;
+    case GL_LINE_SMOOTH_HINT:
+      pHint = &hintLineSmooth_;
+      break;
+    case GL_PERSPECTIVE_CORRECTION_HINT:
+      pHint = &hintPerspectiveCorrection_;
+      break;
+    case GL_POINT_SMOOTH_HINT:
+      pHint = &hintPointSmooth_;
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(mode)
+  {
+    case GL_FASTEST:
+      break;
+    case GL_NICEST:
+      break;
+    case GL_DONT_CARE:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  *pHint = mode;
 }
 
 //-----------------------------------------------------------------------------
@@ -302,6 +369,7 @@ CASoftGLESFloat::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
     case GL_LIGHT6: pLight = &lights_[6]; break;
     case GL_LIGHT7: pLight = &lights_[7]; break;
     default:
+      setError(GL_INVALID_ENUM);
       return;
   }
 
@@ -319,6 +387,7 @@ CASoftGLESFloat::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
       // Invert and normalize
       pLight->direction = pLight->position.getInverted().normalize();
     default:
+      setError(GL_INVALID_ENUM);
       return;
   }
 
@@ -338,6 +407,7 @@ CASoftGLESFloat::glMaterialf(GLenum face, GLenum pname, GLfloat param)
       matShininess_ = param;
       break;
     default:
+      setError(GL_INVALID_ENUM);
       return;
   }
 }
@@ -386,6 +456,7 @@ CASoftGLESFloat::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
       matColorDiffuse_.a = params[3];
       break;
     default:
+      setError(GL_INVALID_ENUM);
       return;
   }
 }
@@ -951,7 +1022,7 @@ CASoftGLESFloat::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
         v[0] = &v1;
         v[1] = &v2;
         v[2] = &v0;
-      } 
+      }
       else
       {
         // v[2] == inside
@@ -1007,6 +1078,17 @@ CASoftGLESFloat::interpolateVertex(SVertexF & vNew, SVertexF & vOld, SVertexF & 
     vNew.sx = (GLint)    ((xA_ * vNew.vd.x) + xB_);
     vNew.sy = (GLint)    ((yA_ * vNew.vd.y) + yB_);
     vNew.sz = (uint32_t)(((zA_ * vNew.vd.z) + zB_) * zMax_);
+  }
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::setError(GLenum error)
+{
+  if(bError_ == false)
+  {
+    bError_ = true;
+    errorCode_ = error;
   }
 }
 
@@ -1080,8 +1162,23 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
     delete edge2;
 
   zbuffer = new uint32_t[width * height];
-  edge1   = new CEdgeF(viewportHeight);
-  edge2   = new CEdgeF(viewportHeight);
+  if(zbuffer == NULL)
+  {
+    setError(GL_OUT_OF_MEMORY);
+    return;
+  }
+  edge1 = new CEdgeF(viewportHeight);
+  if(edge1 == NULL)
+  {
+    setError(GL_OUT_OF_MEMORY);
+    return;
+  }
+  edge2 = new CEdgeF(viewportHeight);
+  if(edge2 == NULL)
+  {
+    setError(GL_OUT_OF_MEMORY);
+    return;
+  }
 }
 
 //-----------------------------------------------------------------------------

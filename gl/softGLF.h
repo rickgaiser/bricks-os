@@ -40,6 +40,8 @@ public:
   virtual void glFlush(void);
   virtual void glFogf(GLenum pname, GLfloat param);
   virtual void glFogfv(GLenum pname, const GLfloat *params);
+  virtual GLenum glGetError(void);
+  virtual void glHint(GLenum target, GLenum mode);
   virtual void glLightf(GLenum light, GLenum pname, GLfloat param);
   virtual void glLightfv(GLenum light, GLenum pname, const GLfloat * params);
   virtual void glMaterialf(GLenum face, GLenum pname, GLfloat param);
@@ -65,9 +67,10 @@ protected:
   virtual void rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit = 0);
   virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2) = 0;
 
-protected:
   void interpolateVertex(SVertexF & vNew, SVertexF & vOld, SVertexF & vFrom, GLfloat t);
+  void setError(GLenum error);
 
+protected:
   // Depth testing
   bool        depthTestEnabled_;
   GLenum      depthFunction_;
@@ -109,6 +112,16 @@ protected:
 
   // Textures
   bool        texturesEnabled_;
+
+  // Hints
+  GLenum      hintFog_;
+  GLenum      hintLineSmooth_;
+  GLenum      hintPerspectiveCorrection_;
+  GLenum      hintPointSmooth_;
+
+  // Error
+  GLenum      errorCode_;
+  bool        bError_;
 
   // Vertex transformations
   GLfloat     xA_;

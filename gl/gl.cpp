@@ -88,7 +88,7 @@ GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, typ
 // GL API
 //-----------------------------------------------------------------------------
 //#ifdef OPENGL_ES
-//GL_API GLenum GL_APIENTRY glGetError (void);
+GL_API GLenum GL_APIENTRY glGetError (void);
 GL_APIFUNCTION_4(glColor4ub,           GLubyte, red, GLubyte, green, GLubyte, blue, GLubyte, alpha);
 GL_APIFUNCTION_4(glColorPointer,       GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);
 GL_APIFUNCTION_3(glNormalPointer,      GLenum, type, GLsizei, stride, const GLvoid *, pointer);
@@ -146,7 +146,7 @@ GL_APIFUNCTION_1(glClear,              GLbitfield, mask);
 //GL_APIFUNCTION_7(glReadPixels,         GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
 GL_APIFUNCTION_0(glFlush);
 GL_APIFUNCTION_0(glFinish);
-//GL_APIFUNCTION_2(glHint,               GLenum target, GLenum mode);
+GL_APIFUNCTION_2(glHint,               GLenum, target, GLenum, mode);
 //GL_APIFUNCTION_2(glGetBooleanv,        GLenum pname, GLboolean *params);
 //GL_APIFUNCTION_2(glGetIntegerv,        GLenum pname, GLint *params);
 //GL_API GLboolean GL_APIENTRY glIsEnabled (GLenum cap);

@@ -298,7 +298,7 @@ public:
 //  virtual void glGetClipPlanex(GLenum pname, GLfixed eqn[4]) = 0;
 //  virtual void glGenBuffers(GLsizei n, GLuint *buffers) = 0;
   virtual void glGenTextures(GLsizei n, GLuint *textures) = 0;
-//  virtual GLenum glGetError(void) = 0;
+  virtual GLenum glGetError(void) = 0;
 //  virtual void glGetFixedv(GLenum pname, GLfixed *params) = 0;
 //  virtual void glGetIntegerv(GLenum pname, GLint *params) = 0;
 //  virtual void glGetLightxv(GLenum light, GLenum pname, GLfixed *params) = 0;
@@ -309,7 +309,7 @@ public:
 //  virtual void glGetTexEnvxv(GLenum env, GLenum pname, GLfixed *params) = 0;
 //  virtual void glGetTexParameteriv(GLenum target, GLenum pname, GLint *params) = 0;
 //  virtual void glGetTexParameterxv(GLenum target, GLenum pname, GLfixed *params) = 0;
-//  virtual void glHint(GLenum target, GLenum mode) = 0;
+  virtual void glHint(GLenum target, GLenum mode) = 0;
 //  virtual GLboolean glIsBuffer(GLuint buffer) = 0;
 //  virtual GLboolean glIsEnabled(GLenum cap) = 0;
 //  virtual GLboolean glIsTexture(GLuint texture) = 0;
