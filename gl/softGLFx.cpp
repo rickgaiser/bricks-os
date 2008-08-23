@@ -708,6 +708,17 @@ CASoftGLESFixed::_fragmentCull(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
 }
 
 //-----------------------------------------------------------------------------
+#define ROUNDING_ERROR (1 << 8) // ~0.004f
+const GLfixed fxPlusOne (gl_fpfromi( 1) + ROUNDING_ERROR);
+const GLfixed fxMinusOne(gl_fpfromi(-1) - ROUNDING_ERROR);
+#define SET_CLIP_FLAGS(v) \
+     if((v).vd.x.value > fxPlusOne ) (v).clip |= CLIP_X_MAX; \
+else if((v).vd.x.value < fxMinusOne) (v).clip |= CLIP_X_MIN; \
+     if((v).vd.y.value > fxPlusOne ) (v).clip |= CLIP_Y_MAX; \
+else if((v).vd.y.value < fxMinusOne) (v).clip |= CLIP_Y_MIN; \
+     if((v).vd.z.value > fxPlusOne ) (v).clip |= CLIP_Z_MAX; \
+else if((v).vd.z.value < fxMinusOne) (v).clip |= CLIP_Z_MIN
+//-----------------------------------------------------------------------------
 void
 CASoftGLESFixed::_fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
 {
@@ -719,22 +730,7 @@ CASoftGLESFixed::_fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
   for(int iVertex(0); iVertex < 3; iVertex++)
   {
     v[iVertex]->clip = 0;
-
-    // x
-    if(v[iVertex]->vd.x > 1.0f)
-      v[iVertex]->clip |= CLIP_X_MAX;
-    else if(v[iVertex]->vd.x < -1.0f)
-      v[iVertex]->clip |= CLIP_X_MIN;
-    // y
-    if(v[iVertex]->vd.y > 1.0f)
-      v[iVertex]->clip |= CLIP_Y_MAX;
-    else if(v[iVertex]->vd.y < -1.0f)
-      v[iVertex]->clip |= CLIP_Y_MIN;
-    // z
-    if(v[iVertex]->vd.z > 1.0f)
-      v[iVertex]->clip |= CLIP_Z_MAX;
-    else if(v[iVertex]->vd.z < -1.0f)
-      v[iVertex]->clip |= CLIP_Z_MIN;
+    SET_CLIP_FLAGS(*(v[iVertex]));
   }
 
   if(v0.clip & v1.clip & v2.clip)
@@ -832,14 +828,17 @@ CASoftGLESFixed::_primitiveAssembly(SVertexFx & v)
 // t = -(plane.dotProduct(from) + planeDistance) / plane.dotProduct(delta);
 #define clip_func(name,sign,dir,dir1,dir2)         \
 inline CFixed                                      \
-name(TVector4<CFixed> & from, TVector4<CFixed> & delta) \
+name(TVector4<CFixed> & vnew, TVector4<CFixed> & from, TVector4<CFixed> & to) \
 {                                                  \
+  TVector4<CFixed> delta;                          \
   CFixed t, den;                                   \
+  delta = to - from;                               \
   den = 0 sign delta.dir;                          \
   if(den == 0)                                     \
     t = 0;                                         \
   else                                             \
     t = (0 - (0 sign from.dir - 1)) / den;         \
+  vnew = from + (delta * t);                       \
   return t;                                        \
 }
 
@@ -850,7 +849,7 @@ clip_func(clip_ymax,+,y,x,z)
 clip_func(clip_zmin,-,z,x,y)
 clip_func(clip_zmax,+,z,x,y)
 
-CFixed (*clip_proc[6])(TVector4<CFixed> &, TVector4<CFixed> &) =
+CFixed (*clip_proc[6])(TVector4<CFixed> &, TVector4<CFixed> &, TVector4<CFixed> &) =
 {
   clip_xmin,
   clip_xmax,
@@ -871,6 +870,7 @@ CASoftGLESFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & 
     v2.clip
   };
   uint32_t clipOr = cc[0] | cc[1] | cc[2];
+  uint32_t clipAnd;
 
   if(clipOr == 0)
   {
@@ -879,7 +879,8 @@ CASoftGLESFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & 
   }
   else
   {
-    if(cc[0] & cc[1] & cc[2])
+    clipAnd = cc[0] & cc[1] & cc[2];
+    if(clipAnd != 0)
       return; // Completely outside
 
     // find the next clip bit
@@ -888,107 +889,60 @@ CASoftGLESFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & 
       clipBit++;
     }
 
+    if(clipBit >= 6)
+    {
+      // Rounding error?
+      return;
+    }
+
     uint32_t clipMask = (1 << clipBit);
     uint32_t clipXor  = (cc[0] ^ cc[1] ^ cc[2]) & clipMask;
 
     if(clipXor != 0)
     {
       // 1 vertex outside
-      SVertexFx * v[3]; // Rearrange vertices
       SVertexFx vNew1;  // Intersection of 1 line
       SVertexFx vNew2;  // Intersection of 1 line
       CFixed tt;
 
-      if(cc[0] & clipMask)
-      {
-        // v[0] == outside
-        v[0] = &v0;
-        v[1] = &v1;
-        v[2] = &v2;
-      }
-      else if(cc[1] & clipMask)
-      {
-        // v[1] == outside
-        v[0] = &v1;
-        v[1] = &v2;
-        v[2] = &v0;
-      }
-      else
-      {
-        // v[2] == outside
-        v[0] = &v2;
-        v[1] = &v0;
-        v[2] = &v1;
-      }
-
-      // Clear clipping bits in vertex
-      v[0]->clip &= ~clipMask;
-
-      TVector4<CFixed> vRay;
+      // Rearrange vertices
+      SVertexFx * v[3];
+           if(cc[0] & clipMask){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v[0] == outside
+      else if(cc[1] & clipMask){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v[1] == outside
+      else                     {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v[2] == outside
 
       // Interpolate 1-0
-      vRay = v[0]->vd - v[1]->vd;
-      tt = clip_proc[clipBit](v[1]->vd, vRay);
-      vNew1.vd = v[1]->vd + (vRay * tt);
+      tt = clip_proc[clipBit](vNew1.vd, v[1]->vd, v[0]->vd);
       interpolateVertex(vNew1, *v[0], *v[1], tt);
-
       // Interpolate 2-0
-      vRay = v[0]->vd - v[2]->vd;
-      tt = clip_proc[clipBit](v[2]->vd, vRay);
-      vNew2.vd = v[2]->vd + (vRay * tt);
+      tt = clip_proc[clipBit](vNew2.vd, v[2]->vd, v[0]->vd);
       interpolateVertex(vNew2, *v[0], *v[2], tt);
 
+      // Raster 2 new triangles
       this->rasterTriangleClip(vNew1, *v[1], *v[2], clipBit + 1);
       this->rasterTriangleClip(vNew2, vNew1, *v[2], clipBit + 1);
     }
     else
     {
       // 2 vertices outside
-      SVertexFx * v[3]; // Rearrange vertices
       SVertexFx vNew1;  // Intersection of 1 line
       SVertexFx vNew2;  // Intersection of 1 line
       CFixed tt;
 
-      if((cc[0] & clipMask) == 0)
-      {
-        // v[0] == inside
-        v[0] = &v0;
-        v[1] = &v1;
-        v[2] = &v2;
-      }
-      else if((cc[1] & clipMask) == 0)
-      {
-        // v[1] == inside
-        v[0] = &v1;
-        v[1] = &v2;
-        v[2] = &v0;
-      }
-      else
-      {
-        // v[2] == inside
-        v[0] = &v2;
-        v[1] = &v0;
-        v[2] = &v1;
-      }
-
-      // Clear clipping bits in vertex
-      v[1]->clip &= ~clipMask;
-      v[2]->clip &= ~clipMask;
-
-      TVector4<CFixed> vRay;
+      // Rearrange vertices
+      SVertexFx * v[3];
+           if((cc[0] & clipMask) == 0){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v[0] == inside
+      else if((cc[1] & clipMask) == 0){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v[1] == inside
+      else                            {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v[2] == inside
 
       // Interpolate 0-1
-      vRay = v[1]->vd - v[0]->vd;
-      tt = clip_proc[clipBit](v[0]->vd, vRay);
-      vNew1.vd = v[0]->vd + (vRay * tt);
+      tt = clip_proc[clipBit](vNew1.vd, v[0]->vd, v[1]->vd);
       interpolateVertex(vNew1, *v[1], *v[0], tt);
-
       // Interpolate 0-2
-      vRay = v[2]->vd - v[0]->vd;
-      tt = clip_proc[clipBit](v[0]->vd, vRay);
-      vNew2.vd = v[0]->vd + (vRay * tt);
+      tt = clip_proc[clipBit](vNew2.vd, v[0]->vd, v[2]->vd);
       interpolateVertex(vNew2, *v[2], *v[0], tt);
 
+      // Raster new triangle
       this->rasterTriangleClip(*v[0], vNew1, vNew2, clipBit + 1);
     }
   }
@@ -1009,8 +963,9 @@ CASoftGLESFixed::interpolateVertex(SVertexFx & vNew, SVertexFx & vOld, SVertexFx
     vNew.cl = vOld.cl;
   }
 
-  // Copy clipping flags
-  vNew.clip = vOld.clip;
+  // Set clipping flags
+  vNew.clip = 0;
+  SET_CLIP_FLAGS(vNew);
 
   if(vNew.clip == 0)
   {
