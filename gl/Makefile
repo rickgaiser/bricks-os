@@ -7,6 +7,7 @@ OBJS            =\
                 gl \
                 glMatrix \
                 glu \
+                glut \
                 textures \
 
 
