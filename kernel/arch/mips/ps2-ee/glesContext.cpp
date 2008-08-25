@@ -331,18 +331,18 @@ CPS2GLESContext::glBegin(GLenum mode)
 {
   CASoftGLESFloat::glBegin(mode);
 
-  switch(mode)
-  {
-    case GL_TRIANGLES:
-      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
-      break;
-    case GL_TRIANGLE_STRIP:
-      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
-      break;
-    case GL_TRIANGLE_FAN:
-      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI_FAN, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
-      break;
-  };
+//  switch(mode)
+//  {
+//    case GL_TRIANGLES:
+      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI,       ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+//      break;
+//    case GL_TRIANGLE_STRIP:
+//      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+//      break;
+//    case GL_TRIANGLE_FAN:
+//      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI_FAN,   ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+//      break;
+//  };
 }
 
 //-----------------------------------------------------------------------------
