@@ -129,26 +129,6 @@ CASoftGLESFixed::glClearDepthx(GLclampx depth)
 
 //-----------------------------------------------------------------------------
 void
-CASoftGLESFixed::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
-{
-  clCurrent.r.value = gl_fpmul(gl_fpfromi(red  ), gl_fpfromf(1.0f/255.0f));
-  clCurrent.g.value = gl_fpmul(gl_fpfromi(green), gl_fpfromf(1.0f/255.0f));
-  clCurrent.b.value = gl_fpmul(gl_fpfromi(blue ), gl_fpfromf(1.0f/255.0f));
-  clCurrent.a.value = gl_fpmul(gl_fpfromi(alpha), gl_fpfromf(1.0f/255.0f));
-}
-
-//-----------------------------------------------------------------------------
-void
-CASoftGLESFixed::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
-{
-  clCurrent.r.value = red;
-  clCurrent.g.value = green;
-  clCurrent.b.value = blue;
-  clCurrent.a.value = alpha;
-}
-
-//-----------------------------------------------------------------------------
-void
 CASoftGLESFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
 {
   zNear_.value = clampfx(zNear);
@@ -156,18 +136,6 @@ CASoftGLESFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
 
   zA_ = (zFar_ - zNear_) / 2;
   zB_ = (zFar_ + zNear_) / 2;
-}
-
-//-----------------------------------------------------------------------------
-void
-CASoftGLESFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
-{
-  normal_.x.value = nx;
-  normal_.y.value = ny;
-  normal_.z.value = nz;
-
-  if(normalizeEnabled_  == true)
-    normal_.normalize();
 }
 
 //-----------------------------------------------------------------------------
@@ -425,6 +393,80 @@ CASoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 }
 
 //-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::glBegin(GLenum mode)
+{
+  rasterMode_ = mode;
+
+  // Initialize for default triangle
+  triangle_[0] = &vertices[0];
+  triangle_[1] = &vertices[1];
+  triangle_[2] = &vertices[2];
+  bFlipFlop_ = true;
+  vertIdx_   = 0;
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::glEnd()
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
+{
+  SVertexFx v;
+
+  // Set vertex
+  v.vo.x.value = x;
+  v.vo.y.value = y;
+  v.vo.z.value = z;
+  v.vo.w.value = w;
+  // Set normal
+  v.n = normal_;
+  // Set color
+  v.cl = clCurrent;
+  // Set texture
+  v.t[0] = texCoordCurrent_[0];
+  v.t[1] = texCoordCurrent_[1];
+
+  vertexShaderTransform(v);
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
+{
+  clCurrent.r.value = red;
+  clCurrent.g.value = green;
+  clCurrent.b.value = blue;
+  clCurrent.a.value = alpha;
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q)
+{
+  texCoordCurrent_[0].value = s;
+  texCoordCurrent_[1].value = t;
+  texCoordCurrent_[2].value = r;
+  texCoordCurrent_[3].value = q;
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
+{
+  normal_.x.value = nx;
+  normal_.y.value = ny;
+  normal_.z.value = nz;
+
+  if(normalizeEnabled_  == true)
+    normal_.normalize();
+}
+
+//-----------------------------------------------------------------------------
 inline CFixed
 my_pow(CFixed x, int y)
 {
@@ -471,26 +513,6 @@ CASoftGLESFixed::primitiveAssembly(SVertexFx & v)
 
 //-----------------------------------------------------------------------------
 void
-CASoftGLESFixed::begin(GLenum mode)
-{
-  rasterMode_ = mode;
-
-  // Initialize for default triangle
-  triangle_[0] = &vertices[0];
-  triangle_[1] = &vertices[1];
-  triangle_[2] = &vertices[2];
-  bFlipFlop_ = true;
-  vertIdx_   = 0;
-}
-
-//-----------------------------------------------------------------------------
-void
-CASoftGLESFixed::end()
-{
-}
-
-//-----------------------------------------------------------------------------
-void
 CASoftGLESFixed::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
   if(bBufVertexEnabled_ == false)
@@ -502,7 +524,7 @@ CASoftGLESFixed::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
   GLint idxTexCoord(first * bufTexCoord_.size);
   SVertexFx v;
 
-  begin(mode);
+  glBegin(mode);
 
   // Process all vertices
   for(GLint i(0); i < count; i++)
@@ -589,7 +611,7 @@ CASoftGLESFixed::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
     vertexShaderTransform(v);
   }
 
-  end();
+  glEnd();
 }
 
 //-----------------------------------------------------------------------------

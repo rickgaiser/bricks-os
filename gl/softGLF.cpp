@@ -129,26 +129,6 @@ CASoftGLESFloat::glClearDepthf(GLclampf depth)
 
 //-----------------------------------------------------------------------------
 void
-CASoftGLESFloat::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
-{
-  clCurrent.r = (GLfloat)red   * (1.0f/255.0f);
-  clCurrent.g = (GLfloat)green * (1.0f/255.0f);
-  clCurrent.b = (GLfloat)blue  * (1.0f/255.0f);
-  clCurrent.a = (GLfloat)alpha * (1.0f/255.0f);
-}
-
-//-----------------------------------------------------------------------------
-void
-CASoftGLESFloat::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
-{
-  clCurrent.r = red;
-  clCurrent.g = green;
-  clCurrent.b = blue;
-  clCurrent.a = alpha;
-}
-
-//-----------------------------------------------------------------------------
-void
 CASoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
 {
   zNear_ = clampf(zNear);
@@ -156,18 +136,6 @@ CASoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
 
   zA_ = (zFar_ - zNear_) / 2;
   zB_ = (zFar_ + zNear_) / 2;
-}
-
-//-----------------------------------------------------------------------------
-void
-CASoftGLESFloat::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
-{
-  normal_.x = nx;
-  normal_.y = ny;
-  normal_.z = nz;
-
-  if(normalizeEnabled_  == true)
-    normal_.normalize();
 }
 
 //-----------------------------------------------------------------------------
@@ -425,6 +393,80 @@ CASoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 }
 
 //-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glBegin(GLenum mode)
+{
+  rasterMode_ = mode;
+
+  // Initialize for default triangle
+  triangle_[0] = &vertices[0];
+  triangle_[1] = &vertices[1];
+  triangle_[2] = &vertices[2];
+  bFlipFlop_ = true;
+  vertIdx_   = 0;
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glEnd()
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+  SVertexF v;
+
+  // Set vertex
+  v.vo.x = x;
+  v.vo.y = y;
+  v.vo.z = z;
+  v.vo.w = w;
+  // Set normal
+  v.n = normal_;
+  // Set color
+  v.cl = clCurrent;
+  // Set texture
+  v.t[0] = texCoordCurrent_[0];
+  v.t[1] = texCoordCurrent_[1];
+
+  vertexShaderTransform(v);
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
+{
+  clCurrent.r = red;
+  clCurrent.g = green;
+  clCurrent.b = blue;
+  clCurrent.a = alpha;
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
+{
+  texCoordCurrent_[0] = s;
+  texCoordCurrent_[1] = t;
+  texCoordCurrent_[2] = r;
+  texCoordCurrent_[3] = q;
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
+{
+  normal_.x = nx;
+  normal_.y = ny;
+  normal_.z = nz;
+
+  if(normalizeEnabled_  == true)
+    normal_.normalize();
+}
+
+//-----------------------------------------------------------------------------
 inline GLfloat
 my_pow(GLfloat x, int y)
 {
@@ -471,26 +513,6 @@ CASoftGLESFloat::primitiveAssembly(SVertexF & v)
 
 //-----------------------------------------------------------------------------
 void
-CASoftGLESFloat::begin(GLenum mode)
-{
-  rasterMode_ = mode;
-
-  // Initialize for default triangle
-  triangle_[0] = &vertices[0];
-  triangle_[1] = &vertices[1];
-  triangle_[2] = &vertices[2];
-  bFlipFlop_ = true;
-  vertIdx_   = 0;
-}
-
-//-----------------------------------------------------------------------------
-void
-CASoftGLESFloat::end()
-{
-}
-
-//-----------------------------------------------------------------------------
-void
 CASoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
   if(bBufVertexEnabled_ == false)
@@ -502,7 +524,7 @@ CASoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
   GLint idxTexCoord(first * bufTexCoord_.size);
   SVertexF v;
 
-  begin(mode);
+  glBegin(mode);
 
   // Process all vertices
   for(GLint i(0); i < count; i++)
@@ -589,7 +611,7 @@ CASoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
     vertexShaderTransform(v);
   }
 
-  end();
+  glEnd();
 }
 
 //-----------------------------------------------------------------------------

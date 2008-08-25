@@ -36,8 +36,6 @@ public:
 
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
   virtual void glClearDepthx(GLclampx depth);
-  virtual void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
-  virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
   virtual void glDepthRangex(GLclampx zNear, GLclampx zFar);
   virtual void glDepthFunc(GLenum func);
   virtual void glDisable(GLenum cap);
@@ -51,9 +49,15 @@ public:
   virtual void glLightxv(GLenum light, GLenum pname, const GLfixed * params);
   virtual void glMaterialx(GLenum face, GLenum pname, GLfixed param);
   virtual void glMaterialxv(GLenum face, GLenum pname, const GLfixed *params);
-  virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
   virtual void glShadeModel(GLenum mode);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
+
+  virtual void glBegin(GLenum mode);
+  virtual void glEnd();
+  virtual void glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w);
+  virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
+  virtual void glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q);
+  virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
 
 protected:
   // Vertex shader
@@ -65,9 +69,7 @@ protected:
   virtual void fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
 
   // Rasterizer
-  virtual void begin(GLenum mode);
   virtual void primitiveAssembly(SVertexFx & v);
-  virtual void end();
 
   virtual void rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2, uint32_t clipBit = 0);
   virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) = 0;
@@ -117,6 +119,7 @@ protected:
 
   // Textures
   bool        texturesEnabled_;
+  CFixed      texCoordCurrent_[4];
 
   // Vertex transformations
   CFixed      xA_;

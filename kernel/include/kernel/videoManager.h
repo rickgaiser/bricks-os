@@ -219,7 +219,6 @@ public:
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) = 0;
   virtual void glClearDepthf(GLclampf depth) = 0;
 //  virtual void glClipPlanef(GLenum plane, const GLfloat *equation) = 0;
-  virtual void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) = 0;
   virtual void glDepthRangef(GLclampf zNear, GLclampf zFar) = 0;
   virtual void glFogf(GLenum pname, GLfloat param) = 0;
   virtual void glFogfv(GLenum pname, const GLfloat *params) = 0;
@@ -240,7 +239,6 @@ public:
   virtual void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params) = 0;
   virtual void glMultMatrixf(const GLfloat *m) = 0;
 //  virtual void glMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q) = 0;
-  virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz) = 0;
   virtual void glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar) = 0;
 //  virtual void glPointParameterf(GLenum pname, GLfloat param) = 0;
 //  virtual void glPointParameterfv(GLenum pname, const GLfloat *params) = 0;
@@ -267,8 +265,6 @@ public:
 //  virtual void glClearStencil(GLint s) = 0;
 //  virtual void glClientActiveTexture(GLenum texture) = 0;
 //  virtual void glClipPlanex(GLenum plane, const GLfixed *equation) = 0;
-  virtual void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha) = 0;
-  virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha) = 0;
 //  virtual void glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha) = 0;
   virtual void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer) = 0;
 //  virtual void glCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data) = 0;
@@ -326,7 +322,6 @@ public:
   virtual void glMatrixMode(GLenum mode) = 0;
   virtual void glMultMatrixx(const GLfixed *m) = 0;
 //  virtual void glMultiTexCoord4x(GLenum target, GLfixed s, GLfixed t, GLfixed r, GLfixed q) = 0;
-  virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz) = 0;
   virtual void glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer) = 0;
   virtual void glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar) = 0;
 //  virtual void glPixelStorei(GLenum pname, GLint param) = 0;
@@ -360,6 +355,20 @@ public:
   virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z) = 0;
   virtual void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer) = 0;
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height) = 0;
+
+  // GL API
+  virtual void glBegin(GLenum mode) = 0;
+  virtual void glEnd() = 0;
+
+  virtual void glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w) = 0;
+  virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha) = 0;
+  virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz) = 0;
+  virtual void glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q) = 0;
+
+  virtual void glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w) = 0;
+  virtual void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) = 0;
+  virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz) = 0;
+  virtual void glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q) = 0;
 };
 
 //---------------------------------------------------------------------------

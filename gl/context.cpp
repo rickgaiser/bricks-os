@@ -281,13 +281,6 @@ CAGLESFloatToFxContext::glClearDepthf(GLclampf depth)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
-{
-  glColor4x(gl_fpfromf(red), gl_fpfromf(green), gl_fpfromf(blue), gl_fpfromf(alpha));
-}
-
-//-----------------------------------------------------------------------------
-void
 CAGLESFloatToFxContext::glDepthRangef(GLclampf zNear, GLclampf zFar)
 {
   glDepthRangex(gl_fpfromf(zNear), gl_fpfromf(zFar));
@@ -407,13 +400,6 @@ CAGLESFloatToFxContext::glLightfv(GLenum light, GLenum pname, const GLfloat * pa
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
-{
-  glNormal3x(gl_fpfromf(nx), gl_fpfromf(ny), gl_fpfromf(nz));
-}
-
-//-----------------------------------------------------------------------------
-void
 CAGLESFloatToFxContext::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
   glOrthox(gl_fpfromf(left), gl_fpfromf(right), gl_fpfromf(bottom), gl_fpfromf(top), gl_fpfromf(zNear), gl_fpfromf(zFar));
@@ -439,6 +425,34 @@ CAGLESFloatToFxContext::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
   glTranslatex(gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
 }
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+  glVertex4x(gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z), gl_fpfromf(w));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
+{
+  glColor4x(gl_fpfromf(red), gl_fpfromf(green), gl_fpfromf(blue), gl_fpfromf(alpha));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
+{
+  glTexCoord4x(gl_fpfromf(s), gl_fpfromf(t), gl_fpfromf(r), gl_fpfromf(q));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFloatToFxContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
+{
+  glNormal3x(gl_fpfromf(nx), gl_fpfromf(ny), gl_fpfromf(nz));
+}
 #else
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -453,13 +467,6 @@ void
 CAGLESFxToFloatContext::glClearDepthx(GLclampx depth)
 {
   glClearDepthf(gl_fptof(depth));
-}
-
-//-----------------------------------------------------------------------------
-void
-CAGLESFxToFloatContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
-{
-  glColor4f(gl_fptof(red), gl_fptof(green), gl_fptof(blue), gl_fptof(alpha));
 }
 
 //-----------------------------------------------------------------------------
@@ -583,13 +590,6 @@ CAGLESFxToFloatContext::glMultMatrixx(const GLfixed *m)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
-{
-  glNormal3f(gl_fptof(nx), gl_fptof(ny), gl_fptof(nz));
-}
-
-//-----------------------------------------------------------------------------
-void
 CAGLESFxToFloatContext::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
   glOrthof(gl_fptof(left), gl_fptof(right), gl_fptof(bottom), gl_fptof(top), gl_fptof(zNear), gl_fptof(zFar));
@@ -615,4 +615,33 @@ CAGLESFxToFloatContext::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
   glTranslatef(gl_fptof(x), gl_fptof(y), gl_fptof(z));
 }
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
+{
+  glVertex4f(gl_fptof(x), gl_fptof(y), gl_fptof(z), gl_fptof(w));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
+{
+  glColor4f(gl_fptof(red), gl_fptof(green), gl_fptof(blue), gl_fptof(alpha));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q)
+{
+  glTexCoord4f(gl_fptof(s), gl_fptof(t), gl_fptof(r), gl_fptof(q));
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESFxToFloatContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
+{
+  glNormal3f(gl_fptof(nx), gl_fptof(ny), gl_fptof(nz));
+}
+
 #endif // CONFIG_FPU

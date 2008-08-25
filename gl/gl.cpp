@@ -89,7 +89,6 @@ GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, typ
 //-----------------------------------------------------------------------------
 //#ifdef OPENGL_ES
 GL_API GLenum GL_APIENTRY glGetError (void);
-GL_APIFUNCTION_4(glColor4ub,           GLubyte, red, GLubyte, green, GLubyte, blue, GLubyte, alpha);
 GL_APIFUNCTION_4(glColorPointer,       GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);
 GL_APIFUNCTION_3(glNormalPointer,      GLenum, type, GLsizei, stride, const GLvoid *, pointer);
 GL_APIFUNCTION_4(glTexCoordPointer,    GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);
@@ -201,9 +200,7 @@ GL_APIFUNCTION_1(glClearDepthx,        GLclampx, depth);
 
 //#ifdef OPENGL_ES_COMMON
 
-GL_APIFUNCTION_3(glNormal3f,           GLfloat, nx, GLfloat, ny, GLfloat, nz);
 //GL_APIFUNCTION_5(glMultiTexCoord4f,    GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
-GL_APIFUNCTION_4(glColor4f,            GLfloat, red, GLfloat, green, GLfloat, blue, GLfloat, alpha);
 GL_APIFUNCTION_2(glDepthRangef,        GLclampf, zNear, GLclampf, zFar);
 GL_APIFUNCTION_1(glLoadMatrixf,        const GLfloat *, m);
 GL_APIFUNCTION_1(glMultMatrixf,        const GLfloat *, m);
@@ -241,27 +238,43 @@ GL_APIFUNCTION_4(glClearColor,         GLclampf, red, GLclampf, green, GLclampf,
 GL_APIFUNCTION_1(glClearDepthf,        GLclampf, depth);
 //GL_APIFUNCTION_2(glGetFloatv,          GLenum pname, GLfloat *params);
 
+// GL API
+GL_APIFUNCTION_1(glBegin,              GLenum, mode);
+GL_APIFUNCTION_0(glEnd);
+GL_APIFUNCTION_4(glVertex4f,           GLfloat, x, GLfloat, y, GLfloat, z, GLfloat, w);
+GL_APIFUNCTION_4(glColor4f,            GLfloat, red, GLfloat, green, GLfloat, blue, GLfloat, alpha);
+GL_APIFUNCTION_4(glTexCoord4f,         GLfloat, s, GLfloat, t, GLfloat, r, GLfloat, q);
+GL_APIFUNCTION_3(glNormal3f,           GLfloat, nx, GLfloat, ny, GLfloat, nz);
+
+// Vertex (GLfloat)
+GL_API void GL_APIENTRY glVertex3f   (GLfloat x, GLfloat y, GLfloat z){glVertex4f(x,    y,    z,    1.0f);}
+GL_API void GL_APIENTRY glVertex2f   (GLfloat x, GLfloat y)           {glVertex4f(x,    y,    0.0f, 1.0f);}
+GL_API void GL_APIENTRY glVertex4fv  (const GLfloat * v)              {glVertex4f(v[0], v[1], v[2], v[3]);}
+GL_API void GL_APIENTRY glVertex3fv  (const GLfloat * v)              {glVertex4f(v[0], v[1], v[2], 1.0f);}
+GL_API void GL_APIENTRY glVertex2fv  (const GLfloat * v)              {glVertex4f(v[0], v[1], 0.0f, 1.0f);}
+// Color (GLfloat)
+GL_API void GL_APIENTRY glColor3f    (GLfloat red, GLfloat green, GLfloat blue){glColor4f(red,  green, blue, 1.0f);}
+GL_API void GL_APIENTRY glColor4fv   (const GLfloat * v)                       {glColor4f(v[0], v[1],  v[2], v[3]);}
+GL_API void GL_APIENTRY glColor3fv   (const GLfloat * v)                       {glColor4f(v[0], v[1],  v[2], 1.0f);}
+GL_API void GL_APIENTRY glColor3ubv  (const GLubyte * v)                       {glColor4f((GLfloat)v[0] * (1.0f/255.0f), (GLfloat)v[1] * (1.0f/255.0f),  (GLfloat)v[2] * (1.0f/255.0f), 1.0f);}
+// TexCoord (GLfloat)
+GL_API void GL_APIENTRY glTexCoord3f (GLfloat s, GLfloat t, GLfloat r){glTexCoord4f(s,    t,    r,    1.0f);}
+GL_API void GL_APIENTRY glTexCoord2f (GLfloat s, GLfloat t)           {glTexCoord4f(s,    t,    0.0f, 1.0f);}
+GL_API void GL_APIENTRY glTexCoord1f (GLfloat s)                      {glTexCoord4f(s,    0.0f, 0.0f, 1.0f);}
+GL_API void GL_APIENTRY glTexCoord4fv(const GLfloat * v)              {glTexCoord4f(v[0], v[1], v[2], v[3]);}
+GL_API void GL_APIENTRY glTexCoord3fv(const GLfloat * v)              {glTexCoord4f(v[0], v[1], v[2], 1.0f);}
+GL_API void GL_APIENTRY glTexCoord2fv(const GLfloat * v)              {glTexCoord4f(v[0], v[1], 0.0f, 1.0f);}
+GL_API void GL_APIENTRY glTexCoord1fv(const GLfloat * v)              {glTexCoord4f(v[0], 0.0f, 0.0f, 1.0f);}
+// Normal (GLfloat)
+GL_API void GL_APIENTRY glNormal3fv  (const GLfloat * v){glNormal3f(v[0], v[1], v[2]);}
+
+GL_API void GL_APIENTRY glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val){
+  glFrustumf(left, right, bottom, top, near_val, far_val);}
+GL_API void GL_APIENTRY glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val){
+  glOrthof(left, right, bottom, top, near_val, far_val);}
+GL_API void GL_APIENTRY glDepthRange(GLclampd near_val, GLclampd far_val){
+  glDepthRangef(near_val, far_val);}
+
 //#endif // OPENGL_ES_COMMON
 
 //#endif // OPENGL_ES
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val)
-{
-  glFrustumf(left, right, bottom, top, near_val, far_val);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val)
-{
-  glOrthof(left, right, bottom, top, near_val, far_val);
-}
-
-//-----------------------------------------------------------------------------
-GL_API void
-GL_APIENTRY glDepthRange(GLclampd near_val, GLclampd far_val)
-{
-  glDepthRangef(near_val, far_val);
-}

@@ -58,9 +58,10 @@ public:
   virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
   virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
 
+  virtual void glBegin(GLenum mode);
+  virtual void glEnd();
+
 protected:
-  virtual void begin(GLenum mode);
-  virtual void end();
   virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2);
 
 private:

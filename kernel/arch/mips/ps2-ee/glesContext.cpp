@@ -327,9 +327,9 @@ CPS2GLESContext::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::begin(GLenum mode)
+CPS2GLESContext::glBegin(GLenum mode)
 {
-  CASoftGLESFloat::begin(mode);
+  CASoftGLESFloat::glBegin(mode);
 
   switch(mode)
   {
@@ -347,9 +347,9 @@ CPS2GLESContext::begin(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::end()
+CPS2GLESContext::glEnd()
 {
-  CASoftGLESFloat::end();
+  CASoftGLESFloat::glEnd();
 
   bDataWaiting_ = true;
 }

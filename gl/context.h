@@ -149,7 +149,6 @@ public:
 
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
   virtual void glClearDepthf(GLclampf depth);
-  virtual void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
   virtual void glDepthRangef(GLclampf zNear, GLclampf zFar);
   virtual void glFogf(GLenum pname, GLfloat param);
   virtual void glFogfv(GLenum pname, const GLfloat *params);
@@ -160,11 +159,15 @@ public:
   virtual void glMaterialf(GLenum face, GLenum pname, GLfloat param);
   virtual void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params);
   virtual void glMultMatrixf(const GLfloat *m);
-  virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
   virtual void glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
   virtual void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
   virtual void glScalef(GLfloat x, GLfloat y, GLfloat z);
   virtual void glTranslatef(GLfloat x, GLfloat y, GLfloat z);
+
+  virtual void glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+  virtual void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+  virtual void glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q);
+  virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
 };
 #else
 //-----------------------------------------------------------------------------
@@ -177,7 +180,6 @@ public:
 
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
   virtual void glClearDepthx(GLclampx depth);
-  virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
   virtual void glDepthRangex(GLclampx zNear, GLclampx zFar);
   virtual void glFogx(GLenum pname, GLfixed param);
   virtual void glFogxv(GLenum pname, const GLfixed *params);
@@ -188,11 +190,15 @@ public:
   virtual void glMaterialx(GLenum face, GLenum pname, GLfixed param);
   virtual void glMaterialxv(GLenum face, GLenum pname, const GLfixed *params);
   virtual void glMultMatrixx(const GLfixed *m);
-  virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
   virtual void glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
   virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
   virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);
   virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z);
+
+  virtual void glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w);
+  virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
+  virtual void glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q);
+  virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
 };
 #endif // CONFIG_FPU
 

@@ -76,6 +76,8 @@ typedef unsigned short  GLushort;
 typedef unsigned int    GLuint;
 typedef float           GLfloat;
 typedef float           GLclampf;
+typedef double          GLdouble;
+typedef double          GLclampd;
 typedef void            GLvoid;
 typedef int             GLfixed;
 typedef int             GLclampx;
@@ -677,7 +679,6 @@ GL_API void GL_APIENTRY glAlphaFunc (GLenum func, GLclampf ref);
 GL_API void GL_APIENTRY glClearColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 GL_API void GL_APIENTRY glClearDepthf (GLclampf depth);
 GL_API void GL_APIENTRY glClipPlanef (GLenum plane, const GLfloat *equation);
-GL_API void GL_APIENTRY glColor4f (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 GL_API void GL_APIENTRY glDepthRangef (GLclampf zNear, GLclampf zFar);
 GL_API void GL_APIENTRY glFogf (GLenum pname, GLfloat param);
 GL_API void GL_APIENTRY glFogfv (GLenum pname, const GLfloat *params);
@@ -698,7 +699,6 @@ GL_API void GL_APIENTRY glMaterialf (GLenum face, GLenum pname, GLfloat param);
 GL_API void GL_APIENTRY glMaterialfv (GLenum face, GLenum pname, const GLfloat *params);
 GL_API void GL_APIENTRY glMultMatrixf (const GLfloat *m);
 GL_API void GL_APIENTRY glMultiTexCoord4f (GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
-GL_API void GL_APIENTRY glNormal3f (GLfloat nx, GLfloat ny, GLfloat nz);
 GL_API void GL_APIENTRY glOrthof (GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
 GL_API void GL_APIENTRY glPointParameterf (GLenum pname, GLfloat param);
 GL_API void GL_APIENTRY glPointParameterfv (GLenum pname, const GLfloat *params);
@@ -842,6 +842,41 @@ GL_API void GL_APIENTRY glDrawTexxvOES (const GLfixed *coords);
 
 GL_API void GL_APIENTRY glDrawTexfOES (GLfloat x, GLfloat y, GLfloat z, GLfloat width, GLfloat height);
 GL_API void GL_APIENTRY glDrawTexfvOES (const GLfloat *coords);
+
+// -----------------------------------------------------------------------------
+// GL
+GL_API void GL_APIENTRY glBegin(GLenum mode);
+GL_API void GL_APIENTRY glEnd(void);
+// Vertex
+GL_API void GL_APIENTRY glVertex4f (GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+GL_API void GL_APIENTRY glVertex3f (GLfloat x, GLfloat y, GLfloat z);
+GL_API void GL_APIENTRY glVertex2f (GLfloat x, GLfloat y);
+GL_API void GL_APIENTRY glVertex4fv(const GLfloat * v);
+GL_API void GL_APIENTRY glVertex3fv(const GLfloat * v);
+GL_API void GL_APIENTRY glVertex2fv(const GLfloat * v);
+// Color
+GL_API void GL_APIENTRY glColor4f (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+GL_API void GL_APIENTRY glColor3f (GLfloat red, GLfloat green, GLfloat blue);
+GL_API void GL_APIENTRY glColor4fv(const GLfloat * v);
+GL_API void GL_APIENTRY glColor3fv(const GLfloat * v);
+GL_API void GL_APIENTRY glColor3ubv(const GLubyte * v);
+// TexCoord
+GL_API void GL_APIENTRY glTexCoord4f (GLfloat s, GLfloat t, GLfloat r, GLfloat q);
+GL_API void GL_APIENTRY glTexCoord3f (GLfloat s, GLfloat t, GLfloat r);
+GL_API void GL_APIENTRY glTexCoord2f (GLfloat s, GLfloat t);
+GL_API void GL_APIENTRY glTexCoord1f (GLfloat s);
+GL_API void GL_APIENTRY glTexCoord4fv(const GLfloat * v);
+GL_API void GL_APIENTRY glTexCoord3fv(const GLfloat * v);
+GL_API void GL_APIENTRY glTexCoord2fv(const GLfloat * v);
+GL_API void GL_APIENTRY glTexCoord1fv(const GLfloat * v);
+// Normal
+GL_API void GL_APIENTRY glNormal3f (GLfloat nx, GLfloat ny, GLfloat nz);
+GL_API void GL_APIENTRY glNormal3fv(const GLfloat * v);
+// Matrix
+GL_API void GL_APIENTRY glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val);
+GL_API void GL_APIENTRY glOrtho  (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val);
+GL_API void GL_APIENTRY glDepthRange(GLclampd near_val, GLclampd far_val);
+
 
 #ifdef __cplusplus
 }
