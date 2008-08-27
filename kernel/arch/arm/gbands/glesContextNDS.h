@@ -59,8 +59,6 @@ public:
   virtual void glClear(GLbitfield mask);
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
   virtual void glClearDepthx(GLclampx depth);
-  virtual void glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
-  virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
   virtual void glCullFace(GLenum mode);
   virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
   virtual void glDisable(GLenum cap);
@@ -78,7 +76,6 @@ public:
   virtual void glLoadMatrixx(const GLfixed *m);
   virtual void glMatrixMode(GLenum mode);
   virtual void glMultMatrixx(const GLfixed *m);
-  virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
   virtual void glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
   virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
   virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);
@@ -88,11 +85,12 @@ public:
   virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
+  virtual void glBegin(GLenum mode);
+  virtual void glEnd();
+
 protected:
   virtual void vertexShaderTransform(SVertexFx & v);
 
-  virtual void begin(GLenum mode);
-  virtual void end();
   virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
 
 private:

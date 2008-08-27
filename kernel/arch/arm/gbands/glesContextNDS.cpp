@@ -133,24 +133,6 @@ CNDSGLESContext::glClearDepthx(GLclampx depth)
 
 //-----------------------------------------------------------------------------
 void
-CNDSGLESContext::glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha)
-{
-  CASoftGLESFixed::glColor4ub(red, green, blue, alpha);
-
-  GFX_COLOR = fp_to_ndsRGB555(clCurrent.r, clCurrent.g, clCurrent.b);
-}
-
-//-----------------------------------------------------------------------------
-void
-CNDSGLESContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
-{
-  CASoftGLESFixed::glColor4x(red, green, blue, alpha);
-
-  GFX_COLOR = fp_to_ndsRGB555(clCurrent.r, clCurrent.g, clCurrent.b);
-}
-
-//-----------------------------------------------------------------------------
-void
 CNDSGLESContext::glCullFace(GLenum mode)
 {
   CASoftGLESFixed::glCullFace(mode);
@@ -450,15 +432,6 @@ CNDSGLESContext::glMultMatrixx(const GLfixed *m)
   MATRIX_MULT4x4 = gl_to_ndsv(m[15]);
 }
 
-//-----------------------------------------------------------------------------
-void
-CNDSGLESContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
-{
-  CASoftGLESFixed::glNormal3x(nx, ny, nz);
-
-  //GFX_NORMAL = ...;
-}
-
 //---------------------------------------------------------------------------
 void
 CNDSGLESContext::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
@@ -726,28 +699,8 @@ CNDSGLESContext::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 }
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
 void
-CNDSGLESContext::vertexShaderTransform(SVertexFx & v)
-{
-  // Color or normal
-  if(lightingEnabled_ == true)
-    GFX_NORMAL = fp_to_ndsNormal(v.n.x,  v.n.y,  v.n.z);
-  else
-    GFX_COLOR  = fp_to_ndsRGB555(v.cl.r, v.cl.g, v.cl.b);
-
-  // Textures
-  if(texturesEnabled_ == true)
-    GFX_TEX_COORD = fp_to_ndsTexCoord(v.t[0], v.t[1]);
-
-  // Vertex
-  GFX_VERTEX16 = ((gl_to_ndsv(v.vo[1].value) << 16) & 0xffff0000) | (gl_to_ndsv(v.vo[0].value) & 0xffff);
-  GFX_VERTEX16 = gl_to_ndsv(v.vo[2].value) & 0xffff;
-}
-
-//-----------------------------------------------------------------------------
-void
-CNDSGLESContext::begin(GLenum mode)
+CNDSGLESContext::glBegin(GLenum mode)
 {
   rasterMode_ = mode;
 
@@ -768,9 +721,29 @@ CNDSGLESContext::begin(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CNDSGLESContext::end()
+CNDSGLESContext::glEnd()
 {
   GFX_END = 0;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void
+CNDSGLESContext::vertexShaderTransform(SVertexFx & v)
+{
+  // Color or normal
+  if(lightingEnabled_ == true)
+    GFX_NORMAL = fp_to_ndsNormal(v.n.x,  v.n.y,  v.n.z);
+  else
+    GFX_COLOR  = fp_to_ndsRGB555(v.cl.r, v.cl.g, v.cl.b);
+
+  // Textures
+  if(texturesEnabled_ == true)
+    GFX_TEX_COORD = fp_to_ndsTexCoord(v.t[0], v.t[1]);
+
+  // Vertex
+  GFX_VERTEX16 = ((gl_to_ndsv(v.vo[1].value) << 16) & 0xffff0000) | (gl_to_ndsv(v.vo[0].value) & 0xffff);
+  GFX_VERTEX16 = gl_to_ndsv(v.vo[2].value) & 0xffff;
 }
 
 //-----------------------------------------------------------------------------

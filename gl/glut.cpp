@@ -5,6 +5,20 @@
 #include "stdlib.h"
 
 
+// NDS Renders to screen directly
+#if defined(NDS)
+#else
+  #define BUFFER_A
+#endif
+
+// NGC Uses copy from RGB to YPbPr framebuffer
+// NDS Renders to screen directly
+#if defined(NGC) || defined(NDS)
+#else
+  #define BUFFER_B // Double buffering
+#endif
+
+
 extern void glMakeCurrent(I3DRenderer * ctx);
 
 
@@ -15,9 +29,13 @@ CAVideoDevice * pGlutDevice = NULL;
 const SVideoMode * pGlutMode = NULL;
 
 // 2 surfaces for double buffering
+#ifdef BUFFER_A
 CSurface * pGlutSurfaceA = NULL;
+#endif
+#ifdef BUFFER_B
 CSurface * pGlutSurfaceB = NULL;
 bool bGlutActiveDisplay = false;
+#endif
 
 // 3D rendering device
 I3DRenderer * pGlutRenderer;
@@ -52,16 +70,22 @@ glutInit(int * pargc, char ** argv)
       pGlutDevice->setMode(pGlutMode);
 
       // Allocate two surfaces for double buffering
+#ifdef BUFFER_A
       pGlutDevice->getSurface(&pGlutSurfaceA, pGlutMode->width, pGlutMode->height);
+#endif
+#ifdef BUFFER_B
       pGlutDevice->getSurface(&pGlutSurfaceB, pGlutMode->width, pGlutMode->height);
+#endif
 
       // Allocate renderer and activate it
       pGlutDevice->get3DRenderer(&pGlutRenderer);
       glMakeCurrent(pGlutRenderer);
 
       pGlutDevice->setVSync(false);
+#ifdef BUFFER_A
       pGlutRenderer->setSurface(pGlutSurfaceA);
       pGlutDevice->displaySurface(pGlutSurfaceA);
+#endif
     }
     else
       printk("ERROR: Device has no modes!\n");
@@ -104,7 +128,7 @@ glutProcessKeys()
 {
   bool bUp(false), bDown(false), bLeft(false), bRight(false);
 
-#ifdef GBA
+#if defined(GBA) || defined(NDS)
   uint16_t data;
   data   = ~REG_KEYS;
   bUp    = (data & KEY_UP);
@@ -154,7 +178,9 @@ glutMainLoop(void)
 void
 glutSwapBuffers(void)
 {
+#ifdef BUFFER_B
   pGlutRenderer->setSurface(bGlutActiveDisplay ? pGlutSurfaceA : pGlutSurfaceB);
   pGlutDevice->displaySurface(bGlutActiveDisplay ? pGlutSurfaceB : pGlutSurfaceA);
   bGlutActiveDisplay = !bGlutActiveDisplay;
+#endif
 }
