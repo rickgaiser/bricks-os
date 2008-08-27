@@ -60,7 +60,6 @@ init()
   glCullFace(GL_BACK);
   glEnable(GL_CULL_FACE);
 
-  glShadeModel(GL_SMOOTH);
   glClearColor(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
 //  glClearDepth(1.0f);
 //  glEnable(GL_DEPTH_TEST);
@@ -89,16 +88,29 @@ display()
     glRotatef(xrot, 1.0f, 0.0f, 0.0f);
     glRotatef(yrot, 0.0f, 1.0f, 0.0f);
 
+    glShadeModel(GL_SMOOTH);
     // GLES
     //glDrawArrays(GL_TRIANGLES, 0, TRIANGLE_COUNT*3);
-
     // GL
     glBegin(GL_TRIANGLES);
-      for(int i(0); i < (TRIANGLE_COUNT * 3); i++)
+      for(int i(0); i < (TRIANGLE_COUNT*3); i++)
       {
         glColor4fv (&pyramidColF [i*4]);
         glVertex3fv(&pyramidVertF[i*3]);
       }
+    glEnd();
+
+    glShadeModel(GL_FLAT);
+    glBegin(GL_TRIANGLES);
+      glColor4f ( 0.6f,  0.6f,  0.6f,  1.0f);
+
+      glVertex3f(-1.0f, -1.0f,  1.0f);
+      glVertex3f(-1.0f, -1.0f, -1.0f);
+      glVertex3f( 1.0f, -1.0f,  1.0f);
+
+      glVertex3f( 1.0f, -1.0f,  1.0f);
+      glVertex3f(-1.0f, -1.0f, -1.0f);
+      glVertex3f( 1.0f, -1.0f, -1.0f);
     glEnd();
 
   glPopMatrix();
