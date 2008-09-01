@@ -26,8 +26,8 @@ enum EBiosTVMode
 #define KEY_R                     0x00100000
 #define KEY_UP                    0x00080000
 #define KEY_DOWN                  0x00040000
-#define KEY_LEFT                  0x00020000
-#define KEY_RIGHT                 0x00010000
+#define KEY_RIGHT                 0x00020000
+#define KEY_LEFT                  0x00010000
 //#define KEY_X_MASK                0x0000ff00
 //#define KEY_Y_MASK                0x000000ff
 
