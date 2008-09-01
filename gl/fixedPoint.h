@@ -44,7 +44,7 @@
 //#define gl_fpmul(i1,i2) fpmul32(FP_PRESICION_GL,(i1),(i2))
 #define gl_fpmul(i1,i2) fpmul(FP_PRESICION_GL,(i1),(i2))
 #define gl_fpipmul(i1,i2) fpipmul(FP_PRESICION_GL,(i1),(i2))
-#define gl_fpipipmul(i1,i2) fpipmul(FP_PRESICION_GL,(i1),(i2))
+#define gl_fpipipmul(i1,i2) fpipipmul(FP_PRESICION_GL,(i1),(i2))
 #define gl_fpdiv(i1,i2) fpdiv32(FP_PRESICION_GL,(i1),(i2))
 
 
