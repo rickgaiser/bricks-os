@@ -21,7 +21,7 @@ ifndef LIB_PATH
 endif
 
 #----------------------------------------------------------------------------
-MY_DEFINITIONS  =$(addprefix -D,$(DEFINITIONS-y))
+MY_DEFINITIONS  =$(addprefix -D,$(DEFINITIONS))
 MY_ELF          =$(addprefix $(ELF_PATH),$(addsuffix .elf,$(ELF)))
 MY_INCL_PATH    =$(addprefix -I,$(INCL_PATH))
 MY_LIB          =$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(LIB)))
