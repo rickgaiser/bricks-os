@@ -18,7 +18,7 @@ CXXFLAGS        +=\
                 -fno-builtin \
                 -G0 \
 
-LDFLAGS         +=\
+LINK_FLAGS      +=\
                 -fno-builtin \
                 -nostdlib \
                 -s \
@@ -30,4 +30,4 @@ STARTUP_LIBS    =\
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@.irx
-	$(CC) $(LDFLAGS) -o $@.irx $(BRICKS_ROOT)/kernel/arch/mips/ps2-iop/obj-ps2-iop/arch.o $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) $(STARTUP_LIBS)
+	$(CC) $(LINK_FLAGS) -o $@.irx $(BRICKS_ROOT)/kernel/arch/mips/ps2-iop/obj-ps2-iop/arch.o $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) $(STARTUP_LIBS)

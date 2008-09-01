@@ -34,7 +34,7 @@ CXXFLAGS        +=\
                 -mlong-calls \
                 -DGBA \
 
-LDFLAGS         =\
+LINK_FLAGS      =\
                 -mthumb \
                 -mthumb-interwork \
                 -Wl,-Map,$@.map \
@@ -43,8 +43,8 @@ LDFLAGS         =\
 # Create .elf file from MY_OBJS + MY_LIBS
 %.elf: $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [LD ] $@
-	$(CXX) -specs=$(BRICKS_ROOT)/include/makeinclude/gba_cart.specs $(LDFLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@
+	$(CXX) -specs=$(BRICKS_ROOT)/include/makeinclude/gba_cart.specs $(LINK_FLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@
 
 %_mb.elf: $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [LD ] $@
-	$(CXX) -specs=$(BRICKS_ROOT)/include/makeinclude/gba_mb.specs   $(LDFLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@
+	$(CXX) -specs=$(BRICKS_ROOT)/include/makeinclude/gba_mb.specs   $(LINK_FLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@

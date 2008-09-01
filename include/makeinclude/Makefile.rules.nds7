@@ -33,7 +33,7 @@ CXXFLAGS        +=\
                 -DNDS \
                 -DNDS7 \
 
-LDFLAGS         +=\
+LINK_FLAGS      +=\
                 -mthumb \
                 -mthumb-interwork \
                 -Wl,-Map,$@.map \
@@ -42,4 +42,4 @@ LDFLAGS         +=\
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@
-	$(CXX) -specs=$(BRICKS_ROOT)/include/makeinclude/ds_arm7.specs $(LDFLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@
+	$(CXX) -specs=$(BRICKS_ROOT)/include/makeinclude/ds_arm7.specs $(LINK_FLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@

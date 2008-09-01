@@ -53,6 +53,12 @@ CXXFLAGS        =\
                 -fno-exceptions \
                 $(MY_DEFINITIONS) \
 
+LDFLAGS         =\
+                -r \
+
+ARFLAGS         =\
+                -rc \
+
 #----------------------------------------------------------------------------
 include $(BRICKS_ROOT)/include/makeinclude/Makefile.rules.$(TARGET)
 
