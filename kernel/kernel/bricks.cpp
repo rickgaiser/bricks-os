@@ -9,6 +9,7 @@
 extern "C" int appMain(int argc, char * argv[]);
 
 
+#ifdef CONFIG_MULTI_THREADING
 // -----------------------------------------------------------------------------
 // Main thread
 void *
@@ -25,6 +26,7 @@ mainThread(void *)
 
   return (void *)iRetVal;
 }
+#endif
 
 // -----------------------------------------------------------------------------
 // Idle thread (never returns)
@@ -47,10 +49,15 @@ bricks_main()
   printk("Bricks-OS\n");
   printk("=========\n");
 
+#ifdef CONFIG_MULTI_THREADING
   // Create main thread
   pthread_t thr;
   if(k_pthread_create(&thr, 0, mainThread, (void *)NULL) != 0)
     panic("Unable to create main thread\n");
+#else
+  // We are the main thread
+  appMain(0, 0);
+#endif
 
   // We become the idle thread
   CTaskManager::pIdleThread_ = CTaskManager::pCurrentThread_;

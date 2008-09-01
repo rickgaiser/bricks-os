@@ -5,6 +5,9 @@
 // Debugging
 #define CONFIG_DEBUGGING
 
+// Multithreading implemented yet?
+#undef  CONFIG_MULTI_THREADING
+
 // Hardware capabilities
 //#define __LITTLE_ENDIAN__ <--
 //#define __BIG_ENDIAN__

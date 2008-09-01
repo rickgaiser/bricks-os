@@ -1,6 +1,9 @@
 # Debugging
 CONFIG_DEBUGGING=y
 
+# Multithreading implemented yet?
+CONFIG_MULTI_THREADING=y
+
 # Hardware capabilities
 CONFIG_FPU=n
 CONFIG_MMU=n
