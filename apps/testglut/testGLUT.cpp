@@ -7,8 +7,8 @@
 
 
 const GLfloat fogColor[] = { 0.4f,  0.4f,  0.4f,  1.0f};
-float xrot(0.0f);
-float yrot(0.0f);
+float xrot(20.0f);
+float yrot(30.0f);
 
 
 // -----------------------------------------------------------------------------

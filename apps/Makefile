@@ -2,7 +2,7 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 
 
 ifeq ($(CONFIG_FRAMEBUFFER),y)
-  DIRS = testfb
+  DIRS = testglut
 else
   DIRS = halt
 endif

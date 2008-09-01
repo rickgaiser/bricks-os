@@ -2,6 +2,7 @@
 #include "GLES/gl.h"
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
+#include "asm/arch/registers.h"
 #include "stdlib.h"
 
 
@@ -126,7 +127,7 @@ glutSpecialFunc(void (* callback)(int, int, int))
 void
 glutProcessKeys()
 {
-  bool bUp(false), bDown(false), bLeft(false), bRight(false);
+  bool bUp(false), bDown(false), bLeft(false), bRight(true);
 
 #if defined(GBA) || defined(NDS)
   uint16_t data;
@@ -178,6 +179,7 @@ glutMainLoop(void)
 void
 glutSwapBuffers(void)
 {
+  pGlutDevice->waitVSync();
 #ifdef BUFFER_B
   pGlutRenderer->setSurface(bGlutActiveDisplay ? pGlutSurfaceA : pGlutSurfaceB);
   pGlutDevice->displaySurface(bGlutActiveDisplay ? pGlutSurfaceB : pGlutSurfaceA);
