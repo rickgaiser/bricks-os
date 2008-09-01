@@ -8,10 +8,25 @@ MY_LIBS_PATH    +=\
 #----------------------------------------------------------------------------
 CROSS_COMPILE   =sh-elf-
 CFLAGS          +=\
+                -ml \
+                -m4-single-only \
 
 CXXFLAGS        +=\
+                -ml \
+                -m4-single-only \
+
+ASFLAGS         +=\
+                -ml \
+                -m4-single-only \
+
+LDFLAGS         +=\
+                -EL \
 
 LINK_FLAGS      +=\
+                -ml \
+                -m4-single-only \
+                -Wl,-Ttext=0x8c010000 \
+                -nostartfiles \
                 -nostdlib \
                 $(MY_LIBS_PATH) \
 
@@ -23,4 +38,4 @@ STARTUP_LIBS    =\
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@
-	$(CXX) $(LINK_FLAGS) -o $@ $(DEVKITSH)/sh-elf/lib/crt0.o $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) $(STARTUP_LIBS)
+	$(CXX) $(LINK_FLAGS) -o $@ $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) $(STARTUP_LIBS)
