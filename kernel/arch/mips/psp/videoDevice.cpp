@@ -63,35 +63,34 @@ CPSPVideoDevice::setMode(const SVideoMode * mode)
 
   switch(mode->format)
   {
-    case cfB5G6R5:
-      sceDisplaySetMode(PSP_DISPLAY_PIXEL_FORMAT_565, mode->width, mode->height);
-      sceDisplaySetFrameBuf((void *)0x04000000, mode->xpitch, PSP_DISPLAY_PIXEL_FORMAT_565, PSP_DISPLAY_SETBUF_NEXTFRAME);
-      break;
-    case cfA1B5G5R5:
-      sceDisplaySetMode(PSP_DISPLAY_PIXEL_FORMAT_5551, mode->width, mode->height);
-      sceDisplaySetFrameBuf((void *)0x04000000, mode->xpitch, PSP_DISPLAY_PIXEL_FORMAT_5551, PSP_DISPLAY_SETBUF_NEXTFRAME);
-      break;
-    case cfA4B4G4R4:
-      sceDisplaySetMode(PSP_DISPLAY_PIXEL_FORMAT_4444, mode->width, mode->height);
-      sceDisplaySetFrameBuf((void *)0x04000000, mode->xpitch, PSP_DISPLAY_PIXEL_FORMAT_4444, PSP_DISPLAY_SETBUF_NEXTFRAME);
-      break;
-    case cfA8B8G8R8:
-      sceDisplaySetMode(PSP_DISPLAY_PIXEL_FORMAT_8888, mode->width, mode->height);
-      sceDisplaySetFrameBuf((void *)0x04000000, mode->xpitch, PSP_DISPLAY_PIXEL_FORMAT_8888, PSP_DISPLAY_SETBUF_NEXTFRAME);
-      break;
+    case cfB5G6R5:   sceDisplaySetMode(PSP_DISPLAY_PIXEL_FORMAT_565,  mode->width, mode->height); break;
+    case cfA1B5G5R5: sceDisplaySetMode(PSP_DISPLAY_PIXEL_FORMAT_5551, mode->width, mode->height); break;
+    case cfA4B4G4R4: sceDisplaySetMode(PSP_DISPLAY_PIXEL_FORMAT_4444, mode->width, mode->height); break;
+    case cfA8B8G8R8: sceDisplaySetMode(PSP_DISPLAY_PIXEL_FORMAT_8888, mode->width, mode->height); break;
     default:
       ;
   };
 }
 
 //---------------------------------------------------------------------------
+// Align to 128bit == 16byte == 0xf
+#define mallocSurface(size) \
+  (void *)(((uint32_t)new uint8_t[size + 0xf]) & (~0xf))
+//---------------------------------------------------------------------------
+//static uint32_t bytesUsed(0);
 void
 CPSPVideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
   CSurface * pSurface = new CSurface;
 
-  pSurface->mode = *pCurrentMode_;
-  pSurface->p = (uint16_t *)0x04000000;
+  uint32_t size = pCurrentMode_->xpitch * pCurrentMode_->ypitch * (pCurrentMode_->bpp / 8);
+
+  pSurface->mode        = *pCurrentMode_;
+  //pSurface->p           = (void *)(0x04000000 + bytesUsed);
+  pSurface->p           = mallocSurface(size);
+
+  // Add the bytes we just used
+  //bytesUsed += size;
 
   *surface = pSurface;
 }
@@ -121,7 +120,6 @@ CPSPVideoDevice::getFrameNr()
 uint32_t
 CPSPVideoDevice::waitVSync()
 {
-  sceKernelDcacheWritebackAll();
   sceDisplayWaitVblankStart();
 
   return iFrameCount_;
@@ -131,6 +129,17 @@ CPSPVideoDevice::waitVSync()
 void
 CPSPVideoDevice::displaySurface(CSurface * surface)
 {
+  PspDisplayPixelFormats format;
+  switch(pCurrentMode_->format)
+  {
+    case cfB5G6R5:   format = PSP_DISPLAY_PIXEL_FORMAT_565;  break;
+    case cfA1B5G5R5: format = PSP_DISPLAY_PIXEL_FORMAT_5551; break;
+    case cfA4B4G4R4: format = PSP_DISPLAY_PIXEL_FORMAT_4444; break;
+    default:
+    case cfA8B8G8R8: format = PSP_DISPLAY_PIXEL_FORMAT_8888; break;
+  };
+
+  // Always VSync, even if the frame is not new.
   if(vSync_ == true)
     waitVSync();
 
@@ -141,5 +150,8 @@ CPSPVideoDevice::displaySurface(CSurface * surface)
   if(surface != NULL)
   {
     pSurface_ = surface;
+
+    sceKernelDcacheWritebackAll();
+    sceDisplaySetFrameBuf((void *)(pSurface_->p), pCurrentMode_->xpitch, format, PSP_DISPLAY_SETBUF_IMMEDIATE);
   }
 }
