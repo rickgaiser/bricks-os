@@ -33,6 +33,24 @@ static const SVideoMode videoModes[] =
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
 
+// NDS Configuration options:
+//
+// Top Display (engine a):
+//   2D:
+//     3x 128KiB (3 full frame buffers)
+//   3D (option 1):
+//     Direct rendering to display
+//     3x 128KiB
+//   3D (option 2):
+//     1x 128KiB Render buffer
+//     1x 128KiB Display buffer
+//     1x 128KiB
+//
+// Bottom Display (engine b):
+//   2D:
+//     1x 128KiB (1 full frame buffer)
+
+
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CGBA2DRenderer::CGBA2DRenderer()
