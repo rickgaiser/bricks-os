@@ -5,6 +5,9 @@
 #include "asm/arch/registers.h"
 #include "stdlib.h"
 
+#ifdef PSP
+#include <pspctrl.h>
+#endif
 
 // NDS Renders to screen directly
 #if defined(NDS)
@@ -145,6 +148,14 @@ glutProcessKeys()
   bDown  = (datah & KEY_DOWN);
   bLeft  = (datah & KEY_LEFT);
   bRight = (datah & KEY_RIGHT);
+#endif
+#ifdef PSP
+  SceCtrlData pad;
+  sceCtrlReadBufferPositive(&pad, 1);
+  bUp    = (pad.Buttons & PSP_CTRL_UP);
+  bDown  = (pad.Buttons & PSP_CTRL_DOWN);
+  bLeft  = (pad.Buttons & PSP_CTRL_LEFT);
+  bRight = (pad.Buttons & PSP_CTRL_RIGHT);
 #endif
 
   if(bUp)
