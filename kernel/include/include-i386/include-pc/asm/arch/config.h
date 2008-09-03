@@ -15,7 +15,7 @@
 //#define CONFIG_MMU
 
 // Kernel interface
-#undef  CONFIG_DIRECT_ACCESS_KERNEL
+#define CONFIG_DIRECT_ACCESS_KERNEL
 #undef  CONFIG_DIRECT_ACCESS_KERNEL_FUNC
 
 // File System
