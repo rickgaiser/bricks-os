@@ -30,20 +30,24 @@ CAGLESMatrixF::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat t
 {
   GLfloat m[16];
 
-  m[0*4+0] = (2.0f * zNear) / (right - left);
+  GLfloat idw = 1.0f / (right - left);
+  GLfloat idh = 1.0f / (top - bottom);
+  GLfloat idz = 1.0f / (zFar - zNear);
+
+  m[0*4+0] = (2.0f * zNear) * idw;
   m[0*4+1] = 0.0f;
-  m[0*4+2] = (right + left) / (right - left);
+  m[0*4+2] = (right + left) * idw;
   m[0*4+3] = 0.0f;
 
   m[1*4+0] = 0.0f;
-  m[1*4+1] = (2.0f * zNear) / (top - bottom);
-  m[1*4+2] = (top + bottom) / (top - bottom);
+  m[1*4+1] = (2.0f * zNear) * idh;
+  m[1*4+2] = (top + bottom) * idh;
   m[1*4+3] = 0.0f;
 
   m[2*4+0] = 0.0f;
   m[2*4+1] = 0.0f;
-  m[2*4+2] = -((zFar + zNear) / (zFar - zNear));
-  m[2*4+3] = -((2.0f * zFar * zNear) / (zFar - zNear));
+  m[2*4+2] = -((zFar + zNear) * idz);
+  m[2*4+3] = -((2.0f * zFar * zNear) * idz);
 
   m[3*4+0] = 0.0f;
   m[3*4+1] = 0.0f;
@@ -73,20 +77,24 @@ CAGLESMatrixF::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top
 {
   GLfloat m[16];
 
-  m[0*4+0] = 2.0f / (right - left);
+  GLfloat idw = 1.0f / (right - left);
+  GLfloat idh = 1.0f / (top - bottom);
+  GLfloat idz = 1.0f / (zFar - zNear);
+
+  m[0*4+0] = 2.0f * idw;
   m[0*4+1] = 0.0f;
   m[0*4+2] = 0.0f;
-  m[0*4+3] = -((right + left) / (right - left));
+  m[0*4+3] = -((right + left) * idw);
 
   m[1*4+0] = 0.0f;
-  m[1*4+1] = 2.0f / (top - bottom);
+  m[1*4+1] = 2.0f * idh;
   m[1*4+2] = 0.0f;
-  m[1*4+3] = -((top + bottom) / (top - bottom));
+  m[1*4+3] = -((top + bottom) * idh);
 
   m[2*4+0] = 0.0f;
   m[2*4+1] = 0.0f;
-  m[2*4+2] = -2.0f / (zFar - zNear);
-  m[2*4+3] = -((zFar + zNear) / (zFar - zNear));
+  m[2*4+2] = -2.0f * idz;
+  m[2*4+3] = -((zFar + zNear) * idz);
 
   m[3*4+0] = 0.0f;
   m[3*4+1] = 0.0f;
@@ -228,20 +236,24 @@ CAGLESMatrixFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed 
 {
   CFixed m[16];
 
-  m[0*4+0].value = gl_fpdiv((zNear << 1), (right - left));
+  GLfixed idw = gl_fpinverse(right - left);
+  GLfixed idh = gl_fpinverse(top - bottom);
+  GLfixed idz = gl_fpinverse(zFar - zNear);
+
+  m[0*4+0].value = gl_fpmul((zNear << 1), idw);
   m[0*4+1].value = gl_fpfromi(0);
-  m[0*4+2].value = gl_fpdiv((right + left), (right - left));
+  m[0*4+2].value = gl_fpmul((right + left), idw);
   m[0*4+3].value = gl_fpfromi(0);
 
   m[1*4+0].value = gl_fpfromi(0);
-  m[1*4+1].value = gl_fpdiv((zNear << 1), (top - bottom));
-  m[1*4+2].value = gl_fpdiv((top + bottom), (top - bottom));
+  m[1*4+1].value = gl_fpmul((zNear << 1), idh);
+  m[1*4+2].value = gl_fpmul((top + bottom), idh);
   m[1*4+3].value = gl_fpfromi(0);
 
   m[2*4+0].value = gl_fpfromi(0);
   m[2*4+1].value = gl_fpfromi(0);
-  m[2*4+2].value = -gl_fpdiv((zFar + zNear), (zFar - zNear));
-  m[2*4+3].value = -gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear));
+  m[2*4+2].value = -gl_fpmul((zFar + zNear), idz);
+  m[2*4+3].value = -gl_fpmul((gl_fpmul(zFar, zNear) << 1), idz);
 
   m[3*4+0].value = gl_fpfromi(0);
   m[3*4+1].value = gl_fpfromi(0);
@@ -271,20 +283,24 @@ CAGLESMatrixFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed to
 {
   CFixed m[16];
 
-  m[0*4+0].value = gl_fpdiv(gl_fpfromi(2), (right - left));
+  GLfixed idw = gl_fpinverse(right - left);
+  GLfixed idh = gl_fpinverse(top - bottom);
+  GLfixed idz = gl_fpinverse(zFar - zNear);
+
+  m[0*4+0].value = gl_fpmul(gl_fpfromi(2), idw);
   m[0*4+1].value = gl_fpfromi(0);
   m[0*4+2].value = gl_fpfromi(0);
-  m[0*4+3].value = -gl_fpdiv((right + left), (right - left));
+  m[0*4+3].value = -gl_fpmul((right + left), idw);
 
   m[1*4+0].value = gl_fpfromi(0);
-  m[1*4+1].value = gl_fpdiv(gl_fpfromi(2), (top - bottom));
+  m[1*4+1].value = gl_fpmul(gl_fpfromi(2), idh);
   m[1*4+2].value = gl_fpfromi(0);
-  m[1*4+3].value = -gl_fpdiv((top + bottom), (top - bottom));
+  m[1*4+3].value = -gl_fpmul((top + bottom), idh);
 
   m[2*4+0].value = gl_fpfromi(0);
   m[2*4+1].value = gl_fpfromi(0);
-  m[2*4+2].value = gl_fpdiv(gl_fpfromi(-2), (zFar - zNear));
-  m[2*4+3].value = -gl_fpdiv((zFar + zNear), (zFar - zNear));
+  m[2*4+2].value = gl_fpmul(gl_fpfromi(-2), idz);
+  m[2*4+3].value = -gl_fpmul((zFar + zNear), idz);
 
   m[3*4+0].value = gl_fpfromi(0);
   m[3*4+1].value = gl_fpfromi(0);

@@ -635,7 +635,11 @@ CASoftGLESFloat::_vertexShaderTransform(SVertexF & v)
   matrixProjection.transform4(v.ve, v.vc);
   // Perspective division
   //   from 'clip coordinates' to 'normalized device coordinates'
-  v.vd = v.vc / v.vc.w;
+  GLfloat scale;
+  scale = 1.0f / v.vc.w;
+  v.vd.x = v.vc.x * scale;
+  v.vd.y = v.vc.y * scale;
+  v.vd.z = v.vc.z * scale;
   // Viewport transformation
   //   from 'normalized device coordinates' to 'window coordinates'
   v.sx = (GLint)    ((xA_ * v.vd.x) + xB_);
