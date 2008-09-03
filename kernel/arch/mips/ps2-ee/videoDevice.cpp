@@ -486,9 +486,7 @@ static uint32_t bytesUsed(0);
 void
 CPS2VideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
-  CPS2Surface * pSurface = 0;
-
-  pSurface = new CPS2Surface;
+  CPS2Surface * pSurface = new CPS2Surface;
 
   pSurface->mode        = *pCurrentMode_;
   pSurface->mode.width  = width;
@@ -497,7 +495,7 @@ CPS2VideoDevice::getSurface(CSurface ** surface, int width, int height)
   pSurface->p           = (void *)bytesUsed;
 
   // Add the bytes we just used
-  bytesUsed += width * height * (pCurrentMode_->bpp / 8);
+  bytesUsed += pCurrentMode_->xpitch * pCurrentMode_->ypitch * (pCurrentMode_->bpp / 8);
 
   // Alignment:
   //  -   8KiB  for system buffers
