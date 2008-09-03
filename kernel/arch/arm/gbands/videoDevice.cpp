@@ -131,11 +131,16 @@ CGBAVideoDevice::CGBAVideoDevice()
  , pSurface_(NULL)
  , iSurfacesFree_(0)
  , iFrameCount_(0)
+#ifndef CONFIG_MULTI_THREADING
+ , bSwap_(false)
+#endif
  , pCurrentMode_(NULL)
 {
+#ifdef CONFIG_MULTI_THREADING
   // Initialize mutex to a locked state so we can use it to wait for VSync
   k_pthread_mutex_init(&mutex_, NULL);
   k_pthread_cond_init(&condVSync_, NULL);
+#endif
 
   CInterruptManager::attach(0, this);
   // Enable VBlank interrupt
@@ -154,7 +159,12 @@ CGBAVideoDevice::isr(int irq)
   iFrameCount_++;
 
   // Notify swap function that we have vertical sync
+#ifdef CONFIG_MULTI_THREADING
   k_pthread_cond_broadcast(&condVSync_);
+#else
+  if(bSwap_ == true)
+    bSwap_ = false;
+#endif
 
   return 0;
 }
@@ -377,7 +387,12 @@ CGBAVideoDevice::getFrameNr()
 uint32_t
 CGBAVideoDevice::waitVSync()
 {
+#ifdef CONFIG_MULTI_THREADING
   k_pthread_cond_wait(&condVSync_, &mutex_);
+#else
+  bSwap_ = true;
+  while(bSwap_ == true){}
+#endif
 
   return iFrameCount_;
 }
