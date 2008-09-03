@@ -92,6 +92,7 @@ protected:
   virtual void vertexShaderTransform(SVertexFx & v);
 
   virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
+  virtual void zbuffer(bool enable);
 
 private:
   void plotPoly(SVertexFx * vtx[3]);

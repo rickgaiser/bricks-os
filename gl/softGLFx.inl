@@ -15,13 +15,13 @@ CSoftGLESFixed::testAndSetDepth(GLfixed z, uint32_t index)
 
     switch(depthFunction_)
     {
-      case GL_LESS:     if(zval <  zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_EQUAL:    if(zval == zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_LEQUAL:   if(zval <= zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_GREATER:  if(zval >  zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_NOTEQUAL: if(zval != zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_GEQUAL:   if(zval >= zbuffer[index]){zbuffer[index] = zval; return true;} break;
-      case GL_ALWAYS:                              zbuffer[index] = zval; return true;  break;
+      case GL_LESS:     if(zval <  pZBuffer_[index]){pZBuffer_[index] = zval; return true;} break;
+      case GL_EQUAL:    if(zval == pZBuffer_[index]){pZBuffer_[index] = zval; return true;} break;
+      case GL_LEQUAL:   if(zval <= pZBuffer_[index]){pZBuffer_[index] = zval; return true;} break;
+      case GL_GREATER:  if(zval >  pZBuffer_[index]){pZBuffer_[index] = zval; return true;} break;
+      case GL_NOTEQUAL: if(zval != pZBuffer_[index]){pZBuffer_[index] = zval; return true;} break;
+      case GL_GEQUAL:   if(zval >= pZBuffer_[index]){pZBuffer_[index] = zval; return true;} break;
+      case GL_ALWAYS:                                pZBuffer_[index] = zval; return true;  break;
       case GL_NEVER:                                                      return false; break;
     };
   }

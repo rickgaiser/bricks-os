@@ -76,6 +76,8 @@ protected:
 
   void interpolateVertex(SVertexFx & vNew, SVertexFx & vOld, SVertexFx & vFrom, CFixed t);
 
+  virtual void zbuffer(bool enable) = 0;
+
 protected:
   // Depth testing
   bool        depthTestEnabled_;
@@ -164,9 +166,10 @@ public:
 
 protected:
   virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
+  virtual void zbuffer(bool enable);
 
 protected:
-  uint16_t  * zbuffer;
+  uint16_t  * pZBuffer_;
   CEdgeFx   * edge1;
   CEdgeFx   * edge2;
 

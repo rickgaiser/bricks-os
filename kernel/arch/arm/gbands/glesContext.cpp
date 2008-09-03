@@ -74,6 +74,6 @@ CGBAGLESContext::glClear(GLbitfield mask)
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
     uint32_t z = (zClearValue_ << 16) | zClearValue_;
-    dmaFill32(z, zbuffer, viewportPixelCount>>1);
+    dmaFill32(z, pZBuffer_, viewportPixelCount>>1);
   }
 }

@@ -753,6 +753,12 @@ CNDSGLESContext::rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
 }
 
 //-----------------------------------------------------------------------------
+void
+CNDSGLESContext::zbuffer(bool enable)
+{
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void
 CNDSGLESContext::updateLights()

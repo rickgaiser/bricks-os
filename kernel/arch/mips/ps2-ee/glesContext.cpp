@@ -100,17 +100,10 @@ CPS2GLESContext::glDisable(GLenum cap)
     case GL_LIGHT5: lights_[5].enabled = false; break;
     case GL_LIGHT6: lights_[6].enabled = false; break;
     case GL_LIGHT7: lights_[7].enabled = false; break;
-/*
     case GL_DEPTH_TEST:
-    {
       depthTestEnabled_ = false;
-      // Z-Buffer
-      packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_DISABLE));
-      // Z-Buffer test
-      packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+      zbuffer(false);
       break;
-    }
-*/
     case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
     case GL_FOG:        fogEnabled_       = false; break;
     case GL_TEXTURE_2D: texturesEnabled_  = false; ps2Textures_ = TEXTURES_OFF; break;
@@ -137,28 +130,9 @@ CPS2GLESContext::glEnable(GLenum cap)
     case GL_LIGHT6:     lights_[6].enabled = true; break;
     case GL_LIGHT7:     lights_[7].enabled = true; break;
     case GL_DEPTH_TEST:
-    {
       depthTestEnabled_ = true;
-/*
-      // 16bit
-      packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_16S, ZMSK_ENABLE));
-      //ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 2);
-      zMax_ = 0xffff;
-
-      // 24bit
-      packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
-      //ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 3);
-      zMax_ = 0xffffff;
-*/
-      // 32bit
-      packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF((3*1024*1024) >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
-      //ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 4);
-      zMax_ = 0xffffffff;
-
-      // Z-Buffer test
-      packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+      zbuffer(true);
       break;
-    }
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
     case GL_TEXTURE_2D: texturesEnabled_   = true; ps2Textures_ = TEXTURES_ON; break;
@@ -403,4 +377,35 @@ CPS2GLESContext::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
     }
     packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
   }
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::zbuffer(bool enable)
+{
+/*
+  if(enable == true)
+  {
+    // 16bit
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16S, ZMSK_ENABLE));
+    ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 2);
+    zMax_ = 0xffff;
+    // 24bit
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
+    ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 3);
+    zMax_ = 0xffffff;
+    // 32bit
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
+    ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 4);
+    zMax_ = 0xffffffff;
+  }
+  else
+  {
+    // Z-Buffer
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_DISABLE));
+  }
+
+  // Z-Buffer test
+  packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, enable, ps2DepthFunction_));
+*/
 }

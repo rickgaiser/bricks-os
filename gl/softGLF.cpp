@@ -161,7 +161,10 @@ CASoftGLESFloat::glDisable(GLenum cap)
     case GL_LIGHT6: lights_[6].enabled = false; break;
     case GL_LIGHT7: lights_[7].enabled = false; break;
 
-    case GL_DEPTH_TEST: depthTestEnabled_ = false; break;
+    case GL_DEPTH_TEST:
+      depthTestEnabled_ = false;
+      zbuffer(false); // Notify rasterizer
+      break;
     case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
     case GL_FOG:        fogEnabled_       = false; break;
     case GL_TEXTURE_2D: texturesEnabled_  = false; break;
@@ -196,7 +199,10 @@ CASoftGLESFloat::glEnable(GLenum cap)
     case GL_LIGHT6:     lights_[6].enabled = true; break;
     case GL_LIGHT7:     lights_[7].enabled = true; break;
 
-    case GL_DEPTH_TEST: depthTestEnabled_  = true; break;
+    case GL_DEPTH_TEST:
+      depthTestEnabled_ = true;
+      zbuffer(true); // Notify rasterizer
+      break;
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
     case GL_TEXTURE_2D: texturesEnabled_   = true; break;
@@ -1003,10 +1009,16 @@ CASoftGLESFloat::interpolateVertex(SVertexF & vNew, SVertexF & vOld, SVertexF & 
 CSoftGLESFloat::CSoftGLESFloat()
  : CASoftGLESFloat()
  , CAGLESTextures()
- , zbuffer(0)
- , edge1(0)
- , edge2(0)
+ , pZBuffer_(NULL)
+ , edge1(NULL)
+ , edge2(NULL)
 {
+  if(pZBuffer_)
+    delete pZBuffer_;
+  if(edge1)
+    delete edge1;
+  if(edge2)
+    delete edge2;
 }
 
 //-----------------------------------------------------------------------------
@@ -1050,7 +1062,7 @@ CSoftGLESFloat::glClear(GLbitfield mask)
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
     for(int i(0); i < viewportPixelCount; i++)
-      zbuffer[i] = zClearValue_;
+      pZBuffer_[i] = zClearValue_;
   }
 }
 
@@ -1060,19 +1072,16 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
   CASoftGLESFloat::glViewport(x, y, width, height);
 
-  if(zbuffer)
-    delete zbuffer;
+  // Update z-buffer
+  if(depthTestEnabled_ == true)
+    zbuffer(true);
+
+  // Allocate edge buffers (for triangle rasterization)
   if(edge1)
     delete edge1;
   if(edge2)
     delete edge2;
 
-  zbuffer = new uint32_t[width * height];
-  if(zbuffer == NULL)
-  {
-    setError(GL_OUT_OF_MEMORY);
-    return;
-  }
   edge1 = new CEdgeF(viewportHeight);
   if(edge1 == NULL)
   {
@@ -1092,6 +1101,21 @@ void
 CSoftGLESFloat::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
   _rasterTriangle(v0, v1, v2);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::zbuffer(bool enable)
+{
+  if(enable == true)
+  {
+    if(pZBuffer_)
+      delete pZBuffer_;
+
+    pZBuffer_ = new uint32_t[viewportWidth * viewportHeight];
+    if(pZBuffer_ == NULL)
+      setError(GL_OUT_OF_MEMORY);
+  }
 }
 
 //-----------------------------------------------------------------------------

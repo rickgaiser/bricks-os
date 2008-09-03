@@ -68,6 +68,8 @@ protected:
 
   void interpolateVertex(SVertexF & vNew, SVertexF & vOld, SVertexF & vFrom, GLfloat t);
 
+  virtual void zbuffer(bool enable) = 0;
+
 protected:
   // Depth testing
   bool        depthTestEnabled_;
@@ -155,9 +157,10 @@ public:
 
 protected:
   virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2);
+  virtual void zbuffer(bool enable);
 
 private:
-  uint32_t  * zbuffer;
+  uint32_t  * pZBuffer_;
   CEdgeF    * edge1;
   CEdgeF    * edge2;
 
