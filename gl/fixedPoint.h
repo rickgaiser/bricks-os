@@ -66,9 +66,9 @@ public:
   CFixed & operator= (double d)         {value = gl_fpfromd(d); return (*this);}
   CFixed & operator= (int32_t i)        {value = gl_fpfromi(i); return (*this);}
 
-  operator float()   {return gl_fptof(value);}
-  operator double()  {return gl_fptod(value);}
-  operator int32_t() {return gl_fptoi(value);}
+  operator float()   const {return gl_fptof(value);}
+  operator double()  const {return gl_fptod(value);}
+  operator int32_t() const {return gl_fptoi(value);}
 
   // Compound Assignment Operators
   CFixed & operator+=(const CFixed & fx){value += fx.value;                      return (*this);}
