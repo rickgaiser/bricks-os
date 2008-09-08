@@ -9,6 +9,7 @@
 const GLfloat fogColor[] = { 0.4f,  0.4f,  0.4f,  1.0f};
 float xrot(20.0f);
 float yrot(30.0f);
+float speed(2.0f);
 
 
 // -----------------------------------------------------------------------------
@@ -149,22 +150,22 @@ arrow_keys(int a_keys, int x, int y)
   switch(a_keys)
   {
     case GLUT_KEY_UP:
-      xrot -= 1.0f;
+      xrot -= 1.0f * speed;
       if(xrot < 0.0f)
         xrot += 360.0f;
       break;
     case GLUT_KEY_DOWN:
-      xrot += 1.0f;
+      xrot += 1.0f * speed;
       if(xrot >= 360.0f)
         xrot -= 360.0f;
       break;
     case GLUT_KEY_LEFT:
-      yrot -= 1.0f;
+      yrot -= 1.0f * speed;
       if(yrot < 0.0f)
         yrot += 360.0f;
       break;
     case GLUT_KEY_RIGHT:
-      yrot += 1.0f;
+      yrot += 1.0f * speed;
       if(yrot >= 360.0f)
         yrot -= 360.0f;
       break;
