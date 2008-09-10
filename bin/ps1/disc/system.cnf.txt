@@ -1,0 +1,22 @@
+The boot procedure of the Playstation comes in two flavors. Hardware Mode and Application Boot.
+
+Hardware mode corresponds to booting the actual hardware.
+
+Application boot jumps to a specific address in ROM and performs a check of the hardware. Next, it checks to see what type of disc is in the Playstation. If it's a Playstation disc, it gets the system designation file (SYSTEM.CNF) and executes it.
+
+If there is no disc, it goes into looping demonstration.
+
+
+The SYSTEM.CNF is basically the Autoexec.bat of the Playstation. Each section is as follows:
+
+BOOT: Specify the name of the file to be started. The default is GAME.PSX.
+Example: BOOT = PSXAPP.EXE
+
+TCB: Specify the number of tasks. The default is 4.
+Example: TCB = 5
+
+EVENT: Specify the number of events. The default is 16.
+Example: Event = 5
+
+STACK: The stack pointer value when the file specified by BOOT is started. Default is 0x8001FF00.
+Example: STACK = 800FFF0

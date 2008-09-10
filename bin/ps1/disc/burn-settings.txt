@@ -1,0 +1,9 @@
+From the "NOT YAROZE" website:
+
+Creation of CD-R
+
+First, made ISO image file which is CD-ROM-XA mode 2 and the file name of ISO Level1.
+Next, the area code in 16 top sectors (37632 bytes) is extracted from real CD-ROM,
+and ISO image which created is overwritten. (If you use same area of hitmen(USA or Europe?)
+version of PSX, hitlice in Hitmen provide easy way. but it dosn't work on Japanese version of PSX.)
+Finally, ISO image is burnt to CD-R and it is completion.
