@@ -66,7 +66,7 @@ init_pci()
 
   for(uint16_t bus(0); bus < 256; bus++)
   {
-    printk(" - Scanning bus %d\r");
+    printk(" - Scanning bus %d\r", bus);
 
     for(uint16_t slot(0); slot < 32; slot++)
     {
