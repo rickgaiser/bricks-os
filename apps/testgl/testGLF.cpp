@@ -143,11 +143,9 @@ testGLF(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
   device->get3DRenderer(&renderer);
   glMakeCurrent(renderer);
 
-#ifndef ENABLE_DOUBLE_BUFFERED
   // Set buffers
   renderer->setSurface(surface_a);
   device->displaySurface(surface_a);
-#endif
 
   // Automatically wait for VSync
 #ifdef ENABLE_VSYNC
@@ -216,32 +214,33 @@ testGLF(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
 
   while(true)
   {
-    // Without Lighting
-    glDisable(GL_LIGHTING);
     // Flat
-    glShadeModel(GL_FLAT);
-    renderPyramidF(device, renderer, surface_a, surface_b);
+//    glShadeModel(GL_FLAT);
+//    renderPyramidF(device, renderer, surface_a, surface_b);
     // Smooth
     glShadeModel(GL_SMOOTH);
     renderPyramidF(device, renderer, surface_a, surface_b);
 
 #ifdef ENABLE_LIGHTING
-    // With Lighting
     glEnable(GL_LIGHTING);
+
     // Flat
-    glShadeModel(GL_FLAT);
-    renderPyramidF(device, renderer, surface_a, surface_b);
+//    glShadeModel(GL_FLAT);
+//    renderPyramidF(device, renderer, surface_a, surface_b);
     // Smooth
     glShadeModel(GL_SMOOTH);
     renderPyramidF(device, renderer, surface_a, surface_b);
+
+    glDisable(GL_LIGHTING);
 #endif
 
 #ifdef ENABLE_TEXTURES
-    // With textures (without lighting)
-    glDisable(GL_LIGHTING);
-    glShadeModel(GL_FLAT);
     glEnable(GL_TEXTURE_2D);
+
+    // Flat
+    glShadeModel(GL_FLAT);
     renderCubeF(device, renderer, surface_a, surface_b);
+
     glDisable(GL_TEXTURE_2D);
 #endif
   }
