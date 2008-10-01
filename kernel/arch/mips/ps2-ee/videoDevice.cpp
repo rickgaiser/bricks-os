@@ -132,47 +132,47 @@ const uint32_t vmode_count(sizeof(vmodes) / sizeof(SPS2VideoMode));
 static const SVideoMode videoModes[] =
 {
   // PAL
-  { 640,  256,  640,  256, 16, cfA1R5G5B5}, //  320KiB  0
+  { 640,  256,  640,  256, 16, cfA1B5G5R5}, //  320KiB  0
   { 640,  256,  640,  256, 24, cfB8G8R8},   //  480KiB
   { 640,  256,  640,  256, 32, cfA8B8G8R8}, //  640KiB
-  { 640,  512,  640,  512, 16, cfA1R5G5B5}, //  640KiB
+  { 640,  512,  640,  512, 16, cfA1B5G5R5}, //  640KiB
   { 640,  512,  640,  512, 24, cfB8G8R8},   //  960KiB
   { 640,  512,  640,  512, 32, cfA8B8G8R8}, // 1280KiB  5
   // NTSC
-  { 640,  224,  640,  224, 16, cfA1R5G5B5}, //  280KiB  6
+  { 640,  224,  640,  224, 16, cfA1B5G5R5}, //  280KiB  6
   { 640,  224,  640,  224, 24, cfB8G8R8},   //  420KiB
   { 640,  224,  640,  224, 32, cfA8B8G8R8}, //  560KiB
-  { 640,  448,  640,  448, 16, cfA1R5G5B5}, //  560KiB
+  { 640,  448,  640,  448, 16, cfA1B5G5R5}, //  560KiB
   { 640,  448,  640,  448, 24, cfB8G8R8},   //  840KiB
   { 640,  448,  640,  448, 32, cfA8B8G8R8}, // 1120KiB 11
 
   // EDTV
-  { 720,  480,  720,  480, 16, cfA1R5G5B5}, //  675KiB 12
+  { 720,  480,  720,  480, 16, cfA1B5G5R5}, //  675KiB 12
   { 720,  480,  720,  480, 24, cfB8G8R8},   // 1012KiB
   { 720,  480,  720,  480, 32, cfA8B8G8R8}, // 1350KiB 13
   // HDTV
-  {1280,  720, 1280,  720, 16, cfA1R5G5B5}, // 1800KiB 15
+  {1280,  720, 1280,  720, 16, cfA1B5G5R5}, // 1800KiB 15
   {1280,  720, 1280,  720, 24, cfB8G8R8},   // 2700KiB
   {1280,  720, 1280,  720, 32, cfA8B8G8R8}, // 3600KiB
-  {1920,  540, 1920,  540, 16, cfA1R5G5B5}, // 2025KiB
+  {1920,  540, 1920,  540, 16, cfA1B5G5R5}, // 2025KiB
   {1920,  540, 1920,  540, 24, cfB8G8R8},   // 3038KiB
   {1920,  540, 1920,  540, 32, cfA8B8G8R8}, // 4050KiB
-  {1920, 1080, 1920, 1080, 16, cfA1R5G5B5}, // 4050KiB 21
+  {1920, 1080, 1920, 1080, 16, cfA1B5G5R5}, // 4050KiB 21
 
   // VGA
-  { 640,  480,  640,  480, 16, cfA1R5G5B5}, //  600KiB 22
+  { 640,  480,  640,  480, 16, cfA1B5G5R5}, //  600KiB 22
   { 640,  480,  640,  480, 24, cfB8G8R8},   //  900KiB
   { 640,  480,  640,  480, 32, cfA8B8G8R8}, // 1200KiB 24
   // SVGA
-  { 800,  600,  800,  600, 16, cfA1R5G5B5}, //  938KiB 25
+  { 800,  600,  800,  600, 16, cfA1B5G5R5}, //  938KiB 25
   { 800,  600,  800,  600, 24, cfB8G8R8},   // 1406KiB
   { 800,  600,  800,  600, 32, cfA8B8G8R8}, // 1875KiB 27
   // XGA
-  {1024,  768, 1024,  768, 16, cfA1R5G5B5}, // 1536KiB 28
+  {1024,  768, 1024,  768, 16, cfA1B5G5R5}, // 1536KiB 28
   {1024,  768, 1024,  768, 24, cfB8G8R8},   // 2304KiB
   {1024,  768, 1024,  768, 32, cfA8B8G8R8}, // 3072KiB 30
   // SXGA
-  {1280, 1024, 1280, 1024, 16, cfA1R5G5B5}, // 2560KiB 31
+  {1280, 1024, 1280, 1024, 16, cfA1B5G5R5}, // 2560KiB 31
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
@@ -296,9 +296,9 @@ CPS22DRenderer::setPixel(int x, int y)
   x += GS_X_BASE;
   y += GS_Y_BASE;
 
-  packet_.gifAddPackedAD(GIF::REG::prim,  GS_PRIM(PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x<<4, y<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
   bDataWaiting_ = true;
 }
 
@@ -316,10 +316,10 @@ CPS22DRenderer::fillRect(int x, int y, unsigned int width, unsigned int height)
   x += GS_X_BASE;
   y += GS_Y_BASE;
 
-  packet_.gifAddPackedAD(GIF::REG::prim,  GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x<<4, y<<4, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2((x+width)<<4, (y+height)<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((x+width)<<4, (y+height)<<4, 0));
   bDataWaiting_ = true;
 }
 
@@ -332,10 +332,10 @@ CPS22DRenderer::drawLine(int x1, int y1, int x2, int y2)
   x2 += GS_X_BASE;
   y2 += GS_Y_BASE;
 
-  packet_.gifAddPackedAD(GIF::REG::prim,  GS_PRIM(PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x1<<4, y1<<4, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x2<<4, y2<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x1<<4, y1<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x2<<4, y2<<4, 0));
   bDataWaiting_ = true;
 }
 
@@ -360,13 +360,13 @@ CPS22DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
   x += GS_X_BASE;
   y += GS_Y_BASE;
 
-  packet_.gifAddPackedAD(GIF::REG::prim,  GS_PRIM(PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x<<4, y<<4, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x+width<<4, y<<4, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x+width<<4, y+height<<4, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x<<4, y+height<<4, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x<<4, y<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x+width<<4, y<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x+width<<4, y+height<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y+height<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
   bDataWaiting_ = true;
 }
 

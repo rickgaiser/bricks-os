@@ -47,10 +47,10 @@ CPS2GLESContext::glClear(GLbitfield mask)
     uint8_t b = (uint8_t)(clClear.b * 255);
     //uint8_t a = (uint8_t)(clClear.a * 255);
 
-    packet_.gifAddPackedAD(GIF::REG::prim,  GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-    packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ(r, g, b, 0x80, 0));
-    packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2((0+GS_X_BASE)<<4, (0+GS_Y_BASE)<<4, 0));
-    packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2((viewportWidth+GS_X_BASE)<<4, (viewportHeight+GS_Y_BASE)<<4, 0));
+    packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+    packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(r, g, b, 0x80, 0));
+    packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((0+GS_X_BASE)<<4, (0+GS_Y_BASE)<<4, 0));
+    packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((viewportWidth+GS_X_BASE)<<4, (viewportHeight+GS_Y_BASE)<<4, 0));
   }
 
   if(mask & GL_DEPTH_BUFFER_BIT)
@@ -218,10 +218,10 @@ CPS2GLESContext::glGenTextures(GLsizei n, GLuint *textures)
 }
 
 //-----------------------------------------------------------------------------
+#define FIXME_TEX_ADDR (3*1024*1024)
 void
 CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
-/*
   if(target == GL_TEXTURE_2D)
   {
     if((pCurrentTex_ != 0) && (pCurrentTex_->used == true))
@@ -232,7 +232,18 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
       pCurrentTex_->texMagFilter = GL_LINEAR;
       pCurrentTex_->texWrapS     = GL_REPEAT;
       pCurrentTex_->texWrapT     = GL_REPEAT;
-      pCurrentTex_->data         = (void *)ps2TexturesStart_;
+      pCurrentTex_->data         = (void *)FIXME_TEX_ADDR;
+
+      EColorFormat fmtFrom;
+      switch(type)
+      {
+        case GL_UNSIGNED_BYTE:          fmtFrom = cfA8B8G8R8; break;
+        case GL_UNSIGNED_SHORT_5_6_5:   fmtFrom = cfR5G6B5;   break;
+        case GL_UNSIGNED_SHORT_4_4_4_4: fmtFrom = cfA4B4G4R4; break;
+        case GL_UNSIGNED_SHORT_5_5_5_1: fmtFrom = cfA1B5G5R5; break;
+        default:
+          return; // ERROR, invalid type
+      };
 
       // Copy to texture memory
       // Convert everything to cfA8B8G8R8
@@ -240,40 +251,23 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
       {
         case GL_UNSIGNED_BYTE:
         {
-          ee_to_gsBitBlt(0, 0, width, height, (uint32_t)pixels, ps2TexturesStart_, width);
+          ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)pixels);
           break;
         }
         case GL_UNSIGNED_SHORT_5_6_5:
-        {
-          uint32_t * newTexture = new uint32_t[width*height];
-          for(int i(0); i < (width*height); i++)
-            newTexture[i] = BxColorFormat_Convert(cfB5G6R5, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
-          ee_to_gsBitBlt(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
-          delete newTexture;
-          break;
-        }
         case GL_UNSIGNED_SHORT_4_4_4_4:
-        {
-          uint32_t * newTexture = new uint32_t[width*height];
-          for(int i(0); i < (width*height); i++)
-            newTexture[i] = BxColorFormat_Convert(cfA4B4G4R4, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
-          ee_to_gsBitBlt(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
-          delete newTexture;
-          break;
-        }
         case GL_UNSIGNED_SHORT_5_5_5_1:
         {
           uint32_t * newTexture = new uint32_t[width*height];
           for(int i(0); i < (width*height); i++)
-            newTexture[i] = BxColorFormat_Convert(cfA1B5G5R5, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
-          ee_to_gsBitBlt(0, 0, width, height, (uint32_t)newTexture, ps2TexturesStart_, width);
+            newTexture[i] = BxColorFormat_Convert(fmtFrom, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
+          ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)newTexture);
           delete newTexture;
           break;
         }
       };
     }
   }
-*/
 }
 
 //-----------------------------------------------------------------------------
@@ -330,7 +324,7 @@ CPS2GLESContext::glEnd()
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
+CPS2GLESContext::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit)
 {
   SVertexF * va[3] = {&v0, &v1, &v2};
   uint8_t alpha;
@@ -365,18 +359,24 @@ CPS2GLESContext::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
     if(texturesEnabled_ == true)
     {
       GLfloat tq = 1.0f / v.vc[3];
-      v.t[0] *= tq;
-      v.t[1] *= tq;
+      GLfloat ts = v.t[0] * tq;
+      GLfloat tt = v.t[1] * tq;
 
-      packet_.gifAddPackedAD(GIF::REG::st, GS_ST(*(uint32_t *)(&v.t[0]), *(uint32_t *)(&v.t[1])));
-      packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, *(uint32_t *)(&tq)));
+      packet_.gifAddPackedAD(GIF::REG::st,    GIF::REG::ST(ts, tt));
+      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, tq));
     }
     else
     {
-      packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, 0));
+      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, 0));
     }
-    packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
+    packet_.gifAddPackedAD(GIF::REG::xyz2, GIF::REG::XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
   }
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS2GLESContext::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
+{
 }
 
 //-----------------------------------------------------------------------------

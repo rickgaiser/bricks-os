@@ -59,6 +59,13 @@ namespace GIF
       finish     = 0x61,
       label      = 0x62
     };
+    #define FLOAT_TO_INT(F) (*((uint32_t *)&(F)))
+    inline uint64_t PRIM (uint8_t prim, bool IIP = false, bool TME = false, bool FGE = false, bool ABE = false, bool AA1 = false, bool FST = false, bool CTXT = false, bool FIX = false){return GS_PRIM(prim,IIP,TME,FGE,ABE,AA1,FST,CTXT,FIX);}
+    inline uint64_t RGBAQ(uint8_t r, uint8_t g, uint8_t b,  uint8_t a, float q){return GS_RGBAQ(r, g, b, a, FLOAT_TO_INT(q));}
+    inline uint64_t ST   (float s, float t)                                    {return GS_ST(FLOAT_TO_INT(s), FLOAT_TO_INT(t));}
+    inline uint64_t UV   (uint16_t u, uint16_t v)                              {return GS_UV(u, v);}
+    inline uint64_t XYZF2(int16_t x, int16_t y, uint32_t z, uint8_t f)         {return GS_XYZF2(x, y, z, f);}
+    inline uint64_t XYZ2 (int16_t x, int16_t y, uint32_t z           )         {return GS_XYZ2 (x, y, z   );}
   };
 };
 
