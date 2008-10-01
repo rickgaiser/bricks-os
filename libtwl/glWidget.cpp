@@ -2,9 +2,6 @@
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 #include "GL/glu.h"
-#include "kernel/videoManager.h"
-#include "../gl/fixedPoint.h"
-#include "../gl/context.h"
 
 
 extern void glMakeCurrent(I3DRenderer * ctx);

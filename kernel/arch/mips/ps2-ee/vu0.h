@@ -2,7 +2,8 @@
 #define PS2_VU0_H
 
 
-#include "../../../../gl/matrix.h"
+#include "GL/gl.h"
+#include "vhl/matrix.h"
 
 
 namespace VU0

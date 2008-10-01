@@ -1,5 +1,5 @@
 #include "edge.h"
-#include "fixedPoint.h"
+#include "vhl/fixedPoint.h"
 
 
 // Floating Point Macros

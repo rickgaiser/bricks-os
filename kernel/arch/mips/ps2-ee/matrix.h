@@ -2,7 +2,8 @@
 #define PS2_MATRIX_H
 
 
-#include "../../../../gl/matrix.h"
+#include "GL/gl.h"
+#include "vhl/matrix.h"
 
 
 class CPS2Matrix

@@ -1,6 +1,6 @@
 #include "GLES/gl.h"
-#include "../gl/fixedPoint.h"
-#include "../gl/vector.h"
+#include "vhl/fixedPoint.h"
+#include "vhl/vector.h"
 #include "glconfig.h"
 
 

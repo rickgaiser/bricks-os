@@ -4,7 +4,6 @@
 
 #include "widget.h"
 #include "kernel/videoManager.h"
-#include "../gl/context.h"
 
 
 namespace twl

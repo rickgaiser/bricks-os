@@ -3,7 +3,7 @@
 #include "GL/glu.h"
 #include "kernel/videoManager.h"
 #include "glconfig.h"
-#include "../gl/fixedPoint.h"
+#include "vhl/fixedPoint.h"
 #include "../gl/context.h"
 
 

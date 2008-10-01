@@ -3,8 +3,8 @@
 
 
 #include "context.h"
-#include "fixedPoint.h"
-#include "matrix.h"
+#include "vhl/fixedPoint.h"
+#include "vhl/matrix.h"
 #include "asm/arch/config.h"
 
 

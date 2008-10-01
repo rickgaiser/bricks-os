@@ -1,6 +1,4 @@
-#include "vector.h"
-typedef unsigned int wint_t;
-#include "math.h"
+#include "color.h"
 
 
 //---------------------------------------------------------------------------

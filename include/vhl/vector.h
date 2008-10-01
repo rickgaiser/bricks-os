@@ -2,6 +2,9 @@
 #define GL_VECTOR_H
 
 
+#include "inttypes.h"
+
+
 //---------------------------------------------------------------------------
 template <class T>
 class TVector4;

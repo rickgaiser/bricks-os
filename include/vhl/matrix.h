@@ -2,10 +2,8 @@
 #define CMATRIX_H
 
 
-#include "context.h"
-#include "fixedPoint.h"
+#include "inttypes.h"
 #include "vector.h"
-#include "asm/arch/config.h"
 
 
 #define DEGREE_PRECISION_MUL   (2)

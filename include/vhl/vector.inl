@@ -1,5 +1,4 @@
 #include "vector.h"
-typedef unsigned int wint_t;
 #include "math.h"
 
 
@@ -340,7 +339,7 @@ template <class T>
 inline T
 TVector3<T>::length() const
 {
-  return sqrt(x*x + y*y + z*z);
+  return sqrtf(x*x + y*y + z*z);
 }
 
 //---------------------------------------------------------------------------
@@ -699,7 +698,7 @@ template <class T>
 inline T
 TVector4<T>::length() const
 {
-  return sqrt(x*x + y*y + z*z);
+  return sqrtf(x*x + y*y + z*z);
 }
 
 //---------------------------------------------------------------------------

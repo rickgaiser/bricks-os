@@ -1,7 +1,7 @@
 #include "asm/arch/config.h"
 #include "GLES/gl.h"
-#include "../gl/fixedPoint.h"
-#include "../gl/vector.h"
+#include "vhl/fixedPoint.h"
+#include "vhl/vector.h"
 
 
 // -----------------------------------------------------------------------------

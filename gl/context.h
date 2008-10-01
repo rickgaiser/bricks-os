@@ -5,9 +5,9 @@
 #include "GLES/gl.h"
 #include "GLES/gl_extra.h"
 #include "kernel/videoManager.h"
-#include "fixedPoint.h"
-#include "vector.h"
-#include "color.h"
+#include "vhl/fixedPoint.h"
+#include "vhl/vector.h"
+#include "vhl/color.h"
 #include "asm/arch/config.h"
 
 

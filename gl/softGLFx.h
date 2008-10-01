@@ -11,8 +11,8 @@
 #include "glMatrix.h"
 #include "textures.h"
 #include "edge.h"
-#include "fixedPoint.h"
-#include "vector.h"
+#include "vhl/fixedPoint.h"
+#include "vhl/vector.h"
 
 #include "asm/arch/memory.h"
 

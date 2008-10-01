@@ -3,7 +3,7 @@
 
 
 #include "glWidget.h"
-#include "../gl/fixedPoint.h"
+#include "vhl/fixedPoint.h"
 
 
 class CGLDemo1

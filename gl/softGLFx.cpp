@@ -1,5 +1,5 @@
 #include "softGLFx.h"
-#include "fixedPoint.h"
+#include "vhl/fixedPoint.h"
 
 #include "stdlib.h"
 #include "math.h"

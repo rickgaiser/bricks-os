@@ -1,6 +1,6 @@
 #include "softGLF.h"
-#include "matrix.h"
-#include "fixedPoint.h"
+#include "vhl/matrix.h"
+#include "vhl/fixedPoint.h"
 
 
 #define SL_LINE_WIDTH() \

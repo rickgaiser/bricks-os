@@ -3,7 +3,7 @@
 
 
 #include "../../../../gl/softGLFx.h"
-#include "../../../../gl/fixedPoint.h"
+#include "vhl/fixedPoint.h"
 
 
 #define NDS_MATRIX_PRECISION   12

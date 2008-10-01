@@ -2,21 +2,16 @@
 #define FIXEDPOINT_H
 
 
-#include "GLES/gl.h"
 #include "inttypes.h"
 
 
 // Conversions
 #define fpfromi(c,a)       ((a)<<(c))
-#define fpfromf(c,a)       ((GLfixed)((a)*(1<<(c))))
-#define fpfromd(c,a)       ((GLfixed)((a)*(1<<(c))))
+#define fpfromf(c,a)       ((int32_t)((a)*(1<<(c))))
+#define fpfromd(c,a)       ((int32_t)((a)*(1<<(c))))
 #define fptoi(c,a)         ((a)>>(c))
 #define fptof(c,a)         ((float)(a)/(1<<(c)))
 #define fptod(c,a)         ((double)(a)/(1<<(c)))
-#define fp32to64(c,a)      (((int64_t)(a))<<(c))
-#define fp64to32(c,a)      ((a)>>(c))
-#define fp16to32(c,a)      (((int32_t)(a))<<(c))
-#define fp32to16(c,a)      ((a)>>(c))
 
 // Math (Use at own risk)
 //#define fpmul(c,a,b)       (((a)*(b))>>(c))
@@ -49,9 +44,9 @@
 #define gl_fpinverse(i) ((0xffffffff) / (i)) // 1<<16<<16 == 0x100000000 ~~ 0xffffffff
 
 
-struct CFixed
-{
 #ifdef __cplusplus
+class CFixed
+{
 public:
   // Constructors
   CFixed(){}
@@ -135,13 +130,10 @@ public:
   bool     operator< (int32_t i)         const {return (value <  gl_fpfromi(i));}
   bool     operator>=(int32_t i)         const {return (value >= gl_fpfromi(i));}
   bool     operator<=(int32_t i)         const {return (value <= gl_fpfromi(i));}
-#endif // __cplusplus
 
-  GLfixed value;
+  int32_t value;
 };
 
-
-#ifdef __cplusplus
 inline CFixed operator+ (float   f, const CFixed & fx){return CFixed(f) + fx;}
 inline CFixed operator- (float   f, const CFixed & fx){return CFixed(f) - fx;}
 inline CFixed operator* (float   f, const CFixed & fx){return CFixed(f) * fx;}
