@@ -582,6 +582,7 @@ CNDSGLESContext::glScalex(GLfixed x, GLfixed y, GLfixed z)
 }
 
 //-----------------------------------------------------------------------------
+#define FIXME_TEX_ADDR (0x6840000)
 void
 CNDSGLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
@@ -634,34 +635,25 @@ CNDSGLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
 
     pCurrentTex_->width  = width;
     pCurrentTex_->height = height;
-    pCurrentTex_->format = TEXGEN_OFF | NDS_REPEAT_S | NDS_REPEAT_T | (idxWidth << 20) | (idxHeight << 23) | (((uint32_t)0x6840000 >> 3) & 0xFFFF) | (NDS_RGBA << 26);
-    pCurrentTex_->data   = (void *)0x6840000;
+    pCurrentTex_->format = TEXGEN_OFF | NDS_REPEAT_S | NDS_REPEAT_T | (idxWidth << 20) | (idxHeight << 23) | (((uint32_t)FIXME_TEX_ADDR >> 3) & 0xFFFF) | (NDS_RGBA << 26);
+    pCurrentTex_->data   = (void *)FIXME_TEX_ADDR;
+
+    EColorFormat fmtFrom;
+    switch(type)
+    {
+      case GL_UNSIGNED_BYTE:          fmtFrom = cfA8B8G8R8; break;
+      case GL_UNSIGNED_SHORT_5_6_5:   fmtFrom = cfR5G6B5;   break;
+      case GL_UNSIGNED_SHORT_4_4_4_4: fmtFrom = cfA4B4G4R4; break;
+      case GL_UNSIGNED_SHORT_5_5_5_1: fmtFrom = cfA1B5G5R5; break;
+      default:
+        setError(GL_INVALID_ENUM);
+        return;
+    };
 
     // Unlock texture memory
     REG_VRAM_C_CR = VRAM_ENABLE | VRAM_TYPE_LCD;
 
-    // Copy to texture memory
-    // Convert everything to cfA1B5G5R5 (native NDS format)
-    switch(type)
-    {
-      case GL_UNSIGNED_BYTE:
-        for(int i(0); i < (width*height); i++)
-          ((uint16_t *)0x6840000)[i] = BxColorFormat_Convert(cfA8B8G8R8, cfA1B5G5R5, ((uint32_t *)pixels)[i]);
-        break;
-      case GL_UNSIGNED_SHORT_5_6_5:
-        for(int i(0); i < (width*height); i++)
-          ((uint16_t *)0x6840000)[i] = BxColorFormat_Convert(cfR5G6B5,   cfA1B5G5R5, ((uint16_t *)pixels)[i]);
-        break;
-      case GL_UNSIGNED_SHORT_4_4_4_4:
-        for(int i(0); i < (width*height); i++)
-          ((uint16_t *)0x6840000)[i] = BxColorFormat_Convert(cfA4B4G4R4, cfA1B5G5R5, ((uint16_t *)pixels)[i]);
-        break;
-      case GL_UNSIGNED_SHORT_5_5_5_1:
-        //memcpy((void *)0x6840000, pixels, width * height * 2);
-        for(int i(0); i < (width*height); i++)
-          ((uint16_t *)0x6840000)[i] = ((uint16_t *)pixels)[i] | 0x8000;
-        break;
-    };
+    convertImageFormat(pCurrentTex_->data, cfA1B5G5R5, pixels, fmtFrom, width, height);
 
     // Restore texture memory
     REG_VRAM_C_CR = VRAM_ENABLE | VRAM_TYPE_TEXTURE;

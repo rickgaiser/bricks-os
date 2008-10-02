@@ -37,7 +37,7 @@ struct STextureNDS
 
   uint32_t format;
 
-  const void * data;
+  void * data;
 };
 
 //-----------------------------------------------------------------------------

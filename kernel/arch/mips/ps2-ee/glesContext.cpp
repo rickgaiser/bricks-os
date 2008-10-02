@@ -293,6 +293,7 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
     pCurrentTex_->height       = height;
     pCurrentTex_->data         = (void *)FIXME_TEX_ADDR;
 
+    EColorFormat fmtTo = cfA8B8G8R8;
     EColorFormat fmtFrom;
     switch(type)
     {
@@ -304,27 +305,17 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
         return; // ERROR, invalid type
     };
 
-    // Copy to texture memory
-    // Convert everything to cfA8B8G8R8
-    switch(type)
+    if(fmtTo != fmtFrom)
     {
-      case GL_UNSIGNED_BYTE:
-      {
-        ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)pixels);
-        break;
-      }
-      case GL_UNSIGNED_SHORT_5_6_5:
-      case GL_UNSIGNED_SHORT_4_4_4_4:
-      case GL_UNSIGNED_SHORT_5_5_5_1:
-      {
-        uint32_t * newTexture = new uint32_t[width*height];
-        for(int i(0); i < (width*height); i++)
-          newTexture[i] = BxColorFormat_Convert(fmtFrom, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
-        ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)newTexture);
-        delete newTexture;
-        break;
-      }
-    };
+      ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)pixels);
+    }
+    else
+    {
+      uint32_t * newTexture = new uint32_t[width*height];
+      convertImageFormat(newTexture, fmtTo, pixels, fmtFrom, width, height);
+      ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)newTexture);
+      delete newTexture;
+    }
   }
 }
 

@@ -49,5 +49,7 @@ private:
   STexture textures_[MAX_TEXTURE_COUNT];
 };
 
+int convertImageFormat(void * dst, EColorFormat dstFmt, const void * src, EColorFormat srcFmt, int width, int height);
+
 
 #endif

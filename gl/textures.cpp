@@ -4,6 +4,79 @@
 
 
 //-----------------------------------------------------------------------------
+#define IMG_CONV_32_TO_32 0x44
+#define IMG_CONV_32_TO_16 0x42
+#define IMG_CONV_32_TO_08 0x41
+#define IMG_CONV_16_TO_32 0x24
+#define IMG_CONV_16_TO_16 0x22
+#define IMG_CONV_16_TO_08 0x21
+#define IMG_CONV_08_TO_32 0x14
+#define IMG_CONV_08_TO_16 0x12
+#define IMG_CONV_08_TO_08 0x11
+//-----------------------------------------------------------------------------
+int
+convertImageFormat(void * dst, EColorFormat dstFmt, const void * src, EColorFormat srcFmt, int width, int height)
+{
+  uint32_t iPixelCount = width * height;
+
+  // Copy/Convert to texture buffer
+  if(dstFmt != srcFmt)
+  {
+    uint32_t i = 0;
+    uint8_t iConv =
+      ((colorFormatOps[srcFmt].bitsPerPixel >> 3) << 4) |
+      ((colorFormatOps[dstFmt].bitsPerPixel >> 3)     );
+
+    switch(iConv)
+    {
+      case IMG_CONV_32_TO_32:
+        for(; i < iPixelCount; i++)
+          ((uint32_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint32_t *)src)[i]);
+        break;
+      case IMG_CONV_32_TO_16:
+        for(; i < iPixelCount; i++)
+          ((uint16_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint32_t *)src)[i]);
+        break;
+      case IMG_CONV_32_TO_08:
+        for(; i < iPixelCount; i++)
+          ((uint8_t  *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint32_t *)src)[i]);
+        break;
+      case IMG_CONV_16_TO_32:
+        for(; i < iPixelCount; i++)
+          ((uint32_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint16_t *)src)[i]);
+        break;
+      case IMG_CONV_16_TO_16:
+        for(; i < iPixelCount; i++)
+          ((uint16_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint16_t *)src)[i]);
+        break;
+      case IMG_CONV_16_TO_08:
+        for(; i < iPixelCount; i++)
+          ((uint8_t  *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint16_t *)src)[i]);
+        break;
+      case IMG_CONV_08_TO_32:
+        for(; i < iPixelCount; i++)
+          ((uint32_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint8_t  *)src)[i]);
+        break;
+      case IMG_CONV_08_TO_16:
+        for(; i < iPixelCount; i++)
+          ((uint16_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint8_t  *)src)[i]);
+        break;
+      case IMG_CONV_08_TO_08:
+        for(; i < iPixelCount; i++)
+          ((uint8_t  *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint8_t  *)src)[i]);
+        break;
+    };
+  }
+  else
+  {
+    // Just copy
+    memcpy(dst, src, iPixelCount * (colorFormatOps[dstFmt].bitsPerPixel >> 3));
+  }
+
+  return 0;
+}
+
+//-----------------------------------------------------------------------------
 CAGLESTextures::CAGLESTextures()
  : pCurrentTex_(NULL)
 {
@@ -157,8 +230,8 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
         return;
     };
 
-    pCurrentTex_->width        = width;
-    pCurrentTex_->height       = height;
+    pCurrentTex_->width  = width;
+    pCurrentTex_->height = height;
 
     EColorFormat fmtTo = renderSurface->mode.format;
     EColorFormat fmtFrom;
@@ -179,58 +252,14 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
     // Allocate texture buffer
     switch(renderSurface->mode.bpp)
     {
-      case 8:  pCurrentTex_->data = new uint8_t [width*height];  break;
+      case 8:  pCurrentTex_->data = new uint8_t [width*height]; break;
       case 16: pCurrentTex_->data = new uint16_t[width*height]; break;
       case 32: pCurrentTex_->data = new uint32_t[width*height]; break;
       default:
         return; // ERROR, invalid render surface
     };
 
-    // Copy/Convert to texture buffer
-    if(fmtTo != fmtFrom)
-    {
-      // Allocate temporary buffer
-      uint32_t * pTemp = new uint32_t[width*height];
-
-      // Convert pixel format to temp buffer
-      switch(type)
-      {
-        case GL_UNSIGNED_BYTE:
-          for(int i(0); i < (width*height); i++)
-            pTemp[i] = BxColorFormat_Convert(fmtFrom, fmtTo, ((uint32_t *)pixels)[i]);
-          break;
-        case GL_UNSIGNED_SHORT_5_6_5:
-        case GL_UNSIGNED_SHORT_4_4_4_4:
-        case GL_UNSIGNED_SHORT_5_5_5_1:
-          for(int i(0); i < (width*height); i++)
-            pTemp[i] = BxColorFormat_Convert(fmtFrom, fmtTo, ((uint16_t *)pixels)[i]);
-          break;
-      };
-
-      // Copy from temp buffer to texture buffer
-      switch(renderSurface->mode.bpp)
-      {
-        case 8:
-          for(int i(0); i < (width*height); i++)
-            ((uint8_t  *)pCurrentTex_->data)[i] = pTemp[i];
-          break;
-        case 16:
-          for(int i(0); i < (width*height); i++)
-            ((uint16_t *)pCurrentTex_->data)[i] = pTemp[i];
-          break;
-        case 32:
-          for(int i(0); i < (width*height); i++)
-            ((uint32_t *)pCurrentTex_->data)[i] = pTemp[i];
-          break;
-      };
-
-      delete pTemp;
-    }
-    else
-    {
-      // Just copy
-      memcpy(pCurrentTex_->data, pixels, width * height * (renderSurface->mode.bpp / 8));
-    }
+    convertImageFormat(pCurrentTex_->data, fmtTo, pixels, fmtFrom, width, height);
   }
 }
 
