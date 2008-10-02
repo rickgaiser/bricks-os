@@ -3084,3 +3084,30 @@ const float tanTable[1024] =
   -0.012272,
   -0.006136,
 };
+
+// -----------------------------------------------------------------------------
+double
+sqrt(double x)
+{
+  return sqrtf(x);
+}
+
+// -----------------------------------------------------------------------------
+// From quake
+float
+sqrtf(float value)
+{
+  uint32_t i;
+  float x, y;
+  const float f = 1.5f;
+
+  x = value * 0.5f;
+  y = value;
+  i = *(uint32_t *)&y;
+  i = 0x5f3759df - (i >> 1);
+  y = *(float *)&i;
+  y = y * (f - (x * y * y));
+  y = y * (f - (x * y * y));
+
+  return (value * y);
+}
