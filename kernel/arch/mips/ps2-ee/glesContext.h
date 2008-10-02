@@ -20,6 +20,8 @@ struct STexturePS2
 
   GLsizei width;
   GLsizei height;
+  GLint   widthBitNr;
+  GLint   heightBitNr;
 
   GLint texMinFilter;
   GLint texMagFilter;

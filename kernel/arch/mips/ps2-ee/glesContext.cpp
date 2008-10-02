@@ -160,34 +160,48 @@ CPS2GLESContext::glShadeModel(GLenum mode)
 void
 CPS2GLESContext::glBindTexture(GLenum target, GLuint texture)
 {
-  if(target == GL_TEXTURE_2D)
+  if(target != GL_TEXTURE_2D)
   {
-    pCurrentTex_ = &textures_[texture];
-
-    packet_.gifAddPackedAD(GIF::REG::tex0_1,
-      GS_TEX0(
-        ((uint32_t)pCurrentTex_->data)>>8,   // base pointer
-        pCurrentTex_->width>>6,              // width
-        0,                                   // 32bit RGBA
-        getBitNr(pCurrentTex_->width),       // width
-        getBitNr(pCurrentTex_->height),      // height
-        1,                                   // RGBA
-        TEX_DECAL,                           // just overwrite existing pixels
-        0, 0, 0, 0, 0));
-
-    packet_.gifAddPackedAD(GIF::REG::tex1_1,
-      GS_TEX1(
-        0, 0,
-        pCurrentTex_->texMagFilter != GL_NEAREST,
-        pCurrentTex_->texMinFilter != GL_NEAREST,
-        0, 0, 0));
+    setError(GL_INVALID_ENUM);
+    return;
   }
+  if(texture >= MAX_TEXTURE_COUNT)
+  {
+    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  pCurrentTex_ = &textures_[texture];
+
+  packet_.gifAddPackedAD(GIF::REG::tex0_1,
+    GS_TEX0(
+      ((uint32_t)pCurrentTex_->data)>>8,   // base pointer
+      pCurrentTex_->width>>6,              // width
+      0,                                   // 32bit RGBA
+      getBitNr(pCurrentTex_->width),       // width
+      getBitNr(pCurrentTex_->height),      // height
+      1,                                   // RGBA
+      TEX_DECAL,                           // just overwrite existing pixels
+      0, 0, 0, 0, 0));
+
+  packet_.gifAddPackedAD(GIF::REG::tex1_1,
+    GS_TEX1(
+      0, 0,
+      pCurrentTex_->texMagFilter == GL_LINEAR, // GL_LINEAR or GL_NEAREST
+      pCurrentTex_->texMinFilter == GL_LINEAR, // GL_LINEAR or GL_NEAREST
+      0, 0, 0));
 }
 
 //-----------------------------------------------------------------------------
 void
 CPS2GLESContext::glDeleteTextures(GLsizei n, const GLuint *textures)
 {
+  if(n < 0)
+  {
+    setError(GL_INVALID_VALUE);
+    return;
+  }
+
   for(GLsizei i(0); i < n; i++)
     if(textures[i] < MAX_TEXTURE_COUNT)
       textures_[textures[i]].used = false;
@@ -197,16 +211,29 @@ CPS2GLESContext::glDeleteTextures(GLsizei n, const GLuint *textures)
 void
 CPS2GLESContext::glGenTextures(GLsizei n, GLuint *textures)
 {
-  for(GLsizei i(0); i < n; i++)
+  if(n < 0)
+  {
+    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  for(GLsizei idxNr(0); idxNr < n; idxNr++)
   {
     bool bFound(false);
 
-    for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
+    for(GLuint idxTex(0); idxTex < MAX_TEXTURE_COUNT; idxTex++)
     {
-      if(textures_[idx].used == false)
+      if(textures_[idxTex].used == false)
       {
-        textures_[idx].used = true;
-        textures[i] = idx;
+        textures_[idxTex].used = true;
+
+        // Initialize some default values
+        textures_[idxTex].texMinFilter = GL_LINEAR;
+        textures_[idxTex].texMagFilter = GL_LINEAR;
+        textures_[idxTex].texWrapS     = GL_REPEAT;
+        textures_[idxTex].texWrapT     = GL_REPEAT;
+
+        textures[idxNr] = idxTex;
         bFound = true;
         break;
       }
@@ -222,51 +249,82 @@ CPS2GLESContext::glGenTextures(GLsizei n, GLuint *textures)
 void
 CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
-  if(target == GL_TEXTURE_2D)
+  if(target != GL_TEXTURE_2D)
   {
-    if((pCurrentTex_ != 0) && (pCurrentTex_->used == true))
+    setError(GL_INVALID_ENUM);
+    return;
+  }
+  if(level < 0)
+  {
+    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  // FIXME: MipMaps not supported
+  if(level > 0)
+    return;
+
+  if((pCurrentTex_ != 0) && (pCurrentTex_->used == true))
+  {
+    switch(width)
     {
-      pCurrentTex_->width        = width;
-      pCurrentTex_->height       = height;
-      pCurrentTex_->texMinFilter = GL_LINEAR;
-      pCurrentTex_->texMagFilter = GL_LINEAR;
-      pCurrentTex_->texWrapS     = GL_REPEAT;
-      pCurrentTex_->texWrapT     = GL_REPEAT;
-      pCurrentTex_->data         = (void *)FIXME_TEX_ADDR;
+      case   64: pCurrentTex_->widthBitNr =  6; break;
+      case  128: pCurrentTex_->widthBitNr =  7; break;
+      case  256: pCurrentTex_->widthBitNr =  8; break;
+      case  512: pCurrentTex_->widthBitNr =  9; break;
+      case 1024: pCurrentTex_->widthBitNr = 10; break;
+      default:
+        setError(GL_INVALID_VALUE);
+        return;
+    };
+    switch(height)
+    {
+      case   64: pCurrentTex_->heightBitNr =  6; break;
+      case  128: pCurrentTex_->heightBitNr =  7; break;
+      case  256: pCurrentTex_->heightBitNr =  8; break;
+      case  512: pCurrentTex_->heightBitNr =  9; break;
+      case 1024: pCurrentTex_->heightBitNr = 10; break;
+      default:
+        setError(GL_INVALID_VALUE);
+        return;
+    };
 
-      EColorFormat fmtFrom;
-      switch(type)
-      {
-        case GL_UNSIGNED_BYTE:          fmtFrom = cfA8B8G8R8; break;
-        case GL_UNSIGNED_SHORT_5_6_5:   fmtFrom = cfR5G6B5;   break;
-        case GL_UNSIGNED_SHORT_4_4_4_4: fmtFrom = cfA4B4G4R4; break;
-        case GL_UNSIGNED_SHORT_5_5_5_1: fmtFrom = cfA1B5G5R5; break;
-        default:
-          return; // ERROR, invalid type
-      };
+    pCurrentTex_->width        = width;
+    pCurrentTex_->height       = height;
+    pCurrentTex_->data         = (void *)FIXME_TEX_ADDR;
 
-      // Copy to texture memory
-      // Convert everything to cfA8B8G8R8
-      switch(type)
+    EColorFormat fmtFrom;
+    switch(type)
+    {
+      case GL_UNSIGNED_BYTE:          fmtFrom = cfA8B8G8R8; break;
+      case GL_UNSIGNED_SHORT_5_6_5:   fmtFrom = cfR5G6B5;   break;
+      case GL_UNSIGNED_SHORT_4_4_4_4: fmtFrom = cfA4B4G4R4; break;
+      case GL_UNSIGNED_SHORT_5_5_5_1: fmtFrom = cfA1B5G5R5; break;
+      default:
+        return; // ERROR, invalid type
+    };
+
+    // Copy to texture memory
+    // Convert everything to cfA8B8G8R8
+    switch(type)
+    {
+      case GL_UNSIGNED_BYTE:
       {
-        case GL_UNSIGNED_BYTE:
-        {
-          ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)pixels);
-          break;
-        }
-        case GL_UNSIGNED_SHORT_5_6_5:
-        case GL_UNSIGNED_SHORT_4_4_4_4:
-        case GL_UNSIGNED_SHORT_5_5_5_1:
-        {
-          uint32_t * newTexture = new uint32_t[width*height];
-          for(int i(0); i < (width*height); i++)
-            newTexture[i] = BxColorFormat_Convert(fmtFrom, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
-          ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)newTexture);
-          delete newTexture;
-          break;
-        }
-      };
-    }
+        ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)pixels);
+        break;
+      }
+      case GL_UNSIGNED_SHORT_5_6_5:
+      case GL_UNSIGNED_SHORT_4_4_4_4:
+      case GL_UNSIGNED_SHORT_5_5_5_1:
+      {
+        uint32_t * newTexture = new uint32_t[width*height];
+        for(int i(0); i < (width*height); i++)
+          newTexture[i] = BxColorFormat_Convert(fmtFrom, cfA8B8G8R8, ((uint16_t *)pixels)[i]);
+        ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)newTexture);
+        delete newTexture;
+        break;
+      }
+    };
   }
 }
 
@@ -274,7 +332,13 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
 void
 CPS2GLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
 {
-  if((pCurrentTex_ != 0) && (target == GL_TEXTURE_2D))
+  if(target != GL_TEXTURE_2D)
+  {
+    setError(GL_INVALID_ENUM);
+    return;
+  }
+
+  if(pCurrentTex_ != 0)
   {
     switch(pname)
     {

@@ -27,10 +27,10 @@
   CFixed tt(from.tt_[y]); \
   CFixed mts = (to.ts_[y] - from.ts_[y]).ipMul(xwidth1); \
   CFixed mtt = (to.tt_[y] - from.tt_[y]).ipMul(xwidth1); \
-  ts  = ts  * pCurrentTex_->width  + 0.5f; \
-  tt  = tt  * pCurrentTex_->height + 0.5f; \
-  mts = mts * pCurrentTex_->width; \
-  mtt = mtt * pCurrentTex_->height
+  ts  *= pCurrentTex_->width; \
+  tt  *= pCurrentTex_->height; \
+  mts *= pCurrentTex_->width; \
+  mtt *= pCurrentTex_->height
 #define SL_INTERPOLATE_TP() \
   GLfixed tz(gl_fpdiv(gl_fpfromi(1), from.z_[y])); \
   GLfixed ts(gl_fpmul(from.ts_[y] * pCurrentTex_->width,  tz)); \
