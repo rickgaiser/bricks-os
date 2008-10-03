@@ -70,8 +70,7 @@ my_pow(GLfloat x, int y)
     rv *= x;
   return rv;
 }
-// -----------------------------------------------------------------------------
-CSphere light1(TVector3<float>(0.0f, 0.0f, 3.0f), 0.1f);
+
 // -----------------------------------------------------------------------------
 void
 CRaytracer::trace(CRay & ray, TColor<float> & color, int depth, float rindex, float & dist)
@@ -79,7 +78,7 @@ CRaytracer::trace(CRay & ray, TColor<float> & color, int depth, float rindex, fl
   dist = 1000000.0f;
   CAPrimitive * pPrim = NULL;
 
-  for(int i(0); i < scene_.count_; i++)
+  for(int i(0); i < scene_.primCount_; i++)
   {
     if(scene_.prim_[i]->intersect(ray, dist) == 1)
     {
@@ -89,36 +88,65 @@ CRaytracer::trace(CRay & ray, TColor<float> & color, int depth, float rindex, fl
 
   if(pPrim != NULL)
   {
+    // Intersection point with closest object
     TVector3<float> intersect = ray.getOrigin() + (ray.getDirection() * dist);
-    TVector3<float> L = (light1.getCenter() - intersect).normalize();
+    // Normal at the objects intersection point
     TVector3<float> N = pPrim->getNormal(intersect);
-    // Diffuse reflection
-    if(pPrim->getMaterial().getDiffuse() > 0.0f)
-    {
-      float dot = L.dotProduct(N);
-      if(dot > 0)
-      {
-        color +=
-          pPrim->getMaterial().getColor() *
-          pPrim->getMaterial().getDiffuse() *
-//          light->getMaterial().getColor() *
-          dot;
-      }
-    }
-    // Specular reflection
-    if(pPrim->getMaterial().getSpecular() > 0.0f)
-    {
-      TVector3<float> R = L.getInverted().getReflection(N);
-      float dot = R.dotProduct(ray.getDirection());
-      if(dot > 0)
-      {
-        float spec = my_pow(dot, 10);
 
-        color +=
-          pPrim->getMaterial().getColor() *
-          pPrim->getMaterial().getSpecular() *
-//          light->getMaterial().getColor() *
-          spec;
+    for(int light(0); light < scene_.lightCount_; light++)
+    {
+      // Normalized vector to light (relative to the objects intersection point)
+      TVector3<float> L = scene_.light_[light]->getCenter() - intersect;
+      float lightDist = L.length();
+      L /= lightDist;
+
+      // Shadow ray
+      float shade = 1.0f;
+      TVector3<float> origin = intersect + L * EPSILON;
+      CRay rayObjToLight(origin, L);
+      for(int i(0); i < scene_.primCount_; i++)
+      {
+        if(scene_.prim_[i]->intersect(rayObjToLight, lightDist) == 1)
+        {
+          shade = 0.0f;
+          break;
+        }
+      }
+
+      if(shade > 0.0f)
+      {
+        // Diffuse reflection
+        if(pPrim->getMaterial().getDiffuse() > 0.0f)
+        {
+          float diffuse = L.dotProduct(N);
+          if(diffuse > 0.0f)
+          {
+            color +=
+              pPrim->getMaterial().getColor() *
+              pPrim->getMaterial().getDiffuse() *
+//              light->getMaterial().getColor() *
+              shade *
+              diffuse;
+          }
+        }
+
+        // Specular reflection
+        if(pPrim->getMaterial().getSpecular() > 0.0f)
+        {
+          TVector3<float> R = L.getInverted().getReflection(N);
+          float specular = R.dotProduct(ray.getDirection());
+          if(specular > 0)
+          {
+            specular = my_pow(specular, 10);
+
+            color +=
+              pPrim->getMaterial().getColor() *
+              pPrim->getMaterial().getSpecular() *
+//              light->getMaterial().getColor() *
+              shade *
+              specular;
+          }
+        }
       }
     }
     // Reflection

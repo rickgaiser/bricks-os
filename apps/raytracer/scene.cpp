@@ -75,46 +75,65 @@ CSphere::intersect(CRay & ray, float & dist)
 void
 CScene::init()
 {
-  TColor<float> c1(0.6f, 0.6f, 0.6f, 1.0f); // Top/Bottom
-  TColor<float> c2(1.0f, 1.0f, 1.0f, 1.0f); // Left/Right
-  TColor<float> c3(1.0f, 0.0f, 0.0f, 1.0f); // Back
-  TColor<float> c4(1.0f, 1.0f, 1.0f, 1.0f); // Sphere
+  TColor<float> clWall   (0.6f, 0.6f, 0.6f, 1.0f); // Top/Bottom/Left/Right
+  TColor<float> clBack   (0.6f, 0.6f, 0.6f, 1.0f); // Back
+  TColor<float> clSphere1(1.0f, 0.0f, 0.0f, 1.0f);
+  TColor<float> clSphere2(0.0f, 1.0f, 0.0f, 1.0f);
+  TColor<float> clSphere3(0.0f, 0.0f, 1.0f, 1.0f);
 
-  // Top plane
-  prim_[0] = new CPlane (TVector3<float>( 0.0f, -1.0f,  0.0f), 3.0f);
-  prim_[0]->getMaterial().setColor(c1);
+  // ---------------------------------------------------------------
+  // Lights
+  // ---------------------------------------------------------------
+  light_[0] = new CSphere(TVector3<float>( 0.0f,  2.5f,  3.0f), 0.1f);
+  light_[1] = new CSphere(TVector3<float>( 0.0f,  2.5f,  7.0f), 0.1f);
+  lightCount_ = 2;
+
+  // ---------------------------------------------------------------
+  // Primitives
+  // ---------------------------------------------------------------
+  // Top/Left plane
+/*
+  prim_[0] = new CPlaneMirror(TVector3<float>( 0.0f, -1.0f,  0.0f), 3.0f);
+  prim_[1] = new CPlaneMirror(TVector3<float>( 1.0f,  0.0f,  0.0f), 3.0f);
+*/
+  prim_[0] = new CPlane(TVector3<float>( 0.0f, -1.0f,  0.0f), 3.0f);
+  prim_[0]->getMaterial().setColor(clWall);
   prim_[0]->getMaterial().setDiffuse(1.0f);
   prim_[0]->getMaterial().setReflection(0.0f);
-
-  // Bottom plane
-  prim_[1] = new CPlane (TVector3<float>( 0.0f,  1.0f,  0.0f), 3.0f);
-  prim_[1]->getMaterial().setColor(c1);
-  prim_[1]->getMaterial().setDiffuse(0.5f);
-  prim_[1]->getMaterial().setReflection(1.0f);
-
-  // Left plane
-  prim_[2] = new CPlane (TVector3<float>( 1.0f,  0.0f,  0.0f), 3.0f);
-  prim_[2]->getMaterial().setColor(c2);
+  prim_[1] = new CPlane(TVector3<float>( 1.0f,  0.0f,  0.0f), 3.0f);
+  prim_[1]->getMaterial().setColor(clWall);
+  prim_[1]->getMaterial().setDiffuse(1.0f);
+  prim_[1]->getMaterial().setReflection(0.0f);
+  // Bottom/Right plane
+  prim_[2] = new CPlane(TVector3<float>( 0.0f,  1.0f,  0.0f), 3.0f);
+  prim_[2]->getMaterial().setColor(clWall);
   prim_[2]->getMaterial().setDiffuse(1.0f);
   prim_[2]->getMaterial().setReflection(0.0f);
-
-  // Right plane
-  prim_[3] = new CPlane (TVector3<float>(-1.0f,  0.0f,  0.0f), 3.0f);
-  prim_[3]->getMaterial().setColor(c2);
+  prim_[3] = new CPlane(TVector3<float>(-1.0f,  0.0f,  0.0f), 3.0f);
+  prim_[3]->getMaterial().setColor(clWall);
   prim_[3]->getMaterial().setDiffuse(1.0f);
   prim_[3]->getMaterial().setReflection(0.0f);
-
   // Back plane
-  prim_[4] = new CPlane (TVector3<float>( 0.0f,  0.0f, -1.0f), 15.0f);
-  prim_[4]->getMaterial().setColor(c3);
+  prim_[4] = new CPlane (TVector3<float>( 0.0f,  0.0f, -1.0f), 10.0f);
+  prim_[4]->getMaterial().setColor(clBack);
   prim_[4]->getMaterial().setDiffuse(1.0f);
   prim_[4]->getMaterial().setReflection(0.0f);
 
   // Sphere
-  prim_[5] = new CSphere(TVector3<float>( 0.0f,  0.0f,  5.0f),  3.0f);
-  prim_[5]->getMaterial().setColor(c4);
-  prim_[5]->getMaterial().setDiffuse(0.5f);
+  prim_[5] = new CSphere(TVector3<float>(-1.0f,  1.0f,  6.0f),  1.0f);
+  prim_[5]->getMaterial().setColor(clSphere1);
+  prim_[5]->getMaterial().setDiffuse(1.0f);
   prim_[5]->getMaterial().setReflection(0.0f);
+  // Sphere
+  prim_[6] = new CSphere(TVector3<float>( 1.0f, -1.0f,  7.0f),  1.0f);
+  prim_[6]->getMaterial().setColor(clSphere2);
+  prim_[6]->getMaterial().setDiffuse(1.0f);
+  prim_[6]->getMaterial().setReflection(0.0f);
+  // Sphere
+  prim_[7] = new CSphere(TVector3<float>( 0.5f,  0.5f,  8.0f),  1.0f);
+  prim_[7]->getMaterial().setColor(clSphere3);
+  prim_[7]->getMaterial().setDiffuse(1.0f);
+  prim_[7]->getMaterial().setReflection(0.0f);
 
-  count_ = 5;
+  primCount_ = 8;
 }

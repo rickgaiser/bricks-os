@@ -62,6 +62,21 @@ private:
 };
 
 // -----------------------------------------------------------------------------
+class CPlaneMirror
+ : public CPlane
+{
+public:
+  CPlaneMirror(TVector3<float> normal, float d) : CPlane(normal,d)
+  {
+    TColor<float> c(0.6f, 0.6f, 0.6f, 1.0f);
+
+    this->getMaterial().setColor(c);
+    this->getMaterial().setDiffuse(0.0f);
+    this->getMaterial().setReflection(1.0f);
+  }
+};
+
+// -----------------------------------------------------------------------------
 class CSphere
  : public CAPrimitive
 {
@@ -90,7 +105,10 @@ public:
 
 public:
   CAPrimitive * prim_[10];
-  int count_;
+  int primCount_;
+
+  CSphere     * light_[10];
+  int lightCount_;
 };
 
 
