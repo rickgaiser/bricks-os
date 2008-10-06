@@ -3085,6 +3085,7 @@ const float tanTable[1024] =
   -0.006136,
 };
 
+
 // -----------------------------------------------------------------------------
 double
 sqrt(double x)
@@ -3095,19 +3096,48 @@ sqrt(double x)
 // -----------------------------------------------------------------------------
 // From quake
 float
-sqrtf(float value)
+sqrtf(float number)
 {
-  uint32_t i;
-  float x, y;
-  const float f = 1.5f;
+  int32_t i;
+  float x2 = number * 0.5f;
+  float y;
 
-  x = value * 0.5f;
-  y = value;
-  i = *(uint32_t *)&y;
+  i = *(int32_t *)&number;
   i = 0x5f3759df - (i >> 1);
   y = *(float *)&i;
-  y = y * (f - (x * y * y));
-  y = y * (f - (x * y * y));
 
-  return (value * y);
+  y = y * (1.5f - (x2 * y * y));
+  y = y * (1.5f - (x2 * y * y));
+  y = y * (1.5f - (x2 * y * y));
+  y = y * (1.5f - (x2 * y * y));
+
+  return number*y;
+}
+
+// -----------------------------------------------------------------------------
+double
+inv_sqrt(double x)
+{
+  return inv_sqrtf(x);
+}
+
+// -----------------------------------------------------------------------------
+// From quake
+float
+inv_sqrtf(float number)
+{
+  int32_t i;
+  float x2 = number * 0.5f;
+  float y;
+
+  i = *(int32_t *)&number;
+  i = 0x5f3759df - (i >> 1);
+  y = *(float *)&i;
+
+  y = y * (1.5f - (x2 * y * y));
+  y = y * (1.5f - (x2 * y * y));
+  y = y * (1.5f - (x2 * y * y));
+  y = y * (1.5f - (x2 * y * y));
+
+  return y;
 }

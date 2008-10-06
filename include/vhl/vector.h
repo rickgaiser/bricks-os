@@ -52,6 +52,7 @@ public:
   TVector3 & reflection(const TVector3 & vec);
 
   T length() const; // Warning: uses sqrt==slow
+  T inv_length() const; // Warning: uses inv_sqrt==slow
   T dotProduct(const TVector3 & vec) const;
 
 public:
@@ -103,6 +104,7 @@ public:
   TVector4 & reflection(const TVector4 & vec);
 
   T length() const; // Warning: uses sqrt==slow
+  T inv_length() const; // Warning: uses inv_sqrt==slow
   T dotProduct(const TVector4 & vec) const;
 
 public:

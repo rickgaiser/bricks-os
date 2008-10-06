@@ -28,6 +28,8 @@ inline double tan (double angle){return tanTable[ANGLE_TO_INDEX(angle)];}
 inline float  tanf(float  angle){return tanTable[ANGLE_TO_INDEX(angle)];}
 double sqrt (double x);
 float  sqrtf(float  x);
+double inv_sqrt (double x);
+float  inv_sqrtf(float  x);
 
 
 #ifdef __cplusplus

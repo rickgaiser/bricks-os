@@ -304,7 +304,7 @@ template <class T>
 inline TVector3<T> &
 TVector3<T>::normalize()
 {
-  return *this /= length();
+  return *this *= inv_length();
 }
 
 //---------------------------------------------------------------------------
@@ -335,11 +335,12 @@ TVector3<T>::reflection(const TVector3 & vec)
 }
 
 //---------------------------------------------------------------------------
-// From geon on the devmaster.net forum
 template <class T>
 inline T
 TVector3<T>::length() const
 {
+/*
+  // From geon on the devmaster.net forum
   T a, b, c;
 
   a = x > 0 ? x : 0-x;
@@ -362,7 +363,16 @@ TVector3<T>::length() const
 
   // I found this value optimal. There is probably no point in finetuning it further, since there still is a 20% fault... (For an int version of the same function, use a one step bitshift (a+((b+c)>>1)) instead)
   return a + (b + c) * 0.366;
-//  return sqrtf(x*x + y*y + z*z);
+*/
+  return sqrtf(x*x + y*y + z*z);
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline T
+TVector3<T>::inv_length() const
+{
+  return inv_sqrtf(x*x + y*y + z*z);
 }
 
 //---------------------------------------------------------------------------
@@ -679,7 +689,7 @@ template <class T>
 inline TVector4<T> &
 TVector4<T>::normalize()
 {
-  return *this /= length();
+  return *this *= inv_length();
 }
 
 //---------------------------------------------------------------------------
@@ -710,11 +720,12 @@ TVector4<T>::reflection(const TVector4 & vec)
 }
 
 //---------------------------------------------------------------------------
-// From geon on the devmaster.net forum
 template <class T>
 inline T
 TVector4<T>::length() const
 {
+/*
+  // From geon on the devmaster.net forum
   T a, b, c;
 
   a = x > 0 ? x : 0-x;
@@ -737,7 +748,16 @@ TVector4<T>::length() const
 
   // I found this value optimal. There is probably no point in finetuning it further, since there still is a 20% fault... (For an int version of the same function, use a one step bitshift (a+((b+c)>>1)) instead)
   return w * (a + (b + c) * 0.366);
-//  return w * sqrtf(x*x + y*y + z*z);
+*/
+  return w * sqrtf(x*x + y*y + z*z);
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline T
+TVector4<T>::inv_length() const
+{
+  return inv_sqrtf(x*x + y*y + z*z) / w;
 }
 
 //---------------------------------------------------------------------------

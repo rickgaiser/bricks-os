@@ -44,6 +44,7 @@ MY_LIBS_PATH    += \
 CFLAGS          =\
                 -O2 \
                 -Wall \
+                -fno-strict-aliasing \
                 $(MY_DEFINITIONS) \
 
 CXXFLAGS        =\
@@ -51,6 +52,7 @@ CXXFLAGS        =\
                 -Wall \
                 -fno-rtti \
                 -fno-exceptions \
+                -fno-strict-aliasing \
                 $(MY_DEFINITIONS) \
 
 LDFLAGS         =\
