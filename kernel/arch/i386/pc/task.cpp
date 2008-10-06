@@ -97,8 +97,8 @@ CThreadImpl::~CThreadImpl()
 void
 CThreadImpl::init(void * entry, int argc, char * argv[])
 {
-  size_t stack(512);
-  size_t svcstack(512);
+  size_t stack(1024);
+  size_t svcstack(1024);
 
   // Allocate stacks
   pStack_    = new uint32_t[stack];
@@ -193,8 +193,8 @@ CV86Thread::~CV86Thread()
 void
 CV86Thread::init()
 {
-  //size_t stack(512);
-  size_t svcstack(512);
+  //size_t stack(1024);
+  size_t svcstack(1024);
 
   // Allocate stacks
   pStack_    = (uint32_t *)physAllocPageLow();
