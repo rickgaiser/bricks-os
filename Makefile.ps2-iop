@@ -6,3 +6,6 @@ all:
 
 clean:
 	make -f Makefile clean ARCH=mips TARGET=ps2-iop
+
+run:
+	ps2client -t 1 -h 192.168.1.10 execiop host:bin/ps2-iop/Bricks.elf.irx
