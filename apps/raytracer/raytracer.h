@@ -18,6 +18,7 @@ public:
 
 private:
   void trace(CRay & ray, TColor<float> & color, int depth, float rindex, float & dist);
+  float calcShade(CAPrimitive * light, TVector3<float> ip, TVector3<float> & dir);
 
 private:
   CSurface * pSurface_;

@@ -3,12 +3,16 @@
 
 
 #define EPSILON 0.0001f
-#define TRACEDEPTH 3
+#define TRACEDEPTH 6
 #define fColor_to_rgb555(c) \
   (0x8000 | \
   (((uint16_t)(c.b*31.0f) << 10) & 0x7c00) | \
   (((uint16_t)(c.g*31.0f) <<  5) & 0x03e0) | \
   (((uint16_t)(c.r*31.0f)      ) & 0x001f))
+#define fColor_to_rgb565(c) \
+ ((((uint16_t)(c.r*31.0f) << 11) & 0xf800) | \
+  (((uint16_t)(c.g*63.0f) <<  5) & 0x07e0) | \
+  (((uint16_t)(c.b*31.0f)      ) & 0x001f))
 
 
 // -----------------------------------------------------------------------------
@@ -56,7 +60,7 @@ CRaytracer::render()
 
       trace(ray, col, 1, 1.0f, dist);
 
-      pData_[dataIndex++] = fColor_to_rgb555(col);
+      pData_[dataIndex++] = fColor_to_rgb565(col);
     }
   }
 }
@@ -88,6 +92,11 @@ CRaytracer::trace(CRay & ray, TColor<float> & color, int depth, float rindex, fl
 
   if(pPrim != NULL)
   {
+    TColor<float> clAmbient   (0.2f, 0.2f, 0.2f, 0.0f);
+    TColor<float> clDiffuse   (0.0f, 0.0f, 0.0f, 0.0f);
+    TColor<float> clSpecular  (0.0f, 0.0f, 0.0f, 0.0f);
+    TColor<float> clReflection(0.0f, 0.0f, 0.0f, 0.0f);
+
     // Intersection point with closest object
     TVector3<float> intersect = ray.getOrigin() + (ray.getDirection() * dist);
     // Normal at the objects intersection point
@@ -96,22 +105,10 @@ CRaytracer::trace(CRay & ray, TColor<float> & color, int depth, float rindex, fl
     for(int light(0); light < scene_.lightCount_; light++)
     {
       // Normalized vector to light (relative to the objects intersection point)
-      TVector3<float> L = scene_.light_[light]->getCenter() - intersect;
-      float lightDist = L.length();
-      L /= lightDist;
+      TVector3<float> L;
+      float shade;
 
-      // Shadow ray
-      float shade = 1.0f;
-      TVector3<float> origin = intersect + L * EPSILON;
-      CRay rayObjToLight(origin, L);
-      for(int i(0); i < scene_.primCount_; i++)
-      {
-        if(scene_.prim_[i]->intersect(rayObjToLight, lightDist) == 1)
-        {
-          shade = 0.0f;
-          break;
-        }
-      }
+      shade = calcShade(scene_.light_[light], intersect, L);
 
       if(shade > 0.0f)
       {
@@ -121,9 +118,7 @@ CRaytracer::trace(CRay & ray, TColor<float> & color, int depth, float rindex, fl
           float diffuse = L.dotProduct(N);
           if(diffuse > 0.0f)
           {
-            color +=
-              pPrim->getMaterial().getColor() *
-              pPrim->getMaterial().getDiffuse() *
+            clDiffuse +=
 //              light->getMaterial().getColor() *
               shade *
               diffuse;
@@ -139,9 +134,7 @@ CRaytracer::trace(CRay & ray, TColor<float> & color, int depth, float rindex, fl
           {
             specular = my_pow(specular, 10);
 
-            color +=
-              pPrim->getMaterial().getColor() *
-              pPrim->getMaterial().getSpecular() *
+            clSpecular +=
 //              light->getMaterial().getColor() *
               shade *
               specular;
@@ -160,13 +153,48 @@ CRaytracer::trace(CRay & ray, TColor<float> & color, int depth, float rindex, fl
         CRay rray(origin, R);
         float rdist;
         trace(rray, rcolor, depth + 1, rindex, rdist);
-
-        color +=
-          pPrim->getMaterial().getColor() *
-          pPrim->getMaterial().getReflection() *
-          rcolor;
+        clReflection += rcolor;
       }
     }
+    // Refraction
+    // ...
+
+    clDiffuse += clAmbient;
+    clDiffuse.clamp();
+    clSpecular.clamp();
+    clReflection.clamp();
+    color +=
+      clDiffuse    * pPrim->getMaterial().getDiffuse()  * pPrim->getMaterial().getColor() +
+      clSpecular   * pPrim->getMaterial().getSpecular() +
+      clReflection * pPrim->getMaterial().getReflection();
     color.clamp();
   }
+}
+
+// -----------------------------------------------------------------------------
+float
+CRaytracer::calcShade(CAPrimitive * light, TVector3<float> intersect, TVector3<float> & dir)
+{
+  float shade = 1.0f;
+
+  if(light->getType() == CAPrimitive::SPHERE)
+  {
+    dir = ((CSphere *)light)->getCenter() - intersect;
+    float lightDist = dir.length();
+    dir /= lightDist;
+
+    // Shadow ray
+    TVector3<float> origin = intersect + dir * EPSILON;
+    CRay rayObjToLight(origin, dir);
+    for(int i(0); i < scene_.primCount_; i++)
+    {
+      if(scene_.prim_[i]->intersect(rayObjToLight, lightDist) == 1)
+      {
+        shade = 0.0f;
+        break;
+      }
+    }
+  }
+  
+  return shade;
 }
