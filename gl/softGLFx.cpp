@@ -300,6 +300,7 @@ CASoftGLESFixed::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
       pLight->position.w.value = params[3];
       // Invert and normalize
       pLight->direction = pLight->position.getInverted().normalize();
+      break;
     default:
       setError(GL_INVALID_ENUM);
       return;
