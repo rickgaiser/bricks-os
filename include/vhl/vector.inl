@@ -339,31 +339,6 @@ template <class T>
 inline T
 TVector3<T>::length() const
 {
-/*
-  // From geon on the devmaster.net forum
-  T a, b, c;
-
-  a = x > 0 ? x : 0-x;
-  b = y > 0 ? y : 0-y;
-  c = z > 0 ? z : 0-z;
-
-  // Assigning the greatest value to a.
-  if((b > a) && (b > c))
-  {
-    T tmp = b;
-    b = a;
-    a = tmp;
-  }
-  else if((c > a) && (c > b))
-  {
-    T tmp = c;
-    c = a;
-    a = tmp;
-  }
-
-  // I found this value optimal. There is probably no point in finetuning it further, since there still is a 20% fault... (For an int version of the same function, use a one step bitshift (a+((b+c)>>1)) instead)
-  return a + (b + c) * 0.366;
-*/
   return sqrtf(x*x + y*y + z*z);
 }
 
@@ -724,31 +699,6 @@ template <class T>
 inline T
 TVector4<T>::length() const
 {
-/*
-  // From geon on the devmaster.net forum
-  T a, b, c;
-
-  a = x > 0 ? x : 0-x;
-  b = y > 0 ? y : 0-y;
-  c = z > 0 ? z : 0-z;
-
-  // Assigning the greatest value to a.
-  if((b > a) && (b > c))
-  {
-    T tmp = b;
-    b = a;
-    a = tmp;
-  }
-  else if((c > a) && (c > b))
-  {
-    T tmp = c;
-    c = a;
-    a = tmp;
-  }
-
-  // I found this value optimal. There is probably no point in finetuning it further, since there still is a 20% fault... (For an int version of the same function, use a one step bitshift (a+((b+c)>>1)) instead)
-  return w * (a + (b + c) * 0.366);
-*/
   return w * sqrtf(x*x + y*y + z*z);
 }
 
