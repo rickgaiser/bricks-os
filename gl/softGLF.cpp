@@ -437,6 +437,8 @@ CASoftGLESFloat::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
   // Set texture
   v.t[0] = texCoordCurrent_[0];
   v.t[1] = texCoordCurrent_[1];
+  // Vertex not processed yet
+  v.processed = false;
 
   vertexShaderTransform(v);
 }

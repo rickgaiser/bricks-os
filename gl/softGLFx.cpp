@@ -437,6 +437,8 @@ CASoftGLESFixed::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
   // Set texture
   v.t[0] = texCoordCurrent_[0];
   v.t[1] = texCoordCurrent_[1];
+  // Vertex not processed yet
+  v.processed = false;
 
   vertexShaderTransform(v);
 }
