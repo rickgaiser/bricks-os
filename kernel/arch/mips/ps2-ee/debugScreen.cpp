@@ -44,7 +44,7 @@ CPS2DebugScreen::init()
   // Select video mode
   //  0 -> NTSC, 640x224, 60Hz double-scan = 30Hz progressive
   //  2 -> PAL,  640x256, 50Hz double-scan = 25Hz progressive
-  pCurrentPS2Mode_ = IS_PAL() ? &vmodes[2] : &vmodes[0];
+  pCurrentPS2Mode_ = IS_PAL() ? &vmodes[1] : &vmodes[0];
   actualHeight_ = pCurrentPS2Mode_->height / 2;
 
   // Set video mode
