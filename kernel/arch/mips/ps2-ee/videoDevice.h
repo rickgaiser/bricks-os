@@ -13,6 +13,7 @@
 #define GS_Y_BASE 1024
 
 
+//---------------------------------------------------------------------------
 struct SPS2CRTCMode
 {
   uint8_t biosMode;
@@ -24,10 +25,7 @@ struct SPS2VideoMode
 {
   uint16_t width;
   uint16_t height;
-  uint16_t bpp;
-  uint16_t psm;
-  uint16_t interlace;
-  uint16_t field;
+  uint16_t interlaced;
   const SPS2CRTCMode * crtcMode;
   uint16_t xoffset;
   uint16_t yoffset;
@@ -137,6 +135,11 @@ private:
 
   const SVideoMode    * pCurrentMode_;
   const SPS2VideoMode * pCurrentPS2Mode_;
+  uint16_t actualHeight_;
+  uint16_t currentPSM_;
+  uint16_t currentInterlaced_;
+  uint16_t currentField_;
+  uint16_t currentDoubleScan_;
 
   vuint32_t iFrameCount_; // volatile, becouse the isr updates it
 };

@@ -41,8 +41,14 @@ CPS2DebugScreen::~CPS2DebugScreen()
 int
 CPS2DebugScreen::init()
 {
+  // Select video mode
+  //  0 -> NTSC, 640x224, 60Hz double-scan = 30Hz progressive
+  //  2 -> PAL,  640x256, 50Hz double-scan = 25Hz progressive
+  pCurrentPS2Mode_ = IS_PAL() ? &vmodes[2] : &vmodes[0];
+  actualHeight_ = pCurrentPS2Mode_->height / 2;
+
   // Set video mode
-  this->setMode(&(vmodes[2]));
+  this->setMode(pCurrentPS2Mode_);
 
   // Clear screen
   cls();
@@ -110,7 +116,7 @@ CPS2DebugScreen::cls()
       packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
       packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ(0, 0, 0, 0x80, 0));
       packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2(gs_origin_x<<4, gs_origin_y<<4, 0));
-      packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2((gs_origin_x+pCurrentPS2Mode_->width+1)<<4, (gs_origin_y+pCurrentPS2Mode_->height+1)<<4, 0));
+      packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2((gs_origin_x+pCurrentPS2Mode_->width+1)<<4, (gs_origin_y+actualHeight_+1)<<4, 0));
     packet_.gifTagClose();
   packet_.scTagClose();
   packet_.send();
@@ -131,14 +137,14 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
 
   // Allocate first frame
   frameAddr_[0] = gs_mem_current;
-  gs_mem_current += pCurrentPS2Mode_->width * pCurrentPS2Mode_->height * (pCurrentPS2Mode_->bpp/8);
+  gs_mem_current += pCurrentPS2Mode_->width * actualHeight_ * 4;
 
   // No double buffering (second frame points to first one)
   frameAddr_[1] = frameAddr_[0];
 
   // Allocate (font) texture
   g2_fontbuf_addr = gs_mem_current;
-  gs_mem_current += g2_fontbuf_w * g2_fontbuf_h * (pCurrentPS2Mode_->bpp/8);
+  gs_mem_current += g2_fontbuf_w * g2_fontbuf_h * 4;
 
   // Reset the GS
   REG_GS_CSR = GS_CSR_RESET();
@@ -150,7 +156,7 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   bios::GsPutIMR(0);
 
   // Setup CRTC for video mode
-  bios::SetGsCrt(pCurrentPS2Mode_->interlace, pCurrentPS2Mode_->crtcMode->biosMode, pCurrentPS2Mode_->field);
+  bios::SetGsCrt(NON_INTERLACED, pCurrentPS2Mode_->crtcMode->biosMode, 0);
 
   // Enable read circuit 1
   REG_GS_PMODE = GS_PMODE(
@@ -165,28 +171,30 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   // Setup read circuit 1
   REG_GS_DISPLAY1 = GS_DISPLAY_CREATE(pCurrentPS2Mode_->crtcMode->vck,
                                       pCurrentPS2Mode_->xoffset,
-                                      pCurrentPS2Mode_->yoffset,
+                                      pCurrentPS2Mode_->yoffset >> 1,
+                                      1 * pCurrentPS2Mode_->crtcMode->vck, // MAGH
+                                      1,                                   // MAGV
                                       pCurrentPS2Mode_->width,
-                                      pCurrentPS2Mode_->height);
+                                      actualHeight_);
 
   // Setup read circuit 2
   //REG_GS_DISPLAY2 = ...;
 
   // Display buffer
-  REG_GS_DISPFB1  = GS_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0, 0);
+  REG_GS_DISPFB1  = GS_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, GRAPH_PSM_32, 0, 0);
 
   packet_.scTagOpenEnd();
     packet_.gifTagOpenPacked();
       // Render buffer
-      packet_.gifAddPackedAD(GIF::REG::frame_1,    GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+      packet_.gifAddPackedAD(GIF::REG::frame_1,    GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, GRAPH_PSM_32, 0));
       // Use drawing parameters from PRIM register
       packet_.gifAddPackedAD(GIF::REG::prmodecont, 1);
       // Setup frame buffers. Point to 0 initially.
-      packet_.gifAddPackedAD(GIF::REG::frame_1,    GS_FRAME(0, pCurrentPS2Mode_->width >> 6, pCurrentPS2Mode_->psm, 0));
+      packet_.gifAddPackedAD(GIF::REG::frame_1,    GS_FRAME(0, pCurrentPS2Mode_->width >> 6, GRAPH_PSM_32, 0));
       // Displacement between Primitive and Window coordinate systems.
       packet_.gifAddPackedAD(GIF::REG::xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
       // Clip to frame buffer.
-      packet_.gifAddPackedAD(GIF::REG::scissor_1,  GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, pCurrentPS2Mode_->height));
+      packet_.gifAddPackedAD(GIF::REG::scissor_1,  GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, actualHeight_));
     packet_.gifTagClose();
   packet_.scTagClose();
   packet_.send();

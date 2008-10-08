@@ -30,6 +30,7 @@ private:
   void printLine(uint16_t x, uint16_t y, char * str);
 
   SPS2VideoMode * pCurrentPS2Mode_;
+  uint16_t actualHeight_;
   uint32_t frameAddr_[2];
 
   // Text

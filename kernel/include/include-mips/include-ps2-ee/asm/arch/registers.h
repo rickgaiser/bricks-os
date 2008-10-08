@@ -68,13 +68,29 @@
   ((uint64_t)(FFMD) << 1) | \
   ((uint64_t)(DPMS) << 2)
 
+//---------------------------------------------------------------------------
+// VCK: 1 VCK unit == 4 pixels
+// Raster: ???
+//---------------------------------------------------------------------------
+// DISPFP Registers
+// FBP  - Framebuffer pointer / 2048
+// FBW  - Framebuffer width / 64
+// PSM  - Pixel Storage Mode
+// DBX  - x pos (in pixels)
+// DBY  - y pos (in pixels)
+#define GS_DISPFB(FBP,FBW,PSM,DBX,DBY) \
+  ((uint64_t)(FBP) << 0)  | \
+  ((uint64_t)(FBW) << 9)  | \
+  ((uint64_t)(PSM) << 15) | \
+  ((uint64_t)(DBX) << 32) | \
+  ((uint64_t)(DBY) << 43)
 // DISPLAY Registers
-// DX   - x pos in display area (VCK units)
-// DY   - y pos in display area (raster units)
-// MAGH - magnification in h direction
-// MAGV - magnification in v direction
-// DW   - display area width  - 1 (VCK units == pixels * 4)
-// DH   - display area height - 1 (pixel units)
+// DX   - x pos in display area (in VCK units)
+// DY   - y pos in display area (in raster units)
+// MAGH - magnification in h direction (1..16) - 1
+// MAGV - magnification in v direction (1...4) - 1
+// DW   - display area width  (in VCK units)   - 1
+// DH   - display area height (in pixels)      - 1
 #define GS_DISPLAY(DX,DY,MAGH,MAGV,DW,DH) \
   ((uint64_t)(DX)   <<  0) | \
   ((uint64_t)(DY)   << 12) | \
@@ -82,20 +98,8 @@
   ((uint64_t)(MAGV) << 27) | \
   ((uint64_t)(DW)   << 32) | \
   ((uint64_t)(DH)   << 44)
-#define GS_DISPLAY_CREATE(VCK,DX,DY,DW,DH) \
-  ((uint64_t)(DX*VCK)   <<  0) | \
-  ((uint64_t)(DY)       << 12) | \
-  ((uint64_t)(VCK-1)    << 23) | \
-  ((uint64_t)(0)        << 27) | \
-  ((uint64_t)(DW*VCK-1) << 32) | \
-  ((uint64_t)(DH-1)     << 44)
-// DISPFP Registers
-#define GS_DISPFB(FBP,FBW,PSM,DBX,DBY) \
-  ((uint64_t)(FBP) << 0)  | \
-  ((uint64_t)(FBW) << 9)  | \
-  ((uint64_t)(PSM) << 15) | \
-  ((uint64_t)(DBX) << 32) | \
-  ((uint64_t)(DBY) << 43)
+#define GS_DISPLAY_CREATE(VCK,DX,DY,MAGH,MAGV,DW,DH) \
+  GS_DISPLAY((DX)*(VCK), DY, (MAGH)-1, (MAGV)-1, (DW)*(MAGH)-1, (DH)*(MAGV)-1)
 
 // BGCOLOR Register
 #define GS_BGCOLOR(R,G,B) \
