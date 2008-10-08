@@ -22,7 +22,7 @@
 //#define ENABLE_FOG
 
 // Enable ligting in test, currently experimental
-//#define ENABLE_LIGHTING
+#define ENABLE_LIGHTING
 
 // Enable textures, currently experimental
 //#define ENABLE_TEXTURES

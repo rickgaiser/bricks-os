@@ -100,44 +100,30 @@ void
 initPyramidF()
 {
 #ifdef ENABLE_LIGHTING
-  TVector3<GLfloat> V0;
-  TVector3<GLfloat> V1;
-  TVector3<GLfloat> V2;
+  // Precalculated normals
+  TVector3<GLfloat> V[3];
   TVector3<GLfloat> normal;
-
   for(int i(0); i < TRIANGLE_COUNT; i++)
   {
     // Load vetices V0, V1 and V2
-    // V0
-    V0.x = pyramidVertF[i*3*3+0];
-    V0.y = pyramidVertF[i*3*3+1];
-    V0.z = pyramidVertF[i*3*3+2];
-    // V1
-    V1.x = pyramidVertF[i*3*3+3];
-    V1.y = pyramidVertF[i*3*3+4];
-    V1.z = pyramidVertF[i*3*3+5];
-    // V2
-    V2.x = pyramidVertF[i*3*3+6];
-    V2.y = pyramidVertF[i*3*3+7];
-    V2.z = pyramidVertF[i*3*3+8];
+    for(int v(0); v < 3; v++)
+    {
+      V[v].x = pyramidVertF[i*3*3+(v*3)+0];
+      V[v].y = pyramidVertF[i*3*3+(v*3)+1];
+      V[v].z = pyramidVertF[i*3*3+(v*3)+2];
+    }
 
     // Calculate normal
-    normal = (V0 - V1).getCrossProduct(V2 - V1);
+    normal = (V[0] - V[1]).getCrossProduct(V[2] - V[1]);
     normal.normalize();
 
-    // Store normals to V0, V1 and V2
-    // V0
-    pyramidNormalF[i*3*3+0] = normal.x;
-    pyramidNormalF[i*3*3+1] = normal.y;
-    pyramidNormalF[i*3*3+2] = normal.z;
-    // V1
-    pyramidNormalF[i*3*3+3] = normal.x;
-    pyramidNormalF[i*3*3+4] = normal.y;
-    pyramidNormalF[i*3*3+5] = normal.z;
-    // V2
-    pyramidNormalF[i*3*3+6] = normal.x;
-    pyramidNormalF[i*3*3+7] = normal.y;
-    pyramidNormalF[i*3*3+8] = normal.z;
+    // Store normal for V0, V1 and V2
+    for(int v(0); v < 3; v++)
+    {
+      pyramidNormalF[i*3*3+(v*3)+0] = normal.x;
+      pyramidNormalF[i*3*3+(v*3)+1] = normal.y;
+      pyramidNormalF[i*3*3+(v*3)+2] = normal.z;
+    }
   }
 #endif
 }
