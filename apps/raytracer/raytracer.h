@@ -17,7 +17,7 @@ public:
   void render();
 
 private:
-  void trace(CRay & ray, color4f & color, int depth, float rindex, float & dist);
+  CAPrimitive * trace(CRay & ray, color4f & color, int depth, float rindex, float & dist);
   float calcShade(CAPrimitive * light, vector3f ip, vector3f & dir);
   int findNearest(CRay & ray, float & dist, CAPrimitive *& prim);
 
@@ -26,6 +26,13 @@ private:
   int iWidth_;
   int iHeight_;
   uint16_t * pData_;
+
+  float fStartX_;
+  float fDeltaX_;
+  float fPixelDeltaX_;
+  float fStartY_;
+  float fDeltaY_;
+  float fPixelDeltaY_;
 
   CScene scene_;
 };

@@ -95,6 +95,33 @@ public:
 };
 
 // -----------------------------------------------------------------------------
+class CBox
+ : public CAPrimitive
+{
+public:
+  CBox();
+  CBox(CAABB box);
+
+  virtual void setLight(bool light);
+
+  int getType(){return AABB;}
+  virtual int intersect(CRay & ray, float & dist);
+  virtual vector3f getNormal(vector3f & pos);
+
+  bool intersectBox(CAABB & box) {return box_.intersect(box);}
+  bool contains(vector3f & pos)   {return box_.contains(pos);}
+  vector3f & getPos()  {return box_.getPos();}
+  vector3f & getSize() {return box_.getSize();}
+  float getGridX(int idx) {return grid_[idx << 1];}
+  float getGridY(int idx) {return grid_[(idx << 1) + 1];}
+  CAABB getAABB() {return box_;}
+
+protected:
+  CAABB box_;
+  float * grid_;
+};
+
+// -----------------------------------------------------------------------------
 class CSphere
  : public CAPrimitive
 {

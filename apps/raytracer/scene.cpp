@@ -3,6 +3,10 @@
 #include <math.h>
 
 
+#define fabs(a) ((a) >= 0.0f ? (a) : -(a))
+
+
+// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 int
 CPlane::intersect(CRay & ray, float & dist)
@@ -24,6 +28,7 @@ CPlane::intersect(CRay & ray, float & dist)
   return 0;
 }
 
+// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 CSphere::CSphere(vector3f center, float radius)
  : center_(center)
@@ -72,6 +77,137 @@ CSphere::intersect(CRay & ray, float & dist)
 }
 
 // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+CBox::CBox()
+ : box_(vector3f(0, 0, 0), vector3f(0, 0, 0))
+ , grid_(0)
+{
+}
+
+// -----------------------------------------------------------------------------
+CBox::CBox(CAABB box)
+ : box_(box)
+ , grid_(0)
+{
+}
+
+// -----------------------------------------------------------------------------
+int
+CBox::intersect(CRay & ray, float & dist)
+{
+  float pDist[6];
+  vector3f ip[6];
+  vector3f d = ray.getDirection();
+  vector3f o = ray.getOrigin();
+  bool retval = 0;
+  for(int i(0); i < 6; i++)
+    pDist[i] = -1;
+  vector3f v1 = box_.getPos();
+  vector3f v2 = box_.getPos() + getSize();
+  if(d.x)
+  {
+    float rc = 1.0f / d.x;
+    pDist[0] = (v1.x - o.x) * rc;
+    pDist[3] = (v2.x - o.x) * rc;
+  }
+  if (d.y)
+  {
+    float rc = 1.0f / d.y;
+    pDist[1] = (v1.y - o.y) * rc;
+    pDist[4] = (v2.y - o.y) * rc;
+  }
+  if (d.z)
+  {
+    float rc = 1.0f / d.z;
+    pDist[2] = (v1.z - o.z) * rc;
+    pDist[5] = (v2.z - o.z) * rc;
+  }
+  for(int i(0); i < 6; i++)
+  {
+    if(pDist[i] > 0)
+    {
+      ip[i] = o + d * pDist[i];
+      if((ip[i].x > (v1.x - EPSILON)) && (ip[i].x < (v2.x + EPSILON)) &&
+         (ip[i].y > (v1.y - EPSILON)) && (ip[i].y < (v2.y + EPSILON)) &&
+         (ip[i].z > (v1.z - EPSILON)) && (ip[i].z < (v2.z + EPSILON)))
+      {
+        if(pDist[i] < dist)
+        {
+          dist = pDist[i];
+          retval = 1;
+        }
+      }
+    }
+  }
+  return retval;
+}
+
+// -----------------------------------------------------------------------------
+vector3f
+CBox::getNormal(vector3f & pos)
+{
+  float pDist[6];
+
+  pDist[0] = (float)fabs(box_.getSize().x - box_.getPos().x);
+  pDist[1] = (float)fabs(box_.getSize().x + box_.getSize().x - box_.getPos().x);
+  pDist[2] = (float)fabs(box_.getSize().y - box_.getPos().y);
+  pDist[3] = (float)fabs(box_.getSize().y + box_.getSize().y - box_.getPos().y);
+  pDist[4] = (float)fabs(box_.getSize().z - box_.getPos().z);
+  pDist[5] = (float)fabs(box_.getSize().z + box_.getSize().z - box_.getPos().z);
+
+  int best = 0;
+  float bdist = pDist[0];
+  for(int i(1) ; i < 6; i++)
+  {
+    if(pDist[i] < bdist)
+    {
+      bdist = pDist[i];
+      best = i;
+    }
+  }
+       if(best == 0) return vector3f(-1,  0,  0);
+  else if(best == 1) return vector3f( 1,  0,  0);
+  else if(best == 2) return vector3f( 0, -1,  0);
+  else if(best == 3) return vector3f( 0,  1,  0);
+  else if(best == 4) return vector3f( 0,  0, -1);
+  else               return vector3f( 0,  0,  1);
+}
+
+// -----------------------------------------------------------------------------
+void
+CBox::setLight(bool light)
+{
+  CAPrimitive::setLight(light);
+  if(!grid_)
+  {
+    grid_ = new float[32];
+    grid_[ 0] = 1, grid_[ 1] = 2;
+    grid_[ 2] = 3, grid_[ 3] = 3;
+    grid_[ 4] = 2, grid_[ 5] = 0;
+    grid_[ 6] = 0, grid_[ 7] = 1;
+    grid_[ 8] = 2, grid_[ 9] = 3;
+    grid_[10] = 0, grid_[11] = 3;
+    grid_[12] = 0, grid_[13] = 0;
+    grid_[14] = 2, grid_[15] = 2;
+    grid_[16] = 3, grid_[17] = 1;
+    grid_[18] = 1, grid_[19] = 3;
+    grid_[20] = 1, grid_[21] = 0;
+    grid_[22] = 3, grid_[23] = 2;
+    grid_[24] = 2, grid_[25] = 1;
+    grid_[26] = 3, grid_[27] = 0;
+    grid_[28] = 1, grid_[29] = 1;
+    grid_[30] = 0, grid_[31] = 2;
+
+    for(int i(0); i < 16; i++)
+    {
+      grid_[i * 2] = grid_[i * 2] * box_.getSize().x / 4 + box_.getPos().x;
+      grid_[i * 2 + 1] = grid_[i * 2 + 1] * box_.getSize().z / 4 + box_.getPos().z;
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 CScene::CScene()
  : primCount_(0)
  , lightCount_(0)
@@ -96,13 +232,17 @@ CScene::init()
   //pPrim = new CSphere(vector3f( 0.0f,  2.5f,  1.0f), 0.2f);
   //pPrim->setLight(true);
   //addLight(pPrim);
-  pPrim = new CSphere(vector3f( 0.0f,  2.5f,  5.0f), 0.2f);
-  pPrim->getMaterial().setColor(clLight);
-  pPrim->setLight(true);
-  addLight(pPrim);
+//  pPrim = new CSphere(vector3f( 0.0f,  2.5f,  5.0f), 0.2f);
+//  pPrim->getMaterial().setColor(clLight);
+//  pPrim->setLight(true);
+//  addLight(pPrim);
   //pPrim = new CSphere(vector3f( 0.0f,  2.5f,  9.0f), 0.2f);
   //pPrim->setLight(true);
   //addLight(pPrim);
+  pPrim = new CBox(CAABB(vector3f(-1.0f,  2.5f,  5.0f), vector3f(2, 0.1f, 2)));
+  pPrim->getMaterial().setColor(clLight);
+  pPrim->setLight(true);
+  addLight(pPrim);
 
   // ---------------------------------------------------------------
   // Primitives
