@@ -7,14 +7,18 @@
 #include "common.h"
 
 
+#define MAX_PRIM_COUNT   20
+#define MAX_LIGHT_COUNT   4
+
+
 // -----------------------------------------------------------------------------
 class CMaterial
 {
 public:
   CMaterial(){}
 
-  void setColor(TColor<float> & color){color_ = color;}
-  TColor<float> & getColor(){return color_;}
+  void setColor(color4f & color){color_ = color;}
+  color4f & getColor(){return color_;}
 
   void setDiffuse(float diffuse){diffuse_ = diffuse;}
   float getDiffuse(){return diffuse_;}
@@ -25,7 +29,7 @@ public:
   float getReflection(){return reflection_;}
 
 private:
-  TColor<float> color_;
+  color4f color_;
   float diffuse_;
   float reflection_;
 };
@@ -37,20 +41,26 @@ public:
   enum
   {
     SPHERE = 1,
-    PLANE
+    PLANE,
+    AABB,
   };
 
-  virtual ~CAPrimitive(){}
+  CAPrimitive() : bLight_(false) {}
+  virtual ~CAPrimitive() {}
+
+  virtual void setLight(bool light){bLight_ = light;}
+  virtual bool getLight(){return bLight_;}
 
   virtual int getType() = 0;
   virtual int intersect(CRay & ray, float & dist) = 0;
-  virtual TVector3<float> getNormal(TVector3<float> & pos) = 0;
+  virtual vector3f getNormal(vector3f & pos) = 0;
 
   void setMaterial(CMaterial & mat){material_ = mat;}
   CMaterial & getMaterial(){return material_;}
 
 private:
   CMaterial material_;
+  bool bLight_;
 };
 
 // -----------------------------------------------------------------------------
@@ -58,14 +68,14 @@ class CPlane
  : public CAPrimitive
 {
 public:
-  CPlane(TVector3<float> normal, float d) : normal_(normal), d_(d) {}
+  CPlane(vector3f normal, float d) : normal_(normal), d_(d) {}
 
   int getType(){return PLANE;}
   virtual int intersect(CRay & ray, float & dist);
-  virtual TVector3<float> getNormal(TVector3<float> & pos){return normal_;};
+  virtual vector3f getNormal(vector3f & pos){return normal_;};
 
 private:
-  TVector3<float> normal_;
+  vector3f normal_;
   float d_;
 };
 
@@ -74,9 +84,9 @@ class CPlaneMirror
  : public CPlane
 {
 public:
-  CPlaneMirror(TVector3<float> normal, float d) : CPlane(normal,d)
+  CPlaneMirror(vector3f normal, float d) : CPlane(normal,d)
   {
-    TColor<float> c(0.6f, 0.6f, 0.6f, 1.0f);
+    color4f c(0.6f, 0.6f, 0.6f, 1.0f);
 
     this->getMaterial().setColor(c);
     this->getMaterial().setDiffuse(0.2f);
@@ -89,16 +99,16 @@ class CSphere
  : public CAPrimitive
 {
 public:
-  CSphere(TVector3<float> center, float radius);
+  CSphere(vector3f center, float radius);
 
   int getType(){return SPHERE;}
   virtual int intersect(CRay & ray, float & dist);
-  virtual TVector3<float> getNormal(TVector3<float> & pos){return (pos - center_) * radiusR_;};
+  virtual vector3f getNormal(vector3f & pos){return (pos - center_) * radiusR_;};
 
-  TVector3<float> & getCenter(){return center_;}
+  vector3f & getCenter(){return center_;}
 
 private:
-  TVector3<float> center_;
+  vector3f center_;
   float radius_;
   float radiusSq_;
   float radiusR_;
@@ -108,16 +118,20 @@ private:
 class CScene
 {
 public:
-  CScene(){}
+  CScene();
 
   void init();
 
 public:
-  CAPrimitive * prim_[10];
+  CAPrimitive * prim_[MAX_PRIM_COUNT];
   int primCount_;
 
-  CAPrimitive * light_[10];
+  CAPrimitive * light_[MAX_LIGHT_COUNT];
   int lightCount_;
+
+private:
+  void addPrimitive(CAPrimitive * prim);
+  void addLight(CAPrimitive * prim);
 };
 
 

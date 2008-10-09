@@ -3,6 +3,14 @@
 
 
 #include "vhl/vector.h"
+#include "vhl/color.h"
+
+
+// -----------------------------------------------------------------------------
+#define vector3f TVector3<float>
+#define vector4f TVector4<float>
+//#define color3f  TColor3<float>
+#define color4f  TColor<float>
 
 
 // -----------------------------------------------------------------------------
@@ -10,17 +18,17 @@ class CRay
 {
 public:
   CRay(){};
-  CRay(TVector3<float> & origin, TVector3<float> & direction) : origin_(origin), direction_(direction){};
+  CRay(vector3f & origin, vector3f & direction) : origin_(origin), direction_(direction){};
 
-  void setOrigin   (TVector3<float> & origin)    {origin_    = origin;}
-  void setDirection(TVector3<float> & direction) {direction_ = direction;}
+  void setOrigin   (vector3f & origin)    {origin_    = origin;}
+  void setDirection(vector3f & direction) {direction_ = direction;}
 
-  TVector3<float> & getOrigin()    {return origin_;}
-  TVector3<float> & getDirection() {return direction_;}
+  vector3f & getOrigin()    {return origin_;}
+  vector3f & getDirection() {return direction_;}
 
 private:
-  TVector3<float> origin_;
-  TVector3<float> direction_;
+  vector3f origin_;
+  vector3f direction_;
 };
 
 

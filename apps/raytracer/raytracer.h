@@ -17,8 +17,9 @@ public:
   void render();
 
 private:
-  void trace(CRay & ray, TColor<float> & color, int depth, float rindex, float & dist);
-  float calcShade(CAPrimitive * light, TVector3<float> ip, TVector3<float> & dir);
+  void trace(CRay & ray, color4f & color, int depth, float rindex, float & dist);
+  float calcShade(CAPrimitive * light, vector3f ip, vector3f & dir);
+  int findNearest(CRay & ray, float & dist, CAPrimitive *& prim);
 
 private:
   CSurface * pSurface_;
