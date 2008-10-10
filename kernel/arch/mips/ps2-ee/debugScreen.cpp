@@ -102,8 +102,10 @@ CPS2DebugScreen::write(const void * data, size_t size, bool block)
   cls();
 
   // Draw all lines
+  printBegin();
   for(int y(0); y < TEXT_HEIGHT; y++)
     printLine(15, 15 * y,  pBuffer_[y]);
+  printEnd();
 
   return 0;
 }
@@ -196,9 +198,46 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
 
 //---------------------------------------------------------------------------
 void
+CPS2DebugScreen::printBegin()
+{
+  packet_.scTagOpenEnd();
+    packet_.gifTagOpenPacked();
+
+      // Draw a sprite with current character mapped onto it
+      packet_.gifAddPackedAD(GIF::REG::tex0_1,
+        GS_TEX0(
+          g2_fontbuf_addr/256,            // base pointer
+          (g2_fontbuf_w)/64,              // width
+          0,                              // 32bit RGBA
+          getBitNr(g2_fontbuf_w),         // width
+          getBitNr(g2_fontbuf_w),         // height
+          1,                              // RGBA
+          TEX_DECAL,                      // just overwrite existing pixels
+          0,0,0,0,0));
+/*
+      packet_.gifAddPackedAD(tex1_1,
+        GS_TEX1(
+          0, 0,
+          FILTER_LINEAR,
+          FILTER_LINEAR,
+          0, 0, 0));
+
+      packet_.gifAddPackedAD(GIF::REG::clamp_1, 0x05);
+*/
+      packet_.gifAddPackedAD(GIF::REG::prim,
+        GS_PRIM(PRIM_SPRITE,
+          0,                              // flat shading
+          1,                              // texture mapping ON
+          0, 1, 0,                        // no fog or antialiasing, but use alpha
+          1,                              // use UV register for coordinates.
+          0,
+          0));
+}
+
+//---------------------------------------------------------------------------
+void
 CPS2DebugScreen::printLine(uint16_t x, uint16_t y, char * str)
 {
-  char c;                   // current character
   uint16_t * tc;            // current texture coordinates [4]
   uint16_t x0, y0, x1, y1;  // rectangle for current character
   uint16_t w, h;            // width and height of above rectangle
@@ -206,11 +245,10 @@ CPS2DebugScreen::printLine(uint16_t x, uint16_t y, char * str)
   x += GS_X_BASE;
   y += GS_Y_BASE;
 
-  c = *str;
-  while(c)
+  while(*str)
   {
     // Read the texture coordinates for current character
-    tc = &g2_font_tc[c*4];
+    tc = &g2_font_tc[(*str)*4];
     x0 = *tc++;
     y0 = *tc++;
     x1 = *tc++;
@@ -218,53 +256,25 @@ CPS2DebugScreen::printLine(uint16_t x, uint16_t y, char * str)
     w  = x1-x0+1;
     h  = y1-y0+1;
 
-    packet_.scTagOpenEnd();
-      packet_.gifTagOpenPacked();
-
-        // Draw a sprite with current character mapped onto it
-        packet_.gifAddPackedAD(GIF::REG::tex0_1,
-          GS_TEX0(
-            g2_fontbuf_addr/256,            // base pointer
-            (g2_fontbuf_w)/64,              // width
-            0,                              // 32bit RGBA
-            getBitNr(g2_fontbuf_w),         // width
-            getBitNr(g2_fontbuf_w),         // height
-            1,                              // RGBA
-            TEX_DECAL,                      // just overwrite existing pixels
-            0,0,0,0,0));
-/*
-        packet_.gifAddPackedAD(tex1_1,
-          GS_TEX1(
-            0, 0,
-            FILTER_LINEAR,
-            FILTER_LINEAR,
-            0, 0, 0));
-
-        packet_.gifAddPackedAD(GIF::REG::clamp_1, 0x05);
-*/
-        packet_.gifAddPackedAD(GIF::REG::prim,
-          GS_PRIM(PRIM_SPRITE,
-            0,                              // flat shading
-            1,                              // texture mapping ON
-            0, 1, 0,                        // no fog or antialiasing, but use alpha
-            1,                              // use UV register for coordinates.
-            0,
-            0));
-
-        packet_.gifAddPackedAD(GIF::REG::uv,    GS_UV(x0<<4, y0<<4));
-        packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x<<4, y<<4, 0));
-        packet_.gifAddPackedAD(GIF::REG::uv,    GS_UV((x1+1)<<4, (y1+1)<<4));
-        packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2((x+w)<<4, (y+h)<<4, 0));
-      packet_.gifTagClose();
-    packet_.scTagClose();
-    packet_.send();
-    packet_.reset();
+    packet_.gifAddPackedAD(GIF::REG::uv,    GS_UV(x0<<4, y0<<4));
+    packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x<<4, y<<4, 0));
+    packet_.gifAddPackedAD(GIF::REG::uv,    GS_UV((x1+1)<<4, (y1+1)<<4));
+    packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2((x+w)<<4, (y+h)<<4, 0));
 
     // Advance drawing position
     x += w;
 
     // Get next character
     str++;
-    c = *str;
   }
+}
+
+//---------------------------------------------------------------------------
+void
+CPS2DebugScreen::printEnd()
+{
+    packet_.gifTagClose();
+  packet_.scTagClose();
+  packet_.send();
+  packet_.reset();
 }

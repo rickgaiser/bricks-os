@@ -27,7 +27,9 @@ public:
 private:
   void cls();
   void setMode(SPS2VideoMode * mode);
+  void printBegin();
   void printLine(uint16_t x, uint16_t y, char * str);
+  void printEnd();
 
   SPS2VideoMode * pCurrentPS2Mode_;
   uint16_t actualHeight_;
