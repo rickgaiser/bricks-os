@@ -37,7 +37,7 @@ class CPS2GLESContext
  , public CAPS2Renderer
 {
 public:
-  CPS2GLESContext();
+  CPS2GLESContext(CPS2VideoDevice & device);
   virtual ~CPS2GLESContext();
 
   // Surfaces
@@ -69,8 +69,11 @@ protected:
   virtual void zbuffer(bool enable);
 
 private:
+  CPS2VideoDevice & device_;
   STexturePS2 * pCurrentTex_;
   STexturePS2 textures_[MAX_TEXTURE_COUNT];
+  uint16_t    ps2ZPSM_;
+  uint32_t    ps2ZBufferAddr_;
   uint16_t    ps2Shading_;
   uint16_t    ps2Textures_;
   uint16_t    ps2Fog_;

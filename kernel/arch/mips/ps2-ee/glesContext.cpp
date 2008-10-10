@@ -8,12 +8,15 @@
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-CPS2GLESContext::CPS2GLESContext()
+CPS2GLESContext::CPS2GLESContext(CPS2VideoDevice & device)
  : CASoftGLESFloat()
  , CAPS2Renderer()
 
+ , device_(device)
  , pCurrentTex_(NULL)
 
+ , ps2ZPSM_(GRAPH_PSM_16S)
+ , ps2ZBufferAddr_(0)
  , ps2Shading_(SHADE_FLAT)
  , ps2Textures_(TEXTURES_OFF)
  , ps2Fog_(FOG_OFF)
@@ -22,6 +25,16 @@ CPS2GLESContext::CPS2GLESContext()
  , ps2DepthFunction_(ZTST_GREATER)
  , ps2DepthInvert_(true)
 {
+  // Select MAX z-value
+  switch(ps2ZPSM_)
+  {
+    case GRAPH_PSM_16:
+    case GRAPH_PSM_16S: zMax_ = 0x0000ffff; break;
+    case GRAPH_PSM_24:  zMax_ = 0x00ffffff; break;
+    case GRAPH_PSM_32:  zMax_ = 0xffffffff; break;
+  };
+
+  // Initialize textures
   for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
     textures_[idx].used = false;
 }
@@ -245,7 +258,6 @@ CPS2GLESContext::glGenTextures(GLsizei n, GLuint *textures)
 }
 
 //-----------------------------------------------------------------------------
-#define FIXME_TEX_ADDR (3*1024*1024)
 void
 CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
@@ -291,7 +303,12 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
 
     pCurrentTex_->width        = width;
     pCurrentTex_->height       = height;
-    pCurrentTex_->data         = (void *)FIXME_TEX_ADDR;
+    pCurrentTex_->data         = device_.allocTexture(width, height, GRAPH_PSM_32);
+    if(pCurrentTex_->data == NULL)
+    {
+      setError(GL_OUT_OF_MEMORY);
+      return;
+    }
 
     EColorFormat fmtTo = cfA8B8G8R8;
     EColorFormat fmtFrom;
@@ -302,18 +319,19 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
       case GL_UNSIGNED_SHORT_4_4_4_4: fmtFrom = cfA4B4G4R4; break;
       case GL_UNSIGNED_SHORT_5_5_5_1: fmtFrom = cfA1B5G5R5; break;
       default:
-        return; // ERROR, invalid type
+        setError(GL_INVALID_ENUM);
+        return;
     };
 
     if(fmtTo != fmtFrom)
     {
-      ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)pixels);
+      ee_to_gsBitBlt((uint32_t)pCurrentTex_->data, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)pixels);
     }
     else
     {
       uint32_t * newTexture = new uint32_t[width*height];
       convertImageFormat(newTexture, fmtTo, pixels, fmtFrom, width, height);
-      ee_to_gsBitBlt(FIXME_TEX_ADDR, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)newTexture);
+      ee_to_gsBitBlt((uint32_t)pCurrentTex_->data, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)newTexture);
       delete newTexture;
     }
   }
@@ -438,29 +456,23 @@ CPS2GLESContext::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 void
 CPS2GLESContext::zbuffer(bool enable)
 {
-/*
   if(enable == true)
   {
-    // 16bit
-    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16S, ZMSK_ENABLE));
-    ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 2);
-    zMax_ = 0xffff;
-    // 24bit
-    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_24, ZMSK_ENABLE));
-    ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 3);
-    zMax_ = 0xffffff;
-    // 32bit
-    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_32, ZMSK_ENABLE));
-    ps2TexturesStart_ = gs_mem_current + (pSurface_->mode.width * pSurface_->mode.height * 4);
-    zMax_ = 0xffffffff;
+    if(ps2ZBufferAddr_ == 0)
+    {
+      // Allocate z-buffer
+      ps2ZBufferAddr_ = (uint32_t)device_.allocFramebuffer(pSurface_->mode.width, pSurface_->mode.height, ps2ZPSM_);
+
+      // Register buffer location and pixel mode
+      packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, ZMSK_ENABLE));
+    }
   }
   else
   {
     // Z-Buffer
-    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(gs_mem_current >> 13, GRAPH_PSM_16, ZMSK_DISABLE));
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(0, ps2ZPSM_, ZMSK_DISABLE));
   }
 
   // Z-Buffer test
   packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, enable, ps2DepthFunction_));
-*/
 }

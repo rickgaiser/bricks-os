@@ -494,23 +494,20 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
 void
 CPS2VideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
-  CPS2Surface * pSurface = new CPS2Surface;
+  void * pAddr = allocFramebuffer(pCurrentMode_->xpitch, pCurrentMode_->ypitch, currentPSM_);
 
-  pSurface->mode        = *pCurrentMode_;
-  pSurface->mode.width  = width;
-  pSurface->mode.height = height;
-  pSurface->psm_        = currentPSM_;
-  pSurface->p           = (void *)freeMemAddr_;
+  if(pAddr != NULL)
+  {
+    CPS2Surface * pSurface = new CPS2Surface;
 
-  // Add the bytes we just used
-  freeMemAddr_ += pCurrentMode_->xpitch * pCurrentMode_->ypitch * (pCurrentMode_->bpp / 8);
+    pSurface->mode        = *pCurrentMode_;
+    pSurface->mode.width  = width;
+    pSurface->mode.height = height;
+    pSurface->psm_        = currentPSM_;
+    pSurface->p           = pAddr;
 
-  // Alignment:
-  //  -   8KiB  for system buffers
-  //  - 256Byte for textures
-  freeMemAddr_ = (freeMemAddr_ + 0x1fff) & (~0x1fff); // Align to 8KiB
-
-  *surface = pSurface;
+    *surface = pSurface;
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -524,7 +521,7 @@ CPS2VideoDevice::get2DRenderer(I2DRenderer ** renderer)
 void
 CPS2VideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
-  *renderer = new CPS2GLESContext;
+  *renderer = new CPS2GLESContext(*this);
 }
 
 //---------------------------------------------------------------------------
@@ -589,4 +586,96 @@ CPS2VideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface 
   packet_.scTagClose();
   packet_.send();
   packet_.reset();
+}
+
+//---------------------------------------------------------------------------
+void *
+CPS2VideoDevice::allocFramebuffer(int w, int h, uint16_t psm)
+{
+  uint32_t addr;
+
+  // Width must be multiple of 64
+  if((w & 0x3f) != 0)
+    return NULL;
+
+  // Limit the max size
+  if((w > 1920) || (h > 1080))
+    return NULL;
+
+  uint32_t iSize = w * h;
+
+  switch(psm)
+  {
+    case GRAPH_PSM_16:
+    case GRAPH_PSM_16S:
+      iSize *= 2;
+      break;
+    case GRAPH_PSM_24:
+    case GRAPH_PSM_32:
+      iSize *= 4;
+      break;
+    default:
+      return NULL;
+  };
+
+  // Align to 8KiB
+  freeMemAddr_ = (freeMemAddr_ + 0x00001fff) & (~0x00001fff);
+
+  // Get addr
+  addr = freeMemAddr_;
+
+  // Add the bytes we just used
+  freeMemAddr_ += iSize;
+
+  return (void *)addr;
+}
+
+//---------------------------------------------------------------------------
+void *
+CPS2VideoDevice::allocTexture(int w, int h, uint16_t psm)
+{
+  uint32_t addr;
+
+  // Width must be multiple of 64
+  if((w & 0x3f) != 0)
+    return NULL;
+
+  // Limit the max size
+  if((w > 1024) || (h > 1024))
+    return NULL;
+
+  uint32_t iSize = w * h;
+
+  switch(psm)
+  {
+//    case GRAPH_PSM_4HL:
+//    case GRAPH_PSM_4HH:
+//    case GRAPH_PSM_8H:
+    case GRAPH_PSM_4:
+      iSize /= 2;
+      break;
+    case GRAPH_PSM_8:
+      break;
+    case GRAPH_PSM_16:
+    case GRAPH_PSM_16S:
+      iSize *= 2;
+      break;
+    case GRAPH_PSM_24:
+    case GRAPH_PSM_32:
+      iSize *= 4;
+      break;
+    default:
+      return NULL;
+  };
+
+  // Align to 256Byte
+  freeMemAddr_ = (freeMemAddr_ + 0x000000ff) & (~0x000000ff);
+
+  // Get addr
+  addr = freeMemAddr_;
+
+  // Add the bytes we just used
+  freeMemAddr_ += iSize;
+
+  return (void *)addr;
 }

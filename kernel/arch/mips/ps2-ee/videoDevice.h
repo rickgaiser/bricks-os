@@ -121,6 +121,9 @@ public:
 
   virtual void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy);
 
+  void * allocFramebuffer(int w, int h, uint16_t psm);
+  void * allocTexture(int w, int h, uint16_t psm);
+
 private:
   // Surface we're currently displaying
   CPS2Surface * pSurface_;
