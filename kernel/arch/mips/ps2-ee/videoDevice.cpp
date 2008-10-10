@@ -30,24 +30,24 @@
 //---------------------------------------------------------------------------
 const SPS2CRTCMode cmodes[] =
 {
-  {0x02, 4}, //       NTSC 0
-  {0x03, 4}, //        PAL 1
+  {0x02, 4}, //       NTSC 0, tested
+  {0x03, 4}, //        PAL 1, tested
 
-  {0x1a, 2}, //  VGA, 60Hz 2
-  {0x1b, 2}, //  VGA, 72Hz 3
-  {0x1c, 2}, //  VGA, 75Hz 4
-  {0x1d, 2}, //  VGA, 85Hz 5
-  {0x2a, 2}, // SVGA, 56Hz 6
-  {0x2b, 2}, // SVGA, 60Hz 7
-  {0x2c, 2}, // SVGA, 72Hz 8
-  {0x2d, 2}, // SVGA, 75Hz 9
-  {0x2e, 2}, // SVGA, 85Hz 10
-  {0x3b, 1}, //  XGA, 60Hz 11
-  {0x3c, 1}, //  XGA, 72Hz 12
-  {0x3d, 1}, //  XGA, 75Hz 13
-  {0x3e, 1}, //  XGA, 85Hz 14
-  {0x4a, 1}, // SXGA, 60Hz 15
-  {0x4b, 1}, // SXGA, 75Hz 16
+  {0x1a, 2}, //  VGA, 60Hz 2, tested
+  {0x1b, 2}, //  VGA, 72Hz 3, tested
+  {0x1c, 2}, //  VGA, 75Hz 4, tested
+  {0x1d, 2}, //  VGA, 85Hz 5, ERROR
+  {0x2a, 2}, // SVGA, 56Hz 6, tested
+  {0x2b, 2}, // SVGA, 60Hz 7, tested
+  {0x2c, 2}, // SVGA, 72Hz 8, tested
+  {0x2d, 2}, // SVGA, 75Hz 9, tested
+  {0x2e, 2}, // SVGA, 85Hz 10, tested
+  {0x3b, 2}, //  XGA, 60Hz 11, tested
+  {0x3c, 1}, //  XGA, 72Hz 12, tested
+  {0x3d, 1}, //  XGA, 75Hz 13, tested
+  {0x3e, 1}, //  XGA, 85Hz 14, tested
+  {0x4a, 1}, // SXGA, 60Hz 15, tested
+  {0x4b, 1}, // SXGA, 75Hz 16, tested
 
   {0x50, 2}, //       480p 17
   {0x51, 1}, //      1080i 18
@@ -55,30 +55,31 @@ const SPS2CRTCMode cmodes[] =
 };
 
 //---------------------------------------------------------------------------
+// VGA Offsets tested with Samsung SyncMaster 900nf
 SPS2VideoMode vmodes[] =
 {
   // SDTV
   { 640,  448, INTERLACED,     &cmodes[ 0], 158, 50}, // NTSC 480i60
   { 640,  512, INTERLACED,     &cmodes[ 1], 163, 72}, // PAL  576i50
   // VGA
-//  { 640,  480, NON_INTERLACED, &cmodes[ 2], 138, 34}, // 60Hz
-//  { 640,  480, NON_INTERLACED, &cmodes[ 3], 138, 34}, // 72Hz
-  { 640,  480, NON_INTERLACED, &cmodes[ 4], 138, 34}, // 75Hz
-//  { 640,  480, NON_INTERLACED, &cmodes[ 5], 138, 34}, // 85Hz
+  { 640,  480, NON_INTERLACED, &cmodes[ 2], 140, 25}, // 60Hz, offsets ok
+//  { 640,  480, NON_INTERLACED, &cmodes[ 3], 140, 25}, // 72Hz, offsets ok
+//  { 640,  480, NON_INTERLACED, &cmodes[ 4], 175, 12}, // 75Hz, offsets ok
+//  { 640,  480, NON_INTERLACED, &cmodes[ 5], 138, 34}, // 85Hz, ERROR
   // SVGA
-//  { 800,  600, NON_INTERLACED, &cmodes[ 6], 210, 26}, // 56Hz
-//  { 800,  600, NON_INTERLACED, &cmodes[ 7], 210, 26}, // 60Hz
-//  { 800,  600, NON_INTERLACED, &cmodes[ 8], 210, 26}, // 72Hz
-  { 800,  600, NON_INTERLACED, &cmodes[ 9], 210, 26}, // 75Hz
-//  { 800,  600, NON_INTERLACED, &cmodes[10], 210, 26}, // 85Hz
+//  { 800,  600, NON_INTERLACED, &cmodes[ 6], 190, 15}, // 56Hz, offsets ok
+  { 800,  600, NON_INTERLACED, &cmodes[ 7], 240, 15}, // 60Hz, offsets ok
+//  { 800,  600, NON_INTERLACED, &cmodes[ 8], 210, 30}, // 72Hz, offsets ok
+//  { 800,  600, NON_INTERLACED, &cmodes[ 9], 220, 15}, // 75Hz, offsets ok
+//  { 800,  600, NON_INTERLACED, &cmodes[10], 210, 15}, // 85Hz, offsets ok
   // XGA
-//  {1024,  768, NON_INTERLACED, &cmodes[11], 270, 34}, // 60Hz
-//  {1024,  768, NON_INTERLACED, &cmodes[12], 270, 34}, // 70Hz
-  {1024,  768, NON_INTERLACED, &cmodes[13], 270, 34}, // 75Hz
-//  {1024,  768, NON_INTERLACED, &cmodes[14], 270, 34}, // 85Hz
+  {1024,  768, NON_INTERLACED, &cmodes[11], 310, 20}, // 60Hz, offsets ok
+//  {1024,  768, NON_INTERLACED, &cmodes[12], 295, 20}, // 70Hz, offsets ok
+//  {1024,  768, NON_INTERLACED, &cmodes[13], 260, 20}, // 75Hz, offsets ok
+//  {1024,  768, NON_INTERLACED, &cmodes[14], 295, 20}, // 85Hz, offsets ok
   // SXGA
-//  {1280, 1024, NON_INTERLACED, &cmodes[15], 348, 40}, // 60Hz
-  {1280, 1024, NON_INTERLACED, &cmodes[16], 348, 40}, // 75Hz
+  {1280, 1024, NON_INTERLACED, &cmodes[15], 360, 25}, // 60Hz, offsets ok
+//  {1280, 1024, NON_INTERLACED, &cmodes[16], 390, 25}, // 75Hz, offsets ok
   // EDTV
   { 720,  480, NON_INTERLACED, &cmodes[17], 116, 35}, // 480p60
   // HDTV
@@ -117,9 +118,9 @@ static const SVideoMode videoModes[] =
   { 640,  448,  640,  448, 32, cfA8B8G8R8}, //  560/1120KiB 11
 
   // EDTV
-  { 720,  480,  768,  480, 16, cfA1B5G5R5}, //  720KiB 12
-  { 720,  480,  768,  480, 24, cfB8G8R8},   // 1080KiB
-  { 720,  480,  768,  480, 32, cfA8B8G8R8}, // 1440KiB 13
+  { 768,  480,  720,  480, 16, cfA1B5G5R5}, //  720KiB 12
+  { 768,  480,  720,  480, 24, cfB8G8R8},   // 1080KiB
+  { 768,  480,  720,  480, 32, cfA8B8G8R8}, // 1440KiB 13
   // HDTV
   {1280,  720, 1280,  720, 16, cfA1B5G5R5}, // 1800KiB 15
   {1280,  720, 1280,  720, 24, cfB8G8R8},   // 2700KiB
@@ -134,9 +135,9 @@ static const SVideoMode videoModes[] =
   { 640,  480,  640,  480, 24, cfB8G8R8},   //  900KiB
   { 640,  480,  640,  480, 32, cfA8B8G8R8}, // 1200KiB 24
   // SVGA
-  { 800,  600,  832,  600, 16, cfA1B5G5R5}, //  975KiB 25
-  { 800,  600,  832,  600, 24, cfB8G8R8},   // 1463KiB
-  { 800,  600,  832,  600, 32, cfA8B8G8R8}, // 1950KiB 27
+  { 832,  600,  800,  600, 16, cfA1B5G5R5}, //  975KiB 25
+  { 832,  600,  800,  600, 24, cfB8G8R8},   // 1463KiB
+  { 832,  600,  800,  600, 32, cfA8B8G8R8}, // 1950KiB 27
   // XGA
   {1024,  768, 1024,  768, 16, cfA1B5G5R5}, // 1536KiB 28
   {1024,  768, 1024,  768, 24, cfB8G8R8},   // 2304KiB
@@ -494,15 +495,13 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
 void
 CPS2VideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
-  void * pAddr = allocFramebuffer(pCurrentMode_->xpitch, pCurrentMode_->ypitch, currentPSM_);
+  void * pAddr;
 
-  if(pAddr != NULL)
+  if(allocFramebuffer(pAddr, pCurrentMode_->xpitch, pCurrentMode_->ypitch, currentPSM_) == true)
   {
     CPS2Surface * pSurface = new CPS2Surface;
 
     pSurface->mode        = *pCurrentMode_;
-    pSurface->mode.width  = width;
-    pSurface->mode.height = height;
     pSurface->psm_        = currentPSM_;
     pSurface->p           = pAddr;
 
@@ -589,18 +588,16 @@ CPS2VideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface 
 }
 
 //---------------------------------------------------------------------------
-void *
-CPS2VideoDevice::allocFramebuffer(int w, int h, uint16_t psm)
+bool
+CPS2VideoDevice::allocFramebuffer(void *& addr, int w, int h, uint16_t psm)
 {
-  uint32_t addr;
-
   // Width must be multiple of 64
   if((w & 0x3f) != 0)
-    return NULL;
+    return false;
 
   // Limit the max size
   if((w > 1920) || (h > 1080))
-    return NULL;
+    return false;
 
   uint32_t iSize = w * h;
 
@@ -615,34 +612,32 @@ CPS2VideoDevice::allocFramebuffer(int w, int h, uint16_t psm)
       iSize *= 4;
       break;
     default:
-      return NULL;
+      return false;
   };
 
   // Align to 8KiB
   freeMemAddr_ = (freeMemAddr_ + 0x00001fff) & (~0x00001fff);
 
   // Get addr
-  addr = freeMemAddr_;
+  addr = (void *)freeMemAddr_;
 
   // Add the bytes we just used
   freeMemAddr_ += iSize;
 
-  return (void *)addr;
+  return true;
 }
 
 //---------------------------------------------------------------------------
-void *
-CPS2VideoDevice::allocTexture(int w, int h, uint16_t psm)
+bool
+CPS2VideoDevice::allocTexture(void *& addr, int w, int h, uint16_t psm)
 {
-  uint32_t addr;
-
   // Width must be multiple of 64
   if((w & 0x3f) != 0)
-    return NULL;
+    return false;
 
   // Limit the max size
   if((w > 1024) || (h > 1024))
-    return NULL;
+    return false;
 
   uint32_t iSize = w * h;
 
@@ -665,17 +660,17 @@ CPS2VideoDevice::allocTexture(int w, int h, uint16_t psm)
       iSize *= 4;
       break;
     default:
-      return NULL;
+      return false;
   };
 
   // Align to 256Byte
   freeMemAddr_ = (freeMemAddr_ + 0x000000ff) & (~0x000000ff);
 
   // Get addr
-  addr = freeMemAddr_;
+  addr = (void *)freeMemAddr_;
 
   // Add the bytes we just used
   freeMemAddr_ += iSize;
 
-  return (void *)addr;
+  return true;
 }

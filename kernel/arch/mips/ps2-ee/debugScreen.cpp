@@ -10,7 +10,7 @@ extern SPS2VideoMode vmodes[];
 extern uint32_t courier_new[];
 extern uint16_t fixed_tc[];
 
-uint64_t pdata[50 * 2] __attribute__((aligned(64)));
+uint64_t pdata[1000 * 2] __attribute__((aligned(64)));
 
 
 //---------------------------------------------------------------------------
@@ -23,7 +23,7 @@ CPS2DebugScreen::CPS2DebugScreen()
  , g2_fontbuf_w(256)
  , g2_fontbuf_h(128)
  , g2_font_tc(0)
- , packet_(pdata, 50, DMAC::Channel::GIF)
+ , packet_(pdata, 1000, DMAC::Channel::GIF)
 {
   frameAddr_[0] = 0;
   frameAddr_[1] = 0;

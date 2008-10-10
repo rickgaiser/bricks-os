@@ -191,8 +191,8 @@ CPS2GLESContext::glBindTexture(GLenum target, GLuint texture)
       ((uint32_t)pCurrentTex_->data)>>8,   // base pointer
       pCurrentTex_->width>>6,              // width
       0,                                   // 32bit RGBA
-      getBitNr(pCurrentTex_->width),       // width
-      getBitNr(pCurrentTex_->height),      // height
+      pCurrentTex_->widthBitNr,            // width
+      pCurrentTex_->heightBitNr,           // height
       1,                                   // RGBA
       TEX_DECAL,                           // just overwrite existing pixels
       0, 0, 0, 0, 0));
@@ -303,8 +303,7 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
 
     pCurrentTex_->width        = width;
     pCurrentTex_->height       = height;
-    pCurrentTex_->data         = device_.allocTexture(width, height, GRAPH_PSM_32);
-    if(pCurrentTex_->data == NULL)
+    if(device_.allocTexture((void *)pCurrentTex_->data, width, height, GRAPH_PSM_32) == false)
     {
       setError(GL_OUT_OF_MEMORY);
       return;
@@ -323,7 +322,7 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
         return;
     };
 
-    if(fmtTo != fmtFrom)
+    if(fmtTo == fmtFrom)
     {
       ee_to_gsBitBlt((uint32_t)pCurrentTex_->data, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)pixels);
     }
@@ -406,8 +405,7 @@ CPS2GLESContext::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
   {
     SVertexF & v = *va[iVertex];
 
-    if(ps2DepthInvert_ == true)
-      v.sz = zMax_ - v.sz;
+    uint32_t z = ps2DepthInvert_ ? (zMax_ - v.sz) : v.sz;
 
     // Determine alpha value (for aliasing and alpha blending)
     // Both off: solid colors
@@ -431,7 +429,7 @@ CPS2GLESContext::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
     // Add to message
     if(texturesEnabled_ == true)
     {
-      GLfloat tq = 1.0f / v.vc[3];
+      GLfloat tq = 1.0f / v.vc.w;
       GLfloat ts = v.t[0] * tq;
       GLfloat tt = v.t[1] * tq;
 
@@ -442,7 +440,7 @@ CPS2GLESContext::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
     {
       packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, 0));
     }
-    packet_.gifAddPackedAD(GIF::REG::xyz2, GIF::REG::XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, v.sz));
+    packet_.gifAddPackedAD(GIF::REG::xyz2, GIF::REG::XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, z));
   }
 }
 
@@ -461,11 +459,10 @@ CPS2GLESContext::zbuffer(bool enable)
     if(ps2ZBufferAddr_ == 0)
     {
       // Allocate z-buffer
-      ps2ZBufferAddr_ = (uint32_t)device_.allocFramebuffer(pSurface_->mode.width, pSurface_->mode.height, ps2ZPSM_);
-
-      // Register buffer location and pixel mode
-      packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, ZMSK_ENABLE));
+      device_.allocFramebuffer((void *&)ps2ZBufferAddr_, pSurface_->mode.xpitch, pSurface_->mode.height, ps2ZPSM_);
     }
+    // Register buffer location and pixel mode
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, ZMSK_ENABLE));
   }
   else
   {
