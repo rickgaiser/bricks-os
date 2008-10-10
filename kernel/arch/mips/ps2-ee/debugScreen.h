@@ -31,6 +31,7 @@ private:
 
   SPS2VideoMode * pCurrentPS2Mode_;
   uint16_t actualHeight_;
+  uint32_t freeMemAddr_;
   uint32_t frameAddr_[2];
 
   // Text
@@ -43,10 +44,6 @@ private:
   uint32_t   g2_fontbuf_w;       // font buffer width
   uint32_t   g2_fontbuf_h;       // font buffer height
   uint16_t * g2_font_tc;         // pointer to texture coordinate buffer
-
-  // Primitive to Window coordinate mapping
-  uint16_t   gs_origin_x;
-  uint16_t   gs_origin_y;
 
   // GIF packet for DMA transmission to GS
   CGIFPacket packet_;

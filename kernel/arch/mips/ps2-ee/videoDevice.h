@@ -9,11 +9,6 @@
 
 
 //---------------------------------------------------------------------------
-#define GS_X_BASE 1024
-#define GS_Y_BASE 1024
-
-
-//---------------------------------------------------------------------------
 struct SPS2CRTCMode
 {
   uint8_t biosMode;
@@ -135,6 +130,7 @@ private:
 
   const SVideoMode    * pCurrentMode_;
   const SPS2VideoMode * pCurrentPS2Mode_;
+  uint32_t freeMemAddr_;
   uint16_t actualHeight_;
   uint16_t currentPSM_;
   uint16_t currentInterlaced_;

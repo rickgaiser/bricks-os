@@ -6,9 +6,6 @@
 #include "string.h"
 
 
-#define PS2_VIDEO_MEMORY_SIZE (4*1024*1024)
-
-
 //---------------------------------------------------------------------------
 // DISPFB1/2:
 //  - Base Pointer (>> 13) / (/ 2048)
@@ -108,21 +105,21 @@ static const SVideoMode videoModes[] =
   { 640,  256,  640,  256, 16, cfA1B5G5R5}, //  320KiB  0
   { 640,  256,  640,  256, 24, cfB8G8R8},   //  480KiB
   { 640,  256,  640,  256, 32, cfA8B8G8R8}, //  640KiB
-  { 640,  512,  640,  512, 16, cfA1B5G5R5}, //  640KiB
-  { 640,  512,  640,  512, 24, cfB8G8R8},   //  960KiB
-  { 640,  512,  640,  512, 32, cfA8B8G8R8}, // 1280KiB  5
+  { 640,  512,  640,  512, 16, cfA1B5G5R5}, //  320/ 640KiB
+  { 640,  512,  640,  512, 24, cfB8G8R8},   //  480/ 960KiB
+  { 640,  512,  640,  512, 32, cfA8B8G8R8}, //  640/1280KiB  5
   // NTSC
   { 640,  224,  640,  224, 16, cfA1B5G5R5}, //  280KiB  6
   { 640,  224,  640,  224, 24, cfB8G8R8},   //  420KiB
   { 640,  224,  640,  224, 32, cfA8B8G8R8}, //  560KiB
-  { 640,  448,  640,  448, 16, cfA1B5G5R5}, //  560KiB
-  { 640,  448,  640,  448, 24, cfB8G8R8},   //  840KiB
-  { 640,  448,  640,  448, 32, cfA8B8G8R8}, // 1120KiB 11
+  { 640,  448,  640,  448, 16, cfA1B5G5R5}, //  280/ 560KiB
+  { 640,  448,  640,  448, 24, cfB8G8R8},   //  420/ 840KiB
+  { 640,  448,  640,  448, 32, cfA8B8G8R8}, //  560/1120KiB 11
 
   // EDTV
-  { 720,  480,  720,  480, 16, cfA1B5G5R5}, //  675KiB 12
-  { 720,  480,  720,  480, 24, cfB8G8R8},   // 1012KiB
-  { 720,  480,  720,  480, 32, cfA8B8G8R8}, // 1350KiB 13
+  { 720,  480,  768,  480, 16, cfA1B5G5R5}, //  720KiB 12
+  { 720,  480,  768,  480, 24, cfB8G8R8},   // 1080KiB
+  { 720,  480,  768,  480, 32, cfA8B8G8R8}, // 1440KiB 13
   // HDTV
   {1280,  720, 1280,  720, 16, cfA1B5G5R5}, // 1800KiB 15
   {1280,  720, 1280,  720, 24, cfB8G8R8},   // 2700KiB
@@ -130,16 +127,16 @@ static const SVideoMode videoModes[] =
   {1920,  540, 1920,  540, 16, cfA1B5G5R5}, // 2025KiB
   {1920,  540, 1920,  540, 24, cfB8G8R8},   // 3038KiB
   {1920,  540, 1920,  540, 32, cfA8B8G8R8}, // 4050KiB
-  {1920, 1080, 1920, 1080, 16, cfA1B5G5R5}, // 4050KiB 21
+  {1920, 1080, 1920, 1080, 16, cfA1B5G5R5}, // 2025/4050KiB 21
 
   // VGA
   { 640,  480,  640,  480, 16, cfA1B5G5R5}, //  600KiB 22
   { 640,  480,  640,  480, 24, cfB8G8R8},   //  900KiB
   { 640,  480,  640,  480, 32, cfA8B8G8R8}, // 1200KiB 24
   // SVGA
-  { 800,  600,  800,  600, 16, cfA1B5G5R5}, //  938KiB 25
-  { 800,  600,  800,  600, 24, cfB8G8R8},   // 1406KiB
-  { 800,  600,  800,  600, 32, cfA8B8G8R8}, // 1875KiB 27
+  { 800,  600,  832,  600, 16, cfA1B5G5R5}, //  975KiB 25
+  { 800,  600,  832,  600, 24, cfB8G8R8},   // 1463KiB
+  { 800,  600,  832,  600, 32, cfA8B8G8R8}, // 1950KiB 27
   // XGA
   {1024,  768, 1024,  768, 16, cfA1B5G5R5}, // 1536KiB 28
   {1024,  768, 1024,  768, 24, cfB8G8R8},   // 2304KiB
@@ -196,7 +193,7 @@ CAPS2Renderer::setSurface(CSurface * surface)
   {
     flush();
 
-    packet_.gifAddPackedAD(GIF::REG::frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.width >> 6, pSurface_->psm_, 0));
+    packet_.gifAddPackedAD(GIF::REG::frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.xpitch >> 6, pSurface_->psm_, 0));
     packet_.gifAddPackedAD(GIF::REG::scissor_1, GS_SCISSOR(0, pSurface_->mode.width, 0, pSurface_->mode.height));
   }
 }
@@ -351,6 +348,7 @@ CPS2VideoDevice::CPS2VideoDevice()
  , packet_(50, DMAC::Channel::GIF)
  , pCurrentMode_(NULL)
  , pCurrentPS2Mode_(NULL)
+ , freeMemAddr_(0)
  , iFrameCount_(0)
 {
 }
@@ -436,7 +434,7 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
   };
 
   // Validate total memory requirement of framebuffer
-  if((mode->width * mode->height * (mode->bpp / 8)) > PS2_VIDEO_MEMORY_SIZE)
+  if((mode->xpitch * mode->height * (mode->bpp / 8)) > GS_MEMORY_SIZE)
     return;
 
   pCurrentMode_    = mode;
@@ -493,7 +491,6 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
 }
 
 //---------------------------------------------------------------------------
-static uint32_t bytesUsed(0);
 void
 CPS2VideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
@@ -503,15 +500,15 @@ CPS2VideoDevice::getSurface(CSurface ** surface, int width, int height)
   pSurface->mode.width  = width;
   pSurface->mode.height = height;
   pSurface->psm_        = currentPSM_;
-  pSurface->p           = (void *)bytesUsed;
+  pSurface->p           = (void *)freeMemAddr_;
 
   // Add the bytes we just used
-  bytesUsed += pCurrentMode_->xpitch * pCurrentMode_->ypitch * (pCurrentMode_->bpp / 8);
+  freeMemAddr_ += pCurrentMode_->xpitch * pCurrentMode_->ypitch * (pCurrentMode_->bpp / 8);
 
   // Alignment:
   //  -   8KiB  for system buffers
   //  - 256Byte for textures
-  bytesUsed  = (bytesUsed + 0x1fff) & (~0x1fff); // Align to 8KiB
+  freeMemAddr_ = (freeMemAddr_ + 0x1fff) & (~0x1fff); // Align to 8KiB
 
   *surface = pSurface;
 }
@@ -565,7 +562,7 @@ CPS2VideoDevice::displaySurface(CSurface * surface)
     pSurface_ = pNewSurface;
 
     // Set visible frame
-    REG_GS_DISPFB1 = GS_DISPFB((uint32_t)pSurface_->p >> 13, pSurface_->mode.width >> 6, pSurface_->psm_, 0, 0);
+    REG_GS_DISPFB1 = GS_DISPFB((uint32_t)pSurface_->p >> 13, pSurface_->mode.xpitch >> 6, pSurface_->psm_, 0, 0);
   }
 }
 
@@ -580,10 +577,10 @@ CPS2VideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface 
     packet_.gifTagOpenPacked();
       packet_.gifAddPackedAD(GIF::REG::bitbltbuf, GS_BITBLTBUF(
         ((uint32_t)pSource->p)>>8,
-        pSource->mode.width>>6,
+        pSource->mode.xpitch>>6,
         pSource->psm_,
         ((uint32_t)pDest->p)>>8,
-        pDest->mode.width>>6,
+        pDest->mode.xpitch>>6,
         pDest->psm_));
       packet_.gifAddPackedAD(GIF::REG::trxpos,    GS_TRXPOS(sx, sy, dx, dy, 0));
       packet_.gifAddPackedAD(GIF::REG::trxreg,    GS_TRXREG(w, h));

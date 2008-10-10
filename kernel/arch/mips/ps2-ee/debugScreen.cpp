@@ -16,6 +16,7 @@ uint64_t pdata[50 * 2] __attribute__((aligned(64)));
 //---------------------------------------------------------------------------
 CPS2DebugScreen::CPS2DebugScreen()
  : pCurrentPS2Mode_(NULL)
+ , freeMemAddr_(0)
  , iCurrentX_(0)
  , iCurrentY_(0)
  , g2_fontbuf_addr(0)
@@ -115,8 +116,8 @@ CPS2DebugScreen::cls()
     packet_.gifTagOpenPacked();
       packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
       packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ(0, 0, 0, 0x80, 0));
-      packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2(gs_origin_x<<4, gs_origin_y<<4, 0));
-      packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2((gs_origin_x+pCurrentPS2Mode_->width+1)<<4, (gs_origin_y+actualHeight_+1)<<4, 0));
+      packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2(GS_X_BASE<<4, GS_Y_BASE<<4, 0));
+      packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2((GS_X_BASE+pCurrentPS2Mode_->width+1)<<4, (GS_Y_BASE+actualHeight_+1)<<4, 0));
     packet_.gifTagClose();
   packet_.scTagClose();
   packet_.send();
@@ -129,22 +130,16 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
 {
   pCurrentPS2Mode_ = mode;
 
-  gs_origin_x = 1024;
-  gs_origin_y = 1024;
-
-  // Create memory map
-  uint32_t gs_mem_current = 0;
-
   // Allocate first frame
-  frameAddr_[0] = gs_mem_current;
-  gs_mem_current += pCurrentPS2Mode_->width * actualHeight_ * 4;
+  frameAddr_[0] = freeMemAddr_;
+  freeMemAddr_ += pCurrentPS2Mode_->width * actualHeight_ * 4;
 
   // No double buffering (second frame points to first one)
   frameAddr_[1] = frameAddr_[0];
 
   // Allocate (font) texture
-  g2_fontbuf_addr = gs_mem_current;
-  gs_mem_current += g2_fontbuf_w * g2_fontbuf_h * 4;
+  g2_fontbuf_addr = freeMemAddr_;
+  freeMemAddr_ += g2_fontbuf_w * g2_fontbuf_h * 4;
 
   // Reset the GS
   REG_GS_CSR = GS_CSR_RESET();
@@ -180,25 +175,23 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   // Setup read circuit 2
   //REG_GS_DISPLAY2 = ...;
 
-  // Display buffer
-  REG_GS_DISPFB1  = GS_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, GRAPH_PSM_32, 0, 0);
-
   packet_.scTagOpenEnd();
     packet_.gifTagOpenPacked();
-      // Render buffer
-      packet_.gifAddPackedAD(GIF::REG::frame_1,    GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, GRAPH_PSM_32, 0));
       // Use drawing parameters from PRIM register
       packet_.gifAddPackedAD(GIF::REG::prmodecont, 1);
       // Setup frame buffers. Point to 0 initially.
-      packet_.gifAddPackedAD(GIF::REG::frame_1,    GS_FRAME(0, pCurrentPS2Mode_->width >> 6, GRAPH_PSM_32, 0));
+      packet_.gifAddPackedAD(GIF::REG::frame_1,    GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, GRAPH_PSM_32, 0));
       // Displacement between Primitive and Window coordinate systems.
-      packet_.gifAddPackedAD(GIF::REG::xyoffset_1, GS_XYOFFSET(gs_origin_x<<4, gs_origin_y<<4));
+      packet_.gifAddPackedAD(GIF::REG::xyoffset_1, GS_XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
       // Clip to frame buffer.
       packet_.gifAddPackedAD(GIF::REG::scissor_1,  GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, actualHeight_));
     packet_.gifTagClose();
   packet_.scTagClose();
   packet_.send();
   packet_.reset();
+
+  // Display buffer
+  REG_GS_DISPFB1  = GS_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, GRAPH_PSM_32, 0, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -210,8 +203,8 @@ CPS2DebugScreen::printLine(uint16_t x, uint16_t y, char * str)
   uint16_t x0, y0, x1, y1;  // rectangle for current character
   uint16_t w, h;            // width and height of above rectangle
 
-  x += gs_origin_x;
-  y += gs_origin_y;
+  x += GS_X_BASE;
+  y += GS_Y_BASE;
 
   c = *str;
   while(c)

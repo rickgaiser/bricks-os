@@ -37,6 +37,10 @@
 #define GRAPH_PSM_4HH           0x24    // 4 bits per pixel, palettized. Stored int bits 28..31 of a 32 bit value
 #define GRAPH_PSM_4HL           0x2C    // 4 bits per pixel, palettized. Stored int bits 24..27 of a 32 bit value
 
+#define GS_X_BASE               1024
+#define GS_Y_BASE               1024
+#define GS_MEMORY_SIZE          (4*1024*1024)
+
 #define DRAW_FIELD_EVEN()       (GS_REG_CSR & (1 << 13))
 #define DISPLAY_FIELD_EVEN()    (!DRAW_FIELD_EVEN)
 #define WAIT_VSYNC()            {REG_GS_CSR = REG_GS_CSR & 8; while(!(REG_GS_CSR & 8));}
