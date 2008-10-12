@@ -61,32 +61,45 @@ extern const SColorFormatOperations colorFormatOps[];
 //---------------------------------------------------------------------------
 enum EColorFormat
 {
-    cfUNKNOWN       = 0
-    // (A/X)RGB (32bit)
-  , cfR8G8B8        = 1
-  , cfA8R8G8B8      = 2
-  , cfX8R8G8B8      = 3
-    // (A/X)BGR (32bit)
-  , cfB8G8R8        = 4
-  , cfA8B8G8R8      = 5
-  , cfX8B8G8R8      = 6
-    // (A/X)RGB (16bit)
-  , cfR5G6B5        = 7
-  , cfA1R5G5B5      = 8
-  , cfX1R5G5B5      = 9
-  , cfA4R4G4B4      = 10
-  , cfX4R4G4B4      = 11
-    // (A/X)BGR (16bit)
-  , cfB5G6R5        = 12
-  , cfA1B5G5R5      = 13  // NDS
-  , cfX1B5G5R5      = 14  // GBA
-  , cfA4B4G4R4      = 15
-  , cfX4B4G4R4      = 16
+    cfUNKNOWN       =  0
+    // (A/X)RGB(A/X) (32bit)
+  , cfA8R8G8B8      =  1
+  , cfX8R8G8B8      =  2
+  , cfR8G8B8A8      =  3
+  , cfR8G8B8X8      =  4
+    // (A/X)BGR(A/X) (32bit)
+  , cfA8B8G8R8      =  5
+  , cfX8B8G8R8      =  6
+  , cfB8G8R8A8      =  7
+  , cfB8G8R8X8      =  8
+  // RGB/BGR (24bit)
+  , cfR8G8B8        =  9
+  , cfB8G8R8        = 10
+    // (A/X)RGB(A/X) (16bit)
+  , cfR5G6B5        = 11
+  , cfA1R5G5B5      = 12
+  , cfX1R5G5B5      = 13
+  , cfA4R4G4B4      = 14
+  , cfX4R4G4B4      = 15
+  , cfR5G5B5A1      = 16
+  , cfR5G5B5X1      = 17
+  , cfR4G4B4A4      = 18
+  , cfR4G4B4X4      = 19
+    // (A/X)BGR(A/X) (16bit)
+  , cfB5G6R5        = 20
+  , cfA1B5G5R5      = 21
+  , cfX1B5G5R5      = 22
+  , cfA4B4G4R4      = 23
+  , cfX4B4G4R4      = 24
+  , cfB5G5R5A1      = 25
+  , cfB5G5R5X1      = 26
+  , cfB4G4R4A4      = 27
+  , cfB4G4R4X4      = 28
     // Palettized RGB (8bit)
-  , cfR3G3B2        = 17
+  , cfR3G3B2        = 29
     // Palettized
-  , cfP8            = 18  // 256 colors (8 bit)
-  , cfP4            = 19  //  16 colors (4 bit)
+  , cfP8            = 30 // 256 colors (8 bit)
+  , cfP4            = 31 //  16 colors (4 bit)
 };
 
 //---------------------------------------------------------------------------
