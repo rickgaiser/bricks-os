@@ -50,6 +50,7 @@ private:
 };
 
 int convertImageFormat(void * dst, EColorFormat dstFmt, const void * src, EColorFormat srcFmt, int width, int height);
+EColorFormat convertGLToBxColorFormat(GLenum format, GLenum type);
 
 
 #endif

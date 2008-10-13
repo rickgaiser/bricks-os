@@ -14,21 +14,30 @@
 
 
 //-----------------------------------------------------------------------------
-struct STexturePS2
+struct STexLevel
 {
-  bool used;
-
+  bool    initialized;
   GLsizei width;
   GLsizei height;
   GLint   widthBitNr;
   GLint   heightBitNr;
+  const void * data;
+};
+
+struct STexturePS2
+{
+  bool used;
+  bool initialized;
+
+  STexLevel level_[7];
+  uint16_t maxLevel_;
 
   GLint texMinFilter;
   GLint texMagFilter;
   GLint texWrapS;
   GLint texWrapT;
-
-  const void * data;
+  uint16_t psm_;
+  uint16_t rgba_;
 };
 
 //-----------------------------------------------------------------------------

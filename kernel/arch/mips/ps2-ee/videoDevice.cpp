@@ -55,12 +55,13 @@ const SPS2CRTCMode cmodes[] =
 };
 
 //---------------------------------------------------------------------------
-// VGA Offsets tested with Samsung SyncMaster 900nf
+// SDTV Offsets tested with Panasonic CRT-TV
+// VGA  Offsets tested with Samsung SyncMaster 900nf
 SPS2VideoMode vmodes[] =
 {
   // SDTV
-  { 640,  448, INTERLACED,     &cmodes[ 0], 158, 50}, // NTSC 480i60
-  { 640,  512, INTERLACED,     &cmodes[ 1], 163, 72}, // PAL  576i50
+  { 640,  448, INTERLACED,     &cmodes[ 0], 173, 50}, // NTSC 480i60, offsets ok
+  { 640,  512, INTERLACED,     &cmodes[ 1], 175, 75}, // PAL  576i50, offsets ok
   // VGA
   { 640,  480, NON_INTERLACED, &cmodes[ 2], 140, 25}, // 60Hz, offsets ok
 //  { 640,  480, NON_INTERLACED, &cmodes[ 3], 140, 25}, // 72Hz, offsets ok
@@ -152,7 +153,6 @@ static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 //---------------------------------------------------------------------------
 CPS2Surface::CPS2Surface()
  : CSurface()
- , psm_(GRAPH_PSM_16)
 {
 }
 
@@ -497,7 +497,7 @@ CPS2VideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
   void * pAddr;
 
-  if(allocFramebuffer(pAddr, pCurrentMode_->xpitch, pCurrentMode_->ypitch, currentPSM_) == true)
+  if(allocFramebuffer((uint32_t &)pAddr, pCurrentMode_->xpitch, pCurrentMode_->ypitch, currentPSM_) == true)
   {
     CPS2Surface * pSurface = new CPS2Surface;
 
@@ -589,7 +589,7 @@ CPS2VideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface 
 
 //---------------------------------------------------------------------------
 bool
-CPS2VideoDevice::allocFramebuffer(void *& addr, int w, int h, uint16_t psm)
+CPS2VideoDevice::allocFramebuffer(uint32_t & addr, int w, int h, uint16_t psm)
 {
   // Width must be multiple of 64
   if((w & 0x3f) != 0)
@@ -616,24 +616,24 @@ CPS2VideoDevice::allocFramebuffer(void *& addr, int w, int h, uint16_t psm)
   };
 
   // Align to 8KiB
-  freeMemAddr_ = (freeMemAddr_ + 0x00001fff) & (~0x00001fff);
+  addr = (freeMemAddr_ + 0x00001fff) & (~0x00001fff);
 
-  // Get addr
-  addr = (void *)freeMemAddr_;
+  if((addr + iSize) > GS_MEMORY_SIZE)
+    return false;
 
-  // Add the bytes we just used
-  freeMemAddr_ += iSize;
+  // Save new addr
+  freeMemAddr_ = addr + iSize;
 
   return true;
 }
 
 //---------------------------------------------------------------------------
 bool
-CPS2VideoDevice::allocTexture(void *& addr, int w, int h, uint16_t psm)
+CPS2VideoDevice::allocTexture(uint32_t & addr, int w, int h, uint16_t psm)
 {
   // Width must be multiple of 64
-  if((w & 0x3f) != 0)
-    return false;
+  //if((w & 0x3f) != 0)
+  //  return false;
 
   // Limit the max size
   if((w > 1024) || (h > 1024))
@@ -664,13 +664,13 @@ CPS2VideoDevice::allocTexture(void *& addr, int w, int h, uint16_t psm)
   };
 
   // Align to 256Byte
-  freeMemAddr_ = (freeMemAddr_ + 0x000000ff) & (~0x000000ff);
+  addr = (freeMemAddr_ + 0x000000ff) & (~0x000000ff);
 
-  // Get addr
-  addr = (void *)freeMemAddr_;
+  if((addr + iSize) > GS_MEMORY_SIZE)
+    return false;
 
-  // Add the bytes we just used
-  freeMemAddr_ += iSize;
+  // Save new addr
+  freeMemAddr_ = addr + iSize;
 
   return true;
 }

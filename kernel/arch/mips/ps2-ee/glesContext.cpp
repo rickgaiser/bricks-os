@@ -186,23 +186,53 @@ CPS2GLESContext::glBindTexture(GLenum target, GLuint texture)
 
   pCurrentTex_ = &textures_[texture];
 
-  packet_.gifAddPackedAD(GIF::REG::tex0_1,
-    GS_TEX0(
-      ((uint32_t)pCurrentTex_->data)>>8,   // base pointer
-      pCurrentTex_->width>>6,              // width
-      0,                                   // 32bit RGBA
-      pCurrentTex_->widthBitNr,            // width
-      pCurrentTex_->heightBitNr,           // height
-      1,                                   // RGBA
-      TEX_DECAL,                           // just overwrite existing pixels
-      0, 0, 0, 0, 0));
+  if(pCurrentTex_->level_[0].initialized == true)
+  {
+    packet_.gifAddPackedAD(GIF::REG::tex0_1,
+      GS_TEX0(
+        ((uint32_t)pCurrentTex_->level_[0].data)>>8,   // base pointer
+        pCurrentTex_->level_[0].width>>6,              // width
+        pCurrentTex_->psm_,                            // pixel store mode
+        pCurrentTex_->level_[0].widthBitNr,            // width
+        pCurrentTex_->level_[0].heightBitNr,           // height
+        pCurrentTex_->rgba_,                           // 0=RGB, 1=RGBA
+        TEX_MODULATE,                                  // Texture Function
+        0, 0, 0, 0, 0));                               // CLUT (currently not used)
 
-  packet_.gifAddPackedAD(GIF::REG::tex1_1,
-    GS_TEX1(
-      0, 0,
-      pCurrentTex_->texMagFilter == GL_LINEAR, // GL_LINEAR or GL_NEAREST
-      pCurrentTex_->texMinFilter == GL_LINEAR, // GL_LINEAR or GL_NEAREST
-      0, 0, 0));
+    packet_.gifAddPackedAD(GIF::REG::tex1_1,
+      GS_TEX1(
+        0,
+        pCurrentTex_->maxLevel_,                 // Max MipMap level
+        pCurrentTex_->texMagFilter == GL_LINEAR, // GL_LINEAR or GL_NEAREST
+        4,//pCurrentTex_->texMinFilter == GL_LINEAR, // GL_LINEAR or GL_NEAREST
+        0,
+        0,                                       // LOD: L parameter (Shift LOD left 0..3)
+        -20));                                   // LOD: K parameter (Add to LOD -128..127)
+
+    if(pCurrentTex_->maxLevel_ > 0)
+    {
+      packet_.gifAddPackedAD(GIF::REG::miptbp1_1,
+        GS_MIPTBP(
+          ((uint32_t)pCurrentTex_->level_[1].data) >> 8,
+          pCurrentTex_->level_[1].width>>6,
+          ((uint32_t)pCurrentTex_->level_[2].data) >> 8,
+          pCurrentTex_->level_[2].width>>6,
+          ((uint32_t)pCurrentTex_->level_[3].data) >> 8,
+          pCurrentTex_->level_[3].width>>6));
+    }
+
+    if(pCurrentTex_->maxLevel_ > 3)
+    {
+      packet_.gifAddPackedAD(GIF::REG::miptbp2_1,
+        GS_MIPTBP(
+          ((uint32_t)pCurrentTex_->level_[4].data) >> 8,
+          pCurrentTex_->level_[4].width>>6,
+          ((uint32_t)pCurrentTex_->level_[5].data) >> 8,
+          pCurrentTex_->level_[5].width>>6,
+          ((uint32_t)pCurrentTex_->level_[6].data) >> 8,
+          pCurrentTex_->level_[6].width>>6));
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -239,12 +269,7 @@ CPS2GLESContext::glGenTextures(GLsizei n, GLuint *textures)
       if(textures_[idxTex].used == false)
       {
         textures_[idxTex].used = true;
-
-        // Initialize some default values
-        textures_[idxTex].texMinFilter = GL_LINEAR;
-        textures_[idxTex].texMagFilter = GL_LINEAR;
-        textures_[idxTex].texWrapS     = GL_REPEAT;
-        textures_[idxTex].texWrapT     = GL_REPEAT;
+        textures_[idxTex].initialized = false;
 
         textures[idxNr] = idxTex;
         bFound = true;
@@ -261,6 +286,11 @@ CPS2GLESContext::glGenTextures(GLsizei n, GLuint *textures)
 void
 CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
+  //level = 0;
+  internalformat = GL_RGBA;
+  format = GL_RGBA;
+  type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+
   if(target != GL_TEXTURE_2D)
   {
     setError(GL_INVALID_ENUM);
@@ -271,69 +301,179 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
     setError(GL_INVALID_VALUE);
     return;
   }
-
-  // FIXME: MipMaps not supported
-  if(level > 0)
-    return;
-
-  if((pCurrentTex_ != 0) && (pCurrentTex_->used == true))
+  if((GLint)format != internalformat)
   {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+  if(((format != GL_RGB) && (format != GL_BGR)) &&
+     ((type == GL_UNSIGNED_SHORT_5_6_5) ||
+      (type == GL_UNSIGNED_SHORT_5_6_5_REV)))
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+  if(((format != GL_RGBA) && (format != GL_BGRA)) &&
+     ((type == GL_UNSIGNED_SHORT_4_4_4_4) ||
+      (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) ||
+      (type == GL_UNSIGNED_SHORT_5_5_5_1) ||
+      (type == GL_UNSIGNED_SHORT_1_5_5_5_REV)))
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  if(level > 6)
+  {
+//    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  if((pCurrentTex_ == 0) || (pCurrentTex_->used == false))
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  if(pCurrentTex_->initialized == false)
+  {
+    // Initialize the texture with MipMap level 0 first
+    if(level != 0)
+    {
+      setError(GL_INVALID_OPERATION);
+      return;
+    }
+
+    pCurrentTex_->texMinFilter = GL_LINEAR;
+    pCurrentTex_->texMagFilter = GL_LINEAR;
+    pCurrentTex_->texWrapS     = GL_REPEAT;
+    pCurrentTex_->texWrapT     = GL_REPEAT;
+    for(int iLevel(0); iLevel < 7; iLevel++)
+      pCurrentTex_->level_[iLevel].initialized = false;
+    pCurrentTex_->initialized  = true;
+  }
+
+  if(level == 0)
+  {
+    GLint widthBit;
+    GLint heightBit;
+
+    // Clear every level
+    for(int iLevel(0); iLevel < 7; iLevel++)
+      pCurrentTex_->level_[iLevel].initialized = false;
+
     switch(width)
     {
-      case   64: pCurrentTex_->widthBitNr =  6; break;
-      case  128: pCurrentTex_->widthBitNr =  7; break;
-      case  256: pCurrentTex_->widthBitNr =  8; break;
-      case  512: pCurrentTex_->widthBitNr =  9; break;
-      case 1024: pCurrentTex_->widthBitNr = 10; break;
+      case   64: widthBit =  6; break;
+      case  128: widthBit =  7; break;
+      case  256: widthBit =  8; break;
+      case  512: widthBit =  9; break;
+      case 1024: widthBit = 10; break;
       default:
         setError(GL_INVALID_VALUE);
         return;
     };
     switch(height)
     {
-      case   64: pCurrentTex_->heightBitNr =  6; break;
-      case  128: pCurrentTex_->heightBitNr =  7; break;
-      case  256: pCurrentTex_->heightBitNr =  8; break;
-      case  512: pCurrentTex_->heightBitNr =  9; break;
-      case 1024: pCurrentTex_->heightBitNr = 10; break;
+      case   64: heightBit =  6; break;
+      case  128: heightBit =  7; break;
+      case  256: heightBit =  8; break;
+      case  512: heightBit =  9; break;
+      case 1024: heightBit = 10; break;
       default:
         setError(GL_INVALID_VALUE);
         return;
     };
 
-    pCurrentTex_->width        = width;
-    pCurrentTex_->height       = height;
-    if(device_.allocTexture((void *)pCurrentTex_->data, width, height, GRAPH_PSM_32) == false)
+    for(int iLevel(0); iLevel < 7; iLevel++)
     {
-      setError(GL_OUT_OF_MEMORY);
+      pCurrentTex_->level_[iLevel].width       = width    >> iLevel;
+      pCurrentTex_->level_[iLevel].height      = height   >> iLevel;
+      pCurrentTex_->level_[iLevel].widthBitNr  = widthBit  - iLevel;
+      pCurrentTex_->level_[iLevel].heightBitNr = heightBit - iLevel;
+    }
+
+    pCurrentTex_->rgba_ = ((format == GL_RGBA) || (format == GL_BGRA));
+  }
+  else
+  {
+    // MipMap level > 0
+
+    // Previous level must be initialized
+    if(pCurrentTex_->level_[level-1].initialized == false)
+    {
+      setError(GL_INVALID_OPERATION);
       return;
     }
-
-    EColorFormat fmtTo = cfA8B8G8R8;
-    EColorFormat fmtFrom;
-    switch(type)
+    // Width and height must be >= 8
+    if((width < 8) || (height < 8))
     {
-      case GL_UNSIGNED_BYTE:          fmtFrom = cfA8B8G8R8; break;
-      case GL_UNSIGNED_SHORT_5_6_5:   fmtFrom = cfR5G6B5;   break;
-      case GL_UNSIGNED_SHORT_4_4_4_4: fmtFrom = cfA4B4G4R4; break;
-      case GL_UNSIGNED_SHORT_5_5_5_1: fmtFrom = cfA1B5G5R5; break;
-      default:
-        setError(GL_INVALID_ENUM);
-        return;
-    };
-
-    if(fmtTo == fmtFrom)
-    {
-      ee_to_gsBitBlt((uint32_t)pCurrentTex_->data, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)pixels);
+//      setError(GL_INVALID_OPERATION);
+      return;
     }
-    else
+    // Width and height must match the selected level
+    if((pCurrentTex_->level_[level].width != width) || (pCurrentTex_->level_[level].height != height))
     {
-      uint32_t * newTexture = new uint32_t[width*height];
-      convertImageFormat(newTexture, fmtTo, pixels, fmtFrom, width, height);
-      ee_to_gsBitBlt((uint32_t)pCurrentTex_->data, width, GRAPH_PSM_32, 0, 0, width, height, (uint32_t)newTexture);
-      delete newTexture;
+      setError(GL_INVALID_OPERATION);
+      return;
+    }
+    // RGB/RGBA must match
+    if(pCurrentTex_->rgba_ != ((format == GL_RGBA) || (format == GL_BGRA)))
+    {
+      setError(GL_INVALID_OPERATION);
+      return;
     }
   }
+
+  EColorFormat fmtTo;
+  EColorFormat fmtFrom = convertGLToBxColorFormat(format, type);
+  if(fmtFrom == cfUNKNOWN)
+  {
+    setError(GL_INVALID_ENUM);
+    return;
+  }
+
+  if(colorFormatOps[fmtFrom].bitsPerPixel <= 16)
+  {
+    pCurrentTex_->psm_ = GRAPH_PSM_16;
+    fmtTo = cfA1B5G5R5;
+  }
+  else
+  {
+    pCurrentTex_->psm_ = GRAPH_PSM_32;
+    fmtTo = cfA8B8G8R8;
+  }
+
+  uint32_t texAddr(0);
+  if(device_.allocTexture(texAddr, width, height, pCurrentTex_->psm_) == false)
+  {
+    setError(GL_OUT_OF_MEMORY);
+    return;
+  }
+
+  if(fmtTo == fmtFrom)
+  {
+    ee_to_gsBitBlt(texAddr, width, pCurrentTex_->psm_, 0, 0, width, height, (uint32_t)pixels);
+  }
+  else if(pCurrentTex_->psm_ == GRAPH_PSM_16)
+  {
+    uint16_t * newTexture = new uint16_t[width*height];
+    convertImageFormat(newTexture, fmtTo, pixels, fmtFrom, width, height);
+    ee_to_gsBitBlt(texAddr, width, pCurrentTex_->psm_, 0, 0, width, height, (uint32_t)newTexture);
+    delete newTexture;
+  }
+  else // 32bit
+  {
+    uint32_t * newTexture = new uint32_t[width*height];
+    convertImageFormat(newTexture, fmtTo, pixels, fmtFrom, width, height);
+    ee_to_gsBitBlt(texAddr, width, pCurrentTex_->psm_, 0, 0, width, height, (uint32_t)newTexture);
+    delete newTexture;
+  }
+
+  pCurrentTex_->level_[level].data = (void *)texAddr;
+  if(level > pCurrentTex_->maxLevel_)
+    pCurrentTex_->maxLevel_ = level;
+  pCurrentTex_->level_[level].initialized = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -459,7 +599,7 @@ CPS2GLESContext::zbuffer(bool enable)
     if(ps2ZBufferAddr_ == 0)
     {
       // Allocate z-buffer
-      device_.allocFramebuffer((void *&)ps2ZBufferAddr_, pSurface_->mode.xpitch, pSurface_->mode.height, ps2ZPSM_);
+      device_.allocFramebuffer(ps2ZBufferAddr_, pSurface_->mode.xpitch, pSurface_->mode.height, ps2ZPSM_);
     }
     // Register buffer location and pixel mode
     packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, ZMSK_ENABLE));

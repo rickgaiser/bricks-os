@@ -302,6 +302,15 @@
    ((uint64_t)(L)    << 19) | \
    ((uint64_t)(K)    << 32))
 
+// MipMap Table Pointers and Widths
+#define GS_MIPTBP(P1,W1,P2,W2,P3,W3) \
+  (((uint64_t)(P1)   <<  0) | \
+   ((uint64_t)(W1)   << 14) | \
+   ((uint64_t)(P2)   << 20) | \
+   ((uint64_t)(W2)   << 34) | \
+   ((uint64_t)(P3)   << 40) | \
+   ((uint64_t)(W3)   << 54))
+
 // TRXDIR Register - Set Image Transfer Directon, and Start Transfer
 //   XDIR - (0=EE->GS, 1=GS->EE, 2=GS->GS, 3=Transmission is deactivated)
 #define XDIR_EE_GS              0

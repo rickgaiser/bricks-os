@@ -596,6 +596,27 @@ CNDSGLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
     setError(GL_INVALID_VALUE);
     return;
   }
+  if((GLint)format != internalformat)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+  if(((format != GL_RGB) && (format != GL_BGR)) &&
+     ((type == GL_UNSIGNED_SHORT_5_6_5) ||
+      (type == GL_UNSIGNED_SHORT_5_6_5_REV)))
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+  if(((format != GL_RGBA) && (format != GL_BGRA)) &&
+     ((type == GL_UNSIGNED_SHORT_4_4_4_4) ||
+      (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) ||
+      (type == GL_UNSIGNED_SHORT_5_5_5_1) ||
+      (type == GL_UNSIGNED_SHORT_1_5_5_5_REV)))
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
 
   // FIXME: MipMaps not supported
   if(level > 0)
@@ -638,17 +659,12 @@ CNDSGLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
     pCurrentTex_->format = TEXGEN_OFF | NDS_REPEAT_S | NDS_REPEAT_T | (idxWidth << 20) | (idxHeight << 23) | (((uint32_t)FIXME_TEX_ADDR >> 3) & 0xFFFF) | (NDS_RGBA << 26);
     pCurrentTex_->data   = (void *)FIXME_TEX_ADDR;
 
-    EColorFormat fmtFrom;
-    switch(type)
+    EColorFormat fmtFrom = convertGLToBxColorFormat(format, type);
+    if(fmtFrom == cfUNKNOWN)
     {
-      case GL_UNSIGNED_BYTE:          fmtFrom = cfA8B8G8R8; break;
-      case GL_UNSIGNED_SHORT_5_6_5:   fmtFrom = cfR5G6B5;   break;
-      case GL_UNSIGNED_SHORT_4_4_4_4: fmtFrom = cfA4B4G4R4; break;
-      case GL_UNSIGNED_SHORT_5_5_5_1: fmtFrom = cfA1B5G5R5; break;
-      default:
-        setError(GL_INVALID_ENUM);
-        return;
-    };
+      setError(GL_INVALID_ENUM);
+      return;
+    }
 
     // Unlock texture memory
     REG_VRAM_C_CR = VRAM_ENABLE | VRAM_TYPE_LCD;

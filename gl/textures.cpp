@@ -77,6 +77,42 @@ convertImageFormat(void * dst, EColorFormat dstFmt, const void * src, EColorForm
 }
 
 //-----------------------------------------------------------------------------
+EColorFormat
+convertGLToBxColorFormat(GLenum format, GLenum type)
+{
+  EColorFormat fmt;
+
+  // Validate format
+  if((format != GL_RGB) && (format != GL_BGR) && (format != GL_RGBA) && (format != GL_BGRA))
+    return cfUNKNOWN;
+
+  switch(type)
+  {
+    case GL_UNSIGNED_BYTE:
+    {
+      switch(format)
+      {
+        case GL_RGB:  fmt = cfR8G8B8;   break;
+        case GL_BGR:  fmt = cfB8G8R8;   break;
+        case GL_RGBA: fmt = cfR8G8B8A8; break;
+        case GL_BGRA: fmt = cfB8G8R8A8; break;
+        default:      fmt = cfUNKNOWN;
+      };
+      break;
+    }
+    case GL_UNSIGNED_SHORT_5_6_5:       fmt = (format == GL_RGB ) ? cfR5G6B5   : cfB5G6R5;   break;
+    case GL_UNSIGNED_SHORT_5_6_5_REV:   fmt = (format == GL_RGB ) ? cfB5G6R5   : cfR5G6B5;   break;
+    case GL_UNSIGNED_SHORT_4_4_4_4:     fmt = (format == GL_RGBA) ? cfR4G4B4A4 : cfB4G4R4A4; break;
+    case GL_UNSIGNED_SHORT_4_4_4_4_REV: fmt = (format == GL_RGBA) ? cfA4B4G4R4 : cfA4R4G4B4; break;
+    case GL_UNSIGNED_SHORT_5_5_5_1:     fmt = (format == GL_RGBA) ? cfR5G5B5A1 : cfB5G5R5A1; break;
+    case GL_UNSIGNED_SHORT_1_5_5_5_REV: fmt = (format == GL_RGBA) ? cfA1B5G5R5 : cfA1R5G5B5; break;
+    default:                            fmt = cfUNKNOWN;
+  };
+
+  return fmt;
+}
+
+//-----------------------------------------------------------------------------
 CAGLESTextures::CAGLESTextures()
  : pCurrentTex_(NULL)
 {
@@ -190,6 +226,27 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
 //    setError(GL_INVALID_VALUE);
     return;
   }
+  if((GLint)format != internalformat)
+  {
+//    setError(GL_INVALID_OPERATION);
+    return;
+  }
+  if(((format != GL_RGB) && (format != GL_BGR)) &&
+     ((type == GL_UNSIGNED_SHORT_5_6_5) ||
+      (type == GL_UNSIGNED_SHORT_5_6_5_REV)))
+  {
+//    setError(GL_INVALID_OPERATION);
+    return;
+  }
+  if(((format != GL_RGBA) && (format != GL_BGRA)) &&
+     ((type == GL_UNSIGNED_SHORT_4_4_4_4) ||
+      (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) ||
+      (type == GL_UNSIGNED_SHORT_5_5_5_1) ||
+      (type == GL_UNSIGNED_SHORT_1_5_5_5_REV)))
+  {
+//    setError(GL_INVALID_OPERATION);
+    return;
+  }
 
   // FIXME: MipMaps not supported
   if(level > 0)
@@ -233,18 +290,13 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
     pCurrentTex_->width  = width;
     pCurrentTex_->height = height;
 
-    EColorFormat fmtTo = renderSurface->mode.format;
-    EColorFormat fmtFrom;
-    switch(type)
+    EColorFormat fmtTo   = renderSurface->mode.format;
+    EColorFormat fmtFrom = convertGLToBxColorFormat(format, type);
+    if(fmtFrom == cfUNKNOWN)
     {
-      case GL_UNSIGNED_BYTE:          fmtFrom = cfA8B8G8R8; break;
-      case GL_UNSIGNED_SHORT_5_6_5:   fmtFrom = cfR5G6B5;   break;
-      case GL_UNSIGNED_SHORT_4_4_4_4: fmtFrom = cfA4B4G4R4; break;
-      case GL_UNSIGNED_SHORT_5_5_5_1: fmtFrom = cfA1B5G5R5; break;
-      default:
-//        setError(GL_INVALID_ENUM);
-        return;
-    };
+//      setError(GL_INVALID_ENUM);
+      return;
+    }
 
     // Delete old texture buffer if present
     if(pCurrentTex_->data != NULL)

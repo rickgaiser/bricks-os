@@ -88,7 +88,7 @@ GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, typ
 // GL API
 //-----------------------------------------------------------------------------
 //#ifdef OPENGL_ES
-GL_API GLenum GL_APIENTRY glGetError (void);
+GL_API GLenum GL_APIENTRY glGetError (void){return pCurrentContext->glGetError();}
 GL_APIFUNCTION_4(glColorPointer,       GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);
 GL_APIFUNCTION_3(glNormalPointer,      GLenum, type, GLsizei, stride, const GLvoid *, pointer);
 GL_APIFUNCTION_4(glTexCoordPointer,    GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);

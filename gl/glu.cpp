@@ -1,6 +1,7 @@
 #include "GL/glu.h"
 #include "GLES/gl.h"
 #include "math.h"
+#include "textures.h"
 #include "kernel/videoManager.h"
 
 
@@ -28,7 +29,9 @@ gluBuild2DMipmaps(GLenum target, GLint components, GLint width, GLint height, GL
   switch(format)
   {
     case GL_RGB:  break;
+    case GL_BGR:  break;
     case GL_RGBA: break;
+    case GL_BGRA: break;
     default:
       return GLU_INVALID_ENUM;
   };
@@ -107,41 +110,10 @@ gluScaleImage(GLenum format, GLint widthin, GLint heightin, GLenum typein, const
   if((widthin < 0) || (heightin < 0) || (widthout < 0) || (heightout < 0))
     return GLU_INVALID_VALUE;
 
-  switch(format)
-  {
-    case GL_RGB:  break;
-    case GL_RGBA: break;
-    default:
-      return GLU_INVALID_ENUM;
-  };
-
-  switch(typein)
-  {
-    case GL_UNSIGNED_SHORT_5_6_5:       fmtFrom = cfR5G6B5;   break;
-    case GL_UNSIGNED_SHORT_5_6_5_REV:   fmtFrom = cfB5G6R5;   break;
-    case GL_UNSIGNED_SHORT_4_4_4_4:     fmtFrom = cfR4G4B4A4; break;
-    case GL_UNSIGNED_SHORT_4_4_4_4_REV: fmtFrom = cfA4B4G4R4; break;
-    case GL_UNSIGNED_SHORT_5_5_5_1:     fmtFrom = cfR5G5B5A1; break;
-    case GL_UNSIGNED_SHORT_1_5_5_5_REV: fmtFrom = cfA1B5G5R5; break;
-//    case GL_UNSIGNED_INT_8_8_8_8:       fmtFrom = cfR8G8B8A8; break;
-//    case GL_UNSIGNED_INT_8_8_8_8_REV:   fmtFrom = cfA8B8G8R8; break;
-    default:
-      return GLU_INVALID_ENUM;
-  };
-
-  switch(typeout)
-  {
-    case GL_UNSIGNED_SHORT_5_6_5:       fmtTo = cfR5G6B5;   break;
-    case GL_UNSIGNED_SHORT_5_6_5_REV:   fmtTo = cfB5G6R5;   break;
-    case GL_UNSIGNED_SHORT_4_4_4_4:     fmtTo = cfR4G4B4A4; break;
-    case GL_UNSIGNED_SHORT_4_4_4_4_REV: fmtTo = cfA4B4G4R4; break;
-    case GL_UNSIGNED_SHORT_5_5_5_1:     fmtTo = cfR5G5B5A1; break;
-    case GL_UNSIGNED_SHORT_1_5_5_5_REV: fmtTo = cfA1B5G5R5; break;
-//    case GL_UNSIGNED_INT_8_8_8_8:       fmtTo = cfR8G8B8A8; break;
-//    case GL_UNSIGNED_INT_8_8_8_8_REV:   fmtTo = cfA8B8G8R8; break;
-    default:
-      return GLU_INVALID_ENUM;
-  };
+  fmtTo   = convertGLToBxColorFormat(format, typeout);
+  fmtFrom = convertGLToBxColorFormat(format, typein);
+  if((fmtTo == cfUNKNOWN) || (fmtFrom == cfUNKNOWN))
+    return GLU_INVALID_ENUM;
 
   // We only scale down
   if((widthout > widthin) || (heightout > heightin))

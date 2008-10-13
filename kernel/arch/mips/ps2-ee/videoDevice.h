@@ -121,8 +121,8 @@ public:
 
   virtual void bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * source, int sx, int sy);
 
-  bool allocFramebuffer(void *& addr, int w, int h, uint16_t psm);
-  bool allocTexture(void *& addr, int w, int h, uint16_t psm);
+  bool allocFramebuffer(uint32_t & addr, int w, int h, uint16_t psm);
+  bool allocTexture(uint32_t & addr, int w, int h, uint16_t psm);
 
 private:
   // Surface we're currently displaying
