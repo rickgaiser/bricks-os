@@ -57,7 +57,7 @@ extern "C" {
 #   endif
 #endif
 
-#define GL_APIENTRY 
+#define GL_APIENTRY
 
 #ifndef GLAPI
 #	define GLAPI GL_API
@@ -430,6 +430,8 @@ typedef int             GLsizeiptr;
 #define GL_RGBA                           0x1908
 #define GL_LUMINANCE                      0x1909
 #define GL_LUMINANCE_ALPHA                0x190A
+#define GL_BGR                            0x80E0 // OpenGL 1.2
+#define GL_BGRA                           0x80E1 // OpenGL 1.2
 
 /* PixelStoreParameter */
 #define GL_UNPACK_ALIGNMENT               0x0CF5
@@ -437,9 +439,18 @@ typedef int             GLsizeiptr;
 
 /* PixelType */
 /*      GL_UNSIGNED_BYTE */
-#define GL_UNSIGNED_SHORT_4_4_4_4         0x8033
-#define GL_UNSIGNED_SHORT_5_5_5_1         0x8034
+#define GL_UNSIGNED_BYTE_3_3_2            0x8032 // OpenGL 1.2
+#define GL_UNSIGNED_BYTE_2_3_3_REV        0x8362 // OpenGL 1.2
 #define GL_UNSIGNED_SHORT_5_6_5           0x8363
+#define GL_UNSIGNED_SHORT_5_6_5_REV       0x8364 // OpenGL 1.2
+#define GL_UNSIGNED_SHORT_4_4_4_4         0x8033
+#define GL_UNSIGNED_SHORT_4_4_4_4_REV     0x8365 // OpenGL 1.2
+#define GL_UNSIGNED_SHORT_5_5_5_1         0x8034
+#define GL_UNSIGNED_SHORT_1_5_5_5_REV     0x8366 // OpenGL 1.2
+#define GL_UNSIGNED_INT_8_8_8_8           0x8035 // OpenGL 1.2
+#define GL_UNSIGNED_INT_8_8_8_8_REV       0x8367 // OpenGL 1.2
+//#define GL_UNSIGNED_INT_10_10_10_2        0x8036 // OpenGL 1.2
+//#define GL_UNSIGNED_INT_2_10_10_10_REV    0x8368 // OpenGL 1.2
 
 /* ShadingModel */
 #define GL_FLAT                           0x1D00
