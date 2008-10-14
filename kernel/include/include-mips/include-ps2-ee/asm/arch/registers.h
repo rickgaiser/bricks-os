@@ -263,10 +263,10 @@
 //                        0=RGB,
 //                        1=RGBA, use Alpha from TEXA reg when not in PSM
 //   TFX  - Texture Function (0=modulate, 1=decal, 2=hilight, 3=hilight2)
-#define TEX_MODULATE            0
-#define TEX_DECAL               1
-#define TEX_HILIGHT             2
-#define TEX_HILIGHT2            3
+#define PS2_GL_MODULATE         0
+#define PS2_GL_DECAL            1
+#define TEX_HILIGHT             2 // Not supported in OpenGL???
+#define TEX_HILIGHT2            3 // Not supported in OpenGL???
 
 #define GS_TEX0(TBP0,TBW,PSM,TW,TH,TCC,TFX,CBP,CPSM,CSM,CSA,CLD) \
   (((uint64_t)(TBP0) <<  0) | \
@@ -290,8 +290,12 @@
 //   MTBA  - MIP Base specified by (0=MIPTBP1&2, 1=Automatic)
 //   L     - LOD parameter L
 //   K     - LOD parameter K
-#define FILTER_NEAREST          0
-#define FILTER_LINEAR           1
+#define PS2_GL_NEAREST                 0
+#define PS2_GL_LINEAR                  1
+#define PS2_GL_NEAREST_MIPMAP_NEAREST  2
+#define PS2_GL_NEAREST_MIPMAP_LINEAR   3
+#define PS2_GL_LINEAR_MIPMAP_NEAREST   4
+#define PS2_GL_LINEAR_MIPMAP_LINEAR    5
 
 #define GS_TEX1(LCM,MXL,MMAG,MMIN,MTBA,L,K) \
   (((uint64_t)(LCM)  <<  0) | \

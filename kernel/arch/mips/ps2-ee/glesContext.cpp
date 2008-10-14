@@ -170,6 +170,7 @@ CPS2GLESContext::glShadeModel(GLenum mode)
 }
 
 //-----------------------------------------------------------------------------
+#define MIN_VAL(x,y) (((x) > (y)) ? (x) : (y))
 void
 CPS2GLESContext::glBindTexture(GLenum target, GLuint texture)
 {
@@ -196,16 +197,16 @@ CPS2GLESContext::glBindTexture(GLenum target, GLuint texture)
         pCurrentTex_->level_[0].widthBitNr,            // width
         pCurrentTex_->level_[0].heightBitNr,           // height
         pCurrentTex_->rgba_,                           // 0=RGB, 1=RGBA
-        TEX_MODULATE,                                  // Texture Function
+        TEX_DECAL,                                     // GL_TEXTURE_ENV_MODE
         0, 0, 0, 0, 0));                               // CLUT (currently not used)
 
     packet_.gifAddPackedAD(GIF::REG::tex1_1,
       GS_TEX1(
-        0,
+        0,                                       // LOD Calculation: 0=formula, 1=fixed
         pCurrentTex_->maxLevel_,                 // Max MipMap level
-        pCurrentTex_->texMagFilter == GL_LINEAR, // GL_LINEAR or GL_NEAREST
-        4,//pCurrentTex_->texMinFilter == GL_LINEAR, // GL_LINEAR or GL_NEAREST
-        0,
+        pCurrentTex_->texMagFilter,              // GL_TEXTURE_MAG_FILTER
+        pCurrentTex_->texMinFilter,              // GL_TEXTURE_MIN_FILTER
+        0,                                       // 0=We specify MipMap addr. 1=auto generated (with limitations)
         0,                                       // LOD: L parameter (Shift LOD left 0..3)
         -20));                                   // LOD: K parameter (Add to LOD -128..127)
 
@@ -214,11 +215,11 @@ CPS2GLESContext::glBindTexture(GLenum target, GLuint texture)
       packet_.gifAddPackedAD(GIF::REG::miptbp1_1,
         GS_MIPTBP(
           ((uint32_t)pCurrentTex_->level_[1].data) >> 8,
-          pCurrentTex_->level_[1].width>>6,
+          MIN_VAL(pCurrentTex_->level_[1].width>>6, 1),
           ((uint32_t)pCurrentTex_->level_[2].data) >> 8,
-          pCurrentTex_->level_[2].width>>6,
+          MIN_VAL(pCurrentTex_->level_[2].width>>6, 1),
           ((uint32_t)pCurrentTex_->level_[3].data) >> 8,
-          pCurrentTex_->level_[3].width>>6));
+          MIN_VAL(pCurrentTex_->level_[3].width>>6, 1)));
     }
 
     if(pCurrentTex_->maxLevel_ > 3)
@@ -226,11 +227,11 @@ CPS2GLESContext::glBindTexture(GLenum target, GLuint texture)
       packet_.gifAddPackedAD(GIF::REG::miptbp2_1,
         GS_MIPTBP(
           ((uint32_t)pCurrentTex_->level_[4].data) >> 8,
-          pCurrentTex_->level_[4].width>>6,
+          MIN_VAL(pCurrentTex_->level_[4].width>>6, 1),
           ((uint32_t)pCurrentTex_->level_[5].data) >> 8,
-          pCurrentTex_->level_[5].width>>6,
+          MIN_VAL(pCurrentTex_->level_[5].width>>6, 1),
           ((uint32_t)pCurrentTex_->level_[6].data) >> 8,
-          pCurrentTex_->level_[6].width>>6));
+          MIN_VAL(pCurrentTex_->level_[6].width>>6, 1)));
     }
   }
 }
@@ -344,7 +345,7 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
       return;
     }
 
-    pCurrentTex_->texMinFilter = GL_LINEAR;
+    pCurrentTex_->texMinFilter = PS2_GL_NEAREST_MIPMAP_LINEAR;
     pCurrentTex_->texMagFilter = GL_LINEAR;
     pCurrentTex_->texWrapS     = GL_REPEAT;
     pCurrentTex_->texWrapT     = GL_REPEAT;
@@ -490,10 +491,45 @@ CPS2GLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
   {
     switch(pname)
     {
-      case GL_TEXTURE_MIN_FILTER: pCurrentTex_->texMinFilter = (GLint)param; break;
-      case GL_TEXTURE_MAG_FILTER: pCurrentTex_->texMagFilter = (GLint)param; break;
-      case GL_TEXTURE_WRAP_S:     pCurrentTex_->texWrapS     = (GLint)param; break;
-      case GL_TEXTURE_WRAP_T:     pCurrentTex_->texWrapT     = (GLint)param; break;
+      case GL_TEXTURE_MIN_FILTER:
+      {
+        GLint value = (GLint)param;
+        switch(value)
+        {
+          case GL_NEAREST: pCurrentTex_->texMinFilter = PS2_GL_NEAREST; break;
+          case GL_LINEAR:  pCurrentTex_->texMinFilter = PS2_GL_LINEAR;  break;
+          default:
+            setError(GL_INVALID_ENUM);
+            return;
+        };
+        break;
+      }
+      case GL_TEXTURE_MAG_FILTER:
+      {
+        GLint value = (GLint)param;
+        switch(value)
+        {
+          case GL_NEAREST:                pCurrentTex_->texMagFilter = PS2_GL_NEAREST;                break;
+          case GL_LINEAR:                 pCurrentTex_->texMagFilter = PS2_GL_LINEAR;                 break;
+          case GL_NEAREST_MIPMAP_NEAREST: pCurrentTex_->texMagFilter = PS2_GL_NEAREST_MIPMAP_NEAREST; break;
+          case GL_LINEAR_MIPMAP_NEAREST:  pCurrentTex_->texMagFilter = PS2_GL_LINEAR_MIPMAP_NEAREST;  break;
+          case GL_NEAREST_MIPMAP_LINEAR:  pCurrentTex_->texMagFilter = PS2_GL_NEAREST_MIPMAP_LINEAR;  break;
+          case GL_LINEAR_MIPMAP_LINEAR:   pCurrentTex_->texMagFilter = PS2_GL_LINEAR_MIPMAP_LINEAR;   break;
+          default:
+            setError(GL_INVALID_ENUM);
+            return;
+        };
+        break;
+      }
+      case GL_TEXTURE_WRAP_S:
+        pCurrentTex_->texWrapS = (GLint)param;
+        break;
+      case GL_TEXTURE_WRAP_T:
+        pCurrentTex_->texWrapT = (GLint)param;
+        break;
+      default:
+        setError(GL_INVALID_ENUM);
+        return;
     };
   }
 }

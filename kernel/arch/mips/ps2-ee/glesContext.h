@@ -24,6 +24,7 @@ struct STexLevel
   const void * data;
 };
 
+//-----------------------------------------------------------------------------
 struct STexturePS2
 {
   bool used;
