@@ -17,9 +17,9 @@ extern void drawCubeF();
 
 #ifdef ENABLE_LIGHTING
 // Material
-const GLfloat matAmbient []   = { 0.4f,  0.2f,  0.0f,  1.0f};
-const GLfloat matDiffuse []   = { 0.8f,  0.4f,  0.0f,  1.0f};
-const GLfloat matSpecular[]   = { 0.8f,  0.4f,  0.0f,  1.0f};
+const GLfloat matAmbient []   = { 0.2f,  0.2f,  0.2f,  1.0f};
+const GLfloat matDiffuse []   = { 0.6f,  0.6f,  0.6f,  1.0f};
+const GLfloat matSpecular[]   = { 0.2f,  0.2f,  0.2f,  1.0f};
 const GLfloat matShininess    = 8.0f;
 // Light
 const GLfloat lightAmbient [] = { 1.0f,  1.0f,  1.0f,  1.0f};
@@ -73,6 +73,9 @@ renderPyramidF(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surfac
     device->displaySurface(bDisplayB ? surface_a : surface_b);
     bDisplayB = !bDisplayB;
 #endif
+#ifdef ENABLE_VSYNC
+    device->waitVSync();
+#endif
 
     iFrameCount++;
     iCurrentFrame = device->getFrameNr();
@@ -125,6 +128,9 @@ renderCubeF(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_a
     device->displaySurface(bDisplayB ? surface_a : surface_b);
     bDisplayB = !bDisplayB;
 #endif
+#ifdef ENABLE_VSYNC
+    device->waitVSync();
+#endif
 
     iFrameCount++;
     iCurrentFrame = device->getFrameNr();
@@ -147,12 +153,8 @@ testGLF(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
   renderer->setSurface(surface_a);
   device->displaySurface(surface_a);
 
-  // Automatically wait for VSync
-#ifdef ENABLE_VSYNC
-  device->setVSync(true);
-#else
+  // Do not automatically wait for VSync
   device->setVSync(false);
-#endif
 
   // Background color
   glClearColor(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
@@ -211,6 +213,12 @@ testGLF(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
+
+  // Notify user of error
+  if(glGetError() != GL_NO_ERROR)
+  {
+    glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+  }
 
   while(true)
   {

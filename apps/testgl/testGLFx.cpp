@@ -18,9 +18,9 @@ extern void drawCubeFx();
 
 #ifdef ENABLE_LIGHTING
 // Material
-const GLfixed matAmbient []   = {gl_fpfromf( 0.4f), gl_fpfromf( 0.2f), gl_fpfromf( 0.0f), gl_fpfromf( 1.0f)};
-const GLfixed matDiffuse []   = {gl_fpfromf( 0.8f), gl_fpfromf( 0.4f), gl_fpfromf( 0.0f), gl_fpfromf( 1.0f)};
-const GLfixed matSpecular[]   = {gl_fpfromf( 0.8f), gl_fpfromf( 0.4f), gl_fpfromf( 0.0f), gl_fpfromf( 1.0f)};
+const GLfixed matAmbient []   = {gl_fpfromf( 0.2f), gl_fpfromf( 0.2f), gl_fpfromf( 0.2f), gl_fpfromf( 1.0f)};
+const GLfixed matDiffuse []   = {gl_fpfromf( 0.6f), gl_fpfromf( 0.6f), gl_fpfromf( 0.6f), gl_fpfromf( 1.0f)};
+const GLfixed matSpecular[]   = {gl_fpfromf( 0.2f), gl_fpfromf( 0.2f), gl_fpfromf( 0.2f), gl_fpfromf( 1.0f)};
 const GLfixed matShininess    = gl_fpfromf( 8.0f);
 // Light
 const GLfixed lightAmbient[]  = {gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f), gl_fpfromf( 1.0f)};
@@ -74,6 +74,9 @@ renderPyramidFx(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surfa
     device->displaySurface(bDisplayB ? surface_a : surface_b);
     bDisplayB = !bDisplayB;
 #endif
+#ifdef ENABLE_VSYNC
+    device->waitVSync();
+#endif
 
     iFrameCount++;
     iCurrentFrame = device->getFrameNr();
@@ -126,6 +129,9 @@ renderCubeFx(CAVideoDevice * device, I3DRenderer * renderer, CSurface * surface_
     device->displaySurface(bDisplayB ? surface_a : surface_b);
     bDisplayB = !bDisplayB;
 #endif
+#ifdef ENABLE_VSYNC
+    device->waitVSync();
+#endif
 
     iFrameCount++;
     iCurrentFrame = device->getFrameNr();
@@ -148,12 +154,8 @@ testGLFx(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
   renderer->setSurface(surface_a);
   device->displaySurface(surface_a);
 
-  // Automatically wait for VSync
-#ifdef ENABLE_VSYNC
-  device->setVSync(true);
-#else
+  // Do not automatically wait for VSync
   device->setVSync(false);
-#endif
 
   // Background color
   glClearColorx(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
@@ -212,6 +214,12 @@ testGLFx(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
+
+  // Notify user of error
+  if(glGetError() != GL_NO_ERROR)
+  {
+    glClearColorx(gl_fpfromi(1), gl_fpfromi(0), gl_fpfromi(0), gl_fpfromi(0));
+  }
 
   while(true)
   {
