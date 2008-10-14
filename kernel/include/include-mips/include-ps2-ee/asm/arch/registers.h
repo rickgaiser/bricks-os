@@ -355,10 +355,20 @@
    ((uint64_t)(V) << 16))
 
 // XYZ2 Register
+// 32bit Z (depth)
 #define GS_XYZ2(X,Y,Z) \
   (((uint64_t)(X) <<  0) | \
    ((uint64_t)(Y) << 16) | \
    ((uint64_t)(Z) << 32))
+
+// XYZF2 Register
+// 24bit Z (depth)
+//  8bit F (fog)
+#define GS_XYZF2(X,Y,Z,F) \
+  (((uint64_t)(X) <<  0) | \
+   ((uint64_t)(Y) << 16) | \
+   ((uint64_t)(Z) << 32) | \
+   ((uint64_t)(F) << 56))
 
 // XYOFFSET_x Register
 #define GS_XYOFFSET(OFX,OFY) \
@@ -373,6 +383,22 @@
   (((uint64_t)(ZBP)  <<  0) | \
    ((uint64_t)(PSM)  << 24) | \
    ((uint64_t)(ZMSK) << 32))
+
+typedef unsigned int uint128_t __attribute__(( mode(TI) ));
+#define GS_PACKED_RGBA(R,G,B,A) \
+  (((uint128_t)(R) <<  0) | \
+   ((uint128_t)(G) << 32) | \
+   ((uint128_t)(B) << 64) | \
+   ((uint128_t)(A) << 96))
+#define GS_PACKED_XYZ2(X,Y,Z) \
+  (((uint128_t)(X) <<  0) | \
+   ((uint128_t)(Y) << 32) | \
+   ((uint128_t)(Z) << 68))
+#define GS_PACKED_XYZ3(X,Y,Z) \
+  (((uint128_t)(X) <<  0) | \
+   ((uint128_t)(Y) << 32) | \
+   ((uint128_t)(Z) << 68) | \
+   ((uint128_t)(1) <<111))
 
 //---------------------------------------------------------------------------
 // Registers
