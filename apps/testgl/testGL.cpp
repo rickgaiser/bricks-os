@@ -38,10 +38,17 @@ appMain(int argc, char * argv[])
 
         // Allocate two surfaces for double buffering
         devices[iDev]->getSurface(&pVideoSurfaceA, newMode->width, newMode->height);
+#ifdef ENABLE_DOUBLE_BUFFERED
         devices[iDev]->getSurface(&pVideoSurfaceB, newMode->width, newMode->height);
+#endif
 
         // Start test
-        if((pVideoSurfaceA != NULL) && (pVideoSurfaceB != NULL))
+        if(
+           (pVideoSurfaceA != NULL)
+#ifdef ENABLE_DOUBLE_BUFFERED
+        && (pVideoSurfaceB != NULL)
+#endif
+          )
         {
 #ifdef USE_FLOATING_POINT
           testGLF (devices[iDev], pVideoSurfaceA, pVideoSurfaceB);

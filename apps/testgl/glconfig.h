@@ -25,7 +25,7 @@
 #define ENABLE_LIGHTING
 
 // Enable textures, currently experimental
-//#define ENABLE_TEXTURES
+#define ENABLE_TEXTURES
 
 // Enable deph testing (z-buffer), some platforms only
 //#define ENABLE_DEPTH_TEST

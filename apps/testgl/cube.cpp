@@ -1,5 +1,8 @@
 #include "GLES/gl.h"
+#include "GL/glu.h"
 #include "vhl/fixedPoint.h"
+#include "vhl/vector.h"
+#include "glconfig.h"
 
 
 extern const unsigned short crate_Width;
@@ -152,26 +155,65 @@ const GLfixed cubeTexFx[] =
   gl_fpfromf(1.0f), gl_fpfromf(1.0f),
 };
 
+#ifdef ENABLE_LIGHTING
+GLfloat cubeNormalF[24*3];
+#endif
 // -----------------------------------------------------------------------------
 void
 initCubeF()
 {
+#ifdef ENABLE_LIGHTING
+  // Precalculated normals
+  TVector3<GLfloat> V[3];
+  TVector3<GLfloat> normal;
+  for(int i(0); i < 6; i++)
+  {
+    // Load vetices V0, V1 and V2
+    for(int v(0); v < 3; v++)
+    {
+      V[v].x = cubeVertF[i*4*3+(v*3)+0];
+      V[v].y = cubeVertF[i*4*3+(v*3)+1];
+      V[v].z = cubeVertF[i*4*3+(v*3)+2];
+    }
+
+    // Calculate normal
+    normal = (V[0] - V[1]).getCrossProduct(V[2] - V[1]);
+    normal.normalize();
+
+    // Store normal for V0, V1, V2 and V3
+    for(int v(0); v < 4; v++)
+    {
+      cubeNormalF[i*4*3+(v*3)+0] = normal.x;
+      cubeNormalF[i*4*3+(v*3)+1] = normal.y;
+      cubeNormalF[i*4*3+(v*3)+2] = normal.z;
+    }
+  }
+#endif
+
   glGenTextures(1, &textures[0]);
   glBindTexture(GL_TEXTURE_2D, textures[0]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, crate_Width, crate_Height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crate_Bitmap);
+//  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, crate_Width, crate_Height, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, crate_Bitmap);
+  gluBuild2DMipmaps(GL_TEXTURE_2D, 4, crate_Width, crate_Height, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, crate_Bitmap);
 }
 
 // -----------------------------------------------------------------------------
 void
 drawCubeF()
 {
-  glVertexPointer(3, GL_FLOAT, 0, cubeVertF);
+  glVertexPointer  (3, GL_FLOAT, 0, cubeVertF);
   glTexCoordPointer(2, GL_FLOAT, 0, cubeTexF);
+#ifdef ENABLE_LIGHTING
+  glNormalPointer  (   GL_FLOAT, 0, cubeNormalF);
+#endif
 
   glEnableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+#ifdef ENABLE_LIGHTING
+  glEnableClientState(GL_NORMAL_ARRAY);
+#else
   glDisableClientState(GL_NORMAL_ARRAY);
+#endif
 
   glBindTexture(GL_TEXTURE_2D, textures[0]);
   glDrawArrays(GL_TRIANGLE_STRIP,  0, 4); // Top
@@ -188,7 +230,7 @@ initCubeFx()
 {
   glGenTextures(1, &textures[0]);
   glBindTexture(GL_TEXTURE_2D, textures[0]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, crate_Width, crate_Height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crate_Bitmap);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, crate_Width, crate_Height, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, crate_Bitmap);
 }
 
 // -----------------------------------------------------------------------------
