@@ -3,8 +3,7 @@
 
 // -----------------------------------------------------------------------------
 CRingBuffer::CRingBuffer()
- : size_(128)
- , inPtr_(0)
+ : inPtr_(0)
  , outPtr_(0)
 {
   // Initialize mutex to a locked state so we can use it to wait for data
@@ -26,7 +25,7 @@ CRingBuffer::put(uint8_t data)
 
   // Calculate new inPtr_
   uint32_t in = inPtr_ + 1;
-  if(in >= size_)
+  if(in >= RINGBUFFER_SIZE)
     in = 0;
 
   // Buffer full
@@ -63,7 +62,7 @@ CRingBuffer::get(uint8_t * data, bool block)
   *data = buffer_[outPtr_];
 
   // Increment outPtr_
-  if(outPtr_ >= (size_ - 1))
+  if(outPtr_ >= (RINGBUFFER_SIZE - 1))
     outPtr_ = 0;
   else
     outPtr_++;

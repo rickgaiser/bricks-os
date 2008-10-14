@@ -6,6 +6,9 @@
 #include "inttypes.h"
 
 
+#define RINGBUFFER_SIZE 512
+
+
 // -----------------------------------------------------------------------------
 class CRingBuffer
 {
@@ -18,7 +21,7 @@ public:
   void notifyGetters();
 
 private:
-  uint8_t buffer_[128];
+  uint8_t buffer_[RINGBUFFER_SIZE];
   uint32_t size_;
   volatile uint32_t inPtr_;
   volatile uint32_t outPtr_;
