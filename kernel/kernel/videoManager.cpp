@@ -107,7 +107,6 @@ CSurface::format()
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CAVideoDevice::CAVideoDevice()
- : vSync_(true)
 {
   videoManager.addDevice(this);
 }
@@ -147,20 +146,6 @@ CAVideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface * 
     pSrc += source->mode.xpitch * bytespp;
     pDst += dest->mode.xpitch   * bytespp;
   }
-}
-
-//---------------------------------------------------------------------------
-void
-CAVideoDevice::setVSync(bool vsync)
-{
-  vSync_ = vsync;
-}
-
-//---------------------------------------------------------------------------
-bool
-CAVideoDevice::getVSync()
-{
-  return vSync_;
 }
 
 //---------------------------------------------------------------------------

@@ -364,10 +364,6 @@ CNGCVideoDevice::waitVSync()
 void
 CNGCVideoDevice::displaySurface(CSurface * surface)
 {
-  // Always VSync, even if the frame is not new.
-  if(vSync_ == true)
-    waitVSync();
-
   // FIXME: isr should update this, but we don't have interrupts
   iFrameCount_++;
 

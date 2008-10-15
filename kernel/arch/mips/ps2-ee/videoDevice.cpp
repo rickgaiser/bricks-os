@@ -542,10 +542,6 @@ CPS2VideoDevice::displaySurface(CSurface * surface)
 {
   CPS2Surface * pNewSurface = (CPS2Surface *)surface;
 
-  // Always VSync, even if the frame is not new.
-  if(vSync_ == true)
-    WAIT_VSYNC();
-
   // FIXME: isr should update this, but we don't have interrupts
   iFrameCount_++;
 

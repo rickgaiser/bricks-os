@@ -207,10 +207,6 @@ CVesaVideoDevice::waitVSync()
 void
 CVesaVideoDevice::displaySurface(CSurface * surface)
 {
-  // Always VSync, even if the frame is not new.
-  if(vSync_ == true)
-    waitVSync();
-
   // FIXME
   iFrameCount_++;
 

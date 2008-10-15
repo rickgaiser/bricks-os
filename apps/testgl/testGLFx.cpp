@@ -154,9 +154,6 @@ testGLFx(CAVideoDevice * device, CSurface * surface_a, CSurface * surface_b)
   renderer->setSurface(surface_a);
   device->displaySurface(surface_a);
 
-  // Do not automatically wait for VSync
-  device->setVSync(false);
-
   // Background color
   glClearColorx(fogColor[0], fogColor[1], fogColor[2], fogColor[3]);
 

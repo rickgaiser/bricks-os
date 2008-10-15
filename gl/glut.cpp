@@ -85,7 +85,6 @@ glutInit(int * pargc, char ** argv)
       pGlutDevice->get3DRenderer(&pGlutRenderer);
       glMakeCurrent(pGlutRenderer);
 
-      pGlutDevice->setVSync(false);
 #ifdef BUFFER_A
       pGlutRenderer->setSurface(pGlutSurfaceA);
       pGlutDevice->displaySurface(pGlutSurfaceA);

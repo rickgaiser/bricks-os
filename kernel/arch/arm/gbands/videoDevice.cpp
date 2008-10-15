@@ -401,10 +401,6 @@ CGBAVideoDevice::waitVSync()
 void
 CGBAVideoDevice::displaySurface(CSurface * surface)
 {
-  // Always VSync, even if the frame is not new.
-  if(vSync_ == true)
-    waitVSync();
-
   // Set new surface if it changed
   if((surface != NULL) && (surface != pSurface_))
   {
