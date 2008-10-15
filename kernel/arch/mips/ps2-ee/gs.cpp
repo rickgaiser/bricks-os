@@ -81,22 +81,3 @@ gs_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, u
   gifData.send();
   gifData.reset();
 }
-
-//---------------------------------------------------------------------------
-// 0x0001 ->  0
-// 0x0002 ->  1
-// 0x0004 ->  2
-// 0x0008 ->  3
-// ...... -> ..
-// 0x8000 -> 15
-uint8_t
-getBitNr(uint32_t value)
-{
-  uint8_t iBitNr;
-
-  value--;
-  for(iBitNr = 0; value > 0; iBitNr++, value >>= 1)
-    ;
-
-  return iBitNr;
-}

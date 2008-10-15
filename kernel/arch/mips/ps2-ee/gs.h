@@ -55,7 +55,6 @@ extern "C" {
 
 void       ee_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, uint32_t source);
 void       gs_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, uint32_t source, int sw, int spsm, int sx, int sy);
-uint8_t    getBitNr(uint32_t value);
 
 
 #ifdef __cplusplus
