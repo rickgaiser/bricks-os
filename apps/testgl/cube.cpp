@@ -225,12 +225,21 @@ drawCubeF()
 }
 
 // -----------------------------------------------------------------------------
+#define TEX_WH 64
+#define TEX_W  TEX_WH
+#define TEX_H  TEX_WH
+uint16_t * pTex = 0;
 void
 initCubeFx()
 {
+  // Scale down texture
+  pTex = new uint16_t[TEX_W * TEX_H];
+  gluScaleImage(GL_RGBA, crate_Width, crate_Height, GL_UNSIGNED_SHORT_1_5_5_5_REV, crate_Bitmap, TEX_W, TEX_H, GL_UNSIGNED_SHORT_1_5_5_5_REV, pTex);
+
   glGenTextures(1, &textures[0]);
   glBindTexture(GL_TEXTURE_2D, textures[0]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, crate_Width, crate_Height, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, crate_Bitmap);
+//  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, crate_Width   , crate_Height   , 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, crate_Bitmap);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEX_W, TEX_H, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, pTex);
 }
 
 // -----------------------------------------------------------------------------
