@@ -3,6 +3,7 @@
 
 
 #include "../../../../gl/softGLFx.h"
+#include "../../../../gl/textures.h"
 #include "vhl/fixedPoint.h"
 
 
@@ -28,21 +29,23 @@
 typedef GLfixed NDSfixed;
 
 //-----------------------------------------------------------------------------
-struct STextureNDS
+class CNDSTexture
+ : public CSoftTexture
 {
-  bool used;
+public:
+  CNDSTexture();
+  virtual ~CNDSTexture();
 
-  GLsizei width;
-  GLsizei height;
+  virtual void bind();
 
+public:
   uint32_t format;
-
-  void * data;
 };
 
 //-----------------------------------------------------------------------------
 class CNDSGLESContext
  : public CASoftGLESFixed
+ , public CAGLESTextures
 {
 public:
   CNDSGLESContext();
@@ -55,12 +58,10 @@ public:
   // Flush operations to surface
   virtual void       flush()                       {IRenderer::flush();}
 
-  virtual void glBindTexture(GLenum target, GLuint texture);
   virtual void glClear(GLbitfield mask);
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
   virtual void glClearDepthx(GLclampx depth);
   virtual void glCullFace(GLenum mode);
-  virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
   virtual void glDisable(GLenum cap);
   virtual void glEnable(GLenum cap);
   virtual void glFlush(void);
@@ -71,7 +72,6 @@ public:
   virtual void glMaterialx(GLenum face, GLenum pname, GLfixed param);
   virtual void glMaterialxv(GLenum face, GLenum pname, const GLfixed *params);
   virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
-  virtual void glGenTextures(GLsizei n, GLuint *textures);
   virtual void glLoadIdentity(void);
   virtual void glLoadMatrixx(const GLfixed *m);
   virtual void glMatrixMode(GLenum mode);
@@ -81,7 +81,6 @@ public:
   virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);
   virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
   virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
-  virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
   virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
@@ -93,6 +92,7 @@ protected:
 
   virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
   virtual void zbuffer(bool enable);
+  virtual CTexture * getTexture();
 
 private:
   void plotPoly(SVertexFx * vtx[3]);
@@ -108,10 +108,6 @@ private:
   static bool        bInitialized_;
   static NDSfixed    fpSin_[];
   static NDSfixed    fpCos_[];
-
-  STextureNDS * pCurrentTex_;
-
-  STextureNDS textures_[MAX_TEXTURE_COUNT];
 
   // NDS Material colors
   uint16_t ndsMatColorAmbient_;

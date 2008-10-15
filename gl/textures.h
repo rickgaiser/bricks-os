@@ -9,21 +9,40 @@
 
 
 //-----------------------------------------------------------------------------
-struct STexture
+class CTexture
 {
-  bool used;
+public:
+  CTexture();
+  virtual ~CTexture();
 
+  virtual void init();
+  virtual void free();
+  virtual void bind();
+
+public:
   GLsizei width;
   GLsizei height;
 
+  GLint minFilter;
+  GLint magFilter;
+  GLint wrapS;
+  GLint wrapT;
+};
+
+//-----------------------------------------------------------------------------
+class CSoftTexture
+ : public CTexture
+{
+public:
+  CSoftTexture();
+  virtual ~CSoftTexture();
+
+  virtual void init();
+  virtual void free();
+
+public:
   uint32_t maskWidth;
   uint32_t maskHeight;
-
-  GLint texMinFilter;
-  GLint texMagFilter;
-  GLint texWrapS;
-  GLint texWrapT;
-
   void * data;
 };
 
@@ -43,14 +62,19 @@ public:
   virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
 
 protected:
-  STexture  * pCurrentTex_;
+  virtual CTexture * getTexture();
+
+protected:
+  CTexture * pCurrentTex_;
 
 private:
-  STexture textures_[MAX_TEXTURE_COUNT];
+  CTexture * textures_[MAX_TEXTURE_COUNT];
 };
 
+//-----------------------------------------------------------------------------
 int convertImageFormat(void * dst, EColorFormat dstFmt, const void * src, EColorFormat srcFmt, int width, int height);
 EColorFormat convertGLToBxColorFormat(GLenum format, GLenum type);
+uint8_t getBitNr(uint32_t value);
 
 
 #endif

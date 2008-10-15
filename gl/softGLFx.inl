@@ -3,6 +3,8 @@
 #include "vhl/fixedPoint.h"
 
 
+#define CURRENT_TEX ((CSoftTexture *)pCurrentTex_)
+
 #define SL_LINE_WIDTH() \
   (to.x_[y] - from.x_[y])
 #define SL_PIXEL_INDEX() \
@@ -27,17 +29,17 @@
   CFixed tt(from.tt_[y]); \
   CFixed mts = (to.ts_[y] - from.ts_[y]).ipMul(xwidth1); \
   CFixed mtt = (to.tt_[y] - from.tt_[y]).ipMul(xwidth1); \
-  ts  *= pCurrentTex_->width; \
-  tt  *= pCurrentTex_->height; \
-  mts *= pCurrentTex_->width; \
-  mtt *= pCurrentTex_->height
+  ts  *= CURRENT_TEX->width; \
+  tt  *= CURRENT_TEX->height; \
+  mts *= CURRENT_TEX->width; \
+  mtt *= CURRENT_TEX->height
 #define SL_INTERPOLATE_TP() \
   GLfixed tz(gl_fpdiv(gl_fpfromi(1), from.z_[y])); \
-  GLfixed ts(gl_fpmul(from.ts_[y] * pCurrentTex_->width,  tz)); \
-  GLfixed tt(gl_fpmul(from.tt_[y] * pCurrentTex_->height, tz)); \
+  GLfixed ts(gl_fpmul(from.ts_[y] * CURRENT_TEX->width,  tz)); \
+  GLfixed tt(gl_fpmul(from.tt_[y] * CURRENT_TEX->height, tz)); \
   GLfixed mtz((gl_fpdiv(gl_fpfromi(1), to.z_[y]) - tz)).ipMul(xwidth1); \
-  GLfixed mts(gl_fpmul((to.ts_[y] - from.ts_[y]) * pCurrentTex_->width,  tz)).ipMul(xwidth1); \
-  GLfixed mtt(gl_fpmul((to.tt_[y] - from.tt_[y]) * pCurrentTex_->height, tz)).ipMul(xwidth1)
+  GLfixed mts(gl_fpmul((to.ts_[y] - from.ts_[y]) * CURRENT_TEX->width,  tz)).ipMul(xwidth1); \
+  GLfixed mtt(gl_fpmul((to.tt_[y] - from.tt_[y]) * CURRENT_TEX->height, tz)).ipMul(xwidth1)
 
 #define SL_INCREMENT_Z() \
   z += mz
@@ -237,13 +239,13 @@ CSoftGLESFixed::hlineTa(CEdgeFx & from, CEdgeFx & to, GLint y)
 //      switch(renderSurface->bpp_)
 //      {
 //        case 8:
-//          ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
+//          ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)CURRENT_TEX->data)[(((int32_t)tt & CURRENT_TEX->maskHeight) * CURRENT_TEX->width) + ((int32_t)ts & CURRENT_TEX->maskWidth)];
 //          break;
 //        case 16:
-          ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
+          ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)CURRENT_TEX->data)[(((int32_t)tt & CURRENT_TEX->maskHeight) * CURRENT_TEX->width) + ((int32_t)ts & CURRENT_TEX->maskWidth)];
 //          break;
 //        case 32:
-//          ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
+//          ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)CURRENT_TEX->data)[(((int32_t)tt & CURRENT_TEX->maskHeight) * CURRENT_TEX->width) + ((int32_t)ts & CURRENT_TEX->maskWidth)];
 //          break;
 //      };
       SL_INCREMENT_TA();
@@ -273,13 +275,13 @@ CSoftGLESFixed::hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y)
 //        switch(renderSurface->bpp_)
 //        {
 //          case 8:
-//            ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
+//            ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)CURRENT_TEX->data)[(((int32_t)tt & CURRENT_TEX->maskHeight) * CURRENT_TEX->width) + ((int32_t)ts & CURRENT_TEX->maskWidth)];
 //            break;
 //          case 16:
-            ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
+            ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)CURRENT_TEX->data)[(((int32_t)tt & CURRENT_TEX->maskHeight) * CURRENT_TEX->width) + ((int32_t)ts & CURRENT_TEX->maskWidth)];
 //            break;
 //          case 32:
-//            ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[(((int32_t)tt & pCurrentTex_->maskHeight) * pCurrentTex_->width) + ((int32_t)ts & pCurrentTex_->maskWidth)];
+//            ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)CURRENT_TEX->data)[(((int32_t)tt & CURRENT_TEX->maskHeight) * CURRENT_TEX->width) + ((int32_t)ts & CURRENT_TEX->maskWidth)];
 //            break;
 //        };
       }
@@ -314,13 +316,13 @@ CSoftGLESFixed::hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y)
 //        switch(renderSurface->bpp_)
 //        {
 //          case 8:
-//            ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
+//            ((uint8_t  *)renderSurface->p)[index] = ((uint8_t  *)CURRENT_TEX->data)[((gl_fptoi(t) & CURRENT_TEX->maskHeight) * CURRENT_TEX->width) + (gl_fptoi(s) & CURRENT_TEX->maskWidth)];
 //            break;
 //          case 16:
-            ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
+            ((uint16_t *)renderSurface->p)[index] = ((uint16_t *)CURRENT_TEX->data)[((gl_fptoi(t) & CURRENT_TEX->maskHeight) * CURRENT_TEX->width) + (gl_fptoi(s) & CURRENT_TEX->maskWidth)];
 //            break;
 //          case 32:
-//            ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)pCurrentTex_->data)[((gl_fptoi(t) & pCurrentTex_->maskHeight) * pCurrentTex_->width) + (gl_fptoi(s) & pCurrentTex_->maskWidth)];
+//            ((uint32_t *)renderSurface->p)[index] = ((uint32_t *)CURRENT_TEX->data)[((gl_fptoi(t) & CURRENT_TEX->maskHeight) * CURRENT_TEX->width) + (gl_fptoi(s) & CURRENT_TEX->maskWidth)];
 //            break;
 //        };
       }

@@ -6,6 +6,7 @@
 #include "string.h"
 
 
+extern uint8_t getBitNr(uint32_t value);
 extern SPS2VideoMode vmodes[];
 extern uint32_t courier_new[];
 extern uint16_t fixed_tc[];
@@ -212,7 +213,7 @@ CPS2DebugScreen::printBegin()
           getBitNr(g2_fontbuf_w),         // width
           getBitNr(g2_fontbuf_w),         // height
           1,                              // RGBA
-          TEX_DECAL,                      // just overwrite existing pixels
+          PS2_GL_DECAL,                   // just overwrite existing pixels
           0,0,0,0,0));
 /*
       packet_.gifAddPackedAD(tex1_1,

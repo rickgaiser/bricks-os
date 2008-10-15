@@ -5,45 +5,66 @@
 #include "../../../../gl/softGLF.h"
 #include "../../../../gl/glMatrix.h"
 #include "../../../../gl/context.h"
+#include "../../../../gl/textures.h"
 #include "vhl/vector.h"
 #include "videoDevice.h"
 #include "gif.h"
 
 
-#define MAX_TEXTURE_COUNT 32
-
-
 //-----------------------------------------------------------------------------
-struct STexLevel
+class CPS2TextureLevel
 {
-  bool    initialized;
-  GLsizei width;
-  GLsizei height;
-  GLint   widthBitNr;
-  GLint   heightBitNr;
-  const void * data;
+public:
+  CPS2TextureLevel();
+  virtual ~CPS2TextureLevel();
+
+  virtual void init();
+  virtual void use();
+  virtual void free();
+  bool used(){return used_;}
+
+public:
+  void * data;
+
+  uint16_t ps2Width;
+  uint32_t ps2GSAddr;
+
+private:
+  bool used_;
 };
 
 //-----------------------------------------------------------------------------
-struct STexturePS2
+class CPS2Texture
+ : public CTexture
 {
-  bool used;
-  bool initialized;
+public:
+  CPS2Texture(CGIFPacket & packet);
+  virtual ~CPS2Texture();
 
-  STexLevel level_[7];
+  virtual void init();
+  virtual void free();
+  virtual void bind();
+
+public:
+  CPS2TextureLevel level_[7];
   uint16_t maxLevel_;
 
-  GLint texMinFilter;
-  GLint texMagFilter;
-  GLint texWrapS;
-  GLint texWrapT;
+  // Precalculated values
+  uint16_t widthBitNr;
+  uint16_t heightBitNr;
+  uint16_t ps2MinFilter;
+  uint16_t ps2MagFilter;
   uint16_t psm_;
   uint16_t rgba_;
+
+private:
+  CGIFPacket & packet_;
 };
 
 //-----------------------------------------------------------------------------
 class CPS2GLESContext
  : public CASoftGLESFloat
+ , public CAGLESTextures
  , public CAPS2Renderer
 {
 public:
@@ -63,12 +84,11 @@ public:
   virtual void glEnable(GLenum cap);
   virtual void glShadeModel(GLenum mode);
 
-  virtual void glBindTexture(GLenum target, GLuint texture);
-  virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
-  virtual void glGenTextures(GLsizei n, GLuint *textures);
+//  virtual void glBindTexture(GLenum target, GLuint texture);
+//  virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
+//  virtual void glGenTextures(GLsizei n, GLuint *textures);
   virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
   virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
-  virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
 
   virtual void glBegin(GLenum mode);
   virtual void glEnd();
@@ -77,11 +97,10 @@ protected:
   virtual void rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit = 0);
   virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2);
   virtual void zbuffer(bool enable);
+  virtual CTexture * getTexture();
 
 private:
   CPS2VideoDevice & device_;
-  STexturePS2 * pCurrentTex_;
-  STexturePS2 textures_[MAX_TEXTURE_COUNT];
   uint16_t    ps2ZPSM_;
   uint32_t    ps2ZBufferAddr_;
   uint16_t    ps2Shading_;

@@ -112,28 +112,107 @@ convertGLToBxColorFormat(GLenum format, GLenum type)
   return fmt;
 }
 
+//---------------------------------------------------------------------------
+// 0x0001 ->  0
+// 0x0002 ->  1
+// 0x0004 ->  2
+// 0x0008 ->  3
+// ...... -> ..
+// 0x8000 -> 15
+uint8_t
+getBitNr(uint32_t value)
+{
+  uint8_t iBitNr;
+
+  value--;
+  for(iBitNr = 0; value > 0; iBitNr++, value >>= 1)
+    ;
+
+  return iBitNr;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+CTexture::CTexture()
+{
+}
+
+//-----------------------------------------------------------------------------
+CTexture::~CTexture()
+{
+  this->free();
+}
+
+//-----------------------------------------------------------------------------
+void
+CTexture::init()
+{
+  minFilter   = GL_NEAREST_MIPMAP_LINEAR;
+  magFilter   = GL_LINEAR;
+  wrapS       = GL_REPEAT;
+  wrapT       = GL_REPEAT;
+}
+
+//-----------------------------------------------------------------------------
+void
+CTexture::free()
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CTexture::bind()
+{
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+CSoftTexture::CSoftTexture()
+ : CTexture()
+ , data(NULL)
+{
+}
+
+//-----------------------------------------------------------------------------
+CSoftTexture::~CSoftTexture()
+{
+  this->free();
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftTexture::init()
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftTexture::free()
+{
+  if(data != NULL)
+  {
+    delete (uint8_t *)data;
+    data = NULL;
+  }
+
+  CTexture::free();
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CAGLESTextures::CAGLESTextures()
  : pCurrentTex_(NULL)
 {
-  // Initialize all texture structs
-  for(GLuint idxTex(0); idxTex < MAX_TEXTURE_COUNT; idxTex++)
-  {
-    textures_[idxTex].used = false;
-    textures_[idxTex].data = NULL;
-  }
+  for(int i(0); i < MAX_TEXTURE_COUNT; i++)
+    textures_[i] = NULL;
 }
 
 //-----------------------------------------------------------------------------
 CAGLESTextures::~CAGLESTextures()
 {
-  // Clear all texture structs
-  for(GLsizei idxTex(0); idxTex < MAX_TEXTURE_COUNT; idxTex++)
-  {
-    textures_[idxTex].used = false;
-    if(textures_[idxTex].data != NULL)
-      delete ((uint8_t *)textures_[idxTex].data);
-  }
+  for(int i(0); i < MAX_TEXTURE_COUNT; i++)
+    if(textures_[i] == NULL)
+      delete textures_[i];
 }
 
 //-----------------------------------------------------------------------------
@@ -145,13 +224,15 @@ CAGLESTextures::glBindTexture(GLenum target, GLuint texture)
 //    setError(GL_INVALID_ENUM);
     return;
   }
-  if(texture >= MAX_TEXTURE_COUNT)
+  if((texture >= MAX_TEXTURE_COUNT) || (textures_[texture] == NULL))
   {
 //    setError(GL_INVALID_VALUE);
     return;
   }
 
-  pCurrentTex_ = &textures_[texture];
+  pCurrentTex_ = textures_[texture];
+
+  pCurrentTex_->bind();
 }
 
 //-----------------------------------------------------------------------------
@@ -164,15 +245,10 @@ CAGLESTextures::glDeleteTextures(GLsizei n, const GLuint *textures)
     return;
   }
 
-  for(GLsizei idxNr(0); idxNr < n; idxNr++)
-  {
-    if(textures[idxNr] < MAX_TEXTURE_COUNT)
-    {
-      textures_[textures[idxNr]].used = false;
-      if(textures_[textures[idxNr]].data != NULL)
-        delete ((uint8_t *)textures_[textures[idxNr]].data);
-    }
-  }
+  for(GLsizei i(0); i < n; i++)
+    if(textures[i] < MAX_TEXTURE_COUNT)
+      if(textures_[textures[i]] != NULL)
+        delete textures_[textures[i]];
 }
 
 //-----------------------------------------------------------------------------
@@ -191,15 +267,10 @@ CAGLESTextures::glGenTextures(GLsizei n, GLuint *textures)
 
     for(GLuint idxTex(0); idxTex < MAX_TEXTURE_COUNT; idxTex++)
     {
-      if(textures_[idxTex].used == false)
+      if(textures_[idxTex] == NULL)
       {
-        textures_[idxTex].used = true;
-
-        // Initialize some default values
-        textures_[idxTex].texMinFilter = GL_LINEAR;
-        textures_[idxTex].texMagFilter = GL_LINEAR;
-        textures_[idxTex].texWrapS     = GL_REPEAT;
-        textures_[idxTex].texWrapT     = GL_REPEAT;
+        textures_[idxTex] = this->getTexture();
+        textures_[idxTex]->init();
 
         textures[idxNr] = idxTex;
         bFound = true;
@@ -250,9 +321,18 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
 
   // FIXME: MipMaps not supported
   if(level > 0)
+  {
+//    setError(GL_INVALID_OPERATION);
     return;
+  }
 
-  if((renderSurface != 0) && (pCurrentTex_ != 0) && (pCurrentTex_->used == true))
+  if((pCurrentTex_ == 0) || (renderSurface == 0))
+  {
+//    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  if(level == 0)
   {
     switch(width)
     {
@@ -264,10 +344,9 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
       case  256:
       case  512:
       case 1024:
-        pCurrentTex_->maskWidth = width - 1;
         break;
       default:
-//        setError(GL_INVALID_VALUE);
+  //      setError(GL_INVALID_VALUE);
         return;
     };
     switch(height)
@@ -280,39 +359,44 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
       case  256:
       case  512:
       case 1024:
-        pCurrentTex_->maskHeight = width - 1;
         break;
       default:
-//        setError(GL_INVALID_VALUE);
+  //      setError(GL_INVALID_VALUE);
         return;
     };
 
+    ((CSoftTexture *)pCurrentTex_)->maskWidth  = width - 1;
+    ((CSoftTexture *)pCurrentTex_)->maskHeight = width - 1;
     pCurrentTex_->width  = width;
     pCurrentTex_->height = height;
-
-    EColorFormat fmtTo   = renderSurface->mode.format;
-    EColorFormat fmtFrom = convertGLToBxColorFormat(format, type);
-    if(fmtFrom == cfUNKNOWN)
-    {
-//      setError(GL_INVALID_ENUM);
-      return;
-    }
-
-    // Delete old texture buffer if present
-    if(pCurrentTex_->data != NULL)
-      delete ((uint8_t *)pCurrentTex_->data);
-    // Allocate texture buffer
-    switch(renderSurface->mode.bpp)
-    {
-      case 8:  pCurrentTex_->data = new uint8_t [width*height]; break;
-      case 16: pCurrentTex_->data = new uint16_t[width*height]; break;
-      case 32: pCurrentTex_->data = new uint32_t[width*height]; break;
-      default:
-        return; // ERROR, invalid render surface
-    };
-
-    convertImageFormat(pCurrentTex_->data, fmtTo, pixels, fmtFrom, width, height);
   }
+  else
+  {
+    // MipMap level > 0
+  }
+
+  EColorFormat fmtTo   = renderSurface->mode.format;
+  EColorFormat fmtFrom = convertGLToBxColorFormat(format, type);
+  if(fmtFrom == cfUNKNOWN)
+  {
+//    setError(GL_INVALID_ENUM);
+    return;
+  }
+
+  // Delete old texture buffer if present
+  if(((CSoftTexture *)pCurrentTex_)->data != NULL)
+    delete ((uint8_t *)((CSoftTexture *)pCurrentTex_)->data);
+  // Allocate texture buffer
+  switch(renderSurface->mode.bpp)
+  {
+    case 8:  ((CSoftTexture *)pCurrentTex_)->data = new uint8_t [width*height]; break;
+    case 16: ((CSoftTexture *)pCurrentTex_)->data = new uint16_t[width*height]; break;
+    case 32: ((CSoftTexture *)pCurrentTex_)->data = new uint32_t[width*height]; break;
+    default:
+      return; // ERROR, invalid render surface
+  };
+
+  convertImageFormat(((CSoftTexture *)pCurrentTex_)->data, fmtTo, pixels, fmtFrom, width, height);
 }
 
 //-----------------------------------------------------------------------------
@@ -329,10 +413,59 @@ CAGLESTextures::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
   {
     switch(pname)
     {
-      case GL_TEXTURE_MIN_FILTER: pCurrentTex_->texMinFilter = (GLint)param; break;
-      case GL_TEXTURE_MAG_FILTER: pCurrentTex_->texMagFilter = (GLint)param; break;
-      case GL_TEXTURE_WRAP_S:     pCurrentTex_->texWrapS     = (GLint)param; break;
-      case GL_TEXTURE_WRAP_T:     pCurrentTex_->texWrapT     = (GLint)param; break;
+      case GL_TEXTURE_MIN_FILTER:
+        switch((GLint)param)
+        {
+          case GL_NEAREST: break;
+          case GL_LINEAR:  break;
+          default:
+//            setError(GL_INVALID_ENUM);
+            return;
+        };
+        pCurrentTex_->minFilter = (GLint)param;
+        break;
+      case GL_TEXTURE_MAG_FILTER:
+        switch((GLint)param)
+        {
+          case GL_NEAREST:                break;
+          case GL_LINEAR:                 break;
+          case GL_NEAREST_MIPMAP_NEAREST: break;
+          case GL_LINEAR_MIPMAP_NEAREST:  break;
+          case GL_NEAREST_MIPMAP_LINEAR:  break;
+          case GL_LINEAR_MIPMAP_LINEAR:   break;
+          default:
+//            setError(GL_INVALID_ENUM);
+            return;
+        };
+        pCurrentTex_->magFilter = (GLint)param;
+        break;
+      case GL_TEXTURE_WRAP_S:
+        switch((GLint)param)
+        {
+          //case GL_CLAMP:         break;
+          case GL_CLAMP_TO_EDGE: break;
+          case GL_REPEAT:        break;
+          default:
+//            setError(GL_INVALID_ENUM);
+            return;
+        };
+        pCurrentTex_->wrapS = (GLint)param;
+        break;
+      case GL_TEXTURE_WRAP_T:
+        switch((GLint)param)
+        {
+          //case GL_CLAMP:         break;
+          case GL_CLAMP_TO_EDGE: break;
+          case GL_REPEAT:        break;
+          default:
+//            setError(GL_INVALID_ENUM);
+            return;
+        };
+        pCurrentTex_->wrapT = (GLint)param;
+        break;
+      default:
+//        setError(GL_INVALID_ENUM);
+        return;
     };
   }
 }
@@ -342,4 +475,11 @@ void
 CAGLESTextures::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 {
   glTexParameterf(target, pname, gl_fptof(param));
+}
+
+//-----------------------------------------------------------------------------
+CTexture *
+CAGLESTextures::getTexture()
+{
+  return new CSoftTexture;
 }

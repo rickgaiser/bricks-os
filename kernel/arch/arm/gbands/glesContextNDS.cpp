@@ -1,8 +1,12 @@
 #include "glesContextNDS.h"
 #include "asm/arch/registers.h"
 #include "asm/arch/macros.h"
+#include "string.h"
 #include "math.h"
 
+
+#define CURRENT_NDSTEX ((CNDSTexture *)pCurrentTex_)
+#define FIXME_TEX_ADDR (0x6840000)
 
 #define fpgl_to_ndsRGB555(r,g,b) \
   ((((b*31) >>  6) & 0x00007c00) | \
@@ -53,11 +57,34 @@ NDSfixed  CNDSGLESContext::fpCos_[360];
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+CNDSTexture::CNDSTexture()
+ : CSoftTexture()
+{
+}
+
+//-----------------------------------------------------------------------------
+CNDSTexture::~CNDSTexture()
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CNDSTexture::bind()
+{
+  uint8_t idxWidth  = getBitNr(width)  - 3;
+  uint8_t idxHeight = getBitNr(height) - 3;
+  format = TEXGEN_OFF | NDS_REPEAT_S | NDS_REPEAT_T | (idxWidth << 20) | (idxHeight << 23) | (((uint32_t)FIXME_TEX_ADDR >> 3) & 0xffff) | (NDS_RGBA << 26);
+
+  GFX_TEX_FORMAT = format;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 CNDSGLESContext::CNDSGLESContext()
  : CASoftGLESFixed()
+ , CAGLESTextures()
  , matrixMode_(GL_MODELVIEW)
  , ndsCurrentMatrixId_(NDS_MODELVIEW)
- , pCurrentTex_(NULL)
 {
   zMax_ = 0x7fff;
 
@@ -86,33 +113,11 @@ CNDSGLESContext::CNDSGLESContext()
       fpCos_[i] = nds_fpfromf(cos(static_cast<float>(i) * M_PI / 180.0f));
     }
   }
-
-  for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
-    textures_[idx].used = false;
 }
 
 //-----------------------------------------------------------------------------
 CNDSGLESContext::~CNDSGLESContext()
 {
-}
-
-//-----------------------------------------------------------------------------
-void
-CNDSGLESContext::glBindTexture(GLenum target, GLuint texture)
-{
-  if(target != GL_TEXTURE_2D)
-  {
-    setError(GL_INVALID_ENUM);
-    return;
-  }
-  if(texture >= MAX_TEXTURE_COUNT)
-  {
-    setError(GL_INVALID_VALUE);
-    return;
-  }
-
-  pCurrentTex_ = &textures_[texture];
-  GFX_TEX_FORMAT = pCurrentTex_->format;
 }
 
 //-----------------------------------------------------------------------------
@@ -155,21 +160,6 @@ CNDSGLESContext::glCullFace(GLenum mode)
     };
     GFX_POLY_FORMAT = iNDSPolyFormat_;
   }
-}
-
-//-----------------------------------------------------------------------------
-void
-CNDSGLESContext::glDeleteTextures(GLsizei n, const GLuint *textures)
-{
-  if(n < 0)
-  {
-    setError(GL_INVALID_VALUE);
-    return;
-  }
-
-  for(GLsizei i(0); i < n; i++)
-    if(textures[i] < MAX_TEXTURE_COUNT)
-      textures_[textures[i]].used = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -346,36 +336,6 @@ CNDSGLESContext::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed
   MATRIX_MULT4x4 = nds_fpfromi(0);
 
 //  MATRIX_STORE = ndsCurrentMatrixId_;
-}
-
-//-----------------------------------------------------------------------------
-void
-CNDSGLESContext::glGenTextures(GLsizei n, GLuint *textures)
-{
-  if(n < 0)
-  {
-    setError(GL_INVALID_VALUE);
-    return;
-  }
-
-  for(GLsizei i(0); i < n; i++)
-  {
-    bool bFound(false);
-
-    for(GLuint idx(0); idx < MAX_TEXTURE_COUNT; idx++)
-    {
-      if(textures_[idx].used == false)
-      {
-        textures_[idx].used = true;
-        textures[i] = idx;
-        bFound = true;
-        break;
-      }
-    }
-
-    if(bFound = false)
-      break;
-  }
 }
 
 //---------------------------------------------------------------------------
@@ -582,98 +542,24 @@ CNDSGLESContext::glScalex(GLfixed x, GLfixed y, GLfixed z)
 }
 
 //-----------------------------------------------------------------------------
-#define FIXME_TEX_ADDR (0x6840000)
 void
 CNDSGLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
-  if(target != GL_TEXTURE_2D)
+  CAGLESTextures::glTexImage2D(target, level, internalformat, width, height, border, format, type, pixels);
+  GLenum error = glGetError();
+  if(error != GL_NO_ERROR)
   {
-    setError(GL_INVALID_ENUM);
-    return;
-  }
-  if(level < 0)
-  {
-    setError(GL_INVALID_VALUE);
-    return;
-  }
-  if((GLint)format != internalformat)
-  {
-    setError(GL_INVALID_OPERATION);
-    return;
-  }
-  if(((format != GL_RGB) && (format != GL_BGR)) &&
-     ((type == GL_UNSIGNED_SHORT_5_6_5) ||
-      (type == GL_UNSIGNED_SHORT_5_6_5_REV)))
-  {
-    setError(GL_INVALID_OPERATION);
-    return;
-  }
-  if(((format != GL_RGBA) && (format != GL_BGRA)) &&
-     ((type == GL_UNSIGNED_SHORT_4_4_4_4) ||
-      (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) ||
-      (type == GL_UNSIGNED_SHORT_5_5_5_1) ||
-      (type == GL_UNSIGNED_SHORT_1_5_5_5_REV)))
-  {
-    setError(GL_INVALID_OPERATION);
+    setError(error);
     return;
   }
 
-  // FIXME: MipMaps not supported
-  if(level > 0)
-    return;
+  // Unlock texture memory
+  REG_VRAM_C_CR = VRAM_ENABLE | VRAM_TYPE_LCD;
 
-  if((pCurrentTex_ != 0) && (pCurrentTex_->used == true))
-  {
-    uint32_t idxWidth, idxHeight;
-    switch(width)
-    {
-      case    8: idxWidth = 0; break;
-      case   16: idxWidth = 1; break;
-      case   32: idxWidth = 2; break;
-      case   64: idxWidth = 3; break;
-      case  128: idxWidth = 4; break;
-      case  256: idxWidth = 5; break;
-      case  512: idxWidth = 6; break;
-      case 1024: idxWidth = 7; break;
-      default:
-        setError(GL_INVALID_VALUE);
-        return;
-    };
-    switch(height)
-    {
-      case    8: idxHeight = 0; break;
-      case   16: idxHeight = 1; break;
-      case   32: idxHeight = 2; break;
-      case   64: idxHeight = 3; break;
-      case  128: idxHeight = 4; break;
-      case  256: idxHeight = 5; break;
-      case  512: idxHeight = 6; break;
-      case 1024: idxHeight = 7; break;
-      default:
-        setError(GL_INVALID_VALUE);
-        return;
-    };
+  memcpy((void *)FIXME_TEX_ADDR, CURRENT_NDSTEX->data, width * height * (colorFormatOps[cfA1B5G5R5].bitsPerPixel >> 3));
 
-    pCurrentTex_->width  = width;
-    pCurrentTex_->height = height;
-    pCurrentTex_->format = TEXGEN_OFF | NDS_REPEAT_S | NDS_REPEAT_T | (idxWidth << 20) | (idxHeight << 23) | (((uint32_t)FIXME_TEX_ADDR >> 3) & 0xFFFF) | (NDS_RGBA << 26);
-    pCurrentTex_->data   = (void *)FIXME_TEX_ADDR;
-
-    EColorFormat fmtFrom = convertGLToBxColorFormat(format, type);
-    if(fmtFrom == cfUNKNOWN)
-    {
-      setError(GL_INVALID_ENUM);
-      return;
-    }
-
-    // Unlock texture memory
-    REG_VRAM_C_CR = VRAM_ENABLE | VRAM_TYPE_LCD;
-
-    convertImageFormat(pCurrentTex_->data, cfA1B5G5R5, pixels, fmtFrom, width, height);
-
-    // Restore texture memory
-    REG_VRAM_C_CR = VRAM_ENABLE | VRAM_TYPE_TEXTURE;
-  }
+  // Restore texture memory
+  REG_VRAM_C_CR = VRAM_ENABLE | VRAM_TYPE_TEXTURE;
 }
 
 //-----------------------------------------------------------------------------
@@ -686,43 +572,69 @@ CNDSGLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
     return;
   }
 
-  if(pCurrentTex_ != 0)
+  if(CURRENT_NDSTEX != 0)
   {
     switch(pname)
     {
+      case GL_TEXTURE_MIN_FILTER:
+      {
+        GLint value = (GLint)param;
+        switch(value)
+        {
+          case GL_NEAREST: break;
+          case GL_LINEAR:  break;
+          default:
+            setError(GL_INVALID_ENUM);
+            return;
+        };
+        CURRENT_NDSTEX->minFilter = value;
+        break;
+      }
+      case GL_TEXTURE_MAG_FILTER:
+      {
+        GLint value = (GLint)param;
+        switch(value)
+        {
+          case GL_NEAREST:                break;
+          case GL_LINEAR:                 break;
+          case GL_NEAREST_MIPMAP_NEAREST: break;
+          case GL_LINEAR_MIPMAP_NEAREST:  break;
+          case GL_NEAREST_MIPMAP_LINEAR:  break;
+          case GL_LINEAR_MIPMAP_LINEAR:   break;
+          default:
+            setError(GL_INVALID_ENUM);
+            return;
+        };
+        CURRENT_NDSTEX->magFilter = value;
+        break;
+      }
       case GL_TEXTURE_WRAP_S:
         switch((GLint)param)
         {
-          //case GL_CLAMP:
-          case GL_CLAMP_TO_EDGE:
-            pCurrentTex_->format &= ~NDS_REPEAT_S;
-            break;
-          case GL_REPEAT:
-            pCurrentTex_->format |= NDS_REPEAT_S;
-            break;
+          //case GL_CLAMP:                                                  break;
+          case GL_CLAMP_TO_EDGE: CURRENT_NDSTEX->format &= ~NDS_REPEAT_S; break;
+          case GL_REPEAT:        CURRENT_NDSTEX->format |=  NDS_REPEAT_S; break;
+          default:
+            setError(GL_INVALID_ENUM);
+            return;
         };
         break;
       case GL_TEXTURE_WRAP_T:
         switch((GLint)param)
         {
-          //case GL_CLAMP:
-          case GL_CLAMP_TO_EDGE:
-            pCurrentTex_->format &= ~NDS_REPEAT_T;
-            break;
-          case GL_REPEAT:
-            pCurrentTex_->format |= NDS_REPEAT_T;
-            break;
+          //case GL_CLAMP:                                                  break;
+          case GL_CLAMP_TO_EDGE: CURRENT_NDSTEX->format &= ~NDS_REPEAT_T; break;
+          case GL_REPEAT:        CURRENT_NDSTEX->format |=  NDS_REPEAT_T; break;
+          default:
+            setError(GL_INVALID_ENUM);
+            return;
         };
         break;
+      default:
+        setError(GL_INVALID_ENUM);
+        return;
     };
   }
-}
-
-//-----------------------------------------------------------------------------
-void
-CNDSGLESContext::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
-{
-  glTexParameterf(target, pname, gl_fptof(param));
 }
 
 //---------------------------------------------------------------------------
@@ -836,4 +748,11 @@ CNDSGLESContext::updateFog()
 
 //  fogDensity_
 //  fogEnd_
+}
+
+//-----------------------------------------------------------------------------
+CTexture *
+CNDSGLESContext::getTexture()
+{
+  return new CNDSTexture;
 }
