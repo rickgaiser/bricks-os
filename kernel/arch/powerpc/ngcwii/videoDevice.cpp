@@ -430,6 +430,8 @@ CNGCVideoDevice::setHorizontal(uint16_t xoffset, uint16_t width)
   if((xoffset + width) > 720)
     xoffset = 720 - width;
 
+  iCurrentHOffset_ = xoffset;
+
   // Set the horizontal register
   if(pCurrentMode_->height == 480) // NTSC
     REG_VI_HTR1 = VI_HTR1_CREATE(413, 122, 64, xoffset, width);
@@ -475,6 +477,8 @@ CNGCVideoDevice::setVertical(uint16_t yoffset, uint16_t height)
 
   if((yoffset + height) > maxHeight)
     yoffset = maxHeight - height;
+
+  iCurrentVOffset_ = yoffset;
 
   // Calculate Pre-Blanking
   uint16_t oddPreBlanking   = oprb + (yoffset);
@@ -532,4 +536,62 @@ CNGCVideoDevice::setInterlaced(bool interlaced)
     REG_VI_CLK = VI_CLK_27MHZ;
   else
     REG_VI_CLK = VI_CLK_54MHZ;
+}
+
+//---------------------------------------------------------------------------
+bool
+CNGCVideoDevice::hasPositioning()
+{
+  return true;
+}
+
+//---------------------------------------------------------------------------
+uint16_t
+CNGCVideoDevice::getMaxHorizontalOffset()
+{
+  return (720 - pCurrentMode_->width);
+}
+
+//---------------------------------------------------------------------------
+uint16_t
+CNGCVideoDevice::getHorizontalOffset()
+{
+  return iCurrentHOffset_;
+}
+
+//---------------------------------------------------------------------------
+void
+CNGCVideoDevice::setHorizontalOffset(uint16_t x)
+{
+  this->setHorizontal(x, pCurrentMode_->width);
+}
+
+//---------------------------------------------------------------------------
+uint16_t
+CNGCVideoDevice::getMaxVerticalOffset()
+{
+  if(pCurrentMode_->height == 480)
+  {
+    // NTSC
+    return (486 - pCurrentMode_->height);
+  }
+  else
+  {
+    // PAL
+    return (576 - pCurrentMode_->height);
+  }
+}
+
+//---------------------------------------------------------------------------
+uint16_t
+CNGCVideoDevice::getVerticalOffset()
+{
+  return iCurrentVOffset_;
+}
+
+//---------------------------------------------------------------------------
+void
+CNGCVideoDevice::setVerticalOffset(uint16_t y)
+{
+  this->setVertical(y, pCurrentMode_->height);
 }

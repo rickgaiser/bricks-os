@@ -64,6 +64,57 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
   for(int i(0); i < loops; i++)
     device->waitVSync();
 */
+
+  if(device->hasPositioning() == true)
+  {
+    int16_t maxH = device->getMaxHorizontalOffset();
+    int16_t maxV = device->getMaxVerticalOffset();
+
+    // Create window to easily detect screen edges
+    // 2 Pixel white border
+    renderer->setColor(255, 255, 255);
+    renderer->fill();
+    // 8 Pixel red border
+    renderer->setColor(255, 0, 0);
+    renderer->fillRect(2, 2, surface->width() - 4, surface->height() - 4);
+    // Black filling
+    renderer->setColor(0, 0, 0);
+    renderer->fillRect(10, 10, surface->width() - 20, surface->height() - 20);
+    renderer->flush();
+
+    // Initial position 0, 0
+    device->setHorizontalOffset(0);
+    device->setVerticalOffset(0);
+
+    while(true)
+    {
+      // Move right (1,0 -> max,0)
+      for(int16_t iX(1); iX < maxH; iX++)
+      {
+        device->setHorizontalOffset(iX);
+        device->waitVSync();
+      }
+      // Move down (max,1 -> max,max)
+      for(int16_t iY(1); iY < maxV; iY++)
+      {
+        device->setVerticalOffset(iY);
+        device->waitVSync();
+      }
+      // Move left (max-1,max -> 0,max)
+      for(int16_t iX(maxH - 1); iX >= 0; iX--)
+      {
+        device->setHorizontalOffset(iX);
+        device->waitVSync();
+      }
+      // Move up (0,max-1 -> 0,0)
+      for(int16_t iY(maxV - 1); iY >= 0; iY--)
+      {
+        device->setVerticalOffset(iY);
+        device->waitVSync();
+      }
+    }
+  }
+
   // Full screen fill test
   for(int i(0); i < loops; i++)
   {

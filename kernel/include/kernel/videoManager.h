@@ -427,6 +427,15 @@ public:
   virtual void get2DRenderer(I2DRenderer ** renderer) = 0;
   virtual void get3DRenderer(I3DRenderer ** renderer) = 0;
 
+  // Screen positioning (in pixels)
+  virtual bool     hasPositioning(){return false;}
+  virtual uint16_t getMaxHorizontalOffset(){return 0;}
+  virtual uint16_t getHorizontalOffset(){return 0;}
+  virtual void     setHorizontalOffset(uint16_t x){}
+  virtual uint16_t getMaxVerticalOffset(){return 0;}
+  virtual uint16_t getVerticalOffset(){return 0;}
+  virtual void     setVerticalOffset(uint16_t y){}
+
   virtual uint32_t getFrameNr() = 0; // Returns current frame/field number
   virtual uint32_t waitVSync() = 0; // Returns current frame/field number, after vsync
   virtual void displaySurface(CSurface * surface) = 0;
