@@ -7,6 +7,19 @@
 
 
 //---------------------------------------------------------------------------
+// Double buffering options in interlaced mode:
+//  1: Buffer SWAP with 2 full buffers. FIELD mode.
+//      + Frame rate is allowed to drop.
+//      - Only half of what is rendered is displayed.
+//  2 - Buffer SWAP. 2 half buffers. FRAME mode.
+//      + Memory efficient.
+//      - Buffers need a half pixel offset.
+//      - Keep up the frame rate.
+//  3 - Buffer COPY. 1 full, 1 half buffer. FRAME mode.
+//      + Vertical aliasing on copy.
+//      + 24bit display buffer allows extra 8/4bit textures.
+
+//---------------------------------------------------------------------------
 // DISPFB1/2:
 //  - Base Pointer (>> 13) / (/ 2048)
 //  - Buffer Width (>>  6) / (/   64)
@@ -400,6 +413,8 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
         actualHeight_       = vmodes[i].height;
         currentDoubleScan_  = 0;
         currentInterlaced_  = vmodes[i].interlaced;
+        // FIELD = Display only HALF of the lines! (what a waste of power)
+        // FRAME = Display EVERY line. (require special processing)
         currentField_       = FIELD;
         pPS2Mode            = &vmodes[i];
         break;
@@ -411,7 +426,7 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
         actualHeight_       = vmodes[i].height / 2;
         currentDoubleScan_  = 1;
         currentInterlaced_  = NON_INTERLACED;
-        currentField_       = FIELD;
+        currentField_       = 0; // Not used in (fake) progressive mode
         pPS2Mode            = &vmodes[i];
         break;
       }
