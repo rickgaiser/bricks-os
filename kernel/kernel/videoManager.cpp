@@ -51,6 +51,54 @@ const SColorFormatOperations colorFormatOps[] =
 
 
 //---------------------------------------------------------------------------
+void
+BxColorFormat_CreateConverter(SColorFormatConverter & conv, EColorFormat from, EColorFormat to)
+{
+  const SColorFormatOperations & fmtFrom = colorFormatOps[from];
+  const SColorFormatOperations & fmtTo   = colorFormatOps[to];
+
+  // Mask takes out the source color
+  conv.maskR  = fmtFrom.maskR;
+  conv.maskG  = fmtFrom.maskG;
+  conv.maskB  = fmtFrom.maskB;
+  conv.maskA  = fmtFrom.maskA;
+
+  // Shift right selected color
+  conv.rshiftR = fmtFrom.shiftR;
+  conv.rshiftG = fmtFrom.shiftG;
+  conv.rshiftB = fmtFrom.shiftB;
+  conv.rshiftA = fmtFrom.shiftA;
+
+  // Shift left into destination position
+  conv.lshiftR = fmtTo.shiftR;
+  conv.lshiftG = fmtTo.shiftG;
+  conv.lshiftB = fmtTo.shiftB;
+  conv.lshiftA = fmtTo.shiftA;
+
+  // Destination has more loss:
+  //  - Shift right the extra loss
+  if(fmtTo.lossR > fmtFrom.lossR)
+    conv.rshiftR += fmtTo.lossR - fmtFrom.lossR;
+  if(fmtTo.lossG > fmtFrom.lossG)
+    conv.rshiftG += fmtTo.lossG - fmtFrom.lossG;
+  if(fmtTo.lossB > fmtFrom.lossB)
+    conv.rshiftB += fmtTo.lossB - fmtFrom.lossB;
+  if(fmtTo.lossA > fmtFrom.lossA)
+    conv.rshiftA += fmtTo.lossA - fmtFrom.lossA;
+
+  // Destination has more bits:
+  //  - Shift left the extra bits
+  if(fmtTo.lossR < fmtFrom.lossR)
+    conv.lshiftR += fmtFrom.lossR - fmtTo.lossR;
+  if(fmtTo.lossG < fmtFrom.lossG)
+    conv.lshiftG += fmtFrom.lossG - fmtTo.lossG;
+  if(fmtTo.lossB < fmtFrom.lossB)
+    conv.lshiftB += fmtFrom.lossB - fmtTo.lossB;
+  if(fmtTo.lossA < fmtFrom.lossA)
+    conv.lshiftA += fmtFrom.lossA - fmtTo.lossA;
+}
+
+//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CSurface::CSurface()
  : p(0)

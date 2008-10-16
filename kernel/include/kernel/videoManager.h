@@ -43,20 +43,43 @@ public:
 struct SColorFormatOperations
 {
   uint8_t  bitsPerPixel;
+  // Shift right 8bit value when creating color
   uint8_t  lossR;
   uint8_t  lossG;
   uint8_t  lossB;
   uint8_t  lossA;
+  // Shift left value into color format position
   uint8_t  shiftR;
   uint8_t  shiftG;
   uint8_t  shiftB;
   uint8_t  shiftA;
+  // Mask for picking a color from a color format
   uint32_t maskR;
   uint32_t maskG;
   uint32_t maskB;
   uint32_t maskA;
 };
 extern const SColorFormatOperations colorFormatOps[];
+
+//---------------------------------------------------------------------------
+struct SColorFormatConverter
+{
+  // Source color mask
+  uint32_t maskR;
+  uint32_t maskG;
+  uint32_t maskB;
+  uint32_t maskA;
+  // Right shift color
+  uint8_t  rshiftR;
+  uint8_t  rshiftG;
+  uint8_t  rshiftB;
+  uint8_t  rshiftA;
+  // Left shift color
+  uint8_t  lshiftR;
+  uint8_t  lshiftG;
+  uint8_t  lshiftB;
+  uint8_t  lshiftA;
+};
 
 //---------------------------------------------------------------------------
 enum EColorFormat
@@ -105,15 +128,14 @@ enum EColorFormat
 //---------------------------------------------------------------------------
 // Create color formats
 #define BxColorFormat_FromRGBA(fmt,r,g,b,a) \
-  ((r >> colorFormatOps[fmt].lossR) << colorFormatOps[fmt].shiftR) | \
-  ((g >> colorFormatOps[fmt].lossG) << colorFormatOps[fmt].shiftG) | \
-  ((b >> colorFormatOps[fmt].lossB) << colorFormatOps[fmt].shiftB) | \
-  ((a >> colorFormatOps[fmt].lossA) << colorFormatOps[fmt].shiftA)
+  (((r >> colorFormatOps[fmt].lossR) << colorFormatOps[fmt].shiftR) | \
+   ((g >> colorFormatOps[fmt].lossG) << colorFormatOps[fmt].shiftG) | \
+   ((b >> colorFormatOps[fmt].lossB) << colorFormatOps[fmt].shiftB) | \
+   ((a >> colorFormatOps[fmt].lossA) << colorFormatOps[fmt].shiftA))
 #define BxColorFormat_FromRGB(fmt,r,g,b) \
-  ((r >> colorFormatOps[fmt].lossR) << colorFormatOps[fmt].shiftR) | \
-  ((g >> colorFormatOps[fmt].lossG) << colorFormatOps[fmt].shiftG) | \
-  ((b >> colorFormatOps[fmt].lossB) << colorFormatOps[fmt].shiftB) | \
-  (colorFormatOps[fmt].maskA)
+  (((r >> colorFormatOps[fmt].lossR) << colorFormatOps[fmt].shiftR) | \
+   ((g >> colorFormatOps[fmt].lossG) << colorFormatOps[fmt].shiftG) | \
+   ((b >> colorFormatOps[fmt].lossB) << colorFormatOps[fmt].shiftB))
 // Get colors from color formats
 #define BxColorFormat_GetR(fmt,color) \
   (((color & colorFormatOps[fmt].maskR) >> colorFormatOps[fmt].shiftR) << colorFormatOps[fmt].lossR)
@@ -123,13 +145,18 @@ enum EColorFormat
   (((color & colorFormatOps[fmt].maskB) >> colorFormatOps[fmt].shiftB) << colorFormatOps[fmt].lossB)
 #define BxColorFormat_GetA(fmt,color) \
   (((color & colorFormatOps[fmt].maskA) >> colorFormatOps[fmt].shiftA) << colorFormatOps[fmt].lossA)
+// Create color format conversion struct
+void BxColorFormat_CreateConverter(SColorFormatConverter & conv, EColorFormat from, EColorFormat to);
 // Convert color formats
-#define BxColorFormat_Convert(fmtFrom,fmtTo,color) \
-  BxColorFormat_FromRGBA(fmtTo, \
-                         BxColorFormat_GetR(fmtFrom, color), \
-                         BxColorFormat_GetG(fmtFrom, color), \
-                         BxColorFormat_GetB(fmtFrom, color), \
-                         BxColorFormat_GetA(fmtFrom, color))
+#define BxColorFormat_ConvertRGB(conv,color) \
+  ((((color & conv.maskR) >> conv.rshiftR) << conv.lshiftR) | \
+   (((color & conv.maskG) >> conv.rshiftG) << conv.lshiftG) | \
+   (((color & conv.maskB) >> conv.rshiftB) << conv.lshiftB))
+#define BxColorFormat_ConvertRGBA(conv,color) \
+  ((((color & conv.maskR) >> conv.rshiftR) << conv.lshiftR) | \
+   (((color & conv.maskG) >> conv.rshiftG) << conv.lshiftG) | \
+   (((color & conv.maskB) >> conv.rshiftB) << conv.lshiftB) | \
+   (((color & conv.maskA) >> conv.rshiftA) << conv.lshiftA))
 
 //---------------------------------------------------------------------------
 enum ESurfaceType

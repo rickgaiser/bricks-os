@@ -22,48 +22,51 @@ convertImageFormat(void * dst, EColorFormat dstFmt, const void * src, EColorForm
   // Copy/Convert to texture buffer
   if(dstFmt != srcFmt)
   {
+    SColorFormatConverter sConverter;
     uint32_t i = 0;
     uint8_t iConv =
       ((colorFormatOps[srcFmt].bitsPerPixel >> 3) << 4) |
       ((colorFormatOps[dstFmt].bitsPerPixel >> 3)     );
 
+    BxColorFormat_CreateConverter(sConverter, srcFmt, dstFmt);
+
     switch(iConv)
     {
       case IMG_CONV_32_TO_32:
         for(; i < iPixelCount; i++)
-          ((uint32_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint32_t *)src)[i]);
+          ((uint32_t *)dst)[i] = BxColorFormat_ConvertRGBA(sConverter, ((uint32_t *)src)[i]);
         break;
       case IMG_CONV_32_TO_16:
         for(; i < iPixelCount; i++)
-          ((uint16_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint32_t *)src)[i]);
+          ((uint16_t *)dst)[i] = BxColorFormat_ConvertRGBA(sConverter, ((uint32_t *)src)[i]);
         break;
       case IMG_CONV_32_TO_08:
         for(; i < iPixelCount; i++)
-          ((uint8_t  *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint32_t *)src)[i]);
+          ((uint8_t  *)dst)[i] = BxColorFormat_ConvertRGBA(sConverter, ((uint32_t *)src)[i]);
         break;
       case IMG_CONV_16_TO_32:
         for(; i < iPixelCount; i++)
-          ((uint32_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint16_t *)src)[i]);
+          ((uint32_t *)dst)[i] = BxColorFormat_ConvertRGBA(sConverter, ((uint16_t *)src)[i]);
         break;
       case IMG_CONV_16_TO_16:
         for(; i < iPixelCount; i++)
-          ((uint16_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint16_t *)src)[i]);
+          ((uint16_t *)dst)[i] = BxColorFormat_ConvertRGBA(sConverter, ((uint16_t *)src)[i]);
         break;
       case IMG_CONV_16_TO_08:
         for(; i < iPixelCount; i++)
-          ((uint8_t  *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint16_t *)src)[i]);
+          ((uint8_t  *)dst)[i] = BxColorFormat_ConvertRGBA(sConverter, ((uint16_t *)src)[i]);
         break;
       case IMG_CONV_08_TO_32:
         for(; i < iPixelCount; i++)
-          ((uint32_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint8_t  *)src)[i]);
+          ((uint32_t *)dst)[i] = BxColorFormat_ConvertRGBA(sConverter, ((uint8_t  *)src)[i]);
         break;
       case IMG_CONV_08_TO_16:
         for(; i < iPixelCount; i++)
-          ((uint16_t *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint8_t  *)src)[i]);
+          ((uint16_t *)dst)[i] = BxColorFormat_ConvertRGBA(sConverter, ((uint8_t  *)src)[i]);
         break;
       case IMG_CONV_08_TO_08:
         for(; i < iPixelCount; i++)
-          ((uint8_t  *)dst)[i] = BxColorFormat_Convert(srcFmt, dstFmt, ((uint8_t  *)src)[i]);
+          ((uint8_t  *)dst)[i] = BxColorFormat_ConvertRGBA(sConverter, ((uint8_t  *)src)[i]);
         break;
     };
   }
