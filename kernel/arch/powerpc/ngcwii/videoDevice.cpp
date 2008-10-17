@@ -1,6 +1,7 @@
 #include "videoDevice.h"
 #include "asm/arch/registers.h"
 #include <gccore.h>
+#include "gx.h"
 
 
 // NOTE:
@@ -106,6 +107,33 @@ static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 #define RGB2YUV_Y(r,g,b)  clamp(16, 235, ((RGB2YUV_MUL_Yr * r + RGB2YUV_MUL_Yg * g + RGB2YUV_MUL_Yb * b) >> RGB2YUV_SHIFT) + RGB2YUV_LUMA);
 #define RGB2YUV_Cb(r,g,b) clamp(16, 240, ((RGB2YUV_MUL_Ur * r + RGB2YUV_MUL_Ug * g + RGB2YUV_MUL_Ub * b) >> RGB2YUV_SHIFT) + RGB2YUV_CHROMA);
 #define RGB2YUV_Cr(r,g,b) clamp(16, 240, ((RGB2YUV_MUL_Vr * r + RGB2YUV_MUL_Vg * g + RGB2YUV_MUL_Vb * b) >> RGB2YUV_SHIFT) + RGB2YUV_CHROMA);
+
+
+// -----------------------------------------------------------------------------
+void
+copyEFBToXFB(void * xfbAddr, bool clear)
+{
+//  GX_LOAD_BP_REG(GX::REG::zmode,   0x1f);
+//  GX_LOAD_BP_REG(GX::REG::cmode0, 0x4bc);
+
+  // Set display copy source
+  GX_LOAD_BP_REG(GX::REG::cp_srcoff,  GX_XY(0, 0));         // Source top left
+  GX_LOAD_BP_REG(GX::REG::cp_srcsize, GX_XY(640-1, 480)); // Source bottom right
+  // Set display copy destination
+  GX_LOAD_BP_REG(GX::REG::cp_dstaddr, ((uint32_t)xfbAddr >> 5))
+  GX_LOAD_BP_REG(GX::REG::cp_dstw,    (640>>4));
+  // Scaling
+  GX_LOAD_BP_REG(GX::REG::cp_yscale,  (1<<8));
+
+//  uint8_t  a(0),r(0),g(0),b(0);
+//  uint32_t z(0x00ffffff); // 24bit z-buffer?
+//  GX_LOAD_BP_REG(GX::REG::cp_clr_ar, (a << 8) | r);
+//  GX_LOAD_BP_REG(GX::REG::cp_clr_gb, (g << 8) | b);
+//  GX_LOAD_BP_REG(GX::REG::cp_clr_z,  z);
+
+  // Start copying
+  GX_LOAD_BP_REG(GX::REG::cp_ctrl, (clear ? 4803 : 4003));
+}
 
 // -----------------------------------------------------------------------------
 // 2 rgb pixels --> 2 yuv pixels (yuyv)
