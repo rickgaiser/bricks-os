@@ -3,6 +3,7 @@
 #include "asm/arch/registers.h"
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
+#include "kernel/2dRenderer.h"
 #include "stdlib.h"
 
 

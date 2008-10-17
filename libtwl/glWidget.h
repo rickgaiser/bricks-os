@@ -4,6 +4,7 @@
 
 #include "widget.h"
 #include "kernel/videoManager.h"
+#include "kernel/3dRenderer.h"
 
 
 namespace twl

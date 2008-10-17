@@ -1,5 +1,4 @@
 #include "windowManager.h"
-#include "kernel/videoManager.h"
 #include "desktop.h"
 #include "event.h"
 #include "eventKey.h"

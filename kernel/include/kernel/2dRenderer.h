@@ -7,6 +7,27 @@
 
 
 //---------------------------------------------------------------------------
+class I2DRenderer
+ : public IRenderer
+{
+public:
+  virtual ~I2DRenderer(){}
+
+  // Color
+  virtual void       setColor(color_t rgb) = 0; // cfA8R8G8B8 format color
+  virtual void       setColor(uint8_t r, uint8_t g, uint8_t b) = 0;
+
+  // Drawing
+  virtual void       setPixel(int x, int y) = 0;
+  virtual void       fill() = 0;
+  virtual void       fillRect(int x, int y, unsigned int width, unsigned int height) = 0;  // Width: width in pixels, Height: height in pixels
+  virtual void       drawLine(int x1, int y1, int x2, int y2) = 0;                         // Note: x2 and y2 are drawn
+  virtual void       drawHLine(int x, int y, unsigned int width) = 0;
+  virtual void       drawVLine(int x, int y, unsigned int height) = 0;
+  virtual void       drawRect(int x, int y, unsigned int width, unsigned int height) = 0;
+};
+
+//---------------------------------------------------------------------------
 class C2DRenderer
  : public I2DRenderer
 {

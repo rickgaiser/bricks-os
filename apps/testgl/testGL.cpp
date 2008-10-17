@@ -1,5 +1,6 @@
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
+#include "kernel/3dRenderer.h"
 #include "stdlib.h"
 #include "glconfig.h"
 

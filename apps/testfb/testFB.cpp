@@ -2,6 +2,7 @@
 #include "asm/arch/config.h"
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
+#include "kernel/2dRenderer.h"
 #include "stdlib.h"
 
 

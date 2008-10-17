@@ -4,6 +4,7 @@
 
 #include "window.h"
 #include "kernel/videoManager.h"
+#include "kernel/2dRenderer.h"
 #include "vector"
 
 
