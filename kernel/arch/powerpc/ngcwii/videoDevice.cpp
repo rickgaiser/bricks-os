@@ -113,23 +113,23 @@ static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 void
 copyEFBToXFB(void * xfbAddr, bool clear)
 {
-//  GX_LOAD_BP_REG(GX::REG::zmode,   0x1f);
-//  GX_LOAD_BP_REG(GX::REG::cmode0, 0x4bc);
+//  GX_LOAD_BP_REG(GX::REG::zmode,        0x1f);
+//  GX_LOAD_BP_REG(GX::REG::cmode0,      0x4bc);
 
   // Set display copy source
-  GX_LOAD_BP_REG(GX::REG::cp_srcoff,  GX_XY(0, 0));         // Source top left
-  GX_LOAD_BP_REG(GX::REG::cp_srcsize, GX_XY(640-1, 480)); // Source bottom right
+  GX_LOAD_BP_REG(GX::REG::cp_src_off,  GX_XY(0, 0));         // Source top left
+  GX_LOAD_BP_REG(GX::REG::cp_src_size, GX_XY(640-1, 480)); // Source bottom right
   // Set display copy destination
-  GX_LOAD_BP_REG(GX::REG::cp_dstaddr, ((uint32_t)xfbAddr >> 5))
-  GX_LOAD_BP_REG(GX::REG::cp_dstw,    (640>>4));
+  GX_LOAD_BP_REG(GX::REG::cp_dst_addr, ((uint32_t)xfbAddr >> 5))
+  GX_LOAD_BP_REG(GX::REG::cp_dst_w,    (640>>4));
   // Scaling
-  GX_LOAD_BP_REG(GX::REG::cp_yscale,  (1<<8));
+  GX_LOAD_BP_REG(GX::REG::cp_yscale,   (1<<8));
 
 //  uint8_t  a(0),r(0),g(0),b(0);
 //  uint32_t z(0x00ffffff); // 24bit z-buffer?
-//  GX_LOAD_BP_REG(GX::REG::cp_clr_ar, (a << 8) | r);
-//  GX_LOAD_BP_REG(GX::REG::cp_clr_gb, (g << 8) | b);
-//  GX_LOAD_BP_REG(GX::REG::cp_clr_z,  z);
+//  GX_LOAD_BP_REG(GX::REG::cp_clr_ar,   (a << 8) | r);
+//  GX_LOAD_BP_REG(GX::REG::cp_clr_gb,   (g << 8) | b);
+//  GX_LOAD_BP_REG(GX::REG::cp_clr_z,    (z));
 
   // Start copying
   GX_LOAD_BP_REG(GX::REG::cp_ctrl, (clear ? 4803 : 4003));
