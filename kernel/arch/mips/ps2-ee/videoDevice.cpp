@@ -497,6 +497,20 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
       packet_.gifAddPackedAD(GIF::REG::xyoffset_1, GS_XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
       // Clip to frame buffer.
       packet_.gifAddPackedAD(GIF::REG::scissor_1,  GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, actualHeight_));
+      // Clamp colors
+      packet_.gifAddPackedAD(GIF::REG::colclamp,   1);
+      // Dithering
+      if(mode->bpp == 16)
+      {
+        // Enable dithering
+        packet_.gifAddPackedAD(GIF::REG::dimx, GS_DIMX(-4,2,-3,3,0,-2,1,-1,-3,3,-4,2,1,-1,0,-2));
+        packet_.gifAddPackedAD(GIF::REG::dthe, 1);
+      }
+      else
+      {
+        // Disable dithering
+        packet_.gifAddPackedAD(GIF::REG::dthe, 0);
+      }
     packet_.gifTagClose();
   packet_.scTagClose();
   packet_.send();

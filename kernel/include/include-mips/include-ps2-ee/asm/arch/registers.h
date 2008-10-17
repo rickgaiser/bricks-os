@@ -107,6 +107,25 @@
   ((uint64_t)(G) <<  8) | \
   ((uint64_t)(B) << 16)
 
+// DIMX Register (dither matrix)
+#define GS_DIMX(DM00,DM01,DM02,DM03,DM10,DM11,DM12,DM13,DM20,DM21,DM22,DM23,DM30,DM31,DM32,DM33) \
+  ((uint64_t)(DM00) <<  0) | \
+  ((uint64_t)(DM01) <<  4) | \
+  ((uint64_t)(DM02) <<  8) | \
+  ((uint64_t)(DM03) << 12) | \
+  ((uint64_t)(DM10) << 16) | \
+  ((uint64_t)(DM11) << 20) | \
+  ((uint64_t)(DM12) << 24) | \
+  ((uint64_t)(DM13) << 28) | \
+  ((uint64_t)(DM20) << 32) | \
+  ((uint64_t)(DM21) << 36) | \
+  ((uint64_t)(DM22) << 40) | \
+  ((uint64_t)(DM23) << 44) | \
+  ((uint64_t)(DM30) << 48) | \
+  ((uint64_t)(DM31) << 52) | \
+  ((uint64_t)(DM32) << 56) | \
+  ((uint64_t)(DM33) << 60)
+
 // ALPHA_x Registers - Setup Alpha Blending Parameters
 //   Alpha Formula is: Cv = (A-B)*C>>7 + D
 //   For A,B,D - (0=texture, 1=frame buffer, 2=0)
