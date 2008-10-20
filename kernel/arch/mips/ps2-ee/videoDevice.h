@@ -125,6 +125,15 @@ public:
   bool allocFramebuffer(uint32_t & addr, int w, int h, uint16_t psm);
   bool allocTexture(uint32_t & addr, int w, int h, uint16_t psm);
 
+  // Screen positioning (in pixels)
+  virtual bool     hasPositioning();
+  virtual uint16_t getMaxHorizontalOffset();
+  virtual uint16_t getHorizontalOffset();
+  virtual void     setHorizontalOffset(uint16_t x);
+  virtual uint16_t getMaxVerticalOffset();
+  virtual uint16_t getVerticalOffset();
+  virtual void     setVerticalOffset(uint16_t y);
+
 private:
   // Surface we're currently displaying
   CPS2Surface * pSurface_;
@@ -142,6 +151,8 @@ private:
   uint16_t currentDoubleScan_;
 
   vuint32_t iFrameCount_; // volatile, becouse the isr updates it
+  uint16_t iCurrentHOffset_;
+  uint16_t iCurrentVOffset_;
 };
 
 

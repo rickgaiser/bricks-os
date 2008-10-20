@@ -68,37 +68,39 @@ const SPS2CRTCMode cmodes[] =
 };
 
 //---------------------------------------------------------------------------
-// SDTV Offsets tested with Panasonic CRT-TV
-// VGA  Offsets tested with Samsung SyncMaster 900nf
+// VGA Offsets tested with Samsung SyncMaster 900nf & Dell 1907FP
 SPS2VideoMode vmodes[] =
 {
-  // SDTV
-  { 640,  448, INTERLACED,     &cmodes[ 0], 173, 50}, // NTSC 480i60, offsets ok
-  { 640,  512, INTERLACED,     &cmodes[ 1], 175, 75}, // PAL  576i50, offsets ok
-  // VGA
-  { 640,  480, NON_INTERLACED, &cmodes[ 2], 140, 25}, // 60Hz, offsets ok
-//  { 640,  480, NON_INTERLACED, &cmodes[ 3], 140, 25}, // 72Hz, offsets ok
-//  { 640,  480, NON_INTERLACED, &cmodes[ 4], 175, 12}, // 75Hz, offsets ok
-//  { 640,  480, NON_INTERLACED, &cmodes[ 5], 138, 34}, // 85Hz, ERROR
-  // SVGA
-//  { 800,  600, NON_INTERLACED, &cmodes[ 6], 190, 15}, // 56Hz, offsets ok
-  { 800,  600, NON_INTERLACED, &cmodes[ 7], 240, 15}, // 60Hz, offsets ok
-//  { 800,  600, NON_INTERLACED, &cmodes[ 8], 210, 30}, // 72Hz, offsets ok
-//  { 800,  600, NON_INTERLACED, &cmodes[ 9], 220, 15}, // 75Hz, offsets ok
-//  { 800,  600, NON_INTERLACED, &cmodes[10], 210, 15}, // 85Hz, offsets ok
-  // XGA
-  {1024,  768, NON_INTERLACED, &cmodes[11], 310, 20}, // 60Hz, offsets ok
-//  {1024,  768, NON_INTERLACED, &cmodes[12], 295, 20}, // 70Hz, offsets ok
-//  {1024,  768, NON_INTERLACED, &cmodes[13], 260, 20}, // 75Hz, offsets ok
-//  {1024,  768, NON_INTERLACED, &cmodes[14], 295, 20}, // 85Hz, offsets ok
-  // SXGA
-  {1280, 1024, NON_INTERLACED, &cmodes[15], 360, 25}, // 60Hz, offsets ok
-//  {1280, 1024, NON_INTERLACED, &cmodes[16], 390, 25}, // 75Hz, offsets ok
+  // NTSC 480i60 (525 scanlines, 21-263 & 283-525 = 486 video lines)
+  { 640,  448, INTERLACED,     &cmodes[ 0], 160, 50},
+  // PAL  576i50 (625 scanlines, 23.5-310 & 336-622.5 = 574 (+2 half) video lines)
+  { 640,  512, INTERLACED,     &cmodes[ 1], 176, 70},
+
   // EDTV
-  { 720,  480, NON_INTERLACED, &cmodes[17], 116, 35}, // 480p60
+  { 720,  480, NON_INTERLACED, &cmodes[17],  58, 35}, // 480p60
   // HDTV
-  {1920, 1080, INTERLACED,     &cmodes[18], 238, 40}, // 1080i60
+  {1920, 1080, INTERLACED,     &cmodes[18], 236, 40}, // 1080i60
   {1280,  720, NON_INTERLACED, &cmodes[19], 302, 24}, // 720p60
+
+  // VGA
+  { 640,  480, NON_INTERLACED, &cmodes[ 2], 136, 34}, // 60Hz
+//  { 640,  480, NON_INTERLACED, &cmodes[ 3], 160, 30}, // 72Hz
+//  { 640,  480, NON_INTERLACED, &cmodes[ 4], 176, 18}, // 75Hz
+//  { 640,  480, NON_INTERLACED, &cmodes[ 5], 140, 34}, // 85Hz, ERROR
+  // SVGA
+//  { 800,  600, NON_INTERLACED, &cmodes[ 6], 192, 23}, // 56Hz
+  { 800,  600, NON_INTERLACED, &cmodes[ 7], 208, 26}, // 60Hz
+//  { 800,  600, NON_INTERLACED, &cmodes[ 8], 176, 28}, // 72Hz
+//  { 800,  600, NON_INTERLACED, &cmodes[ 9], 232, 23}, // 75Hz
+//  { 800,  600, NON_INTERLACED, &cmodes[10], 208, 29}, // 85Hz
+  // XGA
+  {1024,  768, NON_INTERLACED, &cmodes[11], 288, 34}, // 60Hz
+//  {1024,  768, NON_INTERLACED, &cmodes[12], 264, 34}, // 70Hz
+//  {1024,  768, NON_INTERLACED, &cmodes[13], 258, 30}, // 75Hz
+//  {1024,  768, NON_INTERLACED, &cmodes[14], 288, 38}, // 85Hz
+  // SXGA
+  {1280, 1024, NON_INTERLACED, &cmodes[15], 344, 40}, // 60Hz
+//  {1280, 1024, NON_INTERLACED, &cmodes[16], 376, 40}, // 75Hz
 };
 const uint32_t vmode_count(sizeof(vmodes) / sizeof(SPS2VideoMode));
 
@@ -134,7 +136,7 @@ static const SVideoMode videoModes[] =
   // EDTV
   { 768,  480,  720,  480, 16, cfA1B5G5R5}, //  720KiB 12
   { 768,  480,  720,  480, 24, cfB8G8R8},   // 1080KiB
-  { 768,  480,  720,  480, 32, cfA8B8G8R8}, // 1440KiB 13
+  { 768,  480,  720,  480, 32, cfA8B8G8R8}, // 1440KiB 14
   // HDTV
   {1280,  720, 1280,  720, 16, cfA1B5G5R5}, // 1800KiB 15
   {1280,  720, 1280,  720, 24, cfB8G8R8},   // 2700KiB
@@ -502,8 +504,16 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
       // Dithering
       if(mode->bpp == 16)
       {
+        // -4 == 100b == 4
+        // -3 == 101b == 5
+        // -2 == 110b == 6
+        // -1 == 111b == 7
+        //  0 == 000b == 0
+        //  1 == 001b == 1
+        //  2 == 010b == 2
+        //  3 == 011b == 3
         // Enable dithering
-        packet_.gifAddPackedAD(GIF::REG::dimx, GS_DIMX(-4,2,-3,3,0,-2,1,-1,-3,3,-4,2,1,-1,0,-2));
+        packet_.gifAddPackedAD(GIF::REG::dimx, GS_DIMX(4,2,5,3,0,6,1,7,5,3,4,2,1,7,0,6));
         packet_.gifAddPackedAD(GIF::REG::dthe, 1);
       }
       else
@@ -695,4 +705,51 @@ CPS2VideoDevice::allocTexture(uint32_t & addr, int w, int h, uint16_t psm)
   freeMemAddr_ = addr + iSize;
 
   return true;
+}
+
+//---------------------------------------------------------------------------
+bool
+CPS2VideoDevice::hasPositioning()
+{
+  return false;
+}
+
+//---------------------------------------------------------------------------
+uint16_t
+CPS2VideoDevice::getMaxHorizontalOffset()
+{
+  return 0;
+}
+
+//---------------------------------------------------------------------------
+uint16_t
+CPS2VideoDevice::getHorizontalOffset()
+{
+  return 0;
+}
+
+//---------------------------------------------------------------------------
+void
+CPS2VideoDevice::setHorizontalOffset(uint16_t x)
+{
+}
+
+//---------------------------------------------------------------------------
+uint16_t
+CPS2VideoDevice::getMaxVerticalOffset()
+{
+  return 0;
+}
+
+//---------------------------------------------------------------------------
+uint16_t
+CPS2VideoDevice::getVerticalOffset()
+{
+  return 0;
+}
+
+//---------------------------------------------------------------------------
+void
+CPS2VideoDevice::setVerticalOffset(uint16_t y)
+{
 }
