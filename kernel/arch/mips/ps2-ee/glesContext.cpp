@@ -520,9 +520,8 @@ CPS2GLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
       case GL_TEXTURE_WRAP_S:
         switch((GLint)param)
         {
-          //case GL_CLAMP:         break;
-          case GL_CLAMP_TO_EDGE: break;
-          case GL_REPEAT:        break;
+          case GL_CLAMP:  break;
+          case GL_REPEAT: break;
           default:
             setError(GL_INVALID_ENUM);
             return;
@@ -532,9 +531,8 @@ CPS2GLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
       case GL_TEXTURE_WRAP_T:
         switch((GLint)param)
         {
-          //case GL_CLAMP:         break;
-          case GL_CLAMP_TO_EDGE: break;
-          case GL_REPEAT:        break;
+          case GL_CLAMP:  break;
+          case GL_REPEAT: break;
           default:
             setError(GL_INVALID_ENUM);
             return;

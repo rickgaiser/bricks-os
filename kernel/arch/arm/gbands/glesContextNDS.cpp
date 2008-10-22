@@ -611,9 +611,8 @@ CNDSGLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
       case GL_TEXTURE_WRAP_S:
         switch((GLint)param)
         {
-          //case GL_CLAMP:                                                  break;
-          case GL_CLAMP_TO_EDGE: CURRENT_NDSTEX->format &= ~NDS_REPEAT_S; break;
-          case GL_REPEAT:        CURRENT_NDSTEX->format |=  NDS_REPEAT_S; break;
+          case GL_CLAMP:  CURRENT_NDSTEX->format &= ~NDS_REPEAT_S; break;
+          case GL_REPEAT: CURRENT_NDSTEX->format |=  NDS_REPEAT_S; break;
           default:
             setError(GL_INVALID_ENUM);
             return;
@@ -622,9 +621,8 @@ CNDSGLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
       case GL_TEXTURE_WRAP_T:
         switch((GLint)param)
         {
-          //case GL_CLAMP:                                                  break;
-          case GL_CLAMP_TO_EDGE: CURRENT_NDSTEX->format &= ~NDS_REPEAT_T; break;
-          case GL_REPEAT:        CURRENT_NDSTEX->format |=  NDS_REPEAT_T; break;
+          case GL_CLAMP:  CURRENT_NDSTEX->format &= ~NDS_REPEAT_T; break;
+          case GL_REPEAT: CURRENT_NDSTEX->format |=  NDS_REPEAT_T; break;
           default:
             setError(GL_INVALID_ENUM);
             return;

@@ -1,5 +1,5 @@
 #include "GL/glu.h"
-#include "GLES/gl.h"
+#include "GL/gl.h"
 #include "math.h"
 #include "textures.h"
 #include "kernel/videoManager.h"

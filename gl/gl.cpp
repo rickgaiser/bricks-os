@@ -1,5 +1,5 @@
+#include "GL/gl.h"
 #include "GLES/gl.h"
-#include "GLES/gl_extra.h"
 #include "context.h"
 #include "asm/arch/config.h"
 
@@ -87,194 +87,150 @@ GL_APIENTRY name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5, typ
 //-----------------------------------------------------------------------------
 // GL API
 //-----------------------------------------------------------------------------
-//#ifdef OPENGL_ES
-GL_API GLenum GL_APIENTRY glGetError (void){return pCurrentContext->glGetError();}
-GL_APIFUNCTION_4(glColorPointer,       GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);
-GL_APIFUNCTION_3(glNormalPointer,      GLenum, type, GLsizei, stride, const GLvoid *, pointer);
-GL_APIFUNCTION_4(glTexCoordPointer,    GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);
-GL_APIFUNCTION_4(glVertexPointer,      GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);
-GL_APIFUNCTION_3(glDrawArrays,         GLenum, mode, GLint, first, GLsizei, count);
-//GL_APIFUNCTION_4(glDrawElements,       GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
-//GL_APIFUNCTION_1(glClientActiveTexture, GLenum texture);
-GL_APIFUNCTION_1(glDisableClientState, GLenum, array);
+// Miscellaneous
+GL_APIFUNCTION_4(glClearColor,         GLclampf, red, GLclampf, green, GLclampf, blue, GLclampf, alpha);
+GL_APIFUNCTION_1(glClear,              GLbitfield, mask);
+GL_APIFUNCTION_1(glCullFace,           GLenum, mode);
+GL_APIFUNCTION_1(glFrontFace,          GLenum, mode);
+GL_APIFUNCTION_1(glEnable,             GLenum, cap);
+GL_APIFUNCTION_1(glDisable,            GLenum, cap);
 GL_APIFUNCTION_1(glEnableClientState,  GLenum, array);
-//GL_APIFUNCTION_2(glBindBuffer,         GLenum target, GLuint buffer);
-//GL_APIFUNCTION_4(glBufferData,         GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage);
-//GL_APIFUNCTION_4(glBufferSubData,      GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data);
-//GL_APIFUNCTION_2(glDeleteBuffers,      GLsizei n, const GLuint *buffers);
-//GL_APIFUNCTION_2(glGenBuffers,         GLsizei n, GLuint *buffers);
-GL_APIFUNCTION_4(glViewport,           GLint, x, GLint, y, GLsizei, width, GLsizei, height);
+GL_APIFUNCTION_1(glDisableClientState, GLenum, array);
+GL_API GLenum GL_APIENTRY glGetError (void){return pCurrentContext->glGetError();}
+GL_APIFUNCTION_0(glFinish);
+GL_APIFUNCTION_0(glFlush);
+GL_APIFUNCTION_2(glHint,               GLenum, target, GLenum, mode);
+// Depth Buffer
+GL_APIFUNCTION_1(glClearDepthf,        GLclampf, depth);
+GL_APIFUNCTION_1(glDepthFunc,          GLenum, func);
+GL_APIFUNCTION_2(glDepthRangef,        GLclampf, zNear, GLclampf, zFar);
+// Accumulation Buffer
+// ...
+// Transformation
 GL_APIFUNCTION_1(glMatrixMode,         GLenum, mode);
-GL_APIFUNCTION_0(glLoadIdentity);
-//GL_APIFUNCTION_1(glActiveTexture,      GLenum texture);
+GL_APIFUNCTION_6(glOrthof,             GLfloat, left, GLfloat, right, GLfloat, bottom, GLfloat, top, GLfloat, zNear, GLfloat, zFar);
+GL_APIFUNCTION_6(glFrustumf,           GLfloat, left, GLfloat, right, GLfloat, bottom, GLfloat, top, GLfloat, zNear, GLfloat, zFar);
+GL_APIFUNCTION_4(glViewport,           GLint, x, GLint, y, GLsizei, width, GLsizei, height);
 GL_APIFUNCTION_0(glPushMatrix);
 GL_APIFUNCTION_0(glPopMatrix);
-GL_APIFUNCTION_1(glDisable,            GLenum, cap);
-GL_APIFUNCTION_1(glEnable,             GLenum, cap);
-GL_APIFUNCTION_1(glFrontFace,          GLenum, mode);
-GL_APIFUNCTION_1(glShadeModel,         GLenum, mode);
-GL_APIFUNCTION_1(glCullFace,           GLenum, mode);
-//GL_APIFUNCTION_2(glPixelStorei,        GLenum pname, GLint param);
-GL_APIFUNCTION_9(glTexImage2D,         GLenum, target, GLint, level, GLint, internalformat, GLsizei, width, GLsizei, height, GLint, border, GLenum, format, GLenum, type, const GLvoid *, pixels);
-//GL_APIFUNCTION_9(glTexSubImage2D,      GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
-//GL_APIFUNCTION_8(glCopyTexImage2D,     GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
-//GL_APIFUNCTION_8(glCopyTexSubImage2D,  GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
-//GL_APIFUNCTION_8(glCompressedTexImage2D, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
-//GL_APIFUNCTION_9(glCompressedTexSubImage2D, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid *data);
-//GL_APIFUNCTION_3(glTexParameteri,      GLenum target, GLenum pname, GLint param);
-//GL_APIFUNCTION_3(glTexParameteriv,     GLenum target, GLenum pname, const GLint *params);
-GL_APIFUNCTION_2(glBindTexture,        GLenum, target, GLuint, texture);
-GL_APIFUNCTION_2(glDeleteTextures,     GLsizei, n, const GLuint *, textures);
-GL_APIFUNCTION_2(glGenTextures,        GLsizei, n, GLuint *, textures);
-//GL_API GLboolean GL_APIENTRY glIsTexture (GLuint texture);
-//GL_APIFUNCTION_3(glTexEnvi,            GLenum target, GLenum pname, GLint param);
-//GL_APIFUNCTION_3(glTexEnviv,           GLenum target, GLenum pname, const GLint *params);
-//GL_APIFUNCTION_3(glGetTexEnviv,        GLenum env, GLenum pname, GLint *params);
-//GL_APIFUNCTION_3(glGetTexParameteriv,  GLenum target, GLenum pname, GLint *params);
-//GL_APIFUNCTION_4(glScissor,            GLint x, GLint y, GLsizei width, GLsizei height);
-//GL_APIFUNCTION_3(glStencilFunc,        GLenum func, GLint ref, GLuint mask);
-//GL_APIFUNCTION_3(glStencilOp,          GLenum fail, GLenum zfail, GLenum zpass);
-GL_APIFUNCTION_1(glDepthFunc,          GLenum, func);
-//GL_APIFUNCTION_2(glBlendFunc,          GLenum sfactor, GLenum dfactor);
-//GL_APIFUNCTION_1(glLogicOp,            GLenum opcode);
-//GL_APIFUNCTION_4(glColorMask,          GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
-//GL_APIFUNCTION_1(glDepthMask,          GLboolean flag);
-//GL_APIFUNCTION_1(glStencilMask,        GLuint mask);
-GL_APIFUNCTION_1(glClear,              GLbitfield, mask);
-//GL_APIFUNCTION_1(glClearStencil,       GLint s);
-//GL_APIFUNCTION_7(glReadPixels,         GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
-GL_APIFUNCTION_0(glFlush);
-GL_APIFUNCTION_0(glFinish);
-GL_APIFUNCTION_2(glHint,               GLenum, target, GLenum, mode);
-//GL_APIFUNCTION_2(glGetBooleanv,        GLenum pname, GLboolean *params);
-//GL_APIFUNCTION_2(glGetIntegerv,        GLenum pname, GLint *params);
-//GL_API GLboolean GL_APIENTRY glIsEnabled (GLenum cap);
-//GL_APIFUNCTION_3(glGetBufferParameteriv, GLenum target, GLenum pname, GLint *params);
-//GL_APIFUNCTION_2(glGetPointerv,        GLenum pname, void **params);
-//GL_API const GLubyte * GL_APIENTRY glGetString (GLenum name);
-//GL_API GLboolean GL_APIENTRY glIsBuffer (GLuint buffer);
-
-//#ifdef OPENGL_ES_COMMON_LITE
-
-GL_APIFUNCTION_3(glNormal3x,           GLfixed, nx, GLfixed, ny, GLfixed, nz);
-//GL_APIFUNCTION_5(glMultiTexCoord4x,    GLenum target, GLfixed s, GLfixed t, GLfixed r, GLfixed q);
-GL_APIFUNCTION_4(glColor4x,            GLfixed, red, GLfixed, green, GLfixed, blue, GLfixed, alpha);
-GL_APIFUNCTION_2(glDepthRangex,        GLclampx, zNear, GLclampx, zFar);
-GL_APIFUNCTION_1(glLoadMatrixx,        const GLfixed *, m);
-GL_APIFUNCTION_1(glMultMatrixx,        const GLfixed *, m);
-GL_APIFUNCTION_4(glRotatex,            GLfixed, angle, GLfixed, x, GLfixed, y, GLfixed, z);
-GL_APIFUNCTION_3(glScalex,             GLfixed, x, GLfixed, y, GLfixed, z);
-GL_APIFUNCTION_3(glTranslatex,         GLfixed, x, GLfixed, y, GLfixed, z);
-GL_APIFUNCTION_6(glFrustumx,           GLfixed, left, GLfixed, right, GLfixed, bottom, GLfixed, top, GLfixed, zNear, GLfixed, zFar);
-GL_APIFUNCTION_6(glOrthox,             GLfixed, left, GLfixed, right, GLfixed, bottom, GLfixed, top, GLfixed, zNear, GLfixed, zFar);
-//GL_APIFUNCTION_2(glClipPlanex,         GLenum plane, const GLfixed *equation);
-//GL_APIFUNCTION_2(glGetClipPlanex,      GLenum pname, GLfixed eqn[4]);
-GL_APIFUNCTION_3(glMaterialx,          GLenum, face, GLenum, pname, GLfixed, param);
-GL_APIFUNCTION_3(glMaterialxv,         GLenum, face, GLenum, pname, const GLfixed *, params);
-//GL_APIFUNCTION_3(glGetMaterialxv,      GLenum face, GLenum pname, GLfixed *params);
-GL_APIFUNCTION_3(glLightx,             GLenum, light, GLenum, pname, GLfixed, param);
-GL_APIFUNCTION_3(glLightxv,            GLenum, light, GLenum, pname, const GLfixed *, params);
-//GL_APIFUNCTION_3(glGetLightxv,         GLenum light, GLenum pname, GLfixed *params);
-//GL_APIFUNCTION_2(glLightModelx,        GLenum pname, GLfixed param);
-//GL_APIFUNCTION_2(glLightModelxv,       GLenum pname, const GLfixed *params);
-//GL_APIFUNCTION_1(glPointSizex,         GLfixed size);
-//GL_APIFUNCTION_2(glPointParameterx,    GLenum pname, GLfixed param);
-//GL_APIFUNCTION_2(glPointParameterxv,   GLenum pname, const GLfixed *params);
-//GL_APIFUNCTION_1(glLineWidthx,         GLfixed width);
-//GL_APIFUNCTION_2(glPolygonOffsetx,     GLfixed factor, GLfixed units);
-GL_APIFUNCTION_3(glTexParameterx,      GLenum, target, GLenum, pname, GLfixed, param);
-//GL_APIFUNCTION_3(glTexParameterxv,     GLenum target, GLenum pname, const GLfixed *params);
-//GL_APIFUNCTION_3(glTexEnvx,            GLenum target, GLenum pname, GLfixed param);
-//GL_APIFUNCTION_3(glTexEnvxv,           GLenum target, GLenum pname, const GLfixed *params);
-//GL_APIFUNCTION_3(glGetTexEnvxv,        GLenum env, GLenum pname, GLfixed *params);
-//GL_APIFUNCTION_3(glGetTexParameterxv,  GLenum target, GLenum pname, GLfixed *params);
-GL_APIFUNCTION_2(glFogx,               GLenum, pname, GLfixed, param);
-GL_APIFUNCTION_2(glFogxv,              GLenum, pname, const GLfixed *, params);
-//GL_APIFUNCTION_2(glSampleCoveragex,    GLclampx value, GLboolean invert);
-//GL_APIFUNCTION_2(glAlphaFuncx,         GLenum func, GLclampx ref);
-GL_APIFUNCTION_4(glClearColorx,        GLclampx, red, GLclampx, green, GLclampx, blue, GLclampx, alpha);
-GL_APIFUNCTION_1(glClearDepthx,        GLclampx, depth);
-//GL_APIFUNCTION_2(glGetFixedv,          GLenum pname, GLfixed *params);
-
-//#endif // OPENGL_ES_COMMON_LITE
-
-//#ifdef OPENGL_ES_COMMON
-
-//GL_APIFUNCTION_5(glMultiTexCoord4f,    GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
-GL_APIFUNCTION_2(glDepthRangef,        GLclampf, zNear, GLclampf, zFar);
+GL_APIFUNCTION_0(glLoadIdentity);
 GL_APIFUNCTION_1(glLoadMatrixf,        const GLfloat *, m);
 GL_APIFUNCTION_1(glMultMatrixf,        const GLfloat *, m);
 GL_APIFUNCTION_4(glRotatef,            GLfloat, angle, GLfloat, x, GLfloat, y, GLfloat, z);
 GL_APIFUNCTION_3(glScalef,             GLfloat, x, GLfloat, y, GLfloat, z);
 GL_APIFUNCTION_3(glTranslatef,         GLfloat, x, GLfloat, y, GLfloat, z);
-GL_APIFUNCTION_6(glFrustumf,           GLfloat, left, GLfloat, right, GLfloat, bottom, GLfloat, top, GLfloat, zNear, GLfloat, zFar);
-GL_APIFUNCTION_6(glOrthof,             GLfloat, left, GLfloat, right, GLfloat, bottom, GLfloat, top, GLfloat, zNear, GLfloat, zFar);
-//GL_APIFUNCTION_2(glClipPlanef,         GLenum plane, const GLfloat *equation);
-//GL_APIFUNCTION_2(glGetClipPlanef,      GLenum pname, GLfloat eqn[4]);
-GL_APIFUNCTION_3(glMaterialf,          GLenum, face, GLenum, pname, GLfloat, param);
-GL_APIFUNCTION_3(glMaterialfv,         GLenum, face, GLenum, pname, const GLfloat *, params);
-//GL_APIFUNCTION_3(glGetMaterialfv,      GLenum face, GLenum pname, GLfloat *params);
-GL_APIFUNCTION_3(glLightf,             GLenum, light, GLenum, pname, GLfloat, param);
-GL_APIFUNCTION_3(glLightfv,            GLenum, light, GLenum, pname, const GLfloat *, params);
-//GL_APIFUNCTION_3(glGetLightfv,         GLenum light, GLenum pname, GLfloat *params);
-//GL_APIFUNCTION_2(glLightModelf,        GLenum pname, GLfloat param);
-//GL_APIFUNCTION_2(glLightModelfv,       GLenum pname, const GLfloat *params);
-//GL_APIFUNCTION_1(glPointSize,          GLfloat size);
-//GL_APIFUNCTION_2(glPointParameterf,    GLenum pname, GLfloat param);
-//GL_APIFUNCTION_2(glPointParameterfv,   GLenum pname, const GLfloat *params);
-//GL_APIFUNCTION_1(glLineWidth,          GLfloat width);
-//GL_APIFUNCTION_2(glPolygonOffset,      GLfloat factor, GLfloat units);
-GL_APIFUNCTION_3(glTexParameterf,      GLenum, target, GLenum, pname, GLfloat, param);
-//GL_APIFUNCTION_3(glTexParameterfv,     GLenum target, GLenum pname, const GLfloat *params);
-//GL_APIFUNCTION_3(glTexEnvf,            GLenum target, GLenum pname, GLfloat param);
-//GL_APIFUNCTION_3(glTexEnvfv,           GLenum target, GLenum pname, const GLfloat *params);
-//GL_APIFUNCTION_3(glGetTexEnvfv,        GLenum env, GLenum pname, GLfloat *params);
-//GL_APIFUNCTION_3(glGetTexParameterfv,  GLenum target, GLenum pname, GLfloat *params);
-GL_APIFUNCTION_2(glFogf,               GLenum, pname, GLfloat, param);
-GL_APIFUNCTION_2(glFogfv,              GLenum, pname, const GLfloat *, params);
-//GL_APIFUNCTION_2(glSampleCoverage,     GLclampf value, GLboolean invert);
-//GL_APIFUNCTION_2(glAlphaFunc,          GLenum func, GLclampf ref);
-GL_APIFUNCTION_4(glClearColor,         GLclampf, red, GLclampf, green, GLclampf, blue, GLclampf, alpha);
-GL_APIFUNCTION_1(glClearDepthf,        GLclampf, depth);
-//GL_APIFUNCTION_2(glGetFloatv,          GLenum pname, GLfloat *params);
-
-// GL API
+// Display Lists
+// ...
+// Drawing Functions
 GL_APIFUNCTION_1(glBegin,              GLenum, mode);
 GL_APIFUNCTION_0(glEnd);
 GL_APIFUNCTION_4(glVertex4f,           GLfloat, x, GLfloat, y, GLfloat, z, GLfloat, w);
+GL_APIFUNCTION_3(glNormal3f,           GLfloat, nx, GLfloat, ny, GLfloat, nz);
 GL_APIFUNCTION_4(glColor4f,            GLfloat, red, GLfloat, green, GLfloat, blue, GLfloat, alpha);
 GL_APIFUNCTION_4(glTexCoord4f,         GLfloat, s, GLfloat, t, GLfloat, r, GLfloat, q);
-GL_APIFUNCTION_3(glNormal3f,           GLfloat, nx, GLfloat, ny, GLfloat, nz);
+// Vertex Arrays (OpenGL 1.1)
+GL_APIFUNCTION_4(glVertexPointer,      GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);
+GL_APIFUNCTION_3(glNormalPointer,      GLenum, type, GLsizei, stride, const GLvoid *, pointer);
+GL_APIFUNCTION_4(glColorPointer,       GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);
+GL_APIFUNCTION_4(glTexCoordPointer,    GLint, size, GLenum, type, GLsizei, stride, const GLvoid *, pointer);
+GL_APIFUNCTION_3(glDrawArrays,         GLenum, mode, GLint, first, GLsizei, count);
+// Lighting
+GL_APIFUNCTION_1(glShadeModel,         GLenum, mode);
+GL_APIFUNCTION_3(glLightf,             GLenum, light, GLenum, pname, GLfloat, param);
+GL_APIFUNCTION_3(glLightfv,            GLenum, light, GLenum, pname, const GLfloat *, params);
+GL_APIFUNCTION_3(glMaterialf,          GLenum, face, GLenum, pname, GLfloat, param);
+GL_APIFUNCTION_3(glMaterialfv,         GLenum, face, GLenum, pname, const GLfloat *, params);
+// Raster functions
+// ...
+// Stenciling
+// ...
+// Texture mapping
+GL_APIFUNCTION_3(glTexParameterf,      GLenum, target, GLenum, pname, GLfloat, param);
+GL_APIFUNCTION_9(glTexImage2D,         GLenum, target, GLint, level, GLint, internalformat, GLsizei, width, GLsizei, height, GLint, border, GLenum, format, GLenum, type, const GLvoid *, pixels);
+// OpenGL 1.1 functions
+GL_APIFUNCTION_2(glGenTextures,        GLsizei, n, GLuint *, textures);
+GL_APIFUNCTION_2(glDeleteTextures,     GLsizei, n, const GLuint *, textures);
+GL_APIFUNCTION_2(glBindTexture,        GLenum, target, GLuint, texture);
+// Evaluators
+// ...
+// Fog
+GL_APIFUNCTION_2(glFogf,               GLenum, pname, GLfloat, param);
+GL_APIFUNCTION_2(glFogfv,              GLenum, pname, const GLfloat *, params);
+// Selection and Feedback
+// ...
 
-// Vertex (GLfloat)
-GL_API void GL_APIENTRY glVertex3f   (GLfloat x, GLfloat y, GLfloat z){glVertex4f(x,    y,    z,    1.0f);}
-GL_API void GL_APIENTRY glVertex2f   (GLfloat x, GLfloat y)           {glVertex4f(x,    y,    0.0f, 1.0f);}
-GL_API void GL_APIENTRY glVertex4fv  (const GLfloat * v)              {glVertex4f(v[0], v[1], v[2], v[3]);}
-GL_API void GL_APIENTRY glVertex3fv  (const GLfloat * v)              {glVertex4f(v[0], v[1], v[2], 1.0f);}
-GL_API void GL_APIENTRY glVertex2fv  (const GLfloat * v)              {glVertex4f(v[0], v[1], 0.0f, 1.0f);}
-// Color (GLfloat)
-GL_API void GL_APIENTRY glColor3f    (GLfloat red, GLfloat green, GLfloat blue){glColor4f(red,  green, blue, 1.0f);}
-GL_API void GL_APIENTRY glColor4fv   (const GLfloat * v)                       {glColor4f(v[0], v[1],  v[2], v[3]);}
-GL_API void GL_APIENTRY glColor3fv   (const GLfloat * v)                       {glColor4f(v[0], v[1],  v[2], 1.0f);}
-GL_API void GL_APIENTRY glColor3ubv  (const GLubyte * v)                       {glColor4f((GLfloat)v[0] * (1.0f/255.0f), (GLfloat)v[1] * (1.0f/255.0f),  (GLfloat)v[2] * (1.0f/255.0f), 1.0f);}
-// TexCoord (GLfloat)
-GL_API void GL_APIENTRY glTexCoord3f (GLfloat s, GLfloat t, GLfloat r){glTexCoord4f(s,    t,    r,    1.0f);}
-GL_API void GL_APIENTRY glTexCoord2f (GLfloat s, GLfloat t)           {glTexCoord4f(s,    t,    0.0f, 1.0f);}
-GL_API void GL_APIENTRY glTexCoord1f (GLfloat s)                      {glTexCoord4f(s,    0.0f, 0.0f, 1.0f);}
-GL_API void GL_APIENTRY glTexCoord4fv(const GLfloat * v)              {glTexCoord4f(v[0], v[1], v[2], v[3]);}
-GL_API void GL_APIENTRY glTexCoord3fv(const GLfloat * v)              {glTexCoord4f(v[0], v[1], v[2], 1.0f);}
-GL_API void GL_APIENTRY glTexCoord2fv(const GLfloat * v)              {glTexCoord4f(v[0], v[1], 0.0f, 1.0f);}
-GL_API void GL_APIENTRY glTexCoord1fv(const GLfloat * v)              {glTexCoord4f(v[0], 0.0f, 0.0f, 1.0f);}
-// Normal (GLfloat)
-GL_API void GL_APIENTRY glNormal3fv  (const GLfloat * v){glNormal3f(v[0], v[1], v[2]);}
+// FIXED point
+GL_APIFUNCTION_4(glClearColorx,        GLclampx, red, GLclampx, green, GLclampx, blue, GLclampx, alpha);
+GL_APIFUNCTION_1(glClearDepthx,        GLclampx, depth);
+GL_APIFUNCTION_2(glDepthRangex,        GLclampx, zNear, GLclampx, zFar);
+GL_APIFUNCTION_6(glOrthox,             GLfixed, left, GLfixed, right, GLfixed, bottom, GLfixed, top, GLfixed, zNear, GLfixed, zFar);
+GL_APIFUNCTION_6(glFrustumx,           GLfixed, left, GLfixed, right, GLfixed, bottom, GLfixed, top, GLfixed, zNear, GLfixed, zFar);
+GL_APIFUNCTION_1(glLoadMatrixx,        const GLfixed *, m);
+GL_APIFUNCTION_1(glMultMatrixx,        const GLfixed *, m);
+GL_APIFUNCTION_4(glRotatex,            GLfixed, angle, GLfixed, x, GLfixed, y, GLfixed, z);
+GL_APIFUNCTION_3(glScalex,             GLfixed, x, GLfixed, y, GLfixed, z);
+GL_APIFUNCTION_3(glTranslatex,         GLfixed, x, GLfixed, y, GLfixed, z);
+GL_APIFUNCTION_3(glNormal3x,           GLfixed, nx, GLfixed, ny, GLfixed, nz);
+GL_APIFUNCTION_4(glColor4x,            GLfixed, red, GLfixed, green, GLfixed, blue, GLfixed, alpha);
+GL_APIFUNCTION_3(glLightx,             GLenum, light, GLenum, pname, GLfixed, param);
+GL_APIFUNCTION_3(glLightxv,            GLenum, light, GLenum, pname, const GLfixed *, params);
+GL_APIFUNCTION_3(glMaterialx,          GLenum, face, GLenum, pname, GLfixed, param);
+GL_APIFUNCTION_3(glMaterialxv,         GLenum, face, GLenum, pname, const GLfixed *, params);
+GL_APIFUNCTION_3(glTexParameterx,      GLenum, target, GLenum, pname, GLfixed, param);
+GL_APIFUNCTION_2(glFogx,               GLenum, pname, GLfixed, param);
+GL_APIFUNCTION_2(glFogxv,              GLenum, pname, const GLfixed *, params);
 
-GL_API void GL_APIENTRY glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val){
-  glFrustumf(left, right, bottom, top, near_val, far_val);}
-GL_API void GL_APIENTRY glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val){
-  glOrthof(left, right, bottom, top, near_val, far_val);}
+// Wrappers
+GL_API void GL_APIENTRY glClearDepth(GLclampd depth){
+  glClearDepthf(depth);}
 GL_API void GL_APIENTRY glDepthRange(GLclampd near_val, GLclampd far_val){
   glDepthRangef(near_val, far_val);}
+GL_API void GL_APIENTRY glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val){
+  glOrthof(left, right, bottom, top, near_val, far_val);}
+GL_API void GL_APIENTRY glFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val){
+  glFrustumf(left, right, bottom, top, near_val, far_val);}
 
-//#endif // OPENGL_ES_COMMON
+// Wrapper macro's
+#define VERTEX_WRAPPERS(ch,type,def3,def4) \
+  GL_API void GL_APIENTRY glVertex2##ch     (type x, type y)        {glVertex4##ch(x,    y,    def3, def4);} \
+  GL_API void GL_APIENTRY glVertex3##ch     (type x, type y, type z){glVertex4##ch(x,    y,    z,    def4);} \
+  GL_API void GL_APIENTRY glVertex2##ch##v  (const type * v)        {glVertex4##ch(v[0], v[1], def3, def4);} \
+  GL_API void GL_APIENTRY glVertex3##ch##v  (const type * v)        {glVertex4##ch(v[0], v[1], v[2], def4);} \
+  GL_API void GL_APIENTRY glVertex4##ch##v  (const type * v)        {glVertex4##ch(v[0], v[1], v[2], v[3]);}
+#define NORMAL_WRAPPERS(ch,type) \
+  GL_API void GL_APIENTRY glNormal##ch##fv  (const type * v){glNormal3##ch(v[0], v[1], v[2]);}
+#define COLOR_WRAPPERS(ch,type,def4) \
+  GL_API void GL_APIENTRY glColor3##ch      (type red, type green, type blue){glColor4##ch(red,  green, blue, def4);} \
+  GL_API void GL_APIENTRY glColor3##ch##v   (const type * v)                 {glColor4##ch(v[0], v[1],  v[2], def4);} \
+  GL_API void GL_APIENTRY glColor4##ch##v   (const type * v)                 {glColor4##ch(v[0], v[1],  v[2], v[3]);}
+#define TEXCOORD_WRAPPERS(ch,type,def2,def3,def4) \
+  GL_API void GL_APIENTRY glTexCoord1f (type s)                {glTexCoord4##ch(s,    def2, def3, def4);} \
+  GL_API void GL_APIENTRY glTexCoord2f (type s, type t)        {glTexCoord4##ch(s,    t,    def3, def4);} \
+  GL_API void GL_APIENTRY glTexCoord3f (type s, type t, type r){glTexCoord4##ch(s,    t,    r,    def4);} \
+  GL_API void GL_APIENTRY glTexCoord1fv(const type * v)        {glTexCoord4##ch(v[0], def2, def3, def4);} \
+  GL_API void GL_APIENTRY glTexCoord2fv(const type * v)        {glTexCoord4##ch(v[0], v[1], def3, def4);} \
+  GL_API void GL_APIENTRY glTexCoord3fv(const type * v)        {glTexCoord4##ch(v[0], v[1], v[2], def4);} \
+  GL_API void GL_APIENTRY glTexCoord4fv(const type * v)        {glTexCoord4##ch(v[0], v[1], v[2], v[3]);}
 
-//#endif // OPENGL_ES
+// Wrappers
+//VERTEX_WRAPPERS(d, GLdouble, 0.0f, 1.0f);
+VERTEX_WRAPPERS(f, GLfloat,  0.0f, 1.0f);
+//VERTEX_WRAPPERS(i, GLint,    ???);
+//VERTEX_WRAPPERS(s, GLshort,  ???);
+//NORMAL_WRAPPERS(b, GLbyte  );
+//NORMAL_WRAPPERS(d, GLdouble);
+NORMAL_WRAPPERS(f, GLfloat );
+//NORMAL_WRAPPERS(i, GLint   );
+//NORMAL_WRAPPERS(s, GLshort );
+//COLOR_WRAPPERS(b,  GLbyte,   ???);
+//COLOR_WRAPPERS(d,  GLdouble, 1.0f);
+COLOR_WRAPPERS(f,  GLfloat,  1.0f);
+//COLOR_WRAPPERS(i,  GLint,    ???);
+//COLOR_WRAPPERS(s,  GLshort,  ???);
+//COLOR_WRAPPERS(ub, GLubyte,  ???);
+//COLOR_WRAPPERS(ui, GLuint,   ???);
+//COLOR_WRAPPERS(us, GLushort, ???);
+//TEXCOORD_WRAPPERS(d, GLdouble, 0.0f, 0.0f, 1.0f);
+TEXCOORD_WRAPPERS(f, GLfloat,  0.0f, 0.0f, 1.0f);
+//TEXCOORD_WRAPPERS(i, GLfloat,  ???);
+//TEXCOORD_WRAPPERS(s, GLfloat,  ???);

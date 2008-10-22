@@ -2,7 +2,7 @@
 #define EDGE_H
 
 
-#include "GLES/gl.h"
+#include "GL/gl.h"
 #include "context.h"
 #include "inttypes.h"
 #include "asm/arch/config.h"

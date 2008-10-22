@@ -1,3 +1,4 @@
+#include "GL/gl.h"
 #include "GLES/gl.h"
 #include "vhl/fixedPoint.h"
 #include "vhl/vector.h"

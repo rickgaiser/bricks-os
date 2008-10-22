@@ -1,6 +1,5 @@
 #include "glDemo2.h"
-#include "GLES/gl.h"
-#include "GLES/gl_extra.h"
+#include "GL/gl.h"
 #include "GL/glu.h"
 #include "../gl/context.h"
 

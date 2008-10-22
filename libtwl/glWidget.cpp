@@ -1,6 +1,5 @@
 #include "glWidget.h"
-#include "GLES/gl.h"
-#include "GLES/gl_extra.h"
+#include "GL/gl.h"
 #include "GL/glu.h"
 
 

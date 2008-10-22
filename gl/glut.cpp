@@ -1,5 +1,5 @@
 #include "GL/glut.h"
-#include "GLES/gl.h"
+#include "GL/gl.h"
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
 #include "kernel/3dRenderer.h"
