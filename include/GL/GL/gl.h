@@ -708,12 +708,12 @@ GLAPI void GLAPIENTRY glFlush( void );
 GLAPI void GLAPIENTRY glHint( GLenum target, GLenum mode );
 
 // Depth Buffer
-#define glClearDepthf glClearDepth
-GLAPI void GLAPIENTRY glClearDepth( GLclampd depth );
+GLAPI void GLAPIENTRY glClearDepthf( GLclampf depth );
+GLAPI void GLAPIENTRY glClearDepth ( GLclampd depth );
 GLAPI void GLAPIENTRY glDepthFunc( GLenum func );
 //GLAPI void GLAPIENTRY glDepthMask( GLboolean flag );
-#define glDepthRangef glDepthRange
-GLAPI void GLAPIENTRY glDepthRange( GLclampd near_val, GLclampd far_val );
+GLAPI void GLAPIENTRY glDepthRangef( GLclampf near_val, GLclampf far_val );
+GLAPI void GLAPIENTRY glDepthRange ( GLclampd near_val, GLclampd far_val );
 
 // Accumulation Buffer
 //GLAPI void GLAPIENTRY glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha );
@@ -721,10 +721,10 @@ GLAPI void GLAPIENTRY glDepthRange( GLclampd near_val, GLclampd far_val );
 
 // Transformation
 GLAPI void GLAPIENTRY glMatrixMode( GLenum mode );
-#define glOrthof glOrtho
-GLAPI void GLAPIENTRY glOrtho( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val );
-#define glFrustumf glFrustum
-GLAPI void GLAPIENTRY glFrustum( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val );
+GLAPI void GLAPIENTRY glOrthof( GLfloat  left, GLfloat  right, GLfloat  bottom, GLfloat  top, GLfloat  near_val, GLfloat  far_val );
+GLAPI void GLAPIENTRY glOrtho ( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val );
+GLAPI void GLAPIENTRY glFrustumf( GLfloat  left, GLfloat  right, GLfloat  bottom, GLfloat  top, GLfloat  near_val, GLfloat  far_val );
+GLAPI void GLAPIENTRY glFrustum ( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val );
 GLAPI void GLAPIENTRY glViewport( GLint x, GLint y, GLsizei width, GLsizei height );
 GLAPI void GLAPIENTRY glPushMatrix( void );
 GLAPI void GLAPIENTRY glPopMatrix( void );

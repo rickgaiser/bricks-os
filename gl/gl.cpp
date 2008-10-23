@@ -198,7 +198,7 @@ GL_API void GL_APIENTRY glFrustum(GLdouble left, GLdouble right, GLdouble bottom
   GL_API void GL_APIENTRY glVertex3##ch##v  (const type * v)        {glVertex4##ch(v[0], v[1], v[2], def4);} \
   GL_API void GL_APIENTRY glVertex4##ch##v  (const type * v)        {glVertex4##ch(v[0], v[1], v[2], v[3]);}
 #define NORMAL_WRAPPERS(ch,type) \
-  GL_API void GL_APIENTRY glNormal##ch##fv  (const type * v){glNormal3##ch(v[0], v[1], v[2]);}
+  GL_API void GL_APIENTRY glNormal3##ch##v  (const type * v){glNormal3##ch(v[0], v[1], v[2]);}
 #define COLOR_WRAPPERS(ch,type,def4) \
   GL_API void GL_APIENTRY glColor3##ch      (type red, type green, type blue){glColor4##ch(red,  green, blue, def4);} \
   GL_API void GL_APIENTRY glColor3##ch##v   (const type * v)                 {glColor4##ch(v[0], v[1],  v[2], def4);} \
