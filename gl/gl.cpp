@@ -213,24 +213,67 @@ GL_API void GL_APIENTRY glFrustum(GLdouble left, GLdouble right, GLdouble bottom
   GL_API void GL_APIENTRY glTexCoord4fv(const type * v)        {glTexCoord4##ch(v[0], v[1], v[2], v[3]);}
 
 // Wrappers
-//VERTEX_WRAPPERS(d, GLdouble, 0.0f, 1.0f);
+GL_API void GL_APIENTRY glVertex4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w){
+  glVertex4f(x, y, z, w);}
+GL_API void GL_APIENTRY glVertex4i(GLint x, GLint y, GLint z, GLint w){
+  glVertex4f(x, y, z, w);}
+GL_API void GL_APIENTRY glVertex4s(GLshort x, GLshort y, GLshort z, GLshort w){
+  glVertex4f(x, y, z, w);}
+VERTEX_WRAPPERS(d, GLdouble, 0.0f, 1.0f);
 VERTEX_WRAPPERS(f, GLfloat,  0.0f, 1.0f);
-//VERTEX_WRAPPERS(i, GLint,    ???);
-//VERTEX_WRAPPERS(s, GLshort,  ???);
-//NORMAL_WRAPPERS(b, GLbyte  );
-//NORMAL_WRAPPERS(d, GLdouble);
+VERTEX_WRAPPERS(i, GLint,       0,    1);
+VERTEX_WRAPPERS(s, GLshort,     0,    1);
+
+GL_API void GL_APIENTRY glNormal3b(GLbyte nx, GLbyte ny, GLbyte nz){
+  glNormal3f(nx, ny, nz);}
+GL_API void GL_APIENTRY glNormal3d(GLdouble nx, GLdouble ny, GLdouble nz){
+  glNormal3f(nx, ny, nz);}
+GL_API void GL_APIENTRY glNormal3i(GLint nx, GLint ny, GLint nz){
+  glNormal3f(nx, ny, nz);}
+GL_API void GL_APIENTRY glNormal3s(GLshort nx, GLshort ny, GLshort nz){
+  glNormal3f(nx, ny, nz);}
+NORMAL_WRAPPERS(b, GLbyte  );
+NORMAL_WRAPPERS(d, GLdouble);
 NORMAL_WRAPPERS(f, GLfloat );
-//NORMAL_WRAPPERS(i, GLint   );
-//NORMAL_WRAPPERS(s, GLshort );
-//COLOR_WRAPPERS(b,  GLbyte,   ???);
-//COLOR_WRAPPERS(d,  GLdouble, 1.0f);
+NORMAL_WRAPPERS(i, GLint   );
+NORMAL_WRAPPERS(s, GLshort );
+
+const float  b_to_float = 1.0f / (float)0x7f;
+const float  s_to_float = 1.0f / (float)0x7fff;
+const float  i_to_float = 1.0f / (float)0x7fffffff;
+const float ub_to_float = 1.0f / (float)0xff;
+const float us_to_float = 1.0f / (float)0xffff;
+const float ui_to_float = 1.0f / (float)0xffffffff;
+GL_API void GL_APIENTRY glColor4d(GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha){
+  glColor4f(red, green, blue, alpha);}
+GL_API void GL_APIENTRY glColor4b(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha){
+  glColor4f(((float)red) * b_to_float, ((float)green) * b_to_float, ((float)blue) * b_to_float, ((float)alpha) * b_to_float);}
+GL_API void GL_APIENTRY glColor4s(GLshort red, GLshort green, GLshort blue, GLshort alpha){
+  glColor4f(((float)red) * s_to_float, ((float)green) * s_to_float, ((float)blue) * s_to_float, ((float)alpha) * s_to_float);}
+GL_API void GL_APIENTRY glColor4i(GLint red, GLint green, GLint blue, GLint alpha){
+  glColor4f(((float)red) * i_to_float, ((float)green) * i_to_float, ((float)blue) * i_to_float, ((float)alpha) * i_to_float);}
+GL_API void GL_APIENTRY glColor4ub(GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha){
+  glColor4f(((float)red) * ub_to_float, ((float)green) * ub_to_float, ((float)blue) * ub_to_float, ((float)alpha) * ub_to_float);}
+GL_API void GL_APIENTRY glColor4us(GLushort red, GLushort green, GLushort blue, GLushort alpha){
+  glColor4f(((float)red) * us_to_float, ((float)green) * us_to_float, ((float)blue) * us_to_float, ((float)alpha) * us_to_float);}
+GL_API void GL_APIENTRY glColor4ui(GLuint red, GLuint green, GLuint blue, GLuint alpha){
+  glColor4f(((float)red) * ui_to_float, ((float)green) * ui_to_float, ((float)blue) * ui_to_float, ((float)alpha) * ui_to_float);}
+COLOR_WRAPPERS(b,  GLbyte,   0x7f);
+COLOR_WRAPPERS(d,  GLdouble, 1.0f);
 COLOR_WRAPPERS(f,  GLfloat,  1.0f);
-//COLOR_WRAPPERS(i,  GLint,    ???);
-//COLOR_WRAPPERS(s,  GLshort,  ???);
-//COLOR_WRAPPERS(ub, GLubyte,  ???);
-//COLOR_WRAPPERS(ui, GLuint,   ???);
-//COLOR_WRAPPERS(us, GLushort, ???);
-//TEXCOORD_WRAPPERS(d, GLdouble, 0.0f, 0.0f, 1.0f);
+COLOR_WRAPPERS(i,  GLint,    0x7fffffff);
+COLOR_WRAPPERS(s,  GLshort,  0x7fff);
+COLOR_WRAPPERS(ub, GLubyte,  0xff);
+COLOR_WRAPPERS(ui, GLuint,   0xffffffff);
+COLOR_WRAPPERS(us, GLushort, 0xffff);
+
+GL_API void GL_APIENTRY glTexCoord4d(GLdouble s, GLdouble t, GLdouble r, GLdouble q){
+  glTexCoord4f(s, t, r, q);}
+GL_API void GL_APIENTRY glTexCoord4i(GLint s, GLint t, GLint r, GLint q){
+  glTexCoord4f(s, t, r, q);}
+GL_API void GL_APIENTRY glTexCoord4s(GLshort s, GLshort t, GLshort r, GLshort q){
+  glTexCoord4f(s, t, r, q);}
+TEXCOORD_WRAPPERS(d, GLdouble, 0.0f, 0.0f, 1.0f);
 TEXCOORD_WRAPPERS(f, GLfloat,  0.0f, 0.0f, 1.0f);
-//TEXCOORD_WRAPPERS(i, GLfloat,  ???);
-//TEXCOORD_WRAPPERS(s, GLfloat,  ???);
+TEXCOORD_WRAPPERS(i, GLint,       0,    0,    1);
+TEXCOORD_WRAPPERS(s, GLshort,     0,    0,    1);
