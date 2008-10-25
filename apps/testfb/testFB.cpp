@@ -87,7 +87,7 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
     device->setHorizontalOffset(0);
     device->setVerticalOffset(0);
 
-    while(true)
+    //while(true)
     {
       // Move right (1,0 -> max,0)
       for(int16_t iX(1); iX < maxH; iX++)
@@ -114,6 +114,10 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
         device->waitVSync();
       }
     }
+
+    // Center?
+    device->setHorizontalOffset(maxH>>1);
+    device->setVerticalOffset(maxV>>1);
   }
 
   // Full screen fill test
