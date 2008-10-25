@@ -855,6 +855,25 @@ CASoftGLESFixed::_primitiveAssembly(SVertexFx & v)
         vertIdx_++;
       break;
     }
+    case GL_QUADS:
+    {
+      if(vertIdx_ == 2)
+      {
+        fragmentCull(*triangle_[0], *triangle_[1], *triangle_[2]);
+        // Swap 3rd with 2nd vertex pointer
+        SVertexFx * pTemp = triangle_[1];
+        triangle_[1] = triangle_[2];
+        triangle_[2] = pTemp;
+        // QUADS are TRIANGLE_FAN with only 2 triangles
+        if(bFlipFlop_ == true)
+          bFlipFlop_ = false;
+        else
+          vertIdx_ = 0;
+      }
+      else
+        vertIdx_++;
+      break;
+    }
   };
 }
 
