@@ -1,4 +1,8 @@
 #include "math.h"
+#include "inttypes.h"
+
+
+#define ANGLE_TO_INDEX(a) ((uint32_t)((a) * (1024.0 / (2.0 * M_PI))) & 0x000003ff)
 
 
 const float sinTable[1024] =
@@ -3085,6 +3089,48 @@ const float tanTable[1024] =
   -0.006136,
 };
 
+
+// -----------------------------------------------------------------------------
+double
+cos(double x)
+{
+  return cosTable[ANGLE_TO_INDEX(x)];
+}
+
+// -----------------------------------------------------------------------------
+float
+cosf(float x)
+{
+  return cosTable[ANGLE_TO_INDEX(x)];
+}
+
+// -----------------------------------------------------------------------------
+double
+sin(double x)
+{
+  return sinTable[ANGLE_TO_INDEX(x)];
+}
+
+// -----------------------------------------------------------------------------
+float
+sinf(float x)
+{
+  return sinTable[ANGLE_TO_INDEX(x)];
+}
+
+// -----------------------------------------------------------------------------
+double
+tan(double x)
+{
+  return tanTable[ANGLE_TO_INDEX(x)];
+}
+
+// -----------------------------------------------------------------------------
+float
+tanf(float x)
+{
+  return tanTable[ANGLE_TO_INDEX(x)];
+}
 
 // -----------------------------------------------------------------------------
 double
