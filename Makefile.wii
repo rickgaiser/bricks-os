@@ -6,6 +6,9 @@ all: alldirs bin/wii/Bricks.dol
 clean:
 	make -f Makefile clean ARCH=powerpc TARGET=wii
 
+run:
+	wiiload bin/wii/Bricks.dol
+
 bin/wii/Bricks.dol: bin/wii/Bricks.elf
 	@echo [DOL] $@
 	powerpc-gekko-objcopy -O binary $< $@
