@@ -25,6 +25,9 @@ char * managed_memory_start;
 char * last_valid_address;
 SHeap heap = {0, 0, 0, 0};
 
+// 128bit aligned
+const unsigned int mcbSize = (sizeof(mem_control_block) + 0xf) & (~0xf);
+
 
 // -----------------------------------------------------------------------------
 void *
@@ -96,6 +99,9 @@ kmalloc_init()
 void *
 kmalloc(size_t numbytes)
 {
+  if(numbytes == 0)
+    return NULL;
+
   // Holds where we are looking in memory
   char * current_location;
   // This is the same as current_location, but cast to a
@@ -103,17 +109,17 @@ kmalloc(size_t numbytes)
   struct mem_control_block * current_location_mcb;
   // This is the memory location we will return.  It will
   // be set to 0 until we find something suitable
-  char * memory_location;
+  char * memory_location = NULL;
   /* Initialize if we haven't already done so */
   if(has_initialized == false)
     kmalloc_init();
+
+  // Align to 128bit
+  numbytes = (numbytes + 0xf) & (~0xf);
   // The memory we search for has to include the memory
   // control block, but the users of malloc don't need
   // to know this, so we'll just add it in for them.
-  numbytes = numbytes + sizeof(struct mem_control_block);
-  // Set memory_location to 0 until we find a suitable
-  // location
-  memory_location = 0;
+  numbytes += mcbSize;
   // Begin searching at the start of managed memory
   current_location = managed_memory_start;
   // Keep going until we have searched all allocated space
@@ -142,7 +148,7 @@ kmalloc(size_t numbytes)
     }
     // If we made it here, it's because the Current memory
     // block not suitable; move to the next one
-    current_location = current_location + current_location_mcb->size;
+    current_location += current_location_mcb->size;
   }
 
   // If we still don't have a valid location, we'll
@@ -167,7 +173,7 @@ kmalloc(size_t numbytes)
 
   // Move the pointer past the mem_control_block
   if(memory_location != 0)
-    memory_location = memory_location + sizeof(struct mem_control_block);
+    memory_location += mcbSize;
   else
     panic("Memory Error!\n");
 
@@ -182,7 +188,7 @@ kfree(void * firstbyte)
   struct mem_control_block * mcb;
   // Backup from the given pointer to find the
   // mem_control_block
-  mcb = (struct mem_control_block *)((char *)firstbyte - sizeof(struct mem_control_block));
+  mcb = (struct mem_control_block *)((char *)firstbyte - mcbSize);
   // Mark the block as being available
   mcb->is_available = true;
   // That's It!  We're done.
