@@ -12,10 +12,12 @@ MY_LIBS_PATH    +=\
 CROSS_COMPILE   =ee-
 CFLAGS          +=\
                 -D_EE \
+                -DPS2 \
                 -G0 \
 
 CXXFLAGS        +=\
                 -D_EE \
+                -DPS2 \
                 -G0 \
 
 LINK_FLAGS      +=\

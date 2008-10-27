@@ -5,6 +5,7 @@
 # -----------
 # From PS2SDK
 # -----------
+#define USE_KMODE
 #ifdef USE_KMODE
 #define SYSCALL(name, number) \
   .set push;            \

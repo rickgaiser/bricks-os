@@ -2,33 +2,69 @@
 #define CPU_H
 
 
+#include "mipsregisters.h"
+
+
+// -----------------------------------------------------------------------------
+// Clear EI bit in status register (0x00010000)
+static inline void
+local_irq_disable(void)
+{
+#ifdef PS2
+  __asm__ volatile(
+    "di\n\t" \
+    "sync.p\n\t" \
+  );
+#endif
+}
+
+// -----------------------------------------------------------------------------
+// Set EI bit in status register (0x00010000)
+static inline void
+local_irq_enable(void)
+{
+#ifdef PS2
+  __asm__ volatile (
+    "ei\n\t" \
+  );
+#endif
+}
+
 // -----------------------------------------------------------------------------
 static inline unsigned long
 local_save_flags(void)
 {
+#ifdef PS2
+  unsigned long stat;
+
+  __asm__ volatile ("mfc0 %0, $12" : "=r"(stat):);
+
+  stat &= 0x00010000;
+
+  return stat;
+#else
   return 0;
+#endif
 }
 
 // -----------------------------------------------------------------------------
 static inline void
 local_irq_restore(unsigned long flags)
 {
+#ifdef PS2
+  if(flags & 0x00010000)
+    local_irq_enable();
+  else
+    local_irq_disable();
+#endif
 }
 
 // -----------------------------------------------------------------------------
 static inline void
-local_irq_disable(void)
+halt(void)
 {
+  while(1);
 }
-
-// -----------------------------------------------------------------------------
-static inline void
-local_irq_enable(void)
-{
-}
-
-// -----------------------------------------------------------------------------
-static inline void halt(){while(true){}}
 
 
 // -----------------------------------------------------------------------------
@@ -72,41 +108,6 @@ static inline void halt(){while(true){}}
 #else
 #define _ULCAST_ (unsigned long)
 #endif
-
-// -----------------------------------------------------------------------------
-// MIPS CPU Registers
-#define zero                     $0 // Always 0
-#define at                       $1 // Assembler temporary
-#define v0                       $2 // Function return
-#define v1                       $3 //
-#define a0                       $4 // Function arguments
-#define a1                       $5
-#define a2                       $6
-#define a3                       $7
-#define t0                       $8 // Temporaries. No need
-#define t1                       $9 // to preserve in your
-#define t2                      $10 // functions.
-#define t3                      $11
-#define t4                      $12
-#define t5                      $13
-#define t6                      $14
-#define t7                      $15
-#define s0                      $16 // Saved Temporaries.
-#define s1                      $17 // Make sure to restore
-#define s2                      $18 // to original value
-#define s3                      $19 // if your function
-#define s4                      $20 // changes their value.
-#define s5                      $21
-#define s6                      $22
-#define s7                      $23
-#define t8                      $24 // More Temporaries.
-#define t9                      $25
-#define k0                      $26 // Reserved for Kernel
-#define k1                      $27
-#define gp                      $28 // Global Pointer
-#define sp                      $29 // Stack Pointer
-#define fp                      $30 // Frame Pointer
-#define ra                      $31 // Function Return Address
 
 // -----------------------------------------------------------------------------
 // Coprocessor 0 register names

@@ -1,5 +1,60 @@
 #include "dma.h"
+#include "kernel/debug.h"
 
+
+const char * sDMASource[] =
+{
+  "VIF0",
+  "VIF1",
+  "GIF",
+  "fromIPU",
+  "toIPU",
+  "SIF0",
+  "SIF1",
+  "SIF2",
+  "fromSPR",
+  "toSPR"
+};
+
+
+//-------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+CDMAC::CDMAC()
+{
+}
+
+//-------------------------------------------------------------------------
+CDMAC::~CDMAC()
+{
+}
+
+//-------------------------------------------------------------------------
+void
+CDMAC::init()
+{
+  dmaInitialize();
+
+  setInterruptHandler(MIPS_INT_1, *this);
+}
+
+//-------------------------------------------------------------------------
+void
+CDMAC::isr(unsigned int irq, pt_regs * regs)
+{
+  uint32_t status = REG_DMA_STAT;
+
+  // DMA controller
+  printk("interrupt from DMAC(0x%x)\n", status);
+
+  for(int i(0); i < 10; i++)
+  {
+    if(status & (1 << i))
+    {
+      printk(" - int from %s\n", sDMASource[i]);
+      REG_DMA_STAT = (1 << i);
+    }
+  }
+}
 
 //-------------------------------------------------------------------------
 //-------------------------------------------------------------------------

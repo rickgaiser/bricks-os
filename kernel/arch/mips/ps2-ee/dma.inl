@@ -82,7 +82,7 @@ dmaSend(EDMAChannel channel, void * data, int size, bool chain)
   if(chain == false)
   {
     *dmaChannel_[channel].qwc  = DMA_QWC(size);
-    *dmaChannel_[channel].madr = DMA_MADR(data, 0);
+    *dmaChannel_[channel].madr = DMA_MADR((uint32_t)data & 0x01ffffff, 0); // FIXME: Need physical addresses
     *dmaChannel_[channel].tadr = DMA_TADR(0, 0);
     *dmaChannel_[channel].chcr = DMA_CHCR(DMAC::Channel::fromMemory, DMAC::Channel::normal, 0, 0, 0, 1, 0);
   }
@@ -90,7 +90,7 @@ dmaSend(EDMAChannel channel, void * data, int size, bool chain)
   {
     *dmaChannel_[channel].qwc  = DMA_QWC(0);
     *dmaChannel_[channel].madr = DMA_MADR(0, 0);
-    *dmaChannel_[channel].tadr = DMA_TADR(data, 0);
+    *dmaChannel_[channel].tadr = DMA_TADR((uint32_t)data & 0x01ffffff, 0); // FIXME: Need physical addresses
     *dmaChannel_[channel].chcr = DMA_CHCR(DMAC::Channel::fromMemory, DMAC::Channel::chain,  0, 0, 0, 1, 0);
   }
 }

@@ -5,12 +5,15 @@ OBJ             =arch
 OBJS            =\
                 arch \
                 bios \
+                cache \
                 courier_new \
                 dma \
                 fixed_tc \
                 gif \
                 vif \
                 gs \
+                irq \
+                isr \
                 matrix \
                 sif \
                 task \

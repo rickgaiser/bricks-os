@@ -4,6 +4,7 @@
 
 #include "bios.h"
 #include "inttypes.h"
+#include "asm/irq.h"
 #include "asm/arch/registers.h"
 
 
@@ -83,6 +84,19 @@ inline void dmaSend      (EDMAChannel channel, void * data, int size, bool chain
 // Wait for trasfer to complete
 inline void dmaWait      (EDMAChannel channel);
 
+
+// -----------------------------------------------------------------------------
+// DMA Controller class
+class CDMAC
+ : public IInterruptHandler
+{
+public:
+  CDMAC();
+  virtual ~CDMAC();
+
+  void init();
+  void isr(unsigned int irq, pt_regs * regs);
+};
 
 // -----------------------------------------------------------------------------
 class CDMAPacket
