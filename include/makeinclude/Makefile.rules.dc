@@ -10,14 +10,17 @@ CROSS_COMPILE   =sh-elf-
 CFLAGS          +=\
                 -ml \
                 -m4-single-only \
+                -DDC \
 
 CXXFLAGS        +=\
                 -ml \
                 -m4-single-only \
+                -DDC \
 
 ASFLAGS         +=\
                 -ml \
                 -m4-single-only \
+                -DDC \
 
 LDFLAGS         +=\
                 -EL \
@@ -25,17 +28,16 @@ LDFLAGS         +=\
 LINK_FLAGS      +=\
                 -ml \
                 -m4-single-only \
-                -Wl,-Ttext=0x8c010000 \
+                -Ttext=0x8c010000 \
                 -nostartfiles \
                 -nostdlib \
-                $(MY_LIBS_PATH) \
+                -Wl,-Map,$@.map \
 
-#----------------------------------------------------------------------------
-STARTUP_LIBS    =\
+MY_LIBS         +=\
                 -lgcc \
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@
-	$(CXX) $(LINK_FLAGS) -o $@ $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) $(STARTUP_LIBS)
+	$(CXX) $(LINK_FLAGS) -o $@ $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS)

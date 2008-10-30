@@ -29,11 +29,13 @@ LINK_FLAGS      +=\
                 -mhard-float \
                 -DGEKKO \
                 -mrvl \
-                $(MY_LIBS_PATH) \
+                -Wl,-Map,$@.map \
+
+MY_LIBS         +=\
                 -logc \
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@
-	$(CXX) $(LINK_FLAGS) $(MY_OBJS) $(MY_LIBS) -o $@
+	$(CXX) $(LINK_FLAGS) $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@

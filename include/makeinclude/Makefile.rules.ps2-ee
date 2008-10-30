@@ -13,20 +13,21 @@ CROSS_COMPILE   =ee-
 CFLAGS          +=\
                 -D_EE \
                 -DPS2 \
+                -DPS2EE \
                 -G0 \
 
 CXXFLAGS        +=\
                 -D_EE \
                 -DPS2 \
+                -DPS2EE \
                 -G0 \
 
 LINK_FLAGS      +=\
                 -mno-crt0 \
                 -T$(BRICKS_ROOT)/include/makeinclude/link.ps2 \
-                $(MY_LIBS_PATH) \
+                -Wl,-Map,$@.map \
 
-#----------------------------------------------------------------------------
-STARTUP_LIBS    =\
+MY_LIBS         +=\
                 -lsupc++ \
                 -ldebug \
                 -lgraph \
@@ -56,4 +57,4 @@ $(VDIR)%.o: %.vsm $(VDIR).creation_stamp
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@
-	$(CC) $(LINK_FLAGS) -o $@ $(PS2SDK)/ee/startup/crt0.o $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) $(STARTUP_LIBS)
+	$(CC) $(LINK_FLAGS) -o $@ $(PS2SDK)/ee/startup/crt0.o $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS)

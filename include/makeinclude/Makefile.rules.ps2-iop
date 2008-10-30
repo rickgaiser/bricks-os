@@ -12,22 +12,24 @@ MY_LIBS_PATH    +=\
 CROSS_COMPILE   =iop-
 CFLAGS          +=\
                 -fno-builtin \
+                -DPS2 \
+                -DPS2IOP \
                 -G0 \
 
 CXXFLAGS        +=\
                 -fno-builtin \
+                -DPS2 \
+                -DPS2IOP \
                 -G0 \
 
 LINK_FLAGS      +=\
                 -fno-builtin \
                 -nostdlib \
+                -Wl,-Map,$@.map \
                 -s \
-
-#----------------------------------------------------------------------------
-STARTUP_LIBS    =\
 
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@.irx
-	$(CC) $(LINK_FLAGS) -o $@.irx $(BRICKS_ROOT)/kernel/arch/mips/ps2-iop/obj-ps2-iop/arch.o $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS) $(STARTUP_LIBS)
+	$(CC) $(LINK_FLAGS) -o $@.irx $(BRICKS_ROOT)/kernel/arch/mips/ps2-iop/obj-ps2-iop/arch.o $(MY_OBJS) $(MY_LIBS_PATH) $(MY_LIBS)

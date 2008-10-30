@@ -15,12 +15,16 @@ MY_LIBS_PATH    +=\
 #----------------------------------------------------------------------------
 CROSS_COMPILE   =psp-
 CFLAGS          +=\
+                -DPSP \
 
 CXXFLAGS        +=\
+                -DPSP \
 
 LINK_FLAGS      +=\
                 -D_PSP_FW_VERSION=$(PSP_FW_VERSION) \
-                $(MY_LIBS_PATH) \
+                -Wl,-Map,$@.map \
+
+MY_LIBS         +=\
                 -lstdc++ \
                 -lpspdebug \
                 -lpspdisplay \
@@ -41,4 +45,4 @@ LINK_FLAGS      +=\
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)
 	@echo [CC ] $@
-	$(CC) $(MY_OBJS) $(MY_LIBS) $(LINK_FLAGS) -o $@
+	$(CC) $(MY_OBJS) $(LINK_FLAGS) $(MY_LIBS_PATH) $(MY_LIBS) -o $@
