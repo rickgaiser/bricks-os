@@ -9,6 +9,25 @@ GXRModeObj *rmode;
 
 
 // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// NOTE: There are compatibility issues when:
+//  1 - Using libogc-20080602
+//  2 - Loading with HBC beta9
+// I can't figure out why, but I reverted back to libogc-20080228.
+extern "C" GXRModeObj *
+VIDEO_GetPreferredMode(GXRModeObj * mode)
+{
+  switch(VIDEO_GetCurrentTvMode())
+  {
+    case VI_NTSC: return &TVNtsc480IntDf;
+    case VI_PAL:  return &TVPal528IntDf;
+    case VI_MPAL: return &TVMpal480IntDf;
+    default:      return &TVNtsc480IntDf;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 CNGCDebugScreen::CNGCDebugScreen()
 {
   // Don't use constructor, use init function instead
