@@ -52,7 +52,11 @@ main(int, char *[])
 
   //printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
 
+#ifdef NGC
   printk("NGC arch ready\n");
+#else
+  printk("Wii arch ready\n");
+#endif
 
   return bricks_main();
 }

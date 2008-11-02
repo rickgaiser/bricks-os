@@ -1,7 +1,13 @@
 #include "serial.h"
+#include "videoDevice.h"
 #include "asm/arch/registers.h"
-#include <gccore.h>
 
+
+//---------------------------------------------------------------------------
+// Real dirty: Wait for line 200 TWICE
+#define BUSY_WAIT_VSYNC() \
+  while(REG_VI_HLINE != 200); \
+  while(REG_VI_HLINE <= 200)
 
 // -----------------------------------------------------------------------------
 CNGCSerial::CNGCSerial()
@@ -33,7 +39,7 @@ CNGCSerial::init()
   REG_SI_CHANNEL2_OUTBUF = 0x00400300;
   REG_SI_CHANNEL3_OUTBUF = 0x00400300;
 
-  VIDEO_WaitVSync();
+  BUSY_WAIT_VSYNC();
 
   REG_SI_POLL            = 0x00000000;
   REG_SI_STATUS          = 0x80000000;

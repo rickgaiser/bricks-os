@@ -21,10 +21,6 @@ public:
   // Flush operations to surface
   virtual void flush();
 
-  // Color
-  virtual void setColor(color_t rgb);
-  virtual void setColor(uint8_t r, uint8_t g, uint8_t b);
-
 private:
   CNGCVideoDevice * pDev_;
 };
@@ -87,6 +83,7 @@ private:
   CSurface * pSurface_;
 
   // Current Native surface (RGB mode only)
+  uint8_t * pSurfaceData_;
   void * pNativeSurface_;
 
   const SVideoMode * pCurrentMode_;

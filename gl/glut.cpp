@@ -16,9 +16,9 @@
   #define BUFFER_A
 #endif
 
-// NGC Uses copy from RGB to YPbPr framebuffer
+// NGC/Wii Uses copy from RGB to YPbPr framebuffer
 // NDS Renders to screen directly
-#if defined(NGC) || defined(NDS)
+#if defined(NGC) || defined(WII) || defined(NDS)
 #else
   #define BUFFER_B // Double buffering
 #endif
@@ -140,7 +140,7 @@ glutProcessKeys()
   bLeft  = (data & KEY_LEFT);
   bRight = (data & KEY_RIGHT);
 #endif
-#ifdef NGC
+#if defined(NGC) || defined(WII)
   uint32_t datah, datal;
   datah  = REG_SI_CHANNEL0_INBUFH;
   datal  = REG_SI_CHANNEL0_INBUFL;

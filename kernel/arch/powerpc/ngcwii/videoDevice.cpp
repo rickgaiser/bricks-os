@@ -15,6 +15,7 @@
 
 #define SCREEN_WIDTH           640
 #define SCREEN_XPOS            (((720 - SCREEN_WIDTH) / 2) + 0)
+#define COMPONENT_CABLE        ((REG_VI_SEL & 0x01) != NULL)
 
 
 // Video registers for different modes
@@ -65,21 +66,21 @@ static const uint32_t videoRegs[6][32] =
 };
 
 // NOTE: The sizes used here are for XFB
-#define DEFAULT_VIDEO_MODE_NTSC   videoModes[0]
-#define DEFAULT_VIDEO_MODE_PAL    videoModes[2]
-#define DEFAULT_VIDEO_MODE_MPAL   videoModes[0]
-#define DEFAULT_VIDEO_MODE_PAL60  videoModes[0]
+#define DEFAULT_VIDEO_MODE_NTSC   videoModes[1]
+#define DEFAULT_VIDEO_MODE_PAL    videoModes[3]
+#define DEFAULT_VIDEO_MODE_MPAL   videoModes[1]
+#define DEFAULT_VIDEO_MODE_PAL60  videoModes[1]
 static const SVideoMode videoModes[] =
 {
   // NTSC
-  {640, 480, 640, 480, 32, cfA8R8G8B8}, // RGB Surface
-  {320, 480, 320, 480, 32, cfR8G8B8},   // Native Surface
+  {640, 480, 640, 480, 16, cfR5G6B5},
+  {640, 480, 640, 480, 32, cfA8R8G8B8},
   // PAL (Max. XFB sizes)
-  {640, 574, 640, 574, 32, cfA8R8G8B8}, // RGB Surface
-  {320, 574, 320, 574, 32, cfR8G8B8},   // Native Surface
+  {640, 574, 640, 574, 16, cfR5G6B5},
+  {640, 574, 640, 574, 32, cfA8R8G8B8},
   // PAL (Max. EFB sizes)
-  {640, 528, 640, 528, 32, cfA8R8G8B8}, // RGB Surface
-  {320, 528, 320, 528, 32, cfR8G8B8},   // Native Surface
+  {640, 528, 640, 528, 16, cfR5G6B5},
+  {640, 528, 640, 528, 32, cfA8R8G8B8},
 };
 static const int videoModeCount(sizeof(videoModes) / sizeof(SVideoMode));
 
@@ -193,33 +194,8 @@ CNGC2DRenderer::~CNGC2DRenderer()
 void
 CNGC2DRenderer::flush()
 {
-  if(pSurface_->mode.width == 640)
-  {
-    // BitBlt RGB Surface to Native Surface
-    pDev_->flush(pSurface_);
-  }
-}
-
-//---------------------------------------------------------------------------
-void
-CNGC2DRenderer::setColor(color_t rgb)
-{
-  C2DRenderer::setColor(rgb);
-
-  // Override color if mode is YCbYCr (hidden as a cfR8G8B8 surface)
-  if(pSurface_->mode.width == 320)
-    fmtColor_ = rgb2yuyv(color_.r, color_.g, color_.b);
-}
-
-//---------------------------------------------------------------------------
-void
-CNGC2DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
-{
-  C2DRenderer::setColor(r, g, b);
-
-  // Override color if mode is YCbYCr (hidden as a cfR8G8B8 surface)
-  if(pSurface_->mode.width == 320)
-    fmtColor_ = rgb2yuyv(color_.r, color_.g, color_.b);
+  // BitBlt RGB Surface to Native Surface
+  pDev_->flush(pSurface_);
 }
 
 //---------------------------------------------------------------------------
@@ -239,11 +215,8 @@ CNGC3DRenderer::~CNGC3DRenderer()
 void
 CNGC3DRenderer::flush()
 {
-  if(renderSurface->mode.width == 640)
-  {
-    // BitBlt RGB Surface to Native Surface
-    pDev_->flush(renderSurface);
-  }
+  // BitBlt RGB Surface to Native Surface
+  pDev_->flush(renderSurface);
 }
 
 //---------------------------------------------------------------------------
@@ -251,6 +224,7 @@ CNGC3DRenderer::flush()
 CNGCVideoDevice::CNGCVideoDevice()
  : CAVideoDevice()
  , pSurface_(NULL)
+ , pSurfaceData_(NULL)
  , pNativeSurface_(NULL)
  , pCurrentMode_(NULL)
  , iFrameCount_(0)
@@ -323,37 +297,27 @@ CNGCVideoDevice::setMode(const SVideoMode * mode)
     // Set interlacing
     setInterlaced(true);
   }
+
+  // Allocate new aligned YUV surface
+  if(pSurfaceData_ != NULL)
+    delete pSurfaceData_;
+  pSurfaceData_   = new uint8_t[(mode->width * mode->height * 2) + 0x1f];
+  pNativeSurface_ = (void *)MEM_K0_TO_K1((uint32_t)(pSurfaceData_ + 0x1f) & (~0x1f));
+
+  REG_VI_XFB1 = (uint32_t)pNativeSurface_;
+  REG_VI_XFB2 = ((uint32_t)pNativeSurface_) + (mode->width * 2);
 }
 
-//---------------------------------------------------------------------------
-//  32 byte aligned?
-// 512 byte aligned?
-#define mallocSurface(size) \
-  MEM_K0_TO_K1(((uint32_t)new uint8_t[size + 0x1f]) & (~0x1f))
-//  MEM_K0_TO_K1(((uint32_t)new uint8_t[size + 0x1ff]) & (~0x1ff))
 //---------------------------------------------------------------------------
 void
 CNGCVideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
-  if(width == 320) // Native Surface
-  {
-    CSurface * pSurface = new CSurface;
-    pSurface->mode  = *pCurrentMode_;
-    pSurface->p     = mallocSurface(width * height * 4);
-    *surface = pSurface;
-  }
-  else if(width == 640) // RGB Surface
-  {
-    CSurface * pSurface = new CSurface;
-    pSurface->mode  = *pCurrentMode_;
-    pSurface->p     = mallocSurface(width * height * 4);
-    if(pNativeSurface_ == NULL)
-      pNativeSurface_ = mallocSurface(width * height * 2);
-    *surface = pSurface;
-  }
-  else // Texture?
-  {
-  }
+  CSurface * pSurface = new CSurface;
+
+  pSurface->mode = *pCurrentMode_;
+  pSurface->p    = new uint8_t[width * height * (pCurrentMode_->bpp / 8)];
+
+  *surface = pSurface;
 }
 
 //---------------------------------------------------------------------------
@@ -381,9 +345,20 @@ CNGCVideoDevice::getFrameNr()
 uint32_t
 CNGCVideoDevice::waitVSync()
 {
-  // Busy waiting for vblank
-  while(REG_VI_HLINE != 200); //0x20A);
-  while(REG_VI_HLINE <= 200); //0x20A);
+  if(pCurrentMode_->height == 480)
+  {
+    // NTSC REG_VI_HLINE counts from 1 to 575?
+    // Field1:  21 - 263
+    // Field2: 283 - 525
+    while((REG_VI_HLINE != 264) && (REG_VI_HLINE != 526));
+  }
+  else
+  {
+    // PAL: REG_VI_HLINE counts from 1 to 625
+    // Field1:  23 - 310
+    // Field2: 336 - 623
+    while((REG_VI_HLINE != 311) && (REG_VI_HLINE != 624));
+  }
 
   return iFrameCount_;
 }
@@ -399,17 +374,6 @@ CNGCVideoDevice::displaySurface(CSurface * surface)
   if((surface != NULL) && (surface != pSurface_))
   {
     pSurface_ = surface;
-
-    if(pSurface_->mode.width == 320)
-    {
-      REG_VI_XFB1 = (uint32_t)pSurface_->p;
-      REG_VI_XFB2 = ((uint32_t)pSurface_->p) + (pSurface_->mode.width * 4);
-    }
-    else
-    {
-      REG_VI_XFB1 = (uint32_t)pNativeSurface_;
-      REG_VI_XFB2 = ((uint32_t)pNativeSurface_) + (pSurface_->mode.width * 2);
-    }
   }
 }
 
@@ -417,29 +381,28 @@ CNGCVideoDevice::displaySurface(CSurface * surface)
 void
 CNGCVideoDevice::flush(CSurface * surface)
 {
-  if((surface == pSurface_) && (surface->mode.width == 640))
+  // FIXME: isr should update this, but we don't have interrupts
+  iFrameCount_++;
+
+  if(surface == pSurface_)
   {
     uint32_t * source = (uint32_t *)surface->p;
     uint32_t * dest   = (uint32_t *)pNativeSurface_;
+    uint32_t   pixelCount = (surface->mode.width >> 1) * surface->mode.height;
     SColor     pixel1;
     SColor     pixel2;
 
-    uint32_t height = surface->mode.height;
-    while(height--)
+    while(pixelCount--)
     {
-      uint32_t width = surface->mode.width >> 1;
-      while(width--)
-      {
-        pixel1.color = *source++;
-        pixel2.color = *source++;
+      pixel1.color = *source++;
+      pixel2.color = *source++;
 
-        *dest++ = rgbrgb2yuyv(pixel1.r,
-                              pixel1.g,
-                              pixel1.b,
-                              pixel2.r,
-                              pixel2.g,
-                              pixel2.b);
-      }
+      *dest++ = rgbrgb2yuyv(pixel1.r,
+                            pixel1.g,
+                            pixel1.b,
+                            pixel2.r,
+                            pixel2.g,
+                            pixel2.b);
     }
   }
 }
