@@ -363,12 +363,36 @@ CPS2VideoDevice::CPS2VideoDevice()
  , pCurrentPS2Mode_(NULL)
  , freeMemAddr_(0)
  , iFrameCount_(0)
+#ifndef CONFIG_MULTI_THREADING
+ , bSwap_(false)
+#endif
 {
+  CInterruptManager::attach(INT_VBLANK_START, this);
 }
 
 //---------------------------------------------------------------------------
 CPS2VideoDevice::~CPS2VideoDevice()
 {
+}
+
+//---------------------------------------------------------------------------
+int
+CPS2VideoDevice::isr(int irq)
+{
+  iFrameCount_++;
+
+  if(irq == INT_VBLANK_START)
+  {
+    // Notify swap function that we have vertical sync
+#ifdef CONFIG_MULTI_THREADING
+    k_pthread_cond_broadcast(&condVSync_);
+#else
+    if(bSwap_ == true)
+      bSwap_ = false;
+#endif
+  }
+
+  return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -486,6 +510,8 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
                                       pCurrentPS2Mode_->width,
                                       actualHeight_);
 
+//  REG_GS_BGCOLOR = GS_BGCOLOR(128, 128, 128);
+
   // Setup read circuit 2
   //REG_GS_DISPLAY2 = ...;
 
@@ -570,7 +596,12 @@ CPS2VideoDevice::getFrameNr()
 uint32_t
 CPS2VideoDevice::waitVSync()
 {
-  WAIT_VSYNC();
+#ifdef CONFIG_MULTI_THREADING
+  k_pthread_cond_wait(&condVSync_, &mutex_);
+#else
+  bSwap_ = true;
+  while(bSwap_ == true){}
+#endif
 
   return iFrameCount_;
 }
@@ -711,45 +742,78 @@ CPS2VideoDevice::allocTexture(uint32_t & addr, int w, int h, uint16_t psm)
 bool
 CPS2VideoDevice::hasPositioning()
 {
-  return false;
+  return true;
 }
 
 //---------------------------------------------------------------------------
 uint16_t
 CPS2VideoDevice::getMaxHorizontalOffset()
 {
-  return 0;
+  return (704 - pCurrentMode_->width);
 }
 
 //---------------------------------------------------------------------------
 uint16_t
 CPS2VideoDevice::getHorizontalOffset()
 {
-  return 0;
+  return iCurrentHOffset_;
 }
 
+#define HADD 140
+#define VADD  40
 //---------------------------------------------------------------------------
 void
 CPS2VideoDevice::setHorizontalOffset(uint16_t x)
 {
+  iCurrentHOffset_ = x;
+/*
+  // Setup read circuit 1
+  REG_GS_DISPLAY1 = GS_DISPLAY_CREATE(pCurrentPS2Mode_->crtcMode->vck,
+                                      (iCurrentHOffset_ + HADD),
+                                      (iCurrentVOffset_ + VADD) >> currentDoubleScan_,
+                                      1 * pCurrentPS2Mode_->crtcMode->vck, // MAGH
+                                      1,                                   // MAGV
+                                      pCurrentPS2Mode_->width,
+                                      actualHeight_);
+*/
 }
 
 //---------------------------------------------------------------------------
 uint16_t
 CPS2VideoDevice::getMaxVerticalOffset()
 {
-  return 0;
+//  if(pCurrentMode_->height == 480)
+//  {
+    // NTSC
+    return (486 - pCurrentMode_->height);
+//  }
+//  else
+//  {
+//    // PAL
+//    return (576 - pCurrentMode_->height);
+//  }
 }
 
 //---------------------------------------------------------------------------
 uint16_t
 CPS2VideoDevice::getVerticalOffset()
 {
-  return 0;
+  return iCurrentVOffset_;
 }
 
 //---------------------------------------------------------------------------
 void
 CPS2VideoDevice::setVerticalOffset(uint16_t y)
 {
+  iCurrentVOffset_ = y;
+/*
+  // Setup read circuit 1
+  REG_GS_DISPLAY1 = GS_DISPLAY_CREATE(pCurrentPS2Mode_->crtcMode->vck,
+                                      (iCurrentHOffset_ + HADD),
+                                      (iCurrentVOffset_ + VADD) >> currentDoubleScan_,
+                                      1 * pCurrentPS2Mode_->crtcMode->vck, // MAGH
+                                      1,                                   // MAGV
+                                      pCurrentPS2Mode_->width,
+                                      actualHeight_);
+*/
 }

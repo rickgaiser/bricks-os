@@ -9,8 +9,8 @@ const char * sDMASource[] =
   "GIF",
   "fromIPU",
   "toIPU",
-  "SIF0",
-  "SIF1",
+  "SIF0 (IOP to EE)",
+  "SIF1 (EE to IOP)",
   "SIF2",
   "fromSPR",
   "toSPR"
@@ -32,8 +32,14 @@ CDMAC::~CDMAC()
 void
 CDMAC::init()
 {
-  dmaInitialize();
+  iDMAMask_ = 0;
 
+  // Clear DMA mask/status
+  //  0.. 9 == status (writing 1 clears status)
+  // 16..25 == mask   (writing 1 xors mask)
+  REG_DMA_STAT = REG_DMA_STAT;
+
+  // DMA controller is connected to MIPS interrupt PIN1
   setInterruptHandler(MIPS_INT_1, *this);
 }
 
@@ -50,7 +56,9 @@ CDMAC::isr(unsigned int irq, pt_regs * regs)
   {
     if(status & (1 << i))
     {
-      printk(" - int from %s\n", sDMASource[i]);
+      printk(" - %s Complete\n", sDMASource[i]);
+
+      // Clear status
       REG_DMA_STAT = (1 << i);
     }
   }

@@ -12,26 +12,26 @@
 
 // Stack overhead, functions will touch into the area without moving stack pointer
 #define STACK_OVERHEAD 16
-
 // Align stack addresses at this value
 #define STACK_ALIGN 16
-// Register context size saved by interrupt
-#define CONTEXT_SIZE (((32 * 16 + 8 * 32 + 9 * 4) + STACK_ALIGN - 1) & ~(STACK_ALIGN - 1))
 
-// Save one register on stack
-#define SAVE_REG(r) sq $r, 16 * r(sp)
-// Restore one register from stack
+// CPU registers
+#define SAVE_REG(r)    sq $r, 16 * r(sp)
 #define RESTORE_REG(r) lq $r, 16 * r(sp)
+#define CPU_REG_SIZE (32 * 16)
 
-// Offset into context where fpu registers begin
-#define FPU_OFFSET (32 * 16)
-// Save FPU register
-#define SAVE_FPU(r) swc1 $r, FPU_OFFSET + 8 * r(sp)
-// Restore FPU register
+// FPU registers
+#define FPU_OFFSET CPU_REG_SIZE
+#define SAVE_FPU(r)    swc1 $r, FPU_OFFSET + 8 * r(sp)
 #define RESTORE_FPU(r) lwc1 $r, FPU_OFFSET + 8 * r(sp)
+#define FPU_REG_SIZE (32 * 8)
 
-// Offset into CPU context where status registers begins
-#define STATUS_OFFSET (FPU_OFFSET + 32 * 8)
+// Status registers
+#define STATUS_OFFSET (FPU_OFFSET + FPU_REG_SIZE)
+#define STATUS_REG_SIZE (9 * 4)
+
+// Size of the context (aligned to STACK_ALIGN)
+#define CONTEXT_SIZE (((CPU_REG_SIZE + FPU_REG_SIZE + STATUS_REG_SIZE) + STACK_ALIGN - 1) & ~(STACK_ALIGN - 1))
 
 
 .data
@@ -59,8 +59,7 @@ commonExceptionHandler:
         addiu   sp, sp, -STACK_OVERHEAD
         addiu   sp, sp, -CONTEXT_SIZE
 
-        // Save all registers
-        sq      k0, 16 * 29(sp)
+        // Save 32 128-bit General Purpose Registers (GPRs)
         SAVE_REG(0)
         SAVE_REG(1)
         SAVE_REG(2)
@@ -90,6 +89,7 @@ commonExceptionHandler:
         SAVE_REG(26)
         SAVE_REG(27)
         SAVE_REG(28)
+        sq k0, 16 * 29(sp)
         SAVE_REG(30)
         SAVE_REG(31)
 
@@ -105,7 +105,7 @@ callSyscallHandler:
         mfc0    k0, $12
         sync.p
         // Switch to kernel mode and disable EXL
-        ori             k0, k0, 0x1a
+        ori     k0, k0, 0x1a
         xori    k0, k0, 0x1a
         mtc0    k0, $12
         sync.p
@@ -170,18 +170,17 @@ commonExceptionHandlerExit:
 .set noat
 .set noreorder
 interruptExceptionHandler:
+        // Save stack pointer to k0
         addiu   k0, sp, 0
 
-        // XXX: Better detect kernel mode!
-        bltz    k0, reuseStack
-        nop
-
+        // Use different stack
         lw      sp, exceptionKernelStack
 
 reuseStack:
         addiu   sp, sp, -STACK_OVERHEAD
         addiu   sp, sp, -CONTEXT_SIZE
-        sq      k0, 16 * 29(sp)
+
+        // Save 32 128-bit General Purpose Registers (GPRs)
         SAVE_REG(0)
         SAVE_REG(1)
         SAVE_REG(2)
@@ -211,18 +210,20 @@ reuseStack:
         SAVE_REG(26)
         SAVE_REG(27)
         SAVE_REG(28)
+        sq k0, 16 * 29(sp)
         SAVE_REG(30)
         SAVE_REG(31)
 
-        // Save EPC
+        // Save 32-bit COP0-Reg14, Exception Program Counter (EPC)
         mfc0    t5, $14
         sync.p
         sw      t5, STATUS_OFFSET + 4 * 8(sp)
 
-        // Save floating point status register
+        // Save 32-bit CP1-FCR31, FPU Control/Status register
         cfc1    t6, $31
         sw      t6, STATUS_OFFSET + 4 * 7(sp)
 
+        // Save 32 64-bit Floating Point registers (FPRs) to stack
         SAVE_FPU(0)
         SAVE_FPU(1)
         SAVE_FPU(2)
@@ -256,11 +257,12 @@ reuseStack:
         SAVE_FPU(30)
         SAVE_FPU(31)
 
-        // save fp_acc
+        // Save fp_acc
         mtc1    $0, $0
         msub.s  $f0, $f0, $f0   // $f0 = fpacc - 0.0f * 0.0f
         swc1    $0, STATUS_OFFSET + 4 * 0(sp)
 
+        // Save HI and LO Registers (4*64-bit)
         mfhi    t0
         sw      t0, STATUS_OFFSET + 4 * 2(sp)
         mflo    t1
@@ -277,6 +279,7 @@ reuseStack:
         jal isr
         nop
 
+        // Restore HI and LO Registers (4*64-bit)
         lw      t0, STATUS_OFFSET + 4 * 2(sp)
         mthi    t0
         lw      t1, STATUS_OFFSET + 4 * 3(sp)
@@ -288,12 +291,12 @@ reuseStack:
         lw      t4, STATUS_OFFSET + 4 * 6(sp)
         mtsa    t4
 
-        // restore fp_acc
+        // Restore fp_acc
         lwc1    $0, STATUS_OFFSET + 4 * 0(sp)
         mtc1    $0, $1
         suba.s  $f0, $f1  // fpacc <- $f0 - 0.0f
 
-
+        // Restore 32 64-bit Floating Point registers (FPRs) to stack
         RESTORE_FPU(0)
         RESTORE_FPU(1)
         RESTORE_FPU(2)
@@ -327,14 +330,16 @@ reuseStack:
         RESTORE_FPU(30)
         RESTORE_FPU(31)
 
+        // Restore 32-bit CP1-FCR31, FPU Control/Status register
         lw      t5, STATUS_OFFSET + 4 * 7(sp)
         ctc1    t5, $31
 
-        // Save EPC
+        // Restore 32-bit COP0-Reg14, Exception Program Counter (EPC)
         lw      t6, STATUS_OFFSET + 4 * 8(sp)
         mtc0    t6, $14
         sync.p
 
+        // Restore 32 128-bit General Purpose Registers (GPRs)
         RESTORE_REG(0)
         RESTORE_REG(1)
         RESTORE_REG(2)
@@ -367,6 +372,7 @@ reuseStack:
         RESTORE_REG(30)
         RESTORE_REG(31)
         RESTORE_REG(29)
+
         sync.l
         sync.p
         eret
@@ -376,8 +382,8 @@ reuseStack:
 .type jump2kernelspace,@function;
 .ent jumpToSegment
 jumpToSegment:
-	or ra, ra, a0
-	or sp, sp, a0
-	jr ra
-	nop
+        or ra, ra, a0
+        or sp, sp, a0
+        jr ra
+        nop
 .end jumpToSegment

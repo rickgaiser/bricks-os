@@ -15,22 +15,9 @@
 #define V_INTERRUPT       4
 
 // Interrupts Pins (exception V_INTERRUPT)
-#define INT_PENDING_0     (1<<10)
-#define INT_PENDING_1     (1<<11)
-#define INT_PENDING_2     (1<<15)
-
-// Interrupts Controller (connected to INT_PENDING_0)
-#define INT_GS            0
-#define INT_SBUS          1
-#define INT_VBLANK_START  2
-#define INT_VBLANK_END    3
-#define INT_VIF0          4
-#define INT_VIF1          5
-#define INT_VU0           6
-#define INT_VU1           7
-#define INT_IPU           8
-#define INT_TIMER0        9
-#define INT_TIMER1       10
+#define COUSE_INT_0       (1<<10)
+#define COUSE_INT_1       (1<<11)
+#define COUSE_INT_2       (1<<15)
 
 
 const char * sINTSource[] =
@@ -146,21 +133,21 @@ isr(pt_regs * regs)
   iCouse = read_c0_cause();
 
   // Interrupt pending pin 0 (INTC)
-  if(iCouse & INT_PENDING_0)
+  if(iCouse & COUSE_INT_0)
   {
     if(inthandlers[0] != NULL)
       inthandlers[0]->isr(0, regs);
   }
 
   // Interrupt pending pin 1 (DMAC)
-  if(iCouse & INT_PENDING_1)
+  if(iCouse & COUSE_INT_1)
   {
     if(inthandlers[1] != NULL)
       inthandlers[1]->isr(1, regs);
   }
 
   // Interrupt pending pin 2 (not used)
-  if(iCouse & INT_PENDING_2)
+  if(iCouse & COUSE_INT_2)
   {
     if(inthandlers[2] != NULL)
       inthandlers[2]->isr(2, regs);
@@ -220,6 +207,13 @@ CIRQ::~CIRQ()
 int
 CIRQ::init()
 {
+  iINTMask_ = 0;
+
+  // Clear INT mask/status
+  REG_INT_STAT = REG_INT_STAT;
+  REG_INT_MASK = REG_INT_MASK;
+
+  // INT controller is connected to MIPS interrupt PIN0
   setInterruptHandler(MIPS_INT_0, *this);
 
   for(int i(0); i < MAX_INTERRUPTS; i++)
@@ -232,17 +226,64 @@ CIRQ::init()
 void
 CIRQ::isr(unsigned int irq, pt_regs * regs)
 {
-  uint64_t status = REG_INT_MASK;
+  uint64_t status = REG_INT_STAT;
 
-  printk("interrupt from INTC(0x%x)\n", status);
+//  printk("interrupt from INTC(0x%x)\n", status);
 
   for(int i(0); i < MAX_INTERRUPTS; i++)
   {
-    if(status & (1 << i))
+    if((iINTMask_ & status) & (1 << i))
     {
-      printk("isr(%d)\n", i);
+//      printk("isr(%d)\n", i);
       // Interrupt found! Handle it!
       CInterruptManager::isr(i, 0);
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+void
+CIRQ::enable(unsigned int irq)
+{
+//  printk("CIRQ::enable(%d)\n", irq);
+
+  if(irq < MAX_INTERRUPTS)
+  {
+    if((iINTMask_ & (1 << irq)) == 0)
+    {
+      iINTMask_    |= (1 << irq);
+      REG_INT_MASK |= (1 << irq);
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+void
+CIRQ::disable(unsigned int irq)
+{
+//  printk("CIRQ::disable(%d)\n", irq);
+
+  if(irq < MAX_INTERRUPTS)
+  {
+    if((iINTMask_ & (1 << irq)) != 0)
+    {
+      iINTMask_    &= ~(1 << irq);
+      REG_INT_MASK |=  (1 << irq);
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+void
+CIRQ::ack(unsigned int irq)
+{
+//  printk("CIRQ::ack(%d)\n", irq);
+
+  if(irq < MAX_INTERRUPTS)
+  {
+    if((iINTMask_ & (1 << irq)) != 0)
+    {
+      REG_INT_STAT = (1 << irq);
     }
   }
 }

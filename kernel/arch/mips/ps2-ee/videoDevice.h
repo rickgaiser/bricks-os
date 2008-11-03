@@ -5,6 +5,8 @@
 #include "kernel/videoManager.h"
 #include "kernel/2dRenderer.h"
 #include "kernel/fs.h"
+#include "kernel/interruptManager.h"
+#include "asm/arch/memory.h"
 #include "dma.h"
 #include "gif.h"
 
@@ -102,10 +104,14 @@ private:
 //---------------------------------------------------------------------------
 class CPS2VideoDevice
  : public CAVideoDevice
+ , public IInterruptServiceRoutine
 {
 public:
   CPS2VideoDevice();
   virtual ~CPS2VideoDevice();
+
+  // Inherited from IInterruptServiceRoutine
+  virtual int isr(int irq) INTERRUPT_CODE;
 
   virtual void listModes(const SVideoMode ** modes, int * modeCount);
   virtual void getCurrentMode(const SVideoMode ** mode);
@@ -153,6 +159,13 @@ private:
   vuint32_t iFrameCount_; // volatile, becouse the isr updates it
   uint16_t iCurrentHOffset_;
   uint16_t iCurrentVOffset_;
+
+#ifdef CONFIG_MULTI_THREADING
+  pthread_mutex_t mutex_;       // The locking mutex
+  pthread_cond_t condVSync_;    // State change condition
+#else
+  volatile bool bSwap_; // volatile, becouse the isr updates it
+#endif
 };
 
 

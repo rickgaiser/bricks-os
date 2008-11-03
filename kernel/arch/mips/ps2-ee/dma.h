@@ -96,6 +96,9 @@ public:
 
   void init();
   void isr(unsigned int irq, pt_regs * regs);
+
+private:
+  uint32_t iDMAMask_;
 };
 
 // -----------------------------------------------------------------------------
