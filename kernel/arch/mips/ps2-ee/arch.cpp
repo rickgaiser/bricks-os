@@ -53,7 +53,7 @@ main(int, char *[])
   // Jump to KSEG0 (kernel space)
   jumpToSegment(KSEG0_START);
   // Setup interrupts and exceptions
-  //initExceptions(); // Install CPU exception handlers
+  initExceptions(); // Install CPU exception handlers
   cIRQ.init();      // Interrupt Controller
   cDMAC.init();     // DMA Controller
 
