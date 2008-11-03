@@ -1,6 +1,5 @@
-// From kernelloader by Mega Man
-
-
+/* Copyright (c) 2007 Mega Man */
+/* Copyright (c) 2008 Maximus32 */
 #include "asm/mipsregisters.h"
 
 

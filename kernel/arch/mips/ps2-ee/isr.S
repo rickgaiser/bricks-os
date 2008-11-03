@@ -1,6 +1,5 @@
-// From kernelloader by Mega Man
-
-
+/* Copyright (c) 2007 Mega Man */
+/* Copyright (c) 2008 Maximus32 */
 #include "asm/mipsregisters.h"
 
 
@@ -293,7 +292,7 @@ reuseStack:
         lwc1    $0, STATUS_OFFSET + 4 * 0(sp)
         mtc1    $0, $1
         suba.s  $f0, $f1  // fpacc <- $f0 - 0.0f
-        
+
 
         RESTORE_FPU(0)
         RESTORE_FPU(1)

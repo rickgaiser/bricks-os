@@ -1,5 +1,7 @@
+/* Copyright (c) 2007 Mega Man */
+/* Copyright (c) 2008 Maximus32 */
 #ifndef MIPSREGISTER_H
-#define MIPS_REGISTER_H
+#define MIPSREGISTER_H
 
 
 // MIPS CPU Registers
