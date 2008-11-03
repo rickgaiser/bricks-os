@@ -11,14 +11,11 @@
 #include "dma.h"
 #include "sif.h"
 #include "cache.h"
+#include "drivers.h"
 
 #ifdef CONFIG_DEBUGGING
 #include "debugScreen.h"
 #endif // CONFIG_DEBUGGING
-
-#ifdef CONFIG_FRAMEBUFFER
-#include "videoDevice.h"
-#endif // CONFIG_FRAMEBUFFER
 
 
 #ifdef CONFIG_BUILTIN_MM
@@ -35,10 +32,6 @@ CIOP           cIOP;
 #ifdef CONFIG_DEBUGGING
 CPS2DebugScreen cDebug;
 #endif // CONFIG_DEBUGGING
-
-#ifdef CONFIG_FRAMEBUFFER
-CPS2VideoDevice * pVideoDevice;
-#endif // CONFIG_FRAMEBUFFER
 
 
 extern "C" void jumpToSegment(unsigned int segment);
@@ -74,10 +67,6 @@ main(int, char *[])
   printk("Debugging ok\n");
 #endif // CONFIG_DEBUGGING
 
-#ifdef CONFIG_FRAMEBUFFER
-  pVideoDevice = new CPS2VideoDevice;
-#endif // CONFIG_FRAMEBUFFER
-
   task_init();
 
   // Initialize IOP
@@ -94,6 +83,9 @@ main(int, char *[])
   // Enable interrupts
   local_irq_enable();
   printk("Interrupts...OK\n");
+
+  // Initialize drivers
+  init_drivers();
 
   printk("PS2 arch ready\n");
 

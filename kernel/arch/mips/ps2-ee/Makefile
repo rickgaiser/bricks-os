@@ -8,6 +8,7 @@ OBJS            =\
                 cache \
                 courier_new \
                 dma \
+                drivers \
                 fixed_tc \
                 gif \
                 vif \
