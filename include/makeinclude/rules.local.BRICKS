@@ -1,53 +1,53 @@
 #----------------------------------------------------------------------------
 clean.local:
-	$(RM) $(MY_OBJS) $(MY_OBJ) $(MY_LIB) $(MY_ELF)
+	$(RM) $(MY_OBJS) $(MY_DEPENDS) $(MY_OBJ) $(MY_LIB) $(MY_ELF)
 
 all.local: $(MY_OBJS) $(MY_OBJ) $(MY_LIB) $(MY_ELF)
 
 
 #----------------------------------------------------------------------------
 # Create object file from MY_OBJS
-$(MY_OBJ): $(MY_OBJS)
+$(MY_OBJ): $(MY_OBJS) $(BRICKS_ROOT)/lib/.creation_stamp $(BRICKS_ROOT)/lib/$(TARGET)/.creation_stamp
 	@echo [LD ] $@
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $(MY_OBJS)
 
 # Create library file from MY_OBJS
-$(MY_LIB): $(MY_OBJS)
+$(MY_LIB): $(MY_OBJS) $(BRICKS_ROOT)/lib/.creation_stamp $(BRICKS_ROOT)/lib/$(TARGET)/.creation_stamp
 	@echo [AR ] $@
-	$(AR) $(ARFLAGS) $@ $^
+	$(AR) $(ARFLAGS) $@ $(MY_OBJS)
 
 # Create object file from .c file
 $(VDIR)%.o: %.c $(VDIR).creation_stamp
 	@echo [CC ] $<
-	$(CC) $(CFLAGS) $(MY_INCL_PATH) -o $@.S -S $<
-	$(CC) $(CFLAGS) $(MY_INCL_PATH) -o $@ -c $<
+	$(CC) -MMD -MP -MF $(VDIR)/$*.d $(CFLAGS) $(MY_INCL_PATH) -o $@.S -S $<
+	$(CC) -MMD -MP -MF $(VDIR)/$*.d $(CFLAGS) $(MY_INCL_PATH) -o $@ -c $<
 
 # Create object file from .cpp file
 $(VDIR)%.o: %.cpp $(VDIR).creation_stamp
 	@echo [CXX] $<
-	$(CXX) $(CXXFLAGS) $(MY_INCL_PATH) -o $@.S -S $<
-	$(CXX) $(CXXFLAGS) $(MY_INCL_PATH) -o $@ -c $<
+	$(CXX) -MMD -MP -MF $(VDIR)/$*.d  $(CXXFLAGS) $(MY_INCL_PATH) -o $@.S -S $<
+	$(CXX) -MMD -MP -MF $(VDIR)/$*.d  $(CXXFLAGS) $(MY_INCL_PATH) -o $@ -c $<
 
 # Create object file from .s file
 $(VDIR)%.o: %.s $(VDIR).creation_stamp
 	@echo [CC ] $<
-	$(CC) -x assembler-with-cpp $(ASFLAGS) $(MY_INCL_PATH) -o $@ -c $<
+	$(CC) -x assembler-with-cpp -MMD -MP -MF $(VDIR)/$*.d  $(ASFLAGS) $(MY_INCL_PATH) -o $@ -c $<
 
 # Create object file from .S file
 $(VDIR)%.o: %.S $(VDIR).creation_stamp
 	@echo [CC ] $<
-	$(CC) -x assembler-with-cpp $(ASFLAGS) $(MY_INCL_PATH) -o $@ -c $<
+	$(CC) -x assembler-with-cpp -MMD -MP -MF $(VDIR)/$*.d  $(ASFLAGS) $(MY_INCL_PATH) -o $@ -c $<
 
 
 #----------------------------------------------------------------------------
-# ACE, rules.local.GNU
+# Create obj, lib and bin directories
 #----------------------------------------------------------------------------
-ifeq ($(OS),"Windows_NT")
-$(VDIR).creation_stamp:
-	@if not exist $(VDIR) mkdir $(VDIR)
-	@echo > $@
-else
 $(VDIR).creation_stamp:
 	@-test -d $(VDIR) || mkdir $(VDIR) $(ACE_NUL_STDERR)
 	@touch $@
-endif
+$(BRICKS_ROOT)/lib/.creation_stamp:
+	@-test -d $(BRICKS_ROOT)/lib/ || mkdir $(BRICKS_ROOT)/lib/ $(ACE_NUL_STDERR)
+	@touch $@
+$(BRICKS_ROOT)/lib/$(TARGET)/.creation_stamp:
+	@-test -d $(BRICKS_ROOT)/lib/$(TARGET)/ || mkdir $(BRICKS_ROOT)/lib/$(TARGET)/ $(ACE_NUL_STDERR)
+	@touch $@

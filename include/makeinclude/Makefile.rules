@@ -31,6 +31,7 @@ MY_LIBS_PATH    =$(addprefix -L,$(LIBS_PATH))
 MY_OBJ          =$(addprefix $(LIB_PATH)lib,$(addsuffix .a,$(OBJ)))
 MY_OBJS         =$(addprefix $(VDIR),$(addsuffix .o,$(OBJS)))
 MY_OBJS         +=$(addprefix $(VDIR),$(addsuffix .o,$(OBJS-y)))
+MY_DEPENDS      =$(MY_OBJS:.o=.d)
 
 #----------------------------------------------------------------------------
 MY_INCL_PATH    += \
@@ -88,3 +89,8 @@ include $(BRICKS_ROOT)/include/makeinclude/rules.local.BRICKS
 # ACE, rules.nested.GNU
 #----------------------------------------------------------------------------
 include $(BRICKS_ROOT)/include/makeinclude/rules.nested.GNU
+
+#----------------------------------------------------------------------------
+# include automatically generated dependencies
+#----------------------------------------------------------------------------
+-include $(MY_DEPENDS)
