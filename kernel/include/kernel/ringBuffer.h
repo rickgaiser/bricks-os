@@ -16,7 +16,7 @@ public:
   CRingBuffer();
   ~CRingBuffer();
 
-  bool put(uint8_t data);
+  bool put(uint8_t data, bool block = false);
   bool get(uint8_t * data, bool block = false);
   void notifyGetters();
 

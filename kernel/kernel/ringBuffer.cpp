@@ -17,9 +17,8 @@ CRingBuffer::~CRingBuffer()
 }
 
 // -----------------------------------------------------------------------------
-// CAN NOT BLOCK, is used from ISR
 bool
-CRingBuffer::put(uint8_t data)
+CRingBuffer::put(uint8_t data, bool block)
 {
   //printk("%c", (char)data);
 
@@ -28,9 +27,18 @@ CRingBuffer::put(uint8_t data)
   if(in >= RINGBUFFER_SIZE)
     in = 0;
 
-  // Buffer full
-  if(in == outPtr_)
-    return false;
+  if(block == true)
+  {
+    // Wait for data in buffer
+    while(in == outPtr_)
+      k_pthread_mutex_lock(&mutex_);
+  }
+  else
+  {
+    // Buffer full
+    if(in == outPtr_)
+      return false;
+  }
 
   // Place data
   buffer_[inPtr_] = data;
