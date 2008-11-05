@@ -5,9 +5,9 @@
 
 #include "asm/arch/config.h"
 #include "asm/cpu.h"
-#include "asm/irq.h"
 #include "asm/task.h"
 
+#include "irq.h"
 #include "dma.h"
 #include "sif.h"
 #include "cache.h"

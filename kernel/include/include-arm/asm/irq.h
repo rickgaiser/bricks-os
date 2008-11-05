@@ -4,10 +4,6 @@
 
 #include "inttypes.h"
 #include "asm/arch/irq.h"
-#include "asm/arch/registers.h"
-
-
-extern "C" void kill();
 
 
 //---------------------------------------------------------------------------
@@ -37,22 +33,6 @@ struct pt_regs
 
 #define CPU_IRQ_DISABLE      0x00000080
 #define CPU_IRQ_ENABLE       0x00000000
-
-
-// -----------------------------------------------------------------------------
-class CIRQ
-{
-public:
-  CIRQ();
-  virtual ~CIRQ();
-
-  int init();
-
-  inline void enable (unsigned int irq){REG_IE |= (1 << irq);}
-  inline void disable(unsigned int irq){REG_IE &= ~(1 << irq);}
-  inline void ack    (unsigned int irq){REG_IF |= (1 << irq);}
-  inline void end    (unsigned int irq){}
-};
 
 
 #endif

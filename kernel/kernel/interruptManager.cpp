@@ -40,7 +40,7 @@ CInterruptManager::detach(unsigned int irq, IInterruptServiceRoutine * isr)
 
 // -----------------------------------------------------------------------------
 void
-CInterruptManager::attach(unsigned int irq, CIRQ * irqhardware)
+CInterruptManager::attach(unsigned int irq, IInterruptProvider * irqhardware)
 {
   if(irq < MAX_INTERRUPTS)
     interrupt_[irq].hardware_ = irqhardware;
@@ -48,7 +48,7 @@ CInterruptManager::attach(unsigned int irq, CIRQ * irqhardware)
 
 // -----------------------------------------------------------------------------
 void
-CInterruptManager::detach(unsigned int irq, CIRQ * irqhardware)
+CInterruptManager::detach(unsigned int irq, IInterruptProvider * irqhardware)
 {
   if(irq < MAX_INTERRUPTS)
     interrupt_[irq].hardware_ = 0;
@@ -68,7 +68,6 @@ CInterruptManager::isr(unsigned int irq, pt_regs * regs)
     {
       printk("CInterruptManager::isr: ERROR: Unhandled interrupt(int=%d)\n", (int)irq);
     }
-    interrupt_[irq].hardware_->ack(irq);
   }
   else
   {

@@ -1,3 +1,4 @@
+#include "irq.h"
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "kernel/task.h"
@@ -44,7 +45,10 @@ isr(pt_regs * regs)
     {
       if(iFlags & (1 << i))
       {
-        // Interrupt found! Handle it!
+        // ACK
+        REG_IF |= (1 << i);
+
+        // Handle
         CInterruptManager::isr(i, regs);
       }
     }

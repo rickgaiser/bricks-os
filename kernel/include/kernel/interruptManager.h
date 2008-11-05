@@ -16,8 +16,8 @@ public:
   static void attach(unsigned int irq, IInterruptServiceRoutine * isr);
   static void detach(unsigned int irq, IInterruptServiceRoutine * isr);
 
-  static void attach(unsigned int irq, CIRQ * irqhardware);
-  static void detach(unsigned int irq, CIRQ * irqhardware);
+  static void attach(unsigned int irq, IInterruptProvider * irqhardware);
+  static void detach(unsigned int irq, IInterruptProvider * irqhardware);
 
   static unsigned int isr(unsigned int irq, pt_regs * regs);
 

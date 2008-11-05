@@ -7,10 +7,10 @@
 #include "kernel/task.h"
 
 #include "asm/arch/config.h"
-#include "asm/irq.h"
 #include "asm/cpu.h"
 #include "asm/task.h"
 
+#include "irq.h"
 #include "apic.h"
 #include "cpuid.h"
 #include "descriptor.h"

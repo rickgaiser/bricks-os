@@ -1,6 +1,5 @@
 #include "kernel/bricks.h"
 #include "kernel/memoryManager.h"
-#include "asm/irq.h"
 #include "multiboot.h"
 
 

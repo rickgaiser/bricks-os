@@ -2,11 +2,18 @@
 #define INTERRUPT_H
 
 
-#include "asm/irq.h"
-
-
 #define MAX_OBSERVERS 2
 
+
+// -----------------------------------------------------------------------------
+class IInterruptProvider
+{
+public:
+  virtual ~IInterruptProvider(){}
+
+  virtual void enable (unsigned int irq) = 0;
+  virtual void disable(unsigned int irq) = 0;
+};
 
 //---------------------------------------------------------------------------
 class IInterruptServiceRoutine
@@ -31,7 +38,7 @@ public:
 
   virtual int  handle(int isr);
 
-  CIRQ * hardware_;
+  IInterruptProvider * hardware_;
 
 private:
   IInterruptServiceRoutine * observers_[MAX_OBSERVERS];

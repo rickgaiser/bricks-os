@@ -6,24 +6,13 @@
 #include "asm/arch/registers.h"
 
 
-#define INT_GS            0
-#define INT_SBUS          1
-#define INT_VBLANK_START  2
-#define INT_VBLANK_END    3
-#define INT_VIF0          4
-#define INT_VIF1          5
-#define INT_VU0           6
-#define INT_VU1           7
-#define INT_IPU           8
-#define INT_TIMER0        9
-#define INT_TIMER1       10
-
 #define MAX_INTERRUPTS 0x0b
 
 
 //---------------------------------------------------------------------------
 struct pt_regs
 {
+#ifdef PS2
   // 32 128-bit General Purpose Registers
   uint128_t cpu_r00;
   uint128_t cpu_r01;
@@ -100,41 +89,7 @@ struct pt_regs
   uint32_t t4;
   uint32_t fpu_status;
   uint32_t epc;
-};
-
-//---------------------------------------------------------------------------
-#define MIPS_INT_0 0
-#define MIPS_INT_1 1
-#define MIPS_INT_2 2
-class IInterruptHandler
-{
-public:
-  virtual ~IInterruptHandler(){}
-
-  virtual void isr(unsigned int irq, pt_regs * regs) = 0;
-};
-void initExceptions();
-void setInterruptHandler(uint32_t nr, IInterruptHandler & handler);
-
-// -----------------------------------------------------------------------------
-class CIRQ
- : public IInterruptHandler
-{
-public:
-  CIRQ();
-  virtual ~CIRQ();
-
-  int init();
-
-  void isr(unsigned int irq, pt_regs * regs);
-
-  void enable (unsigned int irq);
-  void disable(unsigned int irq);
-  void ack    (unsigned int irq);
-  inline void end    (unsigned int irq){}
-
-private:
-  uint32_t iINTMask_;
+#endif
 };
 
 

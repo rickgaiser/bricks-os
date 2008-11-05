@@ -5,11 +5,11 @@
 
 #include "asm/arch/config.h"
 #include "asm/cpu.h"
-#include "asm/irq.h"
 #include "asm/task.h"
 
 #include "drivers.h"
 #include "timer.h"
+#include "irq.h"
 
 #ifdef CONFIG_DEBUGGING
 #include "debugScreen.h"

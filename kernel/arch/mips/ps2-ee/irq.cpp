@@ -5,6 +5,7 @@
 #include "asm/cpu.h"
 #include "asm/irq.h"
 #include "cache.h"
+#include "irq.h"
 
 
 // Exceptions
@@ -235,7 +236,11 @@ CIRQ::isr(unsigned int irq, pt_regs * regs)
     if((iINTMask_ & status) & (1 << i))
     {
 //      printk("isr(%d)\n", i);
-      // Interrupt found! Handle it!
+
+      // ACK
+      REG_INT_STAT = (1 << i);
+
+      // Handle
       CInterruptManager::isr(i, 0);
     }
   }
@@ -269,21 +274,6 @@ CIRQ::disable(unsigned int irq)
     {
       iINTMask_    &= ~(1 << irq);
       REG_INT_MASK |=  (1 << irq);
-    }
-  }
-}
-
-// -----------------------------------------------------------------------------
-void
-CIRQ::ack(unsigned int irq)
-{
-//  printk("CIRQ::ack(%d)\n", irq);
-
-  if(irq < MAX_INTERRUPTS)
-  {
-    if((iINTMask_ & (1 << irq)) != 0)
-    {
-      REG_INT_STAT = (1 << irq);
     }
   }
 }

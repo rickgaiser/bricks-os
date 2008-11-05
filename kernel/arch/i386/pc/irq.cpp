@@ -1,3 +1,4 @@
+#include "irq.h"
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "kernel/srr_k.h"
@@ -11,6 +12,9 @@
 #define PIC_SLAVE_BASE  0xA0  // Base IO addr
 #define IRQ_BASE        0x20
 #define EOI_BYTE        0x20
+
+
+extern CIRQ cIRQ;
 
 
 // -----------------------------------------------------------------------------
@@ -130,13 +134,8 @@ isr(pt_regs * regs)
 
     // Handle IRQs
     case 0x20:  // Timer
-      // Handle timer interrupt for scheduler separately (faster)
-
-      // Ack interrupt (normally interrupt manager will do this)
-      outb(EOI_BYTE, PIC_MASTER_BASE);
-
-      bTimeout = true;
-
+      // Timer interrupt should be handled by a TSS task
+      panic("Timer interrupt received!\n");
       break;
     case 0x21: // Keyboard
     case 0x22: // Cascade
@@ -154,6 +153,7 @@ isr(pt_regs * regs)
     case 0x2e: // Pimary IDE
     case 0x2f: // Secondary IDE
       //printk("IRQ Interrupt(0x%x): %s\n", regs->iIntNumber, msg[regs->iIntNumber]);
+      cIRQ.ack(regs->iIntNumber);
       CInterruptManager::isr(regs->iIntNumber, regs);
       break;
 
@@ -307,10 +307,4 @@ CIRQ::ack(unsigned int irq)
     if(irq >= 8)
       outb(EOI_BYTE, PIC_SLAVE_BASE);
   }
-}
-
-// -----------------------------------------------------------------------------
-void
-CIRQ::end(unsigned int irq)
-{
 }
