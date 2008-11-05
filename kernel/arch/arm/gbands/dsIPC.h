@@ -22,6 +22,9 @@ public:
 
   // Inherited from IFileIO
   virtual ssize_t write(const void * buffer, size_t size, bool block = false);
+
+private:
+  CRingBuffer bufferWrite_;
 };
 
 

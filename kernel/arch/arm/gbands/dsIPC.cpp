@@ -8,6 +8,7 @@
 // -----------------------------------------------------------------------------
 CDSIPC::CDSIPC()
  : CAFileIOBufferedRead()
+ , bufferWrite_()
 {
 }
 
@@ -21,7 +22,7 @@ int
 CDSIPC::init()
 {
   // Register ISRs
-  CInterruptManager::attach(16, this); // ipc
+//  CInterruptManager::attach(16, this); // ipc
   CInterruptManager::attach(17, this); // send buf empty
   CInterruptManager::attach(18, this); // recv buf not empty
 
@@ -29,7 +30,7 @@ CDSIPC::init()
 //  REG_IPC_SYNC = IPC_SYNC_IRQ_ENABLE;
 
   // fifo init
-  REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR | IPC_FIFO_RECV_IRQ | IPC_FIFO_ERROR; // IPC_FIFO_SEND_IRQ
+  REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR | IPC_FIFO_RECV_IRQ | IPC_FIFO_ERROR | IPC_FIFO_SEND_IRQ;
 
   return 0;
 }
@@ -38,21 +39,51 @@ CDSIPC::init()
 int
 CDSIPC::isr(int irq)
 {
-  uint8_t data;
-  int iCount(0);
-
-//  printk("CDSIPC::isr\n");
+//  printk("CDSIPC::isr(%d)\n", irq);
 
   switch(irq)
   {
+/*
     case 16:
-      printk("CDSIPC::isr: IPC int received\n");
+    {
+      // IPC
+      printk("CDSIPC::isr: IPC\n");
+
       break;
+    }
+*/
     case 17:
-      printk("CDSIPC::isr: send buf empty int received\n");
+    {
+      // Send buffer empty
+      //  - Fill fifo when there is data waiting to be sent
+      //printk("CDSIPC::isr: send buf empty\n");
+
+      uint8_t data;
+
+      while((REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL) == 0)
+      {
+        if(bufferWrite_.get(&data) == false)
+        {
+          // Nothing more to send
+          break;
+        }
+
+        // Send
+        REG_IPC_FIFO_TX = data;
+      }
+
       break;
+    }
     case 18:
-      while(!(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY))
+    {
+      // Receive buffer not empty
+      //  - Read data from fifo and place into read buffer
+      //printk("CDSIPC::isr: receive buf not empty\n");
+
+      uint8_t data;
+      int iCount(0);
+
+      while((REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY) == 0)
       {
         data = REG_IPC_FIFO_RX;
 
@@ -62,13 +93,15 @@ CDSIPC::isr(int irq)
 
         iCount++;
       }
+
+      if(iCount > 0)
+        bufferRead_.notifyGetters();
+
       break;
+    }
     default:
       printk("CDSIPC::isr: ERROR: unknown interrupt\n");
   }
-
-  if(iCount > 0)
-    bufferRead_.notifyGetters();
 
   return 0;
 }
@@ -77,21 +110,53 @@ CDSIPC::isr(int irq)
 ssize_t
 CDSIPC::write(const void * buffer, size_t size, bool block)
 {
-  int iRetVal(0);
+  size_t iRetVal(0);
 
+#if 0
   for(size_t i(0); i < size; i++)
   {
-    // Wait untill fifo is not full
-    while(REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL);
+    if(block == true)
+    {
+      // Wait untill fifo is not full
+      while(REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL);
+    }
+    else
+    {
+      // Break when fifo is full
+      if(REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL)
+        break;
+    }
 
     // Send
     REG_IPC_FIFO_TX = ((char *)buffer)[i];
 
     iRetVal++;
   }
+#else
+  // Place data in fifo
+  while(iRetVal < size)
+  {
+    // Break when fifo is full
+    if(REG_IPC_FIFO_CR & IPC_FIFO_SEND_FULL)
+      break;
+
+    REG_IPC_FIFO_TX = ((char *)buffer)[iRetVal];
+
+    iRetVal++;
+  }
+
+  // Place remaining data in buffer
+  while(iRetVal < size)
+  {
+    // Break if unable to place data in buffer
+    if(bufferWrite_.put(((char *)buffer)[iRetVal], block) == false)
+      break;
+
+    iRetVal++;
+  }
+#endif
 
   return iRetVal;
-
 
   /*
   // --- FIFO TEST ---
