@@ -12,6 +12,14 @@ const char * sVBEFunction[] =
   "Return VBE Mode Information",
   "Set VBE Mode",
   "Return Current VBE Mode",
+  "Save/Restore state",
+  "Display window control",
+  "Set/Get logical scanline control",
+  "Set/Get display start",
+  "Set/Get DAC palette format",
+  "Set/Get palette data",
+  "Return VBE protected mode interface",
+  "Get/Set pixel clock"
 };
 
 // 4/8 bit modes
@@ -26,6 +34,7 @@ static const SVideoMode vesaVideoModes1[] =
   {1280, 1024, 1280, 1024,  4, cfP4}, // 0x106
   {1280, 1024, 1280, 1024,  8, cfP8}, // 0x107
 };
+const uint32_t vmode1_count(sizeof(vesaVideoModes1) / sizeof(SVideoMode));
 
 // 16/24 bit modes
 static const SVideoMode vesaVideoModes2[] =
@@ -43,6 +52,7 @@ static const SVideoMode vesaVideoModes2[] =
   {1280, 1024, 1280, 1024, 16, cfR5G6B5},   // 0x11a
   {1280, 1024, 1280, 1024, 24, cfR8G8B8},   // 0x11b
 };
+const uint32_t vmode2_count(sizeof(vesaVideoModes2) / sizeof(SVideoMode));
 
 //---------------------------------------------------------------------------
 CVesaVideoDevice::CVesaVideoDevice()
@@ -72,6 +82,7 @@ CVesaVideoDevice::CVesaVideoDevice()
   if(vbeCall(0x00) == true)
   {
     printk("VBE version %d.%d\n", pInfo_->ver_major, pInfo_->ver_minor);
+    printk("Video Memory %dKiB\n", pInfo_->vid_mem_size * 64);
 
     // Allocate mode buffer
     // FIXME: How big?
@@ -134,24 +145,57 @@ CVesaVideoDevice::getDefaultMode(const SVideoMode ** mode)
 void
 CVesaVideoDevice::setMode(const SVideoMode * mode)
 {
-  printk("Setting mode set to: %dx%dx%d\n", mode->width, mode->height, mode->bpp);
+  uint32_t vesaMode(0);
+
+  if(mode->bpp >= 16)
+  {
+    // Look for 16/24 bit mode
+    for(uint32_t i(0); i < vmode2_count; i++)
+    {
+      if((mode->width  == vesaVideoModes2[i].width) &&
+         (mode->height == vesaVideoModes2[i].height) &&
+         (mode->format == vesaVideoModes2[i].format))
+      {
+        vesaMode = 0x110 + i;
+        break;
+      }
+    }
+  }
+  else
+  {
+    // Look for 4/8 bit mode
+  }
+
+  if(vesaMode == 0)
+  {
+    printk("VESA: Invalid mode: %dx%dx%d\n", mode->width, mode->height, mode->bpp);
+    return;
+  }
+
+  printk("VESA: Setting mode to: %dx%dx%d\n", mode->width, mode->height, mode->bpp);
 
   // Get mode information
-  v86thr_.pTSS_->ecx = 0x11a; // FIXME
+  v86thr_.pTSS_->ecx = vesaMode;
   v86thr_.pTSS_->es  = (uint32_t)pCurrentVBEMode_ >> 4;
   v86thr_.pTSS_->edi = (uint32_t)pCurrentVBEMode_ &  0xf;
   if(vbeCall(0x01) == true)
   {
     // Set mode
-    v86thr_.pTSS_->ebx = (1 << 14) | 0x11a; // FIXME
+    v86thr_.pTSS_->ebx = (1 << 14) | vesaMode;
     if(vbeCall(0x02) == true)
     {
+      printk("VESA: Mode set to: %dx%dx%d\n", mode->width, mode->height, mode->bpp);
       pCurrentMode_ = mode;
     }
+    else
+      printk("VESA: Unable to set mode\n");
   }
+  else
+    printk("VESA: Unable to get mode information\n");
 }
 
 //---------------------------------------------------------------------------
+static uint32_t bytesUsed(0);
 void
 CVesaVideoDevice::getSurface(CSurface ** surface, int width, int height)
 {
@@ -161,7 +205,10 @@ CVesaVideoDevice::getSurface(CSurface ** surface, int width, int height)
 
   if(((uint32_t)width == pCurrentMode_->width) && ((uint32_t)height == pCurrentMode_->height))
   {
-    pSurface->p           = (void *)pCurrentVBEMode_->physBasePtr;
+    pSurface->p           = (void *)(pCurrentVBEMode_->physBasePtr + bytesUsed);
+
+    // Add the bytes we just used
+    bytesUsed += pCurrentMode_->xpitch * pCurrentMode_->ypitch * (pCurrentMode_->bpp / 8);
   }
   else
   {
@@ -214,6 +261,23 @@ CVesaVideoDevice::displaySurface(CSurface * surface)
   if((surface != NULL) && (surface != pSurface_))
   {
     pSurface_ = surface;
+
+/*
+    // Subfunction 0
+    v86thr_.pTSS_->ebx = 0x00000000;
+    // First pixel in scanline
+    v86thr_.pTSS_->ecx = 0;
+    // First scanline
+    v86thr_.pTSS_->edx = 0;
+
+    // Subfunction 2
+    v86thr_.pTSS_->ebx = 0x00000002;
+    // Byte offset into video memory
+    v86thr_.pTSS_->ecx = ((uint32_t)surface->p) - pCurrentVBEMode_->physBasePtr;
+
+    if(vbeCall(0x07) == false)
+      panic("swap failed");
+*/
   }
 }
 
@@ -234,7 +298,7 @@ CVesaVideoDevice::vbeCall(uint8_t function)
 
   if((v86thr_.pTSS_->eax & 0xff00) != 0)
   {
-//    printk("VBE \"%s\" function failed\n", sVBEFunction[function]);
+//    printk("VBE \"%s\" function failed (%d)\n", sVBEFunction[function], (v86thr_.pTSS_->eax & 0xff00) >> 8);
     bRetVal = false;
   }
 
