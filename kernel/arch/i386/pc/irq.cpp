@@ -21,8 +21,6 @@ extern CIRQ cIRQ;
 extern "C" void
 isr(pt_regs * regs)
 {
-  bool bTimeout(false);
-
   //printk("isr 0x%x\n", regs->iIntNumber);
 
   static const char * msg[] =
@@ -134,8 +132,9 @@ isr(pt_regs * regs)
 
     // Handle IRQs
     case 0x20:  // Timer
-      // Timer interrupt should be handled by a TSS task
-      panic("Timer interrupt received!\n");
+      // Timer interrupt handled at end of this function
+      // Ack interrupt (normally the interrupt manager does this)
+      outb(EOI_BYTE, PIC_MASTER_BASE);
       break;
     case 0x21: // Keyboard
     case 0x22: // Cascade
