@@ -1,3 +1,24 @@
+/*
+ * Bricks-OS, Operating System for Game Consoles
+ * Copyright (C) 2008 Maximus32 <Maximus32@bricks-os.org>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
+ */
+
+
 #ifndef I386_DESCRIPTOR_H
 #define I386_DESCRIPTOR_H
 
@@ -23,7 +44,7 @@ class CDescriptorTable
 public:
   CDescriptorTable();
   ~CDescriptorTable();
-  
+
   void init(SDescriptor * desc, unsigned int count, EDescriptorTableType type = dttLocal);
 
   // Segments (Create in first free entry, only for LDT/GDT)
@@ -40,7 +61,7 @@ public:
   static void createTaskGate     (SDescriptor & desc, unsigned int privilege, selector_t selector);
   static void createInterruptGate(SDescriptor & desc, unsigned int privilege, selector_t selector, uint32_t offset);
   static void createTrapGate     (SDescriptor & desc, unsigned int privilege, selector_t selector, uint32_t offset);
-  
+
   SDescriptorTableReg * getDTRPointer(); // Warning! This class will KEEP the ownership of the DTR
 
 //private:

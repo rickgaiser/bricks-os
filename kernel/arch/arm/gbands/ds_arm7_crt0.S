@@ -34,7 +34,7 @@ _start:
 	mov	r1, #0			@ char *argv[]
 	ldr	r3, =main
 	bl	_call_via_r3		@ jump to user code
-		
+
 	@ If the user ever returns, return to flash cartridge
 	mov	r0, #0x08000000
 	bx	r0

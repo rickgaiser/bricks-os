@@ -1,3 +1,24 @@
+/*
+ * Bricks-OS, Operating System for Game Consoles
+ * Copyright (C) 2008 Maximus32 <Maximus32@bricks-os.org>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
+ */
+
+
 #ifndef I386_SYSCALL_H
 #define I386_SYSCALL_H
 
@@ -69,7 +90,7 @@ __asm__ volatile ("int $0x30" \
 	: "0" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2)), \
 	  "d" ((long)(arg3)),"S" ((long)(arg4))); \
 __syscall_return(type,__res); \
-} 
+}
 
 //---------------------------------------------------------------------------
 #define _syscall5(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4, \
