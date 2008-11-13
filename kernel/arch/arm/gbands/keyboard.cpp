@@ -28,6 +28,7 @@
 // -----------------------------------------------------------------------------
 CGBAKeyboard::CGBAKeyboard()
  : CAFileIOBufferedRead()
+ , CAControllerDevice()
  , iKeys_(0x0000)
 #ifdef NDS7
  , iKeysXY_(0x0000 | KEY_LID) // Lid is opened by default
@@ -87,35 +88,21 @@ CGBAKeyboard::isr(int irq)
   uint16_t iChangedUpXY   = iNewKeysXY & iChangedKeysXY;
 #endif
 
-  if(iChangedUp & KEY_A)
-    bufferRead_.put('A');
-  if(iChangedUp & KEY_B)
-    bufferRead_.put('B');
-  if(iChangedUp & KEY_SELECT)
-    bufferRead_.put('S');
-  if(iChangedUp & KEY_START)
-    bufferRead_.put('S');
-  if(iChangedUp & KEY_RIGHT)
-    bufferRead_.put('R');
-  if(iChangedUp & KEY_LEFT)
-    bufferRead_.put('L');
-  if(iChangedUp & KEY_UP)
-    bufferRead_.put('U');
-  if(iChangedUp & KEY_DOWN)
-    bufferRead_.put('D');
-  if(iChangedUp & KEY_R)
-    bufferRead_.put('>');
-  if(iChangedUp & KEY_L)
-    bufferRead_.put('<');
+  if(iChangedUp & KEY_A)       bufferRead_.put('A');
+  if(iChangedUp & KEY_B)       bufferRead_.put('B');
+  if(iChangedUp & KEY_SELECT)  bufferRead_.put('S');
+  if(iChangedUp & KEY_START)   bufferRead_.put('S');
+  if(iChangedUp & KEY_RIGHT)   bufferRead_.put('R');
+  if(iChangedUp & KEY_LEFT)    bufferRead_.put('L');
+  if(iChangedUp & KEY_UP)      bufferRead_.put('U');
+  if(iChangedUp & KEY_DOWN)    bufferRead_.put('D');
+  if(iChangedUp & KEY_R)       bufferRead_.put('>');
+  if(iChangedUp & KEY_L)       bufferRead_.put('<');
 #ifdef NDS7
-  if(iChangedUpXY & KEY_X)
-    bufferRead_.put('X');
-  if(iChangedUpXY & KEY_Y)
-    bufferRead_.put('Y');
-  if(iChangedUpXY & KEY_TOUCH)
-    bufferRead_.put('T');
-  if(iChangedUpXY & KEY_LID)
-    bufferRead_.put('L');
+  if(iChangedUpXY & KEY_X)     bufferRead_.put('X');
+  if(iChangedUpXY & KEY_Y)     bufferRead_.put('Y');
+  if(iChangedUpXY & KEY_TOUCH) bufferRead_.put('T');
+  if(iChangedUpXY & KEY_LID)   bufferRead_.put('L');
 #endif
 
   bufferRead_.notifyGetters();
@@ -126,4 +113,36 @@ CGBAKeyboard::isr(int irq)
 #endif
 
   return 0;
+}
+
+// -----------------------------------------------------------------------------
+uint32_t
+CGBAKeyboard::getButtonState()
+{
+  uint32_t iRetVal(0);
+
+  uint16_t iKeys   = ~REG_KEYS;
+#ifdef NDS7
+  uint16_t iKeysXY = ~REG_KEYSXY;
+#endif
+
+  if(iKeys & KEY_UP)      iRetVal |= CTRL_BTN_UP;
+  if(iKeys & KEY_DOWN)    iRetVal |= CTRL_BTN_DOWN;
+  if(iKeys & KEY_LEFT)    iRetVal |= CTRL_BTN_LEFT;
+  if(iKeys & KEY_RIGHT)   iRetVal |= CTRL_BTN_RIGHT;
+
+  if(iKeys & KEY_START)   iRetVal |= CTRL_BTN_START;
+  if(iKeys & KEY_SELECT)  iRetVal |= CTRL_BTN_SELECT;
+
+  if(iKeys & KEY_A)       iRetVal |= CTRL_BTN_ACTION_4;
+  if(iKeys & KEY_B)       iRetVal |= CTRL_BTN_ACTION_2;
+#ifdef NDS7
+  if(iKeysXY & KEY_X)     iRetVal |= CTRL_BTN_ACTION_1;
+  if(iKeysXY & KEY_Y)     iRetVal |= CTRL_BTN_ACTION_3;
+#endif
+
+  if(iKeys & KEY_R)       iRetVal |= CTRL_BTN_TRIGGER_R1;
+  if(iKeys & KEY_L)       iRetVal |= CTRL_BTN_TRIGGER_L1;
+
+  return iRetVal;
 }

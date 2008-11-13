@@ -23,6 +23,7 @@
 #include "GL/gl.h"
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
+#include "kernel/inputManager.h"
 #include "kernel/3dRenderer.h"
 #include "asm/arch/registers.h"
 #include "stdlib.h"
@@ -50,6 +51,7 @@ extern void glMakeCurrent(I3DRenderer * ctx);
 
 // Selected device
 CAVideoDevice * pGlutDevice = NULL;
+CAControllerDevice * pController = NULL;
 
 // Selected mode
 const SVideoMode * pGlutMode = NULL;
@@ -83,7 +85,10 @@ glutInit(int * pargc, char ** argv)
 {
   CAVideoDevice ** devices;
   int iDeviceCount;
+  CAInputDevice ** inputDevices;
+  int iInputDeviceCount;
 
+  // Initialize video device
   videoManager.listDevices(&devices, &iDeviceCount);
   if(iDeviceCount > 0)
   {
@@ -117,6 +122,17 @@ glutInit(int * pargc, char ** argv)
   }
   else
     printk("ERROR: No video devices!\n");
+
+  // Initialize input device
+  inputManager.listDevices(&inputDevices, &iInputDeviceCount);
+  for(int i(0); i < iInputDeviceCount; i++)
+  {
+    if(inputDevices[i]->type() == IDT_CONTROLLER)
+    {
+      pController = (CAControllerDevice *)inputDevices[i];
+      break;
+    }
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -153,31 +169,34 @@ glutProcessKeys()
 {
   bool bUp(false), bDown(false), bLeft(false), bRight(true);
 
-#if defined(GBA) || defined(NDS)
-  uint16_t data;
-  data   = ~REG_KEYS;
-  bUp    = (data & KEY_UP);
-  bDown  = (data & KEY_DOWN);
-  bLeft  = (data & KEY_LEFT);
-  bRight = (data & KEY_RIGHT);
-#endif
+  if(pController != NULL)
+  {
+    uint32_t keys = pController->getButtonState();
+    bUp    = (keys & CTRL_BTN_UP);
+    bDown  = (keys & CTRL_BTN_DOWN);
+    bLeft  = (keys & CTRL_BTN_LEFT);
+    bRight = (keys & CTRL_BTN_RIGHT);
+  }
+  else
+  {
 #if defined(NGC) || defined(WII)
-  uint32_t datah, datal;
-  datah  = REG_SI_CHANNEL0_INBUFH;
-  datal  = REG_SI_CHANNEL0_INBUFL;
-  bUp    = (datah & KEY_UP);
-  bDown  = (datah & KEY_DOWN);
-  bLeft  = (datah & KEY_LEFT);
-  bRight = (datah & KEY_RIGHT);
+    uint32_t datah, datal;
+    datah  = REG_SI_CHANNEL0_INBUFH;
+    datal  = REG_SI_CHANNEL0_INBUFL;
+    bUp    = (datah & KEY_UP);
+    bDown  = (datah & KEY_DOWN);
+    bLeft  = (datah & KEY_LEFT);
+    bRight = (datah & KEY_RIGHT);
 #endif
 #ifdef PSP
-  SceCtrlData pad;
-  sceCtrlReadBufferPositive(&pad, 1);
-  bUp    = (pad.Buttons & PSP_CTRL_UP);
-  bDown  = (pad.Buttons & PSP_CTRL_DOWN);
-  bLeft  = (pad.Buttons & PSP_CTRL_LEFT);
-  bRight = (pad.Buttons & PSP_CTRL_RIGHT);
+    SceCtrlData pad;
+    sceCtrlReadBufferPositive(&pad, 1);
+    bUp    = (pad.Buttons & PSP_CTRL_UP);
+    bDown  = (pad.Buttons & PSP_CTRL_DOWN);
+    bLeft  = (pad.Buttons & PSP_CTRL_LEFT);
+    bRight = (pad.Buttons & PSP_CTRL_RIGHT);
 #endif
+  }
 
   if(bUp)
     fpGlutSpecial(GLUT_KEY_UP, 0, 0);

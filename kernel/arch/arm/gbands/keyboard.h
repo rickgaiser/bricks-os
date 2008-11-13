@@ -25,12 +25,14 @@
 
 #include "kernel/fs.h"
 #include "kernel/interrupt.h"
+#include "kernel/inputManager.h"
 #include "asm/arch/memory.h"
 
 
 class CGBAKeyboard
  : public IInterruptServiceRoutine
  , public CAFileIOBufferedRead
+ , public CAControllerDevice
 {
 public:
   CGBAKeyboard();
@@ -40,6 +42,9 @@ public:
 
   // Inherited from IInterruptServiceRoutine
   virtual int isr(int irq) INTERRUPT_CODE;
+
+  // Inherited from CAControllerDevice
+  uint32_t getButtonState();
 
 private:
   uint16_t iKeys_;
