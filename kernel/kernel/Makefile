@@ -10,6 +10,7 @@ OBJS            =\
                 fileDriver \
                 fs \
                 genwait \
+                inputManager \
                 interrupt \
                 interruptManager \
                 pthread \
