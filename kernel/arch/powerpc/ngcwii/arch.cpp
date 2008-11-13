@@ -29,6 +29,7 @@
 #endif // CONFIG_DEBUGGING
 
 #include "serial.h"
+#include "pad.h"
 
 #ifdef CONFIG_FRAMEBUFFER
 #include "videoDevice.h"
@@ -44,7 +45,8 @@ extern char __ArenaLo, __ArenaHi;
 CNGCDebugScreen cDebug;
 #endif // CONFIG_DEBUGGING
 
-CNGCSerial cSerial;
+CNGCSerial   cSerial;
+CNGCPad    * pPAD;
 
 #ifdef CONFIG_FRAMEBUFFER
 CNGCVideoDevice * pVideoDevice;
@@ -55,17 +57,16 @@ CNGCVideoDevice * pVideoDevice;
 int
 main(int, char *[])
 {
-  int iRetVal(0);
-
   //init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
 
 #ifdef CONFIG_DEBUGGING
-  if(cDebug.init() == -1)
-    iRetVal = -1;
+  cDebug.init();
   pDebug = &cDebug;
 #endif // CONFIG_DEBUGGING
 
   cSerial.init();
+  pPAD = new CNGCPad;
+  pPAD->init();
 
 #ifdef CONFIG_FRAMEBUFFER
   pVideoDevice = new CNGCVideoDevice;

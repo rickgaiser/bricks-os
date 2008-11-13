@@ -5,6 +5,7 @@ OBJ             =arch
 OBJS            =\
                 arch \
                 glesContext \
+                pad \
                 task \
 
 

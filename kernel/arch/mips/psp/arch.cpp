@@ -26,6 +26,7 @@
 #include "kernel/bricks.h"
 #include "kernel/debug.h"
 //#include "kernel/memoryManager.h"
+#include "pad.h"
 
 #ifdef CONFIG_DEBUGGING
 #include "debugScreen.h"
@@ -35,6 +36,8 @@
 #include "videoDevice.h"
 #endif // CONFIG_FRAMEBUFFER
 
+
+CPSPPad * pPAD;
 
 #ifdef CONFIG_DEBUGGING
 CPSPDebugScreen cDebug;
@@ -90,17 +93,17 @@ SetupCallbacks(void)
 int
 main(int, char *[])
 {
-  int iRetVal(0);
-
   //init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
 
   SetupCallbacks();
 
 #ifdef CONFIG_DEBUGGING
-  if(cDebug.init() == -1)
-    iRetVal = -1;
+  cDebug.init();
   pDebug = &cDebug;
 #endif // CONFIG_DEBUGGING
+
+  pPAD = new CPSPPad;
+  pPAD->init();
 
 #ifdef CONFIG_FRAMEBUFFER
   pVideoDevice = new CPSPVideoDevice;

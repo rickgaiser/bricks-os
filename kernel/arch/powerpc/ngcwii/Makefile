@@ -4,6 +4,7 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 OBJ             =arch
 OBJS            =\
                 arch \
+                pad \
                 serial \
                 task \
 

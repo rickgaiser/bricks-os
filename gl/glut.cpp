@@ -25,12 +25,8 @@
 #include "kernel/videoManager.h"
 #include "kernel/inputManager.h"
 #include "kernel/3dRenderer.h"
-#include "asm/arch/registers.h"
 #include "stdlib.h"
 
-#ifdef PSP
-#include <pspctrl.h>
-#endif
 
 // NDS Renders to screen directly
 #if defined(NDS)
@@ -176,26 +172,6 @@ glutProcessKeys()
     bDown  = (keys & CTRL_BTN_DOWN);
     bLeft  = (keys & CTRL_BTN_LEFT);
     bRight = (keys & CTRL_BTN_RIGHT);
-  }
-  else
-  {
-#if defined(NGC) || defined(WII)
-    uint32_t datah, datal;
-    datah  = REG_SI_CHANNEL0_INBUFH;
-    datal  = REG_SI_CHANNEL0_INBUFL;
-    bUp    = (datah & KEY_UP);
-    bDown  = (datah & KEY_DOWN);
-    bLeft  = (datah & KEY_LEFT);
-    bRight = (datah & KEY_RIGHT);
-#endif
-#ifdef PSP
-    SceCtrlData pad;
-    sceCtrlReadBufferPositive(&pad, 1);
-    bUp    = (pad.Buttons & PSP_CTRL_UP);
-    bDown  = (pad.Buttons & PSP_CTRL_DOWN);
-    bLeft  = (pad.Buttons & PSP_CTRL_LEFT);
-    bRight = (pad.Buttons & PSP_CTRL_RIGHT);
-#endif
   }
 
   if(bUp)
