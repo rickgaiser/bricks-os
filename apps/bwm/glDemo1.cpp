@@ -20,7 +20,7 @@
 
 
 #include "glDemo1.h"
-#include "GL/gl.h"
+#include "GLES/gl.h"
 #include "GL/glu.h"
 #include "../gl/context.h"
 
@@ -156,4 +156,6 @@ CGLDemo1::drawGL()
   glFlush();
 
   yrot_ += gl_fpfromi(3);
+  if(yrot_ >= gl_fpfromi(360))
+    yrot_ -= gl_fpfromi(360);
 }

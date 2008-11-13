@@ -20,7 +20,7 @@
 
 
 #include "glDemo2.h"
-#include "GL/gl.h"
+#include "GLES/gl.h"
 #include "GL/glu.h"
 #include "../gl/context.h"
 
@@ -28,19 +28,6 @@
 extern const unsigned short crate_Width;
 extern const unsigned short crate_Height;
 extern const unsigned short crate_Bitmap[];
-// MipMap levels (for crate 256x256):
-// 0: 256 x 256
-// 1: 128 x 128
-// 2:  64 x  64
-// 3:  32 x  32
-// 4:  16 x  16
-// 5:   8 x   8
-// 6:   4 x   4
-// 7:   2 x   2
-// 8:   1 x   1
-#define MIPMAP_LEVELS 3 // 64x64
-#define MIPMAP_LEVEL  (MIPMAP_LEVELS-1)
-uint16_t * crateMipMap[MIPMAP_LEVELS];
 GLuint textures[1];
 const GLfixed lightAmbient[]  = {gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(0.5f), gl_fpfromf(1.0f)};
 const GLfixed lightDiffuse[]  = {gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f), gl_fpfromf(1.0f)};
@@ -202,18 +189,10 @@ CGLDemo2::initializeGL()
   glFogx(GL_FOG_END, gl_fpfromi(10));
   //glEnable(GL_FOG);
 
-  // Create MipMaps
-  crateMipMap[0] = (uint16_t *)crate_Bitmap;
-  for(int i(1); i < MIPMAP_LEVELS; i++)
-  {
-    crateMipMap[i] = new uint16_t[(crate_Width >> i) * (crate_Height >> i)];
-    createMipMap(crateMipMap[i], crateMipMap[i - 1], crate_Width >> (i - 1), crate_Height >> (i - 1));
-  }
-
   // Texture
   glGenTextures(1, &textures[0]);
   glBindTexture(GL_TEXTURE_2D, textures[0]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, crate_Width >> MIPMAP_LEVEL, crate_Height >> MIPMAP_LEVEL, 0, GL_RGB, GL_UNSIGNED_SHORT_5_5_5_1, crateMipMap[MIPMAP_LEVEL]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, crate_Width, crate_Height, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, crate_Bitmap);
   //glMatrixMode(GL_TEXTURE);
   //glLoadIdentity();
 
@@ -270,4 +249,6 @@ CGLDemo2::drawGL()
   glFlush();
 
   yrot_ += gl_fpfromi(2);
+  if(yrot_ >= gl_fpfromi(360))
+    yrot_ -= gl_fpfromi(360);
 }
