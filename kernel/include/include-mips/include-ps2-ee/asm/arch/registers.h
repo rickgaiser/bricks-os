@@ -521,7 +521,14 @@ typedef unsigned int uint128_t __attribute__(( mode(TI) ));
 //
 #define REG_INT_STAT          (*(vuint64_t *)(0x1000f000)) // Interrupt status
 #define REG_INT_MASK          (*(vuint64_t *)(0x1000f010)) // Interrupt mask
-#define REG_SBUS_SMFLG        (*(vuint64_t *)(0x1000f230))
+
+// SIF
+#define REG_SIF_MAINADDR      (*(vuint32_t *)(0x1000f200)) // EE side data addr
+#define REG_SIF_SUBADDR       (*(vuint32_t *)(0x1000f210)) // IOP side data addr
+#define REG_SIF_MSFLAG        (*(vuint32_t *)(0x1000f220)) // EE->IOP flags
+#define REG_SIF_SMFLAG        (*(vuint32_t *)(0x1000f230)) // IOP->EE flags
+#define REG_SIF_SUBCTRL       (*(vuint32_t *)(0x1000f240))
+#define REG_SIF_UNKNF260      (*(vuint32_t *)(0x1000f260))
 
 
 #endif

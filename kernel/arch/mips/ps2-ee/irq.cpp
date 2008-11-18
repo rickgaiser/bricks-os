@@ -185,8 +185,8 @@ initExceptions()
     inthandlers[i] = NULL;
   }
 
-  // SBUS
-  REG_SBUS_SMFLG = (1 << 8) | (1 << 10);
+  // SubBus interface / SIF
+  REG_SIF_SMFLAG = (1 << 8) | (1 << 10);
 
 //  install_exception_handler(V_TLB_REFILL, commonExceptionHandler);
 //  install_exception_handler(V_COUNTER,    commonExceptionHandler);
