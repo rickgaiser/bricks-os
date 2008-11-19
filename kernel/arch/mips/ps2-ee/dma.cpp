@@ -20,6 +20,7 @@
 
 
 #include "dma.h"
+#include "asm/arch/registers.h"
 #include "kernel/debug.h"
 
 
@@ -39,24 +40,24 @@ const char * sDMASource[] =
 
 struct SDMAChannel
 {
-  vuint32_t * qwc;
-  vuint32_t * madr;
-  vuint32_t * tadr;
   vuint32_t * chcr;
+  vuint32_t * madr;
+  vuint32_t * qwc;
+  vuint32_t * tadr;
 };
 
 static SDMAChannel dmaChannel_[10] =
 {
-  {(vuint32_t *)0x10008020, (vuint32_t *)0x10008010, (vuint32_t *)0x10008030, (vuint32_t *)0x10008000},
-  {(vuint32_t *)0x10009020, (vuint32_t *)0x10009010, (vuint32_t *)0x10009030, (vuint32_t *)0x10009000},
-  {(vuint32_t *)0x1000a020, (vuint32_t *)0x1000a010, (vuint32_t *)0x1000a030, (vuint32_t *)0x1000a000},
-  {(vuint32_t *)0x1000b020, (vuint32_t *)0x1000b010, (vuint32_t *)0x1000b030, (vuint32_t *)0x1000b000},
-  {(vuint32_t *)0x1000b420, (vuint32_t *)0x1000b410, (vuint32_t *)0x1000b430, (vuint32_t *)0x1000b400},
-  {(vuint32_t *)0x1000c020, (vuint32_t *)0x1000c010, (vuint32_t *)0x1000c030, (vuint32_t *)0x1000c000},
-  {(vuint32_t *)0x1000c420, (vuint32_t *)0x1000c410, (vuint32_t *)0x1000c430, (vuint32_t *)0x1000c400},
-  {(vuint32_t *)0x1000c820, (vuint32_t *)0x1000c810, (vuint32_t *)0x1000c830, (vuint32_t *)0x1000c800},
-  {(vuint32_t *)0x1000d020, (vuint32_t *)0x1000d010, (vuint32_t *)0x1000d030, (vuint32_t *)0x1000d000},
-  {(vuint32_t *)0x1000d420, (vuint32_t *)0x1000d410, (vuint32_t *)0x1000d430, (vuint32_t *)0x1000d400}
+  {&REG_DMA_VIF0_CHCR,    &REG_DMA_VIF0_MADR,    &REG_DMA_VIF0_QWC,    &REG_DMA_VIF0_TADR},
+  {&REG_DMA_VIF1_CHCR,    &REG_DMA_VIF1_MADR,    &REG_DMA_VIF1_QWC,    &REG_DMA_VIF1_TADR},
+  {&REG_DMA_GIF_CHCR,     &REG_DMA_GIF_MADR,     &REG_DMA_GIF_QWC,     &REG_DMA_GIF_TADR},
+  {&REG_DMA_fromIPU_CHCR, &REG_DMA_fromIPU_MADR, &REG_DMA_fromIPU_QWC, &REG_DMA_fromIPU_TADR},
+  {&REG_DMA_toIPU_CHCR,   &REG_DMA_toIPU_MADR,   &REG_DMA_toIPU_QWC,   &REG_DMA_toIPU_TADR},
+  {&REG_DMA_SIF0_CHCR,    &REG_DMA_SIF0_MADR,    &REG_DMA_SIF0_QWC,    &REG_DMA_SIF0_TADR},
+  {&REG_DMA_SIF1_CHCR,    &REG_DMA_SIF1_MADR,    &REG_DMA_SIF1_QWC,    &REG_DMA_SIF1_TADR},
+  {&REG_DMA_SIF2_CHCR,    &REG_DMA_SIF2_MADR,    &REG_DMA_SIF2_QWC,    &REG_DMA_SIF2_TADR},
+  {&REG_DMA_fromSPR_CHCR, &REG_DMA_fromSPR_MADR, &REG_DMA_fromSPR_QWC, &REG_DMA_fromSPR_TADR},
+  {&REG_DMA_toSPR_CHCR,   &REG_DMA_toSPR_MADR,   &REG_DMA_toSPR_QWC,   &REG_DMA_toSPR_TADR},
 };
 
 

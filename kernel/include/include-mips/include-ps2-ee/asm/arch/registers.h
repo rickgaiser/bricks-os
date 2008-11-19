@@ -447,22 +447,45 @@ typedef unsigned int uint128_t __attribute__(( mode(TI) ));
 //---------------------------------------------------------------------------
 // Registers
 //---------------------------------------------------------------------------
-// Timer registers
+//
+// Timers
+//
 // FIXME: Really 64bit registers?
+typedef struct
+{
+  vuint64_t count;
+  vuint64_t pad0;
+  vuint64_t mode;
+  vuint64_t pad1;
+  vuint64_t comp;
+  vuint64_t pad2;
+  vuint64_t hold;
+  vuint64_t pad3;
+} STimerReg;
+// Timer0
 #define REG_TIMER0_COUNT      (*(vuint64_t *)(0x10000000))
 #define REG_TIMER0_MODE       (*(vuint64_t *)(0x10000010))
 #define REG_TIMER0_COMP       (*(vuint64_t *)(0x10000020))
 #define REG_TIMER0_HOLD       (*(vuint64_t *)(0x10000030))
+#define REGS_TIMER0           (*(STimerReg *)&REG_TIMER0_COUNT)
+// Timer1
 #define REG_TIMER1_COUNT      (*(vuint64_t *)(0x10000800))
 #define REG_TIMER1_MODE       (*(vuint64_t *)(0x10000810))
 #define REG_TIMER1_COMP       (*(vuint64_t *)(0x10000820))
 #define REG_TIMER1_HOLD       (*(vuint64_t *)(0x10000830))
+#define REGS_TIMER1           (*(STimerReg *)&REG_TIMER1_COUNT)
+// Timer2
 #define REG_TIMER2_COUNT      (*(vuint64_t *)(0x10001000))
 #define REG_TIMER2_MODE       (*(vuint64_t *)(0x10001010))
 #define REG_TIMER2_COMP       (*(vuint64_t *)(0x10001020))
+#define REG_TIMER2_HOLD       (*(vuint64_t *)(0x10001030))
+#define REGS_TIMER2           (*(STimerReg *)&REG_TIMER2_COUNT)
+// Timer3
 #define REG_TIMER3_COUNT      (*(vuint64_t *)(0x10001800))
 #define REG_TIMER3_MODE       (*(vuint64_t *)(0x10001810))
 #define REG_TIMER3_COMP       (*(vuint64_t *)(0x10001820))
+#define REG_TIMER3_HOLD       (*(vuint64_t *)(0x10001830))
+#define REGS_TIMER3           (*(STimerReg *)&REG_TIMER3_COUNT)
 
 // Graphics InterFace (GIF) registers
 #define REG_GIF_CTRL          (*(vuint32_t *)(0x10003000)) // Control Register
@@ -476,16 +499,80 @@ typedef unsigned int uint128_t __attribute__(( mode(TI) ));
 #define REG_GIF_P3CNT         (*(vuint32_t *)(0x10003090)) // PATH3 Count Register
 #define REG_GIF_P3TAG         (*(vuint32_t *)(0x100030a0)) // PATH3 Tag Register
 
-// DMA registers: Graphics InterFace (GIF) channel
-#define REG_DMA_GIF_CHCR      (*(vuint32_t *)(0x1000a000)) // GIF Channel Control Register
-#define REG_DMA_GIF_MADR      (*(vuint32_t *)(0x1000a010)) // Transfer Address Register
-#define REG_DMA_GIF_QWC       (*(vuint32_t *)(0x1000a020)) // Transfer Size Register (in qwords)
+//
+// DMA controller
+//
+typedef struct
+{
+  vuint32_t chcr;
+  vuint32_t pad0[3];
+  vuint32_t madr;
+  vuint32_t pad1[3];
+  vuint32_t qwc;
+  vuint32_t pad2[3];
+  vuint32_t tadr;
+  vuint32_t pad3[3];
+} SDMAChannelReg;
+// DMA VIF0 channel registers
+#define REG_DMA_VIF0_CHCR     (*(vuint32_t *)(0x10008000))
+#define REG_DMA_VIF0_MADR     (*(vuint32_t *)(0x10008010))
+#define REG_DMA_VIF0_QWC      (*(vuint32_t *)(0x10008020))
+#define REG_DMA_VIF0_TADR     (*(vuint32_t *)(0x10008030))
+#define REGS_DMA_VIF0         (*(SDMAChannelReg *)&REG_DMA_VIF0_CHCR)
+// DMA VIF1 channel registers
+#define REG_DMA_VIF1_CHCR     (*(vuint32_t *)(0x10009000))
+#define REG_DMA_VIF1_MADR     (*(vuint32_t *)(0x10009010))
+#define REG_DMA_VIF1_QWC      (*(vuint32_t *)(0x10009020))
+#define REG_DMA_VIF1_TADR     (*(vuint32_t *)(0x10009030))
+#define REGS_DMA_VIF1         (*(SDMAChannelReg *)&REG_DMA_VIF1_CHCR)
+// DMA GIF channel registers
+#define REG_DMA_GIF_CHCR      (*(vuint32_t *)(0x1000a000))
+#define REG_DMA_GIF_MADR      (*(vuint32_t *)(0x1000a010))
+#define REG_DMA_GIF_QWC       (*(vuint32_t *)(0x1000a020))
 #define REG_DMA_GIF_TADR      (*(vuint32_t *)(0x1000a030))
-// DMA registers: Serial InterFace (SIF) channel
+#define REGS_DMA_GIF          (*(SDMAChannelReg *)&REG_DMA_GIF_CHCR)
+// DMA fromIPU channel registers
+#define REG_DMA_fromIPU_CHCR  (*(vuint32_t *)(0x1000b000))
+#define REG_DMA_fromIPU_MADR  (*(vuint32_t *)(0x1000b010))
+#define REG_DMA_fromIPU_QWC   (*(vuint32_t *)(0x1000b020))
+#define REG_DMA_fromIPU_TADR  (*(vuint32_t *)(0x1000b030))
+#define REGS_DMA_fromIPU      (*(SDMAChannelReg *)&REG_DMA_fromIPU_CHCR)
+// DMA toIPU channel registers
+#define REG_DMA_toIPU_CHCR    (*(vuint32_t *)(0x1000b400))
+#define REG_DMA_toIPU_MADR    (*(vuint32_t *)(0x1000b410))
+#define REG_DMA_toIPU_QWC     (*(vuint32_t *)(0x1000b420))
+#define REG_DMA_toIPU_TADR    (*(vuint32_t *)(0x1000b430))
+#define REGS_DMA_toIPU        (*(SDMAChannelReg *)&REG_DMA_toIPU_CHCR)
+// DMA SIF0 channel registers
 #define REG_DMA_SIF0_CHCR     (*(vuint32_t *)(0x1000c000))
 #define REG_DMA_SIF0_MADR     (*(vuint32_t *)(0x1000c010))
 #define REG_DMA_SIF0_QWC      (*(vuint32_t *)(0x1000c020))
 #define REG_DMA_SIF0_TADR     (*(vuint32_t *)(0x1000c030))
+#define REGS_DMA_SIF0         (*(SDMAChannelReg *)&REG_DMA_SIF0_CHCR)
+// DMA SIF1 channel registers
+#define REG_DMA_SIF1_CHCR     (*(vuint32_t *)(0x1000c400))
+#define REG_DMA_SIF1_MADR     (*(vuint32_t *)(0x1000c410))
+#define REG_DMA_SIF1_QWC      (*(vuint32_t *)(0x1000c420))
+#define REG_DMA_SIF1_TADR     (*(vuint32_t *)(0x1000c430))
+#define REGS_DMA_SIF1         (*(SDMAChannelReg *)&REG_DMA_SIF1_CHCR)
+// DMA SIF2 channel registers
+#define REG_DMA_SIF2_CHCR     (*(vuint32_t *)(0x1000c800))
+#define REG_DMA_SIF2_MADR     (*(vuint32_t *)(0x1000c810))
+#define REG_DMA_SIF2_QWC      (*(vuint32_t *)(0x1000c820))
+#define REG_DMA_SIF2_TADR     (*(vuint32_t *)(0x1000c830))
+#define REGS_DMA_SIF2         (*(SDMAChannelReg *)&REG_DMA_SIF2_CHCR)
+// DMA fromSPR channel registers
+#define REG_DMA_fromSPR_CHCR  (*(vuint32_t *)(0x1000d000))
+#define REG_DMA_fromSPR_MADR  (*(vuint32_t *)(0x1000d010))
+#define REG_DMA_fromSPR_QWC   (*(vuint32_t *)(0x1000d020))
+#define REG_DMA_fromSPR_TADR  (*(vuint32_t *)(0x1000d030))
+#define REGS_DMA_fromSPR      (*(SDMAChannelReg *)&REG_DMA_fromSPR_CHCR)
+// DMA toSPR channel registers
+#define REG_DMA_toSPR_CHCR    (*(vuint32_t *)(0x1000d400))
+#define REG_DMA_toSPR_MADR    (*(vuint32_t *)(0x1000d410))
+#define REG_DMA_toSPR_QWC     (*(vuint32_t *)(0x1000d420))
+#define REG_DMA_toSPR_TADR    (*(vuint32_t *)(0x1000d430))
+#define REGS_DMA_toSPR        (*(SDMAChannelReg *)&REG_DMA_toSPR_CHCR)
 // DMA registers
 #define REG_DMA_CTRL          (*(vuint32_t *)(0x1000e000)) // DMA Control Register
 #define REG_DMA_STAT          (*(vuint32_t *)(0x1000e010)) // Interrupt Status Register
