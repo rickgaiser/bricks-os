@@ -16,7 +16,6 @@ OBJS            =\
                 isr \
                 sif \
                 task \
-                vu \
                 vu0 \
 
 
