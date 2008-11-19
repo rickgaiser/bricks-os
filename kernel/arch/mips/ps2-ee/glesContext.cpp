@@ -23,7 +23,6 @@
 #include "bios.h"
 #include "dma.h"
 #include "gif.h"
-#include "matrix.h"
 #include "stdlib.h"
 
 

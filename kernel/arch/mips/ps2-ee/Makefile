@@ -14,7 +14,6 @@ OBJS            =\
                 vif \
                 irq \
                 isr \
-                matrix \
                 sif \
                 task \
                 vu \
