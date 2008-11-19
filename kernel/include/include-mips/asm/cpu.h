@@ -104,6 +104,7 @@ halt(void)
 // -----------------------------------------------------------------------------
 // Address conversion macros
 // NOTE: Only the first 512MiB of KUSEG can be converted from/to
+#define ADDR_TO_PHYS(a)  ((__typeof__(a))(((uint32_t)(a) & 0x1fffffff)              ))
 #define ADDR_TO_KUSEG(a) ((__typeof__(a))(((uint32_t)(a) & 0x1fffffff) | KUSEG_START))
 #define ADDR_TO_KSEG0(a) ((__typeof__(a))(((uint32_t)(a) & 0x1fffffff) | KSEG0_START))
 #define ADDR_TO_KSEG1(a) ((__typeof__(a))(((uint32_t)(a) & 0x1fffffff) | KSEG1_START))

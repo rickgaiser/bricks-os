@@ -95,18 +95,6 @@ typedef struct
 #define DMA_MAX_TRANSFER    (DMA_MAX_QWTRANSFER * 16)    // Max amount of bytes to transfer                        (256KiB)
 
 
-// Initialize the DMA comtroller
-inline void dmaInitialize();
-// Inititialize DMA channel
-inline void dmaInitialize(EDMAChannel channel, dmaCallBack handler);
-// Shutdown DMA channel
-inline void dmaShutdown  (EDMAChannel channel);
-// Send data over channel
-inline void dmaSend      (EDMAChannel channel, void * data, int size, bool chain = false);
-// Wait for trasfer to complete
-inline void dmaWait      (EDMAChannel channel);
-
-
 // -----------------------------------------------------------------------------
 // DMA Controller class
 class CDMAC
@@ -178,13 +166,13 @@ public:
 
   // DMA Tags in Source Chain mode
   inline CSCDMAPacket & scTagOpenCnt ();
-//  inline CSCDMAPacket & scTagOpenNext(const SDMATag * nextTag);
+//  inline CSCDMAPacket & scTagNext(const SDMATag * nextTag);
   inline CSCDMAPacket & scTagRef(const void * data, uint32_t qwSize);
-//  inline CSCDMAPacket & scTagOpenRefs(const void * data, uint32_t qwSize);
-//  inline CSCDMAPacket & scTagOpenRefe(const void * data, uint32_t qwSize);
-//  inline CSCDMAPacket & scTagOpenCall(const SDMATag * nextTag);
-//  inline CSCDMAPacket & scTagOpenCall(const CSCDMAPacket & packet);
-//  inline CSCDMAPacket & scTagOpenRet ();
+//  inline CSCDMAPacket & scTagRefs(const void * data, uint32_t qwSize);
+  inline CSCDMAPacket & scTagRefe(const void * data, uint32_t qwSize);
+//  inline CSCDMAPacket & scTagCall(const SDMATag * nextTag);
+//  inline CSCDMAPacket & scTagCall(const CSCDMAPacket & packet);
+//  inline CSCDMAPacket & scTagRet ();
   inline CSCDMAPacket & scTagOpenEnd ();
 
   // Close DMA Tag in Source Chain mode (sets data size in tag)
