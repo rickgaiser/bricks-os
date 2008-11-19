@@ -12,7 +12,6 @@ OBJS            =\
                 fixed_tc \
                 gif \
                 vif \
-                gs \
                 irq \
                 isr \
                 matrix \

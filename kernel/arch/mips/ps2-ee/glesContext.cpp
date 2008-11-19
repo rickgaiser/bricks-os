@@ -22,7 +22,7 @@
 #include "glesContext.h"
 #include "bios.h"
 #include "dma.h"
-#include "gs.h"
+#include "gif.h"
 #include "matrix.h"
 #include "stdlib.h"
 

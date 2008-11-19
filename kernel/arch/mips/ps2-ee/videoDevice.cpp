@@ -23,7 +23,7 @@
 #include "glesContext.h"
 #include "bios.h"
 #include "dma.h"
-#include "gs.h"
+#include "gif.h"
 #include "string.h"
 
 
