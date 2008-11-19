@@ -78,6 +78,9 @@ CDMAC::init()
 {
   iDMAMask_ = 0;
 
+  for(int i(0); i < DMA_CHANNEL_COUNT; i++)
+    handlers_[i] = NULL;
+
   // Clear DMA mask/status
   //  0.. 9 == status (writing 1 clears status)
   // 16..25 == mask   (writing 1 xors mask)
@@ -89,6 +92,61 @@ CDMAC::init()
 
 //-------------------------------------------------------------------------
 void
+CDMAC::attach(unsigned int channel, IDMAChannelHandler * handler)
+{
+  if(channel < DMA_CHANNEL_COUNT)
+  {
+    handlers_[channel] = handler;
+    enable(channel);
+  }
+}
+
+//-------------------------------------------------------------------------
+void
+CDMAC::detach(unsigned int channel, IDMAChannelHandler * handler)
+{
+  if(channel < DMA_CHANNEL_COUNT)
+  {
+    if(handlers_[channel] == handler)
+    {
+      handlers_[channel] = NULL;
+      disable(channel);
+    }
+  }
+}
+
+//-------------------------------------------------------------------------
+void
+CDMAC::disable(unsigned int channel)
+{
+  if(channel < DMA_CHANNEL_COUNT)
+  {
+    // Disable if enabled
+    if((iDMAMask_ & (0x00010000 << channel)) != 0)
+    {
+      iDMAMask_    &= ~(0x00010000 << channel);
+      REG_DMA_STAT |=  (0x00010000 << channel);
+    }
+  }
+}
+
+//-------------------------------------------------------------------------
+void
+CDMAC::enable(unsigned int channel)
+{
+  if(channel < DMA_CHANNEL_COUNT)
+  {
+    // Enable if disabled
+    if((iDMAMask_ & (0x00010000 << channel)) == 0)
+    {
+      iDMAMask_    |= (0x00010000 << channel);
+      REG_DMA_STAT |= (0x00010000 << channel);
+    }
+  }
+}
+
+//-------------------------------------------------------------------------
+void
 CDMAC::isr(unsigned int irq, pt_regs * regs)
 {
   uint32_t status = REG_DMA_STAT;
@@ -96,14 +154,17 @@ CDMAC::isr(unsigned int irq, pt_regs * regs)
   // DMA controller
   printk("interrupt from DMAC(0x%x)\n", status);
 
-  for(int i(0); i < 10; i++)
+  for(int i(0); i < DMA_CHANNEL_COUNT; i++)
   {
     if(status & (1 << i))
     {
-      printk(" - %s Complete\n", sDMASource[i]);
+      //printk(" - %s\n", sDMASource[i]);
 
       // Clear status
       REG_DMA_STAT = (1 << i);
+
+      if(handlers_[i] != NULL)
+        handlers_[i]->complete(i);
     }
   }
 }
@@ -160,7 +221,7 @@ CDMAPacket::send(bool waitComplete)
 
   // Flush caches before transfer
   bios::FlushCache(0);
-  bios::_SyncDCache(pData_, (uint8_t *)pData_ + qwc);
+  bios::_SyncDCache(pData_, (uint128_t *)pData_ + qwc);
 
   // Send
   *dmaChannel_[eChannelId_].qwc  = DMA_QWC(qwc);
@@ -203,13 +264,13 @@ CSCDMAPacket::send(bool waitComplete)
 
   // Flush caches before transfer
   bios::FlushCache(0);
-  bios::_SyncDCache(pData_, (uint8_t *)pData_ + qwc);
+  bios::_SyncDCache(pData_, (uint128_t *)pData_ + qwc);
 
   // Send
   *dmaChannel_[eChannelId_].qwc  = DMA_QWC(0);
   *dmaChannel_[eChannelId_].madr = DMA_MADR(0, 0);
   *dmaChannel_[eChannelId_].tadr = DMA_TADR((uint32_t)ADDR_TO_PHYS(pData_), 0);
-  *dmaChannel_[eChannelId_].chcr = DMA_CHCR(DMAC::Channel::fromMemory, DMAC::Channel::chain,  0, 0, 0, 1, 0);
+  *dmaChannel_[eChannelId_].chcr = DMA_CHCR(DMAC::Channel::fromMemory, DMAC::Channel::chain, 0, 0, 0, 1, 0);
 
   // Wait for completion
   if(waitComplete == true)

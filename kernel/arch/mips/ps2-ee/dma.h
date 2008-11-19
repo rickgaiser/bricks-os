@@ -91,9 +91,19 @@ typedef struct
 } SDMATag __attribute__ ((aligned(16)));
 
 
+#define DMA_CHANNEL_COUNT   10
 #define DMA_MAX_QWTRANSFER  (16 * 1024)                  // Max amount of qwords (16 bytes / 128 bits) to transfer  (16K)
 #define DMA_MAX_TRANSFER    (DMA_MAX_QWTRANSFER * 16)    // Max amount of bytes to transfer                        (256KiB)
 
+
+//---------------------------------------------------------------------------
+class IDMAChannelHandler
+{
+public:
+  virtual ~IDMAChannelHandler(){}
+
+  virtual int complete(int channel) = 0;
+};
 
 // -----------------------------------------------------------------------------
 // DMA Controller class
@@ -105,10 +115,18 @@ public:
   virtual ~CDMAC();
 
   void init();
+
+  void attach(unsigned int channel, IDMAChannelHandler * handler);
+  void detach(unsigned int channel, IDMAChannelHandler * handler);
+  void disable(unsigned int channel);
+  void enable(unsigned int channel);
+
   void isr(unsigned int irq, pt_regs * regs);
 
 private:
   uint32_t iDMAMask_;
+
+  IDMAChannelHandler * handlers_[DMA_CHANNEL_COUNT];
 };
 
 // -----------------------------------------------------------------------------
