@@ -137,10 +137,10 @@ CPS2DebugScreen::cls()
 {
   packet_.scTagOpenEnd();
     packet_.gifTagOpenPacked();
-      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-      packet_.gifAddPackedAD(GIF::REG::rgbaq, GS_RGBAQ(0, 0, 0, 0x80, 0));
-      packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2(GS_X_BASE<<4, GS_Y_BASE<<4, 0));
-      packet_.gifAddPackedAD(GIF::REG::xyz2, GS_XYZ2((GS_X_BASE+pCurrentPS2Mode_->width+1)<<4, (GS_Y_BASE+actualHeight_+1)<<4, 0));
+      packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(0, 0, 0, 0x80, 0));
+      packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(GS_X_BASE<<4, GS_Y_BASE<<4, 0));
+      packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((GS_X_BASE+pCurrentPS2Mode_->width+1)<<4, (GS_Y_BASE+actualHeight_+1)<<4, 0));
     packet_.gifTagClose();
   packet_.scTagClose();
   packet_.send();
@@ -233,7 +233,7 @@ CPS2DebugScreen::printBegin()
           getBitNr(g2_fontbuf_w),         // width
           getBitNr(g2_fontbuf_w),         // height
           1,                              // RGBA
-          PS2_GL_DECAL,                   // just overwrite existing pixels
+          GS_TEX0_DECAL,                  // just overwrite existing pixels
           0,0,0,0,0));
 /*
       packet_.gifAddPackedAD(tex1_1,
@@ -246,7 +246,7 @@ CPS2DebugScreen::printBegin()
       packet_.gifAddPackedAD(GIF::REG::clamp_1, 0x05);
 */
       packet_.gifAddPackedAD(GIF::REG::prim,
-        GS_PRIM(PRIM_SPRITE,
+        GIF::REG::PRIM(GS_PRIM_SPRITE,
           0,                              // flat shading
           1,                              // texture mapping ON
           0, 1, 0,                        // no fog or antialiasing, but use alpha
@@ -277,10 +277,10 @@ CPS2DebugScreen::printLine(uint16_t x, uint16_t y, char * str)
     w  = x1-x0+1;
     h  = y1-y0+1;
 
-    packet_.gifAddPackedAD(GIF::REG::uv,    GS_UV(x0<<4, y0<<4));
-    packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2(x<<4, y<<4, 0));
-    packet_.gifAddPackedAD(GIF::REG::uv,    GS_UV((x1+1)<<4, (y1+1)<<4));
-    packet_.gifAddPackedAD(GIF::REG::xyz2,  GS_XYZ2((x+w)<<4, (y+h)<<4, 0));
+    packet_.gifAddPackedAD(GIF::REG::uv,    GIF::REG::UV(x0<<4, y0<<4));
+    packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
+    packet_.gifAddPackedAD(GIF::REG::uv,    GIF::REG::UV((x1+1)<<4, (y1+1)<<4));
+    packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((x+w)<<4, (y+h)<<4, 0));
 
     // Advance drawing position
     x += w;

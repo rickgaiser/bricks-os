@@ -31,6 +31,10 @@ typedef unsigned char               uint8_t;
 typedef unsigned short              uint16_t;
 typedef unsigned int                uint32_t;
 typedef unsigned long long          uint64_t;
+#ifdef PS2EE
+typedef signed int                  int128_t __attribute__(( mode(TI) ));
+typedef unsigned int                uint128_t __attribute__(( mode(TI) ));
+#endif
 
 typedef int8_t                      __s8;
 typedef int16_t                     __s16;
@@ -40,6 +44,10 @@ typedef uint8_t                     __u8;
 typedef uint16_t                    __u16;
 typedef uint32_t                    __u32;
 typedef uint64_t                    __u64;
+#ifdef PS2EE
+typedef int128_t                    __s128;
+typedef uint128_t                   __u128;
+#endif
 
 typedef volatile int8_t             vint8_t;
 typedef volatile int16_t            vint16_t;
@@ -49,6 +57,10 @@ typedef volatile uint8_t            vuint8_t;
 typedef volatile uint16_t           vuint16_t;
 typedef volatile uint32_t           vuint32_t;
 typedef volatile uint64_t           vuint64_t;
+#ifdef PS2EE
+typedef volatile int128_t           vint128_t;
+typedef volatile uint128_t          vuint128_t;
+#endif
 
 typedef signed int                  intptr_t;
 typedef unsigned int                uintptr_t;

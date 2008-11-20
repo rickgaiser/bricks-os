@@ -42,7 +42,7 @@ ee_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, u
       gifData.gifAddPackedAD(GIF::REG::bitbltbuf, GS_BITBLTBUF(0, 0, 0, daddr >> 8, dw >> 6, dpsm));
       gifData.gifAddPackedAD(GIF::REG::trxpos,    GS_TRXPOS(0, 0, dx, dy, 0));
       gifData.gifAddPackedAD(GIF::REG::trxreg,    GS_TRXREG(w, h));
-      gifData.gifAddPackedAD(GIF::REG::trxdir,    GS_TRXDIR(XDIR_EE_GS));
+      gifData.gifAddPackedAD(GIF::REG::trxdir,    GS_TRXDIR(GS_TRXDIR_EE_TO_GS));
     }
     gifData.gifTagClose();
   }
@@ -97,7 +97,7 @@ gs_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, u
       gifData.gifAddPackedAD(GIF::REG::bitbltbuf, GS_BITBLTBUF(source>>8, sw>>6, spsm, daddr>>8, dw>>6, dpsm));
       gifData.gifAddPackedAD(GIF::REG::trxpos,    GS_TRXPOS(sx, sy, dx, dy, 0));
       gifData.gifAddPackedAD(GIF::REG::trxreg,    GS_TRXREG(w, h));
-      gifData.gifAddPackedAD(GIF::REG::trxdir,    GS_TRXDIR(XDIR_GS_GS));
+      gifData.gifAddPackedAD(GIF::REG::trxdir,    GS_TRXDIR(GS_TRXDIR_GS_TO_GS));
     gifData.gifTagClose();
   gifData.scTagClose();
   gifData.send();

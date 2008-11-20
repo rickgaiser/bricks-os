@@ -85,8 +85,8 @@ CPS2Texture::~CPS2Texture()
 void
 CPS2Texture::init()
 {
-  ps2MinFilter = PS2_GL_NEAREST_MIPMAP_LINEAR;
-  ps2MagFilter = PS2_GL_LINEAR;
+  ps2MinFilter = GS_TEX1_NEAREST_MIPMAP_LINEAR;
+  ps2MagFilter = GS_TEX1_LINEAR;
 
   CTexture::init();
 }
@@ -117,7 +117,7 @@ CPS2Texture::bind()
         widthBitNr,                      // width
         heightBitNr,                     // height
         rgba_,                           // 0=RGB, 1=RGBA
-        PS2_GL_DECAL,                    // GL_TEXTURE_ENV_MODE
+        GS_TEX0_DECAL,                   // GL_TEXTURE_ENV_MODE
         0, 0, 0, 0, 0));                 // CLUT (currently not used)
 
     packet_.gifAddPackedAD(GIF::REG::tex1_1,
@@ -161,11 +161,11 @@ CPS2GLESContext::CPS2GLESContext(CPS2VideoDevice & device)
 
  , ps2ZPSM_(GRAPH_PSM_16S)
  , ps2ZBufferAddr_(0)
- , ps2Shading_(SHADE_FLAT)
- , ps2Textures_(TEXTURES_OFF)
- , ps2Fog_(FOG_OFF)
- , ps2AlphaBlend_(ALPHABLEND_OFF)
- , ps2Aliasing_(ALIASING_OFF)
+ , ps2Shading_(GS_PRIM_SHADE_FLAT)
+ , ps2Textures_(GS_PRIM_TEXTURES_OFF)
+ , ps2Fog_(GS_PRIM_FOG_OFF)
+ , ps2AlphaBlend_(GS_PRIM_ALPHABLEND_OFF)
+ , ps2Aliasing_(GS_PRIM_ALIASING_OFF)
  , ps2DepthFunction_(ZTST_GREATER)
  , ps2DepthInvert_(true)
 {
@@ -200,7 +200,7 @@ CPS2GLESContext::glClear(GLbitfield mask)
     uint8_t b = (uint8_t)(clClear.b * 255);
     //uint8_t a = (uint8_t)(clClear.a * 255);
 
-    packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+    packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
     packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(r, g, b, 0x80, 0));
     packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((0+GS_X_BASE)<<4, (0+GS_Y_BASE)<<4, 0));
     packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((viewportWidth+GS_X_BASE)<<4, (viewportHeight+GS_Y_BASE)<<4, 0));
@@ -259,7 +259,7 @@ CPS2GLESContext::glDisable(GLenum cap)
       break;
     case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
     case GL_FOG:        fogEnabled_       = false; break;
-    case GL_TEXTURE_2D: texturesEnabled_  = false; ps2Textures_ = TEXTURES_OFF; break;
+    case GL_TEXTURE_2D: texturesEnabled_  = false; ps2Textures_ = GS_PRIM_TEXTURES_OFF; break;
     case GL_NORMALIZE:  normalizeEnabled_ = false; break;
 
     default:
@@ -288,7 +288,7 @@ CPS2GLESContext::glEnable(GLenum cap)
       break;
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
-    case GL_TEXTURE_2D: texturesEnabled_   = true; ps2Textures_ = TEXTURES_ON; break;
+    case GL_TEXTURE_2D: texturesEnabled_   = true; ps2Textures_ = GS_PRIM_TEXTURES_ON; break;
     case GL_NORMALIZE:  normalizeEnabled_  = true; break;
 
     default:
@@ -304,8 +304,8 @@ CPS2GLESContext::glShadeModel(GLenum mode)
 
   switch(mode)
   {
-    case GL_FLAT:   ps2Shading_ = SHADE_FLAT;    break;
-    case GL_SMOOTH: ps2Shading_ = SHADE_GOURAUD; break;
+    case GL_FLAT:   ps2Shading_ = GS_PRIM_SHADE_FLAT;    break;
+    case GL_SMOOTH: ps2Shading_ = GS_PRIM_SHADE_GOURAUD; break;
   }
 }
 
@@ -514,8 +514,8 @@ CPS2GLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
       case GL_TEXTURE_MIN_FILTER:
         switch((GLint)param)
         {
-          case GL_NEAREST: CURRENT_PS2TEX->ps2MinFilter = PS2_GL_NEAREST; break;
-          case GL_LINEAR:  CURRENT_PS2TEX->ps2MinFilter = PS2_GL_LINEAR;  break;
+          case GL_NEAREST: CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_NEAREST; break;
+          case GL_LINEAR:  CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_LINEAR;  break;
           default:
             setError(GL_INVALID_ENUM);
             return;
@@ -525,12 +525,12 @@ CPS2GLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
       case GL_TEXTURE_MAG_FILTER:
         switch((GLint)param)
         {
-          case GL_NEAREST:                CURRENT_PS2TEX->ps2MagFilter = PS2_GL_NEAREST;                break;
-          case GL_LINEAR:                 CURRENT_PS2TEX->ps2MagFilter = PS2_GL_LINEAR;                 break;
-          case GL_NEAREST_MIPMAP_NEAREST: CURRENT_PS2TEX->ps2MagFilter = PS2_GL_NEAREST_MIPMAP_NEAREST; break;
-          case GL_LINEAR_MIPMAP_NEAREST:  CURRENT_PS2TEX->ps2MagFilter = PS2_GL_LINEAR_MIPMAP_NEAREST;  break;
-          case GL_NEAREST_MIPMAP_LINEAR:  CURRENT_PS2TEX->ps2MagFilter = PS2_GL_NEAREST_MIPMAP_LINEAR;  break;
-          case GL_LINEAR_MIPMAP_LINEAR:   CURRENT_PS2TEX->ps2MagFilter = PS2_GL_LINEAR_MIPMAP_LINEAR;   break;
+          case GL_NEAREST:                CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_NEAREST;                break;
+          case GL_LINEAR:                 CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_LINEAR;                 break;
+          case GL_NEAREST_MIPMAP_NEAREST: CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_NEAREST_MIPMAP_NEAREST; break;
+          case GL_LINEAR_MIPMAP_NEAREST:  CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_LINEAR_MIPMAP_NEAREST;  break;
+          case GL_NEAREST_MIPMAP_LINEAR:  CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_NEAREST_MIPMAP_LINEAR;  break;
+          case GL_LINEAR_MIPMAP_LINEAR:   CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_LINEAR_MIPMAP_LINEAR;   break;
           default:
             setError(GL_INVALID_ENUM);
             return;
@@ -575,13 +575,13 @@ CPS2GLESContext::glBegin(GLenum mode)
 //  switch(mode)
 //  {
 //    case GL_TRIANGLES:
-      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI,       ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+      packet_.gifAddPackedAD(GIF::REG::prim, GIF::REG::PRIM(GS_PRIM_TRI,       ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, GS_PRIM_TEXTURES_ST, 0, 0));
 //      break;
 //    case GL_TRIANGLE_STRIP:
-//      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+//      packet_.gifAddPackedAD(GIF::REG::prim, GIF::REG::PRIM(GS_PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, GS_PRIM_TEXTURES_ST, 0, 0));
 //      break;
 //    case GL_TRIANGLE_FAN:
-//      packet_.gifAddPackedAD(GIF::REG::prim, GS_PRIM(PRIM_TRI_FAN,   ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, TEXTURES_ST, 0, 0));
+//      packet_.gifAddPackedAD(GIF::REG::prim, GIF::REG::PRIM(GS_PRIM_TRI_FAN,   ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, GS_PRIM_TEXTURES_ST, 0, 0));
 //      break;
 //  };
 }
@@ -610,13 +610,13 @@ CPS2GLESContext::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
 
     // Determine alpha value (for aliasing and alpha blending)
     // Both off: solid colors
-    if((ps2Aliasing_ == ALIASING_OFF) && (ps2AlphaBlend_ == ALPHABLEND_OFF))
+    if((ps2Aliasing_ == GS_PRIM_ALIASING_OFF) && (ps2AlphaBlend_ == GS_PRIM_ALPHABLEND_OFF))
       alpha = 255;
     // Only alpha blending: use alpha from color value
-    else if((ps2Aliasing_ == ALIASING_OFF) && (ps2AlphaBlend_ == ALPHABLEND_ON))
+    else if((ps2Aliasing_ == GS_PRIM_ALIASING_OFF) && (ps2AlphaBlend_ == GS_PRIM_ALPHABLEND_ON))
       alpha = (uint8_t)(v.cl.a*255);
     // Only aliasing: use value 0x80
-    else if((ps2Aliasing_ == ALIASING_ON)  && (ps2AlphaBlend_ == ALPHABLEND_OFF))
+    else if((ps2Aliasing_ == GS_PRIM_ALIASING_ON)  && (ps2AlphaBlend_ == GS_PRIM_ALPHABLEND_OFF))
       alpha = 0x80;
     // Both: Can't do both at the same time!!! Prefer alpha blending then...
     else
@@ -663,12 +663,12 @@ CPS2GLESContext::zbuffer(bool enable)
       device_.allocFramebuffer(ps2ZBufferAddr_, pSurface_->mode.xpitch, pSurface_->mode.height, ps2ZPSM_);
     }
     // Register buffer location and pixel mode
-    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, ZMSK_ENABLE));
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, GS_ZBUF_ENABLE));
   }
   else
   {
     // Z-Buffer
-    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(0, ps2ZPSM_, ZMSK_DISABLE));
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(0, ps2ZPSM_, GS_ZBUF_DISABLE));
   }
 
   // Z-Buffer test

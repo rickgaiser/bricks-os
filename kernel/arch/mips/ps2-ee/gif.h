@@ -28,6 +28,334 @@
 #include "asm/arch/registers.h"
 
 
+#define FLOAT_TO_INT(F) (*((uint32_t *)&(F)))
+
+//---------------------------------------------------------------------------
+// GS Register Constructors
+//---------------------------------------------------------------------------
+// REG_GS_CSR constructor
+#define GS_CSR(SIGNAL,FINISH,HSINT,VSINT,EDWINT,FLUSH,RESET,NFIELD,FIELD,FIFO,REV,ID) \
+  ((uint64_t)(SIGNAL) << 0)  | \
+  ((uint64_t)(FINISH) << 1)  | \
+  ((uint64_t)(HSINT)  << 2)  | \
+  ((uint64_t)(VSINT)  << 3)  | \
+  ((uint64_t)(EDWINT) << 4)  | \
+  ((uint64_t)(FLUSH)  << 8)  | \
+  ((uint64_t)(RESET)  << 9)  | \
+  ((uint64_t)(NFIELD) << 12) | \
+  ((uint64_t)(FIELD)  << 13) | \
+  ((uint64_t)(FIFO)   << 14) | \
+  ((uint64_t)(REV)    << 16) | \
+  ((uint64_t)(ID)     << 24)
+#define GS_CSR_RESET() \
+  ((uint64_t)(1) << 9)
+
+// REG_GS_PMODE constructor
+#define GS_PMODE(EN1,EN2,MMOD,AMOD,SLBG,ALP) \
+  ((uint64_t)(EN1)  << 0) | \
+  ((uint64_t)(EN2)  << 1) | \
+  ((uint64_t)(001)  << 2) | \
+  ((uint64_t)(MMOD) << 5) | \
+  ((uint64_t)(AMOD) << 6) | \
+  ((uint64_t)(SLBG) << 7) | \
+  ((uint64_t)(ALP)  << 8)
+
+// REG_GS_SMODE2 constructor
+#define GS_SMODE2(INT,FFMD,DPMS) \
+  ((uint64_t)(INT)  << 0) | \
+  ((uint64_t)(FFMD) << 1) | \
+  ((uint64_t)(DPMS) << 2)
+
+// REG_GS_DISPFB constructor
+// FBP  - Framebuffer pointer / 2048
+// FBW  - Framebuffer width / 64
+// PSM  - Pixel Storage Mode
+// DBX  - x pos (in pixels)
+// DBY  - y pos (in pixels)
+#define GS_DISPFB(FBP,FBW,PSM,DBX,DBY) \
+  ((uint64_t)(FBP) << 0)  | \
+  ((uint64_t)(FBW) << 9)  | \
+  ((uint64_t)(PSM) << 15) | \
+  ((uint64_t)(DBX) << 32) | \
+  ((uint64_t)(DBY) << 43)
+
+// REG_GS_DISPLAY constructor
+// DX   - x pos in display area (in VCK units)
+// DY   - y pos in display area (in raster units)
+// MAGH - magnification in h direction (1..16) - 1
+// MAGV - magnification in v direction (1...4) - 1
+// DW   - display area width  (in VCK units)   - 1
+// DH   - display area height (in pixels)      - 1
+#define GS_DISPLAY(DX,DY,MAGH,MAGV,DW,DH) \
+  ((uint64_t)(DX)   <<  0) | \
+  ((uint64_t)(DY)   << 12) | \
+  ((uint64_t)(MAGH) << 23) | \
+  ((uint64_t)(MAGV) << 27) | \
+  ((uint64_t)(DW)   << 32) | \
+  ((uint64_t)(DH)   << 44)
+#define GS_DISPLAY_CREATE(VCK,DX,DY,MAGH,MAGV,DW,DH) \
+  GS_DISPLAY((DX)*(VCK), DY, (MAGH)-1, (MAGV)-1, (DW)*(MAGH)-1, (DH)*(MAGV)-1)
+
+// REG_GS_BGCOLOR constructor
+#define GS_BGCOLOR(R,G,B) \
+  ((uint64_t)(R) <<  0) | \
+  ((uint64_t)(G) <<  8) | \
+  ((uint64_t)(B) << 16)
+
+//---------------------------------------------------------------------------
+// GS Register Constructors
+//---------------------------------------------------------------------------
+// DIMX Register (dither matrix)
+#define GS_DIMX(DM00,DM01,DM02,DM03,DM10,DM11,DM12,DM13,DM20,DM21,DM22,DM23,DM30,DM31,DM32,DM33) \
+  ((uint64_t)(DM00) <<  0) | \
+  ((uint64_t)(DM01) <<  4) | \
+  ((uint64_t)(DM02) <<  8) | \
+  ((uint64_t)(DM03) << 12) | \
+  ((uint64_t)(DM10) << 16) | \
+  ((uint64_t)(DM11) << 20) | \
+  ((uint64_t)(DM12) << 24) | \
+  ((uint64_t)(DM13) << 28) | \
+  ((uint64_t)(DM20) << 32) | \
+  ((uint64_t)(DM21) << 36) | \
+  ((uint64_t)(DM22) << 40) | \
+  ((uint64_t)(DM23) << 44) | \
+  ((uint64_t)(DM30) << 48) | \
+  ((uint64_t)(DM31) << 52) | \
+  ((uint64_t)(DM32) << 56) | \
+  ((uint64_t)(DM33) << 60)
+
+// ALPHA_x Registers - Setup Alpha Blending Parameters
+//   Alpha Formula is: Cv = (A-B)*C>>7 + D
+//   For A,B,D - (0=texture, 1=frame buffer, 2=0)
+//   For C - (0=texture, 1=frame buffer, 2=use FIX field for Alpha)
+#define GS_ALPHA(A,B,C,D,FIX) \
+  (((uint64_t)(A)   <<  0) | \
+   ((uint64_t)(B)   <<  2) | \
+   ((uint64_t)(C)   <<  4) | \
+   ((uint64_t)(D)   <<  6) | \
+   ((uint64_t)(FIX) << 32))
+
+// BITBLTBUF Register - Setup Image Transfer Between EE and GS
+//   SBP  - Source buffer address (Address/256)
+//   SBW  - Source buffer width (Pixels/64)
+//   SPSM - Source pixel format (0 = 32bit RGBA)
+//   DBP  - Destination buffer address (Address/256)
+//   DBW  - Destination buffer width (Pixels/64)
+//   DPSM - Destination pixel format (0 = 32bit RGBA)
+//
+// - When transferring from EE to GS, only the Detination fields
+//   need to be set. (Only Source fields for GS->EE, and all for GS->GS).
+#define GS_BITBLTBUF(SBP,SBW,SPSM,DBP,DBW,DPSM) \
+  (((uint64_t)(SBP)  <<  0) | \
+   ((uint64_t)(SBW)  << 16) | \
+   ((uint64_t)(SPSM) << 24) | \
+   ((uint64_t)(DBP)  << 32) | \
+   ((uint64_t)(DBW)  << 48) | \
+   ((uint64_t)(DPSM) << 56))
+
+// FRAME_x Register
+#define GS_FRAME(FBP,FBW,PSM,FBMSK) \
+  (((uint64_t)(FBP)   <<  0) | \
+   ((uint64_t)(FBW)   << 16) | \
+   ((uint64_t)(PSM)   << 24) | \
+   ((uint64_t)(FBMSK) << 32))
+
+// GS PRIM Register - Setup Drawing Primitive
+// PRI: Primitive type
+#define GS_PRIM_POINT              0
+#define GS_PRIM_LINE               1
+#define GS_PRIM_LINE_STRIP         2
+#define GS_PRIM_TRI                3
+#define GS_PRIM_TRI_STRIP          4
+#define GS_PRIM_TRI_FAN            5
+#define GS_PRIM_SPRITE             6
+// IIP: Shading method (0=flat, 1=gouraud)
+#define GS_PRIM_SHADE_FLAT         0
+#define GS_PRIM_SHADE_GOURAUD      1
+// TME: Texture mapping (0=off, 1=on)
+#define GS_PRIM_TEXTURES_OFF       0
+#define GS_PRIM_TEXTURES_ON        1
+// FGE: Fog (0=off, 1=on)
+#define GS_PRIM_FOG_OFF            0
+#define GS_PRIM_FOG_ON             1
+// ABE: Alpha Blending (0=off, 1=on)
+#define GS_PRIM_ALPHABLEND_OFF     0
+#define GS_PRIM_ALPHABLEND_ON      1
+// AA1: Antialiasing (0=off,1=on)
+#define GS_PRIM_ALIASING_OFF       0
+#define GS_PRIM_ALIASING_ON        1
+// FST: Texture coordinate specification (0=use ST/RGBAQ register, 1=use UV register)
+#define GS_PRIM_TEXTURES_ST        0 // For 3D
+#define GS_PRIM_TEXTURES_UV        1 // no perspective correction, good for 2D
+// CTXT: Drawing context (0=1, 1=2)
+#define GS_PRIM_CONTEXT0           0
+#define GS_PRIM_CONTEXT1           1
+// FIX: ?? Fragment value control (use 0)
+
+// SCISSOR_x Register
+#define GS_SCISSOR(X0,X1,Y0,Y1) \
+  (((uint64_t)(X0) <<  0) | \
+   ((uint64_t)(X1) << 16) | \
+   ((uint64_t)(Y0) << 32) | \
+   ((uint64_t)(Y1) << 48))
+
+// TEST_x Register - Pixel Test Settings
+//   ATE   - Alpha Test (0=off, 1=on)
+//   ATST  - Alpha Test Method
+//             0=NEVER:  All pixels fail.
+//             1=ALWAYS: All pixels pass.
+//             2=LESS:   Pixels with A less than AREF pass.
+//             3=LEQUAL, 4=EQUAL, 5=GEQUAL, 6=GREATER, 7=NOTEQUAL
+//   AREF  - Alpha value compared to.
+//   AFAIL - What to do when a pixel fails a test.
+//             0=KEEP:    Don't update anything.
+//             1=FBONLY:  Update frame buffer only.
+//             2=ZBONLY:  Update z-buffer only.
+//             3=RGBONLY: Update only the frame buffer RGB.
+//   DATE  - Destination Alpha Test (0=off, 1=on)
+//   DATM  - DAT Mode (0=pass pixels whose destination alpha is 0)
+//   ZTE   - Depth Test (0=off, 1=on)
+//   ZTST  - Depth Test Method.
+//             0=NEVER, 1=ALWAYS, 2=GEQUAL, 3=GREATER
+#define ATST_NEVER              0
+#define ATST_ALWAYS             1
+#define ATST_LESS               2
+#define ATST_LEQUAL             3
+#define ATST_EQUAL              4
+#define ATST_GEQUAL             5
+#define ATST_GREATER            6
+#define ATST_NOTEQUAL           7
+
+#define AFAIL_KEEP              0
+#define AFAIL_FBONLY            1
+#define AFAIL_ZBONLY            2
+#define AFAIL_RGBONLY           3
+
+#define ZTST_NEVER              0
+#define ZTST_ALWAYS             1
+#define ZTST_GEQUAL             2
+#define ZTST_GREATER            3
+
+#define GS_TEST(ATE,ATST,AREF,AFAIL,DATE,DATM,ZTE,ZTST) \
+  (((uint64_t)(ATE)   <<  0)| \
+   ((uint64_t)(ATST)  <<  1)| \
+   ((uint64_t)(AREF)  <<  4)| \
+   ((uint64_t)(AFAIL) << 12)| \
+   ((uint64_t)(DATE)  << 14)| \
+   ((uint64_t)(DATM)  << 15)| \
+   ((uint64_t)(ZTE)   << 16)| \
+   ((uint64_t)(ZTST)  << 17))
+
+// TEX0_x Register - Set Texture Buffer Information
+//   TBP0 - Texture Buffer Base Pointer (Address/256)
+//   TBW  - Texture Buffer Width (Texels/64)
+//   PSM  - Pixel Storage Format (0 = 32bit RGBA)
+//   TW   - Texture Width (Width = 2^TW)
+//   TH   - Texture Height (Height = 2^TH)
+//   TCC  - Tecture Color Component
+//                        0=RGB,
+//                        1=RGBA, use Alpha from TEXA reg when not in PSM
+//   TFX  - Texture Function (0=modulate, 1=decal, 2=hilight, 3=hilight2)
+#define GS_TEX0_MODULATE         0
+#define GS_TEX0_DECAL            1
+#define GS_TEX0_HILIGHT          2 // Not supported in OpenGL???
+#define GS_TEX0_HILIGHT2         3 // Not supported in OpenGL???
+
+#define GS_TEX0(TBP0,TBW,PSM,TW,TH,TCC,TFX,CBP,CPSM,CSM,CSA,CLD) \
+  (((uint64_t)(TBP0) <<  0) | \
+   ((uint64_t)(TBW)  << 14) | \
+   ((uint64_t)(PSM)  << 20) | \
+   ((uint64_t)(TW)   << 26) | \
+   ((uint64_t)(TH)   << 30) | \
+   ((uint64_t)(TCC)  << 34) | \
+   ((uint64_t)(TFX)  << 35) | \
+   ((uint64_t)(CBP)  << 37) | \
+   ((uint64_t)(CPSM) << 51) | \
+   ((uint64_t)(CSM)  << 55) | \
+   ((uint64_t)(CSA)  << 56) | \
+   ((uint64_t)(CLD)  << 61))
+
+// TEX1_x Register - Set Texture Information
+//   LCM   - LOD calculation method
+//   MXL   - Maximum MIP level (0-6)
+//   MMAG  - Filter when expanding (0=NEAREST, 1=LINEAR)
+//   MMIN  - Filter when reducing (0=NEAREST, 1=LINEAR)
+//   MTBA  - MIP Base specified by (0=MIPTBP1&2, 1=Automatic)
+//   L     - LOD parameter L
+//   K     - LOD parameter K
+#define GS_TEX1_NEAREST                 0
+#define GS_TEX1_LINEAR                  1
+#define GS_TEX1_NEAREST_MIPMAP_NEAREST  2
+#define GS_TEX1_NEAREST_MIPMAP_LINEAR   3
+#define GS_TEX1_LINEAR_MIPMAP_NEAREST   4
+#define GS_TEX1_LINEAR_MIPMAP_LINEAR    5
+
+#define GS_TEX1(LCM,MXL,MMAG,MMIN,MTBA,L,K) \
+  (((uint64_t)(LCM)  <<  0) | \
+   ((uint64_t)(MXL)  <<  2) | \
+   ((uint64_t)(MMAG) <<  5) | \
+   ((uint64_t)(MMIN) <<  6) | \
+   ((uint64_t)(MTBA) <<  9) | \
+   ((uint64_t)(L)    << 19) | \
+   ((uint64_t)(K)    << 32))
+
+// MipMap Table Pointers and Widths
+#define GS_MIPTBP(P1,W1,P2,W2,P3,W3) \
+  (((uint64_t)(P1)   <<  0) | \
+   ((uint64_t)(W1)   << 14) | \
+   ((uint64_t)(P2)   << 20) | \
+   ((uint64_t)(W2)   << 34) | \
+   ((uint64_t)(P3)   << 40) | \
+   ((uint64_t)(W3)   << 54))
+
+// TRXDIR Register - Set Image Transfer Directon, and Start Transfer
+//   XDIR - (0=EE->GS, 1=GS->EE, 2=GS->GS, 3=Transmission is deactivated)
+#define GS_TRXDIR_EE_TO_GS           0
+#define GS_TRXDIR_GS_TO_EE           1
+#define GS_TRXDIR_GS_TO_GS           2
+#define GS_TRXDIR_DEACTIVATE         3
+
+#define GS_TRXDIR(XDIR) \
+  ((uint64_t)(XDIR))
+
+// TRXPOS Register - Setup Image Transfer Coordinates
+//   SSAX - Source Upper Left X
+//   SSAY - Source Upper Left Y
+//   DSAX - Destionation Upper Left X
+//   DSAY - Destionation Upper Left Y
+//   DIR  - Pixel Transmission Order (00 = top left -> bottom right)
+//
+// - When transferring from EE to GS, only the Detination fields
+//   need to be set. (Only Source fields for GS->EE, and all for GS->GS).
+#define GS_TRXPOS(SSAX,SSAY,DSAX,DSAY,DIR) \
+  (((uint64_t)(SSAX) <<  0) | \
+   ((uint64_t)(SSAY) << 16) | \
+   ((uint64_t)(DSAX) << 32) | \
+   ((uint64_t)(DSAY) << 48) | \
+   ((uint64_t)(DIR)  << 59))
+
+// TRXREG Register - Setup Image Transfer Size
+//   RRW - Image Width
+//   RRH - Image Height
+#define GS_TRXREG(RRW,RRH) \
+  (((uint64_t)(RRW) <<  0) | \
+   ((uint64_t)(RRH) << 32))
+
+// XYOFFSET_x Register
+#define GS_XYOFFSET(OFX,OFY) \
+  (((uint64_t)(OFX) <<  0) | \
+   ((uint64_t)(OFY) << 32))
+
+// ZBUF_x Register
+#define GS_ZBUF_ENABLE      0
+#define GS_ZBUF_DISABLE     1
+
+#define GS_ZBUF(ZBP,PSM,ZMSK) \
+  (((uint64_t)(ZBP)  <<  0) | \
+   ((uint64_t)(PSM)  << 24) | \
+   ((uint64_t)(ZMSK) << 32))
+
+
 //-------------------------------------------------------------------------
 namespace GIF
 {
@@ -82,32 +410,112 @@ namespace GIF
       finish     = 0x61,
       label      = 0x62
     };
-    #define FLOAT_TO_INT(F) (*((uint32_t *)&(F)))
-    inline uint64_t PRIM (uint8_t prim, bool IIP = false, bool TME = false, bool FGE = false, bool ABE = false, bool AA1 = false, bool FST = false, bool CTXT = false, bool FIX = false){return GS_PRIM(prim,IIP,TME,FGE,ABE,AA1,FST,CTXT,FIX);}
-    inline uint64_t RGBAQ(uint8_t r, uint8_t g, uint8_t b,  uint8_t a, float q){return GS_RGBAQ(r, g, b, a, FLOAT_TO_INT(q));}
-    inline uint64_t ST   (float s, float t)                                    {return GS_ST(FLOAT_TO_INT(s), FLOAT_TO_INT(t));}
-    inline uint64_t UV   (uint16_t u, uint16_t v)                              {return GS_UV(u, v);}
-    inline uint64_t XYZF2(uint16_t x, uint16_t y, uint32_t z, uint8_t f)         {return GS_XYZF2(x, y, z, f);}
-    inline uint64_t XYZ2 (uint16_t x, uint16_t y, uint32_t z           )         {return GS_XYZ2 (x, y, z   );}
+
+    inline uint64_t PRIM(uint8_t prim, bool IIP = false, bool TME = false, bool FGE = false, bool ABE = false, bool AA1 = false, bool FST = false, bool CTXT = false, bool FIX = false)
+    {
+      return
+        (((uint64_t)(prim) <<  0) |
+         ((uint64_t)(IIP)  <<  3) |
+         ((uint64_t)(TME)  <<  4) |
+         ((uint64_t)(FGE)  <<  5) |
+         ((uint64_t)(ABE)  <<  6) |
+         ((uint64_t)(AA1)  <<  7) |
+         ((uint64_t)(FST)  <<  8) |
+         ((uint64_t)(CTXT) <<  9) |
+         ((uint64_t)(FIX)  << 10));
+    }
+    inline uint64_t RGBAQ(uint8_t R, uint8_t G, uint8_t B,  uint8_t A, float Q)
+    {
+      return
+        (((uint64_t)(R) <<  0) |
+         ((uint64_t)(G) <<  8) |
+         ((uint64_t)(B) << 16) |
+         ((uint64_t)(A) << 24) |
+         ((uint64_t)FLOAT_TO_INT(Q) << 32));
+    }
+    inline uint64_t ST(float S, float T)
+    {
+      return
+        (((uint64_t)FLOAT_TO_INT(S) <<  0) |
+         ((uint64_t)FLOAT_TO_INT(T) << 32));
+    }
+    inline uint64_t UV(uint16_t U, uint16_t V)
+    {
+      return
+        (((uint64_t)(U) <<  0) |
+         ((uint64_t)(V) << 16));
+    }
+    inline uint64_t XYZF2(uint16_t X, uint16_t Y, uint32_t Z, uint8_t F)
+    {
+      // 24bit Z (depth)
+      //  8bit F (fog)
+      return
+        (((uint64_t)(X) <<  0) |
+         ((uint64_t)(Y) << 16) |
+         ((uint64_t)(Z) << 32) |
+         ((uint64_t)(F) << 56));
+    }
+    inline uint64_t XYZ2(uint16_t X, uint16_t Y, uint32_t Z)
+    {
+      // 32bit Z (depth)
+      return
+        (((uint64_t)(X) <<  0) |
+         ((uint64_t)(Y) << 16) |
+         ((uint64_t)(Z) << 32));
+    }
   };
-  namespace PACKED
+  namespace PREG // Packed Registers (GIF will unpack them)
   {
-/*
-    // X&Y: 16bit signed fixed point integer 12.4
-    // z:   24bit unsigned integer
-    // f:    8bit unsigned integer
-    #define XYZF2(X,Y,Z,F) \
-      (((uint128_t)(X) <<   0) | \
-       ((uint128_t)(Y) <<  32) | \
-       ((uint128_t)(Z) <<  68) | \
-       ((uint128_t)(F) << 100))
-    #define XYZF3(X,Y,Z,F) \
-      (((uint128_t)(X) <<   0) | \
-       ((uint128_t)(Y) <<  32) | \
-       ((uint128_t)(Z) <<  68) | \
-       ((uint128_t)(F) << 100) | \
-       ((uint128_t)(1) << 111))
-*/
+    inline uint64_t RGBA(uint8_t R, uint8_t G, uint8_t B,  uint8_t A)
+    {
+      return
+        (((uint128_t)(R) <<  0) |
+         ((uint128_t)(G) << 32) |
+         ((uint128_t)(B) << 64) |
+         ((uint128_t)(A) << 96));
+    }
+    inline uint64_t XYZ2(uint16_t X, uint16_t Y, uint32_t Z)
+    {
+      // X&Y: 16bit signed fixed point integer 12.4
+      // z:   32bit unsigned integer
+      return
+        (((uint128_t)(X) <<  0) |
+         ((uint128_t)(Y) << 32) |
+         ((uint128_t)(Z) << 68));
+    }
+    inline uint64_t XYZ3(uint16_t X, uint16_t Y, uint32_t Z)
+    {
+      // X&Y: 16bit signed fixed point integer 12.4
+      // z:   32bit unsigned integer
+      return
+        (((uint128_t)(X) <<  0) |
+         ((uint128_t)(Y) << 32) |
+         ((uint128_t)(Z) << 68) |
+         ((uint128_t)(1) <<111));
+    }
+    inline uint64_t XYZF2(uint16_t X, uint16_t Y, uint32_t Z, uint8_t F)
+    {
+      // X&Y: 16bit signed fixed point integer 12.4
+      // z:   24bit unsigned integer
+      // f:    8bit unsigned integer
+      return
+        (((uint128_t)(X) <<   0) |
+         ((uint128_t)(Y) <<  32) |
+         ((uint128_t)(Z) <<  68) |
+         ((uint128_t)(F) << 100));
+    }
+    inline uint64_t XYZF3(uint16_t X, uint16_t Y, uint32_t Z, uint8_t F)
+    {
+      // X&Y: 16bit signed fixed point integer 12.4
+      // z:   24bit unsigned integer
+      // f:    8bit unsigned integer
+      return
+        (((uint128_t)(X) <<   0) |
+         ((uint128_t)(Y) <<  32) |
+         ((uint128_t)(Z) <<  68) |
+         ((uint128_t)(F) << 100) |
+         ((uint128_t)(1) << 111));
+    }
   };
 };
 

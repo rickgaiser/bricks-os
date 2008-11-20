@@ -30,6 +30,37 @@
 #include "asm/arch/registers.h"
 
 
+//---------------------------------------------------------------------------
+// DMA Register Constructors
+//---------------------------------------------------------------------------
+// CHCR Register - Channel Control Register
+#define DMA_CHCR(DIR,MOD,ASP,TTE,TIE,STR,TAG) \
+  ((uint32_t)(DIR) << 0) | \
+  ((uint32_t)(MOD) << 2) | \
+  ((uint32_t)(ASP) << 4) | \
+  ((uint32_t)(TTE) << 6) | \
+  ((uint32_t)(TIE) << 7) | \
+  ((uint32_t)(STR) << 8) | \
+  ((uint32_t)(TAG) << 16)
+
+// MADR Register - Transfer Address Register
+#define DMA_MADR(ADDR,SPR) \
+  (((uint32_t)(ADDR) << 0) | \
+   ((uint32_t)(SPR)  << 31))
+
+// TADR Register - Tag Address Register
+#define DMA_TADR(ADDR,SPR) \
+  (((uint32_t)(ADDR) << 0) | \
+   ((uint32_t)(SPR)  << 31))
+
+// QWC Register - Transfer Data Size Register
+#define DMA_QWC(SIZE) ((uint32_t)(SIZE))
+
+#define DMA_CHANNEL_COUNT   10
+#define DMA_MAX_QWTRANSFER  (16 * 1024)                  // Max amount of qwords (16 bytes / 128 bits) to transfer  (16K)
+#define DMA_MAX_TRANSFER    (DMA_MAX_QWTRANSFER * 16)    // Max amount of bytes to transfer                        (256KiB)
+
+
 namespace DMAC
 {
   namespace Channel
@@ -89,11 +120,6 @@ typedef struct
   uint32_t opt1;
   uint32_t opt2;
 } SDMATag __attribute__ ((aligned(16)));
-
-
-#define DMA_CHANNEL_COUNT   10
-#define DMA_MAX_QWTRANSFER  (16 * 1024)                  // Max amount of qwords (16 bytes / 128 bits) to transfer  (16K)
-#define DMA_MAX_TRANSFER    (DMA_MAX_QWTRANSFER * 16)    // Max amount of bytes to transfer                        (256KiB)
 
 
 //---------------------------------------------------------------------------
