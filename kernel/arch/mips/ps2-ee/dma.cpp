@@ -124,7 +124,7 @@ CDMAC::disable(unsigned int channel)
     if((iDMAMask_ & (0x00010000 << channel)) != 0)
     {
       iDMAMask_    &= ~(0x00010000 << channel);
-      REG_DMA_STAT |=  (0x00010000 << channel);
+      REG_DMA_STAT  =  (0x00010000 << channel);
     }
   }
 }
@@ -139,7 +139,7 @@ CDMAC::enable(unsigned int channel)
     if((iDMAMask_ & (0x00010000 << channel)) == 0)
     {
       iDMAMask_    |= (0x00010000 << channel);
-      REG_DMA_STAT |= (0x00010000 << channel);
+      REG_DMA_STAT  = (0x00010000 << channel);
     }
   }
 }
@@ -151,11 +151,11 @@ CDMAC::isr(unsigned int irq, pt_regs * regs)
   uint32_t status = REG_DMA_STAT;
 
   // DMA controller
-  printk("interrupt from DMAC(0x%x)\n", status);
+  //printk("interrupt from DMAC(0x%x)\n", status);
 
-  for(int i(0); i < DMA_CHANNEL_COUNT; i++)
+  for(uint32_t i(0); i < DMA_CHANNEL_COUNT; i++)
   {
-    if(status & (1 << i))
+    if((status & ((uint32_t)0x00010001 << i)) == ((uint32_t)0x00010001 << i))
     {
       //printk(" - %s\n", sDMASource[i]);
 
@@ -269,7 +269,7 @@ CSCDMAPacket::send(bool waitComplete)
   *dmaChannel_[eChannelId_].qwc  = DMA_QWC(0);
   *dmaChannel_[eChannelId_].madr = DMA_MADR(0, 0);
   *dmaChannel_[eChannelId_].tadr = DMA_TADR((uint32_t)ADDR_TO_PHYS(pData_), 0);
-  *dmaChannel_[eChannelId_].chcr = DMA_CHCR(DMAC::Channel::fromMemory, DMAC::Channel::chain, 0, 0, 0, 1, 0);
+  *dmaChannel_[eChannelId_].chcr = DMA_CHCR(DMAC::Channel::fromMemory, DMAC::Channel::chain, 0, 0, 1, 1, 0);
 
   // Wait for completion
   if(waitComplete == true)
