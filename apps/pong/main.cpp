@@ -21,9 +21,9 @@
 
 #include "bwm/bwm.h"
 #include "asm/arch/config.h"
-#include "asm/arch/registers.h"
 #include "kernel/debug.h"
 #include "kernel/videoManager.h"
+#include "kernel/inputManager.h"
 #include "kernel/2dRenderer.h"
 #include "stdlib.h"
 
@@ -64,45 +64,19 @@ updateSpeed(I2DRenderer * renderer, CSurface * surface, float diff)
 
 // -----------------------------------------------------------------------------
 void
-getInput()
+getInput(CAControllerDevice * controller)
 {
-  // GBA
-  //uint16_t data;
-  //data     = ~REG_KEYS;
-  //bKeyUp   = (data & KEY_UP);
-  //bKeyDown = (data & KEY_DOWN);
-
-  // GameCube (controller on first port)
-  uint32_t datah, datal;
-  datah    = REG_SI_CHANNEL0_INBUFH;
-  datal    = REG_SI_CHANNEL0_INBUFL;
-  bKeyUp   = (datah & KEY_UP);
-  bKeyDown = (datah & KEY_DOWN);
-
-/*
-  if(datah & KEY_START)
+  if(controller != NULL)
   {
-    void (*reload)() = (void(*)())0x80001800;
-    reload();
+    uint32_t keys = controller->getButtonState();
+    bKeyUp    = (keys & CTRL_BTN_UP);
+    bKeyDown  = (keys & CTRL_BTN_DOWN);
   }
-
-  static uint32_t datah_old, datal_old;
-  if(datah != datah_old)
-  {
-    printk("keysh: 0x%x -> 0x%x (%d/%d)\n", datah_old, datah, bKeyUp, bKeyDown);
-    datah_old = datah;
-  }
-  if(datal != datal_old)
-  {
-    printk("keysl: 0x%x -> 0x%x\n", datal_old, datal);
-    datal_old = datal;
-  }
-*/
 }
 
 // -----------------------------------------------------------------------------
 void
-runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
+runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface, CAControllerDevice * controller)
 {
   if((device == NULL) || (renderer == NULL) || (surface == NULL))
     return;
@@ -144,7 +118,7 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
 
   while(true)
   {
-    getInput();
+    getInput(controller);
 
     // Update player 1
     if(bKeyUp == true)
@@ -275,42 +249,69 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
 extern "C" int
 appMain(int argc, char * argv[])
 {
-  CAVideoDevice ** devices;
-  int iDeviceCount;
-  videoManager.listDevices(&devices, &iDeviceCount);
-  if(iDeviceCount > 0)
+  CAVideoDevice ** videoDevices;
+  int iVideoDeviceCount;
+  CAInputDevice ** inputDevices;
+  int iInputDeviceCount;
+
+  CAVideoDevice      * pVideoDevice   = NULL;
+  CSurface           * pVideoSurface  = NULL;
+  I2DRenderer        * pVideoRenderer = NULL;
+  CAControllerDevice * pController    = NULL;
+
+  int iRetVal(0);
+
+  videoManager.listDevices(&videoDevices, &iVideoDeviceCount);
+  if(iVideoDeviceCount > 0)
   {
-    for(int iDev(0); iDev < iDeviceCount; iDev++)
+    const SVideoMode * pMode;
+
+    pVideoDevice = videoDevices[0];
+    pVideoDevice->getDefaultMode(&pMode);
+    if(pMode != NULL)
     {
-      const SVideoMode * modes;
-      int iModeCount;
-      devices[iDev]->listModes(&modes, &iModeCount);
-      if(iModeCount > 0)
-      {
-        devices[iDev]->setMode(&modes[0]);
-        CSurface    * pVideoSurface;
-        I2DRenderer * pVideoRenderer;
-
-        devices[iDev]->getSurface(&pVideoSurface, stSCREEN);
-        devices[iDev]->displaySurface(pVideoSurface);
-        devices[iDev]->get2DRenderer(&pVideoRenderer);
-        runGame(devices[iDev], pVideoRenderer, pVideoSurface);
-
-        if(pVideoRenderer != NULL)
-          delete pVideoRenderer;
-        if(pVideoSurface != NULL)
-          delete pVideoSurface;
-      }
-      else
-      {
-        printk("ERROR: Device has no modes!\n");
-      }
+      // Set default video mode
+      pVideoDevice->setMode(pMode);
+      pVideoDevice->getSurface(&pVideoSurface, pMode->width, pMode->height);
+      pVideoDevice->displaySurface(pVideoSurface);
+      pVideoDevice->get2DRenderer(&pVideoRenderer);
+    }
+    else
+    {
+      printk("ERROR: Video device has no default mode!\n");
+      iRetVal = -1;
     }
   }
   else
   {
     printk("ERROR: No video devices!\n");
+    iRetVal = -1;
   }
 
-  return 0;
+  if(iRetVal == 0)
+  {
+    // Initialize input device
+    inputManager.listDevices(&inputDevices, &iInputDeviceCount);
+    for(int i(0); i < iInputDeviceCount; i++)
+    {
+      if(inputDevices[i]->type() == IDT_CONTROLLER)
+      {
+        pController = (CAControllerDevice *)inputDevices[i];
+        break;
+      }
+    }
+
+    // Start the game
+    runGame(pVideoDevice, pVideoRenderer, pVideoSurface, pController);
+  }
+
+  // Release allocated memory
+  if(pVideoRenderer != NULL)
+    delete pVideoRenderer;
+  if(pVideoSurface != NULL)
+    delete pVideoSurface;
+  if(pController != NULL)
+    delete pController;
+
+  return iRetVal;
 }
