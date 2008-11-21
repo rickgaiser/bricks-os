@@ -388,7 +388,9 @@ CPS2VideoDevice::CPS2VideoDevice()
  , bSwap_(false)
 #endif
 {
+//  CInterruptManager::attach(INT_GS,           this);
   CInterruptManager::attach(INT_VBLANK_START, this);
+//  CInterruptManager::attach(INT_VBLANK_END,   this);
 }
 
 //---------------------------------------------------------------------------
@@ -400,10 +402,21 @@ CPS2VideoDevice::~CPS2VideoDevice()
 int
 CPS2VideoDevice::isr(int irq)
 {
+  switch(irq)
+  {
+    case INT_GS:
+    {
+      break;
+    }
+    case INT_VBLANK_START:
+    {
+      // Increase framecount
       iFrameCount_++;
 
-  if(irq == INT_VBLANK_START)
-  {
+      // Sync framecount with odd/even signal
+      if(REG_GS_CSR & GS_CSR_ODD)
+        iFrameCount_ |= 1;
+
       // Notify swap function that we have vertical sync
 #ifdef CONFIG_MULTI_THREADING
       k_pthread_cond_broadcast(&condVSync_);
@@ -411,7 +424,14 @@ CPS2VideoDevice::isr(int irq)
       if(bSwap_ == true)
         bSwap_ = false;
 #endif
+
+      break;
     }
+    case INT_VBLANK_END:
+    {
+      break;
+    }
+  };
 
   return 0;
 }
@@ -632,9 +652,6 @@ void
 CPS2VideoDevice::displaySurface(CSurface * surface)
 {
   CPS2Surface * pNewSurface = (CPS2Surface *)surface;
-
-  // FIXME: isr should update this, but we don't have interrupts
-  iFrameCount_++;
 
   // Set new surface
   if(pNewSurface != NULL)

@@ -25,7 +25,7 @@
 
 #include "inttypes.h"
 #include "dma.h"
-#include "asm/arch/registers.h"
+#include "registers.h"
 
 
 #define FLOAT_TO_INT(F) (*((uint32_t *)&(F)))

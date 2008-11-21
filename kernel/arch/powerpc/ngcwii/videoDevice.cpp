@@ -20,7 +20,7 @@
 
 
 #include "videoDevice.h"
-#include "asm/arch/registers.h"
+#include "registers.h"
 #include <gccore.h>
 #include "gx.h"
 

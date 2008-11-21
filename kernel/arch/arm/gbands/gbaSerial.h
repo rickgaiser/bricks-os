@@ -38,7 +38,7 @@
 //  - Fifo can hold 4 bytes
 
 
-#include "asm/arch/registers.h"
+#include "registers.h"
 #include "asm/arch/memory.h"
 #include "kernel/interrupt.h"
 #include "kernel/fs.h"

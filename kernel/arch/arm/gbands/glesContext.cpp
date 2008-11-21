@@ -20,7 +20,7 @@
 
 
 #include "glesContext.h"
-#include "asm/arch/macros.h"
+#include "macros.h"
 
 
 #define BxColorFormat_FromFxRGB(format,r,g,b) \

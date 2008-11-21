@@ -21,10 +21,10 @@
 
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
-#include "asm/arch/registers.h"
 #include "asm/arch/memory.h"
 #include "asm/cpu.h"
 #include "asm/irq.h"
+#include "registers.h"
 #include "cache.h"
 #include "irq.h"
 

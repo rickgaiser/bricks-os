@@ -22,7 +22,7 @@
 #include "dsIPC.h"
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
-#include "asm/arch/registers.h"
+#include "registers.h"
 #include "stddef.h"
 
 

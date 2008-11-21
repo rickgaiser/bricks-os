@@ -27,7 +27,7 @@
 #include "inttypes.h"
 #include "irq.h"
 #include "asm/irq.h"
-#include "asm/arch/registers.h"
+#include "registers.h"
 
 
 //---------------------------------------------------------------------------

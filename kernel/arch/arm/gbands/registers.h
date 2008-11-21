@@ -19,8 +19,8 @@
  */
 
 
-#ifndef ASM_ARCH_REGISTERS_H
-#define ASM_ARCH_REGISTERS_H
+#ifndef GBANDS_REGISTERS_H
+#define GBANDS_REGISTERS_H
 
 
 #include "inttypes.h"
@@ -28,9 +28,9 @@
 
 // Function pointer definitions
 typedef void (* fnptr        )();
-typedef int  (* pf_msgSend   )(int, const void *, int, void *, int);
-typedef int  (* pf_msgReceive)(int, void *, int);
-typedef int  (* pf_msgReply  )(int, int, const void *, int);
+//typedef int  (* pf_msgSend   )(int, const void *, int, void *, int);
+//typedef int  (* pf_msgReceive)(int, void *, int);
+//typedef int  (* pf_msgReply  )(int, int, const void *, int);
 
 // Link script definitions
 extern uint32_t __itcm_start;
@@ -392,9 +392,9 @@ enum ESerialMode
 // Registers
 #ifdef GBA
 #define REG_INTMAIN           (*(fnptr         *)(IWRAM_TOP -  4))
-#define REG_MSGSEND           (*(pf_msgSend    *)(IWRAM_TOP -  8))
-#define REG_MSGRECEIVE        (*(pf_msgReceive *)(IWRAM_TOP - 12))
-#define REG_MSGREPLY          (*(pf_msgReply   *)(IWRAM_TOP - 16))
+//#define REG_MSGSEND           (*(pf_msgSend    *)(IWRAM_TOP -  8))
+//#define REG_MSGRECEIVE        (*(pf_msgReceive *)(IWRAM_TOP - 12))
+//#define REG_MSGREPLY          (*(pf_msgReply   *)(IWRAM_TOP - 16))
 #define REG_DISPCNT           (*(vuint16_t*)0x04000000) // See bits above
 #endif // GBA
 #ifdef NDS

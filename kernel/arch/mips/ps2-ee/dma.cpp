@@ -20,7 +20,6 @@
 
 
 #include "dma.h"
-#include "asm/arch/registers.h"
 #include "kernel/debug.h"
 
 

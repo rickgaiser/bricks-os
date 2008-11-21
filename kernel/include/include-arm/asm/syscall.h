@@ -23,7 +23,7 @@
 #define ARM_SYSCALL_H
 
 
-#include "asm/arch/registers.h"
+#include "asm/arch/syscall.h"
 
 
 //---------------------------------------------------------------------------

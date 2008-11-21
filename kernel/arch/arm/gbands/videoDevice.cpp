@@ -20,8 +20,8 @@
 
 
 #include "videoDevice.h"
-#include "asm/arch/registers.h"
-#include "asm/arch/macros.h"
+#include "registers.h"
+#include "macros.h"
 #include "kernel/debug.h"
 #include "stddef.h"
 

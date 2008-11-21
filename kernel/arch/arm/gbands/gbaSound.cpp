@@ -23,8 +23,8 @@
 
 #include "gbaSound.h"
 #include "kernel/interruptManager.h"
-#include "asm/arch/registers.h"
-#include "asm/arch/macros.h"
+#include "registers.h"
+#include "macros.h"
 #include "stdlib.h"
 
 

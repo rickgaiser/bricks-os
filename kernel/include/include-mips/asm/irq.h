@@ -24,7 +24,6 @@
 
 
 #include "inttypes.h"
-#include "asm/arch/registers.h"
 
 
 #define MAX_INTERRUPTS 0x0b

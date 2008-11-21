@@ -20,9 +20,7 @@
 
 
 #include "gif.h"
-#include "dma.h"
 #include "bios.h"
-#include "asm/arch/registers.h"
 
 
 uint64_t gifData_Data[50 * 2] __attribute__((aligned(64)));

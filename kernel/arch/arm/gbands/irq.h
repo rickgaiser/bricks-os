@@ -24,7 +24,7 @@
 
 
 #include "kernel/interruptManager.h"
-#include "asm/arch/registers.h"
+#include "registers.h"
 
 
 // -----------------------------------------------------------------------------

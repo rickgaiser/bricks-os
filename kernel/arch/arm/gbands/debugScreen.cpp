@@ -20,7 +20,7 @@
 
 
 #include "debugScreen.h"
-#include "asm/arch/registers.h"
+#include "registers.h"
 #include "font8x8.h"
 #include "string.h"
 

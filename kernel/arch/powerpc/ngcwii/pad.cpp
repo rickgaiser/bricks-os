@@ -20,7 +20,7 @@
 
 
 #include "pad.h"
-#include "asm/arch/registers.h"
+#include "registers.h"
 
 
 // -----------------------------------------------------------------------------

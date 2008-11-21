@@ -20,8 +20,8 @@
 
 
 #include "timer.h"
-#include "asm/arch/registers.h"
-#include "asm/arch/macros.h"
+#include "registers.h"
+#include "macros.h"
 
 
 // Max frequencies (Hz)                                     //            GBA    NDS ARM7&9

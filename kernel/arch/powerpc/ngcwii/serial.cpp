@@ -21,7 +21,7 @@
 
 #include "serial.h"
 #include "videoDevice.h"
-#include "asm/arch/registers.h"
+#include "registers.h"
 
 
 //---------------------------------------------------------------------------

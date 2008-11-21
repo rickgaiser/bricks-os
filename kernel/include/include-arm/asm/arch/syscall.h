@@ -19,8 +19,29 @@
  */
 
 
-#ifndef ASM_ARCH_REGISTERS_H
-#define ASM_ARCH_REGISTERS_H
+#ifndef ASM_ARCH_SYSCALL_H
+#define ASM_ARCH_SYSCALL_H
+
+
+#include "inttypes.h"
+
+
+// Function pointer definitions
+//typedef void (* fnptr        )();
+typedef int  (* pf_msgSend   )(int, const void *, int, void *, int);
+typedef int  (* pf_msgReceive)(int, void *, int);
+typedef int  (* pf_msgReply  )(int, int, const void *, int);
+
+
+#ifdef GBA
+#define IWRAM_BASE            (0x03000000)
+#define IWRAM_TOP             (IWRAM_BASE + 0x8000)
+
+//#define REG_INTMAIN           (*(fnptr         *)(IWRAM_TOP -  4))
+#define REG_MSGSEND           (*(pf_msgSend    *)(IWRAM_TOP -  8))
+#define REG_MSGRECEIVE        (*(pf_msgReceive *)(IWRAM_TOP - 12))
+#define REG_MSGREPLY          (*(pf_msgReply   *)(IWRAM_TOP - 16))
+#endif
 
 
 #endif
