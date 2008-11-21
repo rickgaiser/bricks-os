@@ -93,35 +93,35 @@ const SPS2CRTCMode cmodes[] =
 SPS2VideoMode vmodes[] =
 {
   // NTSC 480i60 (525 scanlines, 21-263 & 283-525 = 486 video lines)
-  { 640,  448, INTERLACED,     &cmodes[ 0], 160, 50},
+  { 640,  448, GS_INTERLACED,     &cmodes[ 0], 160, 50},
   // PAL  576i50 (625 scanlines, 23.5-310 & 336-622.5 = 574 (+2 half) video lines)
-  { 640,  512, INTERLACED,     &cmodes[ 1], 176, 70},
+  { 640,  512, GS_INTERLACED,     &cmodes[ 1], 176, 70},
 
   // EDTV
-  { 720,  480, NON_INTERLACED, &cmodes[17],  58, 35}, // 480p60
+  { 720,  480, GS_NON_INTERLACED, &cmodes[17],  58, 35}, // 480p60
   // HDTV
-  {1920, 1080, INTERLACED,     &cmodes[18], 236, 40}, // 1080i60
-  {1280,  720, NON_INTERLACED, &cmodes[19], 302, 24}, // 720p60
+  {1920, 1080, GS_INTERLACED,     &cmodes[18], 236, 40}, // 1080i60
+  {1280,  720, GS_NON_INTERLACED, &cmodes[19], 302, 24}, // 720p60
 
   // VGA
-  { 640,  480, NON_INTERLACED, &cmodes[ 2], 136, 34}, // 60Hz
-//  { 640,  480, NON_INTERLACED, &cmodes[ 3], 160, 30}, // 72Hz
-//  { 640,  480, NON_INTERLACED, &cmodes[ 4], 176, 18}, // 75Hz
-//  { 640,  480, NON_INTERLACED, &cmodes[ 5], 140, 34}, // 85Hz, ERROR
+  { 640,  480, GS_NON_INTERLACED, &cmodes[ 2], 136, 34}, // 60Hz
+//  { 640,  480, GS_NON_INTERLACED, &cmodes[ 3], 160, 30}, // 72Hz
+//  { 640,  480, GS_NON_INTERLACED, &cmodes[ 4], 176, 18}, // 75Hz
+//  { 640,  480, GS_NON_INTERLACED, &cmodes[ 5], 140, 34}, // 85Hz, ERROR
   // SVGA
-//  { 800,  600, NON_INTERLACED, &cmodes[ 6], 192, 23}, // 56Hz
-  { 800,  600, NON_INTERLACED, &cmodes[ 7], 208, 26}, // 60Hz
-//  { 800,  600, NON_INTERLACED, &cmodes[ 8], 176, 28}, // 72Hz
-//  { 800,  600, NON_INTERLACED, &cmodes[ 9], 232, 23}, // 75Hz
-//  { 800,  600, NON_INTERLACED, &cmodes[10], 208, 29}, // 85Hz
+//  { 800,  600, GS_NON_INTERLACED, &cmodes[ 6], 192, 23}, // 56Hz
+  { 800,  600, GS_NON_INTERLACED, &cmodes[ 7], 208, 26}, // 60Hz
+//  { 800,  600, GS_NON_INTERLACED, &cmodes[ 8], 176, 28}, // 72Hz
+//  { 800,  600, GS_NON_INTERLACED, &cmodes[ 9], 232, 23}, // 75Hz
+//  { 800,  600, GS_NON_INTERLACED, &cmodes[10], 208, 29}, // 85Hz
   // XGA
-  {1024,  768, NON_INTERLACED, &cmodes[11], 288, 34}, // 60Hz
-//  {1024,  768, NON_INTERLACED, &cmodes[12], 264, 34}, // 70Hz
-//  {1024,  768, NON_INTERLACED, &cmodes[13], 258, 30}, // 75Hz
-//  {1024,  768, NON_INTERLACED, &cmodes[14], 288, 38}, // 85Hz
+  {1024,  768, GS_NON_INTERLACED, &cmodes[11], 288, 34}, // 60Hz
+//  {1024,  768, GS_NON_INTERLACED, &cmodes[12], 264, 34}, // 70Hz
+//  {1024,  768, GS_NON_INTERLACED, &cmodes[13], 258, 30}, // 75Hz
+//  {1024,  768, GS_NON_INTERLACED, &cmodes[14], 288, 38}, // 85Hz
   // SXGA
-  {1280, 1024, NON_INTERLACED, &cmodes[15], 344, 40}, // 60Hz
-//  {1280, 1024, NON_INTERLACED, &cmodes[16], 376, 40}, // 75Hz
+  {1280, 1024, GS_NON_INTERLACED, &cmodes[15], 344, 40}, // 60Hz
+//  {1280, 1024, GS_NON_INTERLACED, &cmodes[16], 376, 40}, // 75Hz
 };
 const uint32_t vmode_count(sizeof(vmodes) / sizeof(SPS2VideoMode));
 
@@ -227,8 +227,8 @@ CAPS2Renderer::setSurface(CSurface * surface)
   {
     flush();
 
-    packet_.gifAddPackedAD(GIF::REG::frame_1, GS_FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.xpitch >> 6, pSurface_->psm_, 0));
-    packet_.gifAddPackedAD(GIF::REG::scissor_1, GS_SCISSOR(0, pSurface_->mode.width, 0, pSurface_->mode.height));
+    packet_.gifAddPackedAD(GIF::REG::frame_1,   GIF::REG::FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.xpitch >> 6, pSurface_->psm_, 0));
+    packet_.gifAddPackedAD(GIF::REG::scissor_1, GIF::REG::SCISSOR(0, pSurface_->mode.width, 0, pSurface_->mode.height));
   }
 }
 
@@ -400,18 +400,18 @@ CPS2VideoDevice::~CPS2VideoDevice()
 int
 CPS2VideoDevice::isr(int irq)
 {
-  iFrameCount_++;
+      iFrameCount_++;
 
   if(irq == INT_VBLANK_START)
   {
-    // Notify swap function that we have vertical sync
+      // Notify swap function that we have vertical sync
 #ifdef CONFIG_MULTI_THREADING
-    k_pthread_cond_broadcast(&condVSync_);
+      k_pthread_cond_broadcast(&condVSync_);
 #else
-    if(bSwap_ == true)
-      bSwap_ = false;
+      if(bSwap_ == true)
+        bSwap_ = false;
 #endif
-  }
+    }
 
   return 0;
 }
@@ -460,19 +460,19 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
         actualHeight_       = vmodes[i].height;
         currentDoubleScan_  = 0;
         currentInterlaced_  = vmodes[i].interlaced;
-        // FIELD = Display only HALF of the lines! (what a waste of power)
-        // FRAME = Display EVERY line. (require special processing)
-        currentField_       = FIELD;
+        // GS_FIELD = Display only HALF of the lines! (what a waste of power)
+        // GS_FRAME = Display EVERY line. (require special processing)
+        currentField_       = GS_FIELD;
         pPS2Mode            = &vmodes[i];
         break;
       }
 
       // Find fake progressive modes (double scanned interlaced modes)
-      if(((uint16_t)mode->height == (vmodes[i].height/2)) && (vmodes[i].interlaced == INTERLACED))
+      if(((uint16_t)mode->height == (vmodes[i].height/2)) && (vmodes[i].interlaced == GS_INTERLACED))
       {
         actualHeight_       = vmodes[i].height / 2;
         currentDoubleScan_  = 1;
-        currentInterlaced_  = NON_INTERLACED;
+        currentInterlaced_  = GS_NON_INTERLACED;
         currentField_       = 0; // Not used in (fake) progressive mode
         pPS2Mode            = &vmodes[i];
         break;
@@ -486,9 +486,9 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
   // Validate BPP
   switch(mode->bpp)
   {
-    case 16: currentPSM_ = GRAPH_PSM_16S; break;
-    case 24: currentPSM_ = GRAPH_PSM_24;  break;
-    case 32: currentPSM_ = GRAPH_PSM_32;  break;
+    case 16: currentPSM_ = GS_PSM_16S; break;
+    case 24: currentPSM_ = GS_PSM_24;  break;
+    case 32: currentPSM_ = GS_PSM_32;  break;
     default:
       return;
   };
@@ -541,11 +541,11 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
       // Use drawing parameters from PRIM register
       packet_.gifAddPackedAD(GIF::REG::prmodecont, 1);
       // Setup frame buffers. Point to 0 initially.
-      packet_.gifAddPackedAD(GIF::REG::frame_1,    GS_FRAME(0, pCurrentPS2Mode_->width >> 6, currentPSM_, 0));
+      packet_.gifAddPackedAD(GIF::REG::frame_1,    GIF::REG::FRAME(0, pCurrentPS2Mode_->width >> 6, currentPSM_, 0));
       // Displacement between Primitive and Window coordinate systems.
-      packet_.gifAddPackedAD(GIF::REG::xyoffset_1, GS_XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
+      packet_.gifAddPackedAD(GIF::REG::xyoffset_1, GIF::REG::XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
       // Clip to frame buffer.
-      packet_.gifAddPackedAD(GIF::REG::scissor_1,  GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, actualHeight_));
+      packet_.gifAddPackedAD(GIF::REG::scissor_1,  GIF::REG::SCISSOR(0, pCurrentPS2Mode_->width, 0, actualHeight_));
       // Clamp colors
       packet_.gifAddPackedAD(GIF::REG::colclamp,   1);
       // Dithering
@@ -560,7 +560,7 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
         //  2 == 010b == 2
         //  3 == 011b == 3
         // Enable dithering
-        packet_.gifAddPackedAD(GIF::REG::dimx, GS_DIMX(4,2,5,3,0,6,1,7,5,3,4,2,1,7,0,6));
+        packet_.gifAddPackedAD(GIF::REG::dimx, GIF::REG::DIMX(4,2,5,3,0,6,1,7,5,3,4,2,1,7,0,6));
         packet_.gifAddPackedAD(GIF::REG::dthe, 1);
       }
       else
@@ -655,16 +655,16 @@ CPS2VideoDevice::bitBlt(CSurface * dest, int dx, int dy, int w, int h, CSurface 
 
   packet_.scTagOpenEnd();
     packet_.gifTagOpenPacked();
-      packet_.gifAddPackedAD(GIF::REG::bitbltbuf, GS_BITBLTBUF(
+      packet_.gifAddPackedAD(GIF::REG::bitbltbuf, GIF::REG::BITBLTBUF(
         ((uint32_t)pSource->p)>>8,
         pSource->mode.xpitch>>6,
         pSource->psm_,
         ((uint32_t)pDest->p)>>8,
         pDest->mode.xpitch>>6,
         pDest->psm_));
-      packet_.gifAddPackedAD(GIF::REG::trxpos,    GS_TRXPOS(sx, sy, dx, dy, 0));
-      packet_.gifAddPackedAD(GIF::REG::trxreg,    GS_TRXREG(w, h));
-      packet_.gifAddPackedAD(GIF::REG::trxdir,    GS_TRXDIR(GS_TRXDIR_GS_TO_GS));
+      packet_.gifAddPackedAD(GIF::REG::trxpos,    GIF::REG::TRXPOS(sx, sy, dx, dy, 0));
+      packet_.gifAddPackedAD(GIF::REG::trxreg,    GIF::REG::TRXREG(w, h));
+      packet_.gifAddPackedAD(GIF::REG::trxdir,    GIF::REG::TRXDIR(GS_TRXDIR_GS_TO_GS));
     packet_.gifTagClose();
   packet_.scTagClose();
   packet_.send();
@@ -687,12 +687,12 @@ CPS2VideoDevice::allocFramebuffer(uint32_t & addr, int w, int h, uint16_t psm)
 
   switch(psm)
   {
-    case GRAPH_PSM_16:
-    case GRAPH_PSM_16S:
+    case GS_PSM_16:
+    case GS_PSM_16S:
       iSize *= 2;
       break;
-    case GRAPH_PSM_24:
-    case GRAPH_PSM_32:
+    case GS_PSM_24:
+    case GS_PSM_32:
       iSize *= 4;
       break;
     default:
@@ -727,20 +727,20 @@ CPS2VideoDevice::allocTexture(uint32_t & addr, int w, int h, uint16_t psm)
 
   switch(psm)
   {
-//    case GRAPH_PSM_4HL:
-//    case GRAPH_PSM_4HH:
-//    case GRAPH_PSM_8H:
-    case GRAPH_PSM_4:
+//    case GS_PSM_4HL:
+//    case GS_PSM_4HH:
+//    case GS_PSM_8H:
+    case GS_PSM_4:
       iSize /= 2;
       break;
-    case GRAPH_PSM_8:
+    case GS_PSM_8:
       break;
-    case GRAPH_PSM_16:
-    case GRAPH_PSM_16S:
+    case GS_PSM_16:
+    case GS_PSM_16S:
       iSize *= 2;
       break;
-    case GRAPH_PSM_24:
-    case GRAPH_PSM_32:
+    case GS_PSM_24:
+    case GS_PSM_32:
       iSize *= 4;
       break;
     default:

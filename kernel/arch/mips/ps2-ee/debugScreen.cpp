@@ -174,7 +174,7 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   bios::GsPutIMR(0);
 
   // Setup CRTC for video mode
-  bios::SetGsCrt(NON_INTERLACED, pCurrentPS2Mode_->crtcMode->biosMode, 0);
+  bios::SetGsCrt(GS_NON_INTERLACED, pCurrentPS2Mode_->crtcMode->biosMode, 0);
 
   // Enable read circuit 1
   REG_GS_PMODE = GS_PMODE(
@@ -203,18 +203,18 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
       // Use drawing parameters from PRIM register
       packet_.gifAddPackedAD(GIF::REG::prmodecont, 1);
       // Setup frame buffers. Point to 0 initially.
-      packet_.gifAddPackedAD(GIF::REG::frame_1,    GS_FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, GRAPH_PSM_32, 0));
+      packet_.gifAddPackedAD(GIF::REG::frame_1,    GIF::REG::FRAME(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, GS_PSM_32, 0));
       // Displacement between Primitive and Window coordinate systems.
-      packet_.gifAddPackedAD(GIF::REG::xyoffset_1, GS_XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
+      packet_.gifAddPackedAD(GIF::REG::xyoffset_1, GIF::REG::XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
       // Clip to frame buffer.
-      packet_.gifAddPackedAD(GIF::REG::scissor_1,  GS_SCISSOR(0, pCurrentPS2Mode_->width, 0, actualHeight_));
+      packet_.gifAddPackedAD(GIF::REG::scissor_1,  GIF::REG::SCISSOR(0, pCurrentPS2Mode_->width, 0, actualHeight_));
     packet_.gifTagClose();
   packet_.scTagClose();
   packet_.send();
   packet_.reset();
 
   // Display buffer
-  REG_GS_DISPFB1  = GS_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, GRAPH_PSM_32, 0, 0);
+  REG_GS_DISPFB1  = GS_DISPFB(frameAddr_[0] >> 13, pCurrentPS2Mode_->width >> 6, GS_PSM_32, 0, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -226,7 +226,7 @@ CPS2DebugScreen::printBegin()
 
       // Draw a sprite with current character mapped onto it
       packet_.gifAddPackedAD(GIF::REG::tex0_1,
-        GS_TEX0(
+        GIF::REG::TEX0(
           g2_fontbuf_addr/256,            // base pointer
           (g2_fontbuf_w)/64,              // width
           0,                              // 32bit RGBA
@@ -237,10 +237,10 @@ CPS2DebugScreen::printBegin()
           0,0,0,0,0));
 /*
       packet_.gifAddPackedAD(tex1_1,
-        GS_TEX1(
+        GIF::REG::TEX1(
           0, 0,
-          FILTER_LINEAR,
-          FILTER_LINEAR,
+          GS_TEX1_LINEAR,
+          GS_TEX1_LINEAR,
           0, 0, 0));
 
       packet_.gifAddPackedAD(GIF::REG::clamp_1, 0x05);

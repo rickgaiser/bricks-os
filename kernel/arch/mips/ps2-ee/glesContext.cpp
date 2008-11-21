@@ -110,7 +110,7 @@ CPS2Texture::bind()
   if(level_[0].used() == true)
   {
     packet_.gifAddPackedAD(GIF::REG::tex0_1,
-      GS_TEX0(
+      GIF::REG::TEX0(
         level_[0].ps2GSAddr >> 8,        // base pointer
         level_[0].ps2Width,              // width
         psm_,                            // pixel store mode
@@ -121,7 +121,7 @@ CPS2Texture::bind()
         0, 0, 0, 0, 0));                 // CLUT (currently not used)
 
     packet_.gifAddPackedAD(GIF::REG::tex1_1,
-      GS_TEX1(
+      GIF::REG::TEX1(
         0,                               // LOD Calculation: 0=formula, 1=fixed
         maxLevel_,                       // Max MipMap level
         ps2MagFilter,                    // GL_TEXTURE_MAG_FILTER
@@ -133,7 +133,7 @@ CPS2Texture::bind()
     if(maxLevel_ > 0)
     {
       packet_.gifAddPackedAD(GIF::REG::miptbp1_1,
-        GS_MIPTBP(
+        GIF::REG::MIPTBP(
           level_[1].ps2GSAddr >> 8, level_[1].ps2Width,
           level_[2].ps2GSAddr >> 8, level_[2].ps2Width,
           level_[3].ps2GSAddr >> 8, level_[3].ps2Width));
@@ -142,7 +142,7 @@ CPS2Texture::bind()
     if(maxLevel_ > 3)
     {
       packet_.gifAddPackedAD(GIF::REG::miptbp2_1,
-        GS_MIPTBP(
+        GIF::REG::MIPTBP(
           level_[4].ps2GSAddr >> 8, level_[4].ps2Width,
           level_[5].ps2GSAddr >> 8, level_[5].ps2Width,
           level_[6].ps2GSAddr >> 8, level_[6].ps2Width));
@@ -159,23 +159,23 @@ CPS2GLESContext::CPS2GLESContext(CPS2VideoDevice & device)
 
  , device_(device)
 
- , ps2ZPSM_(GRAPH_PSM_16S)
+ , ps2ZPSM_(GS_PSM_16S)
  , ps2ZBufferAddr_(0)
  , ps2Shading_(GS_PRIM_SHADE_FLAT)
  , ps2Textures_(GS_PRIM_TEXTURES_OFF)
  , ps2Fog_(GS_PRIM_FOG_OFF)
  , ps2AlphaBlend_(GS_PRIM_ALPHABLEND_OFF)
  , ps2Aliasing_(GS_PRIM_ALIASING_OFF)
- , ps2DepthFunction_(ZTST_GREATER)
+ , ps2DepthFunction_(GS_ZTST_GREATER)
  , ps2DepthInvert_(true)
 {
   // Select MAX z-value
   switch(ps2ZPSM_)
   {
-    case GRAPH_PSM_16:
-    case GRAPH_PSM_16S: zMax_ = 0x0000ffff; break;
-    case GRAPH_PSM_24:  zMax_ = 0x00ffffff; break;
-    case GRAPH_PSM_32:  zMax_ = 0xffffffff; break;
+    case GS_PSM_16:
+    case GS_PSM_16S: zMax_ = 0x0000ffff; break;
+    case GS_PSM_24:  zMax_ = 0x00ffffff; break;
+    case GS_PSM_32:  zMax_ = 0xffffffff; break;
   };
 }
 
@@ -190,7 +190,7 @@ CPS2GLESContext::glClear(GLbitfield mask)
 {
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, 1, ZTST_ALWAYS));
+    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, 1, GS_ZTST_ALWAYS));
   }
 
   if(mask & GL_COLOR_BUFFER_BIT)
@@ -208,7 +208,7 @@ CPS2GLESContext::glClear(GLbitfield mask)
 
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
   }
   bDataWaiting_ = true;
 }
@@ -221,20 +221,20 @@ CPS2GLESContext::glDepthFunc(GLenum func)
 
   switch(func)
   {
-    case GL_LESS:     ps2DepthFunction_ = ZTST_GREATER; ps2DepthInvert_ = true;  break;
+    case GL_LESS:     ps2DepthFunction_ = GS_ZTST_GREATER; ps2DepthInvert_ = true;  break;
 //    case GL_EQUAL:    ps2DepthFunction_ = ??; break;
-    case GL_LEQUAL:   ps2DepthFunction_ = ZTST_GEQUAL;  ps2DepthInvert_ = true;  break;
-    case GL_GREATER:  ps2DepthFunction_ = ZTST_GREATER; ps2DepthInvert_ = false; break;
+    case GL_LEQUAL:   ps2DepthFunction_ = GS_ZTST_GEQUAL;  ps2DepthInvert_ = true;  break;
+    case GL_GREATER:  ps2DepthFunction_ = GS_ZTST_GREATER; ps2DepthInvert_ = false; break;
 //    case GL_NOTEQUAL: ps2DepthFunction_ = ??; break;
-    case GL_GEQUAL:   ps2DepthFunction_ = ZTST_GEQUAL;  ps2DepthInvert_ = false; break;
-    case GL_NEVER:    ps2DepthFunction_ = ZTST_NEVER;   ps2DepthInvert_ = false; break;
+    case GL_GEQUAL:   ps2DepthFunction_ = GS_ZTST_GEQUAL;  ps2DepthInvert_ = false; break;
+    case GL_NEVER:    ps2DepthFunction_ = GS_ZTST_NEVER;   ps2DepthInvert_ = false; break;
     case GL_ALWAYS:
-    default:          ps2DepthFunction_ = ZTST_ALWAYS;  ps2DepthInvert_ = false; break;
+    default:          ps2DepthFunction_ = GS_ZTST_ALWAYS;  ps2DepthInvert_ = false; break;
   }
 
   if(depthTestEnabled_ == true)
   {
-    packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
   }
 }
 
@@ -448,19 +448,19 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
     // Select texture format
     if(colorFormatOps[fmtFrom].bitsPerPixel <= 16)
     {
-      CURRENT_PS2TEX->psm_ = GRAPH_PSM_16;
+      CURRENT_PS2TEX->psm_ = GS_PSM_16;
       fmtTo = cfA1B5G5R5;
     }
     else
     {
-      CURRENT_PS2TEX->psm_ = GRAPH_PSM_32;
+      CURRENT_PS2TEX->psm_ = GS_PSM_32;
       fmtTo = cfA8B8G8R8;
     }
   }
   else
   {
     // Set texture format
-    if(CURRENT_PS2TEX->psm_ == GRAPH_PSM_16)
+    if(CURRENT_PS2TEX->psm_ == GS_PSM_16)
       fmtTo = cfA1B5G5R5;
     else
       fmtTo = cfA8B8G8R8;
@@ -663,16 +663,16 @@ CPS2GLESContext::zbuffer(bool enable)
       device_.allocFramebuffer(ps2ZBufferAddr_, pSurface_->mode.xpitch, pSurface_->mode.height, ps2ZPSM_);
     }
     // Register buffer location and pixel mode
-    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, GS_ZBUF_ENABLE));
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GIF::REG::ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, GS_ZBUF_ENABLE));
   }
   else
   {
     // Z-Buffer
-    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GS_ZBUF(0, ps2ZPSM_, GS_ZBUF_DISABLE));
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GIF::REG::ZBUF(0, ps2ZPSM_, GS_ZBUF_DISABLE));
   }
 
   // Z-Buffer test
-  packet_.gifAddPackedAD(GIF::REG::test_1, GS_TEST(0, 0, 0, 0, 0, 0, enable, ps2DepthFunction_));
+  packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, enable, ps2DepthFunction_));
 }
 
 //-----------------------------------------------------------------------------

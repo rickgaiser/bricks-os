@@ -39,10 +39,10 @@ ee_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, u
   {
     gifData.gifTagOpenPacked();
     {
-      gifData.gifAddPackedAD(GIF::REG::bitbltbuf, GS_BITBLTBUF(0, 0, 0, daddr >> 8, dw >> 6, dpsm));
-      gifData.gifAddPackedAD(GIF::REG::trxpos,    GS_TRXPOS(0, 0, dx, dy, 0));
-      gifData.gifAddPackedAD(GIF::REG::trxreg,    GS_TRXREG(w, h));
-      gifData.gifAddPackedAD(GIF::REG::trxdir,    GS_TRXDIR(GS_TRXDIR_EE_TO_GS));
+      gifData.gifAddPackedAD(GIF::REG::bitbltbuf, GIF::REG::BITBLTBUF(0, 0, 0, daddr >> 8, dw >> 6, dpsm));
+      gifData.gifAddPackedAD(GIF::REG::trxpos,    GIF::REG::TRXPOS(0, 0, dx, dy, 0));
+      gifData.gifAddPackedAD(GIF::REG::trxreg,    GIF::REG::TRXREG(w, h));
+      gifData.gifAddPackedAD(GIF::REG::trxdir,    GIF::REG::TRXDIR(GS_TRXDIR_EE_TO_GS));
     }
     gifData.gifTagClose();
   }
@@ -51,23 +51,23 @@ ee_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, u
   // Send image data
   switch(dpsm)
   {
-    case GRAPH_PSM_32:  // Framebuffer, Z-Buffer & Textures
+    case GS_PSM_32:  // Framebuffer, Z-Buffer & Textures
       gifData.gifAddSendImage((void *)source, w * h * 4);
       break;
-    case GRAPH_PSM_24:  // Framebuffer, Z-Buffer & Textures
+    case GS_PSM_24:  // Framebuffer, Z-Buffer & Textures
       gifData.gifAddSendImage((void *)source, w * h * 3);
       break;
-    case GRAPH_PSM_16:  // Framebuffer, Z-Buffer & Textures
-    case GRAPH_PSM_16S: // Framebuffer, Z-Buffer & Textures
+    case GS_PSM_16:  // Framebuffer, Z-Buffer & Textures
+    case GS_PSM_16S: // Framebuffer, Z-Buffer & Textures
       gifData.gifAddSendImage((void *)source, w * h * 2);
       break;
-    case GRAPH_PSM_8:   // Textures only (palettized)
-    case GRAPH_PSM_8H:  // Textures only (palettized)
+    case GS_PSM_8:   // Textures only (palettized)
+    case GS_PSM_8H:  // Textures only (palettized)
       gifData.gifAddSendImage((void *)source, w * h);
       break;
-    case GRAPH_PSM_4:   // Textures only (palettized)
-    case GRAPH_PSM_4HH: // Textures only (palettized)
-    case GRAPH_PSM_4HL: // Textures only (palettized)
+    case GS_PSM_4:   // Textures only (palettized)
+    case GS_PSM_4HH: // Textures only (palettized)
+    case GS_PSM_4HL: // Textures only (palettized)
       gifData.gifAddSendImage((void *)source, (w * h) >> 1);
       break;
   };
@@ -94,10 +94,10 @@ gs_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, u
 {
   gifData.scTagOpenEnd();
     gifData.gifTagOpenPacked();
-      gifData.gifAddPackedAD(GIF::REG::bitbltbuf, GS_BITBLTBUF(source>>8, sw>>6, spsm, daddr>>8, dw>>6, dpsm));
-      gifData.gifAddPackedAD(GIF::REG::trxpos,    GS_TRXPOS(sx, sy, dx, dy, 0));
-      gifData.gifAddPackedAD(GIF::REG::trxreg,    GS_TRXREG(w, h));
-      gifData.gifAddPackedAD(GIF::REG::trxdir,    GS_TRXDIR(GS_TRXDIR_GS_TO_GS));
+      gifData.gifAddPackedAD(GIF::REG::bitbltbuf, GIF::REG::BITBLTBUF(source>>8, sw>>6, spsm, daddr>>8, dw>>6, dpsm));
+      gifData.gifAddPackedAD(GIF::REG::trxpos,    GIF::REG::TRXPOS(sx, sy, dx, dy, 0));
+      gifData.gifAddPackedAD(GIF::REG::trxreg,    GIF::REG::TRXREG(w, h));
+      gifData.gifAddPackedAD(GIF::REG::trxdir,    GIF::REG::TRXDIR(GS_TRXDIR_GS_TO_GS));
     gifData.gifTagClose();
   gifData.scTagClose();
   gifData.send();
