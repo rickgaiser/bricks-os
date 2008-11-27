@@ -19,51 +19,39 @@
  */
 
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef DIRENT_H
+#define DIRENT_H
 
 
-typedef unsigned int     clock_t;
-typedef unsigned int     ino_t;
-typedef long long int    loff_t;
-typedef long             off_t;
-typedef int              pid_t;
+#include "sys/types.h"
 
-typedef struct pthread_attr_t
-{
-} pthread_attr_t;
 
-typedef struct pthread_cond_t
-{
-  volatile int iLock;
-} pthread_cond_t;
-
-typedef struct pthread_condattr_t
-{
-} pthread_condattr_t;
-
-typedef struct pthread_mutex_t
-{
-  volatile int iLock;
-} pthread_mutex_t;
-
-typedef struct pthread_mutexattr_t
-{
-} pthread_mutexattr_t;
-
-typedef struct pthread_t
-{
-  void * pThread;
-} pthread_t;
-
-#ifndef __SIZE_T__
-#define __SIZE_T__
-typedef unsigned int     size_t;
+#ifdef __cplusplus
+extern "C" {
 #endif
-typedef int              ssize_t;
-typedef long             suseconds_t;
-typedef long             time_t;
-typedef unsigned long    useconds_t;
+
+
+typedef void * DIR;
+
+typedef struct dirent
+{
+  ino_t  d_ino;        // file serial number
+  char   d_name[256];  // name of entry
+};
+
+
+int             closedir (DIR * dirp);
+DIR           * opendir  (const char * dirname);
+struct dirent * readdir  (DIR * dirp);
+int             readdir_r(DIR * dirp, struct dirent * entry, struct dirent ** result);
+void            rewinddir(DIR * dirp);
+void            seekdir  (DIR * dirp, long int loc);
+long int        telldir  (DIR * dirp);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif
