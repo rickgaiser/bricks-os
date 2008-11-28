@@ -35,30 +35,86 @@
 #define SPEED_DOWN        0.6f
 
 
-float fSpeed  = MIN_SPEED;
 bool bKeyUp   = false;
 bool bKeyDown = false;
+uint32_t iWallWidth = 1;
+
+float fSpeed  = MIN_SPEED;
+uint32_t iSpeedBarHeight = 1;
+bool bRedrawSpeed = true;
+bool bSpeedFlash = false;
+float fSpeedFlash = 0.0f;
+bool bSpeedIncrease = true;
 
 
 // -----------------------------------------------------------------------------
 void
-updateSpeed(I2DRenderer * renderer, CSurface * surface, float diff)
+updateSpeed(float diff)
 {
-  fSpeed += diff;
-
-  if(fSpeed < MIN_SPEED) fSpeed = MIN_SPEED;
-  if(fSpeed > MAX_SPEED) fSpeed = MAX_SPEED;
-
-  // Clear speed bar
-  renderer->setColor(0, 0, 0);
-  renderer->fillRect(0, 0, surface->width(), 20);
-
-  float fSpeedPart = (fSpeed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED);
-  if(fSpeedPart > 0.0f)
+  if(diff != 0)
   {
+    // Calculate new speed
+    float fNewSpeed = fSpeed + diff;
+    if(fNewSpeed < MIN_SPEED) fNewSpeed = MIN_SPEED;
+    if(fNewSpeed > MAX_SPEED) fNewSpeed = MAX_SPEED;
+
+    // Notify if changed
+    if(fNewSpeed != fSpeed)
+    {
+      fSpeed = fNewSpeed;
+      bRedrawSpeed = true;
+      bSpeedIncrease = (diff > 0);
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+void
+drawSpeed(I2DRenderer * renderer, CSurface * surface)
+{
+  if(bSpeedFlash == true)
+  {
+    float fFlash = 1.0f;
+
+    // Flash the speedbar
+    if(fSpeedFlash >= 1.0f)
+    {
+      // Reset the speedflash
+      fSpeedFlash = 0.0f;
+      bSpeedFlash = false;
+    }
+    else
+    {
+      fFlash *= fSpeedFlash;
+      fSpeedFlash += 0.1f;
+    }
+
     // Set speed bar
-    renderer->setColor((uint8_t)(255 * (1.0f - fSpeedPart)), (uint8_t)(255 * fSpeedPart), 0);
-    renderer->fillRect(0, 0, (uint32_t)(surface->width() * fSpeedPart), 20);
+    renderer->setColor(0, (uint8_t)(255 * fFlash), 0);
+    renderer->fillRect(0, 0, surface->width(), iSpeedBarHeight);
+  }
+  else if(bRedrawSpeed == true)
+  {
+    bRedrawSpeed = false;
+
+    if(bSpeedIncrease == false)
+    {
+      // Clear speed bar
+      renderer->setColor(0, 0, 0);
+      renderer->fillRect(0, 0, surface->width(), iSpeedBarHeight);
+    }
+
+    // Calculate the percentage of the speed
+    float fSpeedPart = (fSpeed - MIN_SPEED) * (1.0f / (MAX_SPEED - MIN_SPEED));
+    int32_t width = (int32_t)((float)surface->width() * fSpeedPart);
+
+    // Draw (only if visible)
+    if(width > 0)
+    {
+      // Set speed bar
+      renderer->setColor((uint8_t)(255 * (1.0f - fSpeedPart)), (uint8_t)(255 * fSpeedPart), 0);
+      renderer->fillRect(0, 0, width, iSpeedBarHeight);
+    }
   }
 }
 
@@ -75,6 +131,42 @@ getInput(CAControllerDevice * controller)
 }
 
 // -----------------------------------------------------------------------------
+class CBox
+{
+public:
+  CBox(float width, float height) : iWidth_(width), iHeight_(height) {}
+
+  float x(){return iX_;}
+  float y(){return iY_;}
+  float top(){return iY_;}
+  float bottom(){return iY_ + iHeight_;}
+  float left(){return iX_;}
+  float right(){return iX_ + iWidth_;}
+  float width(){return iWidth_;}
+  float height(){return iHeight_;}
+
+  void setColor(uint8_t r, uint8_t g, uint8_t b){iR_ = r; iG_ = g; iB_ = b;}
+  void setPos(float x, float y){iX_ = x; iY_ = y;}
+  void x(float x){iX_ = x;}
+  void y(float y){iY_ = y;}
+
+  void draw(I2DRenderer * renderer)
+  {
+    renderer->setColor(iR_, iG_, iB_);
+    renderer->fillRect((int32_t)iX_, (int32_t)iY_, (int32_t)iWidth_, (int32_t)iHeight_);
+  }
+
+private:
+  float iWidth_;
+  float iHeight_;
+  float iX_;
+  float iY_;
+  uint8_t iR_;
+  uint8_t iG_;
+  uint8_t iB_;
+};
+
+// -----------------------------------------------------------------------------
 void
 runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface, CAControllerDevice * controller)
 {
@@ -83,18 +175,21 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface, CACo
 
   renderer->setSurface(surface);
 
-  uint32_t iPlayerWidth    = surface->width()  >> 5;
-  uint32_t iPlayerHeight   = surface->height() >> 3;
-  uint32_t iBallWidth      = surface->width()  >> 4;
-  uint32_t iBallHeight     = surface->height() >> 5;
-  uint32_t iTopWallEdge    = 20 + 4;
-  uint32_t iRightWallEdge  = surface->width() - 4;
-  uint32_t iBottomWallEdge = surface->height() - 4;
-  uint32_t iPlayer1Edge    = 10 + iPlayerWidth;
+  CBox player1(surface->width() >> 5, surface->height() >> 3);
+  CBox ball   (surface->width() >> 4, surface->height() >> 5);
+  iSpeedBarHeight       = surface->height() / 10;
+  iWallWidth            = surface->height() / 20;
+  float fTopWallEdge    = iSpeedBarHeight   + iWallWidth;
+  float fRightWallEdge  = surface->width()  - iWallWidth;
+  float fBottomWallEdge = surface->height() - iWallWidth;
 
-  uint32_t iP1Pos = iTopWallEdge + ((iBottomWallEdge - iTopWallEdge) >> 1) - (iPlayerHeight >> 2);
-  float fBallX = 0;
-  float fBallY = iTopWallEdge;
+  float iP1Pos = fTopWallEdge + ((fBottomWallEdge - fTopWallEdge) / 2) - (player1.height() / 4);
+  player1.setPos(10, iP1Pos);
+  player1.setColor(0, 255, 0);
+
+  ball.setPos(0, fTopWallEdge);
+  ball.setColor(0, 255, 0);
+
   float fIncX = 1.0f;
   float fIncY = 0.5f;
   bool  bMissed = false;
@@ -109,109 +204,112 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface, CACo
   renderer->fill();
 
   // Speed bar
-  updateSpeed(renderer, surface, 0.0f);
+  drawSpeed(renderer, surface);
   // Red frame
   renderer->setColor(255, 0, 0);
-  renderer->fillRect(0, 20, surface->width(), 4);
-  renderer->fillRect(0, surface->height() - 4, surface->width(), 4);
-  renderer->fillRect(surface->width() - 4, 20 + 4, 4, surface->height() - 8);
+  renderer->fillRect(0, iSpeedBarHeight, surface->width(), iWallWidth);
+  renderer->fillRect(0, surface->height() - iWallWidth, surface->width(), iWallWidth);
+  renderer->fillRect(surface->width() - iWallWidth, iSpeedBarHeight + iWallWidth, iWallWidth, surface->height() - 2 * iWallWidth);
 
   while(true)
   {
     getInput(controller);
 
-    // Update player 1
+    // Update Player1 Position
     if(bKeyUp == true)
-      iP1Pos -= 2;
+      player1.y(player1.y() - 2);
     if(bKeyDown == true)
-      iP1Pos += 2;
-    if(iP1Pos < iTopWallEdge)
-      iP1Pos = iTopWallEdge;
-    if((iP1Pos + iPlayerHeight) > iBottomWallEdge)
-      iP1Pos = iBottomWallEdge - iPlayerHeight;
+      player1.y(player1.y() + 2);
+    if(player1.y() < fTopWallEdge)
+      player1.y(fTopWallEdge);
+    if((player1.bottom()) > fBottomWallEdge)
+      player1.y(fBottomWallEdge - player1.height());
 
-    // Update Ball
-    fBallX += fIncX * fSpeed;
-    fBallY += fIncY * fSpeed;
+    // Update Ball Position
+    ball.x(ball.x() + fIncX * fSpeed);
+    ball.y(ball.y() + fIncY * fSpeed);
 
+    // Detect hit on player1
+    if((fIncX < 0) && (ball.left() < player1.right()))
+    {
+      if(bMissed == false)
+      {
+        if((ball.bottom() > player1.top()) && (ball.top() < player1.bottom()))
+        {
+          // Reverse direction
+          fIncX = -fIncX;
+          // Correct overshoot
+          ball.x(ball.x() + 2.0f * (player1.right() - ball.left()));
+
+          // It's a hit!
+          iGreenFlash = FLASH_FRAME_COUNT;
+          updateSpeed(SPEED_UP);
+
+          if(fSpeed == MAX_SPEED)
+            bSpeedFlash = true;
+        }
+        else
+        {
+          bMissed = true;
+        }
+      }
+    }
+
+    // Detect hit on walls
     if(fIncX > 0)
     {
       // Detect hit on right wall
-      if((fBallX + iBallWidth - 1) >= iRightWallEdge)
+      if(ball.right() > fRightWallEdge)
       {
+        // Reverse direction
         fIncX = -fIncX;
-        fBallX -= 2 * ((fBallX + iBallWidth - 1) - iRightWallEdge);
+        // Correct overshoot
+        ball.x(ball.x() - 2.0f * (ball.right() - fRightWallEdge));
       }
     }
     else
     {
-      // Detect hit on player 1
-      if(fBallX < iPlayer1Edge)
+      if(ball.left() < 0)
       {
-        if(bMissed == false)
-        {
-          if((fBallY < (iP1Pos + iPlayerHeight)) && ((fBallY + iBallHeight) > iP1Pos))
-          {
-            /*
-            // Calculate new ball Y speed
-            int32_t iP1Center   = iP1Pos + (iPlayerHeight >> 1);
-            int32_t iBallCenter = (int32_t)fBallY + (iBallHeight   >> 1);
-            float fOffset = iBallCenter - iP1Center;
-            fOffset /= (iPlayerHeight >> 1);  // nomalize to -1..1
-            fOffset *= 2.0f;
+        // Reverse direction
+        fIncX = -fIncX;
+        // Correct overshoot
+        ball.x(ball.x() + 2.0f * (0 - ball.left()));
 
-            fIncY += fOffset;
-            if(fIncY >  2.0f) fIncY =  2.0f;
-            if(fIncY < -2.0f) fIncY = -2.0f;
-            */
-
-            fIncX = -fIncX;
-            fBallX += 2 * (iPlayer1Edge - fBallX);
-
-            iGreenFlash = FLASH_FRAME_COUNT;
-            updateSpeed(renderer, surface, SPEED_UP);
-          }
-          else
-          {
-            bMissed = true;
-          }
-        }
-        else
-        {
-          if(fBallX < 0)
-          {
-            bMissed = false;
-
-            fIncX = -fIncX;
-            fBallX += 2 * (-fBallX);
-
-            iRedFlash = FLASH_FRAME_COUNT;
-            updateSpeed(renderer, surface, -SPEED_DOWN);
-          }
-        }
+        // We realle missed if we hit this wall...
+        bMissed = false;
+        iRedFlash = FLASH_FRAME_COUNT;
+        updateSpeed(-SPEED_DOWN);
       }
     }
     if(fIncY > 0)
     {
       // Detect hit on bottom wall
-      if((fBallY + iBallHeight) > iBottomWallEdge)
+      if(ball.bottom() > fBottomWallEdge)
       {
+        // Reverse direction
         fIncY = -fIncY;
-        fBallY -= 2 * ((fBallY + iBallHeight) - iBottomWallEdge);
+        // Correct overshoot
+        ball.y(ball.y() - 2.0f * (ball.bottom() - fBottomWallEdge));
       }
     }
     else
     {
       // Detect hit on top wall
-      if(fBallY < iTopWallEdge)
+      if(ball.top() < fTopWallEdge)
       {
+        // Reverse direction
         fIncY = -fIncY;
-        fBallY += 2 * (iTopWallEdge - fBallY);
+        // Correct overshoot
+        ball.y(ball.y() + 2.0f * (fTopWallEdge - ball.top()));
       }
     }
 
     // Wait for vertical sync before drawing
     device->waitVSync();
+
+    // Draw speedbar
+    drawSpeed(renderer, surface);
 
     // Clear play field
     if(iRedFlash > 0)
@@ -228,17 +326,13 @@ runGame(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface, CACo
     }
     else
       renderer->setColor(0, 0, 0);
-    renderer->fillRect(0, iTopWallEdge, surface->width() - 4, surface->height() - iTopWallEdge - 4);
-    //renderer->fill();
+    renderer->fillRect(0, (int32_t)fTopWallEdge, surface->width() - iWallWidth, surface->height() - (int32_t)fTopWallEdge - iWallWidth);
 
     // Draw player 1
-    renderer->setColor(0, 255, 0);
-    renderer->fillRect(10, iP1Pos, iPlayerWidth, iPlayerHeight);
-    //renderer->fillRect(10, 4, iPlayerWidth, surface->height() - 8);
+    player1.draw(renderer);
 
     // Draw ball
-    renderer->setColor(0, 255, 0);
-    renderer->fillRect((uint32_t)fBallX, (uint32_t)fBallY, iBallWidth, iBallHeight);
+    ball.draw(renderer);
 
     // Flush everything to screen
     renderer->flush();
