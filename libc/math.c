@@ -25,8 +25,9 @@
 
 #define MATH_TABLE_BITS (10) // 10bits == 1024 values
 #define MATH_TABLE_SIZE (1<<MATH_TABLE_BITS)
-#define ANGLE_TO_INDEX_VALUE ((float)(MATH_TABLE_SIZE >> 1) * M_1_PI) // M_1_PI == 1.0f / M_PI
-#define ANGLE_TO_INDEX(a) ((unsigned int)((float)(a) * ANGLE_TO_INDEX_VALUE) & (MATH_TABLE_SIZE-1))
+
+const float angleToIndex = (float)(MATH_TABLE_SIZE >> 1) / M_PI;
+#define ANGLE_TO_INDEX(a) ((unsigned int)((float)(a) * angleToIndex) & (MATH_TABLE_SIZE-1))
 
 
 const float sinTable[MATH_TABLE_SIZE] =
