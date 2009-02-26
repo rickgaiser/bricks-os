@@ -20,9 +20,9 @@
 
 
 #include "asm/arch/config.h"
-#include "asm/arch/registers.h"
 #include "kernel/debug.h"
 #include "stdlib.h"
+#include "../../kernel/arch/arm/gbands/registers.h"
 #include "../../kernel/arch/arm/gbands/gbaSerial.h"
 
 
