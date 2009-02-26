@@ -599,6 +599,7 @@ TVector4<T>::operator+=(const TVector4 & vec)
   x += vec.x;
   y += vec.y;
   z += vec.z;
+  w += vec.w;
 
   return (*this);
 }
@@ -611,6 +612,7 @@ TVector4<T>::operator-=(const TVector4 & vec)
   x -= vec.x;
   y -= vec.y;
   z -= vec.z;
+  w -= vec.w;
 
   return (*this);
 }
@@ -623,6 +625,7 @@ TVector4<T>::operator*=(const TVector4 & vec)
   x *= vec.x;
   y *= vec.y;
   z *= vec.z;
+  w *= vec.w;
 
   return (*this);
 }
@@ -635,6 +638,7 @@ TVector4<T>::operator/=(const TVector4 & vec)
   x /= vec.x;
   y /= vec.y;
   z /= vec.z;
+  w /= vec.w;
 
   return (*this);
 }
@@ -647,6 +651,7 @@ TVector4<T>::operator*=(const T s)
   x *= s;
   y *= s;
   z *= s;
+  w *= s;
 
   return (*this);
 }
@@ -663,6 +668,7 @@ TVector4<T>::operator/=(const T s)
     x *= s2;
     y *= s2;
     z *= s2;
+    w *= s2;
   }
 
   return (*this);
@@ -676,6 +682,7 @@ TVector4<T>::invert()
   x = 0 - x;
   y = 0 - y;
   z = 0 - z;
+  w = 0 - w;
 
   return (*this);
 }
@@ -736,5 +743,5 @@ template <class T>
 inline T
 TVector4<T>::dotProduct(const TVector4 & vec) const
 {
-  return (x*vec.x + y*vec.y + z*vec.z);
+  return (x*vec.x + y*vec.y + z*vec.z + w*vec.w);
 }

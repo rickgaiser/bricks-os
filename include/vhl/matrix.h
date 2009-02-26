@@ -27,8 +27,8 @@
 #include "vector.h"
 
 
-#define DEGREE_PRECISION_MUL   (2)
-#define DEGREE_COUNT           (720) //(360 * DEGREE_PRECISION_MUL)
+#define MATRIX_MATH_TABLE_BITS (10) // 10bits == 1024 values
+#define MATRIX_MATH_TABLE_SIZE (1<<MATRIX_MATH_TABLE_BITS)
 
 #define m00 matrix[0*4+0]
 #define m01 matrix[0*4+1]
@@ -54,13 +54,16 @@ class TMatrix4x4
 {
 public:
   // Constructors
-  TMatrix4x4(){}
+  TMatrix4x4();
   TMatrix4x4(const TMatrix4x4 & m);
   TMatrix4x4(const T * m);
   TMatrix4x4(T _m00, T _m01, T _m02, T _m03,
              T _m10, T _m11, T _m12, T _m13,
              T _m20, T _m21, T _m22, T _m23,
              T _m30, T _m31, T _m32, T _m33);
+
+  // Initialize the sin and cos tables
+  static void init();
 
   // Row accessor. Use: mtx[row][col]
   T * operator[](uint8_t row);
@@ -87,7 +90,7 @@ public:
   void scale     (T x, T y, T z);
   void scale     (const T * vec);
 
-  void rotate    (T x, T y, T z);
+  void rotate    (T angle, T x, T y, T z);
   void rotatex   (T angle);
   void rotatey   (T angle);
   void rotatez   (T angle);
@@ -103,8 +106,8 @@ public:
 
 private:
   static bool bInitialized_;
-  static T sinTable_[DEGREE_COUNT];
-  static T cosTable_[DEGREE_COUNT];
+  static T sinTable_[MATRIX_MATH_TABLE_SIZE];
+  static T cosTable_[MATRIX_MATH_TABLE_SIZE];
 };
 
 
