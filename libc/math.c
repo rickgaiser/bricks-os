@@ -23,10 +23,13 @@
 #include "inttypes.h"
 
 
-#define ANGLE_TO_INDEX(a) ((uint32_t)((a) * (1024.0 / (2.0 * M_PI))) & 0x000003ff)
+#define MATH_TABLE_BITS (10) // 10bits == 1024 values
+#define MATH_TABLE_SIZE (1<<MATH_TABLE_BITS)
+#define ANGLE_TO_INDEX_VALUE ((float)(MATH_TABLE_SIZE >> 1) * M_1_PI) // M_1_PI == 1.0f / M_PI
+#define ANGLE_TO_INDEX(a) ((unsigned int)((float)(a) * ANGLE_TO_INDEX_VALUE) & (MATH_TABLE_SIZE-1))
 
 
-const float sinTable[1024] =
+const float sinTable[MATH_TABLE_SIZE] =
 {
   0.000000,
   0.006136,
@@ -1054,7 +1057,7 @@ const float sinTable[1024] =
   -0.006136,
 };
 
-const float cosTable[1024] =
+const float cosTable[MATH_TABLE_SIZE] =
 {
   1.000000,
   0.999981,
@@ -2082,7 +2085,7 @@ const float cosTable[1024] =
   0.999981,
 };
 
-const float tanTable[1024] =
+const float tanTable[MATH_TABLE_SIZE] =
 {
   0.000000,
   0.006136,
