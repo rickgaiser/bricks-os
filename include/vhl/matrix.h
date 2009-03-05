@@ -28,7 +28,7 @@
 
 
 #define MATRIX_MATH_TABLE_BITS (10) // 10bits == 1024 values
-#define MATRIX_MATH_TABLE_SIZE (1<<MATRIX_MATH_TABLE_BITS)
+#define MATRIX_MATH_TABLE_SIZE 1024 // (1<<MATRIX_MATH_TABLE_BITS) <-- Does not work with GCC 3.2.2
 
 #define m00 matrix[0*4+0]
 #define m01 matrix[0*4+1]
