@@ -31,34 +31,6 @@
 // Main color format type (cfA8R8G8B8)
 typedef uint32_t color_t;
 
-// Color struct
-typedef union
-{
-  struct
-  {
-    uint8_t a, r, g, b;
-  } __attribute__ ((__packed__));
-  color_t color;
-} SColor;
-
-// Color class (same as struct, but with constructors)
-class CColor
-{
-public:
-  inline CColor(color_t _color = 0) : color(_color) {}
-  inline CColor(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a = 255) : a(_a), r(_r), g(_g), b(_b) {}
-
-public:
-  union
-  {
-    struct
-    {
-      uint8_t a, r, g, b;
-    } __attribute__ ((__packed__));
-    color_t color;
-  };
-};
-
 //---------------------------------------------------------------------------
 struct SColorFormatOperations
 {

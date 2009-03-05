@@ -89,7 +89,7 @@ C2DRenderer::setSurface(CSurface * surface)
 {
   pSurface_ = surface;
 
-  setColor(color_.r, color_.g, color_.b);
+  setColor(color_);
 }
 
 //---------------------------------------------------------------------------
@@ -109,26 +109,23 @@ C2DRenderer::flush()
 void
 C2DRenderer::setColor(color_t rgb)
 {
-  color_.r = BxColorFormat_GetR(cfA8R8G8B8, rgb);
-  color_.g = BxColorFormat_GetG(cfA8R8G8B8, rgb);
-  color_.b = BxColorFormat_GetB(cfA8R8G8B8, rgb);
-  color_.a = BxColorFormat_GetA(cfA8R8G8B8, rgb);
+  color_ = rgb;
 
   if(pSurface_ != NULL)
-    fmtColor_ = BxColorFormat_FromRGB(pSurface_->mode.format, color_.r, color_.g, color_.b);
+    fmtColor_ = BxColorFormat_FromRGB(pSurface_->mode.format,
+                                      BxColorFormat_GetR(cfA8R8G8B8, color_),
+                                      BxColorFormat_GetG(cfA8R8G8B8, color_),
+                                      BxColorFormat_GetB(cfA8R8G8B8, color_));
 }
 
 //---------------------------------------------------------------------------
 void
 C2DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
 {
-  color_.r = r;
-  color_.g = g;
-  color_.b = b;
-  color_.a = 255;
+  color_ = BxColorFormat_FromRGB(cfA8R8G8B8, r, g, b);
 
   if(pSurface_ != NULL)
-    fmtColor_ = BxColorFormat_FromRGB(pSurface_->mode.format, color_.r, color_.g, color_.b);
+    fmtColor_ = BxColorFormat_FromRGB(pSurface_->mode.format, r, g, b);
 }
 
 //---------------------------------------------------------------------------

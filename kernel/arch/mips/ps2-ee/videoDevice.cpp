@@ -277,20 +277,22 @@ CPS22DRenderer::~CPS22DRenderer()
 void
 CPS22DRenderer::setColor(color_t rgb)
 {
-  color_.r = BxColorFormat_GetR(cfA8R8G8B8, rgb);
-  color_.g = BxColorFormat_GetG(cfA8R8G8B8, rgb);
-  color_.b = BxColorFormat_GetB(cfA8R8G8B8, rgb);
-  color_.a = BxColorFormat_GetA(cfA8R8G8B8, rgb);
+  colorR_ = BxColorFormat_GetR(cfA8R8G8B8, rgb);
+  colorG_ = BxColorFormat_GetG(cfA8R8G8B8, rgb);
+  colorB_ = BxColorFormat_GetB(cfA8R8G8B8, rgb);
+
+  colorPS2_ = GIF::REG::RGBAQ(colorR_, colorG_, colorB_, 0x80, 0);
 }
 
 //---------------------------------------------------------------------------
 void
 CPS22DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
 {
-  color_.r = r;
-  color_.g = g;
-  color_.b = b;
-  color_.a = 255;
+  colorR_ = r;
+  colorG_ = g;
+  colorB_ = b;
+
+  colorPS2_ = GIF::REG::RGBAQ(colorR_, colorG_, colorB_, 0x80, 0);
 }
 
 //---------------------------------------------------------------------------
@@ -301,7 +303,7 @@ CPS22DRenderer::setPixel(int x, int y)
   y += GS_Y_BASE;
 
   packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.gifAddPackedAD(GIF::REG::rgbaq, colorPS2_);
   packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
   bDataWaiting_ = true;
 }
@@ -321,7 +323,7 @@ CPS22DRenderer::fillRect(int x, int y, unsigned int width, unsigned int height)
   y += GS_Y_BASE;
 
   packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.gifAddPackedAD(GIF::REG::rgbaq, colorPS2_);
   packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
   packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((x+width)<<4, (y+height)<<4, 0));
   bDataWaiting_ = true;
@@ -337,7 +339,7 @@ CPS22DRenderer::drawLine(int x1, int y1, int x2, int y2)
   y2 += GS_Y_BASE;
 
   packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.gifAddPackedAD(GIF::REG::rgbaq, colorPS2_);
   packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x1<<4, y1<<4, 0));
   packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x2<<4, y2<<4, 0));
   bDataWaiting_ = true;
@@ -365,7 +367,7 @@ CPS22DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
   y += GS_Y_BASE;
 
   packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(color_.r, color_.g, color_.b, 0x80, 0));
+  packet_.gifAddPackedAD(GIF::REG::rgbaq, colorPS2_);
   packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
   packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x+width<<4, y<<4, 0));
   packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x+width<<4, y+height<<4, 0));

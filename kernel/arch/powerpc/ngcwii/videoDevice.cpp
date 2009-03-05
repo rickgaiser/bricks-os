@@ -399,6 +399,17 @@ CNGCVideoDevice::displaySurface(CSurface * surface)
 }
 
 //---------------------------------------------------------------------------
+// Color struct
+typedef union
+{
+  struct
+  {
+    uint8_t a, r, g, b;
+  } __attribute__ ((__packed__));
+  uint32_t color;
+} SColor;
+
+//---------------------------------------------------------------------------
 void
 CNGCVideoDevice::flush(CSurface * surface)
 {

@@ -119,7 +119,10 @@ public:
 
 private:
   // Current drawing color
-  SColor color_;
+  uint8_t  colorR_;
+  uint8_t  colorG_;
+  uint8_t  colorB_;
+  uint64_t colorPS2_;
 };
 
 //---------------------------------------------------------------------------

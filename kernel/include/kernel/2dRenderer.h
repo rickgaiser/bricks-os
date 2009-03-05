@@ -91,7 +91,7 @@ protected:
   CSurface * pSurface_;
 
   // Current drawing color
-  SColor color_;      // Color
+  color_t color_;     // Color
   color_t fmtColor_;  // Pre calculated surface format color
 };
 
