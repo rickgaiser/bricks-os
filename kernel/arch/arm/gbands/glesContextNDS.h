@@ -43,15 +43,13 @@
 #define ndst_to_gl(i)    ((i)<<12)
 #define ndsn_to_gl(i)    ((i)<<7)
 
-#define MAX_TEXTURE_COUNT 32
-
 
 //-----------------------------------------------------------------------------
 typedef GLfixed NDSfixed;
 
 //-----------------------------------------------------------------------------
 class CNDSTexture
- : public CSoftTexture
+ : public CTexture
 {
 public:
   CNDSTexture();

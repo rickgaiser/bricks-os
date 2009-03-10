@@ -21,9 +21,47 @@
 
 #include "softGLF.h"
 #include "vhl/fixedPoint.h"
+#include "bitResolution.h"
+#include "color.h"
 
 #include "stdlib.h"
 #include "math.h"
+
+
+//-----------------------------------------------------------------------------
+// Model-View matrix
+//   from 'object coordinates' to 'eye coordinates'
+#define CALC_OBJ_TO_EYE(v) \
+  pCurrentModelView_->transform4((v).vo, (v).ve)
+//-----------------------------------------------------------------------------
+// Projection matrix
+//   from 'eye coordinates' to 'clip coordinates'
+#define CALC_EYE_TO_CLIP(v) \
+  pCurrentProjection_->transform4((v).ve, (v).vc)
+//-----------------------------------------------------------------------------
+// Perspective division
+//   from 'clip coordinates' to 'normalized device coordinates'
+#define CALC_CLIP_TO_NDEV(v) \
+  GLfloat inv_w; \
+  inv_w = 1.0f / (v).vc.w; \
+  (v).vd.x = (v).vc.x * inv_w; \
+  (v).vd.y = (v).vc.y * inv_w; \
+  (v).vd.z = (v).vc.z * inv_w; \
+  (v).vd.w = inv_w
+
+#define CLIP_ROUNDING_ERROR (0.00001f) // (1E-5)
+inline void setClipFlags(SVertexF & v)
+{
+  GLfloat w = v.vc.w * (1.0f + CLIP_ROUNDING_ERROR);
+  v.clip = ((v.vc.x < -w)     ) |
+           ((v.vc.x >  w) << 1) |
+           ((v.vc.y < -w) << 2) |
+           ((v.vc.y >  w) << 3) |
+           ((v.vc.z < -w) << 4) |
+           ((v.vc.z >  w) << 5);
+}
+
+#define CALC_INTERSECTION(a,b,t) (b + ((a - b) * t))
 
 
 //-----------------------------------------------------------------------------
@@ -34,17 +72,30 @@ CASoftGLESFloat::CASoftGLESFloat()
  , CAGLESMatrixF()
 
  , depthTestEnabled_(false)
+ , depthMask_(true)
  , depthFunction_(GL_LESS)
  , depthClear_(1.0f)
- , zClearValue_(0xffffffff)
+ , zClearValue_(0x0000ffff)
+ , zRangeNear_(0.0f)
+ , zRangeFar_(1.0f)
  , zNear_(0.0f)
  , zFar_(1.0f)
- , zMax_(0xffffffff) // 32bit z-buffer
  , shadingModel_(GL_FLAT)
+ , bSmoothShading_(false)
+ , blendingEnabled_(false)
+ , blendSFactor_(GL_ONE)
+ , blendDFactor_(GL_ZERO)
+ , alphaTestEnabled_(false)
+ , alphaFunc_(GL_ALWAYS)
+ , alphaValue_(0.0f)
+ , alphaValueFX_(0)
  , lightingEnabled_(false)
  , normalizeEnabled_(false)
  , fogEnabled_(false)
  , texturesEnabled_(false)
+ , texEnvMode_(GL_MODULATE)
+ , texEnvColor_(0, 0, 0, 0)
+ , beginValid_(false)
 {
   clCurrent.r = 1.0f;
   clCurrent.g = 1.0f;
@@ -121,13 +172,51 @@ CASoftGLESFloat::CASoftGLESFloat()
 
   matShininess_       = 0.0f;
 
-  zA_ = (zFar_ - zNear_) / 2;
-  zB_ = (zFar_ + zNear_) / 2;
+  float zsize = (1 << (DEPTH_Z + SHIFT_Z));
+  zA_ = ((zsize - 0.5) / 2.0);
+  zB_ = ((zsize - 0.5) / 2.0) + (1 << (SHIFT_Z-1));
+
+  texEnvColorFX_.r = (int32_t)(texEnvColor_.r * (1 << SHIFT_COLOR));
+  texEnvColorFX_.g = (int32_t)(texEnvColor_.g * (1 << SHIFT_COLOR));
+  texEnvColorFX_.b = (int32_t)(texEnvColor_.b * (1 << SHIFT_COLOR));
+  texEnvColorFX_.a = (int32_t)(texEnvColor_.a * (1 << SHIFT_COLOR));
+
+  clipPlane_[0] = TVector4<GLfloat>( 1.0,  0.0,  0.0,  1.0); // left
+  clipPlane_[1] = TVector4<GLfloat>(-1.0,  0.0,  0.0,  1.0); // right
+  clipPlane_[2] = TVector4<GLfloat>( 0.0,  1.0,  0.0,  1.0); // bottom
+  clipPlane_[3] = TVector4<GLfloat>( 0.0, -1.0,  0.0,  1.0); // top
+  clipPlane_[4] = TVector4<GLfloat>( 0.0,  0.0,  1.0,  1.0); // near
+  clipPlane_[5] = TVector4<GLfloat>( 0.0,  0.0, -1.0,  1.0); // far
 }
 
 //-----------------------------------------------------------------------------
 CASoftGLESFloat::~CASoftGLESFloat()
 {
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glAlphaFunc(GLenum func, GLclampf ref)
+{
+  switch(func)
+  {
+    case GL_NEVER:
+    case GL_LESS:
+    case GL_EQUAL:
+    case GL_LEQUAL:
+    case GL_GREATER:
+    case GL_NOTEQUAL:
+    case GL_GEQUAL:
+    case GL_ALWAYS:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  alphaFunc_    = func;
+  alphaValue_   = clampf(ref);
+  alphaValueFX_ = (int32_t)(alphaValue_ * (1 << SHIFT_COLOR));
 }
 
 //-----------------------------------------------------------------------------
@@ -145,18 +234,18 @@ void
 CASoftGLESFloat::glClearDepthf(GLclampf depth)
 {
   depthClear_ = clampf(depth);
-  zClearValue_ = (uint32_t)(depthClear_ * zMax_);
+
+  zClearValue_ = (uint32_t)(depthClear_ * ((1<<DEPTH_Z)-1));
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
 {
-  zNear_ = clampf(zNear);
-  zFar_  = clampf(zFar);
+  zRangeNear_ = clampf(zNear);
+  zRangeFar_  = clampf(zFar);
 
-  zA_ = (zFar_ - zNear_) / 2;
-  zB_ = (zFar_ + zNear_) / 2;
+  // FIXME: zA_ and zB_ need to be modified, this function is now useless
 }
 
 //-----------------------------------------------------------------------------
@@ -168,28 +257,37 @@ CASoftGLESFloat::glDepthFunc(GLenum func)
 
 //-----------------------------------------------------------------------------
 void
+CASoftGLESFloat::glDepthMask(GLboolean flag)
+{
+  depthMask_ = flag;
+}
+
+//-----------------------------------------------------------------------------
+void
 CASoftGLESFloat::glDisable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_LIGHTING: lightingEnabled_ = false; break;
-    case GL_LIGHT0: lights_[0].enabled = false; break;
-    case GL_LIGHT1: lights_[1].enabled = false; break;
-    case GL_LIGHT2: lights_[2].enabled = false; break;
-    case GL_LIGHT3: lights_[3].enabled = false; break;
-    case GL_LIGHT4: lights_[4].enabled = false; break;
-    case GL_LIGHT5: lights_[5].enabled = false; break;
-    case GL_LIGHT6: lights_[6].enabled = false; break;
-    case GL_LIGHT7: lights_[7].enabled = false; break;
+    case GL_ALPHA_TEST: alphaTestEnabled_  = false; break;
+    case GL_BLEND:      blendingEnabled_   = false; break;
+    case GL_LIGHTING:   lightingEnabled_   = false; break;
+    case GL_LIGHT0:     lights_[0].enabled = false; break;
+    case GL_LIGHT1:     lights_[1].enabled = false; break;
+    case GL_LIGHT2:     lights_[2].enabled = false; break;
+    case GL_LIGHT3:     lights_[3].enabled = false; break;
+    case GL_LIGHT4:     lights_[4].enabled = false; break;
+    case GL_LIGHT5:     lights_[5].enabled = false; break;
+    case GL_LIGHT6:     lights_[6].enabled = false; break;
+    case GL_LIGHT7:     lights_[7].enabled = false; break;
 
     case GL_DEPTH_TEST:
       depthTestEnabled_ = false;
       zbuffer(false); // Notify rasterizer
       break;
-    case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
-    case GL_FOG:        fogEnabled_       = false; break;
-    case GL_TEXTURE_2D: texturesEnabled_  = false; break;
-    case GL_NORMALIZE:  normalizeEnabled_ = false; break;
+    case GL_CULL_FACE:  cullFaceEnabled_   = false; break;
+    case GL_FOG:        fogEnabled_        = false; break;
+    case GL_TEXTURE_2D: texturesEnabled_   = false; break;
+    case GL_NORMALIZE:  normalizeEnabled_  = false; break;
 
     default:
       setError(GL_INVALID_ENUM);
@@ -210,6 +308,8 @@ CASoftGLESFloat::glEnable(GLenum cap)
 {
   switch(cap)
   {
+    case GL_ALPHA_TEST: alphaTestEnabled_  = true; break;
+    case GL_BLEND:      blendingEnabled_   = true; break;
     case GL_LIGHTING:   lightingEnabled_   = true; break;
     case GL_LIGHT0:     lights_[0].enabled = true; break;
     case GL_LIGHT1:     lights_[1].enabled = true; break;
@@ -402,6 +502,7 @@ void
 CASoftGLESFloat::glShadeModel(GLenum mode)
 {
   shadingModel_ = mode;
+  bSmoothShading_ = (shadingModel_ == GL_SMOOTH);
 }
 
 //-----------------------------------------------------------------------------
@@ -414,16 +515,52 @@ CASoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportHeight     = height;
   viewportPixelCount = width * height;
 
-  xA_ = (viewportWidth  >> 1);
-  xB_ = (GLfloat)(viewportWidth  >> 1) + 0.5f;
-  yA_ = -(viewportHeight >> 1);
-  yB_ = (GLfloat)(viewportHeight >> 1) + 0.5f;
+  xA_ =     (viewportWidth  >> 1);
+  xB_ = x + (viewportWidth  >> 1);
+  yA_ =     (viewportHeight >> 1);
+  yB_ = y + (viewportHeight >> 1);
+
+  // FIXME:
+  yA_  = -yA_;
+  xB_ -= x;
+  yB_ -= y;
+
+  // Use fixed point format for xy
+  xA_ *= (1<<SHIFT_XY);
+  xB_ *= (1<<SHIFT_XY);
+  yA_ *= (1<<SHIFT_XY);
+  yB_ *= (1<<SHIFT_XY);
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFloat::glBegin(GLenum mode)
 {
+  if(beginValid_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  switch(mode)
+  {
+//    case GL_POINTS:
+//    case GL_LINES:
+//    case GL_LINE_STRIP:
+//    case GL_LINE_LOOP:
+    case GL_TRIANGLES:
+    case GL_TRIANGLE_STRIP:
+    case GL_TRIANGLE_FAN:
+    case GL_QUADS:
+//    case GL_QUAD_STRIP:
+    case GL_POLYGON:
+      beginValid_ = true;
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  }
+
   rasterMode_ = mode;
 
   // Initialize for default triangle
@@ -438,12 +575,25 @@ CASoftGLESFloat::glBegin(GLenum mode)
 void
 CASoftGLESFloat::glEnd()
 {
+  if(beginValid_ == false)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  beginValid_ = false;
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFloat::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
+  if(beginValid_ == false)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   SVertexF v;
 
   // Set vertex
@@ -494,6 +644,154 @@ CASoftGLESFloat::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 
   if(normalizeEnabled_  == true)
     normal_.normalize();
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glGetFloatv(GLenum pname, GLfloat * params)
+{
+  // Return 4x4 matrix
+  #define GL_GET_MATRIX_COPY(matrix) \
+    for(int i(0); i < 4; i++) \
+      for(int j(0); j < 4; j++) \
+        params[i*4+j] = matrix[j*4+i]
+
+  switch(pname)
+  {
+    case GL_MATRIX_MODE:
+    {
+      params[0] = matrixMode_;
+      break;
+    }
+    case GL_MODELVIEW_MATRIX:
+    {
+      GL_GET_MATRIX_COPY(pCurrentModelView_->matrix);
+      break;
+    }
+    case GL_MAX_MODELVIEW_STACK_DEPTH:
+    case GL_MODELVIEW_STACK_DEPTH:
+    {
+      params[0] = GL_MATRIX_MODELVIEW_STACK_SIZE;
+      break;
+    }
+    case GL_PROJECTION_MATRIX:
+    {
+      GL_GET_MATRIX_COPY(pCurrentProjection_->matrix);
+      break;
+    }
+    case GL_MAX_PROJECTION_STACK_DEPTH:
+    case GL_PROJECTION_STACK_DEPTH:
+    {
+      params[0] = GL_MATRIX_PROJECTION_STACK_SIZE;
+      break;
+    }
+    case GL_TEXTURE_MATRIX:
+    {
+      GL_GET_MATRIX_COPY(pCurrentTexture_->matrix);
+      break;
+    }
+    case GL_MAX_TEXTURE_STACK_DEPTH:
+    case GL_TEXTURE_STACK_DEPTH:
+    {
+      params[0] = GL_MATRIX_TEXTURE_STACK_SIZE;
+      break;
+    }
+    default:
+      setError(GL_INVALID_ENUM);
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glBlendFunc(GLenum sfactor, GLenum dfactor)
+{
+  blendSFactor_ = sfactor;
+  blendDFactor_ = dfactor;
+
+  if((sfactor == GL_ONE) && (dfactor == GL_ZERO))
+    blendFast_ = FB_SOURCE;
+  else if((sfactor == GL_ZERO) && (dfactor == GL_ONE))
+    blendFast_ = FB_DEST;
+  else if((sfactor == GL_SRC_ALPHA) && (dfactor == GL_ONE_MINUS_SRC_ALPHA))
+    blendFast_ = FB_BLEND;
+  else
+    blendFast_ = FB_OTHER;
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glTexEnvf(GLenum target, GLenum pname, GLfloat param)
+{
+  if(target != GL_TEXTURE_ENV)
+  {
+    setError(GL_INVALID_ENUM);
+    return;
+  }
+  if(pname != GL_TEXTURE_ENV_MODE)
+  {
+    setError(GL_INVALID_ENUM);
+    return;
+  }
+
+  switch((GLenum)param)
+  {
+    case GL_MODULATE:
+    case GL_DECAL:
+    case GL_BLEND:
+    case GL_REPLACE:
+      texEnvMode_ = (GLenum)param;
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
+{
+  if(target != GL_TEXTURE_ENV)
+  {
+    setError(GL_INVALID_ENUM);
+    return;
+  }
+  if((pname != GL_TEXTURE_ENV_MODE) && (pname != GL_TEXTURE_ENV_COLOR))
+  {
+    setError(GL_INVALID_ENUM);
+    return;
+  }
+
+  switch(pname)
+  {
+    case GL_TEXTURE_ENV_MODE:
+      switch((GLenum)params[0])
+      {
+        case GL_MODULATE:
+        case GL_DECAL:
+        case GL_BLEND:
+        case GL_REPLACE:
+          texEnvMode_ = (GLenum)params[0];
+          break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      break;
+    case GL_TEXTURE_ENV_COLOR:
+      texEnvColor_.r = params[0];
+      texEnvColor_.g = params[1];
+      texEnvColor_.b = params[2];
+      texEnvColor_.a = params[3];
+      texEnvColorFX_.r = (int32_t)(texEnvColor_.r * (1 << SHIFT_COLOR));
+      texEnvColorFX_.g = (int32_t)(texEnvColor_.g * (1 << SHIFT_COLOR));
+      texEnvColorFX_.b = (int32_t)(texEnvColor_.b * (1 << SHIFT_COLOR));
+      texEnvColorFX_.a = (int32_t)(texEnvColor_.a * (1 << SHIFT_COLOR));
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
 }
 
 //-----------------------------------------------------------------------------
@@ -653,22 +951,20 @@ CASoftGLESFloat::_vertexShaderTransform(SVertexF & v)
   // --------------
   // Model-View matrix
   //   from 'object coordinates' to 'eye coordinates'
-  matrixModelView.transform4(v.vo, v.ve);
+  CALC_OBJ_TO_EYE(v);
   // Projection matrix
   //   from 'eye coordinates' to 'clip coordinates'
-  matrixProjection.transform4(v.ve, v.vc);
-  // Perspective division
-  //   from 'clip coordinates' to 'normalized device coordinates'
-  GLfloat scale;
-  scale = 1.0f / v.vc.w;
-  v.vd.x = v.vc.x * scale;
-  v.vd.y = v.vc.y * scale;
-  v.vd.z = v.vc.z * scale;
-  // Viewport transformation
-  //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = (GLint)    ((xA_ * v.vd.x) + xB_);
-  v.sy = (GLint)    ((yA_ * v.vd.y) + yB_);
-  v.sz = (uint32_t)(((zA_ * v.vd.z) + zB_) * zMax_);
+  CALC_EYE_TO_CLIP(v);
+
+  // Set clip flags
+  setClipFlags(v);
+
+  if(v.clip == 0)
+  {
+    // Perspective division
+    //   from 'clip coordinates' to 'normalized device coordinates'
+    CALC_CLIP_TO_NDEV(v);
+  }
 
   primitiveAssembly(v);
 }
@@ -685,7 +981,7 @@ CASoftGLESFloat::_vertexShaderLight(SVertexF & v)
     SColorF c(0, 0, 0, 0);
 
     // Normal Rotation
-    matrixModelView.transform3(v.n, v.n2);
+    pCurrentModelView_->transform3(v.n, v.n2);
 
     for(int iLight(0); iLight < 8; iLight++)
     {
@@ -738,64 +1034,20 @@ CASoftGLESFloat::_vertexShaderLight(SVertexF & v)
 void
 CASoftGLESFloat::_fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
-  // -------
-  // Culling
-  // -------
-  if(cullFaceEnabled_ == true)
-  {
-    // Always invisible when culling both front and back
-    if(cullFaceMode_ == GL_FRONT_AND_BACK)
-      return;
-
-    GLint v1x = v2.sx - v0.sx;
-    GLint v1y = v2.sy - v0.sy;
-    GLint v2x = v2.sx - v1.sx;
-    GLint v2y = v2.sy - v1.sy;
-    GLint vnz = (v1x * v2y) - (v1y * v2x);
-
-    if(vnz == 0)
-      return;
-
-    if((vnz > 0) == bCullCW_)
-      return;
-  }
+  if(v0.clip & v1.clip & v2.clip)
+    return; // Not visible
 
   fragmentClip(v0, v1, v2);
 }
 
 //-----------------------------------------------------------------------------
-#define ROUNDING_ERROR (0.0001f)
-const GLfloat fPlusOne ( 1.0f + ROUNDING_ERROR);
-const GLfloat fMinusOne(-1.0f - ROUNDING_ERROR);
-#define SET_CLIP_FLAGS(v) \
-     if((v).vd.x > fPlusOne ) (v).clip |= CLIP_X_MAX; \
-else if((v).vd.x < fMinusOne) (v).clip |= CLIP_X_MIN; \
-     if((v).vd.y > fPlusOne ) (v).clip |= CLIP_Y_MAX; \
-else if((v).vd.y < fMinusOne) (v).clip |= CLIP_Y_MIN; \
-     if((v).vd.z > fPlusOne ) (v).clip |= CLIP_Z_MAX; \
-else if((v).vd.z < fMinusOne) (v).clip |= CLIP_Z_MIN
-//-----------------------------------------------------------------------------
 void
 CASoftGLESFloat::_fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
-  SVertexF * v[3] = {&v0, &v1, &v2};
-
-  // --------
-  // Clipping
-  // --------
-  for(int iVertex(0); iVertex < 3; iVertex++)
-  {
-    v[iVertex]->clip = 0;
-    SET_CLIP_FLAGS(*(v[iVertex]));
-  }
-
-  if(v0.clip & v1.clip & v2.clip)
-    return; // Not visible
-
   // ----------------------
   // Vertex shader lighting
   // ----------------------
-  if(shadingModel_ == GL_SMOOTH)
+  if(bSmoothShading_ == true)
   {
     if(v0.processed == false)
     {
@@ -862,6 +1114,7 @@ CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
         vertIdx_++;
       break;
     }
+    case GL_POLYGON:
     case GL_TRIANGLE_FAN:
     {
       if(vertIdx_ == 2)
@@ -903,17 +1156,22 @@ CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
 // t = -(plane.dotProduct(from) + planeDistance) / plane.dotProduct(delta);
 #define clip_func(name,sign,dir,dir1,dir2)         \
 inline GLfloat                                     \
-name(TVector4<GLfloat> & vnew, TVector4<GLfloat> & from, TVector4<GLfloat> & to) \
+name(TVector4<GLfloat> & c, TVector4<GLfloat> & a, TVector4<GLfloat> & b) \
 {                                                  \
-  TVector4<GLfloat> delta;                         \
+  TVector4<GLfloat> delta = b - a;                 \
   GLfloat t, den;                                  \
-  delta = to - from;                               \
-  den = sign delta.dir;                            \
+                                                   \
+  den = -(sign delta.dir) + delta.w;               \
   if(den == 0)                                     \
     t = 0;                                         \
   else                                             \
-    t = -(sign from.dir - 1) / den;                \
-  vnew = from + (delta * t);                       \
+    t = (sign a.dir - a.w) / den;                  \
+                                                   \
+  c.dir1 = a.dir1 + t * delta.dir1;                \
+  c.dir2 = a.dir2 + t * delta.dir2;                \
+  c.w    = a.w    + t * delta.w;                   \
+  c.dir  = sign c.w;                               \
+                                                   \
   return t;                                        \
 }
 
@@ -933,6 +1191,8 @@ GLfloat (*clip_proc[6])(TVector4<GLfloat> &, TVector4<GLfloat> &, TVector4<GLflo
   clip_zmin,
   clip_zmax
 };
+
+#define CLIP_FUNC(plane,c,a,b) clip_proc[plane](c,a,b)
 
 //-----------------------------------------------------------------------------
 void
@@ -982,15 +1242,15 @@ CASoftGLESFloat::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
 
       // Rearrange vertices
       SVertexF * v[3];
-           if(cc[0] & clipMask){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v[0] == outside
-      else if(cc[1] & clipMask){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v[1] == outside
-      else                     {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v[2] == outside
+           if(cc[0] & clipMask){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v0 == outside
+      else if(cc[1] & clipMask){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v1 == outside
+      else                     {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v2 == outside
 
       // Interpolate 1-0
-      tt = clip_proc[clipBit](vNew1.vd, v[1]->vd, v[0]->vd);
+      tt = CLIP_FUNC(clipBit, vNew1.vc, v[1]->vc, v[0]->vc);
       interpolateVertex(vNew1, *v[0], *v[1], tt);
       // Interpolate 2-0
-      tt = clip_proc[clipBit](vNew2.vd, v[2]->vd, v[0]->vd);
+      tt = CLIP_FUNC(clipBit, vNew2.vc, v[2]->vc, v[0]->vc);
       interpolateVertex(vNew2, *v[0], *v[2], tt);
 
       // Raster 2 new triangles
@@ -1006,15 +1266,15 @@ CASoftGLESFloat::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
 
       // Rearrange vertices
       SVertexF * v[3];
-           if((cc[0] & clipMask) == 0){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v[0] == inside
-      else if((cc[1] & clipMask) == 0){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v[1] == inside
-      else                            {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v[2] == inside
+           if((cc[0] & clipMask) == 0){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v0 == inside
+      else if((cc[1] & clipMask) == 0){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v1 == inside
+      else                            {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v2 == inside
 
       // Interpolate 0-1
-      tt = clip_proc[clipBit](vNew1.vd, v[0]->vd, v[1]->vd);
+      tt = CLIP_FUNC(clipBit, vNew1.vc, v[0]->vc, v[1]->vc);
       interpolateVertex(vNew1, *v[1], *v[0], tt);
       // Interpolate 0-2
-      tt = clip_proc[clipBit](vNew2.vd, v[0]->vd, v[2]->vd);
+      tt = CLIP_FUNC(clipBit, vNew2.vc, v[0]->vc, v[2]->vc);
       interpolateVertex(vNew2, *v[2], *v[0], tt);
 
       // Raster new triangle
@@ -1025,29 +1285,29 @@ CASoftGLESFloat::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
 
 //-----------------------------------------------------------------------------
 void
-CASoftGLESFloat::interpolateVertex(SVertexF & vNew, SVertexF & vOld, SVertexF & vFrom, GLfloat t)
+CASoftGLESFloat::interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLfloat t)
 {
-  if(shadingModel_ == GL_SMOOTH)
-  {
-    // Interpolate color
-    vNew.cl = vFrom.cl + ((vOld.cl - vFrom.cl) * t);
-  }
+  // Color
+  if(bSmoothShading_ == true)
+    c.cl = CALC_INTERSECTION(a.cl, b.cl, t);
   else
+    c.cl = b.cl;
+
+  // Texture coordinates
+  if(texturesEnabled_ == true)
   {
-    // Copy color
-    vNew.cl = vOld.cl;
+    c.t[0] = CALC_INTERSECTION(a.t[0], b.t[0], t);
+    c.t[1] = CALC_INTERSECTION(a.t[1], b.t[1], t);
   }
 
-  // Set clipping flags
-  vNew.clip = 0;
-  SET_CLIP_FLAGS(vNew);
+  // Set clip flags
+  setClipFlags(c);
 
-  if(vNew.clip == 0)
+  if(c.clip == 0)
   {
-    // Calculate new screen values
-    vNew.sx = (GLint)    ((xA_ * vNew.vd.x) + xB_);
-    vNew.sy = (GLint)    ((yA_ * vNew.vd.y) + yB_);
-    vNew.sz = (uint32_t)(((zA_ * vNew.vd.z) + zB_) * zMax_);
+    // Perspective division
+    //   from 'clip coordinates' to 'normalized device coordinates'
+    CALC_CLIP_TO_NDEV(c);
   }
 }
 
@@ -1057,20 +1317,14 @@ CSoftGLESFloat::CSoftGLESFloat()
  : CASoftGLESFloat()
  , CAGLESTextures()
  , pZBuffer_(NULL)
- , edge1(NULL)
- , edge2(NULL)
 {
-  if(pZBuffer_)
-    delete pZBuffer_;
-  if(edge1)
-    delete edge1;
-  if(edge2)
-    delete edge2;
 }
 
 //-----------------------------------------------------------------------------
 CSoftGLESFloat::~CSoftGLESFloat()
 {
+  if(pZBuffer_)
+    delete pZBuffer_;
 }
 
 //-----------------------------------------------------------------------------
@@ -1080,6 +1334,8 @@ CSoftGLESFloat::glClear(GLbitfield mask)
   if(mask & GL_COLOR_BUFFER_BIT)
   {
     color_t color = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(clClear.r * 255), (uint8_t)(clClear.g * 255), (uint8_t)(clClear.b * 255), (uint8_t)(clClear.a * 255));
+    int yoff = renderSurface->mode.height - (viewportHeight + viewportYOffset);
+    int xoff = viewportXOffset;
 
     switch(renderSurface->mode.bpp)
     {
@@ -1087,29 +1343,33 @@ CSoftGLESFloat::glClear(GLbitfield mask)
       {
         for(int32_t y(0); y < viewportHeight; y++)
           for(int32_t x(0); x < viewportWidth; x++)
-            ((uint8_t  *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
+            ((uint8_t  *)renderSurface->p)[(y + yoff) * renderSurface->mode.xpitch + (x + xoff)] = color;
         break;
       }
       case 16:
       {
         for(int32_t y(0); y < viewportHeight; y++)
           for(int32_t x(0); x < viewportWidth; x++)
-            ((uint16_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
+            ((uint16_t *)renderSurface->p)[(y + yoff) * renderSurface->mode.xpitch + (x + xoff)] = color;
         break;
       }
       case 32:
       {
-        for(int32_t y(0); y < viewportHeight; y++)
-          for(int32_t x(0); x < viewportWidth; x++)
-            ((uint32_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
+        uint32_t * pBuffer = (uint32_t *)renderSurface->p;
+        for(int i(0); i < viewportPixelCount; i++)
+          pBuffer[i] = color;
         break;
       }
     };
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    for(int i(0); i < viewportPixelCount; i++)
-      pZBuffer_[i] = zClearValue_;
+    if(pZBuffer_ != NULL)
+    {
+      uint32_t zc = (zClearValue_ << 16) | zClearValue_;
+      for(int i(0); i < (viewportPixelCount / 2); i++)
+        ((uint32_t *)pZBuffer_)[i] = zc;
+    }
   }
 }
 
@@ -1122,25 +1382,6 @@ CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   // Update z-buffer
   if(depthTestEnabled_ == true)
     zbuffer(true);
-
-  // Allocate edge buffers (for triangle rasterization)
-  if(edge1)
-    delete edge1;
-  if(edge2)
-    delete edge2;
-
-  edge1 = new CEdgeF(viewportHeight);
-  if(edge1 == NULL)
-  {
-    setError(GL_OUT_OF_MEMORY);
-    return;
-  }
-  edge2 = new CEdgeF(viewportHeight);
-  if(edge2 == NULL)
-  {
-    setError(GL_OUT_OF_MEMORY);
-    return;
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -1156,12 +1397,214 @@ CSoftGLESFloat::zbuffer(bool enable)
 {
   if(enable == true)
   {
-    if(pZBuffer_)
-      delete pZBuffer_;
+    // (Re)create z-buffer
+    if(pZBuffer_ == 0)
+    {
+      if(pZBuffer_)
+        delete pZBuffer_;
 
-    pZBuffer_ = new uint32_t[viewportWidth * viewportHeight];
-    if(pZBuffer_ == NULL)
-      setError(GL_OUT_OF_MEMORY);
+      // FIXME: Should be viewportPixelCount
+      pZBuffer_ = new uint16_t[(viewportWidth + viewportXOffset) * (viewportHeight + viewportYOffset)];
+      if(pZBuffer_ == NULL)
+        setError(GL_OUT_OF_MEMORY);
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+inline bool
+CSoftGLESFloat::rasterDepth(uint16_t z_pix, uint16_t z_buf)
+{
+  switch(depthFunction_)
+  {
+    case GL_LESS:     return (z_pix <  z_buf); break;
+    case GL_EQUAL:    return (z_pix == z_buf); break;
+    case GL_LEQUAL:   return (z_pix <= z_buf); break;
+    case GL_GREATER:  return (z_pix >  z_buf); break;
+    case GL_NOTEQUAL: return (z_pix != z_buf); break;
+    case GL_GEQUAL:   return (z_pix >= z_buf); break;
+    case GL_ALWAYS:   return true;             break;
+    case GL_NEVER:    return false;            break;
+  };
+
+  return false;
+}
+
+//-----------------------------------------------------------------------------
+inline void
+CSoftGLESFloat::rasterTexture(SRasterColor & out, const SRasterColor & cfragment, int32_t u, int32_t v, bool near)
+{
+  bool alphaChannel = pCurrentTex_->bRGBA_;
+  SRasterColor ctemp;
+
+  pCurrentTex_->getTexel(ctemp, u, v, near);
+
+  switch(texEnvMode_)
+  {
+    case GL_REPLACE:
+      out.r = ctemp.r;
+      out.g = ctemp.g;
+      out.b = ctemp.b;
+      out.a = alphaChannel ? ctemp.a : cfragment.a;
+      break;
+    case GL_MODULATE:
+      // Texture * Fragment color
+      out.r = COLOR_MUL_COMP(cfragment.r, ctemp.r);
+      out.g = COLOR_MUL_COMP(cfragment.g, ctemp.g);
+      out.b = COLOR_MUL_COMP(cfragment.b, ctemp.b);
+      out.a = alphaChannel ? COLOR_MUL_COMP(cfragment.a, ctemp.a) : cfragment.a;
+      break;
+    case GL_DECAL:
+      out.r = alphaChannel ? (COLOR_MUL_COMP(cfragment.r, ((1<<SHIFT_COLOR)-ctemp.a)) + COLOR_MUL_COMP(ctemp.r, ctemp.a)) : ctemp.r;
+      out.g = alphaChannel ? (COLOR_MUL_COMP(cfragment.g, ((1<<SHIFT_COLOR)-ctemp.a)) + COLOR_MUL_COMP(ctemp.g, ctemp.a)) : ctemp.g;
+      out.b = alphaChannel ? (COLOR_MUL_COMP(cfragment.b, ((1<<SHIFT_COLOR)-ctemp.a)) + COLOR_MUL_COMP(ctemp.b, ctemp.a)) : ctemp.b;
+      out.a = cfragment.a;
+      break;
+    case GL_BLEND:
+      out.r = COLOR_MUL_COMP(cfragment.r, ((1<<SHIFT_COLOR)-ctemp.r)) + COLOR_MUL_COMP(texEnvColorFX_.r, ctemp.r);
+      out.g = COLOR_MUL_COMP(cfragment.g, ((1<<SHIFT_COLOR)-ctemp.g)) + COLOR_MUL_COMP(texEnvColorFX_.g, ctemp.g);
+      out.b = COLOR_MUL_COMP(cfragment.b, ((1<<SHIFT_COLOR)-ctemp.b)) + COLOR_MUL_COMP(texEnvColorFX_.b, ctemp.b);
+      out.a = alphaChannel ? COLOR_MUL_COMP(cfragment.a, ctemp.a) : cfragment.a;
+      break;
+    case GL_ADD:
+      out.r = COLOR_ADD_COMP(cfragment.r, ctemp.r);
+      out.g = COLOR_ADD_COMP(cfragment.g, ctemp.g);
+      out.b = COLOR_ADD_COMP(cfragment.b, ctemp.b);
+      out.a = alphaChannel ? COLOR_MUL_COMP(cfragment.a, ctemp.a) : cfragment.a;
+      break;
+  };
+}
+
+//-----------------------------------------------------------------------------
+inline void
+CSoftGLESFloat::rasterBlend(SRasterColor & out, const SRasterColor & source, const SRasterColor & dest)
+{
+  #define BLEND_FACTOR(factor,c) \
+  switch(factor) \
+  { \
+    case GL_ONE: \
+      c.r = c.g = c.b = c.a = (1<<SHIFT_COLOR); \
+      break; \
+    case GL_SRC_COLOR: \
+      c.r = source.r; \
+      c.g = source.g; \
+      c.b = source.b; \
+      c.a = source.a; \
+      break; \
+    case GL_ONE_MINUS_SRC_COLOR: \
+      c.r = (1<<SHIFT_COLOR) - source.r; \
+      c.g = (1<<SHIFT_COLOR) - source.g; \
+      c.b = (1<<SHIFT_COLOR) - source.b; \
+      c.a = (1<<SHIFT_COLOR) - source.a; \
+      break; \
+    case GL_DST_COLOR: \
+      c.r = dest.r; \
+      c.g = dest.g; \
+      c.b = dest.b; \
+      c.a = dest.a; \
+      break; \
+    case GL_ONE_MINUS_DST_COLOR: \
+      c.r = (1<<SHIFT_COLOR) - dest.r; \
+      c.g = (1<<SHIFT_COLOR) - dest.g; \
+      c.b = (1<<SHIFT_COLOR) - dest.b; \
+      c.a = (1<<SHIFT_COLOR) - dest.a; \
+      break; \
+    case GL_SRC_ALPHA: \
+      c.r = c.g = c.b = c.a = source.a; \
+      break; \
+    case GL_ONE_MINUS_SRC_ALPHA: \
+      c.r = c.g = c.b = c.a = (1<<SHIFT_COLOR) - source.a; \
+      break; \
+    case GL_DST_ALPHA: \
+      c.r = c.g = c.b = c.a = dest.a; \
+      break; \
+    case GL_ONE_MINUS_DST_ALPHA: \
+      c.r = c.g = c.b = c.a = (1<<SHIFT_COLOR) - dest.a; \
+      break; \
+    case GL_ZERO: \
+    default: \
+      c.r = c.g = c.b = c.a = 0; \
+  }
+
+  switch(blendFast_)
+  {
+    case FB_SOURCE:
+      out.r = source.r;
+      out.g = source.g;
+      out.b = source.b;
+      out.a = source.a;
+      break;
+    case FB_DEST:
+      out.r = dest.r;
+      out.g = dest.g;
+      out.b = dest.b;
+      out.a = dest.a;
+      break;
+    case FB_BLEND:
+    {
+      COLOR_AVG(out, dest, source, source.a);
+      COLOR_CLAMP(out, out);
+      break;
+    }
+    default:
+    {
+      SRasterColor cs, cd;
+      BLEND_FACTOR(blendSFactor_, cs);
+      BLEND_FACTOR(blendDFactor_, cd);
+
+      cd.r = ((source.r * cs.r) + (dest.r * cd.r)) >> SHIFT_COLOR;
+      cd.g = ((source.g * cs.g) + (dest.g * cd.g)) >> SHIFT_COLOR;
+      cd.b = ((source.b * cs.b) + (dest.b * cd.b)) >> SHIFT_COLOR;
+      cd.a = ((source.a * cs.a) + (dest.a * cd.a)) >> SHIFT_COLOR;
+
+      COLOR_CLAMP_TOP(out, cd);
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+inline void
+FloorDivMod(int32_t Numerator, int32_t Denominator, int32_t &Floor, int32_t &Mod)
+{
+  if(Numerator >= 0)
+  {
+    // positive case, C is okay
+    Floor = Numerator / Denominator;
+    Mod   = Numerator % Denominator;
+  }
+  else
+  {
+    // Numerator is negative, do the right thing
+    Floor = -((-Numerator) / Denominator);
+    Mod   =   (-Numerator) % Denominator;
+    if(Mod)
+    {
+      // there is a remainder
+      Floor--; Mod = Denominator - Mod;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+inline void
+fxFloorDivMod(int32_t Numerator, int32_t Denominator, unsigned int shift, int32_t &Floor, int32_t &Mod)
+{
+  if(Numerator >= 0)
+  {
+    // positive case, C is okay
+    Floor = (((int64_t)Numerator) << shift) / Denominator;
+    Mod   = (((int64_t)Numerator) << shift) % Denominator;
+  }
+  else
+  {
+    // Numerator is negative, do the right thing
+    Floor = -((-(((int64_t)Numerator) << shift)) / Denominator);
+    Mod   =   (-(((int64_t)Numerator) << shift)) % Denominator;
+    if(Mod)
+    {
+      // there is a remainder
+      Floor--; Mod = Denominator - Mod;
+    }
   }
 }
 
@@ -1169,117 +1612,290 @@ CSoftGLESFloat::zbuffer(bool enable)
 void
 CSoftGLESFloat::_rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
-  // Bubble sort the 3 vertexes
-  SVertexF * vtemp;
-  SVertexF * vhi(&v0);
-  SVertexF * vmi(&v1);
-  SVertexF * vlo(&v2);
+  SRasterVertex vtx0, vtx1, vtx2;
 
-  // Swap bottom with middle?
-  if(vlo->sy > vmi->sy)
+  vtx0.x   = (int32_t)((xA_ * v0.vd.x) + xB_);
+  vtx0.y   = (int32_t)((yA_ * v0.vd.y) + yB_);
+  vtx0.z   = (int32_t)((zA_ * v0.vd.z) + zB_);
+  vtx0.c.r = (int32_t)(v0.cl.r * (1<<SHIFT_COLOR)); // float   to 1.17.14
+  vtx0.c.g = (int32_t)(v0.cl.g * (1<<SHIFT_COLOR)); // float   to 1.17.14
+  vtx0.c.b = (int32_t)(v0.cl.b * (1<<SHIFT_COLOR)); // float   to 1.17.14
+  vtx0.c.a = (int32_t)(v0.cl.a * (1<<SHIFT_COLOR)); // float   to 1.17.14
+#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+  vtx0.t.u = v0.t[0] * (1 << pCurrentTex_->bitWidth_);
+  vtx0.t.v = v0.t[1] * (1 << pCurrentTex_->bitHeight_);
+  vtx0.t.w = v0.vd.w;
+#else
+  vtx0.t.u = (int32_t)(v0.t[0] * (1<<(SHIFT_TEX + pCurrentTex_->bitWidth_)));
+  vtx0.t.v = (int32_t)(v0.t[1] * (1<<(SHIFT_TEX + pCurrentTex_->bitHeight_)));
+#endif
+
+  vtx1.x   = (int32_t)((xA_ * v1.vd.x) + xB_);
+  vtx1.y   = (int32_t)((yA_ * v1.vd.y) + yB_);
+  vtx1.z   = (int32_t)((zA_ * v1.vd.z) + zB_);
+  vtx1.c.r = (int32_t)(v1.cl.r * (1<<SHIFT_COLOR)); // float   to 1.17.14
+  vtx1.c.g = (int32_t)(v1.cl.g * (1<<SHIFT_COLOR)); // float   to 1.17.14
+  vtx1.c.b = (int32_t)(v1.cl.b * (1<<SHIFT_COLOR)); // float   to 1.17.14
+  vtx1.c.a = (int32_t)(v1.cl.a * (1<<SHIFT_COLOR)); // float   to 1.17.14
+#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+  vtx1.t.u = v1.t[0] * (1 << pCurrentTex_->bitWidth_);
+  vtx1.t.v = v1.t[1] * (1 << pCurrentTex_->bitHeight_);
+  vtx1.t.w = v1.vd.w;
+#else
+  vtx1.t.u = (int32_t)(v1.t[0] * (1<<(SHIFT_TEX + pCurrentTex_->bitWidth_)));
+  vtx1.t.v = (int32_t)(v1.t[1] * (1<<(SHIFT_TEX + pCurrentTex_->bitHeight_)));
+#endif
+
+  vtx2.x   = (int32_t)((xA_ * v2.vd.x) + xB_);
+  vtx2.y   = (int32_t)((yA_ * v2.vd.y) + yB_);
+  vtx2.z   = (int32_t)((zA_ * v2.vd.z) + zB_);
+  vtx2.c.r = (int32_t)(v2.cl.r * (1<<SHIFT_COLOR)); // float   to 1.17.14
+  vtx2.c.g = (int32_t)(v2.cl.g * (1<<SHIFT_COLOR)); // float   to 1.17.14
+  vtx2.c.b = (int32_t)(v2.cl.b * (1<<SHIFT_COLOR)); // float   to 1.17.14
+  vtx2.c.a = (int32_t)(v2.cl.a * (1<<SHIFT_COLOR)); // float   to 1.17.14
+#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+  vtx2.t.u = v2.t[0] * (1 << pCurrentTex_->bitWidth_);
+  vtx2.t.v = v2.t[1] * (1 << pCurrentTex_->bitHeight_);
+  vtx2.t.w = v2.vd.w;
+#else
+  vtx2.t.u = (int32_t)(v2.t[0] * (1<<(SHIFT_TEX + pCurrentTex_->bitWidth_)));
+  vtx2.t.v = (int32_t)(v2.t[1] * (1<<(SHIFT_TEX + pCurrentTex_->bitHeight_)));
+#endif
+
+  // Calculate function code
+  uint32_t function_code =
+    (blendingEnabled_ << 3) |
+    (texturesEnabled_ << 2) |
+    (bSmoothShading_  << 1) |
+    (depthTestEnabled_    );
+
+  // We don't need smooth shading if all 3 colors are the same
+  if((bSmoothShading_ == true) &&
+     (vtx0.c.r == vtx1.c.r) && (vtx1.c.r == vtx2.c.r) &&
+     (vtx0.c.g == vtx1.c.g) && (vtx1.c.g == vtx2.c.g) &&
+     (vtx0.c.b == vtx1.c.b) && (vtx1.c.b == vtx2.c.b) &&
+     (vtx0.c.a == vtx1.c.a) && (vtx1.c.a == vtx2.c.a))
   {
-    vtemp = vmi;
-    vmi   = vlo;
-    vlo   = vtemp;
+    // Disable smooth shading for this triangle
+    function_code &= ~(bSmoothShading_ << 1);
   }
-  // Swap middle with top?
-  if(vmi->sy > vhi->sy)
+
+  // Bubble sort the 3 vertexes
+  const SRasterVertex * vhi(&vtx0);
+  const SRasterVertex * vmi(&vtx1);
+  const SRasterVertex * vlo(&vtx2);
   {
-    vtemp = vhi;
-    vhi   = vmi;
-    vmi   = vtemp;
-    // Swap bottom with middle again?
-    if(vlo->sy > vmi->sy)
+    const SRasterVertex * vtemp;
+    // Swap bottom with middle?
+    if(vlo->y > vmi->y)
     {
       vtemp = vmi;
       vmi   = vlo;
       vlo   = vtemp;
     }
-  }
-
-  // Create edge lists
-  if(texturesEnabled_ == true)
-  {
-    if(depthTestEnabled_ == true)
+    // Swap middle with top?
+    if(vmi->y > vhi->y)
     {
-      edge1->addZT(*vlo, *vhi);
-      edge2->addZT(*vlo, *vmi);
-      edge2->addZT(*vmi, *vhi);
-    }
-    else
-    {
-      edge1->addT(*vlo, *vhi);
-      edge2->addT(*vlo, *vmi);
-      edge2->addT(*vmi, *vhi);
-    }
-  }
-  else if(shadingModel_ == GL_SMOOTH)
-  {
-    if(depthTestEnabled_ == true)
-    {
-      edge1->addZC(*vlo, *vhi);
-      edge2->addZC(*vlo, *vmi);
-      edge2->addZC(*vmi, *vhi);
-    }
-    else
-    {
-      edge1->addC(*vlo, *vhi);
-      edge2->addC(*vlo, *vmi);
-      edge2->addC(*vmi, *vhi);
-    }
-  }
-  else
-  {
-    if(depthTestEnabled_ == true)
-    {
-      edge1->addZ(*vlo, *vhi);
-      edge2->addZ(*vlo, *vmi);
-      edge2->addZ(*vmi, *vhi);
-    }
-    else
-    {
-      edge1->add(*vlo, *vhi);
-      edge2->add(*vlo, *vmi);
-      edge2->add(*vmi, *vhi);
+      vtemp = vhi;
+      vhi   = vmi;
+      vmi   = vtemp;
+      // Swap bottom with middle again?
+      if(vlo->y > vmi->y)
+      {
+        vtemp = vmi;
+        vmi   = vlo;
+        vlo   = vtemp;
+      }
     }
   }
 
-  CEdgeF * pEdgeLeft  = edge1;
-  CEdgeF * pEdgeRight = edge2;
-  GLint my(vlo->sy + ((vhi->sy - vlo->sy)/2));
-  if(edge1->x_[my] > edge2->x_[my])
+  switch(function_code)
   {
-    // Swap
-    pEdgeLeft  = edge2;
-    pEdgeRight = edge1;
-  }
+    case 0x00: raster    (vlo, vmi, vhi); break;
+    case 0x01: rasterZ   (vlo, vmi, vhi); break;
+    case 0x02: rasterC   (vlo, vmi, vhi); break;
+    case 0x03: rasterCZ  (vlo, vmi, vhi); break;
+    case 0x04: rasterT   (vlo, vmi, vhi); break;
+    case 0x05: rasterTZ  (vlo, vmi, vhi); break;
+    case 0x06: rasterTC  (vlo, vmi, vhi); break;
+    case 0x07: rasterTCZ (vlo, vmi, vhi); break;
+    case 0x08: rasterB   (vlo, vmi, vhi); break;
+    case 0x09: rasterBZ  (vlo, vmi, vhi); break;
+    case 0x0a: rasterBC  (vlo, vmi, vhi); break;
+    case 0x0b: rasterBCZ (vlo, vmi, vhi); break;
+    case 0x0c: rasterBT  (vlo, vmi, vhi); break;
+    case 0x0d: rasterBTZ (vlo, vmi, vhi); break;
+    case 0x0e: rasterBTC (vlo, vmi, vhi); break;
+    case 0x0f: rasterBTCZ(vlo, vmi, vhi); break;
 
-  // Display triangle (horizontal lines forming the triangle)
-  if(texturesEnabled_ == true)
-  {
-    if(depthTestEnabled_ == true)
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineZTa(*pEdgeLeft, *pEdgeRight, y);
-    else
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineTa(*pEdgeLeft, *pEdgeRight, y);
-  }
-  else if(shadingModel_ == GL_SMOOTH)
-  {
-    if(depthTestEnabled_ == true)
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineZC(*pEdgeLeft, *pEdgeRight, y);
-    else
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineC(*pEdgeLeft, *pEdgeRight, y);
-  }
-  else
-  {
-    if(depthTestEnabled_ == true)
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineZ(*pEdgeLeft, *pEdgeRight, y, v2.cl);
-    else
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hline(*pEdgeLeft, *pEdgeRight, y, v2.cl);
-  }
+    default:
+      rasterC(vlo, vmi, vhi);
+  };
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+struct TInterpolation
+{
+  T current;
+  T increment;
+};
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::raster(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_DEPTH_TEST
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterC(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_SMOOTH_COLORS
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_DEPTH_TEST
+  #define RASTER_ENABLE_SMOOTH_COLORS
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterT(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_TEXTURES
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterTZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_DEPTH_TEST
+  #define RASTER_ENABLE_TEXTURES
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterTC(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_SMOOTH_COLORS
+  #define RASTER_ENABLE_TEXTURES
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterTCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_DEPTH_TEST
+  #define RASTER_ENABLE_SMOOTH_COLORS
+  #define RASTER_ENABLE_TEXTURES
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterB(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_BLENDING
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterBZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_DEPTH_TEST
+  #define RASTER_ENABLE_BLENDING
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterBC(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_SMOOTH_COLORS
+  #define RASTER_ENABLE_BLENDING
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterBCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_DEPTH_TEST
+  #define RASTER_ENABLE_SMOOTH_COLORS
+  #define RASTER_ENABLE_BLENDING
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterBT(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_TEXTURES
+  #define RASTER_ENABLE_BLENDING
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterBTZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_DEPTH_TEST
+  #define RASTER_ENABLE_TEXTURES
+  #define RASTER_ENABLE_BLENDING
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterBTC(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_SMOOTH_COLORS
+  #define RASTER_ENABLE_TEXTURES
+  #define RASTER_ENABLE_BLENDING
+
+  #include "raster.h"
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoftGLESFloat::rasterBTCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+{
+  #define RASTER_ENABLE_DEPTH_TEST
+  #define RASTER_ENABLE_SMOOTH_COLORS
+  #define RASTER_ENABLE_TEXTURES
+  #define RASTER_ENABLE_BLENDING
+
+  #include "raster.h"
 }

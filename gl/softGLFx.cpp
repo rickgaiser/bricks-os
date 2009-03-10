@@ -27,6 +27,49 @@
 
 
 //-----------------------------------------------------------------------------
+// Model-View matrix
+//   from 'object coordinates' to 'eye coordinates'
+#define CALC_OBJ_TO_EYE(v) \
+  pCurrentModelView_->transform4((v).vo, (v).ve)
+//-----------------------------------------------------------------------------
+// Projection matrix
+//   from 'eye coordinates' to 'clip coordinates'
+#define CALC_EYE_TO_CLIP(v) \
+  pCurrentProjection_->transform4((v).ve, (v).vc)
+//-----------------------------------------------------------------------------
+// Perspective division
+//   from 'clip coordinates' to 'normalized device coordinates'
+#define CALC_CLIP_TO_NDEV(v) \
+  CFixed inv_w; \
+  inv_w.value = gl_fpinverse((v).vc.w.value); \
+  (v).vd.x = (v).vc.x * inv_w; \
+  (v).vd.y = (v).vc.y * inv_w; \
+  (v).vd.z = (v).vc.z * inv_w; \
+  (v).vd.w = inv_w
+
+//-----------------------------------------------------------------------------
+// Viewport transformation
+//   from 'normalized device coordinates' to 'window coordinates'
+#define CALC_NDEV_TO_WINDOW(v) \
+  (v).sx = (GLint)   ((xA_ * (v).vd.x) + xB_); \
+  (v).sy = (GLint)   ((yA_ * (v).vd.y) + yB_)
+
+#define CLIP_ROUNDING_ERROR (CFixed(0.00001f)) // (1E-5)
+inline void setClipFlags(SVertexFx & v)
+{
+  CFixed w = v.vc.w * (CFixed(1) + CLIP_ROUNDING_ERROR);
+  v.clip = ((v.vc.x.value < -w.value)     ) |
+           ((v.vc.x.value >  w.value) << 1) |
+           ((v.vc.y.value < -w.value) << 2) |
+           ((v.vc.y.value >  w.value) << 3) |
+           ((v.vc.z.value < -w.value) << 4) |
+           ((v.vc.z.value >  w.value) << 5);
+}
+
+#define CALC_INTERSECTION(a,b,t) (b + ((a - b) * t))
+
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CASoftGLESFixed::CASoftGLESFixed()
  : CAGLESFloatToFxContext()
@@ -34,17 +77,30 @@ CASoftGLESFixed::CASoftGLESFixed()
  , CAGLESMatrixFx()
 
  , depthTestEnabled_(false)
+ , depthMask_(true)
  , depthFunction_(GL_LESS)
- , depthClear_(gl_fpfromi(1))
- , zClearValue_(0xffff)
+ , depthClear_(1)
+ , zClearValue_(0x0000ffff)
  , zNear_(0)
  , zFar_(1)
- , zMax_(0x0000ffff) // 16bit z-buffer
+ , zRangeNear_(0)
+ , zRangeFar_(1)
  , shadingModel_(GL_FLAT)
+ , bSmoothShading_(false)
+ , blendingEnabled_(false)
+ , blendSFactor_(GL_ONE)
+ , blendDFactor_(GL_ZERO)
+ , alphaTestEnabled_(false)
+ , alphaFunc_(GL_ALWAYS)
+ , alphaValue_(0.0f)
+ , alphaValueFX_(0)
  , lightingEnabled_(false)
  , normalizeEnabled_(false)
  , fogEnabled_(false)
  , texturesEnabled_(false)
+ , texEnvMode_(GL_MODULATE)
+ , texEnvColor_(0, 0, 0, 0)
+ , beginValid_(false)
 {
   clCurrent.r = 1;
   clCurrent.g = 1;
@@ -121,13 +177,51 @@ CASoftGLESFixed::CASoftGLESFixed()
 
   matShininess_       = 0.0f;
 
-  zA_ = (zFar_ - zNear_) / 2;
-  zB_ = (zFar_ + zNear_) / 2;
+  float zsize = (1 << (DEPTH_Z + SHIFT_Z));
+  zA_ = ((zsize - 0.5) / 2.0);
+  zB_ = ((zsize - 0.5) / 2.0) + (1 << (SHIFT_Z-1));
+
+  texEnvColorFX_.r = texEnvColor_.r.value >> (16 - SHIFT_COLOR);
+  texEnvColorFX_.g = texEnvColor_.g.value >> (16 - SHIFT_COLOR);
+  texEnvColorFX_.b = texEnvColor_.b.value >> (16 - SHIFT_COLOR);
+  texEnvColorFX_.a = texEnvColor_.a.value >> (16 - SHIFT_COLOR);
+
+  clipPlane_[0] = TVector4<CFixed>( 1.0,  0.0,  0.0,  1.0); // left
+  clipPlane_[1] = TVector4<CFixed>(-1.0,  0.0,  0.0,  1.0); // right
+  clipPlane_[2] = TVector4<CFixed>( 0.0,  1.0,  0.0,  1.0); // bottom
+  clipPlane_[3] = TVector4<CFixed>( 0.0, -1.0,  0.0,  1.0); // top
+  clipPlane_[4] = TVector4<CFixed>( 0.0,  0.0,  1.0,  1.0); // near
+  clipPlane_[5] = TVector4<CFixed>( 0.0,  0.0, -1.0,  1.0); // far
 }
 
 //-----------------------------------------------------------------------------
 CASoftGLESFixed::~CASoftGLESFixed()
 {
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::glAlphaFunc(GLenum func, GLclampf ref)
+{
+  switch(func)
+  {
+    case GL_NEVER:
+    case GL_LESS:
+    case GL_EQUAL:
+    case GL_LEQUAL:
+    case GL_GREATER:
+    case GL_NOTEQUAL:
+    case GL_GEQUAL:
+    case GL_ALWAYS:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  alphaFunc_    = func;
+  alphaValue_   = clampf(ref);
+  alphaValueFX_ = (int32_t)(alphaValue_ * (1 << SHIFT_COLOR));
 }
 
 //-----------------------------------------------------------------------------
@@ -144,8 +238,9 @@ CASoftGLESFixed::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLcl
 void
 CASoftGLESFixed::glClearDepthx(GLclampx depth)
 {
-  depthClear_ = clampfx(depth);
-  zClearValue_ = gl_fptoi(depthClear_ * zMax_);
+  depthClear_.value = clampfx(depth);
+
+  zClearValue_ = (uint32_t)((float)depthClear_ * ((1<<DEPTH_Z)-1));
 }
 
 //-----------------------------------------------------------------------------
@@ -155,8 +250,7 @@ CASoftGLESFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
   zNear_.value = clampfx(zNear);
   zFar_.value  = clampfx(zFar);
 
-  zA_ = (zFar_ - zNear_) / 2;
-  zB_ = (zFar_ + zNear_) / 2;
+  // FIXME: zA_ and zB_ need to be modified, this function is now useless
 }
 
 //-----------------------------------------------------------------------------
@@ -168,28 +262,37 @@ CASoftGLESFixed::glDepthFunc(GLenum func)
 
 //-----------------------------------------------------------------------------
 void
+CASoftGLESFixed::glDepthMask(GLboolean flag)
+{
+  depthMask_ = flag;
+}
+
+//-----------------------------------------------------------------------------
+void
 CASoftGLESFixed::glDisable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_LIGHTING: lightingEnabled_ = false; break;
-    case GL_LIGHT0: lights_[0].enabled = false; break;
-    case GL_LIGHT1: lights_[1].enabled = false; break;
-    case GL_LIGHT2: lights_[2].enabled = false; break;
-    case GL_LIGHT3: lights_[3].enabled = false; break;
-    case GL_LIGHT4: lights_[4].enabled = false; break;
-    case GL_LIGHT5: lights_[5].enabled = false; break;
-    case GL_LIGHT6: lights_[6].enabled = false; break;
-    case GL_LIGHT7: lights_[7].enabled = false; break;
+    case GL_ALPHA_TEST: alphaTestEnabled_  = false; break;
+    case GL_BLEND:      blendingEnabled_   = false; break;
+    case GL_LIGHTING:   lightingEnabled_   = false; break;
+    case GL_LIGHT0:     lights_[0].enabled = false; break;
+    case GL_LIGHT1:     lights_[1].enabled = false; break;
+    case GL_LIGHT2:     lights_[2].enabled = false; break;
+    case GL_LIGHT3:     lights_[3].enabled = false; break;
+    case GL_LIGHT4:     lights_[4].enabled = false; break;
+    case GL_LIGHT5:     lights_[5].enabled = false; break;
+    case GL_LIGHT6:     lights_[6].enabled = false; break;
+    case GL_LIGHT7:     lights_[7].enabled = false; break;
 
     case GL_DEPTH_TEST:
       depthTestEnabled_ = false;
       zbuffer(false); // Notify rasterizer
       break;
-    case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
-    case GL_FOG:        fogEnabled_       = false; break;
-    case GL_TEXTURE_2D: texturesEnabled_  = false; break;
-    case GL_NORMALIZE:  normalizeEnabled_ = false; break;
+    case GL_CULL_FACE:  cullFaceEnabled_   = false; break;
+    case GL_FOG:        fogEnabled_        = false; break;
+    case GL_TEXTURE_2D: texturesEnabled_   = false; break;
+    case GL_NORMALIZE:  normalizeEnabled_  = false; break;
 
     default:
       setError(GL_INVALID_ENUM);
@@ -210,6 +313,8 @@ CASoftGLESFixed::glEnable(GLenum cap)
 {
   switch(cap)
   {
+    case GL_ALPHA_TEST: alphaTestEnabled_  = true; break;
+    case GL_BLEND:      blendingEnabled_   = true; break;
     case GL_LIGHTING:   lightingEnabled_   = true; break;
     case GL_LIGHT0:     lights_[0].enabled = true; break;
     case GL_LIGHT1:     lights_[1].enabled = true; break;
@@ -402,6 +507,7 @@ void
 CASoftGLESFixed::glShadeModel(GLenum mode)
 {
   shadingModel_ = mode;
+  bSmoothShading_ = (shadingModel_ == GL_SMOOTH);
 }
 
 //-----------------------------------------------------------------------------
@@ -414,16 +520,52 @@ CASoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportHeight     = height;
   viewportPixelCount = width * height;
 
-  xA_ = (viewportWidth  >> 1);
-  xB_ = CFixed(viewportWidth  >> 1) + 0.5f;
-  yA_ = -(viewportHeight >> 1);
-  yB_ = CFixed(viewportHeight >> 1) + 0.5f;
+  xA_ =     (viewportWidth  >> 1);
+  xB_ = x + (viewportWidth  >> 1);
+  yA_ =     (viewportHeight >> 1);
+  yB_ = y + (viewportHeight >> 1);
+
+  // FIXME:
+  yA_  = 0-yA_;
+  xB_ -= x;
+  yB_ -= y;
+
+  // Use fixed point format for xy
+//  xA_ *= (1<<SHIFT_XY);
+//  xB_ *= (1<<SHIFT_XY);
+//  yA_ *= (1<<SHIFT_XY);
+//  yB_ *= (1<<SHIFT_XY);
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFixed::glBegin(GLenum mode)
 {
+  if(beginValid_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  switch(mode)
+  {
+//    case GL_POINTS:
+//    case GL_LINES:
+//    case GL_LINE_STRIP:
+//    case GL_LINE_LOOP:
+    case GL_TRIANGLES:
+    case GL_TRIANGLE_STRIP:
+    case GL_TRIANGLE_FAN:
+    case GL_QUADS:
+//    case GL_QUAD_STRIP:
+    case GL_POLYGON:
+      beginValid_ = true;
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  }
+
   rasterMode_ = mode;
 
   // Initialize for default triangle
@@ -438,12 +580,25 @@ CASoftGLESFixed::glBegin(GLenum mode)
 void
 CASoftGLESFixed::glEnd()
 {
+  if(beginValid_ == false)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  beginValid_ = false;
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFixed::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
 {
+  if(beginValid_ == false)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   SVertexFx v;
 
   // Set vertex
@@ -494,6 +649,154 @@ CASoftGLESFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 
   if(normalizeEnabled_  == true)
     normal_.normalize();
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::glGetFloatv(GLenum pname, GLfloat * params)
+{
+  // Return 4x4 matrix
+  #define GL_GET_MATRIX_COPY(matrix) \
+    for(int i(0); i < 4; i++) \
+      for(int j(0); j < 4; j++) \
+        params[i*4+j] = matrix[j*4+i]
+
+  switch(pname)
+  {
+    case GL_MATRIX_MODE:
+    {
+      params[0] = matrixMode_;
+      break;
+    }
+    case GL_MODELVIEW_MATRIX:
+    {
+      GL_GET_MATRIX_COPY(pCurrentModelView_->matrix);
+      break;
+    }
+    case GL_MAX_MODELVIEW_STACK_DEPTH:
+    case GL_MODELVIEW_STACK_DEPTH:
+    {
+      params[0] = GL_MATRIX_MODELVIEW_STACK_SIZE;
+      break;
+    }
+    case GL_PROJECTION_MATRIX:
+    {
+      GL_GET_MATRIX_COPY(pCurrentProjection_->matrix);
+      break;
+    }
+    case GL_MAX_PROJECTION_STACK_DEPTH:
+    case GL_PROJECTION_STACK_DEPTH:
+    {
+      params[0] = GL_MATRIX_PROJECTION_STACK_SIZE;
+      break;
+    }
+    case GL_TEXTURE_MATRIX:
+    {
+      GL_GET_MATRIX_COPY(pCurrentTexture_->matrix);
+      break;
+    }
+    case GL_MAX_TEXTURE_STACK_DEPTH:
+    case GL_TEXTURE_STACK_DEPTH:
+    {
+      params[0] = GL_MATRIX_TEXTURE_STACK_SIZE;
+      break;
+    }
+    default:
+      setError(GL_INVALID_ENUM);
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::glBlendFunc(GLenum sfactor, GLenum dfactor)
+{
+  blendSFactor_ = sfactor;
+  blendDFactor_ = dfactor;
+
+  if((sfactor == GL_ONE) && (dfactor == GL_ZERO))
+    blendFast_ = FB_SOURCE;
+  else if((sfactor == GL_ZERO) && (dfactor == GL_ONE))
+    blendFast_ = FB_DEST;
+  else if((sfactor == GL_SRC_ALPHA) && (dfactor == GL_ONE_MINUS_SRC_ALPHA))
+    blendFast_ = FB_BLEND;
+  else
+    blendFast_ = FB_OTHER;
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::glTexEnvf(GLenum target, GLenum pname, GLfloat param)
+{
+  if(target != GL_TEXTURE_ENV)
+  {
+    setError(GL_INVALID_ENUM);
+    return;
+  }
+  if(pname != GL_TEXTURE_ENV_MODE)
+  {
+    setError(GL_INVALID_ENUM);
+    return;
+  }
+
+  switch((GLenum)param)
+  {
+    case GL_MODULATE:
+    case GL_DECAL:
+    case GL_BLEND:
+    case GL_REPLACE:
+      texEnvMode_ = (GLenum)param;
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFixed::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
+{
+  if(target != GL_TEXTURE_ENV)
+  {
+    setError(GL_INVALID_ENUM);
+    return;
+  }
+  if((pname != GL_TEXTURE_ENV_MODE) && (pname != GL_TEXTURE_ENV_COLOR))
+  {
+    setError(GL_INVALID_ENUM);
+    return;
+  }
+
+  switch(pname)
+  {
+    case GL_TEXTURE_ENV_MODE:
+      switch((GLenum)params[0])
+      {
+        case GL_MODULATE:
+        case GL_DECAL:
+        case GL_BLEND:
+        case GL_REPLACE:
+          texEnvMode_ = (GLenum)params[0];
+          break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      break;
+    case GL_TEXTURE_ENV_COLOR:
+      texEnvColor_.r = params[0];
+      texEnvColor_.g = params[1];
+      texEnvColor_.b = params[2];
+      texEnvColor_.a = params[3];
+      texEnvColorFX_.r = texEnvColor_.r.value >> (16 - SHIFT_COLOR);
+      texEnvColorFX_.g = texEnvColor_.g.value >> (16 - SHIFT_COLOR);
+      texEnvColorFX_.b = texEnvColor_.b.value >> (16 - SHIFT_COLOR);
+      texEnvColorFX_.a = texEnvColor_.a.value >> (16 - SHIFT_COLOR);
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
 }
 
 //-----------------------------------------------------------------------------
@@ -653,22 +956,20 @@ CASoftGLESFixed::_vertexShaderTransform(SVertexFx & v)
   // --------------
   // Model-View matrix
   //   from 'object coordinates' to 'eye coordinates'
-  matrixModelView.transform4(v.vo, v.ve);
+  CALC_OBJ_TO_EYE(v);
   // Projection matrix
   //   from 'eye coordinates' to 'clip coordinates'
-  matrixProjection.transform4(v.ve, v.vc);
-  // Perspective division
-  //   from 'clip coordinates' to 'normalized device coordinates'
-  CFixed scale;
-  scale.value = gl_fpinverse(v.vc.w.value);
-  v.vd.x = v.vc.x * scale;
-  v.vd.y = v.vc.y * scale;
-  v.vd.z = v.vc.z * scale;
-  // Viewport transformation
-  //   from 'normalized device coordinates' to 'window coordinates'
-  v.sx = (GLint)((xA_ * v.vd.x) + xB_);
-  v.sy = (GLint)((yA_ * v.vd.y) + yB_);
-  v.sz =        ((zA_ * v.vd.z) + zB_).value - 1; // 16bit z-buffer
+  CALC_EYE_TO_CLIP(v);
+
+  // Set clip flags
+  setClipFlags(v);
+
+  if(v.clip == 0)
+  {
+    // Perspective division
+    //   from 'clip coordinates' to 'normalized device coordinates'
+    CALC_CLIP_TO_NDEV(v);
+  }
 
   primitiveAssembly(v);
 }
@@ -685,7 +986,7 @@ CASoftGLESFixed::_vertexShaderLight(SVertexFx & v)
     SColorFx c(0, 0, 0, 0);
 
     // Normal Rotation
-    matrixModelView.transform3(v.n, v.n2);
+    pCurrentModelView_->transform3(v.n, v.n2);
 
     for(int iLight(0); iLight < 8; iLight++)
     {
@@ -738,64 +1039,20 @@ CASoftGLESFixed::_vertexShaderLight(SVertexFx & v)
 void
 CASoftGLESFixed::_fragmentCull(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
 {
-  // -------
-  // Culling
-  // -------
-  if(cullFaceEnabled_ == true)
-  {
-    // Always invisible when culling both front and back
-    if(cullFaceMode_ == GL_FRONT_AND_BACK)
-      return;
-
-    GLint v1x = v2.sx - v0.sx;
-    GLint v1y = v2.sy - v0.sy;
-    GLint v2x = v2.sx - v1.sx;
-    GLint v2y = v2.sy - v1.sy;
-    GLint vnz = (v1x * v2y) - (v1y * v2x);
-
-    if(vnz == 0)
-      return;
-
-    if((vnz > 0) == bCullCW_)
-      return;
-  }
+  if(v0.clip & v1.clip & v2.clip)
+    return; // Not visible
 
   fragmentClip(v0, v1, v2);
 }
 
 //-----------------------------------------------------------------------------
-#define ROUNDING_ERROR (1 << 8) // ~0.004f
-const GLfixed fxPlusOne (gl_fpfromi( 1) + ROUNDING_ERROR);
-const GLfixed fxMinusOne(gl_fpfromi(-1) - ROUNDING_ERROR);
-#define SET_CLIP_FLAGS(v) \
-     if((v).vd.x.value > fxPlusOne ) (v).clip |= CLIP_X_MAX; \
-else if((v).vd.x.value < fxMinusOne) (v).clip |= CLIP_X_MIN; \
-     if((v).vd.y.value > fxPlusOne ) (v).clip |= CLIP_Y_MAX; \
-else if((v).vd.y.value < fxMinusOne) (v).clip |= CLIP_Y_MIN; \
-     if((v).vd.z.value > fxPlusOne ) (v).clip |= CLIP_Z_MAX; \
-else if((v).vd.z.value < fxMinusOne) (v).clip |= CLIP_Z_MIN
-//-----------------------------------------------------------------------------
 void
 CASoftGLESFixed::_fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
 {
-  SVertexFx * v[3] = {&v0, &v1, &v2};
-
-  // --------
-  // Clipping
-  // --------
-  for(int iVertex(0); iVertex < 3; iVertex++)
-  {
-    v[iVertex]->clip = 0;
-    SET_CLIP_FLAGS(*(v[iVertex]));
-  }
-
-  if(v0.clip & v1.clip & v2.clip)
-    return; // Not visible
-
   // ----------------------
   // Vertex shader lighting
   // ----------------------
-  if(shadingModel_ == GL_SMOOTH)
+  if(bSmoothShading_ == true)
   {
     if(v0.processed == false)
     {
@@ -862,6 +1119,7 @@ CASoftGLESFixed::_primitiveAssembly(SVertexFx & v)
         vertIdx_++;
       break;
     }
+    case GL_POLYGON:
     case GL_TRIANGLE_FAN:
     {
       if(vertIdx_ == 2)
@@ -903,17 +1161,22 @@ CASoftGLESFixed::_primitiveAssembly(SVertexFx & v)
 // t = -(plane.dotProduct(from) + planeDistance) / plane.dotProduct(delta);
 #define clip_func(name,sign,dir,dir1,dir2)         \
 inline CFixed                                      \
-name(TVector4<CFixed> & vnew, TVector4<CFixed> & from, TVector4<CFixed> & to) \
+name(TVector4<CFixed> & c, TVector4<CFixed> & a, TVector4<CFixed> & b) \
 {                                                  \
-  TVector4<CFixed> delta;                          \
+  TVector4<CFixed> delta = b - a;                  \
   CFixed t, den;                                   \
-  delta = to - from;                               \
-  den = 0 sign delta.dir;                          \
+                                                   \
+  den = 0 - (0 sign delta.dir) + delta.w;          \
   if(den == 0)                                     \
     t = 0;                                         \
   else                                             \
-    t = (0 - (0 sign from.dir - 1)) / den;         \
-  vnew = from + (delta * t);                       \
+    t = (0 sign a.dir - a.w) / den;                \
+                                                   \
+  c.dir1 = a.dir1 + t * delta.dir1;                \
+  c.dir2 = a.dir2 + t * delta.dir2;                \
+  c.w    = a.w    + t * delta.w;                   \
+  c.dir  = 0 sign c.w;                             \
+                                                   \
   return t;                                        \
 }
 
@@ -933,6 +1196,8 @@ CFixed (*clip_proc[6])(TVector4<CFixed> &, TVector4<CFixed> &, TVector4<CFixed> 
   clip_zmin,
   clip_zmax
 };
+
+#define CLIP_FUNC(plane,c,a,b) clip_proc[plane](c,a,b)
 
 //-----------------------------------------------------------------------------
 void
@@ -982,16 +1247,16 @@ CASoftGLESFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & 
 
       // Rearrange vertices
       SVertexFx * v[3];
-           if(cc[0] & clipMask){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v[0] == outside
-      else if(cc[1] & clipMask){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v[1] == outside
-      else                     {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v[2] == outside
+           if(cc[0] & clipMask){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v0 == outside
+      else if(cc[1] & clipMask){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v1 == outside
+      else                     {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v2 == outside
 
       // Interpolate 1-0
-      tt = clip_proc[clipBit](vNew1.vd, v[1]->vd, v[0]->vd);
-      interpolateVertex(vNew1, *v[0], *v[1], tt);
+      tt = CLIP_FUNC(clipBit, vNew1.vc, v[1]->vc, v[0]->vc);
+      interpolateVertex(vNew1, *v[1], *v[0], tt);
       // Interpolate 2-0
-      tt = clip_proc[clipBit](vNew2.vd, v[2]->vd, v[0]->vd);
-      interpolateVertex(vNew2, *v[0], *v[2], tt);
+      tt = CLIP_FUNC(clipBit, vNew2.vc, v[2]->vc, v[0]->vc);
+      interpolateVertex(vNew2, *v[2], *v[0], tt);
 
       // Raster 2 new triangles
       this->rasterTriangleClip(vNew1, *v[1], *v[2], clipBit + 1);
@@ -1006,16 +1271,16 @@ CASoftGLESFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & 
 
       // Rearrange vertices
       SVertexFx * v[3];
-           if((cc[0] & clipMask) == 0){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v[0] == inside
-      else if((cc[1] & clipMask) == 0){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v[1] == inside
-      else                            {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v[2] == inside
+           if((cc[0] & clipMask) == 0){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v0 == inside
+      else if((cc[1] & clipMask) == 0){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v1 == inside
+      else                            {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v2 == inside
 
       // Interpolate 0-1
-      tt = clip_proc[clipBit](vNew1.vd, v[0]->vd, v[1]->vd);
-      interpolateVertex(vNew1, *v[1], *v[0], tt);
+      tt = CLIP_FUNC(clipBit, vNew1.vc, v[0]->vc, v[1]->vc);
+      interpolateVertex(vNew1, *v[0], *v[1], tt);
       // Interpolate 0-2
-      tt = clip_proc[clipBit](vNew2.vd, v[0]->vd, v[2]->vd);
-      interpolateVertex(vNew2, *v[2], *v[0], tt);
+      tt = CLIP_FUNC(clipBit, vNew2.vc, v[0]->vc, v[2]->vc);
+      interpolateVertex(vNew2, *v[0], *v[2], tt);
 
       // Raster new triangle
       this->rasterTriangleClip(*v[0], vNew1, vNew2, clipBit + 1);
@@ -1025,29 +1290,29 @@ CASoftGLESFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & 
 
 //-----------------------------------------------------------------------------
 void
-CASoftGLESFixed::interpolateVertex(SVertexFx & vNew, SVertexFx & vOld, SVertexFx & vFrom, CFixed t)
+CASoftGLESFixed::interpolateVertex(SVertexFx & c, SVertexFx & a, SVertexFx & b, CFixed t)
 {
+  // Color
   if(shadingModel_ == GL_SMOOTH)
-  {
-    // Interpolate color
-    vNew.cl = vFrom.cl + ((vOld.cl - vFrom.cl) * t);
-  }
+    c.cl = CALC_INTERSECTION(a.cl, b.cl, t);
   else
+    c.cl = b.cl;
+
+  // Texture coordinates
+  if(texturesEnabled_ == true)
   {
-    // Copy color
-    vNew.cl = vOld.cl;
+    c.t[0] = CALC_INTERSECTION(a.t[0], b.t[0], t);
+    c.t[1] = CALC_INTERSECTION(a.t[1], b.t[1], t);
   }
 
-  // Set clipping flags
-  vNew.clip = 0;
-  SET_CLIP_FLAGS(vNew);
+  // Set clip flags
+  setClipFlags(c);
 
-  if(vNew.clip == 0)
+  if(c.clip == 0)
   {
-    // Calculate new screen values
-    vNew.sx = (GLint)((xA_ * vNew.vd.x) + xB_);
-    vNew.sy = (GLint)((yA_ * vNew.vd.y) + yB_);
-    vNew.sz =        ((zA_ * vNew.vd.z) + zB_).value - 1; // 16bit z-buffer
+    // Perspective division
+    //   from 'clip coordinates' to 'normalized device coordinates'
+    CALC_CLIP_TO_NDEV(c);
   }
 }
 
@@ -1057,20 +1322,14 @@ CSoftGLESFixed::CSoftGLESFixed()
  : CASoftGLESFixed()
  , CAGLESTextures()
  , pZBuffer_(NULL)
- , edge1(NULL)
- , edge2(NULL)
 {
-  if(pZBuffer_)
-    delete pZBuffer_;
-  if(edge1)
-    delete edge1;
-  if(edge2)
-    delete edge2;
 }
 
 //-----------------------------------------------------------------------------
 CSoftGLESFixed::~CSoftGLESFixed()
 {
+  if(pZBuffer_)
+    delete pZBuffer_;
 }
 
 //-----------------------------------------------------------------------------
@@ -1080,6 +1339,8 @@ CSoftGLESFixed::glClear(GLbitfield mask)
   if(mask & GL_COLOR_BUFFER_BIT)
   {
     color_t color(fpRGB(clClear.r, clClear.g, clClear.b));
+    int yoff = renderSurface->mode.height - (viewportHeight + viewportYOffset);
+    int xoff = viewportXOffset;
 
     switch(renderSurface->mode.bpp)
     {
@@ -1087,29 +1348,33 @@ CSoftGLESFixed::glClear(GLbitfield mask)
       {
         for(int32_t y(0); y < viewportHeight; y++)
           for(int32_t x(0); x < viewportWidth; x++)
-            ((uint8_t  *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
+            ((uint8_t  *)renderSurface->p)[(y + yoff) * renderSurface->mode.xpitch + (x + xoff)] = color;
         break;
       }
       case 16:
       {
         for(int32_t y(0); y < viewportHeight; y++)
           for(int32_t x(0); x < viewportWidth; x++)
-            ((uint16_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
+            ((uint16_t *)renderSurface->p)[(y + yoff) * renderSurface->mode.xpitch + (x + xoff)] = color;
         break;
       }
       case 32:
       {
         for(int32_t y(0); y < viewportHeight; y++)
           for(int32_t x(0); x < viewportWidth; x++)
-            ((uint32_t *)renderSurface->p)[(y + viewportYOffset) * renderSurface->mode.xpitch + (x + viewportXOffset)] = color;
+            ((uint32_t *)renderSurface->p)[(y + yoff) * renderSurface->mode.xpitch + (x + xoff)] = color;
         break;
       }
     };
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
-    for(int i(0); i < viewportPixelCount; i++)
-      pZBuffer_[i] = zClearValue_;
+    if(pZBuffer_ != NULL)
+    {
+      uint32_t zc = (zClearValue_ << 16) | zClearValue_;
+      for(int i(0); i < (viewportPixelCount / 2); i++)
+        ((uint32_t *)pZBuffer_)[i] = zc;
+    }
   }
 }
 
@@ -1122,25 +1387,6 @@ CSoftGLESFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
   // Update z-buffer
   if(depthTestEnabled_ == true)
     zbuffer(true);
-
-  // Allocate edge buffers (for triangle rasterization)
-  if(edge1)
-    delete edge1;
-  if(edge2)
-    delete edge2;
-
-  edge1 = new CEdgeFx(viewportHeight);
-  if(edge1 == NULL)
-  {
-    setError(GL_OUT_OF_MEMORY);
-    return;
-  }
-  edge2 = new CEdgeFx(viewportHeight);
-  if(edge2 == NULL)
-  {
-    setError(GL_OUT_OF_MEMORY);
-    return;
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -1156,130 +1402,169 @@ CSoftGLESFixed::zbuffer(bool enable)
 {
   if(enable == true)
   {
-    if(pZBuffer_)
-      delete pZBuffer_;
+    // (Re)create z-buffer
+    if(pZBuffer_ == 0)
+    {
+      if(pZBuffer_)
+        delete pZBuffer_;
 
-    pZBuffer_ = new uint16_t[viewportWidth * viewportHeight];
-    if(pZBuffer_ == NULL)
-      setError(GL_OUT_OF_MEMORY);
+      // FIXME: Should be viewportPixelCount
+      pZBuffer_ = new uint16_t[(viewportWidth + viewportXOffset) * (viewportHeight + viewportYOffset)];
+      if(pZBuffer_ == NULL)
+        setError(GL_OUT_OF_MEMORY);
+    }
   }
 }
+
+//-----------------------------------------------------------------------------
+inline void
+fxFloorDivMod(int32_t Numerator, int32_t Denominator, unsigned int shift, int32_t &Floor, int32_t &Mod)
+{
+  if(Numerator >= 0)
+  {
+    // positive case, C is okay
+    Floor = (((int64_t)Numerator) << shift) / Denominator;
+    Mod   = (((int64_t)Numerator) << shift) % Denominator;
+  }
+  else
+  {
+    // Numerator is negative, do the right thing
+    Floor = -((-(((int64_t)Numerator) << shift)) / Denominator);
+    Mod   =   (-(((int64_t)Numerator) << shift)) % Denominator;
+    if(Mod)
+    {
+      // there is a remainder
+      Floor--; Mod = Denominator - Mod;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+template <class T>
+struct TInterpolation
+{
+  T current;
+  T increment;
+};
 
 //-----------------------------------------------------------------------------
 void
 CSoftGLESFixed::_rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
 {
-  // Bubble sort the 3 vertexes
-  SVertexFx * vtemp;
-  SVertexFx * vhi(&v0);
-  SVertexFx * vmi(&v1);
-  SVertexFx * vlo(&v2);
+  // -------
+  // Culling
+  // -------
+  if(cullFaceEnabled_ == true)
+  {
+    // Always invisible when culling both front and back
+    if(cullFaceMode_ == GL_FRONT_AND_BACK)
+      return;
 
-  // Swap bottom with middle?
-  if(vlo->sy > vmi->sy)
-  {
-    vtemp = vmi;
-    vmi   = vlo;
-    vlo   = vtemp;
+    CFixed vnz =
+      (v0.vd.x - v2.vd.x) * (v1.vd.y - v2.vd.y) -
+      (v0.vd.y - v2.vd.y) * (v1.vd.x - v2.vd.x);
+
+    if(vnz.value == 0)
+      return;
+
+    if((vnz.value < 0) == bCullCW_)
+      return;
   }
-  // Swap middle with top?
-  if(vmi->sy > vhi->sy)
+
+  SRasterVertex vtx0, vtx1, vtx2;
+
+  vtx0.x   = ((xA_ * v0.vd.x) + xB_).value;
+  vtx0.y   = ((yA_ * v0.vd.y) + yB_).value;
+  vtx0.z   = ((zA_ * v0.vd.z) + zB_).value;
+  vtx0.c.r = v0.cl.r.value >> (16 - SHIFT_COLOR);
+  vtx0.c.g = v0.cl.g.value >> (16 - SHIFT_COLOR);
+  vtx0.c.b = v0.cl.b.value >> (16 - SHIFT_COLOR);
+  vtx0.c.a = v0.cl.a.value >> (16 - SHIFT_COLOR);
+#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+  vtx0.t.u = v0.t[0] * (1 << pCurrentTex_->bitWidth_);
+  vtx0.t.v = v0.t[1] * (1 << pCurrentTex_->bitHeight_);
+  vtx0.t.w = v0.vd.w;
+#else
+  vtx0.t.u = v0.t[0].value << (SHIFT_TEX + pCurrentTex_->bitWidth_ - 16);
+  vtx0.t.v = v0.t[1].value << (SHIFT_TEX + pCurrentTex_->bitWidth_ - 16);
+#endif
+
+  vtx1.x   = ((xA_ * v1.vd.x) + xB_).value;
+  vtx1.y   = ((yA_ * v1.vd.y) + yB_).value;
+  vtx1.z   = ((zA_ * v1.vd.z) + zB_).value;
+  vtx1.c.r = v1.cl.r.value >> (16 - SHIFT_COLOR);
+  vtx1.c.g = v1.cl.g.value >> (16 - SHIFT_COLOR);
+  vtx1.c.b = v1.cl.b.value >> (16 - SHIFT_COLOR);
+  vtx1.c.a = v1.cl.a.value >> (16 - SHIFT_COLOR);
+#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+  vtx1.t.u = v1.t[0] * (1 << pCurrentTex_->bitWidth_);
+  vtx1.t.v = v1.t[1] * (1 << pCurrentTex_->bitHeight_);
+  vtx1.t.w = v1.vd.w;
+#else
+  vtx1.t.u = v1.t[0].value << (SHIFT_TEX + pCurrentTex_->bitWidth_ - 16);
+  vtx1.t.v = v1.t[1].value << (SHIFT_TEX + pCurrentTex_->bitWidth_ - 16);
+#endif
+
+  vtx2.x   = ((xA_ * v2.vd.x) + xB_).value;
+  vtx2.y   = ((yA_ * v2.vd.y) + yB_).value;
+  vtx2.z   = ((zA_ * v2.vd.z) + zB_).value;
+  vtx2.c.r = v2.cl.r.value >> (16 - SHIFT_COLOR);
+  vtx2.c.g = v2.cl.g.value >> (16 - SHIFT_COLOR);
+  vtx2.c.b = v2.cl.b.value >> (16 - SHIFT_COLOR);
+  vtx2.c.a = v2.cl.a.value >> (16 - SHIFT_COLOR);
+#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+  vtx2.t.u = v2.t[0] * (1 << pCurrentTex_->bitWidth_);
+  vtx2.t.v = v2.t[1] * (1 << pCurrentTex_->bitHeight_);
+  vtx2.t.w = v2.vd.w;
+#else
+  vtx2.t.u = v2.t[0].value << (SHIFT_TEX + pCurrentTex_->bitWidth_ - 16);
+  vtx2.t.v = v2.t[1].value << (SHIFT_TEX + pCurrentTex_->bitWidth_ - 16);
+#endif
+
+  // Bubble sort the 3 vertexes
+  const SRasterVertex * vhi(&vtx0);
+  const SRasterVertex * vmi(&vtx1);
+  const SRasterVertex * vlo(&vtx2);
   {
-    vtemp = vhi;
-    vhi   = vmi;
-    vmi   = vtemp;
-    // Swap bottom with middle again?
-    if(vlo->sy > vmi->sy)
+    const SRasterVertex * vtemp;
+    // Swap bottom with middle?
+    if(vlo->y > vmi->y)
     {
       vtemp = vmi;
       vmi   = vlo;
       vlo   = vtemp;
     }
+    // Swap middle with top?
+    if(vmi->y > vhi->y)
+    {
+      vtemp = vhi;
+      vhi   = vmi;
+      vmi   = vtemp;
+      // Swap bottom with middle again?
+      if(vlo->y > vmi->y)
+      {
+        vtemp = vmi;
+        vmi   = vlo;
+        vlo   = vtemp;
+      }
+    }
   }
 
-  // Create edge lists
-  if(texturesEnabled_ == true)
+  if(texturesEnabled_ == false)
   {
-    if(depthTestEnabled_ == true)
+    if(bSmoothShading_ == false)
     {
-      edge1->addZT(*vlo, *vhi);
-      edge2->addZT(*vlo, *vmi);
-      edge2->addZT(*vmi, *vhi);
+      #include "raster.h"
     }
     else
     {
-      edge1->addT(*vlo, *vhi);
-      edge2->addT(*vlo, *vmi);
-      edge2->addT(*vmi, *vhi);
-    }
-  }
-  else if(shadingModel_ == GL_SMOOTH)
-  {
-    if(depthTestEnabled_ == true)
-    {
-      edge1->addZC(*vlo, *vhi);
-      edge2->addZC(*vlo, *vmi);
-      edge2->addZC(*vmi, *vhi);
-    }
-    else
-    {
-      edge1->addC(*vlo, *vhi);
-      edge2->addC(*vlo, *vmi);
-      edge2->addC(*vmi, *vhi);
+      #define RASTER_ENABLE_SMOOTH_COLORS
+      #include "raster.h"
     }
   }
   else
   {
-    if(depthTestEnabled_ == true)
-    {
-      edge1->addZ(*vlo, *vhi);
-      edge2->addZ(*vlo, *vmi);
-      edge2->addZ(*vmi, *vhi);
-    }
-    else
-    {
-      edge1->add(*vlo, *vhi);
-      edge2->add(*vlo, *vmi);
-      edge2->add(*vmi, *vhi);
-    }
-  }
-
-  CEdgeFx * pEdgeLeft  = edge1;
-  CEdgeFx * pEdgeRight = edge2;
-  GLint my(vlo->sy + ((vhi->sy - vlo->sy)/2));
-  if(edge1->x_[my] > edge2->x_[my])
-  {
-    // Swap
-    pEdgeLeft  = edge2;
-    pEdgeRight = edge1;
-  }
-
-  // Display triangle (horizontal lines forming the triangle)
-  if(texturesEnabled_ == true)
-  {
-    if(depthTestEnabled_ == true)
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineZTa(*pEdgeLeft, *pEdgeRight, y);
-    else
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineTa(*pEdgeLeft, *pEdgeRight, y);
-  }
-  else if(shadingModel_ == GL_SMOOTH)
-  {
-    if(depthTestEnabled_ == true)
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineZC(*pEdgeLeft, *pEdgeRight, y);
-    else
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineC(*pEdgeLeft, *pEdgeRight, y);
-  }
-  else
-  {
-    if(depthTestEnabled_ == true)
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hlineZ(*pEdgeLeft, *pEdgeRight, y, v2.cl);
-    else
-      for(GLint y(vlo->sy); y < vhi->sy; y++)
-        hline(*pEdgeLeft, *pEdgeRight, y, v2.cl);
+    #define RASTER_ENABLE_TEXTURES
+    #include "raster.h"
   }
 }

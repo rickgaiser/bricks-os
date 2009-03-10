@@ -79,7 +79,7 @@ NDSfixed  CNDSGLESContext::fpCos_[360];
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CNDSTexture::CNDSTexture()
- : CSoftTexture()
+ : CTexture()
 {
 }
 
@@ -107,8 +107,6 @@ CNDSGLESContext::CNDSGLESContext()
  , matrixMode_(GL_MODELVIEW)
  , ndsCurrentMatrixId_(NDS_MODELVIEW)
 {
-  zMax_ = 0x7fff;
-
   // Power control
   REG_POWCNT |= POWER_LCD | POWER_2D_TOP | POWER_2D_BOTTOM | POWER_3D_CORE | POWER_3D_MATRIX;
   // Display control
@@ -119,7 +117,7 @@ CNDSGLESContext::CNDSGLESContext()
 
   GFX_CONTROL     = iNDSGFXControl_;
   GFX_POLY_FORMAT = iNDSPolyFormat_;
-  GFX_CLEAR_DEPTH = zMax_;
+  GFX_CLEAR_DEPTH = 0x7fff;
 
   // Set the fog density table
   for(int i(0); i < 32; i++)

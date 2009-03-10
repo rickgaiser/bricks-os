@@ -73,22 +73,14 @@ CPS2Texture::CPS2Texture(CGIFPacket & packet)
  : CTexture()
  , packet_(packet)
 {
+  ps2MinFilter = GS_TEX1_NEAREST_MIPMAP_LINEAR;
+  ps2MagFilter = GS_TEX1_LINEAR;
 }
 
 //-----------------------------------------------------------------------------
 CPS2Texture::~CPS2Texture()
 {
   this->free();
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS2Texture::init()
-{
-  ps2MinFilter = GS_TEX1_NEAREST_MIPMAP_LINEAR;
-  ps2MagFilter = GS_TEX1_LINEAR;
-
-  CTexture::init();
 }
 
 //-----------------------------------------------------------------------------
@@ -177,6 +169,11 @@ CPS2GLESContext::CPS2GLESContext(CPS2VideoDevice & device)
     case GS_PSM_24:  zMax_ = 0x00ffffff; break;
     case GS_PSM_32:  zMax_ = 0xffffffff; break;
   };
+
+  // Setup alpha blending
+  packet_.gifAddPackedAD(GIF::REG::alpha_1, GIF::REG::ALPHA(0, 1, 0, 1, 0x00));
+  packet_.gifAddPackedAD(GIF::REG::pabe,    0);
+  packet_.gifAddPackedAD(GIF::REG::fba_1,   0);
 }
 
 //-----------------------------------------------------------------------------
@@ -321,11 +318,6 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
   if(level < 0)
   {
     setError(GL_INVALID_VALUE);
-    return;
-  }
-  if((GLint)format != internalformat)
-  {
-    setError(GL_INVALID_OPERATION);
     return;
   }
   if(((format != GL_RGB) && (format != GL_BGR)) &&

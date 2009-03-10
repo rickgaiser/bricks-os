@@ -29,6 +29,11 @@
 #include "asm/arch/config.h"
 
 
+#define GL_MATRIX_MODELVIEW_STACK_SIZE  32
+#define GL_MATRIX_PROJECTION_STACK_SIZE  2
+#define GL_MATRIX_TEXTURE_STACK_SIZE     2
+
+
 #ifdef CONFIG_FPU
 //-----------------------------------------------------------------------------
 class CAGLESMatrixF
@@ -56,19 +61,19 @@ protected:
   GLenum                matrixMode_;
 
   // ModelView
-  TMatrix4x4<GLfloat>   stackModelView[16];  // Stack
-  int                   iCurrentModelView_;  // Current index
-  TMatrix4x4<GLfloat>   matrixModelView;
+  TMatrix4x4<GLfloat>   stackModelView[GL_MATRIX_MODELVIEW_STACK_SIZE];
+  TMatrix4x4<GLfloat> * pCurrentModelView_;
+  int                   iModelViewIndex_;
 
   // Projection
-  TMatrix4x4<GLfloat>   stackProjection[2];  // Stack
-  int                   iCurrentProjection_; // Current index
-  TMatrix4x4<GLfloat>   matrixProjection;
+  TMatrix4x4<GLfloat>   stackProjection[GL_MATRIX_PROJECTION_STACK_SIZE];
+  TMatrix4x4<GLfloat> * pCurrentProjection_;
+  int                   iProjectionIndex_;
 
   // Texture
-  TMatrix4x4<GLfloat>   stackTexture[2];     // Stack
-  int                   iCurrentTexture_;    // Current index
-  TMatrix4x4<GLfloat>   matrixTexture;
+  TMatrix4x4<GLfloat>   stackTexture[GL_MATRIX_TEXTURE_STACK_SIZE];
+  TMatrix4x4<GLfloat> * pCurrentTexture_;
+  int                   iTextureIndex_;
 
   TMatrix4x4<GLfloat> * pCurrentMatrix_;
 };
@@ -99,19 +104,19 @@ protected:
   GLenum               matrixMode_;
 
   // ModelView
-  TMatrix4x4<CFixed>   stackModelView[16];  // Stack
-  int                  iCurrentModelView_;  // Current index
-  TMatrix4x4<CFixed>   matrixModelView;
+  TMatrix4x4<CFixed>   stackModelView[GL_MATRIX_MODELVIEW_STACK_SIZE];
+  TMatrix4x4<CFixed> * pCurrentModelView_;
+  int                  iModelViewIndex_;
 
   // Projection
-  TMatrix4x4<CFixed>   stackProjection[2];  // Stack
-  int                  iCurrentProjection_; // Current index
-  TMatrix4x4<CFixed>   matrixProjection;
+  TMatrix4x4<CFixed>   stackProjection[GL_MATRIX_PROJECTION_STACK_SIZE];
+  TMatrix4x4<CFixed> * pCurrentProjection_;
+  int                  iProjectionIndex_;
 
   // Texture
-  TMatrix4x4<CFixed>   stackTexture[2];     // Stack
-  int                  iCurrentTexture_;    // Current index
-  TMatrix4x4<CFixed>   matrixTexture;
+  TMatrix4x4<CFixed>   stackTexture[GL_MATRIX_TEXTURE_STACK_SIZE];
+  TMatrix4x4<CFixed> * pCurrentTexture_;
+  int                  iTextureIndex_;
 
   TMatrix4x4<CFixed> * pCurrentMatrix_;
 };

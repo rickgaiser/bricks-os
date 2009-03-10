@@ -124,6 +124,7 @@ GL_APIFUNCTION_2(glHint,               GLenum, target, GLenum, mode);
 // Depth Buffer
 GL_APIFUNCTION_1(glClearDepthf,        GLclampf, depth);
 GL_APIFUNCTION_1(glDepthFunc,          GLenum, func);
+GL_APIFUNCTION_1(glDepthMask,          GLboolean, flag);
 GL_APIFUNCTION_2(glDepthRangef,        GLclampf, zNear, GLclampf, zFar);
 // Accumulation Buffer
 // ...
@@ -168,6 +169,7 @@ GL_APIFUNCTION_3(glMaterialfv,         GLenum, face, GLenum, pname, const GLfloa
 // Texture mapping
 GL_APIFUNCTION_3(glTexParameterf,      GLenum, target, GLenum, pname, GLfloat, param);
 GL_APIFUNCTION_9(glTexImage2D,         GLenum, target, GLint, level, GLint, internalformat, GLsizei, width, GLsizei, height, GLint, border, GLenum, format, GLenum, type, const GLvoid *, pixels);
+GL_APIFUNCTION_9(glTexSubImage2D,      GLenum, target, GLint, level, GLint, xoffset, GLint, yoffset, GLsizei, width, GLsizei, height, GLenum, format, GLenum, type, const GLvoid *, pixels)
 // OpenGL 1.1 functions
 GL_APIFUNCTION_2(glGenTextures,        GLsizei, n, GLuint *, textures);
 GL_APIFUNCTION_2(glDeleteTextures,     GLsizei, n, const GLuint *, textures);
@@ -298,3 +300,9 @@ TEXCOORD_WRAPPERS(d, GLdouble, 0.0f, 0.0f, 1.0f);
 TEXCOORD_WRAPPERS(f, GLfloat,  0.0f, 0.0f, 1.0f);
 TEXCOORD_WRAPPERS(i, GLint,       0,    0,    1);
 TEXCOORD_WRAPPERS(s, GLshort,     0,    0,    1);
+
+GL_APIFUNCTION_2(glGetFloatv,          GLenum, pname, GLfloat *, params);
+GL_APIFUNCTION_2(glAlphaFunc,          GLenum, func, GLclampf, ref);
+GL_APIFUNCTION_2(glBlendFunc,          GLenum, sfactor, GLenum, dfactor);
+GL_APIFUNCTION_3(glTexEnvf,            GLenum, target, GLenum, pname, GLfloat, param);
+GL_APIFUNCTION_3(glTexEnvfv,           GLenum, target, GLenum, pname, const GLfloat *, params);

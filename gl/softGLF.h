@@ -31,11 +31,21 @@
 #include "kernel/3dRenderer.h"
 #include "glMatrix.h"
 #include "textures.h"
-#include "edge.h"
+#include "color.h"
 #include "vhl/vector.h"
 
+#include "asm/arch/config.h"
 #include "asm/arch/memory.h"
 
+
+//-----------------------------------------------------------------------------
+enum EFastBlendMode
+{
+  FB_OTHER,
+  FB_SOURCE,
+  FB_DEST,
+  FB_BLEND,
+};
 
 //-----------------------------------------------------------------------------
 class CASoftGLESFloat
@@ -47,10 +57,12 @@ public:
   CASoftGLESFloat();
   virtual ~CASoftGLESFloat();
 
+  virtual void glAlphaFunc(GLenum func, GLclampf ref);
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
   virtual void glClearDepthf(GLclampf depth);
   virtual void glDepthRangef(GLclampf zNear, GLclampf zFar);
   virtual void glDepthFunc(GLenum func);
+  virtual void glDepthMask(GLboolean flag);
   virtual void glDisable(GLenum cap);
   virtual void glDrawArrays(GLenum mode, GLint first, GLsizei count);
   virtual void glEnable(GLenum cap);
@@ -72,6 +84,11 @@ public:
   virtual void glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q);
   virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
 
+  virtual void glGetFloatv(GLenum pname, GLfloat * params);
+  virtual void glBlendFunc(GLenum sfactor, GLenum dfactor);
+  virtual void glTexEnvf(GLenum target, GLenum pname, GLfloat param);
+  virtual void glTexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
+
 protected:
   // Vertex shader
   virtual void vertexShaderTransform(SVertexF & v);
@@ -87,27 +104,43 @@ protected:
   virtual void rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit = 0);
   virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2) = 0;
 
-  void interpolateVertex(SVertexF & vNew, SVertexF & vOld, SVertexF & vFrom, GLfloat t);
+  void interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLfloat t);
 
   virtual void zbuffer(bool enable) = 0;
 
 protected:
   // Depth testing
   bool        depthTestEnabled_;
+  bool        depthMask_;
   GLenum      depthFunction_;
   GLfloat     depthClear_;
   uint32_t    zClearValue_;
+  GLclampf    zRangeNear_;
+  GLclampf    zRangeFar_;
+
   GLclampf    zNear_;
   GLclampf    zFar_;
   GLfloat     zA_;
   GLfloat     zB_;
-  uint32_t    zMax_;
 
   GLenum      shadingModel_;
+  bool        bSmoothShading_;
 
   // Colors
   SColorF     clCurrent;
   SColorF     clClear;
+
+  // Alpha Blending
+  bool        blendingEnabled_;
+  GLenum      blendSFactor_;
+  GLenum      blendDFactor_;
+  EFastBlendMode blendFast_;
+
+  // Alpha testing
+  bool        alphaTestEnabled_;
+  GLenum      alphaFunc_;
+  GLclampf    alphaValue_;
+  int32_t     alphaValueFX_;
 
   // Lighting
   bool        lightingEnabled_;
@@ -134,6 +167,9 @@ protected:
   // Textures
   bool        texturesEnabled_;
   GLfloat     texCoordCurrent_[4];
+  GLenum      texEnvMode_;
+  SColorF     texEnvColor_;
+  SRasterColor texEnvColorFX_;
 
   // Vertex transformations
   GLfloat     xA_;
@@ -142,11 +178,15 @@ protected:
   GLfloat     yB_;
 
   // Primitive assembly
+  bool        beginValid_;
   GLenum      rasterMode_;
   SVertexF    vertices[3];  // Vertex buffer for primitive assembly
   SVertexF  * triangle_[3]; // Assembled triangle
   bool        bFlipFlop_;   // Triangle strip
   GLint       vertIdx_;     // Current index into vertex buffer
+
+  // Clipping planes
+  TVector4<GLfloat> clipPlane_[6];
 
   // Rasterizer
   GLint       viewportXOffset;
@@ -162,6 +202,29 @@ private:
   void _fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2) FAST_CODE;
   void _fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2) FAST_CODE;
   void _primitiveAssembly(SVertexF & v)                           FAST_CODE;
+};
+
+//-----------------------------------------------------------------------------
+struct STexCoord
+{
+#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+  float u;
+  float v;
+  float w;
+#else
+  int32_t u;
+  int32_t v;
+#endif
+};
+
+//-----------------------------------------------------------------------------
+struct SRasterVertex
+{
+  int32_t      x;
+  int32_t      y;
+  int32_t      z;
+  SRasterColor c;
+  STexCoord    t;
 };
 
 //-----------------------------------------------------------------------------
@@ -181,25 +244,33 @@ protected:
   virtual void zbuffer(bool enable);
 
 private:
-  uint32_t  * pZBuffer_;
-  CEdgeF    * edge1;
-  CEdgeF    * edge2;
+  uint16_t * pZBuffer_;
 
 private:
-  void _rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2) FAST_CODE;
+  bool rasterDepth(uint16_t z_pix, uint16_t z_buf)                                              FAST_CODE;
+  void rasterTexture(SRasterColor & out, const SRasterColor & cfragment, int32_t u, int32_t v, bool near) FAST_CODE;
+  void rasterBlend(SRasterColor & out, const SRasterColor & source, const SRasterColor & dest)  FAST_CODE;
 
-  bool testAndSetDepth(GLfloat z, uint32_t index)                   FAST_CODE;
-  void hline   (CEdgeF & from, CEdgeF & to, GLint y, SColorF c)     FAST_CODE;
-  void hlineZ  (CEdgeF & from, CEdgeF & to, GLint y, SColorF c)     FAST_CODE;
-  void hlineC  (CEdgeF & from, CEdgeF & to, GLint y)                FAST_CODE;
-  void hlineZC (CEdgeF & from, CEdgeF & to, GLint y)                FAST_CODE;
-  void hlineTa (CEdgeF & from, CEdgeF & to, GLint y)                FAST_CODE;
-  void hlineZTa(CEdgeF & from, CEdgeF & to, GLint y)                FAST_CODE;
-  void hlineZTp(CEdgeF & from, CEdgeF & to, GLint y)                FAST_CODE;
+
+  void _rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)                             FAST_CODE;
+
+  void raster    (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterZ   (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterC   (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterCZ  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterT   (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterTZ  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterTC  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterTCZ (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterB   (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterBZ  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterBC  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterBCZ (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterBT  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterBTZ (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterBTC (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
+  void rasterBTCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
 };
-
-
-#include "softGLF.inl"
 
 
 #endif // GL_CONTEXT_H

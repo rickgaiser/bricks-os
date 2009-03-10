@@ -23,10 +23,20 @@
 #define TEXTURES_H
 
 
+#include "asm/arch/config.h"
 #include "context.h"
+#include "color.h"
 
 
-#define MAX_TEXTURE_COUNT 32
+#define MAX_TEXTURE_COUNT 1024
+
+#ifdef CONFIG_GL_TEXTURES_16BIT
+  #define TEXEL_FORMAT uint16_t
+  #define TEXEL_LOAD COLOR_LOAD_565
+#else
+  #define TEXEL_FORMAT uint32_t
+  #define TEXEL_LOAD COLOR_LOAD_8888
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -36,35 +46,30 @@ public:
   CTexture();
   virtual ~CTexture();
 
-  virtual void init();
-  virtual void free();
-  virtual void bind();
+  void free();
+  void bind();
+
+#ifndef CONFIG_GL_SIMPLE_TEXTURES
+  inline void getTexel(SRasterColor & c, int32_t u, int32_t v, bool near);
+#endif
 
 public:
-  GLsizei width;
-  GLsizei height;
+  int32_t width;
+  int32_t height;
+  int32_t bitWidth_;
+  int32_t bitHeight_;
+  bool    bRGBA_;
 
   GLint minFilter;
   GLint magFilter;
   GLint wrapS;
   GLint wrapT;
-};
 
-//-----------------------------------------------------------------------------
-class CSoftTexture
- : public CTexture
-{
-public:
-  CSoftTexture();
-  virtual ~CSoftTexture();
+  uint32_t iWidthMask_;
+  uint32_t iHeightMask_;
 
-  virtual void init();
-  virtual void free();
-
-public:
-  uint32_t maskWidth;
-  uint32_t maskHeight;
   void * data;
+  void * data_raw;
 };
 
 //-----------------------------------------------------------------------------
@@ -81,9 +86,7 @@ public:
   virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
   virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
   virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
-
-protected:
-  virtual CTexture * getTexture();
+  virtual void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
 
 protected:
   CTexture * pCurrentTex_;
@@ -96,6 +99,11 @@ private:
 int convertImageFormat(void * dst, EColorFormat dstFmt, const void * src, EColorFormat srcFmt, int width, int height);
 EColorFormat convertGLToBxColorFormat(GLenum format, GLenum type);
 uint8_t getBitNr(uint32_t value);
+
+
+#ifndef CONFIG_GL_SIMPLE_TEXTURES
+  #include "textures.inl"
+#endif
 
 
 #endif

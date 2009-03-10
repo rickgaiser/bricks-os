@@ -20,18 +20,27 @@
 
 
 #include "textures.h"
+#include "bitResolution.h"
+
 #include "unistd.h"
 #include "string.h"
 
 
 //-----------------------------------------------------------------------------
 #define IMG_CONV_32_TO_32 0x44
+#define IMG_CONV_32_TO_24 0x43
 #define IMG_CONV_32_TO_16 0x42
 #define IMG_CONV_32_TO_08 0x41
+#define IMG_CONV_24_TO_32 0x34
+#define IMG_CONV_24_TO_24 0x33
+#define IMG_CONV_24_TO_16 0x32
+#define IMG_CONV_24_TO_08 0x31
 #define IMG_CONV_16_TO_32 0x24
+#define IMG_CONV_16_TO_24 0x23
 #define IMG_CONV_16_TO_16 0x22
 #define IMG_CONV_16_TO_08 0x21
 #define IMG_CONV_08_TO_32 0x14
+#define IMG_CONV_08_TO_24 0x13
 #define IMG_CONV_08_TO_16 0x12
 #define IMG_CONV_08_TO_08 0x11
 //-----------------------------------------------------------------------------
@@ -65,7 +74,16 @@ convertImageFormat(void * dst, EColorFormat dstFmt, const void * src, EColorForm
         for(; i < iPixelCount; i++)
           ((uint8_t  *)dst)[i] = BxColorFormat_ConvertRGBA(sConverter, ((uint32_t *)src)[i]);
         break;
-      case IMG_CONV_16_TO_32:
+      case IMG_CONV_24_TO_32:
+        for(; i < iPixelCount; i++)
+        {
+          uint8_t r = ((uint8_t *)src)[i*3+0];
+          uint8_t g = ((uint8_t *)src)[i*3+1];
+          uint8_t b = ((uint8_t *)src)[i*3+2];
+          ((uint32_t *)dst)[i] = BxColorFormat_FromRGBA(dstFmt, r, g, b, 255);
+        }
+        break;
+	  case IMG_CONV_16_TO_32:
         for(; i < iPixelCount; i++)
           ((uint32_t *)dst)[i] = BxColorFormat_ConvertRGBA(sConverter, ((uint16_t *)src)[i]);
         break;
@@ -158,6 +176,11 @@ getBitNr(uint32_t value)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CTexture::CTexture()
+ : minFilter(GL_NEAREST_MIPMAP_LINEAR)
+ , magFilter(GL_LINEAR)
+ , wrapS(GL_REPEAT)
+ , wrapT(GL_REPEAT)
+ , data_raw(NULL)
 {
 }
 
@@ -169,57 +192,19 @@ CTexture::~CTexture()
 
 //-----------------------------------------------------------------------------
 void
-CTexture::init()
-{
-  minFilter   = GL_NEAREST_MIPMAP_LINEAR;
-  magFilter   = GL_LINEAR;
-  wrapS       = GL_REPEAT;
-  wrapT       = GL_REPEAT;
-}
-
-//-----------------------------------------------------------------------------
-void
 CTexture::free()
 {
+  if(data_raw != NULL)
+  {
+    delete (uint8_t *)data_raw;
+    data_raw = NULL;
+  }
 }
 
 //-----------------------------------------------------------------------------
 void
 CTexture::bind()
 {
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-CSoftTexture::CSoftTexture()
- : CTexture()
- , data(NULL)
-{
-}
-
-//-----------------------------------------------------------------------------
-CSoftTexture::~CSoftTexture()
-{
-  this->free();
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftTexture::init()
-{
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftTexture::free()
-{
-  if(data != NULL)
-  {
-    delete (uint8_t *)data;
-    data = NULL;
-  }
-
-  CTexture::free();
 }
 
 //-----------------------------------------------------------------------------
@@ -293,8 +278,7 @@ CAGLESTextures::glGenTextures(GLsizei n, GLuint *textures)
     {
       if(textures_[idxTex] == NULL)
       {
-        textures_[idxTex] = this->getTexture();
-        textures_[idxTex]->init();
+        textures_[idxTex] = new CTexture;
 
         textures[idxNr] = idxTex;
         bFound = true;
@@ -319,11 +303,6 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
   if(level < 0)
   {
 //    setError(GL_INVALID_VALUE);
-    return;
-  }
-  if((GLint)format != internalformat)
-  {
-//    setError(GL_INVALID_OPERATION);
     return;
   }
   if(((format != GL_RGB) && (format != GL_BGR)) &&
@@ -360,46 +339,54 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
   {
     switch(width)
     {
-      case    8:
-      case   16:
-      case   32:
-      case   64:
-      case  128:
-      case  256:
-      case  512:
-      case 1024:
-        break;
+      case    8: pCurrentTex_->bitWidth_ =  3; break;
+      case   16: pCurrentTex_->bitWidth_ =  4; break;
+      case   32: pCurrentTex_->bitWidth_ =  5; break;
+      case   64: pCurrentTex_->bitWidth_ =  6; break;
+      case  128: pCurrentTex_->bitWidth_ =  7; break;
+      case  256: pCurrentTex_->bitWidth_ =  8; break;
+      case  512: pCurrentTex_->bitWidth_ =  9; break;
+      case 1024: pCurrentTex_->bitWidth_ = 10; break;
       default:
   //      setError(GL_INVALID_VALUE);
         return;
     };
     switch(height)
     {
-      case    8:
-      case   16:
-      case   32:
-      case   64:
-      case  128:
-      case  256:
-      case  512:
-      case 1024:
-        break;
+      case    8: pCurrentTex_->bitHeight_ =  3; break;
+      case   16: pCurrentTex_->bitHeight_ =  4; break;
+      case   32: pCurrentTex_->bitHeight_ =  5; break;
+      case   64: pCurrentTex_->bitHeight_ =  6; break;
+      case  128: pCurrentTex_->bitHeight_ =  7; break;
+      case  256: pCurrentTex_->bitHeight_ =  8; break;
+      case  512: pCurrentTex_->bitHeight_ =  9; break;
+      case 1024: pCurrentTex_->bitHeight_ = 10; break;
       default:
   //      setError(GL_INVALID_VALUE);
         return;
     };
 
-    ((CSoftTexture *)pCurrentTex_)->maskWidth  = width - 1;
-    ((CSoftTexture *)pCurrentTex_)->maskHeight = width - 1;
-    pCurrentTex_->width  = width;
-    pCurrentTex_->height = height;
+    pCurrentTex_->iWidthMask_  = width  - 1;
+    pCurrentTex_->iHeightMask_ = height - 1;
+    pCurrentTex_->width        = width;
+    pCurrentTex_->height       = height;
+    pCurrentTex_->bRGBA_       = internalformat == 4;
   }
   else
   {
     // MipMap level > 0
   }
 
-  EColorFormat fmtTo   = renderSurface->mode.format;
+#ifdef CONFIG_GL_SIMPLE_TEXTURES
+  EColorFormat fmtTo = renderSurface->mode.format;
+#else
+  #ifdef CONFIG_GL_TEXTURES_16BIT
+  EColorFormat fmtTo = cfR5G6B5;
+  #else
+  EColorFormat fmtTo = cfA8R8G8B8;
+  #endif
+#endif
+
   EColorFormat fmtFrom = convertGLToBxColorFormat(format, type);
   if(fmtFrom == cfUNKNOWN)
   {
@@ -408,19 +395,67 @@ CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
   }
 
   // Delete old texture buffer if present
-  if(((CSoftTexture *)pCurrentTex_)->data != NULL)
-    delete ((uint8_t *)((CSoftTexture *)pCurrentTex_)->data);
+  if(pCurrentTex_->data_raw != NULL)
+    delete ((uint8_t *)pCurrentTex_->data_raw);
   // Allocate texture buffer
   switch(renderSurface->mode.bpp)
   {
-    case 8:  ((CSoftTexture *)pCurrentTex_)->data = new uint8_t [width*height]; break;
-    case 16: ((CSoftTexture *)pCurrentTex_)->data = new uint16_t[width*height]; break;
-    case 32: ((CSoftTexture *)pCurrentTex_)->data = new uint32_t[width*height]; break;
+    case 8:  pCurrentTex_->data_raw = new uint8_t [width*height+3]; break;
+    case 16: pCurrentTex_->data_raw = new uint16_t[width*height+3]; break;
+    case 32: pCurrentTex_->data_raw = new uint32_t[width*height+3]; break;
     default:
       return; // ERROR, invalid render surface
   };
+  // Align to 32bit
+  pCurrentTex_->data = (void *)(((uint32_t)pCurrentTex_->data_raw + 3) & (~3));
 
-  convertImageFormat(((CSoftTexture *)pCurrentTex_)->data, fmtTo, pixels, fmtFrom, width, height);
+  convertImageFormat(pCurrentTex_->data, fmtTo, pixels, fmtFrom, width, height);
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLESTextures::glTexSubImage2D(
+  GLenum target,
+  GLint level,
+  GLint xoffset, GLint yoffset,
+  GLsizei width, GLsizei height,
+  GLenum format,
+  GLenum type,
+  const GLvoid * pixels)
+{
+  if(target != GL_TEXTURE_2D)
+  {
+//    setError(GL_INVALID_ENUM);
+    return;
+  }
+  if(level < 0)
+  {
+//    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  // FIXME: MipMaps not supported
+  if(level > 0)
+  {
+//    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  if((pCurrentTex_ == 0) || (renderSurface == 0))
+  {
+//    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+/*
+  for(GLsizei y(0); y < height, y++)
+  {
+    for(GLsizei x(0); x < width, x++)
+    {
+      pCurrentTex_->data[...] = pixels[...];
+    }
+  }
+*/
 }
 
 //-----------------------------------------------------------------------------
@@ -497,11 +532,4 @@ void
 CAGLESTextures::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 {
   glTexParameterf(target, pname, gl_fptof(param));
-}
-
-//-----------------------------------------------------------------------------
-CTexture *
-CAGLESTextures::getTexture()
-{
-  return new CSoftTexture;
 }

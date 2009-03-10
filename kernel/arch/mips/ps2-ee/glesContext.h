@@ -62,7 +62,6 @@ public:
   CPS2Texture(CGIFPacket & packet);
   virtual ~CPS2Texture();
 
-  virtual void init();
   virtual void free();
   virtual void bind();
 
@@ -131,6 +130,7 @@ private:
   uint16_t    ps2Aliasing_;
   uint16_t    ps2DepthFunction_;
   bool        ps2DepthInvert_;
+  uint32_t    zMax_;
 };
 
 

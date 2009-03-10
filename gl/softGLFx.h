@@ -31,10 +31,10 @@
 #include "kernel/3dRenderer.h"
 #include "glMatrix.h"
 #include "textures.h"
-#include "edge.h"
 #include "vhl/fixedPoint.h"
 #include "vhl/vector.h"
 
+#include "asm/arch/config.h"
 #include "asm/arch/memory.h"
 
 
@@ -46,6 +46,15 @@
 
 
 //-----------------------------------------------------------------------------
+enum EFastBlendMode
+{
+  FB_OTHER,
+  FB_SOURCE,
+  FB_DEST,
+  FB_BLEND,
+};
+
+//-----------------------------------------------------------------------------
 class CASoftGLESFixed
  : public virtual CAGLESFloatToFxContext
  , public virtual CAGLESBase
@@ -55,10 +64,12 @@ public:
   CASoftGLESFixed();
   virtual ~CASoftGLESFixed();
 
+  virtual void glAlphaFunc(GLenum func, GLclampf ref);
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
   virtual void glClearDepthx(GLclampx depth);
   virtual void glDepthRangex(GLclampx zNear, GLclampx zFar);
   virtual void glDepthFunc(GLenum func);
+  virtual void glDepthMask(GLboolean flag);
   virtual void glDisable(GLenum cap);
   virtual void glDrawArrays(GLenum mode, GLint first, GLsizei count);
   virtual void glEnable(GLenum cap);
@@ -80,6 +91,11 @@ public:
   virtual void glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q);
   virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
 
+  virtual void glGetFloatv(GLenum pname, GLfloat * params);
+  virtual void glBlendFunc(GLenum sfactor, GLenum dfactor);
+  virtual void glTexEnvf(GLenum target, GLenum pname, GLfloat param);
+  virtual void glTexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
+
 protected:
   // Vertex shader
   virtual void vertexShaderTransform(SVertexFx & v);
@@ -95,28 +111,44 @@ protected:
   virtual void rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2, uint32_t clipBit = 0);
   virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) = 0;
 
-  void interpolateVertex(SVertexFx & vNew, SVertexFx & vOld, SVertexFx & vFrom, CFixed t);
+  void interpolateVertex(SVertexFx & c, SVertexFx & a, SVertexFx & b, CFixed t);
 
   virtual void zbuffer(bool enable) = 0;
 
 protected:
   // Depth testing
   bool        depthTestEnabled_;
+  bool        depthMask_;
   GLenum      depthFunction_;
-  GLfixed     depthClear_;
-  uint16_t    zClearValue_;
+  CFixed      depthClear_;
+  uint32_t    zClearValue_;
+  CFixed      zRangeNear_;
+  CFixed      zRangeFar_;
+
   GLfixed     zLoss_;
   CFixed      zNear_;
   CFixed      zFar_;
   CFixed      zA_;
   CFixed      zB_;
-  uint32_t    zMax_;
 
   GLenum      shadingModel_;
+  bool        bSmoothShading_;
 
   // Colors
   SColorFx    clCurrent;
   SColorFx    clClear;
+
+  // Alpha Blending
+  bool        blendingEnabled_;
+  GLenum      blendSFactor_;
+  GLenum      blendDFactor_;
+  EFastBlendMode blendFast_;
+
+  // Alpha testing
+  bool        alphaTestEnabled_;
+  GLenum      alphaFunc_;
+  GLclampf    alphaValue_;
+  int32_t     alphaValueFX_;
 
   // Lighting
   bool        lightingEnabled_;
@@ -143,6 +175,9 @@ protected:
   // Textures
   bool        texturesEnabled_;
   CFixed      texCoordCurrent_[4];
+  GLenum      texEnvMode_;
+  SColorFx    texEnvColor_;
+  SRasterColor texEnvColorFX_;
 
   // Vertex transformations
   CFixed      xA_;
@@ -151,11 +186,15 @@ protected:
   CFixed      yB_;
 
   // Primitive assembly
+  bool        beginValid_;
   GLenum      rasterMode_;
   SVertexFx   vertices[3];  // Vertex buffer for primitive assembly
   SVertexFx * triangle_[3]; // Assembled triangle
   bool        bFlipFlop_;   // Triangle strip
   GLint       vertIdx_;     // Current index into vertex buffer
+
+  // Clipping planes
+  TVector4<CFixed> clipPlane_[6];
 
   // Rasterizer
   GLint       viewportXOffset;
@@ -171,6 +210,29 @@ private:
   void _fragmentCull(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) FAST_CODE;
   void _fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) FAST_CODE;
   void _primitiveAssembly(SVertexFx & v)                             FAST_CODE;
+};
+
+//-----------------------------------------------------------------------------
+struct STexCoord
+{
+#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+  float u;
+  float v;
+  float w;
+#else
+  int32_t u;
+  int32_t v;
+#endif
+};
+
+//-----------------------------------------------------------------------------
+struct SRasterVertex
+{
+  int32_t      x;
+  int32_t      y;
+  int32_t      z;
+  SRasterColor c;
+  STexCoord    t;
 };
 
 //-----------------------------------------------------------------------------
@@ -190,25 +252,11 @@ protected:
   virtual void zbuffer(bool enable);
 
 protected:
-  uint16_t  * pZBuffer_;
-  CEdgeFx   * edge1;
-  CEdgeFx   * edge2;
+  uint16_t * pZBuffer_;
 
 private:
   void _rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) FAST_CODE;
-
-  bool testAndSetDepth(GLfixed z, uint32_t index)                      FAST_CODE;
-  void hline   (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c)     FAST_CODE;
-  void hlineZ  (CEdgeFx & from, CEdgeFx & to, GLint y, SColorFx c)     FAST_CODE;
-  void hlineC  (CEdgeFx & from, CEdgeFx & to, GLint y)                 FAST_CODE;
-  void hlineZC (CEdgeFx & from, CEdgeFx & to, GLint y)                 FAST_CODE;
-  void hlineTa (CEdgeFx & from, CEdgeFx & to, GLint y)                 FAST_CODE;
-  void hlineZTa(CEdgeFx & from, CEdgeFx & to, GLint y)                 FAST_CODE;
-//  void hlineZTp(CEdgeFx & from, CEdgeFx & to, GLint y)                 FAST_CODE;
 };
-
-
-#include "softGLFx.inl"
 
 
 #endif // GL_CONTEXT_H

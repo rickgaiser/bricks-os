@@ -35,7 +35,7 @@ class I3DRenderer
 public:
   virtual ~I3DRenderer(){}
 
-//  virtual void glAlphaFunc(GLenum func, GLclampf ref) = 0;
+  virtual void glAlphaFunc(GLenum func, GLclampf ref) = 0;
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) = 0;
   virtual void glClearDepthf(GLclampf depth) = 0;
 //  virtual void glClipPlanef(GLenum plane, const GLfloat *equation) = 0;
@@ -44,7 +44,7 @@ public:
   virtual void glFogfv(GLenum pname, const GLfloat *params) = 0;
   virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar) = 0;
 //  virtual void glGetClipPlanef(GLenum pname, GLfloat eqn[4]) = 0;
-//  virtual void glGetFloatv(GLenum pname, GLfloat *params) = 0;
+  virtual void glGetFloatv(GLenum pname, GLfloat *params) = 0;
 //  virtual void glGetLightfv(GLenum light, GLenum pname, GLfloat *params) = 0;
 //  virtual void glGetMaterialfv(GLenum face, GLenum pname, GLfloat *params) = 0;
 //  virtual void glGetTexEnvfv(GLenum env, GLenum pname, GLfloat *params) = 0;
@@ -66,8 +66,8 @@ public:
 //  virtual void glPolygonOffset(GLfloat factor, GLfloat units) = 0;
   virtual void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z) = 0;
   virtual void glScalef(GLfloat x, GLfloat y, GLfloat z) = 0;
-//  virtual void glTexEnvf(GLenum target, GLenum pname, GLfloat param) = 0;
-//  virtual void glTexEnvfv(GLenum target, GLenum pname, const GLfloat *params) = 0;
+  virtual void glTexEnvf(GLenum target, GLenum pname, GLfloat param) = 0;
+  virtual void glTexEnvfv(GLenum target, GLenum pname, const GLfloat *params) = 0;
   virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param) = 0;
 //  virtual void glTexParameterfv(GLenum target, GLenum pname, const GLfloat *params) = 0;
   virtual void glTranslatef(GLfloat x, GLfloat y, GLfloat z) = 0;
@@ -76,7 +76,7 @@ public:
 //  virtual void glAlphaFuncx(GLenum func, GLclampx ref) = 0;
 //  virtual void glBindBuffer(GLenum target, GLuint buffer) = 0;
   virtual void glBindTexture(GLenum target, GLuint texture) = 0;
-//  virtual void glBlendFunc(GLenum sfactor, GLenum dfactor) = 0;
+  virtual void glBlendFunc(GLenum sfactor, GLenum dfactor) = 0;
 //  virtual void glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage) = 0;
 //  virtual void glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data) = 0;
   virtual void glClear(GLbitfield mask) = 0;
@@ -95,7 +95,7 @@ public:
 //  virtual void glDeleteBuffers(GLsizei n, const GLuint *buffers) = 0;
   virtual void glDeleteTextures(GLsizei n, const GLuint *textures) = 0;
   virtual void glDepthFunc(GLenum func) = 0;
-//  virtual void glDepthMask(GLboolean flag) = 0;
+  virtual void glDepthMask(GLboolean flag) = 0;
   virtual void glDepthRangex(GLclampx zNear, GLclampx zFar) = 0;
   virtual void glDisable(GLenum cap) = 0;
   virtual void glDisableClientState(GLenum array) = 0;
@@ -171,7 +171,7 @@ public:
   virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param) = 0;
 //  virtual void glTexParameteriv(GLenum target, GLenum pname, const GLint *params) = 0;
 //  virtual void glTexParameterxv(GLenum target, GLenum pname, const GLfixed *params) = 0;
-//  virtual void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels) = 0;
+  virtual void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels) = 0;
   virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z) = 0;
   virtual void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer) = 0;
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height) = 0;
