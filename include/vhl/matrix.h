@@ -30,28 +30,51 @@
 #define MATRIX_MATH_TABLE_BITS (10) // 10bits == 1024 values
 #define MATRIX_MATH_TABLE_SIZE 1024 // (1<<MATRIX_MATH_TABLE_BITS) <-- Does not work with GCC 3.2.2
 
-#define m00 matrix[0*4+0]
-#define m01 matrix[0*4+1]
-#define m02 matrix[0*4+2]
-#define m03 matrix[0*4+3]
-#define m10 matrix[1*4+0]
-#define m11 matrix[1*4+1]
-#define m12 matrix[1*4+2]
-#define m13 matrix[1*4+3]
-#define m20 matrix[2*4+0]
-#define m21 matrix[2*4+1]
-#define m22 matrix[2*4+2]
-#define m23 matrix[2*4+3]
-#define m30 matrix[3*4+0]
-#define m31 matrix[3*4+1]
-#define m32 matrix[3*4+2]
-#define m33 matrix[3*4+3]
+#define ROW_MAJOR
+//#define COLUMN_MAJOR // OpenGL
 
 
 //---------------------------------------------------------------------------
 template <class T>
 class TMatrix4x4
 {
+public:
+#ifdef ROW_MAJOR
+  static const int ROW0 = 0*4;
+  static const int ROW1 = 1*4;
+  static const int ROW2 = 2*4;
+  static const int ROW3 = 3*4;
+  static const int COL0 = 0;
+  static const int COL1 = 1;
+  static const int COL2 = 2;
+  static const int COL3 = 3;
+#else
+  static const int ROW0 = 0;
+  static const int ROW1 = 1;
+  static const int ROW2 = 2;
+  static const int ROW3 = 3;
+  static const int COL0 = 0*4;
+  static const int COL1 = 1*4;
+  static const int COL2 = 2*4;
+  static const int COL3 = 3*4;
+#endif
+  static const int RC00 = ROW0 + COL0;
+  static const int RC01 = ROW0 + COL1;
+  static const int RC02 = ROW0 + COL2;
+  static const int RC03 = ROW0 + COL3;
+  static const int RC10 = ROW1 + COL0;
+  static const int RC11 = ROW1 + COL1;
+  static const int RC12 = ROW1 + COL2;
+  static const int RC13 = ROW1 + COL3;
+  static const int RC20 = ROW2 + COL0;
+  static const int RC21 = ROW2 + COL1;
+  static const int RC22 = ROW2 + COL2;
+  static const int RC23 = ROW2 + COL3;
+  static const int RC30 = ROW3 + COL0;
+  static const int RC31 = ROW3 + COL1;
+  static const int RC32 = ROW3 + COL2;
+  static const int RC33 = ROW3 + COL3;
+
 public:
   // Constructors
   TMatrix4x4();
@@ -64,9 +87,6 @@ public:
 
   // Initialize the sin and cos tables
   static void init();
-
-  // Row accessor. Use: mtx[row][col]
-  T * operator[](uint8_t row);
 
   // Assignment Operators
   TMatrix4x4 & operator= (const TMatrix4x4 & m);

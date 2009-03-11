@@ -21,6 +21,7 @@
 
 #include "softGLFx.h"
 #include "vhl/fixedPoint.h"
+#include "vhl/matrix.h"
 
 #include "stdlib.h"
 #include "math.h"
@@ -81,10 +82,10 @@ CASoftGLESFixed::CASoftGLESFixed()
  , depthFunction_(GL_LESS)
  , depthClear_(1)
  , zClearValue_(0x0000ffff)
- , zNear_(0)
- , zFar_(1)
  , zRangeNear_(0)
  , zRangeFar_(1)
+ , zNear_(0)
+ , zFar_(1)
  , shadingModel_(GL_FLAT)
  , bSmoothShading_(false)
  , blendingEnabled_(false)
@@ -656,10 +657,16 @@ void
 CASoftGLESFixed::glGetFloatv(GLenum pname, GLfloat * params)
 {
   // Return 4x4 matrix
+#ifdef ROW_MAJOR
   #define GL_GET_MATRIX_COPY(matrix) \
     for(int i(0); i < 4; i++) \
       for(int j(0); j < 4; j++) \
         params[i*4+j] = matrix[j*4+i]
+#else
+  #define GL_GET_MATRIX_COPY(matrix) \
+    for(int i(0); i < 16; i++) \
+      params[i] = matrix[i]
+#endif
 
   switch(pname)
   {

@@ -23,23 +23,40 @@
 #include "math.h"
 
 
+#define m00 matrix[RC00]
+#define m01 matrix[RC01]
+#define m02 matrix[RC02]
+#define m03 matrix[RC03]
+#define m10 matrix[RC10]
+#define m11 matrix[RC11]
+#define m12 matrix[RC12]
+#define m13 matrix[RC13]
+#define m20 matrix[RC20]
+#define m21 matrix[RC21]
+#define m22 matrix[RC22]
+#define m23 matrix[RC23]
+#define m30 matrix[RC30]
+#define m31 matrix[RC31]
+#define m32 matrix[RC32]
+#define m33 matrix[RC33]
+
 #define matrix_copy(mto, mfrom) \
-mto[0*4+0] = mfrom[0*4+0]; mto[0*4+1] = mfrom[0*4+1]; mto[0*4+2] = mfrom[0*4+2]; mto[0*4+3] = mfrom[0*4+3]; \
-mto[1*4+0] = mfrom[1*4+0]; mto[1*4+1] = mfrom[1*4+1]; mto[1*4+2] = mfrom[1*4+2]; mto[1*4+3] = mfrom[1*4+3]; \
-mto[2*4+0] = mfrom[2*4+0]; mto[2*4+1] = mfrom[2*4+1]; mto[2*4+2] = mfrom[2*4+2]; mto[2*4+3] = mfrom[2*4+3]; \
-mto[3*4+0] = mfrom[3*4+0]; mto[3*4+1] = mfrom[3*4+1]; mto[3*4+2] = mfrom[3*4+2]; mto[3*4+3] = mfrom[3*4+3]
+mto[RC00] = mfrom[RC00]; mto[RC01] = mfrom[RC01]; mto[RC02] = mfrom[RC02]; mto[RC03] = mfrom[RC03]; \
+mto[RC10] = mfrom[RC10]; mto[RC11] = mfrom[RC11]; mto[RC12] = mfrom[RC12]; mto[RC13] = mfrom[RC13]; \
+mto[RC20] = mfrom[RC20]; mto[RC21] = mfrom[RC21]; mto[RC22] = mfrom[RC22]; mto[RC23] = mfrom[RC23]; \
+mto[RC30] = mfrom[RC30]; mto[RC31] = mfrom[RC31]; mto[RC32] = mfrom[RC32]; mto[RC33] = mfrom[RC33]
 //memcpy(mto, mfrom, sizeof(GLfloat) * 16)
 #define matrix_clear(m) \
-m[0*4+0] = 0; m[0*4+1] = 0; m[0*4+2] = 0; m[0*4+3] = 0; \
-m[1*4+0] = 0; m[1*4+1] = 0; m[1*4+2] = 0; m[1*4+3] = 0; \
-m[2*4+0] = 0; m[2*4+1] = 0; m[2*4+2] = 0; m[2*4+3] = 0; \
-m[3*4+0] = 0; m[3*4+1] = 0; m[3*4+2] = 0; m[3*4+3] = 0
+m[RC00] = 0; m[RC01] = 0; m[RC02] = 0; m[RC03] = 0; \
+m[RC10] = 0; m[RC11] = 0; m[RC12] = 0; m[RC13] = 0; \
+m[RC20] = 0; m[RC21] = 0; m[RC22] = 0; m[RC23] = 0; \
+m[RC30] = 0; m[RC31] = 0; m[RC32] = 0; m[RC33] = 0
 //memset(m, 0, sizeof(GLfloat) * 16)
 #define matrix_identity(m) \
-m[0*4+0] = 1; m[0*4+1] = 0; m[0*4+2] = 0; m[0*4+3] = 0; \
-m[1*4+0] = 0; m[1*4+1] = 1; m[1*4+2] = 0; m[1*4+3] = 0; \
-m[2*4+0] = 0; m[2*4+1] = 0; m[2*4+2] = 1; m[2*4+3] = 0; \
-m[3*4+0] = 0; m[3*4+1] = 0; m[3*4+2] = 0; m[3*4+3] = 1
+m[RC00] = 1; m[RC01] = 0; m[RC02] = 0; m[RC03] = 0; \
+m[RC10] = 0; m[RC11] = 1; m[RC12] = 0; m[RC13] = 0; \
+m[RC20] = 0; m[RC21] = 0; m[RC22] = 1; m[RC23] = 0; \
+m[RC30] = 0; m[RC31] = 0; m[RC32] = 0; m[RC33] = 1
 
 #define matrixfx_copy(mto, mfrom) \
 matrix_copy(mto, mfrom)
@@ -48,10 +65,10 @@ matrix_copy(mto, mfrom)
 matrix_clear(m)
 //memset(m, 0, sizeof(GLfixed) * 16)
 #define matrixfx_identity(m) \
-m[0*4+0] = gl_fpfromi(1); m[0*4+1] = gl_fpfromi(0); m[0*4+2] = gl_fpfromi(0); m[0*4+3] = gl_fpfromi(0); \
-m[1*4+0] = gl_fpfromi(0); m[1*4+1] = gl_fpfromi(1); m[1*4+2] = gl_fpfromi(0); m[1*4+3] = gl_fpfromi(0); \
-m[2*4+0] = gl_fpfromi(0); m[2*4+1] = gl_fpfromi(0); m[2*4+2] = gl_fpfromi(1); m[2*4+3] = gl_fpfromi(0); \
-m[3*4+0] = gl_fpfromi(0); m[3*4+1] = gl_fpfromi(0); m[3*4+2] = gl_fpfromi(0); m[3*4+3] = gl_fpfromi(1)
+m[RC00] = gl_fpfromi(1); m[RC01] = gl_fpfromi(0); m[RC02] = gl_fpfromi(0); m[RC03] = gl_fpfromi(0); \
+m[RC10] = gl_fpfromi(0); m[RC11] = gl_fpfromi(1); m[RC12] = gl_fpfromi(0); m[RC13] = gl_fpfromi(0); \
+m[RC20] = gl_fpfromi(0); m[RC21] = gl_fpfromi(0); m[RC22] = gl_fpfromi(1); m[RC23] = gl_fpfromi(0); \
+m[RC30] = gl_fpfromi(0); m[RC31] = gl_fpfromi(0); m[RC32] = gl_fpfromi(0); m[RC33] = gl_fpfromi(1)
 
 
 template <class T> bool  TMatrix4x4<T>::bInitialized_(false);
@@ -117,14 +134,6 @@ TMatrix4x4<T>::init()
       cosTable_[i] = cosf(angle);
     }
   }
-}
-
-//---------------------------------------------------------------------------
-template <class T>
-inline T *
-TMatrix4x4<T>::operator[](uint8_t row)
-{
-  return matrix[row*4];
 }
 
 //---------------------------------------------------------------------------
@@ -227,9 +236,9 @@ TMatrix4x4<T>::translate(T x, T y, T z)
 {
   T m[16];
   matrix_identity(m);
-  m[0*4+3] = x;
-  m[1*4+3] = y;
-  m[2*4+3] = z;
+  m[RC03] = x;
+  m[RC13] = y;
+  m[RC23] = z;
   *this *= m;
 }
 
@@ -248,9 +257,9 @@ TMatrix4x4<T>::scale(T x, T y, T z)
 {
   T m[16];
   matrix_identity(m);
-  m[0*4+0] = x;
-  m[1*4+1] = y;
-  m[2*4+2] = z;
+  m[RC00] = x;
+  m[RC11] = y;
+  m[RC22] = z;
   *this *= m;
 }
 
@@ -276,25 +285,25 @@ TMatrix4x4<T>::rotate(T angle, T x, T y, T z)
 
   T m[16];
 
-  m[0*4+0] = x*x*(1-c)+c;
-  m[0*4+1] = x*y*(1-c)-z*s;
-  m[0*4+2] = x*z*(1-c)+y*s;
-  m[0*4+3] = 0;
+  m[RC00] = x*x*(1-c)+c;
+  m[RC01] = x*y*(1-c)-z*s;
+  m[RC02] = x*z*(1-c)+y*s;
+  m[RC03] = 0;
 
-  m[1*4+0] = y*x*(1-c)+z*s;
-  m[1*4+1] = y*y*(1-c)+c;
-  m[1*4+2] = y*z*(1-c)-x*s;
-  m[1*4+3] = 0;
+  m[RC10] = y*x*(1-c)+z*s;
+  m[RC11] = y*y*(1-c)+c;
+  m[RC12] = y*z*(1-c)-x*s;
+  m[RC13] = 0;
 
-  m[2*4+0] = x*z*(1-c)-y*s;
-  m[2*4+1] = y*z*(1-c)+x*s;
-  m[2*4+2] = z*z*(1-c)+c;
-  m[2*4+3] = 0;
+  m[RC20] = x*z*(1-c)-y*s;
+  m[RC21] = y*z*(1-c)+x*s;
+  m[RC22] = z*z*(1-c)+c;
+  m[RC23] = 0;
 
-  m[3*4+0] = 0;
-  m[3*4+1] = 0;
-  m[3*4+2] = 0;
-  m[3*4+3] = 1;
+  m[RC30] = 0;
+  m[RC31] = 0;
+  m[RC32] = 0;
+  m[RC33] = 1;
 
   *this *= m;
 }
@@ -313,10 +322,10 @@ TMatrix4x4<T>::rotatex(T angle)
 
   T m[16];
   matrix_identity(m);
-  m[1*4+1] = iCos;
-  m[1*4+2] = 0 - iSin;
-  m[2*4+1] = iSin;
-  m[2*4+2] = iCos;
+  m[RC11] = iCos;
+  m[RC12] = 0 - iSin;
+  m[RC21] = iSin;
+  m[RC22] = iCos;
   *this *= m;
 }
 
@@ -334,10 +343,10 @@ TMatrix4x4<T>::rotatey(T angle)
 
   T m[16];
   matrix_identity(m);
-  m[0*4+0] = iCos;
-  m[0*4+2] = iSin;
-  m[2*4+0] = 0 - iSin;
-  m[2*4+2] = iCos;
+  m[RC00] = iCos;
+  m[RC02] = iSin;
+  m[RC20] = 0 - iSin;
+  m[RC22] = iCos;
   *this *= m;
 }
 
@@ -355,10 +364,10 @@ TMatrix4x4<T>::rotatez(T angle)
 
   T m[16];
   matrix_identity(m);
-  m[0*4+0] = iCos;
-  m[0*4+1] = iSin;
-  m[1*4+0] = 0 - iSin;
-  m[1*4+1] = iCos;
+  m[RC00] = iCos;
+  m[RC01] = iSin;
+  m[RC10] = 0 - iSin;
+  m[RC11] = iCos;
   *this *= m;
 }
 

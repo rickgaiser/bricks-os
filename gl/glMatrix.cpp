@@ -141,25 +141,25 @@ CAGLESMatrixF::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat t
   GLfloat idh = 1.0f / (top - bottom);
   GLfloat idz = 1.0f / (zFar - zNear);
 
-  m[0*4+0] = (2.0f * zNear) * idw;
-  m[0*4+1] = 0.0f;
-  m[0*4+2] = (right + left) * idw;
-  m[0*4+3] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC00] = (2.0f * zNear) * idw;
+  m[TMatrix4x4<GLfloat>::RC01] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC02] = (right + left) * idw;
+  m[TMatrix4x4<GLfloat>::RC03] = 0.0f;
 
-  m[1*4+0] = 0.0f;
-  m[1*4+1] = (2.0f * zNear) * idh;
-  m[1*4+2] = (top + bottom) * idh;
-  m[1*4+3] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC10] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC11] = (2.0f * zNear) * idh;
+  m[TMatrix4x4<GLfloat>::RC12] = (top + bottom) * idh;
+  m[TMatrix4x4<GLfloat>::RC13] = 0.0f;
 
-  m[2*4+0] = 0.0f;
-  m[2*4+1] = 0.0f;
-  m[2*4+2] = -((zFar + zNear) * idz);
-  m[2*4+3] = -((2.0f * zFar * zNear) * idz);
+  m[TMatrix4x4<GLfloat>::RC20] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC21] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC22] = -((zFar + zNear) * idz);
+  m[TMatrix4x4<GLfloat>::RC23] = -((2.0f * zFar * zNear) * idz);
 
-  m[3*4+0] = 0.0f;
-  m[3*4+1] = 0.0f;
-  m[3*4+2] = -1.0f;
-  m[3*4+3] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC30] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC31] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC32] = -1.0f;
+  m[TMatrix4x4<GLfloat>::RC33] = 0.0f;
 
   *pCurrentMatrix_ *= m;
 }
@@ -188,25 +188,25 @@ CAGLESMatrixF::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top
   GLfloat idh = 1.0f / (top - bottom);
   GLfloat idz = 1.0f / (zFar - zNear);
 
-  m[0*4+0] = 2.0f * idw;
-  m[0*4+1] = 0.0f;
-  m[0*4+2] = 0.0f;
-  m[0*4+3] = -((right + left) * idw);
+  m[TMatrix4x4<GLfloat>::RC00] = 2.0f * idw;
+  m[TMatrix4x4<GLfloat>::RC01] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC02] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC03] = -((right + left) * idw);
 
-  m[1*4+0] = 0.0f;
-  m[1*4+1] = 2.0f * idh;
-  m[1*4+2] = 0.0f;
-  m[1*4+3] = -((top + bottom) * idh);
+  m[TMatrix4x4<GLfloat>::RC10] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC11] = 2.0f * idh;
+  m[TMatrix4x4<GLfloat>::RC12] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC13] = -((top + bottom) * idh);
 
-  m[2*4+0] = 0.0f;
-  m[2*4+1] = 0.0f;
-  m[2*4+2] = -2.0f * idz;
-  m[2*4+3] = -((zFar + zNear) * idz);
+  m[TMatrix4x4<GLfloat>::RC20] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC21] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC22] = -2.0f * idz;
+  m[TMatrix4x4<GLfloat>::RC23] = -((zFar + zNear) * idz);
 
-  m[3*4+0] = 0.0f;
-  m[3*4+1] = 0.0f;
-  m[3*4+2] = 0.0f;
-  m[3*4+3] = 1.0f;
+  m[TMatrix4x4<GLfloat>::RC30] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC31] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC32] = 0.0f;
+  m[TMatrix4x4<GLfloat>::RC33] = 1.0f;
 
   *pCurrentMatrix_ *= m;
 }
@@ -295,25 +295,25 @@ CAGLESMatrixFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed 
   GLfixed idh = gl_fpinverse(top - bottom);
   GLfixed idz = gl_fpinverse(zFar - zNear);
 
-  m[0*4+0].value = gl_fpmul((zNear << 1), idw);
-  m[0*4+1].value = gl_fpfromi(0);
-  m[0*4+2].value = gl_fpmul((right + left), idw);
-  m[0*4+3].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC00].value = gl_fpmul((zNear << 1), idw);
+  m[TMatrix4x4<CFixed>::RC01].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC02].value = gl_fpmul((right + left), idw);
+  m[TMatrix4x4<CFixed>::RC03].value = gl_fpfromi(0);
 
-  m[1*4+0].value = gl_fpfromi(0);
-  m[1*4+1].value = gl_fpmul((zNear << 1), idh);
-  m[1*4+2].value = gl_fpmul((top + bottom), idh);
-  m[1*4+3].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC10].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC11].value = gl_fpmul((zNear << 1), idh);
+  m[TMatrix4x4<CFixed>::RC12].value = gl_fpmul((top + bottom), idh);
+  m[TMatrix4x4<CFixed>::RC13].value = gl_fpfromi(0);
 
-  m[2*4+0].value = gl_fpfromi(0);
-  m[2*4+1].value = gl_fpfromi(0);
-  m[2*4+2].value = -gl_fpmul((zFar + zNear), idz);
-  m[2*4+3].value = -gl_fpmul((gl_fpmul(zFar, zNear) << 1), idz);
+  m[TMatrix4x4<CFixed>::RC20].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC21].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC22].value = -gl_fpmul((zFar + zNear), idz);
+  m[TMatrix4x4<CFixed>::RC23].value = -gl_fpmul((gl_fpmul(zFar, zNear) << 1), idz);
 
-  m[3*4+0].value = gl_fpfromi(0);
-  m[3*4+1].value = gl_fpfromi(0);
-  m[3*4+2].value = gl_fpfromi(-1);
-  m[3*4+3].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC30].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC31].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC32].value = gl_fpfromi(-1);
+  m[TMatrix4x4<CFixed>::RC33].value = gl_fpfromi(0);
 
   *pCurrentMatrix_ *= m;
 }
@@ -342,25 +342,25 @@ CAGLESMatrixFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed to
   GLfixed idh = gl_fpinverse(top - bottom);
   GLfixed idz = gl_fpinverse(zFar - zNear);
 
-  m[0*4+0].value = gl_fpmul(gl_fpfromi(2), idw);
-  m[0*4+1].value = gl_fpfromi(0);
-  m[0*4+2].value = gl_fpfromi(0);
-  m[0*4+3].value = -gl_fpmul((right + left), idw);
+  m[TMatrix4x4<CFixed>::RC00].value = gl_fpmul(gl_fpfromi(2), idw);
+  m[TMatrix4x4<CFixed>::RC01].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC02].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC03].value = -gl_fpmul((right + left), idw);
 
-  m[1*4+0].value = gl_fpfromi(0);
-  m[1*4+1].value = gl_fpmul(gl_fpfromi(2), idh);
-  m[1*4+2].value = gl_fpfromi(0);
-  m[1*4+3].value = -gl_fpmul((top + bottom), idh);
+  m[TMatrix4x4<CFixed>::RC10].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC11].value = gl_fpmul(gl_fpfromi(2), idh);
+  m[TMatrix4x4<CFixed>::RC12].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC13].value = -gl_fpmul((top + bottom), idh);
 
-  m[2*4+0].value = gl_fpfromi(0);
-  m[2*4+1].value = gl_fpfromi(0);
-  m[2*4+2].value = gl_fpmul(gl_fpfromi(-2), idz);
-  m[2*4+3].value = -gl_fpmul((zFar + zNear), idz);
+  m[TMatrix4x4<CFixed>::RC20].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC21].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC22].value = gl_fpmul(gl_fpfromi(-2), idz);
+  m[TMatrix4x4<CFixed>::RC23].value = -gl_fpmul((zFar + zNear), idz);
 
-  m[3*4+0].value = gl_fpfromi(0);
-  m[3*4+1].value = gl_fpfromi(0);
-  m[3*4+2].value = gl_fpfromi(0);
-  m[3*4+3].value = gl_fpfromi(1);
+  m[TMatrix4x4<CFixed>::RC30].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC31].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC32].value = gl_fpfromi(0);
+  m[TMatrix4x4<CFixed>::RC33].value = gl_fpfromi(1);
 
   *pCurrentMatrix_ *= m;
 }
