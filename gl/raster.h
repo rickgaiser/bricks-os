@@ -103,18 +103,14 @@
 #endif
 
   // X Interpolation
-  int32_t left_x, right_x, dxdy_left, dxdy_right;
-
-  int32_t dxdy_left_mod; // dx modulo dy
-  int32_t dxdy_left_den; // denominator (dy)
-  int32_t dxdy_left_err; // error (added modulo's)
-
-  int32_t dxdy_right_mod; // dx modulo dy
-  int32_t dxdy_right_den; // denominator (dy)
-  int32_t dxdy_right_err; // error (added modulo's)
+  //  - mod: dx modulo dy
+  //  - den: denominator (dy)
+  //  - err: error (added modulo's)
+  int32_t left_x  = 0, dxdy_left  = 0, dxdy_left_mod  = 0, dxdy_left_den  = 0, dxdy_left_err  = 0;
+  int32_t right_x = 0, dxdy_right = 0, dxdy_right_mod = 0, dxdy_right_den = 0, dxdy_right_err = 0;
 #ifdef RASTER_ENABLE_DEPTH_TEST
   // Z Interpolation
-  int32_t z, left_z, /*right_z,*/ dzdy_left, /*dzdy_right,*/ dzdx, dzdy;
+  int32_t z, left_z = 0, dzdy_left = 0, dzdx, dzdy;
   d1 = vmi->z - vlo->z;
   d2 = vhi->z - vlo->z;
   dzdx = (int32_t)DDX();
@@ -122,7 +118,7 @@
 #endif
 #ifdef RASTER_ENABLE_SMOOTH_COLORS
   // RGBA Interpolation
-  SRasterColor c, left_c, /*right_c,*/ dcdy_left, /*dcdy_right,*/ dcdx, dcdy;
+  SRasterColor c, left_c = {0,0,0,0}, dcdy_left = {0,0,0,0}, dcdx, dcdy;
   d1 = vmi->c.r - vlo->c.r;
   d2 = vhi->c.r - vlo->c.r;
   dcdx.r = (int32_t)DDX();
@@ -142,9 +138,9 @@
 #endif
 #ifdef RASTER_ENABLE_TEXTURES
   #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-  float u, left_u, /*right_u,*/ dudy_left, /*dudy_right,*/ dudx, dudy;
-  float v, left_v, /*right_v,*/ dvdy_left, /*dvdy_right,*/ dvdx, dvdy;
-  float w, left_w, /*right_w,*/ dwdy_left, /*dwdy_right,*/ dwdx, dwdy;
+  float u, left_u = 0, dudy_left = 0, dudx, dudy;
+  float v, left_v = 0, dvdy_left = 0, dvdx, dvdy;
+  float w, left_w = 0, dwdy_left = 0, dwdx, dwdy;
   d1 = vmi->t.u - vlo->t.u;
   d2 = vhi->t.u - vlo->t.u;
   dudx = DDX();
@@ -158,8 +154,8 @@
   dwdx = DDX();
   dwdy = DDY();
   #else
-  int32_t u, left_u, /*right_u,*/ dudy_left, /*dudy_right,*/ dudx, dudy;
-  int32_t v, left_v, /*right_v,*/ dvdy_left, /*dvdy_right,*/ dvdx, dvdy;
+  int32_t u, left_u = 0, dudy_left = 0, dudx, dudy;
+  int32_t v, left_v = 0, dvdy_left = 0, dvdx, dvdy;
   d1 = vmi->t.u - vlo->t.u;
   d2 = vhi->t.u - vlo->t.u;
   dudx = (int32_t)DDX();
@@ -179,7 +175,7 @@
 
   bool bUpdateLeft  = false;
   bool bUpdateRight = false;
-  const SRasterVertex *pl1, *pl2, *pr1, *pr2;
+  const SRasterVertex *pl1 = NULL, *pl2 = NULL, *pr1 = NULL, *pr2 = NULL;
   for(int i(0); i < 2; i++)
   {
     if(i == 0)
