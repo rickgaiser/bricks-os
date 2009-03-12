@@ -1,0 +1,79 @@
+/*
+ * Bricks-OS, Operating System for Game Consoles
+ * Copyright (C) 2008 Maximus32 <Maximus32@bricks-os.org>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
+ */
+
+
+//-----------------------------------------------------------------------------
+// Test 02:
+//  - Place in VU1 data area:
+//    - GIF Tag
+//    - float vertex
+//  - Call VU1 code:
+//    - Convert vertex from float to int4
+//    - Kick the GIF packets
+//-----------------------------------------------------------------------------
+
+
+import std;
+
+
+//-----------------------------------------------------------------------------
+void
+TransformVertex(float4 vertexAddr[], float4 saveAddr[])
+{
+  // Get vertex
+  float4 vertex = vertexAddr[0];
+  vertexAddr += 1;
+
+  // Convert the position to fixed point integer.
+  vertex = ftoi4(vertex);
+
+  // Store color and vertex
+  saveAddr[0] = vertex;
+  saveAddr += 1;
+}
+
+//-----------------------------------------------------------------------------
+void
+main(float4 vuMem[])
+{
+  // Read the TOP register (for double buffering)
+  float4 dataAddr[];
+  xtop(dataAddr);
+
+  // Prepare some variables
+  float4 vertexAddr[]    = dataAddr + 1; // GIF tag
+  float4 primAddr[]      = dataAddr + 256;
+  float4 saveAddr[]      = dataAddr + 257;
+  int    vertCount       = 3; // One triangle
+
+  // Relocate GIF tag
+  primAddr[0] = dataAddr[0];
+
+  // Transform all vertices
+  int i = 0;
+  while(i < vertCount)
+  {
+    TransformVertex(vertexAddr, saveAddr);
+    i++;
+  }
+
+  // Kick data to GS
+  xgkick(primAddr);
+}

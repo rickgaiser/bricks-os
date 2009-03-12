@@ -34,6 +34,8 @@
 //#define __BIG_ENDIAN__
 #define CONFIG_FPU
 //#define CONFIG_MMU
+#define CONFIG_USE_VU0
+//#define CONFIG_USE_VU1
 
 // Kernel interface
 #define CONFIG_DIRECT_ACCESS_KERNEL
