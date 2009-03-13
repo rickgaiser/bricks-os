@@ -25,6 +25,9 @@ LINK_FLAGS      +=\
                 -nostdlib \
                 -Wl,-Map,$@.map \
 
+MY_LIBS         +=\
+                -lgcc \
+
 #----------------------------------------------------------------------------
 # Create .elf file from MY_OBJS + MY_LIBS
 $(MY_ELF): $(MY_OBJS) $(MY_LIBS_DEP)

@@ -1619,6 +1619,26 @@ fxFloorDivMod(int32_t Numerator, int32_t Denominator, unsigned int shift, int32_
 void
 CSoftGLESFloat::_rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
+  // -------
+  // Culling
+  // -------
+  if(cullFaceEnabled_ == true)
+  {
+    // Always invisible when culling both front and back
+    if(cullFaceMode_ == GL_FRONT_AND_BACK)
+      return;
+
+    GLfloat vnz =
+      (v0.vd.x - v2.vd.x) * (v1.vd.y - v2.vd.y) -
+      (v0.vd.y - v2.vd.y) * (v1.vd.x - v2.vd.x);
+
+    if(vnz == 0.0f)
+      return;
+
+    if((vnz < 0.0f) == bCullCW_)
+      return;
+  }
+
   SRasterVertex vtx0, vtx1, vtx2;
 
   vtx0.x   = (int32_t)((xA_ * v0.vd.x) + xB_);
