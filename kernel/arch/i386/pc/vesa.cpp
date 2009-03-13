@@ -264,10 +264,17 @@ CVesaVideoDevice::getFrameNr()
   return iFrameCount_;
 }
 
+#define REG_VGA_INPUT_STATUS 0x03da
+#define VGA_VRETRACE (1<<3)
 //---------------------------------------------------------------------------
 uint32_t
 CVesaVideoDevice::waitVSync()
 {
+  // Wait until done with vertical retrace
+  while( (inb(REG_VGA_INPUT_STATUS) & VGA_VRETRACE));
+  // Wait until done refreshing
+  while(!(inb(REG_VGA_INPUT_STATUS) & VGA_VRETRACE));
+
   return iFrameCount_;
 }
 
