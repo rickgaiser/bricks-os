@@ -106,7 +106,7 @@ loadELF32(void * file, CTask & task)
 
 // -----------------------------------------------------------------------------
 int
-main(unsigned long magic, multiboot_info_t * mbi)
+arch_main(unsigned long magic, multiboot_info_t * mbi)
 {
   unsigned char * pFirstFreeByte = 0;
   uint64_t iMemFree(0);

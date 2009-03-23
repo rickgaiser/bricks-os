@@ -24,7 +24,7 @@
 #include "multiboot.h"
 
 
-extern int main(unsigned long magic, multiboot_info_t * mbi);
+extern int arch_main(unsigned long magic, multiboot_info_t * mbi);
 void *__dso_handle;
 
 
@@ -88,7 +88,7 @@ __main(unsigned long magic, multiboot_info_t * mbi)
 
   _init();
 
-  iRetVal = main(magic, mbi);
+  iRetVal = arch_main(magic, mbi);
 
   __cxa_atexit();
 

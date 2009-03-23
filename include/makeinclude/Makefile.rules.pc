@@ -21,7 +21,14 @@ CXXFLAGS        +=\
                 -fno-threadsafe-statics \
                 -DI386 \
 
+ASFLAGS         +=\
+                -m32 \
+
+LDFLAGS         +=\
+                -melf_i386 \
+
 LINK_FLAGS      +=\
+                -m32 \
                 -nostdlib \
                 -Wl,-Map,$@.map \
 
