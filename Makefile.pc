@@ -24,3 +24,6 @@ cdrom-img:
 grub:
 	sudo cp bin/pc/Bricks.elf /boot/Bricks.elf
 
+run-qemu:
+	qemu -m 32 -fda bin/pc/floppy.img -boot a
+
