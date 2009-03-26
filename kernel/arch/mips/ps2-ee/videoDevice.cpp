@@ -120,7 +120,7 @@ SPS2VideoMode vmodes[] =
 //  {1024,  768, GS_NON_INTERLACED, &cmodes[13], 258, 30}, // 75Hz
 //  {1024,  768, GS_NON_INTERLACED, &cmodes[14], 288, 38}, // 85Hz
   // SXGA
-  {1280, 1024, GS_NON_INTERLACED, &cmodes[15], 344, 40}, // 60Hz
+  {1280, 1024, GS_NON_INTERLACED, &cmodes[15], 360, 40}, // 60Hz
 //  {1280, 1024, GS_NON_INTERLACED, &cmodes[16], 376, 40}, // 75Hz
 };
 const uint32_t vmode_count(sizeof(vmodes) / sizeof(SPS2VideoMode));
@@ -228,7 +228,6 @@ CAPS2Renderer::setSurface(CSurface * surface)
     flush();
 
     packet_.gifAddPackedAD(GIF::REG::frame_1,   GIF::REG::FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.xpitch >> 6, pSurface_->psm_, 0));
-    packet_.gifAddPackedAD(GIF::REG::scissor_1, GIF::REG::SCISSOR(0, pSurface_->mode.width, 0, pSurface_->mode.height));
   }
 }
 
@@ -275,6 +274,22 @@ CPS22DRenderer::~CPS22DRenderer()
 
 //---------------------------------------------------------------------------
 void
+CPS22DRenderer::setSurface(CSurface * surface)
+{
+  CAPS2Renderer::setSurface(surface);
+
+  if(pSurface_ != NULL)
+  {
+    // (Re)set clipper
+    clipper_.xmin = 0;
+    clipper_.ymin = 0;
+    clipper_.xmax = pSurface_->mode.width  - 1;
+    clipper_.ymax = pSurface_->mode.height - 1;
+  }
+}
+
+//---------------------------------------------------------------------------
+void
 CPS22DRenderer::setColor(color_t rgb)
 {
   colorR_ = BxColorFormat_GetR(cfA8R8G8B8, rgb);
@@ -282,6 +297,7 @@ CPS22DRenderer::setColor(color_t rgb)
   colorB_ = BxColorFormat_GetB(cfA8R8G8B8, rgb);
 
   colorPS2_ = GIF::REG::RGBAQ(colorR_, colorG_, colorB_, 0x80, 0);
+  packet_.gifAddPackedAD(GIF::REG::rgbaq, colorPS2_);
 }
 
 //---------------------------------------------------------------------------
@@ -293,6 +309,7 @@ CPS22DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
   colorB_ = b;
 
   colorPS2_ = GIF::REG::RGBAQ(colorR_, colorG_, colorB_, 0x80, 0);
+  packet_.gifAddPackedAD(GIF::REG::rgbaq, colorPS2_);
 }
 
 //---------------------------------------------------------------------------
@@ -303,7 +320,6 @@ CPS22DRenderer::setPixel(int x, int y)
   y += GS_Y_BASE;
 
   packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_POINT, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, colorPS2_);
   packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
   bDataWaiting_ = true;
 }
@@ -312,7 +328,7 @@ CPS22DRenderer::setPixel(int x, int y)
 void
 CPS22DRenderer::fill()
 {
-  fillRect(0, 0, pSurface_->mode.width, pSurface_->mode.height);
+  fillRect(clipper_.xmin, clipper_.ymin, clipper_.xmax - clipper_.xmin + 1, clipper_.ymax - clipper_.ymin + 1);
 }
 
 //---------------------------------------------------------------------------
@@ -323,13 +339,13 @@ CPS22DRenderer::fillRect(int x, int y, unsigned int width, unsigned int height)
   y += GS_Y_BASE;
 
   packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, colorPS2_);
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((x+width)<<4, (y+height)<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((x         << 4), (y          <<4), 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(((x+width) << 4), ((y+height) <<4), 0));
   bDataWaiting_ = true;
 }
 
 //---------------------------------------------------------------------------
+// FIXME: The last pixel is never drawn, so we need to make the line 1px longer
 void
 CPS22DRenderer::drawLine(int x1, int y1, int x2, int y2)
 {
@@ -339,7 +355,6 @@ CPS22DRenderer::drawLine(int x1, int y1, int x2, int y2)
   y2 += GS_Y_BASE;
 
   packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_LINE, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, colorPS2_);
   packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x1<<4, y1<<4, 0));
   packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x2<<4, y2<<4, 0));
   bDataWaiting_ = true;
@@ -349,14 +364,14 @@ CPS22DRenderer::drawLine(int x1, int y1, int x2, int y2)
 void
 CPS22DRenderer::drawHLine(int x, int y, unsigned int width)
 {
-  drawLine(x, y, x + width, y);
+  drawLine(x, y, x + width - 1, y);
 }
 
 //---------------------------------------------------------------------------
 void
 CPS22DRenderer::drawVLine(int x, int y, unsigned int height)
 {
-  drawLine(x, y, x, y + height);
+  drawLine(x, y, x, y + height - 1);
 }
 
 //---------------------------------------------------------------------------
@@ -367,13 +382,40 @@ CPS22DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
   y += GS_Y_BASE;
 
   packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_LINE_STRIP, 0, 0, 0, 0, 0, 0, 0, 0));
-  packet_.gifAddPackedAD(GIF::REG::rgbaq, colorPS2_);
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x+width<<4, y<<4, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x+width<<4, y+height<<4, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y+height<<4, 0));
-  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(x<<4, y<<4, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((x           << 4), (y            << 4), 0)); // Top-Left
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(((x+width-1) << 4), (y            << 4), 0)); // Top-Right
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2(((x+width-1) << 4), ((y+height-1) << 4), 0)); // Bottom-Right
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((x           << 4), ((y+height-1) << 4), 0)); // Bottom-Left
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((x           << 4), (y            << 4), 0)); // Top-Left
   bDataWaiting_ = true;
+}
+
+//---------------------------------------------------------------------------
+// Clip point to surface
+#define CLIP_POINT_SURF(x,y) \
+{ \
+  if(x < 0) x = 0; \
+  else if((unsigned int)x >= pSurface_->mode.width)  x = pSurface_->mode.width  - 1; \
+  if(y < 0) y = 0; \
+  else if((unsigned int)y >= pSurface_->mode.height) y = pSurface_->mode.height - 1; \
+}
+//---------------------------------------------------------------------------
+void
+CPS22DRenderer::setClipRect(int x, int y, unsigned int width, unsigned int height)
+{
+  int x2 = x + width  - 1;
+  int y2 = y + height - 1;
+
+  // Clip to surface
+  CLIP_POINT_SURF(x,  y);
+  CLIP_POINT_SURF(x2, y2);
+
+  clipper_.xmin = x;
+  clipper_.ymin = y;
+  clipper_.xmax = x2;
+  clipper_.ymax = y2;
+
+  packet_.gifAddPackedAD(GIF::REG::scissor_1, GIF::REG::SCISSOR(clipper_.xmin, clipper_.xmax, clipper_.ymin, clipper_.ymax));
 }
 
 //---------------------------------------------------------------------------
@@ -528,9 +570,6 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
   // Sync
   __asm__("sync.p\nnop");
 
-  // Clear GS interrupt mask register
-  bios::GsPutIMR(0);
-
   // Setup CRTC for video mode
   bios::SetGsCrt(currentInterlaced_, pCurrentPS2Mode_->crtcMode->biosMode, currentField_);
 
@@ -567,7 +606,7 @@ CPS2VideoDevice::setMode(const SVideoMode * mode)
       // Displacement between Primitive and Window coordinate systems.
       packet_.gifAddPackedAD(GIF::REG::xyoffset_1, GIF::REG::XYOFFSET(GS_X_BASE<<4, GS_Y_BASE<<4));
       // Clip to frame buffer.
-      packet_.gifAddPackedAD(GIF::REG::scissor_1,  GIF::REG::SCISSOR(0, pCurrentPS2Mode_->width, 0, actualHeight_));
+      packet_.gifAddPackedAD(GIF::REG::scissor_1,  GIF::REG::SCISSOR(0, pCurrentPS2Mode_->width - 1, 0, pCurrentPS2Mode_->height - 1));
       // Clamp colors
       packet_.gifAddPackedAD(GIF::REG::colclamp,   1);
       // Dithering
@@ -642,8 +681,13 @@ CPS2VideoDevice::waitVSync()
 #ifdef CONFIG_MULTI_THREADING
   k_pthread_cond_wait(&condVSync_, &mutex_);
 #else
+  #if 0
   bSwap_ = true;
   while(bSwap_ == true){}
+  #else
+  REG_GS_CSR = REG_GS_CSR & 8;
+  while(!(REG_GS_CSR & 8));
+  #endif
 #endif
 
   return iFrameCount_;

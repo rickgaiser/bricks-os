@@ -98,7 +98,7 @@ public:
   virtual ~CPS22DRenderer();
 
   // Surfaces
-  virtual void       setSurface(CSurface * surface){CAPS2Renderer::setSurface(surface);}
+  virtual void       setSurface(CSurface * surface);
   virtual CSurface * getSurface()                  {return CAPS2Renderer::getSurface();}
 
   // Flush operations to surface
@@ -117,12 +117,27 @@ public:
   virtual void       drawVLine(int x, int y, unsigned int height);
   virtual void       drawRect(int x, int y, unsigned int width, unsigned int height);
 
+  // Clipping
+  virtual void       setClipRect(int x, int y, unsigned int width, unsigned int height);
+
+protected:
+  struct SClipRect
+  {
+    int xmin;
+    int ymin;
+    int xmax;
+    int ymax;
+  };
+
 private:
   // Current drawing color
   uint8_t  colorR_;
   uint8_t  colorG_;
   uint8_t  colorB_;
   uint64_t colorPS2_;
+
+  // Clip Rect
+  SClipRect clipper_;
 };
 
 //---------------------------------------------------------------------------
