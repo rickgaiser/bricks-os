@@ -170,9 +170,6 @@ CPS2DebugScreen::setMode(SPS2VideoMode * mode)
   // Sync
   __asm__("sync.p\nnop");
 
-  // Clear GS interrupt mask register
-  bios::GsPutIMR(0);
-
   // Setup CRTC for video mode
   bios::SetGsCrt(GS_NON_INTERLACED, pCurrentPS2Mode_->crtcMode->biosMode, 0);
 
