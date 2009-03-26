@@ -88,20 +88,13 @@ CGBA2DRenderer::~CGBA2DRenderer()
 void
 CGBA2DRenderer::fill_i()
 {
-  if(pSurface_->mode.xpitch == pSurface_->mode.width)
+  if(pSurface_->mode.bpp == 8)
   {
-    if(pSurface_->mode.bpp == 8)
-    {
-      dmaFill16((fmtColor_ << 8) | fmtColor_, pSurface_->p, (pSurface_->mode.width * pSurface_->mode.height) >> 1);
-    }
-    else
-    {
-      dmaFill16(fmtColor_ | 0x8000, pSurface_->p, pSurface_->mode.width * pSurface_->mode.height);
-    }
+    dmaFill16((fmtColor_ << 8) | fmtColor_, pSurface_->p, (pSurface_->mode.xpitch * pSurface_->mode.ypitch) >> 1);
   }
   else
   {
-    fillRect_i(0, 0, pSurface_->mode.width, pSurface_->mode.height);
+    dmaFill16(fmtColor_ | 0x8000, pSurface_->p, pSurface_->mode.xpitch * pSurface_->mode.ypitch);
   }
 }
 
@@ -109,6 +102,15 @@ CGBA2DRenderer::fill_i()
 void
 CGBA2DRenderer::fillRect_i(int x, int y, unsigned int width, unsigned int height)
 {
+  // Fast filling entire screen
+  if((x == 0) &&
+     (y == 0) &&
+     (width == pSurface_->mode.xpitch) &&
+     (height == pSurface_->mode.ypitch))
+  {
+    fill_i();
+  }
+
   unsigned int iBase(y * pSurface_->mode.xpitch + x);
 
   if(pSurface_->mode.bpp == 8)
