@@ -157,6 +157,18 @@ test2d(CAVideoDevice * device, I2DRenderer * renderer, CSurface * surface)
     device->waitVSync();
   }
 
+  // Clear entire screen
+  renderer->setColor(0, 0, 0);
+  renderer->fill();
+
+  // Draw red lines, defining the entire screen, and the clipped drawing area
+  renderer->setColor(255, 0, 0);
+  renderer->drawRect(0, 0, surface->width(), surface->height());
+  renderer->drawRect(19, 19, surface->width() - 38, surface->height() - 38);
+
+  // Set clipper
+  renderer->setClipRect(20, 20, surface->width() - 40, surface->height() - 40);
+
   // Pixel test
   renderer->setColor(0, 0, 0);
   renderer->fill();

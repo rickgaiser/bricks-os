@@ -46,6 +46,9 @@ public:
   virtual void       drawHLine(int x, int y, unsigned int width) = 0;
   virtual void       drawVLine(int x, int y, unsigned int height) = 0;
   virtual void       drawRect(int x, int y, unsigned int width, unsigned int height) = 0;
+
+  // Clipping
+  virtual void       setClipRect(int x, int y, unsigned int width, unsigned int height) = 0;
 };
 
 //---------------------------------------------------------------------------
@@ -76,15 +79,25 @@ public:
   virtual void       drawVLine(int x, int y, unsigned int height);
   virtual void       drawRect(int x, int y, unsigned int width, unsigned int height);
 
+  // Clipping
+  virtual void       setClipRect(int x, int y, unsigned int width, unsigned int height);
+
 protected:
   // Drawing
   virtual void       setPixel_i(int x, int y);
-  virtual void       fill_i();
   virtual void       fillRect_i(int x, int y, unsigned int width, unsigned int height);
   virtual void       drawLine_i(int x1, int y1, int x2, int y2);
   virtual void       drawHLine_i(int x, int y, unsigned int width);
   virtual void       drawVLine_i(int x, int y, unsigned int height);
-  virtual void       drawRect_i(int x, int y, unsigned int width, unsigned int height);
+
+protected:
+  struct SClipRect
+  {
+    int xmin;
+    int ymin;
+    int xmax;
+    int ymax;
+  };
 
 protected:
   // Surface we're currently rendering on
@@ -93,6 +106,9 @@ protected:
   // Current drawing color
   color_t color_;     // Color
   color_t fmtColor_;  // Pre calculated surface format color
+
+  // Clip Rect
+  SClipRect clipper_;
 };
 
 

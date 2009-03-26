@@ -44,37 +44,57 @@
 }
 
 //---------------------------------------------------------------------------
-#define VISIBLE_POINT(x,y) ((x >= 0) && (x < (int)pSurface_->mode.width) && (y >= 0) && (y < (int)pSurface_->mode.height))
+// Get clipping flags
+#define GET_CLIP_FLAGS_X(x) \
+  (((x < clipper_.xmin)     ) | \
+   ((x > clipper_.xmax) << 1))
+#define GET_CLIP_FLAGS_Y(y) \
+  (((y < clipper_.ymin) << 2) | \
+   ((y > clipper_.ymax) << 3))
+#define GET_CLIP_FLAGS(x,y) \
+  (GET_CLIP_FLAGS_X(x) | GET_CLIP_FLAGS_Y(y))
 
 //---------------------------------------------------------------------------
-#define VISIBLE_RECT(x,y,w,h) ((x < (int)pSurface_->mode.width) && ((x + w - 1) >= 0) && (y < (int)pSurface_->mode.height) && ((y + h - 1) >= 0))
-
-//---------------------------------------------------------------------------
+// Clip point to clipper
+#define CLIP_POINT_X(x) \
+{ \
+  if(x < clipper_.xmin) x = clipper_.xmin; \
+  else if(x > clipper_.xmax) x = clipper_.xmax; \
+}
+#define CLIP_POINT_Y(y) \
+{ \
+  if(y < clipper_.ymin) y = clipper_.ymin; \
+  else if(y > clipper_.ymax) y = clipper_.ymax; \
+}
 #define CLIP_POINT(x,y) \
 { \
-  if(x < 0) x = 0; \
-  if(y < 0) y = 0; \
-  else if((unsigned int)x >= pSurface_->mode.width)  x = pSurface_->mode.width - 1; \
-  else if((unsigned int)y >= pSurface_->mode.height) y = pSurface_->mode.height -1; \
+  CLIP_POINT_X(x); \
+  CLIP_POINT_Y(y); \
 }
 
 //---------------------------------------------------------------------------
-// Make sure the rect is visible first, using 'VISIBLE(x,y,w,h);'
-// Otherwise this macro makes no sense
-#define CLIP_RECT(x,y,w,h) \
+// Clip point to surface
+#define CLIP_POINT_SURF_X(x) \
 { \
-  if(x < 0) {w -= -x; x = 0;} \
-  if(y < 0) {h -= -y; y = 0;} \
-  if((x + w) > pSurface_->mode.width)  {w = pSurface_->mode.width  - x;} \
-  if((y + h) > pSurface_->mode.height) {h = pSurface_->mode.height - y;} \
+  if(x < 0) x = 0; \
+  else if((unsigned int)x >= pSurface_->mode.width)  x = pSurface_->mode.width  - 1; \
 }
-
+#define CLIP_POINT_SURF_Y(y) \
+{ \
+  if(y < 0) y = 0; \
+  else if((unsigned int)y >= pSurface_->mode.height) y = pSurface_->mode.height - 1; \
+}
+#define CLIP_POINT_SURF(x,y) \
+{ \
+  CLIP_POINT_SURF_X(x); \
+  CLIP_POINT_SURF_Y(y); \
+}
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 C2DRenderer::C2DRenderer(CSurface * surf)
- : pSurface_(surf)
 {
+  setSurface(surf);
   setColor(0, 0, 0);
 }
 
@@ -89,7 +109,14 @@ C2DRenderer::setSurface(CSurface * surface)
 {
   pSurface_ = surface;
 
-  setColor(color_);
+  if(pSurface_ != NULL)
+  {
+    // (Re)set clipper
+    clipper_.xmin = 0;
+    clipper_.ymin = 0;
+    clipper_.xmax = pSurface_->mode.width  - 1;
+    clipper_.ymax = pSurface_->mode.height - 1;
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -132,93 +159,178 @@ C2DRenderer::setColor(uint8_t r, uint8_t g, uint8_t b)
 void
 C2DRenderer::setPixel(int x, int y)
 {
-  if(pSurface_ != NULL)
-  {
-    if(VISIBLE_POINT(x, y))
+  if(pSurface_ == NULL)
+    return;
+
+  if(GET_CLIP_FLAGS(x, y) == 0)
       setPixel_i(x, y);
-  }
 }
 
 //---------------------------------------------------------------------------
+// Fill the entire surface
 void
 C2DRenderer::fill()
 {
-  if(pSurface_ != NULL)
-  {
-    fill_i();
-  }
+  if(pSurface_ == NULL)
+    return;
+
+  fillRect_i(clipper_.xmin, clipper_.ymin, clipper_.xmax - clipper_.xmin + 1, clipper_.ymax - clipper_.ymin + 1);
 }
 
 //---------------------------------------------------------------------------
+// Fill specified rectangle
 void
 C2DRenderer::fillRect(int x, int y, unsigned int width, unsigned int height)
 {
-  if(pSurface_ != NULL)
+  if(pSurface_ == NULL)
+    return;
+
+  int x2 = x + width  - 1;
+  int y2 = y + height - 1;
+
+  // Get clipping flags
+  uint32_t clip1 = GET_CLIP_FLAGS(x, y);
+  uint32_t clip2 = GET_CLIP_FLAGS(x2, y2);
+
+  // Not visible
+  if(clip1 & clip2)
+    return;
+
+  // Clip points
+  if(clip1)
   {
-    if(VISIBLE_RECT(x, y, width, height))
-    {
-      CLIP_RECT(x, y, width, height);
-      fillRect_i(x, y, width, height);
-    }
+    CLIP_POINT_X(x);
+    CLIP_POINT_Y(y);
   }
+  if(clip2)
+  {
+    CLIP_POINT_X(x2);
+    CLIP_POINT_Y(y2);
+  }
+
+  // Call drawing implementation
+  fillRect_i(x, y, x2 - x + 1, y2 - y + 1);
 }
 
 //---------------------------------------------------------------------------
 void
 C2DRenderer::drawLine(int x1, int y1, int x2, int y2)
 {
-  if(pSurface_ != NULL)
-  {
-    // FIXME: Are we visible?
-    CLIP_POINT(x1, y1);
-    CLIP_POINT(x2, y2);
+  if(pSurface_ == NULL)
+    return;
 
-    // order: Smallest x first
-    if(x1 <= x2)
-      drawLine_i(x1, y1, x2, y2);
-    else
-      drawLine_i(x2, y2, x1, y1);
-  }
+  // Get clipping flags
+  uint32_t clip1 = GET_CLIP_FLAGS(x1, y1);
+  uint32_t clip2 = GET_CLIP_FLAGS(x2, y2);
+
+  // Not visible
+  if(clip1 & clip2)
+    return;
+
+  // Clip points
+  // FIXME:
+  //  - Clipping x means interpolating y
+  //  - Clipping y means interpolating x
+  if(clip1 | clip2)
+    return;
+
+  // Call drawing implementation
+  drawLine_i(x1, y1, x2, y2);
 }
 
 //---------------------------------------------------------------------------
 void
 C2DRenderer::drawHLine(int x, int y, unsigned int width)
 {
-  if(pSurface_ != NULL)
-  {
-    // FIXME: Are we visible?
-    CLIP_POINT(x, y);
+  if(pSurface_ == NULL)
+    return;
 
-    drawHLine_i(x, y, width);
-  }
+  // Not visible
+  if(GET_CLIP_FLAGS_Y(y))
+    return;
+
+  int x2 = x + width - 1;
+
+  // Get clipping flags
+  uint32_t clip1 = GET_CLIP_FLAGS_X(x);
+  uint32_t clip2 = GET_CLIP_FLAGS_X(x2);
+
+  // Not visible
+  if(clip1 & clip2)
+    return;
+
+  // Clip points
+  if(clip1)
+    CLIP_POINT_X(x);
+  if(clip2)
+    CLIP_POINT_X(x2);
+
+  // Call drawing implementation
+  drawHLine_i(x, y, x2 - x + 1);
 }
 
 //---------------------------------------------------------------------------
 void
 C2DRenderer::drawVLine(int x, int y, unsigned int height)
 {
-  if(pSurface_ != NULL)
-  {
-    // FIXME: Are we visible?
-    CLIP_POINT(x, y);
+  if(pSurface_ == NULL)
+    return;
 
-    drawVLine_i(x, y, height);
-  }
+  // Not visible
+  if(GET_CLIP_FLAGS_X(x))
+    return;
+
+  int y2 = y + height - 1;
+
+  // Get clipping flags
+  uint32_t clip1 = GET_CLIP_FLAGS_Y(y);
+  uint32_t clip2 = GET_CLIP_FLAGS_Y(y2);
+
+  // Not visible
+  if(clip1 & clip2)
+    return;
+
+  // Clip points
+  if(clip1)
+    CLIP_POINT_Y(y);
+  if(clip2)
+    CLIP_POINT_Y(y2);
+
+  // Call drawing implementation
+  drawVLine_i(x, y, y2 - y + 1);
 }
 
 //---------------------------------------------------------------------------
 void
 C2DRenderer::drawRect(int x, int y, unsigned int width, unsigned int height)
 {
-  if(pSurface_ != NULL)
-  {
-    if(VISIBLE_RECT(x, y, width, height))
-    {
-      CLIP_RECT(x, y, width, height);
-      drawRect_i(x, y, width, height);
-    }
-  }
+  if(pSurface_ == NULL)
+    return;
+
+  drawHLine(x, y, width);                      // Top
+  drawHLine(x, y + height - 1, width);         // Bottom
+  drawVLine(x, y + 1, height - 2);             // Left
+  drawVLine(x + width - 1, y + 1, height - 2); // Right
+}
+
+//---------------------------------------------------------------------------
+void
+C2DRenderer::setClipRect(int x, int y, unsigned int width, unsigned int height)
+{
+  if(pSurface_ == NULL)
+    return;
+
+  int x2 = x + width  - 1;
+  int y2 = y + height - 1;
+
+  // Clip to surface
+  CLIP_POINT_SURF(x,  y);
+  CLIP_POINT_SURF(x2, y2);
+
+  clipper_.xmin = x;
+  clipper_.ymin = y;
+  clipper_.xmax = x2;
+  clipper_.ymax = y2;
 }
 
 //---------------------------------------------------------------------------
@@ -230,18 +342,75 @@ C2DRenderer::setPixel_i(int x, int y)
 
 //---------------------------------------------------------------------------
 void
-C2DRenderer::fill_i()
-{
-  fillRect_i(0, 0, pSurface_->mode.width, pSurface_->mode.height);
-}
-
-//---------------------------------------------------------------------------
-void
 C2DRenderer::fillRect_i(int x, int y, unsigned int width, unsigned int height)
 {
   for(uint32_t i(0); i < height; i++)
     drawHLine_i(x, y + i, width);
 }
+
+//---------------------------------------------------------------------------
+class CDDA
+{
+public:
+  CDDA(){}
+  CDDA(int num, int den)
+  {
+    set(num, den);
+  }
+
+  void set(int num, int den)
+  {
+    iNum_ = num;
+    iDen_ = den;
+
+    if(iNum_ >= 0)
+    {
+      // Positive case, C is okay
+      iDiv_    = iNum_ / iDen_;
+      iModulo_ = iNum_ % iDen_;
+    }
+    else
+    {
+      // Negative case, do the right thing
+      iDiv_    = -((-iNum_) / iDen_);
+      iModulo_ =   (-iNum_) % iDen_;
+      if(iModulo_)
+      {
+        // There is a remainder
+        iDiv_--;
+        iModulo_ = iDen_ - iModulo_;
+      }
+    }
+
+    // Set error to half a result value
+    iError_ = iDen_ >> 1;
+  }
+
+  void increment()
+  {
+    iCurrent_ += iDiv_;
+    iError_ += iModulo_;
+    if(iError_ >= iDen_)
+    {
+      iError_ -= iDen_;
+      iCurrent_++;
+    }
+  }
+
+  int numerator(){return iNum_;}
+  int denominator(){return iDen_;}
+
+  void current(int i){iCurrent_ = i;}
+  int  current(){return iCurrent_;}
+
+private:
+  int iNum_;
+  int iDen_;
+  int iDiv_;
+  int iModulo_;
+  int iError_;
+  int iCurrent_;
+};
 
 //---------------------------------------------------------------------------
 void
@@ -257,31 +426,27 @@ C2DRenderer::drawLine_i(int x1, int y1, int x2, int y2)
   }
   else
   {
-    float dx = (x2-x1);
-    float dy = (y2-y1);
+    int dx = x2 - x1;
+    int dy = y2 - y1;
 
-    if(dx >= abs(dy))
+    if(abs(dx) >= abs(dy))
     {
-      float currenty = y1 + 0.5f;
-      float slopey   = dy / dx;
-
+      CDDA dda(dy, dx);
+      dda.current(y1);
       for(; x1 <= x2; x1++)
       {
-        SET_PIXEL(x1, (int)currenty, fmtColor_);
-        currenty += slopey;
+        SET_PIXEL(x1, dda.current(), fmtColor_);
+        dda.increment();
       }
     }
     else
     {
-      float currentx = x1 + 0.5f;
-      float slopex   = dx / dy;
-      int ystart = (y1 <= y2) ? y1 : y2;
-      int yend   = (y1 <= y2) ? y2 : y1;
-
-      for(; ystart <= yend; ystart++)
+      CDDA dda(dx, dy);
+      dda.current(x1);
+      for(; y1 <= y2; y1++)
       {
-        SET_PIXEL((int)currentx, ystart, fmtColor_);
-        currentx += slopex;
+        SET_PIXEL(dda.current(), y1, fmtColor_);
+        dda.increment();
       }
     }
   }
@@ -308,37 +473,5 @@ C2DRenderer::drawVLine_i(int x, int y, unsigned int height)
     SET_PIXEL(x, y, fmtColor_);
     y++;
     height--;
-  }
-}
-
-//---------------------------------------------------------------------------
-void
-C2DRenderer::drawRect_i(int x, int y, unsigned int width, unsigned int height)
-{
-  if((width < 3) || (height < 3))
-  {
-    if((width == 0) || (height == 0))
-      return;
-    else if(width == 1)
-      drawVLine_i(x, y, height);
-    else if(height == 1)
-      drawHLine_i(x, y, width);
-    else if(width == 2)
-    {
-      drawVLine_i(x,     y, height);
-      drawVLine_i(x + 1, y, height);
-    }
-    else if(height == 2)
-    {
-      drawHLine_i(x, y,     width);
-      drawHLine_i(x, y + 1, width);
-    }
-  }
-  else
-  {
-    drawHLine_i(x, y, width);                      // Top
-    drawHLine_i(x, y + height - 1, width);         // Bottom
-    drawVLine_i(x, y + 1, height - 2);             // Left
-    drawVLine_i(x + width - 1, y + 1, height - 2); // Right
   }
 }
