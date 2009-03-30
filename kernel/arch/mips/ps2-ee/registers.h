@@ -25,11 +25,18 @@
 
 #include "inttypes.h"
 #include "asm/cpu.h"
+#include "asm/arch/config.h"
 
 
-// KSEG1_START: Kernel segment 1, Unmapped, Uncached
-#define REG32(R) (*(vuint32_t *)((R) | KSEG1_START))
-#define REG64(R) (*(vuint64_t *)((R) | KSEG1_START))
+#ifdef CONFIG_KERNEL_MODE
+  // KSEG1_START: Kernel segment 1, Unmapped, Uncached
+  #define REG32(R) (*(vuint32_t *)((R) | KSEG1_START))
+  #define REG64(R) (*(vuint64_t *)((R) | KSEG1_START))
+#else
+  // KUSEG_START: User segment: Mapped
+  #define REG32(R) (*(vuint32_t *)((R) | KUSEG_START))
+  #define REG64(R) (*(vuint64_t *)((R) | KUSEG_START))
+#endif
 
 //
 // Timers

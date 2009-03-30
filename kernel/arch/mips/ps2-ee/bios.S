@@ -2,11 +2,13 @@
 .p2align 3
 
 
-# -----------
-# From PS2SDK
-# -----------
-#define USE_KMODE
-#ifdef USE_KMODE
+#include "asm/arch/config.h"
+
+
+// -----------
+// From PS2SDK
+// -----------
+#ifdef CONFIG_KERNEL_MODE
 #define SYSCALL(name, number) \
   .set push;            \
   .set noreorder;       \

@@ -30,7 +30,6 @@
 
 #include "irq.h"
 #include "dma.h"
-#include "sif.h"
 #include "cache.h"
 #include "drivers.h"
 
@@ -42,13 +41,17 @@
 #ifdef CONFIG_BUILTIN_MM
 extern char _end;
 extern char _heap_size;
-#define HEAP_START (KSEG0_START | (uint32_t)(&_end))
-#define HEAP_END   (KSEG0_START | (32*1024*1024))
+  #ifdef CONFIG_KERNEL_MODE
+    #define HEAP_START (KSEG1_START | (uint32_t)(&_end))
+    #define HEAP_END   (KSEG1_START | (32*1024*1024))
+  #else
+    #define HEAP_START (KUSEG_START | (uint32_t)(&_end))
+    #define HEAP_END   (KUSEG_START | (32*1024*1024))
+  #endif
 #endif // CONFIG_BUILTIN_MM
 
 CIRQ           cIRQ;  // INT-Controller
 CDMAC          cDMAC; // DMA-Controller
-CIOP           cIOP;
 
 #ifdef CONFIG_DEBUGGING
 CPS2DebugScreen cDebug;
@@ -62,6 +65,7 @@ extern "C" void jumpToSegment(unsigned int segment);
 int
 main(int, char *[])
 {
+#ifdef CONFIG_KERNEL_MODE
   // Disable interrupts
   local_irq_disable();
   // Enter cpu's kernel mode
@@ -73,10 +77,7 @@ main(int, char *[])
   invalidateICacheAll();
   // Jump to KSEG0 (kernel space)
   jumpToSegment(KSEG0_START);
-  // Setup interrupts and exceptions
-  initExceptions(); // Install CPU exception handlers
-  cIRQ.init();      // Interrupt Controller
-  cDMAC.init();     // DMA Controller
+#endif
 
 #ifdef CONFIG_BUILTIN_MM
   init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
@@ -88,22 +89,24 @@ main(int, char *[])
   printk("Debugging ok\n");
 #endif // CONFIG_DEBUGGING
 
-  task_init();
+#ifdef CONFIG_KERNEL_MODE
+  // Setup interrupts and exceptions
+  initExceptions(); // Install CPU exception handlers
+  cIRQ.init();      // Interrupt Controller
+  cDMAC.init();     // DMA Controller
+#endif
 
-  // Initialize IOP
-  cIOP.init();
-  // Wait for IOP
-  printk("Waiting for IOP...");
-  while(cIOP.sync());
-  printk("ready\n");
+#ifdef CONFIG_KERNEL_MODE
+  // Enable interrupts
+  local_irq_enable();
+  printk("Interrupts...OK\n");
+#endif
+
+  task_init();
 
 #ifdef CONFIG_BUILTIN_MM
   printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
 #endif // CONFIG_BUILTIN_MM
-
-  // Enable interrupts
-  local_irq_enable();
-  printk("Interrupts...OK\n");
 
   // Initialize drivers
   init_drivers();

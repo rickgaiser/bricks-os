@@ -34,6 +34,7 @@
 //#define __BIG_ENDIAN__
 #define CONFIG_FPU
 //#define CONFIG_MMU
+//#define CONFIG_KERNEL_MODE
 #define CONFIG_USE_VU0
 //#define CONFIG_USE_VU1
 

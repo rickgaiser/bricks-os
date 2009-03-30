@@ -17,7 +17,6 @@ OBJS            =\
                 vif \
                 irq \
                 isr \
-                sif \
                 task \
 
 OBJS-$(CONFIG_USE_VU0) +=\
