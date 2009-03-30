@@ -114,7 +114,6 @@ public:
   virtual void glEnd();
 
 protected:
-  virtual void rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit = 0);
   virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2);
   virtual void zbuffer(bool enable);
   virtual CTexture * getTexture();

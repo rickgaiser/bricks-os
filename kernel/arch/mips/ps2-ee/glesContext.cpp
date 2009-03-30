@@ -241,26 +241,28 @@ CPS2GLESContext::glDisable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_LIGHTING: lightingEnabled_ = false; break;
-    case GL_LIGHT0: lights_[0].enabled = false; break;
-    case GL_LIGHT1: lights_[1].enabled = false; break;
-    case GL_LIGHT2: lights_[2].enabled = false; break;
-    case GL_LIGHT3: lights_[3].enabled = false; break;
-    case GL_LIGHT4: lights_[4].enabled = false; break;
-    case GL_LIGHT5: lights_[5].enabled = false; break;
-    case GL_LIGHT6: lights_[6].enabled = false; break;
-    case GL_LIGHT7: lights_[7].enabled = false; break;
+    case GL_ALPHA_TEST: alphaTestEnabled_  = false; break;
+    case GL_BLEND:      blendingEnabled_   = false; break;
+    case GL_LIGHTING:   lightingEnabled_   = false; break;
+    case GL_LIGHT0:     lights_[0].enabled = false; break;
+    case GL_LIGHT1:     lights_[1].enabled = false; break;
+    case GL_LIGHT2:     lights_[2].enabled = false; break;
+    case GL_LIGHT3:     lights_[3].enabled = false; break;
+    case GL_LIGHT4:     lights_[4].enabled = false; break;
+    case GL_LIGHT5:     lights_[5].enabled = false; break;
+    case GL_LIGHT6:     lights_[6].enabled = false; break;
+    case GL_LIGHT7:     lights_[7].enabled = false; break;
     case GL_DEPTH_TEST:
       depthTestEnabled_ = false;
-      zbuffer(false);
+      zbuffer(false); // Notify rasterizer
       break;
     case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
     case GL_FOG:        fogEnabled_       = false; break;
     case GL_TEXTURE_2D: texturesEnabled_  = false; ps2Textures_ = GS_PRIM_TEXTURES_OFF; break;
     case GL_NORMALIZE:  normalizeEnabled_ = false; break;
-
     default:
-      ; // Not supported
+      setError(GL_INVALID_ENUM);
+      return;
   };
 }
 
@@ -270,6 +272,8 @@ CPS2GLESContext::glEnable(GLenum cap)
 {
   switch(cap)
   {
+    case GL_ALPHA_TEST: alphaTestEnabled_  = true; break;
+    case GL_BLEND:      blendingEnabled_   = true; break;
     case GL_LIGHTING:   lightingEnabled_   = true; break;
     case GL_LIGHT0:     lights_[0].enabled = true; break;
     case GL_LIGHT1:     lights_[1].enabled = true; break;
@@ -281,15 +285,15 @@ CPS2GLESContext::glEnable(GLenum cap)
     case GL_LIGHT7:     lights_[7].enabled = true; break;
     case GL_DEPTH_TEST:
       depthTestEnabled_ = true;
-      zbuffer(true);
+      zbuffer(true); // Notify rasterizer
       break;
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
     case GL_TEXTURE_2D: texturesEnabled_   = true; ps2Textures_ = GS_PRIM_TEXTURES_ON; break;
     case GL_NORMALIZE:  normalizeEnabled_  = true; break;
-
     default:
-      ; // Not supported
+      setError(GL_INVALID_ENUM);
+      return;
   };
 }
 
@@ -506,8 +510,12 @@ CPS2GLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
       case GL_TEXTURE_MIN_FILTER:
         switch((GLint)param)
         {
-          case GL_NEAREST: CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_NEAREST; break;
-          case GL_LINEAR:  CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_LINEAR;  break;
+          case GL_NEAREST:                CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_NEAREST;                break;
+          case GL_LINEAR:                 CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_LINEAR;                 break;
+          case GL_NEAREST_MIPMAP_NEAREST: CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_NEAREST_MIPMAP_NEAREST; break;
+          case GL_LINEAR_MIPMAP_NEAREST:  CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_LINEAR_MIPMAP_NEAREST;  break;
+          case GL_NEAREST_MIPMAP_LINEAR:  CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_NEAREST_MIPMAP_LINEAR;  break;
+          case GL_LINEAR_MIPMAP_LINEAR:   CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_LINEAR_MIPMAP_LINEAR;   break;
           default:
             setError(GL_INVALID_ENUM);
             return;
@@ -517,12 +525,8 @@ CPS2GLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
       case GL_TEXTURE_MAG_FILTER:
         switch((GLint)param)
         {
-          case GL_NEAREST:                CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_NEAREST;                break;
-          case GL_LINEAR:                 CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_LINEAR;                 break;
-          case GL_NEAREST_MIPMAP_NEAREST: CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_NEAREST_MIPMAP_NEAREST; break;
-          case GL_LINEAR_MIPMAP_NEAREST:  CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_LINEAR_MIPMAP_NEAREST;  break;
-          case GL_NEAREST_MIPMAP_LINEAR:  CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_NEAREST_MIPMAP_LINEAR;  break;
-          case GL_LINEAR_MIPMAP_LINEAR:   CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_LINEAR_MIPMAP_LINEAR;   break;
+          case GL_NEAREST: CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_NEAREST; break;
+          case GL_LINEAR:  CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_LINEAR; break;
           default:
             setError(GL_INVALID_ENUM);
             return;
@@ -589,8 +593,28 @@ CPS2GLESContext::glEnd()
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit)
+CPS2GLESContext::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
+  // -------
+  // Culling
+  // -------
+  if(cullFaceEnabled_ == true)
+  {
+    // Always invisible when culling both front and back
+    if(cullFaceMode_ == GL_FRONT_AND_BACK)
+      return;
+
+    GLfloat vnz =
+      (v0.vd.x - v2.vd.x) * (v1.vd.y - v2.vd.y) -
+      (v0.vd.y - v2.vd.y) * (v1.vd.x - v2.vd.x);
+
+    if(vnz == 0.0f)
+      return;
+
+    if((vnz < 0.0f) == bCullCW_)
+      return;
+  }
+
   SVertexF * va[3] = {&v0, &v1, &v2};
   uint8_t alpha;
 
@@ -598,7 +622,7 @@ CPS2GLESContext::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
   {
     SVertexF & v = *va[iVertex];
 
-    uint32_t z = ps2DepthInvert_ ? (zMax_ - v.sz) : v.sz;
+    //uint32_t z = 0;//ps2DepthInvert_ ? (zMax_ - v.sz) : v.sz;
 
     // Determine alpha value (for aliasing and alpha blending)
     // Both off: solid colors
@@ -622,7 +646,7 @@ CPS2GLESContext::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
     // Add to message
     if(texturesEnabled_ == true)
     {
-      GLfloat tq = 1.0f / v.vc.w;
+      GLfloat tq = v.vd.w;
       GLfloat ts = v.t[0] * tq;
       GLfloat tt = v.t[1] * tq;
 
@@ -633,14 +657,14 @@ CPS2GLESContext::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
     {
       packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, 0));
     }
-    packet_.gifAddPackedAD(GIF::REG::xyz2, GIF::REG::XYZ2((GS_X_BASE+v.sx)<<4, (GS_Y_BASE+v.sy)<<4, z));
-  }
-}
+    
+    int32_t x = (int32_t)((xA_ * v.vd.x) + xB_);
+    int32_t y = (int32_t)((yA_ * v.vd.y) + yB_);
+    int32_t z = (int32_t)((zA_ * v.vd.z) + zB_);
+    if(ps2DepthInvert_ == true) z = zMax_ - z;
 
-//-----------------------------------------------------------------------------
-void
-CPS2GLESContext::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
-{
+    packet_.gifAddPackedAD(GIF::REG::xyz2, GIF::REG::XYZ2((GS_X_BASE<<4) + x, (GS_Y_BASE<<4) + y, z));
+  }
 }
 
 //-----------------------------------------------------------------------------
