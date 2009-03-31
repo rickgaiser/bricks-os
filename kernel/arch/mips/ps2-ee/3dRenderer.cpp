@@ -19,7 +19,7 @@
  */
 
 
-#include "glesContext.h"
+#include "3dRenderer.h"
 #include "bios.h"
 #include "dma.h"
 #include "gif.h"
@@ -144,7 +144,7 @@ CPS2Texture::bind()
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-CPS2GLESContext::CPS2GLESContext(CPS2VideoDevice & device)
+CPS23DRenderer::CPS23DRenderer(CPS2VideoDevice & device)
  : CASoftGLESFloat()
  , CAGLESTextures()
  , CAPS2Renderer()
@@ -177,13 +177,13 @@ CPS2GLESContext::CPS2GLESContext(CPS2VideoDevice & device)
 }
 
 //-----------------------------------------------------------------------------
-CPS2GLESContext::~CPS2GLESContext()
+CPS23DRenderer::~CPS23DRenderer()
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glClear(GLbitfield mask)
+CPS23DRenderer::glClear(GLbitfield mask)
 {
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
@@ -212,7 +212,7 @@ CPS2GLESContext::glClear(GLbitfield mask)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glDepthFunc(GLenum func)
+CPS23DRenderer::glDepthFunc(GLenum func)
 {
   depthFunction_ = func;
 
@@ -237,7 +237,7 @@ CPS2GLESContext::glDepthFunc(GLenum func)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glDisable(GLenum cap)
+CPS23DRenderer::glDisable(GLenum cap)
 {
   switch(cap)
   {
@@ -268,7 +268,7 @@ CPS2GLESContext::glDisable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glEnable(GLenum cap)
+CPS23DRenderer::glEnable(GLenum cap)
 {
   switch(cap)
   {
@@ -299,7 +299,7 @@ CPS2GLESContext::glEnable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glShadeModel(GLenum mode)
+CPS23DRenderer::glShadeModel(GLenum mode)
 {
   shadingModel_ = mode;
 
@@ -312,7 +312,7 @@ CPS2GLESContext::glShadeModel(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
+CPS23DRenderer::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
   if(target != GL_TEXTURE_2D)
   {
@@ -495,7 +495,7 @@ CPS2GLESContext::glTexImage2D(GLenum target, GLint level, GLint internalformat, 
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
+CPS23DRenderer::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
 {
   if(target != GL_TEXTURE_2D)
   {
@@ -564,7 +564,7 @@ CPS2GLESContext::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glBegin(GLenum mode)
+CPS23DRenderer::glBegin(GLenum mode)
 {
   CASoftGLESFloat::glBegin(mode);
 
@@ -584,7 +584,7 @@ CPS2GLESContext::glBegin(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::glEnd()
+CPS23DRenderer::glEnd()
 {
   CASoftGLESFloat::glEnd();
 
@@ -593,7 +593,7 @@ CPS2GLESContext::glEnd()
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
+CPS23DRenderer::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
   // -------
   // Culling
@@ -669,7 +669,7 @@ CPS2GLESContext::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 
 //-----------------------------------------------------------------------------
 void
-CPS2GLESContext::zbuffer(bool enable)
+CPS23DRenderer::zbuffer(bool enable)
 {
   if(enable == true)
   {
@@ -693,7 +693,7 @@ CPS2GLESContext::zbuffer(bool enable)
 
 //-----------------------------------------------------------------------------
 CTexture *
-CPS2GLESContext::getTexture()
+CPS23DRenderer::getTexture()
 {
   return new CPS2Texture(packet_);
 }

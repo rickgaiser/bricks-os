@@ -19,8 +19,8 @@
  */
 
 
-#ifndef PS2_GLESCONTEXT_H
-#define PS2_GLESCONTEXT_H
+#ifndef PS2_3DRENDERER_H
+#define PS2_3DRENDERER_H
 
 
 #include "../../../../gl/softGLF.h"
@@ -82,14 +82,14 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-class CPS2GLESContext
+class CPS23DRenderer
  : public CASoftGLESFloat
  , public CAGLESTextures
  , public CAPS2Renderer
 {
 public:
-  CPS2GLESContext(CPS2VideoDevice & device);
-  virtual ~CPS2GLESContext();
+  CPS23DRenderer(CPS2VideoDevice & device);
+  virtual ~CPS23DRenderer();
 
   // Surfaces
   virtual void       setSurface(CSurface * surface){CAPS2Renderer::setSurface(surface);}

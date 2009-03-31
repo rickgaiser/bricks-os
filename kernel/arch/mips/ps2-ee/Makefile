@@ -29,8 +29,8 @@ OBJS-$(CONFIG_USE_VU1) +=\
 
 
 OBJS-$(CONFIG_DEBUGGING)           += debugScreen
-OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
-OBJS-$(CONFIG_GL)                  += glesContext
+OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice 2dRenderer
+OBJS-$(CONFIG_GL)                  += 3dRenderer
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel
