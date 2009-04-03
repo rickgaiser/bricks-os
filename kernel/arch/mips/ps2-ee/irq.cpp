@@ -20,26 +20,8 @@
 
 
 #include "kernel/debug.h"
-#include "kernel/interruptManager.h"
-#include "asm/arch/memory.h"
-#include "asm/cpu.h"
-#include "asm/irq.h"
 #include "registers.h"
-#include "cache.h"
 #include "irq.h"
-
-
-// Exceptions
-#define V_TLB_REFILL      0
-#define V_COUNTER         1
-#define V_DEBUG           2
-#define V_COMMON          3
-#define V_INTERRUPT       4
-
-// Interrupts Pins (exception V_INTERRUPT)
-#define COUSE_INT_0       (1<<10)
-#define COUSE_INT_1       (1<<11)
-#define COUSE_INT_2       (1<<15)
 
 
 const char * sINTSource[] =
@@ -56,8 +38,6 @@ const char * sINTSource[] =
   "TIMER0",
   "TIMER1"
 };
-
-IInterruptHandler * inthandlers[3];
 
 uint32_t syscallTable[130] =
 {
@@ -104,114 +84,7 @@ uint32_t syscallTable[130] =
 */
 };
 
-// Entry point for V_COMMON exception handler
-extern "C" void commonExceptionHandler();
-// Entry point for V_INTERRUPT exception handler
-extern "C" void interruptExceptionHandler();
 
-// Function called by interruptExceptionHandler
-extern "C" void isr(pt_regs * regs) INTERRUPT_CODE;
-
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-void
-install_exception_handler(int type, void (*func)())
-{
-  vuint32_t * dest;
-
-  if(type < 5)
-  {
-    dest = (uint32_t *)(KSEG0_START + type * 0x80);
-    dest[0] = 0x00000000; // nop, required to fix CPU bug
-    dest[1] = 0x00000000; // nop, required to fix CPU bug
-    dest[2] = 0x08000000 | (0x03ffffff & (((uint32_t)func) >> 2)); // jump to function
-    dest[3] = 0x00000000; // nop, required because of branch delay execution
-  }
-}
-
-// -----------------------------------------------------------------------------
-extern "C" void
-errorHandler(uint32_t * regs)
-{
-  panic("Exception!\n");
-}
-
-// -----------------------------------------------------------------------------
-extern "C" uint32_t
-unknownSyscall(int nr)
-{
-  panic("Unknown syscall!\n");
-
-  return 0;
-}
-
-// -----------------------------------------------------------------------------
-extern "C" void
-isr(pt_regs * regs)
-{
-  // Find out who triggered the interrupt
-  uint32_t iCouse;
-  iCouse = read_c0_cause();
-
-  // Interrupt pending pin 0 (INTC)
-  if(iCouse & COUSE_INT_0)
-  {
-    if(inthandlers[0] != NULL)
-      inthandlers[0]->isr(0, regs);
-  }
-
-  // Interrupt pending pin 1 (DMAC)
-  if(iCouse & COUSE_INT_1)
-  {
-    if(inthandlers[1] != NULL)
-      inthandlers[1]->isr(1, regs);
-  }
-
-  // Interrupt pending pin 2 (not used)
-  if(iCouse & COUSE_INT_2)
-  {
-    if(inthandlers[2] != NULL)
-      inthandlers[2]->isr(2, regs);
-  }
-}
-
-// -----------------------------------------------------------------------------
-void
-initExceptions()
-{
-  for(int i(0); i < 3; i++)
-  {
-    inthandlers[i] = NULL;
-  }
-
-  // SubBus interface / SIF
-  REG_SIF_SMFLAG = (1 << 8) | (1 << 10);
-
-//  install_exception_handler(V_TLB_REFILL, commonExceptionHandler);
-//  install_exception_handler(V_COUNTER,    commonExceptionHandler);
-//  install_exception_handler(V_DEBUG,      commonExceptionHandler);
-//  install_exception_handler(V_COMMON,     commonExceptionHandler);
-  install_exception_handler(V_INTERRUPT,  interruptExceptionHandler);
-  flushDCacheAll();
-  invalidateICacheAll();
-}
-
-// -----------------------------------------------------------------------------
-void
-setInterruptHandler(uint32_t nr, IInterruptHandler & handler)
-{
-  if(nr < 3)
-  {
-    inthandlers[nr] = &handler;
-  }
-  else
-  {
-    panic("setInterruptHandler: invalid nr: %d", nr);
-  }
-}
-
-// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 CIRQ::CIRQ()
 {
@@ -236,7 +109,7 @@ CIRQ::init()
   REG_INT_MASK = REG_INT_MASK;
 
   // INT controller is connected to MIPS interrupt PIN0
-  setInterruptHandler(MIPS_INT_0, *this);
+  setInterruptHandler(MIPS_INTERRUPT_0, *this);
 
   for(int i(0); i < MAX_INTERRUPTS; i++)
     CInterruptManager::attach(i, this);

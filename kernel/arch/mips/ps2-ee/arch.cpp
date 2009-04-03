@@ -28,9 +28,9 @@
 #include "asm/cpu.h"
 #include "asm/task.h"
 
+#include "r5900.h"
 #include "irq.h"
 #include "dma.h"
-#include "cache.h"
 #include "drivers.h"
 
 #ifdef CONFIG_DEBUGGING

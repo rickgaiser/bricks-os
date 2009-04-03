@@ -86,7 +86,7 @@ CDMAC::init()
   REG_DMA_STAT = REG_DMA_STAT;
 
   // DMA controller is connected to MIPS interrupt PIN1
-  setInterruptHandler(MIPS_INT_1, *this);
+  setInterruptHandler(MIPS_INTERRUPT_1, *this);
 }
 
 //-------------------------------------------------------------------------

@@ -8,7 +8,6 @@ OBJ             =arch
 OBJS            =\
                 arch \
                 bios \
-                cache \
                 courier_new \
                 dma \
                 drivers \
@@ -16,7 +15,8 @@ OBJS            =\
                 gif \
                 vif \
                 irq \
-                isr \
+                r5900 \
+                r5900_asm \
                 task \
 
 OBJS-$(CONFIG_USE_VU0) +=\

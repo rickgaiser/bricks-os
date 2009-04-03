@@ -24,6 +24,7 @@
 #include "3dRenderer.h"
 #include "bios.h"
 #include "dma.h"
+#include "irq.h"
 #include "gif.h"
 #include "string.h"
 
