@@ -20,9 +20,13 @@
 
 
 #include "kernel/debug.h"
-#include "registers.h"
 #include "irq.h"
 
+#ifdef CONFIG_KERNEL_MODE
+#include "registers.h"
+#else
+#include "bios.h"
+#endif
 
 const char * sINTSource[] =
 {
@@ -39,6 +43,7 @@ const char * sINTSource[] =
   "TIMER1"
 };
 
+#ifdef CONFIG_KERNEL_MODE
 uint32_t syscallTable[130] =
 {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -83,8 +88,26 @@ uint32_t syscallTable[130] =
   syscallSifSetDChain, syscallSifSetReg, syscallSifGetReg, 0, 0, 0, 0, 0, 0, 0,
 */
 };
+#endif // CONFIG_KERNEL_MODE
 
 
+#ifndef CONFIG_KERNEL_MODE
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+int32_t
+biosINTHandler(int32_t irq)
+{
+  if(irq < MAX_INTERRUPTS)
+  {
+    // Handle
+    CInterruptManager::isr(irq, 0);
+  }
+
+  return 0;
+}
+#endif // CONFIG_KERNEL_MODE
+
+// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 CIRQ::CIRQ()
 {
@@ -102,6 +125,7 @@ CIRQ::~CIRQ()
 int
 CIRQ::init()
 {
+#ifdef CONFIG_KERNEL_MODE
   iINTMask_ = 0;
 
   // Clear INT mask/status
@@ -110,6 +134,10 @@ CIRQ::init()
 
   // INT controller is connected to MIPS interrupt PIN0
   setInterruptHandler(MIPS_INTERRUPT_0, *this);
+#else
+  for(int i(0); i < MAX_INTERRUPTS; i++)
+    handle_[i] = 0;
+#endif // CONFIG_KERNEL_MODE
 
   for(int i(0); i < MAX_INTERRUPTS; i++)
     CInterruptManager::attach(i, this);
@@ -117,6 +145,7 @@ CIRQ::init()
   return 0;
 }
 
+#ifdef CONFIG_KERNEL_MODE
 // -----------------------------------------------------------------------------
 void
 CIRQ::isr(unsigned int irq, pt_regs * regs)
@@ -139,6 +168,7 @@ CIRQ::isr(unsigned int irq, pt_regs * regs)
     }
   }
 }
+#endif // CONFIG_KERNEL_MODE
 
 // -----------------------------------------------------------------------------
 void
@@ -148,11 +178,19 @@ CIRQ::enable(unsigned int irq)
 
   if(irq < MAX_INTERRUPTS)
   {
+#ifdef CONFIG_KERNEL_MODE
     if((iINTMask_ & (1 << irq)) == 0)
     {
       iINTMask_    |= (1 << irq);
       REG_INT_MASK |= (1 << irq);
     }
+#else
+    if(handle_[irq] == 0)
+    {
+      handle_[irq] = bios::AddIntcHandler(irq, ::biosINTHandler, 0);
+      bios::EnableIntc(irq);
+    }
+#endif // CONFIG_KERNEL_MODE
   }
 }
 
@@ -164,10 +202,19 @@ CIRQ::disable(unsigned int irq)
 
   if(irq < MAX_INTERRUPTS)
   {
+#ifdef CONFIG_KERNEL_MODE
     if((iINTMask_ & (1 << irq)) != 0)
     {
       iINTMask_    &= ~(1 << irq);
       REG_INT_MASK |=  (1 << irq);
     }
+#else
+    if(handle_[irq] != 0)
+    {
+      bios::DisableIntc(irq);
+      bios::RemoveIntcHandler(irq, handle_[irq]);
+      handle_[irq] = 0;
+    }
+#endif // CONFIG_KERNEL_MODE
   }
 }

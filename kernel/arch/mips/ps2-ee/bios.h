@@ -26,10 +26,7 @@
 #include "stdint.h"
 
 
-#define SIF_DMA_INT_I 0x2
-#define SIF_DMA_INT_O 0x4
-
-
+typedef int32_t (*intCallBack)(int32_t cause);
 typedef int32_t (*dmaCallBack)(int32_t channel);
 
 struct SifDmaTransfer_t
@@ -121,21 +118,21 @@ int32_t  Interrupt2Iop          (int32_t cause);
 void     SetVTLBRefillHandler   (int32_t handler_num, void * handler_func);
 void     SetVCommonHandler      (int32_t handler_num, void * handler_func);
 void     SetVInterruptHandler   (int32_t handler_num, void * handler_func);
-int32_t  AddIntcHandler         (int32_t cause, int32_t(*handler_func)(int32_t cause), int32_t next);
+int32_t  AddIntcHandler         (int32_t cause, intCallBack handler, int32_t next);
 int32_t  AddIntcHandler2        (int32_t cause, int32_t(*handler_func)(int32_t cause, void * arg, void * addr), int32_t next, void * arg);
 int32_t  RemoveIntcHandler      (int32_t cause, int32_t handler_id);
 int32_t  AddDmacHandler         (int32_t channel, dmaCallBack handler, int32_t next);
 int32_t  RemoveDmacHandler      (int32_t channel, int32_t handler_id);
-int32_t  _EnableIntc            (int32_t cause);
-int32_t  _DisableIntc           (int32_t cause);
-int32_t  _EnableDmac            (int32_t channel);
-int32_t  _DisableDmac           (int32_t channel);
+int32_t  EnableIntc             (int32_t cause);
+int32_t  DisableIntc            (int32_t cause);
+int32_t  EnableDmac             (int32_t channel);
+int32_t  DisableDmac            (int32_t channel);
 int32_t  SetAlarm               (uint16_t time, void (*callback)(int32_t alarm_id, uint16_t time, void * arg2), void * arg2);
 int32_t  ReleaseAlarm           (int32_t alarm_id);
-int32_t  _iEnableIntc           (int32_t cause);
-int32_t  _iDisableIntc          (int32_t cause);
-int32_t  _iEnableDmac           (int32_t channel);
-int32_t  _iDisableDmac          (int32_t channel);
+int32_t  iEnableIntc            (int32_t cause);
+int32_t  iDisableIntc           (int32_t cause);
+int32_t  iEnableDmac            (int32_t channel);
+int32_t  iDisableDmac           (int32_t channel);
 int32_t  iSetAlarm              (uint16_t time, void (*callback)(int32_t alarm_id, uint16_t time, void * arg2), void * arg2);
 int32_t  iReleaseAlarm          (int32_t alarm_id);
 int32_t  CreateThread           (ee_thread_t * thread);

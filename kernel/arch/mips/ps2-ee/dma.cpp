@@ -60,6 +60,26 @@ static SDMAChannel dmaChannel_[10] =
 };
 
 
+IDMAChannelHandler * CDMAC::handlers_[DMA_CHANNEL_COUNT];
+
+
+#ifndef CONFIG_KERNEL_MODE
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+int32_t
+biosDMAHandler(int channel)
+{
+  if(channel < DMA_CHANNEL_COUNT)
+  {
+    // Handle
+    if(CDMAC::handlers_[channel] != NULL)
+      CDMAC::handlers_[channel]->dmaCallbackHandler(channel);
+  }
+
+  return 0;
+}
+#endif // CONFIG_KERNEL_MODE
+
 //-------------------------------------------------------------------------
 //-------------------------------------------------------------------------
 CDMAC::CDMAC()
@@ -75,10 +95,8 @@ CDMAC::~CDMAC()
 void
 CDMAC::init()
 {
+#ifdef CONFIG_KERNEL_MODE
   iDMAMask_ = 0;
-
-  for(int i(0); i < DMA_CHANNEL_COUNT; i++)
-    handlers_[i] = NULL;
 
   // Clear DMA mask/status
   //  0.. 9 == status (writing 1 clears status)
@@ -87,6 +105,13 @@ CDMAC::init()
 
   // DMA controller is connected to MIPS interrupt PIN1
   setInterruptHandler(MIPS_INTERRUPT_1, *this);
+#else
+  for(int i(0); i < DMA_CHANNEL_COUNT; i++)
+    handle_[i] = 0;
+#endif // CONFIG_KERNEL_MODE
+
+  for(int i(0); i < DMA_CHANNEL_COUNT; i++)
+    handlers_[i] = NULL;
 }
 
 //-------------------------------------------------------------------------
@@ -116,34 +141,52 @@ CDMAC::detach(unsigned int channel, IDMAChannelHandler * handler)
 
 //-------------------------------------------------------------------------
 void
-CDMAC::disable(unsigned int channel)
-{
-  if(channel < DMA_CHANNEL_COUNT)
-  {
-    // Disable if enabled
-    if((iDMAMask_ & (0x00010000 << channel)) != 0)
-    {
-      iDMAMask_    &= ~(0x00010000 << channel);
-      REG_DMA_STAT  =  (0x00010000 << channel);
-    }
-  }
-}
-
-//-------------------------------------------------------------------------
-void
 CDMAC::enable(unsigned int channel)
 {
   if(channel < DMA_CHANNEL_COUNT)
   {
+#ifdef CONFIG_KERNEL_MODE
     // Enable if disabled
     if((iDMAMask_ & (0x00010000 << channel)) == 0)
     {
       iDMAMask_    |= (0x00010000 << channel);
       REG_DMA_STAT  = (0x00010000 << channel);
     }
+#else
+    if(handle_[channel] == 0)
+    {
+      handle_[channel] = bios::AddDmacHandler(channel, ::biosDMAHandler, 0);
+      bios::EnableDmac(channel);
+    }
+#endif // CONFIG_KERNEL_MODE
   }
 }
 
+//-------------------------------------------------------------------------
+void
+CDMAC::disable(unsigned int channel)
+{
+  if(channel < DMA_CHANNEL_COUNT)
+  {
+#ifdef CONFIG_KERNEL_MODE
+    // Disable if enabled
+    if((iDMAMask_ & (0x00010000 << channel)) != 0)
+    {
+      iDMAMask_    &= ~(0x00010000 << channel);
+      REG_DMA_STAT  =  (0x00010000 << channel);
+    }
+#else
+    if(handle_[channel] != 0)
+    {
+      bios::DisableDmac(channel);
+      bios::RemoveDmacHandler(channel, handle_[channel]);
+      handle_[channel] = 0;
+    }
+#endif // CONFIG_KERNEL_MODE
+  }
+}
+
+#ifdef CONFIG_KERNEL_MODE
 //-------------------------------------------------------------------------
 void
 CDMAC::isr(unsigned int irq, pt_regs * regs)
@@ -163,10 +206,11 @@ CDMAC::isr(unsigned int irq, pt_regs * regs)
       REG_DMA_STAT = (1 << i);
 
       if(handlers_[i] != NULL)
-        handlers_[i]->complete(i);
+        handlers_[i]->dmaCallbackHandler(i);
     }
   }
 }
+#endif // CONFIG_KERNEL_MODE
 
 //-------------------------------------------------------------------------
 //-------------------------------------------------------------------------

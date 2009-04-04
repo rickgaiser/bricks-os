@@ -54,10 +54,10 @@ extern "C" void flushDCacheAll(void);
  */
 extern "C" void invalidateICacheAll(void);
 
-class IInterruptHandler
+class IMIPSInterruptHandler
 {
 public:
-  virtual ~IInterruptHandler(){}
+  virtual ~IMIPSInterruptHandler(){}
 
   virtual void isr(unsigned int irq, pt_regs * regs) = 0;
 };
@@ -65,7 +65,7 @@ public:
 // Exceptions
 void initExceptions();
 // MIPS interrupts
-void setInterruptHandler(uint32_t nr, IInterruptHandler & handler);
+void setInterruptHandler(uint32_t nr, IMIPSInterruptHandler & handler);
 
 
 #endif

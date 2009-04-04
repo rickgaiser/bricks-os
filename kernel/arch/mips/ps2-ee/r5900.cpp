@@ -30,7 +30,7 @@
 #define MIPS_INTERRUPT_BIT_2       (1<<15)
 
 
-IInterruptHandler * inthandlers[3];
+IMIPSInterruptHandler * inthandlers[3];
 
 
 // Entry point for MIPS_EXCEPTION_COMMON handler
@@ -126,7 +126,7 @@ initExceptions()
 
 // -----------------------------------------------------------------------------
 void
-setInterruptHandler(uint32_t nr, IInterruptHandler & handler)
+setInterruptHandler(uint32_t nr, IMIPSInterruptHandler & handler)
 {
   if(nr < 3)
   {

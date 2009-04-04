@@ -15,19 +15,12 @@ OBJS            =\
                 gif \
                 vif \
                 irq \
-                r5900 \
-                r5900_asm \
                 task \
 
-OBJS-$(CONFIG_USE_VU0) +=\
-                vu0 \
 
-OBJS-$(CONFIG_USE_VU1) +=\
-                vu/test_01 \
-                vu/test_02 \
-                vu/test_03 \
-
-
+OBJS-$(CONFIG_KERNEL_MODE)         += r5900 r5900_asm
+OBJS-$(CONFIG_USE_VU0)             += vu0
+OBJS-$(CONFIG_USE_VU1)             += vu/test_01 vu/test_02 vu/test_03
 OBJS-$(CONFIG_DEBUGGING)           += debugScreen
 OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice 2dRenderer
 OBJS-$(CONFIG_GL)                  += 3dRenderer

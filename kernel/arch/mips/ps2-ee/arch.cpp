@@ -58,7 +58,9 @@ CPS2DebugScreen cDebug;
 #endif // CONFIG_DEBUGGING
 
 
+#ifdef CONFIG_KERNEL_MODE
 extern "C" void jumpToSegment(unsigned int segment);
+#endif
 
 
 // -----------------------------------------------------------------------------
@@ -89,12 +91,12 @@ main(int, char *[])
   printk("Debugging ok\n");
 #endif // CONFIG_DEBUGGING
 
-#ifdef CONFIG_KERNEL_MODE
   // Setup interrupts and exceptions
+#ifdef CONFIG_KERNEL_MODE
   initExceptions(); // Install CPU exception handlers
+#endif
   cIRQ.init();      // Interrupt Controller
   cDMAC.init();     // DMA Controller
-#endif
 
 #ifdef CONFIG_KERNEL_MODE
   // Enable interrupts

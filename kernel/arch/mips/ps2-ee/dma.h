@@ -27,6 +27,7 @@
 #include "inttypes.h"
 #include "r5900.h"
 #include "asm/irq.h"
+#include "asm/arch/config.h"
 #include "registers.h"
 
 
@@ -128,14 +129,17 @@ class IDMAChannelHandler
 public:
   virtual ~IDMAChannelHandler(){}
 
-  virtual int complete(int channel) = 0;
+  virtual int dmaCallbackHandler(int channel) = 0;
 };
 
 // -----------------------------------------------------------------------------
 // DMA Controller class
 class CDMAC
- : public IInterruptHandler
+#ifdef CONFIG_KERNEL_MODE
+ : public IMIPSInterruptHandler
+#endif
 {
+  friend int32_t biosDMAHandler(int32_t channel);
 public:
   CDMAC();
   virtual ~CDMAC();
@@ -144,15 +148,22 @@ public:
 
   void attach(unsigned int channel, IDMAChannelHandler * handler);
   void detach(unsigned int channel, IDMAChannelHandler * handler);
-  void disable(unsigned int channel);
-  void enable(unsigned int channel);
 
+  void enable(unsigned int channel);
+  void disable(unsigned int channel);
+
+#ifdef CONFIG_KERNEL_MODE
   void isr(unsigned int irq, pt_regs * regs);
+#endif
 
 private:
+#ifdef CONFIG_KERNEL_MODE
   uint32_t iDMAMask_;
+#else
+  int32_t handle_[DMA_CHANNEL_COUNT];
+#endif
 
-  IDMAChannelHandler * handlers_[DMA_CHANNEL_COUNT];
+  static IDMAChannelHandler * handlers_[DMA_CHANNEL_COUNT];
 };
 
 // -----------------------------------------------------------------------------

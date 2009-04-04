@@ -25,6 +25,7 @@
 
 #include "kernel/interruptManager.h"
 #include "asm/irq.h"
+#include "asm/arch/config.h"
 #include "r5900.h"
 
 
@@ -43,8 +44,10 @@
 
 // -----------------------------------------------------------------------------
 class CIRQ
- : public IInterruptHandler
- , public IInterruptProvider
+ : public IInterruptProvider
+#ifdef CONFIG_KERNEL_MODE
+ , public IMIPSInterruptHandler
+#endif
 {
 public:
   CIRQ();
@@ -52,15 +55,21 @@ public:
 
   int init();
 
+#ifdef CONFIG_KERNEL_MODE
   // Inherited from IInterruptHandler
   void isr(unsigned int irq, pt_regs * regs);
+#endif
 
   // Inherited from IInterruptProvider
   void enable (unsigned int irq);
   void disable(unsigned int irq);
 
 private:
+#ifdef CONFIG_KERNEL_MODE
   uint32_t iINTMask_;
+#else
+  int32_t handle_[MAX_INTERRUPTS];
+#endif
 };
 
 
