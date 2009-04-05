@@ -21,6 +21,14 @@
 
 #include "dma.h"
 #include "kernel/debug.h"
+#include "registers.h"
+
+
+#ifndef CONFIG_KERNEL_MODE
+extern int _gp;
+uint8_t CDMAC::ps2ThreadStack_[16*1024] __attribute__((aligned(64)));
+int     CDMAC::ps2ThreadId_;
+#endif
 
 
 const char * sDMASource[] =
@@ -66,15 +74,46 @@ IDMAChannelHandler * CDMAC::handlers_[DMA_CHANNEL_COUNT];
 #ifndef CONFIG_KERNEL_MODE
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+// Thread used to handle interrupts
+static int32_t iChannelNr = -1;
+int32_t
+biosDMAHandler2()
+{
+  bool bDone = false;
+
+  while(bDone == false)
+  {
+    // Wait for interrupt
+    bios::SleepThread();
+
+    if((iChannelNr != -1) && (iChannelNr < DMA_CHANNEL_COUNT))
+    {
+      // Handle
+      if(CDMAC::handlers_[iChannelNr] != NULL)
+        CDMAC::handlers_[iChannelNr]->dmaCallbackHandler(iChannelNr);
+
+      iChannelNr = -1;
+    }
+  }
+
+  bios::ExitDeleteThread();
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
 int32_t
 biosDMAHandler(int channel)
 {
   if(channel < DMA_CHANNEL_COUNT)
   {
-    // Handle
-    if(CDMAC::handlers_[channel] != NULL)
-      CDMAC::handlers_[channel]->dmaCallbackHandler(channel);
+    // Wake up handler thread
+    iChannelNr = channel;
+    bios::iWakeupThread(CDMAC::ps2ThreadId_);
   }
+
+  asm __volatile__("sync");
+  asm __volatile__("ei");
 
   return 0;
 }
@@ -92,7 +131,7 @@ CDMAC::~CDMAC()
 }
 
 //-------------------------------------------------------------------------
-void
+int
 CDMAC::init()
 {
 #ifdef CONFIG_KERNEL_MODE
@@ -108,10 +147,34 @@ CDMAC::init()
 #else
   for(int i(0); i < DMA_CHANNEL_COUNT; i++)
     handle_[i] = 0;
+
+  // Create handler thread
+  ee_thread_t ps2Thread;
+  ps2Thread.func = (void *)biosDMAHandler2;
+  ps2Thread.stack = ps2ThreadStack_;
+  ps2Thread.stack_size = sizeof(ps2ThreadStack_);
+  ps2Thread.gp_reg = &_gp;
+  ps2Thread.initial_priority = 20;
+
+  int ret = bios::CreateThread(&ps2Thread);
+  if(ret < 0)
+    return -1;
+
+  ps2ThreadId_ = ret;
+
+  ret = bios::StartThread(ps2ThreadId_, 0);
+  if(ret < 0)
+  {
+    bios::DeleteThread(ps2ThreadId_);
+    ps2ThreadId_ = 0;
+    return -1;
+  }
 #endif // CONFIG_KERNEL_MODE
 
   for(int i(0); i < DMA_CHANNEL_COUNT; i++)
     handlers_[i] = NULL;
+
+  return 0;
 }
 
 //-------------------------------------------------------------------------

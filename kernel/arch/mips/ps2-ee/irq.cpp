@@ -24,9 +24,16 @@
 
 #ifdef CONFIG_KERNEL_MODE
 #include "registers.h"
-#else
-#include "bios.h"
 #endif
+
+
+#ifndef CONFIG_KERNEL_MODE
+extern int _gp;
+int32_t CIRQ::handle_[MAX_INTERRUPTS];
+uint8_t CIRQ::ps2ThreadStack_[16*1024] __attribute__((aligned(64)));
+int     CIRQ::ps2ThreadId_;
+#endif
+
 
 const char * sINTSource[] =
 {
@@ -94,14 +101,46 @@ uint32_t syscallTable[130] =
 #ifndef CONFIG_KERNEL_MODE
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+// Thread used to handle interrupts
+static int32_t iIRQNr = -1;
+int32_t
+biosINTHandler2()
+{
+  bool bDone = false;
+
+  while(bDone == false)
+  {
+    // Wait for interrupt
+    bios::SleepThread();
+
+    if((iIRQNr != -1) && (iIRQNr < MAX_INTERRUPTS))
+    {
+      // Handle
+      CInterruptManager::isr(iIRQNr, 0);
+
+      iIRQNr = -1;
+    }
+  }
+
+  bios::ExitDeleteThread();
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+// ISR, wakes up thread
 int32_t
 biosINTHandler(int32_t irq)
 {
   if(irq < MAX_INTERRUPTS)
   {
-    // Handle
-    CInterruptManager::isr(irq, 0);
+    // Wake up handler thread
+    iIRQNr = irq;
+    bios::iWakeupThread(CIRQ::ps2ThreadId_);
   }
+
+  asm __volatile__("sync");
+  asm __volatile__("ei");
 
   return 0;
 }
@@ -137,6 +176,28 @@ CIRQ::init()
 #else
   for(int i(0); i < MAX_INTERRUPTS; i++)
     handle_[i] = 0;
+
+  // Create handler thread
+  ee_thread_t ps2Thread;
+  ps2Thread.func = (void *)biosINTHandler2;
+  ps2Thread.stack = ps2ThreadStack_;
+  ps2Thread.stack_size = sizeof(ps2ThreadStack_);
+  ps2Thread.gp_reg = &_gp;
+  ps2Thread.initial_priority = 20;
+
+  int ret = bios::CreateThread(&ps2Thread);
+  if(ret < 0)
+    return -1;
+
+  ps2ThreadId_ = ret;
+
+  ret = bios::StartThread(ps2ThreadId_, 0);
+  if(ret < 0)
+  {
+    bios::DeleteThread(ps2ThreadId_);
+    ps2ThreadId_ = 0;
+    return -1;
+  }
 #endif // CONFIG_KERNEL_MODE
 
   for(int i(0); i < MAX_INTERRUPTS; i++)

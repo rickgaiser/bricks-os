@@ -23,12 +23,14 @@
 #define PS2_DMA_H
 
 
-#include "bios.h"
 #include "inttypes.h"
-#include "r5900.h"
 #include "asm/irq.h"
 #include "asm/arch/config.h"
-#include "registers.h"
+#ifdef CONFIG_KERNEL_MODE
+#include "r5900.h"
+#else
+#include "bios.h"
+#endif
 
 
 //---------------------------------------------------------------------------
@@ -139,12 +141,15 @@ class CDMAC
  : public IMIPSInterruptHandler
 #endif
 {
+#ifndef CONFIG_KERNEL_MODE
+  friend int32_t biosDMAHandler2();
   friend int32_t biosDMAHandler(int32_t channel);
+#endif
 public:
   CDMAC();
   virtual ~CDMAC();
 
-  void init();
+  int init();
 
   void attach(unsigned int channel, IDMAChannelHandler * handler);
   void detach(unsigned int channel, IDMAChannelHandler * handler);
@@ -161,6 +166,8 @@ private:
   uint32_t iDMAMask_;
 #else
   int32_t handle_[DMA_CHANNEL_COUNT];
+  static int     ps2ThreadId_;
+  static uint8_t ps2ThreadStack_[16*1024];
 #endif
 
   static IDMAChannelHandler * handlers_[DMA_CHANNEL_COUNT];

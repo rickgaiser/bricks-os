@@ -26,7 +26,11 @@
 #include "kernel/interruptManager.h"
 #include "asm/irq.h"
 #include "asm/arch/config.h"
+#ifdef CONFIG_KERNEL_MODE
 #include "r5900.h"
+#else
+#include "bios.h"
+#endif
 
 
 #define INT_GS            0
@@ -49,6 +53,10 @@ class CIRQ
  , public IMIPSInterruptHandler
 #endif
 {
+#ifndef CONFIG_KERNEL_MODE
+  friend int32_t biosINTHandler2();
+  friend int32_t biosINTHandler(int32_t irq);
+#endif
 public:
   CIRQ();
   virtual ~CIRQ();
@@ -68,7 +76,9 @@ private:
 #ifdef CONFIG_KERNEL_MODE
   uint32_t iINTMask_;
 #else
-  int32_t handle_[MAX_INTERRUPTS];
+  static int32_t handle_[MAX_INTERRUPTS];
+  static int     ps2ThreadId_;
+  static uint8_t ps2ThreadStack_[16*1024];
 #endif
 };
 
