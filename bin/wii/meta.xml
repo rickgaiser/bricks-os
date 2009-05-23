@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+  <name>Bricks-OS</name>
+  <coder>Maximus32</coder>
+  <version>v0.0.3</version>
+  <release_date>200809290000</release_date>
+  <short_description>Bricks-OS Demo</short_description>
+  <long_description>Bricks-OS Demo v0.0.3 demonstrates the OpenGL API. A 3D pyramid will show on screen.
+
+NOTE1: You need to power off to exit.
+NOTE2: This version of Bricks-OS only supports SOFTWARE rendering for the GameCube/Wii.</long_description>
+</app>
+
