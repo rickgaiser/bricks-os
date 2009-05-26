@@ -1,4 +1,7 @@
 #----------------------------------------------------------------------------
+ifeq ($(strip $(BRICKS_ROOT)),)
+  $(error "BRICKS_ROOT not specified")
+endif
 ifeq ($(strip $(ARCH)),)
   $(error "ARCH not specified")
 endif

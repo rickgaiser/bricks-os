@@ -30,12 +30,12 @@ $(VDIR)%.o: %.cpp $(VDIR).creation_stamp
 
 # Create object file from .s file
 $(VDIR)%.o: %.s $(VDIR).creation_stamp
-	@echo [CC ] $<
+	@echo [AS ] $<
 	$(CC) -x assembler-with-cpp -MMD -MP -MF $(VDIR)/$*.d  $(ASFLAGS) $(MY_INCL_PATH) -o $@ -c $<
 
 # Create object file from .S file
 $(VDIR)%.o: %.S $(VDIR).creation_stamp
-	@echo [CC ] $<
+	@echo [AS ] $<
 	$(CC) -x assembler-with-cpp -MMD -MP -MF $(VDIR)/$*.d  $(ASFLAGS) $(MY_INCL_PATH) -o $@ -c $<
 
 
