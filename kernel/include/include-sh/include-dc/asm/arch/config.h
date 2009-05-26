@@ -45,8 +45,13 @@
 #undef  CONFIG_PD_IBM
 
 // Video configuration
-#undef  CONFIG_FRAMEBUFFER
-#undef  CONFIG_GL
+#define CONFIG_FRAMEBUFFER
+#define CONFIG_GL
+#define CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+#define CONFIG_GL_ENABLE_ALPHA_TEST
+#define CONFIG_GL_FRAMEBUFFER_16BIT
+#undef  CONFIG_GL_TEXTURES_16BIT // NOTE: Only used when NOT using SIMPLE textures
+#undef  CONFIG_GL_SIMPLE_TEXTURES
 
 // Library configuration
 #define CONFIG_BUILTIN_MM

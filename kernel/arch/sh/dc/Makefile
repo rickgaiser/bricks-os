@@ -5,8 +5,12 @@ OBJ             =arch
 OBJS            =\
                 crt0 \
                 arch \
-                debugScreen \
+                support \
                 task \
+
+
+OBJS-$(CONFIG_DEBUGGING)           += debugScreen
+OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel

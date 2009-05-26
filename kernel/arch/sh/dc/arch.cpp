@@ -24,30 +24,49 @@
 #include "kernel/memoryManager.h"
 #include "asm/arch/config.h"
 
+#ifdef CONFIG_DEBUGGING
+#include "debugScreen.h"
+#endif // CONFIG_DEBUGGING
 
-// -----------------------------------------------------------------------------
-// C++ support function
-extern "C"
-void
-__cxa_pure_virtual()
-{
-}
+#ifdef CONFIG_FRAMEBUFFER
+#include "videoDevice.h"
+#endif // CONFIG_FRAMEBUFFER
 
-// -----------------------------------------------------------------------------
-// C++ support function
-extern "C"
-void
-exit()
-{
-}
+
+extern unsigned long end;
+#define _HEAP_START ((uint32_t)(&end))
+#define HEAP_START ((_HEAP_START+0x3)&(~0x3)) // 4byte aligned
+#define HEAP_END   ((uint32_t)(0x8c000000 + (16*1024*1024)))
+
+#ifdef CONFIG_DEBUGGING
+CDCDebugScreen cDebug;
+#endif // CONFIG_DEBUGGING
+
+#ifdef CONFIG_FRAMEBUFFER
+CDCVideoDevice * pVideoDevice;
+#endif // CONFIG_FRAMEBUFFER
+
 
 // -----------------------------------------------------------------------------
 int
-main(int, char *[])
+arch_main(int, char *[])
 {
-  //init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
+#ifdef CONFIG_BUILTIN_MM
+  init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
+#endif // CONFIG_BUILTIN_MM
 
-  //printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
+#ifdef CONFIG_DEBUGGING
+  cDebug.init();
+  pDebug = &cDebug;
+#endif // CONFIG_DEBUGGING
+
+#ifdef CONFIG_FRAMEBUFFER
+  pVideoDevice = new CDCVideoDevice;
+#endif // CONFIG_FRAMEBUFFER
+
+#ifdef CONFIG_BUILTIN_MM
+  printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
+#endif // CONFIG_BUILTIN_MM
 
   printk("DC arch ready\n");
 

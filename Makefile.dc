@@ -1,8 +1,27 @@
 MAKEFLAGS	+=--no-print-directory -s
 
 
-all:
-	make -f Makefile all ARCH=sh TARGET=dc
+all: bin/dc/Bricks.bin bin/dc/Bricks.srec bin/dc/1ST_READ.BIN
 
 clean:
 	make -f Makefile clean ARCH=sh TARGET=dc
+
+run:
+	dc-tool-serial -t COM6 -b 1500000 -x bin/dc/Bricks.elf
+
+bin/dc/1ST_READ.BIN: bin/dc/Bricks.bin
+	@echo [BIN] $@
+	scramble $< $@
+
+bin/dc/Bricks.bin: bin/dc/Bricks.elf
+	@echo [BIN] $@
+	sh-elf-objcopy -R .stack -O binary $< $@
+
+bin/dc/Bricks.srec: bin/dc/Bricks.elf
+	@echo [BIN] $@
+	sh-elf-objcopy -O srec $< $@
+
+bin/dc/Bricks.elf: alldirs
+
+alldirs:
+	make -f Makefile all ARCH=sh TARGET=dc
