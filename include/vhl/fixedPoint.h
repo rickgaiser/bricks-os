@@ -66,107 +66,159 @@
 
 
 #ifdef __cplusplus
-class CFixed
+template <int p>
+class TFixed
 {
 public:
   // Constructors
-  CFixed(){}
-  CFixed(const CFixed & fx) : value(fx.value)      {}
-  CFixed(float  f)          : value(gl_fpfromf(f)) {}
-  CFixed(double d)          : value(gl_fpfromd(d)) {}
-  CFixed(int32_t i)         : value(gl_fpfromi(i)) {}
+  TFixed(){}
+  TFixed(const TFixed & fx) : value(fx.value)      {}
+  TFixed(float  f)          : value(fpfromf(p, f)) {}
+  TFixed(double d)          : value(fpfromd(p, d)) {}
+  TFixed(int    i)          : value(fpfromi(p, i)) {}
 
   // Assignment Operators
-  CFixed & operator= (const CFixed & fx){value = fx.value;      return (*this);}
-  CFixed & operator= (float  f)         {value = gl_fpfromf(f); return (*this);}
-  CFixed & operator= (double d)         {value = gl_fpfromd(d); return (*this);}
-  CFixed & operator= (int32_t i)        {value = gl_fpfromi(i); return (*this);}
+  TFixed & operator= (const TFixed & fx){value = fx.value;      return (*this);}
+  TFixed & operator= (float  f)         {value = fpfromf(p, f); return (*this);}
+  TFixed & operator= (double d)         {value = fpfromd(p, d); return (*this);}
+  TFixed & operator= (int    i)         {value = fpfromi(p, i); return (*this);}
 
-  operator float()   const {return gl_fptof(value);}
-  operator double()  const {return gl_fptod(value);}
-  operator int32_t() const {return gl_fptoi(value);}
+  operator float()   const {return fptof(p, value);}
+  operator double()  const {return fptod(p, value);}
+  operator int()     const {return fptoi(p, value);}
 
   // Compound Assignment Operators
-  CFixed & operator+=(const CFixed & fx){value += fx.value;                      return (*this);}
-  CFixed & operator-=(const CFixed & fx){value -= fx.value;                      return (*this);}
-  CFixed & operator*=(const CFixed & fx){value = gl_fpmul(value, fx.value);      return (*this);}
-  CFixed & operator/=(const CFixed & fx){value = gl_fpdiv(value, fx.value);      return (*this);}
-  CFixed & operator+=(float  f)         {value += gl_fpfromf(f);                 return (*this);}
-  CFixed & operator-=(float  f)         {value -= gl_fpfromf(f);                 return (*this);}
-  CFixed & operator*=(float  f)         {value = gl_fpmul(value, gl_fpfromf(f)); return (*this);}
-  CFixed & operator/=(float  f)         {value = gl_fpdiv(value, gl_fpfromf(f)); return (*this);}
-  CFixed & operator+=(double d)         {value += gl_fpfromd(d);                 return (*this);}
-  CFixed & operator-=(double d)         {value -= gl_fpfromd(d);                 return (*this);}
-  CFixed & operator*=(double d)         {value = gl_fpmul(value, gl_fpfromd(d)); return (*this);}
-  CFixed & operator/=(double d)         {value = gl_fpdiv(value, gl_fpfromd(d)); return (*this);}
-  CFixed & operator+=(int32_t i)        {value += gl_fpfromi(i);                 return (*this);}
-  CFixed & operator-=(int32_t i)        {value -= gl_fpfromi(i);                 return (*this);}
-  CFixed & operator*=(int32_t i)        {value *= i;                             return (*this);}
-  CFixed & operator/=(int32_t i)        {value /= i;                             return (*this);}
-  CFixed & ipMulIs   (const CFixed & fx){value = gl_fpipmul(value, fx.value);    return (*this);}
-  CFixed & ipipMulIs (const CFixed & fx){value = gl_fpipipmul(value, fx.value);  return (*this);}
+  TFixed & operator+=(const TFixed & fx){value += fx.value;                       return (*this);}
+  TFixed & operator-=(const TFixed & fx){value -= fx.value;                       return (*this);}
+  TFixed & operator*=(const TFixed & fx){value  = fpmul(p, value, fx.value);      return (*this);}
+  TFixed & operator/=(const TFixed & fx){value  = fpdiv(p, value, fx.value);      return (*this);}
+
+  TFixed & operator+=(float  f)         {value += fpfromf(p, f);                  return (*this);}
+  TFixed & operator-=(float  f)         {value -= fpfromf(p, f);                  return (*this);}
+  TFixed & operator*=(float  f)         {value  = fpmul(p, value, fpfromf(p, f)); return (*this);}
+  TFixed & operator/=(float  f)         {value  = fpdiv(p, value, fpfromf(p, f)); return (*this);}
+
+  TFixed & operator+=(double d)         {value += fpfromd(p, d);                  return (*this);}
+  TFixed & operator-=(double d)         {value -= fpfromd(p, d);                  return (*this);}
+  TFixed & operator*=(double d)         {value  = fpmul(p, value, fpfromd(p, d)); return (*this);}
+  TFixed & operator/=(double d)         {value  = fpdiv(p, value, fpfromd(p, d)); return (*this);}
+
+  TFixed & operator+=(int    i)         {value += fpfromi(p, i);                  return (*this);}
+  TFixed & operator-=(int    i)         {value -= fpfromi(p, i);                  return (*this);}
+  TFixed & operator*=(int    i)         {value *= i;                              return (*this);}
+  TFixed & operator/=(int    i)         {value /= i;                              return (*this);}
 
   // Binary Arithmetic Operators
-  CFixed   operator+ (const CFixed & fx) const {CFixed rv(*this); rv += fx; return rv;}
-  CFixed   operator- (const CFixed & fx) const {CFixed rv(*this); rv -= fx; return rv;}
-  CFixed   operator* (const CFixed & fx) const {CFixed rv(*this); rv *= fx; return rv;}
-  CFixed   operator/ (const CFixed & fx) const {CFixed rv(*this); rv /= fx; return rv;}
-  CFixed   operator+ (float  f)          const {CFixed rv(*this); rv += f;  return rv;}
-  CFixed   operator- (float  f)          const {CFixed rv(*this); rv -= f;  return rv;}
-  CFixed   operator* (float  f)          const {CFixed rv(*this); rv *= f;  return rv;}
-  CFixed   operator/ (float  f)          const {CFixed rv(*this); rv /= f;  return rv;}
-  CFixed   operator+ (double d)          const {CFixed rv(*this); rv += d;  return rv;}
-  CFixed   operator- (double d)          const {CFixed rv(*this); rv -= d;  return rv;}
-  CFixed   operator* (double d)          const {CFixed rv(*this); rv *= d;  return rv;}
-  CFixed   operator/ (double d)          const {CFixed rv(*this); rv /= d;  return rv;}
-  CFixed   operator+ (int32_t i)         const {CFixed rv(*this); rv += i;  return rv;}
-  CFixed   operator- (int32_t i)         const {CFixed rv(*this); rv -= i;  return rv;}
-  CFixed   operator* (int32_t i)         const {CFixed rv(*this); rv *= i;  return rv;}
-  CFixed   operator/ (int32_t i)         const {CFixed rv(*this); rv /= i;  return rv;}
-  CFixed   ipMul     (const CFixed & fx) const {CFixed rv(*this); rv.ipMulIs(fx); return rv;}
-  CFixed   ipipMul   (const CFixed & fx) const {CFixed rv(*this); rv.ipipMulIs(fx); return rv;}
+  TFixed   operator+ (const TFixed & fx) const {TFixed rv(*this); rv += fx; return rv;}
+  TFixed   operator- (const TFixed & fx) const {TFixed rv(*this); rv -= fx; return rv;}
+  TFixed   operator* (const TFixed & fx) const {TFixed rv(*this); rv *= fx; return rv;}
+  TFixed   operator/ (const TFixed & fx) const {TFixed rv(*this); rv /= fx; return rv;}
+
+  TFixed   operator+ (float  f)          const {TFixed rv(*this); rv += f;  return rv;}
+  TFixed   operator- (float  f)          const {TFixed rv(*this); rv -= f;  return rv;}
+  TFixed   operator* (float  f)          const {TFixed rv(*this); rv *= f;  return rv;}
+  TFixed   operator/ (float  f)          const {TFixed rv(*this); rv /= f;  return rv;}
+
+  TFixed   operator+ (double d)          const {TFixed rv(*this); rv += d;  return rv;}
+  TFixed   operator- (double d)          const {TFixed rv(*this); rv -= d;  return rv;}
+  TFixed   operator* (double d)          const {TFixed rv(*this); rv *= d;  return rv;}
+  TFixed   operator/ (double d)          const {TFixed rv(*this); rv /= d;  return rv;}
+
+  TFixed   operator+ (int    i)          const {TFixed rv(*this); rv += i;  return rv;}
+  TFixed   operator- (int    i)          const {TFixed rv(*this); rv -= i;  return rv;}
+  TFixed   operator* (int    i)          const {TFixed rv(*this); rv *= i;  return rv;}
+  TFixed   operator/ (int    i)          const {TFixed rv(*this); rv /= i;  return rv;}
 
   // Comparison Operators
-  bool     operator==(const CFixed & fx) const {return (value == fx.value);}
-  bool     operator!=(const CFixed & fx) const {return (value != fx.value);}
-  bool     operator> (const CFixed & fx) const {return (value >  fx.value);}
-  bool     operator< (const CFixed & fx) const {return (value <  fx.value);}
-  bool     operator>=(const CFixed & fx) const {return (value >= fx.value);}
-  bool     operator<=(const CFixed & fx) const {return (value <= fx.value);}
-  bool     operator==(float  f)          const {return (value == gl_fpfromf(f));}
-  bool     operator!=(float  f)          const {return (value != gl_fpfromf(f));}
-  bool     operator> (float  f)          const {return (value >  gl_fpfromf(f));}
-  bool     operator< (float  f)          const {return (value <  gl_fpfromf(f));}
-  bool     operator>=(float  f)          const {return (value >= gl_fpfromf(f));}
-  bool     operator<=(float  f)          const {return (value <= gl_fpfromf(f));}
-  bool     operator==(double d)          const {return (value == gl_fpfromd(d));}
-  bool     operator!=(double d)          const {return (value != gl_fpfromd(d));}
-  bool     operator> (double d)          const {return (value >  gl_fpfromd(d));}
-  bool     operator< (double d)          const {return (value <  gl_fpfromd(d));}
-  bool     operator>=(double d)          const {return (value >= gl_fpfromd(d));}
-  bool     operator<=(double d)          const {return (value <= gl_fpfromd(d));}
-  bool     operator==(int32_t i)         const {return (value == gl_fpfromi(i));}
-  bool     operator!=(int32_t i)         const {return (value != gl_fpfromi(i));}
-  bool     operator> (int32_t i)         const {return (value >  gl_fpfromi(i));}
-  bool     operator< (int32_t i)         const {return (value <  gl_fpfromi(i));}
-  bool     operator>=(int32_t i)         const {return (value >= gl_fpfromi(i));}
-  bool     operator<=(int32_t i)         const {return (value <= gl_fpfromi(i));}
+  bool     operator==(const TFixed & fx) const {return (value == fx.value);}
+  bool     operator!=(const TFixed & fx) const {return (value != fx.value);}
+  bool     operator> (const TFixed & fx) const {return (value >  fx.value);}
+  bool     operator< (const TFixed & fx) const {return (value <  fx.value);}
+  bool     operator>=(const TFixed & fx) const {return (value >= fx.value);}
+  bool     operator<=(const TFixed & fx) const {return (value <= fx.value);}
+
+  bool     operator==(float  f)          const {return (value == fpfromf(p, f));}
+  bool     operator!=(float  f)          const {return (value != fpfromf(p, f));}
+  bool     operator> (float  f)          const {return (value >  fpfromf(p, f));}
+  bool     operator< (float  f)          const {return (value <  fpfromf(p, f));}
+  bool     operator>=(float  f)          const {return (value >= fpfromf(p, f));}
+  bool     operator<=(float  f)          const {return (value <= fpfromf(p, f));}
+
+  bool     operator==(double d)          const {return (value == fpfromd(p, d));}
+  bool     operator!=(double d)          const {return (value != fpfromd(p, d));}
+  bool     operator> (double d)          const {return (value >  fpfromd(p, d));}
+  bool     operator< (double d)          const {return (value <  fpfromd(p, d));}
+  bool     operator>=(double d)          const {return (value >= fpfromd(p, d));}
+  bool     operator<=(double d)          const {return (value <= fpfromd(p, d));}
+
+  bool     operator==(int    i)          const {return (value == fpfromi(p, i));}
+  bool     operator!=(int    i)          const {return (value != fpfromi(p, i));}
+  bool     operator> (int    i)          const {return (value >  fpfromi(p, i));}
+  bool     operator< (int    i)          const {return (value <  fpfromi(p, i));}
+  bool     operator>=(int    i)          const {return (value >= fpfromi(p, i));}
+  bool     operator<=(int    i)          const {return (value <= fpfromi(p, i));}
 
   int32_t value;
 };
 
-inline CFixed operator+ (float   f, const CFixed & fx){return CFixed(f) + fx;}
-inline CFixed operator- (float   f, const CFixed & fx){return CFixed(f) - fx;}
-inline CFixed operator* (float   f, const CFixed & fx){return CFixed(f) * fx;}
-inline CFixed operator/ (float   f, const CFixed & fx){return CFixed(f) / fx;}
-inline CFixed operator+ (double  d, const CFixed & fx){return CFixed(d) + fx;}
-inline CFixed operator- (double  d, const CFixed & fx){return CFixed(d) - fx;}
-inline CFixed operator* (double  d, const CFixed & fx){return CFixed(d) * fx;}
-inline CFixed operator/ (double  d, const CFixed & fx){return CFixed(d) / fx;}
-inline CFixed operator+ (int32_t i, const CFixed & fx){return CFixed(i) + fx;}
-inline CFixed operator- (int32_t i, const CFixed & fx){return CFixed(i) - fx;}
-inline CFixed operator* (int32_t i, const CFixed & fx){return CFixed(i) * fx;}
-inline CFixed operator/ (int32_t i, const CFixed & fx){return CFixed(i) / fx;}
+// float
+template <int p> inline float  &  operator+=(float  & f, const TFixed<p> & fx){return (f += (float)fx);}
+template <int p> inline float  &  operator-=(float  & f, const TFixed<p> & fx){return (f -= (float)fx);}
+template <int p> inline float  &  operator*=(float  & f, const TFixed<p> & fx){return (f  = (float)fx);}
+template <int p> inline float  &  operator/=(float  & f, const TFixed<p> & fx){return (f  = (float)fx);}
+// double
+template <int p> inline double &  operator+=(double & d, const TFixed<p> & fx){return (d += (double)fx);}
+template <int p> inline double &  operator-=(double & d, const TFixed<p> & fx){return (d -= (double)fx);}
+template <int p> inline double &  operator*=(double & d, const TFixed<p> & fx){return (d *= (double)fx);}
+template <int p> inline double &  operator/=(double & d, const TFixed<p> & fx){return (d /= (double)fx);}
+// int
+template <int p> inline int    &  operator+=(int    & i, const TFixed<p> & fx){return (i += (int)fx);}
+template <int p> inline int    &  operator-=(int    & i, const TFixed<p> & fx){return (i -= (int)fx);}
+template <int p> inline int    &  operator*=(int    & i, const TFixed<p> & fx){return (i  = (int)(TFixed<p>(i) * fx));} // NOTE: converting i for more accuracy, but this limits the range
+template <int p> inline int    &  operator/=(int    & i, const TFixed<p> & fx){return (i  = (int)(TFixed<p>(i) / fx));} // NOTE: converting i for more accuracy, but this limits the range
+
+// float
+template <int p> inline TFixed<p> operator+ (float    f, const TFixed<p> & fx){return TFixed<p>(f) + fx;}
+template <int p> inline TFixed<p> operator- (float    f, const TFixed<p> & fx){return TFixed<p>(f) - fx;}
+template <int p> inline TFixed<p> operator* (float    f, const TFixed<p> & fx){return TFixed<p>(f) * fx;}
+template <int p> inline TFixed<p> operator/ (float    f, const TFixed<p> & fx){return TFixed<p>(f) / fx;}
+// double
+template <int p> inline TFixed<p> operator+ (double   d, const TFixed<p> & fx){return TFixed<p>(d) + fx;}
+template <int p> inline TFixed<p> operator- (double   d, const TFixed<p> & fx){return TFixed<p>(d) - fx;}
+template <int p> inline TFixed<p> operator* (double   d, const TFixed<p> & fx){return TFixed<p>(d) * fx;}
+template <int p> inline TFixed<p> operator/ (double   d, const TFixed<p> & fx){return TFixed<p>(d) / fx;}
+// int
+template <int p> inline TFixed<p> operator+ (int      i, const TFixed<p> & fx){return TFixed<p>(i) + fx;}
+template <int p> inline TFixed<p> operator- (int      i, const TFixed<p> & fx){return TFixed<p>(i) - fx;}
+template <int p> inline TFixed<p> operator* (int      i, const TFixed<p> & fx){return TFixed<p>(i) * fx;}
+template <int p> inline TFixed<p> operator/ (int      i, const TFixed<p> & fx){return TFixed<p>(i) / fx;}
+
+// float
+template <int p> inline bool      operator==(float    f, const TFixed<p> & fx){return (f == (float)fx);}
+template <int p> inline bool      operator!=(float    f, const TFixed<p> & fx){return (f != (float)fx);}
+template <int p> inline bool      operator> (float    f, const TFixed<p> & fx){return (f >  (float)fx);}
+template <int p> inline bool      operator< (float    f, const TFixed<p> & fx){return (f <  (float)fx);}
+template <int p> inline bool      operator>=(float    f, const TFixed<p> & fx){return (f >= (float)fx);}
+template <int p> inline bool      operator<=(float    f, const TFixed<p> & fx){return (f <= (float)fx);}
+// double
+template <int p> inline bool      operator==(double   d, const TFixed<p> & fx){return (d == (double)fx);}
+template <int p> inline bool      operator!=(double   d, const TFixed<p> & fx){return (d != (double)fx);}
+template <int p> inline bool      operator> (double   d, const TFixed<p> & fx){return (d >  (double)fx);}
+template <int p> inline bool      operator< (double   d, const TFixed<p> & fx){return (d <  (double)fx);}
+template <int p> inline bool      operator>=(double   d, const TFixed<p> & fx){return (d >= (double)fx);}
+template <int p> inline bool      operator<=(double   d, const TFixed<p> & fx){return (d <= (double)fx);}
+// int
+template <int p> inline bool      operator==(int      i, const TFixed<p> & fx){return (i == (int)fx);}
+template <int p> inline bool      operator!=(int      i, const TFixed<p> & fx){return (i != (int)fx);}
+template <int p> inline bool      operator> (int      i, const TFixed<p> & fx){return (i >  (int)fx);}
+template <int p> inline bool      operator< (int      i, const TFixed<p> & fx){return (i <  (int)fx);}
+template <int p> inline bool      operator>=(int      i, const TFixed<p> & fx){return (i >= (int)fx);}
+template <int p> inline bool      operator<=(int      i, const TFixed<p> & fx){return (i <= (int)fx);}
+
+
+typedef TFixed<16> CFixed;
+
+
 #endif // __cplusplus
 
 
