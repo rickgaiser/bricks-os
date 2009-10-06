@@ -1,6 +1,6 @@
 /*
  * Bricks-OS, Operating System for Game Consoles
- * Copyright (C) 2008 Maximus32 <Maximus32@bricks-os.org>
+ * Copyright (C) 2009 Maximus32 <Maximus32@bricks-os.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,26 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
- *
- * Based on the Adaptive Communication Environment (ACE)
  */
 
 
-#ifndef ACE_THREAD_H
-#define ACE_THREAD_H
+#ifndef SYS_TIME_H
+#define SYS_TIME_H
 
 
-#include "ace/config.h"
+#include "sys/types.h"
 
 
-class ACE_Thread
+#ifndef _TIMEVAL_DEFINED /* also in winsock[2].h */
+#define _TIMEVAL_DEFINED
+struct timeval
 {
-public:
-  static int spawn(ACE_THR_FUNC func, void * arg = 0);
-
-private:
-  ACE_Thread();
+  int tv_sec;
+  int tv_usec;
 };
+#endif
 
 
 #endif

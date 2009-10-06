@@ -25,30 +25,35 @@
 #define ACE_TASK_H
 
 
+#include "ace/config.h"
 //#include "ace/Service_Object.h"
-#include "ace/Thread_Manager.h"
 #include "pthread.h"
+
+
+#define MAX_THREADS 16
 
 
 class ACE_Task_Base
 // : public ACE_Service_Object
 {
 public:
-  ACE_Task_Base(ACE_Thread_Manager * = 0);
+  ACE_Task_Base();
   virtual ~ACE_Task_Base();
 
   virtual int svc();
-  virtual int activate();
+  virtual int activate(int nthreads = 1);
   virtual int wait();
-
-  ACE_Thread_Manager * thr_mgr() const;
-  void thr_mgr (ACE_Thread_Manager *);
 
   static ACE_THR_FUNC_RETURN svc_run(void *);
 
 private:
-  pthread_t thr_;
-  ACE_Thread_Manager * thr_mgr_;
+  struct SThread
+  {
+    bool used;
+    pthread_t thr;
+  };
+
+  SThread thread_[MAX_THREADS];
 };
 
 

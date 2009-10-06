@@ -25,16 +25,8 @@
 #define ACE_TIME_VALUE_H
 
 
-//#include <sys/time.h>
+#include "sys/time.h"
 
-
-#ifndef timeval
-struct timeval
-{
-  int tv_sec;
-  int tv_usec;
-};
-#endif
 
 class ACE_Time_Value
 {

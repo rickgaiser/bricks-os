@@ -2,7 +2,6 @@ LIB             =tace
 
 OBJS            =\
                 Task \
-                Thread_Manager \
                 Time_Value \
 
 
