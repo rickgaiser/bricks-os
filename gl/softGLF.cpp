@@ -1772,7 +1772,7 @@ struct TInterpolation
 void
 CSoftGLESFloat::raster(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
 {
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1781,7 +1781,7 @@ CSoftGLESFloat::rasterZ(const SRasterVertex * vlo, const SRasterVertex * vmi, co
 {
   #define RASTER_ENABLE_DEPTH_TEST
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1790,7 +1790,7 @@ CSoftGLESFloat::rasterC(const SRasterVertex * vlo, const SRasterVertex * vmi, co
 {
   #define RASTER_ENABLE_SMOOTH_COLORS
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1800,7 +1800,7 @@ CSoftGLESFloat::rasterCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, c
   #define RASTER_ENABLE_DEPTH_TEST
   #define RASTER_ENABLE_SMOOTH_COLORS
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1809,7 +1809,7 @@ CSoftGLESFloat::rasterT(const SRasterVertex * vlo, const SRasterVertex * vmi, co
 {
   #define RASTER_ENABLE_TEXTURES
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1819,7 +1819,7 @@ CSoftGLESFloat::rasterTZ(const SRasterVertex * vlo, const SRasterVertex * vmi, c
   #define RASTER_ENABLE_DEPTH_TEST
   #define RASTER_ENABLE_TEXTURES
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1829,7 +1829,7 @@ CSoftGLESFloat::rasterTC(const SRasterVertex * vlo, const SRasterVertex * vmi, c
   #define RASTER_ENABLE_SMOOTH_COLORS
   #define RASTER_ENABLE_TEXTURES
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1840,7 +1840,7 @@ CSoftGLESFloat::rasterTCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, 
   #define RASTER_ENABLE_SMOOTH_COLORS
   #define RASTER_ENABLE_TEXTURES
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1849,7 +1849,7 @@ CSoftGLESFloat::rasterB(const SRasterVertex * vlo, const SRasterVertex * vmi, co
 {
   #define RASTER_ENABLE_BLENDING
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1859,7 +1859,7 @@ CSoftGLESFloat::rasterBZ(const SRasterVertex * vlo, const SRasterVertex * vmi, c
   #define RASTER_ENABLE_DEPTH_TEST
   #define RASTER_ENABLE_BLENDING
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1869,7 +1869,7 @@ CSoftGLESFloat::rasterBC(const SRasterVertex * vlo, const SRasterVertex * vmi, c
   #define RASTER_ENABLE_SMOOTH_COLORS
   #define RASTER_ENABLE_BLENDING
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1880,7 +1880,7 @@ CSoftGLESFloat::rasterBCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, 
   #define RASTER_ENABLE_SMOOTH_COLORS
   #define RASTER_ENABLE_BLENDING
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1890,7 +1890,7 @@ CSoftGLESFloat::rasterBT(const SRasterVertex * vlo, const SRasterVertex * vmi, c
   #define RASTER_ENABLE_TEXTURES
   #define RASTER_ENABLE_BLENDING
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1901,7 +1901,7 @@ CSoftGLESFloat::rasterBTZ(const SRasterVertex * vlo, const SRasterVertex * vmi, 
   #define RASTER_ENABLE_TEXTURES
   #define RASTER_ENABLE_BLENDING
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1912,7 +1912,7 @@ CSoftGLESFloat::rasterBTC(const SRasterVertex * vlo, const SRasterVertex * vmi, 
   #define RASTER_ENABLE_TEXTURES
   #define RASTER_ENABLE_BLENDING
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
@@ -1924,5 +1924,5 @@ CSoftGLESFloat::rasterBTCZ(const SRasterVertex * vlo, const SRasterVertex * vmi,
   #define RASTER_ENABLE_TEXTURES
   #define RASTER_ENABLE_BLENDING
 
-  #include "raster.h"
+  #include "rasterScanline.inl"
 }

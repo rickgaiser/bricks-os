@@ -1561,17 +1561,17 @@ CSoftGLESFixed::_rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
   {
     if(bSmoothShading_ == false)
     {
-      #include "raster.h"
+      #include "rasterScanline.inl"
     }
     else
     {
       #define RASTER_ENABLE_SMOOTH_COLORS
-      #include "raster.h"
+      #include "rasterScanline.inl"
     }
   }
   else
   {
     #define RASTER_ENABLE_TEXTURES
-    #include "raster.h"
+    #include "rasterScanline.inl"
   }
 }
