@@ -508,7 +508,14 @@ CPS2VideoDevice::get2DRenderer(I2DRenderer ** renderer)
 void
 CPS2VideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
-  *renderer = new CPS23DRenderer(*this);
+  // Create common renderer
+  CASoftGLESFloat * pRenderer   = new CASoftGLESFloat();
+
+  // Attach PS2 GS hardware rasterizer to it
+  CPS23DRenderer  * pRasterizer = new CPS23DRenderer(*this);
+  pRenderer->setRaster(pRasterizer);
+
+  *renderer = pRenderer;
 }
 
 //---------------------------------------------------------------------------

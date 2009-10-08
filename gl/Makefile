@@ -9,6 +9,8 @@ OBJS            =\
                 glu \
                 glut \
                 textures \
+                rasterCommon \
+                rasterScanline \
 
 
 ifeq ($(CONFIG_FPU),y)

@@ -24,9 +24,11 @@
 #include "dma.h"
 #include "gif.h"
 #include "stdlib.h"
+#include "../../../../gl/mathlib.h"
 
 
 #define CURRENT_PS2TEX ((CPS2Texture *)pCurrentTex_)
+#define setError(x)
 
 
 //-----------------------------------------------------------------------------
@@ -145,12 +147,8 @@ CPS2Texture::bind()
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CPS23DRenderer::CPS23DRenderer(CPS2VideoDevice & device)
- : CASoftGLESFloat()
- , CAGLESTextures()
- , CAPS2Renderer()
-
+ : CAPS2Renderer()
  , device_(device)
-
  , ps2ZPSM_(GS_PSM_16S)
  , ps2ZBufferAddr_(0)
  , ps2Shading_(GS_PRIM_SHADE_FLAT)
@@ -183,36 +181,72 @@ CPS23DRenderer::~CPS23DRenderer()
 
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::glClear(GLbitfield mask)
+CPS23DRenderer::setSurface(CSurface * surface)
 {
-  if(mask & GL_DEPTH_BUFFER_BIT)
-  {
-    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, 1, GS_ZTST_ALWAYS));
-  }
+  CAPS2Renderer::setSurface(surface);
+}
 
-  if(mask & GL_COLOR_BUFFER_BIT)
-  {
-    uint8_t r = (uint8_t)(clClear.r * 255);
-    uint8_t g = (uint8_t)(clClear.g * 255);
-    uint8_t b = (uint8_t)(clClear.b * 255);
-    //uint8_t a = (uint8_t)(clClear.a * 255);
-
-    packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-    packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(r, g, b, 0x80, 0));
-    packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((0+GS_X_BASE)<<4, (0+GS_Y_BASE)<<4, 0));
-    packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((viewportWidth+GS_X_BASE)<<4, (viewportHeight+GS_Y_BASE)<<4, 0));
-  }
-
-  if(mask & GL_DEPTH_BUFFER_BIT)
-  {
-    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
-  }
-  bDataWaiting_ = true;
+//-----------------------------------------------------------------------------
+CSurface *
+CPS23DRenderer::getSurface()
+{
+  return CAPS2Renderer::getSurface();
 }
 
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::glDepthFunc(GLenum func)
+CPS23DRenderer::enableDepthTest(bool enable)
+{
+  bDepthTestEnabled_ = enable;
+
+  zbuffer(bDepthTestEnabled_);
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::enableSmoothShading(bool enable)
+{
+  bSmoothShadingEnabled_ = enable;
+
+  ps2Shading_ = enable ? GS_PRIM_SHADE_GOURAUD : GS_PRIM_SHADE_FLAT;
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::enableTextures(bool enable)
+{
+  bTexturesEnabled_ = enable;
+
+  ps2Textures_ = enable ? GS_PRIM_TEXTURES_ON : GS_PRIM_TEXTURES_OFF;
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::enableBlending(bool enable)
+{
+  bBlendingEnabled_ = enable;
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::clearDepthf(GLclampf depth)
+{
+  depthClear_ = mathlib::clamp<GLclampf>(depth, 0.0f, 1.0f);
+
+  zClearValue_ = (int32_t)(depthClear_ * ((1<<SHIFT_Z)-1));
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::depthRangef(GLclampf zNear, GLclampf zFar)
+{
+  zRangeNear_ = mathlib::clamp<GLclampf>(zNear, 0.0f, 1.0f);
+  zRangeFar_  = mathlib::clamp<GLclampf>(zFar,  0.0f, 1.0f);
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::depthFunc(GLenum func)
 {
   depthFunction_ = func;
 
@@ -229,90 +263,80 @@ CPS23DRenderer::glDepthFunc(GLenum func)
     default:          ps2DepthFunction_ = GS_ZTST_ALWAYS;  ps2DepthInvert_ = false; break;
   }
 
-  if(depthTestEnabled_ == true)
+  if(bDepthTestEnabled_ == true)
   {
-    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, depthTestEnabled_, ps2DepthFunction_));
+    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, bDepthTestEnabled_, ps2DepthFunction_));
   }
 }
 
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::glDisable(GLenum cap)
+CPS23DRenderer::bindTexture(GLenum target, GLuint texture)
 {
-  switch(cap)
+  if(target != GL_TEXTURE_2D)
   {
-    case GL_ALPHA_TEST: alphaTestEnabled_  = false; break;
-    case GL_BLEND:      blendingEnabled_   = false; break;
-    case GL_LIGHTING:   lightingEnabled_   = false; break;
-    case GL_LIGHT0:     lights_[0].enabled = false; break;
-    case GL_LIGHT1:     lights_[1].enabled = false; break;
-    case GL_LIGHT2:     lights_[2].enabled = false; break;
-    case GL_LIGHT3:     lights_[3].enabled = false; break;
-    case GL_LIGHT4:     lights_[4].enabled = false; break;
-    case GL_LIGHT5:     lights_[5].enabled = false; break;
-    case GL_LIGHT6:     lights_[6].enabled = false; break;
-    case GL_LIGHT7:     lights_[7].enabled = false; break;
-    case GL_DEPTH_TEST:
-      depthTestEnabled_ = false;
-      zbuffer(false); // Notify rasterizer
-      break;
-    case GL_CULL_FACE:  cullFaceEnabled_  = false; break;
-    case GL_FOG:        fogEnabled_       = false; break;
-    case GL_TEXTURE_2D: texturesEnabled_  = false; ps2Textures_ = GS_PRIM_TEXTURES_OFF; break;
-    case GL_NORMALIZE:  normalizeEnabled_ = false; break;
-    default:
-      setError(GL_INVALID_ENUM);
-      return;
-  };
+//    setError(GL_INVALID_ENUM);
+    return;
+  }
+  if((texture >= MAX_TEXTURE_COUNT) || (textures_[texture] == NULL))
+  {
+//    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  pCurrentTex_ = textures_[texture];
 }
 
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::glEnable(GLenum cap)
+CPS23DRenderer::deleteTextures(GLsizei n, const GLuint *textures)
 {
-  switch(cap)
+  if(n < 0)
   {
-    case GL_ALPHA_TEST: alphaTestEnabled_  = true; break;
-    case GL_BLEND:      blendingEnabled_   = true; break;
-    case GL_LIGHTING:   lightingEnabled_   = true; break;
-    case GL_LIGHT0:     lights_[0].enabled = true; break;
-    case GL_LIGHT1:     lights_[1].enabled = true; break;
-    case GL_LIGHT2:     lights_[2].enabled = true; break;
-    case GL_LIGHT3:     lights_[3].enabled = true; break;
-    case GL_LIGHT4:     lights_[4].enabled = true; break;
-    case GL_LIGHT5:     lights_[5].enabled = true; break;
-    case GL_LIGHT6:     lights_[6].enabled = true; break;
-    case GL_LIGHT7:     lights_[7].enabled = true; break;
-    case GL_DEPTH_TEST:
-      depthTestEnabled_ = true;
-      zbuffer(true); // Notify rasterizer
-      break;
-    case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
-    case GL_FOG:        fogEnabled_        = true; break;
-    case GL_TEXTURE_2D: texturesEnabled_   = true; ps2Textures_ = GS_PRIM_TEXTURES_ON; break;
-    case GL_NORMALIZE:  normalizeEnabled_  = true; break;
-    default:
-      setError(GL_INVALID_ENUM);
-      return;
-  };
+//    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  for(GLsizei i(0); i < n; i++)
+    if(textures[i] < MAX_TEXTURE_COUNT)
+      if(textures_[textures[i]] != NULL)
+        delete textures_[textures[i]];
 }
 
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::glShadeModel(GLenum mode)
+CPS23DRenderer::genTextures(GLsizei n, GLuint *textures)
 {
-  shadingModel_ = mode;
-
-  switch(mode)
+  if(n < 0)
   {
-    case GL_FLAT:   ps2Shading_ = GS_PRIM_SHADE_FLAT;    break;
-    case GL_SMOOTH: ps2Shading_ = GS_PRIM_SHADE_GOURAUD; break;
+//    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  for(GLsizei idxNr(0); idxNr < n; idxNr++)
+  {
+    bool bFound(false);
+
+    for(GLuint idxTex(0); idxTex < MAX_TEXTURE_COUNT; idxTex++)
+    {
+      if(textures_[idxTex] == NULL)
+      {
+        textures_[idxTex] = new CPS2Texture(packet_);
+
+        textures[idxNr] = idxTex;
+        bFound = true;
+        break;
+      }
+    }
+
+    if(bFound = false)
+      break;
   }
 }
 
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
+CPS23DRenderer::texImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
   if(target != GL_TEXTURE_2D)
   {
@@ -495,7 +519,7 @@ CPS23DRenderer::glTexImage2D(GLenum target, GLint level, GLint internalformat, G
 
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
+CPS23DRenderer::texParameterf(GLenum target, GLenum pname, GLfloat param)
 {
   if(target != GL_TEXTURE_2D)
   {
@@ -542,7 +566,7 @@ CPS23DRenderer::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
             setError(GL_INVALID_ENUM);
             return;
         };
-        CURRENT_PS2TEX->wrapS = (GLint)param;
+        CURRENT_PS2TEX->uWrapMode = (GLint)param;
         break;
       case GL_TEXTURE_WRAP_T:
         switch((GLint)param)
@@ -553,7 +577,7 @@ CPS23DRenderer::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
             setError(GL_INVALID_ENUM);
             return;
         };
-        CURRENT_PS2TEX->wrapT = (GLint)param;
+        CURRENT_PS2TEX->vWrapMode = (GLint)param;
         break;
       default:
         setError(GL_INVALID_ENUM);
@@ -562,6 +586,115 @@ CPS23DRenderer::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
   }
 }
 
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::texEnvf(GLenum target, GLenum pname, GLfloat param)
+{
+  if(target != GL_TEXTURE_ENV)
+  {
+    //setError(GL_INVALID_ENUM);
+    return;
+  }
+
+  if(pname != GL_TEXTURE_ENV_MODE)
+  {
+    //setError(GL_INVALID_ENUM);
+    return;
+  }
+
+  switch((GLenum)param)
+  {
+    case GL_MODULATE:
+    case GL_DECAL:
+    case GL_BLEND:
+    case GL_REPLACE:
+      texEnvMode_ = (GLenum)param;
+      break;
+    default:
+      //setError(GL_INVALID_ENUM);
+      return;
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::blendFunc(GLenum sfactor, GLenum dfactor)
+{
+  blendSFactor_ = sfactor;
+  blendDFactor_ = dfactor;
+
+  if((sfactor == GL_ONE) && (dfactor == GL_ZERO))
+    blendFast_ = FB_SOURCE;
+  else if((sfactor == GL_ZERO) && (dfactor == GL_ONE))
+    blendFast_ = FB_DEST;
+  else if((sfactor == GL_SRC_ALPHA) && (dfactor == GL_ONE_MINUS_SRC_ALPHA))
+    blendFast_ = FB_BLEND;
+  else
+    blendFast_ = FB_OTHER;
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::clearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+{
+  clClear.r = mathlib::clamp<GLclampf>(red,   0.0f, 1.0f);
+  clClear.g = mathlib::clamp<GLclampf>(green, 0.0f, 1.0f);
+  clClear.b = mathlib::clamp<GLclampf>(blue,  0.0f, 1.0f);
+  clClear.a = mathlib::clamp<GLclampf>(alpha, 0.0f, 1.0f);
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::clear(GLbitfield mask)
+{
+  if(mask & GL_DEPTH_BUFFER_BIT)
+  {
+    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, 1, GS_ZTST_ALWAYS));
+  }
+
+  if(mask & GL_COLOR_BUFFER_BIT)
+  {
+    uint8_t r = (uint8_t)(clClear.r * 255);
+    uint8_t g = (uint8_t)(clClear.g * 255);
+    uint8_t b = (uint8_t)(clClear.b * 255);
+    //uint8_t a = (uint8_t)(clClear.a * 255);
+
+    packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+    packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(r, g, b, 0x80, 0));
+    packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((0+GS_X_BASE)<<4, (0+GS_Y_BASE)<<4, 0));
+    packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((viewportWidth+GS_X_BASE)<<4, (viewportHeight+GS_Y_BASE)<<4, 0));
+  }
+
+  if(mask & GL_DEPTH_BUFFER_BIT)
+  {
+    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, bDepthTestEnabled_, ps2DepthFunction_));
+  }
+  bDataWaiting_ = true;
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::viewport(GLint x, GLint y, GLsizei width, GLsizei height)
+{
+  // FIXME: Use offset also
+  viewportWidth  = width;
+  viewportHeight = height;
+}
+
+//-----------------------------------------------------------------------------
+// Not supported on PS2
+void
+CPS23DRenderer::setUsePixelCenter(bool bCenter)
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::flush()
+{
+  CAPS2Renderer::flush();
+}
+/*
 //-----------------------------------------------------------------------------
 void
 CPS23DRenderer::glBegin(GLenum mode)
@@ -590,11 +723,15 @@ CPS23DRenderer::glEnd()
 
   bDataWaiting_ = true;
 }
-
+*/
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
+CPS23DRenderer::rasterTriangle(const raster::SVertex & v0, const raster::SVertex & v1, const raster::SVertex & v2)
 {
+  packet_.gifAddPackedAD(GIF::REG::prim, GIF::REG::PRIM(GS_PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, GS_PRIM_TEXTURES_ST, 0, 0));
+  bDataWaiting_ = true;
+
+/*
   // -------
   // Culling
   // -------
@@ -614,13 +751,13 @@ CPS23DRenderer::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
     if((vnz < 0.0f) == bCullCW_)
       return;
   }
-
-  SVertexF * va[3] = {&v0, &v1, &v2};
+*/
+  const raster::SVertex * va[3] = {&v0, &v1, &v2};
   uint8_t alpha;
 
   for(int iVertex(0); iVertex < 3; iVertex++)
   {
-    SVertexF & v = *va[iVertex];
+    const raster::SVertex & v = *va[iVertex];
 
     //uint32_t z = 0;//ps2DepthInvert_ ? (zMax_ - v.sz) : v.sz;
 
@@ -630,37 +767,37 @@ CPS23DRenderer::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
       alpha = 255;
     // Only alpha blending: use alpha from color value
     else if((ps2Aliasing_ == GS_PRIM_ALIASING_OFF) && (ps2AlphaBlend_ == GS_PRIM_ALPHABLEND_ON))
-      alpha = (uint8_t)(v.cl.a*255);
+      alpha = (v.c.a*255)>>SHIFT_COLOR;
     // Only aliasing: use value 0x80
     else if((ps2Aliasing_ == GS_PRIM_ALIASING_ON)  && (ps2AlphaBlend_ == GS_PRIM_ALPHABLEND_OFF))
       alpha = 0x80;
     // Both: Can't do both at the same time!!! Prefer alpha blending then...
     else
     {
-      alpha = (uint8_t)(v.cl.a*255);
+      alpha = (v.c.a*255)>>SHIFT_COLOR;
       // Don't use 0x80, it's the 'magic' aliasing value
       if(alpha == 0x80)
         alpha = 0x81;
     }
 
     // Add to message
-    if(texturesEnabled_ == true)
+    if(bTexturesEnabled_ == true)
     {
-      GLfloat tq = v.vd.w;
-      GLfloat ts = v.t[0] * tq;
-      GLfloat tt = v.t[1] * tq;
+      GLfloat tq = v.w;
+      GLfloat ts = v.t.u * tq;
+      GLfloat tt = v.t.v * tq;
 
       packet_.gifAddPackedAD(GIF::REG::st,    GIF::REG::ST(ts, tt));
-      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, tq));
+      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((v.c.r*255)>>SHIFT_COLOR, (v.c.g*255)>>SHIFT_COLOR, (v.c.b*255)>>SHIFT_COLOR, alpha, tq));
     }
     else
     {
-      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((uint8_t)(v.cl.r*255), (uint8_t)(v.cl.g*255), (uint8_t)(v.cl.b*255), alpha, 0));
+      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((v.c.r*255)>>SHIFT_COLOR, (v.c.g*255)>>SHIFT_COLOR, (v.c.b*255)>>SHIFT_COLOR, alpha, 0));
     }
     
-    int32_t x = (int32_t)((xA_ * v.vd.x) + xB_);
-    int32_t y = (int32_t)((yA_ * v.vd.y) + yB_);
-    int32_t z = (int32_t)((zA_ * v.vd.z) + zB_);
+    int32_t x = v.x;//(int32_t)((xA_ * v.vd.x) + xB_);
+    int32_t y = v.y;//(int32_t)((yA_ * v.vd.y) + yB_);
+    int32_t z = v.z;//(int32_t)((zA_ * v.vd.z) + zB_);
     if(ps2DepthInvert_ == true) z = zMax_ - z;
 
     packet_.gifAddPackedAD(GIF::REG::xyz2, GIF::REG::XYZ2((GS_X_BASE<<4) + x, (GS_Y_BASE<<4) + y, z));
@@ -689,11 +826,4 @@ CPS23DRenderer::zbuffer(bool enable)
 
   // Z-Buffer test
   packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, enable, ps2DepthFunction_));
-}
-
-//-----------------------------------------------------------------------------
-CTexture *
-CPS23DRenderer::getTexture()
-{
-  return new CPS2Texture(packet_);
 }

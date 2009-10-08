@@ -26,7 +26,7 @@
 #include "../../../../gl/softGLF.h"
 #include "../../../../gl/glMatrix.h"
 #include "../../../../gl/context.h"
-#include "../../../../gl/textures.h"
+//#include "../../../../gl/textures.h"
 #include "vhl/vector.h"
 #include "videoDevice.h"
 #include "gif.h"
@@ -83,8 +83,7 @@ private:
 
 //-----------------------------------------------------------------------------
 class CPS23DRenderer
- : public CASoftGLESFloat
- , public CAGLESTextures
+ : public raster::IRasterizer
  , public CAPS2Renderer
 {
 public:
@@ -92,31 +91,85 @@ public:
   virtual ~CPS23DRenderer();
 
   // Surfaces
-  virtual void       setSurface(CSurface * surface){CAPS2Renderer::setSurface(surface);}
-  virtual CSurface * getSurface()                  {return CAPS2Renderer::getSurface();}
+  virtual void       setSurface(CSurface * surface);
+  virtual CSurface * getSurface();
 
-  // Flush operations to surface
-  virtual void       flush()                       {CAPS2Renderer::flush();}
+  // Enabling options
+  virtual void enableDepthTest(bool enable);
+  virtual void enableSmoothShading(bool enable);
+  virtual void enableTextures(bool enable);
+  virtual void enableBlending(bool enable);
 
-  virtual void glClear(GLbitfield mask);
-  virtual void glDepthFunc(GLenum func);
-  virtual void glDisable(GLenum cap);
-  virtual void glEnable(GLenum cap);
-  virtual void glShadeModel(GLenum mode);
+  // Depth testing
+  virtual void clearDepthf(GLclampf depth);
+  virtual void depthRangef(GLclampf zNear, GLclampf zFar);
+  virtual void depthFunc(GLenum func);
 
-//  virtual void glBindTexture(GLenum target, GLuint texture);
-//  virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
-//  virtual void glGenTextures(GLsizei n, GLuint *textures);
-  virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-  virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
+  // Textures
+  virtual void bindTexture(GLenum target, GLuint texture);
+  virtual void deleteTextures(GLsizei n, const GLuint * textures);
+  virtual void genTextures(GLsizei n, GLuint * textures);
+  virtual void texImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * pixels);
+  virtual void texParameterf(GLenum target, GLenum pname, GLfloat param);
+  virtual void texEnvf(GLenum target, GLenum pname, GLfloat param);
 
-  virtual void glBegin(GLenum mode);
-  virtual void glEnd();
+  // Blending
+  virtual void blendFunc(GLenum sfactor, GLenum dfactor);
 
-protected:
-  virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2);
-  virtual void zbuffer(bool enable);
-  virtual CTexture * getTexture();
+  // Buffer
+  virtual void clearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+  virtual void clear(GLbitfield mask);
+  virtual void viewport(GLint x, GLint y, GLsizei width, GLsizei height);
+  virtual void setUsePixelCenter(bool bCenter);
+
+  // RASTER!
+  virtual void rasterTriangle(const raster::SVertex & v0, const raster::SVertex & v1, const raster::SVertex & v2);
+
+  // Flush all triangles (very important for tile based rendering)
+  virtual void flush();
+
+private:
+  void zbuffer(bool enable);
+
+private:
+  SColorF     clClear;
+  int32_t   * pZBuffer_;
+
+  // Shading model
+  bool        bSmoothShadingEnabled_;
+
+  // Depth testing
+  bool        bDepthTestEnabled_;
+  GLenum      depthFunction_;
+  GLfloat     depthClear_;
+  int32_t     zClearValue_;
+  GLclampf    zRangeNear_;
+  GLclampf    zRangeFar_;
+
+  // Textures
+  bool        bTexturesEnabled_;
+  GLenum      texEnvMode_;
+  SColorF     texEnvColor_;
+//  CTexture  * pCurrentTex_;
+//  CTexture  * textures_[MAX_TEXTURE_COUNT];
+
+  // Blending
+  bool        bBlendingEnabled_;
+  GLenum      blendSFactor_;
+  GLenum      blendDFactor_;
+  EFastBlendMode blendFast_;
+
+  GLint       viewportXOffset;
+  GLint       viewportYOffset;
+  GLsizei     viewportWidth;
+  GLsizei     viewportHeight;
+  GLsizei     viewportPixelCount;
+
+  // Pixel center
+  bool        bUsePixelCenter_;
+  int32_t     pixelFloorOffset_;
+  int32_t     pixelCenterOffset_;
+  int32_t     oneMinusPixelCenterOffset_;
 
 private:
   CPS2VideoDevice & device_;
@@ -130,6 +183,9 @@ private:
   uint16_t    ps2DepthFunction_;
   bool        ps2DepthInvert_;
   uint32_t    zMax_;
+
+  CPS2Texture * pCurrentTex_;
+  CPS2Texture * textures_[MAX_TEXTURE_COUNT];
 };
 
 
