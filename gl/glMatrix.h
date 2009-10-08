@@ -26,7 +26,10 @@
 #include "context.h"
 #include "vhl/fixedPoint.h"
 #include "vhl/matrix.h"
+
+#ifdef __BRICKS__
 #include "asm/arch/config.h"
+#endif
 
 
 #define GL_MATRIX_MODELVIEW_STACK_SIZE  32
@@ -34,7 +37,7 @@
 #define GL_MATRIX_TEXTURE_STACK_SIZE     2
 
 
-#ifdef CONFIG_FPU
+#if !defined(__BRICKS__) || (defined(__BRICKS__) && defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
 class CAGLESMatrixF
  : public virtual I3DRenderer
@@ -77,7 +80,9 @@ protected:
 
   TMatrix4x4<GLfloat> * pCurrentMatrix_;
 };
-#else // CONFIG_FPU
+#endif
+
+#if !defined(__BRICKS__) || (defined(__BRICKS__) && !defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
 class CAGLESMatrixFx
  : public virtual I3DRenderer
@@ -120,7 +125,7 @@ protected:
 
   TMatrix4x4<CFixed> * pCurrentMatrix_;
 };
-#endif // CONFIG_FPU
+#endif
 
 
 #endif

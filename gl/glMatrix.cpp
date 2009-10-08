@@ -103,7 +103,7 @@ switch(matrixMode_)                                                   \
     break;                                                     \
 }
 
-#ifdef CONFIG_FPU
+#if !defined(__BRICKS__) || (defined(__BRICKS__) && defined(CONFIG_FPU))
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CAGLESMatrixF::CAGLESMatrixF()
@@ -259,7 +259,9 @@ CAGLESMatrixF::glMatrixMode(GLenum mode)
 {
   MATRIX_MODE();
 }
-#else // CONFIG_FPU
+#endif
+
+#if !defined(__BRICKS__) || (defined(__BRICKS__) && !defined(CONFIG_FPU))
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CAGLESMatrixFx::CAGLESMatrixFx()
@@ -432,4 +434,4 @@ CAGLESMatrixFx::glMatrixMode(GLenum mode)
 {
   MATRIX_MODE();
 }
-#endif // CONFIG_FPU
+#endif

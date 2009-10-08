@@ -23,21 +23,21 @@
 #define TEXTURES_H
 
 
-#include "asm/arch/config.h"
 #include "context.h"
+#include "raster.h"
 #include "color.h"
 
 
 #define MAX_TEXTURE_COUNT 1024
 
-#ifdef CONFIG_GL_TEXTURES_16BIT
-  #define TEXEL_FORMAT uint16_t
-  #define TEXEL_LOAD COLOR_LOAD_565
-#else
-  #define TEXEL_FORMAT uint32_t
-  #define TEXEL_LOAD COLOR_LOAD_8888
-#endif
 
+//-----------------------------------------------------------------------------
+#define TEXTURE_MIPMAP_LEVEL_COUNT 11
+// One texture (MipMap) level
+struct STextureLevel
+{
+  void * data;
+};
 
 //-----------------------------------------------------------------------------
 class CTexture
@@ -49,11 +49,29 @@ public:
   void free();
   void bind();
 
-#ifndef CONFIG_GL_SIMPLE_TEXTURES
-  inline void getTexel(SRasterColor & c, int32_t u, int32_t v, bool near);
-#endif
+  float lambda(float dudx, float dudy, float dvdx, float dvdy);
+  void getTexel(raster::SColorF & c, float u, float v, float lod);
+  void getTexel(raster::SColor  & c, float u, float v, float lod);
 
 public:
+  inline void getTexel(int level, int u, int v, float * channels);
+
+  // Pointers to MipMap levels:
+  // Nr Width Tiles
+  //  0 1024     32
+  //  1  512     16
+  //  2  256      8
+  //  3  128      4
+  //  4   64      2
+  //  5   32      1
+  //  6   16
+  //  7    8
+  //  8    4
+  //  9    2
+  // 10    1
+  STextureLevel level[TEXTURE_MIPMAP_LEVEL_COUNT];
+  int iMaxLevel_;
+
   int32_t width;
   int32_t height;
   int32_t bitWidth_;
@@ -62,8 +80,8 @@ public:
 
   GLint minFilter;
   GLint magFilter;
-  GLint wrapS;
-  GLint wrapT;
+  GLint uWrapMode;
+  GLint vWrapMode;
 
   uint32_t iWidthMask_;
   uint32_t iHeightMask_;
@@ -73,37 +91,9 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-class CAGLESTextures
- : public virtual I3DRenderer
-{
-public:
-  CAGLESTextures();
-  virtual ~CAGLESTextures();
-
-  virtual void glBindTexture(GLenum target, GLuint texture);
-  virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
-  virtual void glGenTextures(GLsizei n, GLuint *textures);
-  virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-  virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
-  virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
-  virtual void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
-
-protected:
-  CTexture * pCurrentTex_;
-
-private:
-  CTexture * textures_[MAX_TEXTURE_COUNT];
-};
-
-//-----------------------------------------------------------------------------
 int convertImageFormat(void * dst, EColorFormat dstFmt, const void * src, EColorFormat srcFmt, int width, int height);
 EColorFormat convertGLToBxColorFormat(GLenum format, GLenum type);
 uint8_t getBitNr(uint32_t value);
-
-
-#ifndef CONFIG_GL_SIMPLE_TEXTURES
-  #include "textures.inl"
-#endif
 
 
 #endif

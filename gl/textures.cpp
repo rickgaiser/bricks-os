@@ -20,10 +20,28 @@
 
 
 #include "textures.h"
-#include "bitResolution.h"
-
+#include "GL/gl.h"
+#ifndef __BRICKS__
+#include "GL/glext.h"
+#endif
+#include "mathlib.h"
 #include "unistd.h"
 #include "string.h"
+
+
+//-----------------------------------------------------------------------------
+#define UV_TO_INDEX_WRAP(U,V) ((((V) & iHeightMask_) * width) + ((U) & iWidthMask_))
+
+#define TEX_FRACTIONAL_MASK ((1<<SHIFT_TEX)-1)
+
+// Convert tex_coord format to color format
+#if SHIFT_TEX > SHIFT_COLOR
+  #define TEXCOORD_TO_COLOR(c) ((c) >> (SHIFT_TEX - SHIFT_COLOR))
+#elif SHIFT_TEX < SHIFT_COLOR
+  #define TEXCOORD_TO_COLOR(c) ((c) << (SHIFT_COLOR - SHIFT_TEX))
+#else
+  #define TEXCOORD_TO_COLOR(c) ((c))
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -176,10 +194,11 @@ getBitNr(uint32_t value)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CTexture::CTexture()
- : minFilter(GL_NEAREST_MIPMAP_LINEAR)
+ : iMaxLevel_(0)
+ , minFilter(GL_NEAREST_MIPMAP_LINEAR)
  , magFilter(GL_LINEAR)
- , wrapS(GL_REPEAT)
- , wrapT(GL_REPEAT)
+ , uWrapMode(GL_REPEAT)
+ , vWrapMode(GL_REPEAT)
  , data_raw(NULL)
 {
 }
@@ -208,328 +227,192 @@ CTexture::bind()
 }
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-CAGLESTextures::CAGLESTextures()
- : pCurrentTex_(NULL)
+float
+CTexture::lambda(float dudx, float dudy, float dvdx, float dvdy)
 {
-  for(int i(0); i < MAX_TEXTURE_COUNT; i++)
-    textures_[i] = NULL;
-}
+#if 0
+  float max, rho, lambda;
 
-//-----------------------------------------------------------------------------
-CAGLESTextures::~CAGLESTextures()
-{
-  for(int i(0); i < MAX_TEXTURE_COUNT; i++)
-    if(textures_[i] == NULL)
-      delete textures_[i];
-}
+  dudx = mathlib::abs<float>(dudx);
+  dudy = mathlib::abs<float>(dudy);
+  max = mathlib::max<float>(dudx, dudy) * width;
+  rho = max;
 
-//-----------------------------------------------------------------------------
-void
-CAGLESTextures::glBindTexture(GLenum target, GLuint texture)
-{
-  if(target != GL_TEXTURE_2D)
-  {
-//    setError(GL_INVALID_ENUM);
-    return;
-  }
-  if((texture >= MAX_TEXTURE_COUNT) || (textures_[texture] == NULL))
-  {
-//    setError(GL_INVALID_VALUE);
-    return;
-  }
+  dvdx = mathlib::abs<float>(dvdx);
+  dvdy = mathlib::abs<float>(dvdy);
+  max = mathlib::max<float>(dvdx, dvdy) * height;
+  rho = mathlib::max<float>(rho, max);
 
-  pCurrentTex_ = textures_[texture];
+  mathlib::initialize();
+  lambda = mathlib::fast_log2(rho);
 
-  pCurrentTex_->bind();
+  return lambda;
+#else
+  return 0.0f;
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESTextures::glDeleteTextures(GLsizei n, const GLuint *textures)
+CTexture::getTexel(raster::SColorF & c, float u, float v, float lod)
 {
-  if(n < 0)
+  u *= width;
+  v *= height;
+
+  int upos = (int)u;
+  int vpos = (int)v;
+
+  int iFilter;
+  int iMipMapLevel0;
+  int iMipMapLevel1;
+  float fMipMapBlend = 0.0f; // LERP between level0 and level1
+  if(lod < 0.0f)
   {
-//    setError(GL_INVALID_VALUE);
-    return;
-  }
+    // Magnify
+    iFilter = magFilter;
 
-  for(GLsizei i(0); i < n; i++)
-    if(textures[i] < MAX_TEXTURE_COUNT)
-      if(textures_[textures[i]] != NULL)
-        delete textures_[textures[i]];
-}
-
-//-----------------------------------------------------------------------------
-void
-CAGLESTextures::glGenTextures(GLsizei n, GLuint *textures)
-{
-  if(n < 0)
-  {
-//    setError(GL_INVALID_VALUE);
-    return;
-  }
-
-  for(GLsizei idxNr(0); idxNr < n; idxNr++)
-  {
-    bool bFound(false);
-
-    for(GLuint idxTex(0); idxTex < MAX_TEXTURE_COUNT; idxTex++)
-    {
-      if(textures_[idxTex] == NULL)
-      {
-        textures_[idxTex] = new CTexture;
-
-        textures[idxNr] = idxTex;
-        bFound = true;
-        break;
-      }
-    }
-
-    if(bFound = false)
-      break;
-  }
-}
-
-//-----------------------------------------------------------------------------
-void
-CAGLESTextures::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
-{
-  if(target != GL_TEXTURE_2D)
-  {
-//    setError(GL_INVALID_ENUM);
-    return;
-  }
-  if(level < 0)
-  {
-//    setError(GL_INVALID_VALUE);
-    return;
-  }
-  if(((format != GL_RGB) && (format != GL_BGR)) &&
-     ((type == GL_UNSIGNED_SHORT_5_6_5) ||
-      (type == GL_UNSIGNED_SHORT_5_6_5_REV)))
-  {
-//    setError(GL_INVALID_OPERATION);
-    return;
-  }
-  if(((format != GL_RGBA) && (format != GL_BGRA)) &&
-     ((type == GL_UNSIGNED_SHORT_4_4_4_4) ||
-      (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) ||
-      (type == GL_UNSIGNED_SHORT_5_5_5_1) ||
-      (type == GL_UNSIGNED_SHORT_1_5_5_5_REV)))
-  {
-//    setError(GL_INVALID_OPERATION);
-    return;
-  }
-
-  // FIXME: MipMaps not supported
-  if(level > 0)
-  {
-//    setError(GL_INVALID_OPERATION);
-    return;
-  }
-
-  if((pCurrentTex_ == 0) || (renderSurface == 0))
-  {
-//    setError(GL_INVALID_OPERATION);
-    return;
-  }
-
-  if(level == 0)
-  {
-    switch(width)
-    {
-      case    8: pCurrentTex_->bitWidth_ =  3; break;
-      case   16: pCurrentTex_->bitWidth_ =  4; break;
-      case   32: pCurrentTex_->bitWidth_ =  5; break;
-      case   64: pCurrentTex_->bitWidth_ =  6; break;
-      case  128: pCurrentTex_->bitWidth_ =  7; break;
-      case  256: pCurrentTex_->bitWidth_ =  8; break;
-      case  512: pCurrentTex_->bitWidth_ =  9; break;
-      case 1024: pCurrentTex_->bitWidth_ = 10; break;
-      default:
-  //      setError(GL_INVALID_VALUE);
-        return;
-    };
-    switch(height)
-    {
-      case    8: pCurrentTex_->bitHeight_ =  3; break;
-      case   16: pCurrentTex_->bitHeight_ =  4; break;
-      case   32: pCurrentTex_->bitHeight_ =  5; break;
-      case   64: pCurrentTex_->bitHeight_ =  6; break;
-      case  128: pCurrentTex_->bitHeight_ =  7; break;
-      case  256: pCurrentTex_->bitHeight_ =  8; break;
-      case  512: pCurrentTex_->bitHeight_ =  9; break;
-      case 1024: pCurrentTex_->bitHeight_ = 10; break;
-      default:
-  //      setError(GL_INVALID_VALUE);
-        return;
-    };
-
-    pCurrentTex_->iWidthMask_  = width  - 1;
-    pCurrentTex_->iHeightMask_ = height - 1;
-    pCurrentTex_->width        = width;
-    pCurrentTex_->height       = height;
-    pCurrentTex_->bRGBA_       = internalformat == 4;
+    // No MipMapping
+    iMipMapLevel0 =
+    iMipMapLevel1 = 0;
   }
   else
   {
-    // MipMap level > 0
-  }
+    // Minify
+    iFilter = minFilter;
 
-#ifdef CONFIG_GL_SIMPLE_TEXTURES
-  EColorFormat fmtTo = renderSurface->mode.format;
-#else
-  #ifdef CONFIG_GL_TEXTURES_16BIT
-  EColorFormat fmtTo = cfR5G6B5;
-  #else
-  EColorFormat fmtTo = cfA8R8G8B8;
-  #endif
-#endif
-
-  EColorFormat fmtFrom = convertGLToBxColorFormat(format, type);
-  if(fmtFrom == cfUNKNOWN)
-  {
-//    setError(GL_INVALID_ENUM);
-    return;
-  }
-
-  // Delete old texture buffer if present
-  if(pCurrentTex_->data_raw != NULL)
-    delete ((uint8_t *)pCurrentTex_->data_raw);
-  // Allocate texture buffer
-  switch(renderSurface->mode.bpp)
-  {
-    case 8:  pCurrentTex_->data_raw = new uint8_t [width*height+3]; break;
-    case 16: pCurrentTex_->data_raw = new uint16_t[width*height+3]; break;
-    case 32: pCurrentTex_->data_raw = new uint32_t[width*height+3]; break;
-    default:
-      return; // ERROR, invalid render surface
-  };
-  // Align to 32bit
-  pCurrentTex_->data = (void *)(((uint32_t)pCurrentTex_->data_raw + 3) & (~3));
-
-  convertImageFormat(pCurrentTex_->data, fmtTo, pixels, fmtFrom, width, height);
-}
-
-//-----------------------------------------------------------------------------
-void
-CAGLESTextures::glTexSubImage2D(
-  GLenum target,
-  GLint level,
-  GLint xoffset, GLint yoffset,
-  GLsizei width, GLsizei height,
-  GLenum format,
-  GLenum type,
-  const GLvoid * pixels)
-{
-  if(target != GL_TEXTURE_2D)
-  {
-//    setError(GL_INVALID_ENUM);
-    return;
-  }
-  if(level < 0)
-  {
-//    setError(GL_INVALID_VALUE);
-    return;
-  }
-
-  // FIXME: MipMaps not supported
-  if(level > 0)
-  {
-//    setError(GL_INVALID_OPERATION);
-    return;
-  }
-
-  if((pCurrentTex_ == 0) || (renderSurface == 0))
-  {
-//    setError(GL_INVALID_OPERATION);
-    return;
-  }
-
-/*
-  for(GLsizei y(0); y < height, y++)
-  {
-    for(GLsizei x(0); x < width, x++)
+    if((iFilter == GL_LINEAR_MIPMAP_NEAREST) || (iFilter == GL_LINEAR_MIPMAP_LINEAR))
     {
-      pCurrentTex_->data[...] = pixels[...];
+      // Linear MipMap filtering
+      int level = (int)lod;
+      fMipMapBlend = lod - level;
+      iMipMapLevel0 = mathlib::clamp<int>(level  , 0, iMaxLevel_);
+      iMipMapLevel1 = mathlib::clamp<int>(level+1, 0, iMaxLevel_);
+    }
+    else if((iFilter == GL_NEAREST_MIPMAP_NEAREST) || (iFilter == GL_NEAREST_MIPMAP_LINEAR))
+    {
+      // Nearest MipMap filtering
+      int level = (int)(lod + 0.5f);
+      iMipMapLevel0 =
+      iMipMapLevel1 = mathlib::clamp<int>(level  , 0, iMaxLevel_);
+    }
+    else
+    {
+      // No MipMapping
+      iMipMapLevel0 =
+      iMipMapLevel1 = 0;
     }
   }
-*/
-}
 
-//-----------------------------------------------------------------------------
-void
-CAGLESTextures::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
-{
-  if(target != GL_TEXTURE_2D)
-  {
-//    setError(GL_INVALID_ENUM);
-    return;
-  }
+  float colors[4];
 
-  if(pCurrentTex_ != 0)
+  if(iMipMapLevel0 == iMipMapLevel1)
   {
-    switch(pname)
+    // No MipMapping
+    if((iFilter == GL_NEAREST) ||
+       (iFilter == GL_LINEAR_MIPMAP_NEAREST) ||
+       (iFilter == GL_NEAREST_MIPMAP_NEAREST))
     {
-      case GL_TEXTURE_MIN_FILTER:
-        switch((GLint)param)
-        {
-          case GL_NEAREST: break;
-          case GL_LINEAR:  break;
-          default:
-//            setError(GL_INVALID_ENUM);
-            return;
-        };
-        pCurrentTex_->minFilter = (GLint)param;
-        break;
-      case GL_TEXTURE_MAG_FILTER:
-        switch((GLint)param)
-        {
-          case GL_NEAREST:                break;
-          case GL_LINEAR:                 break;
-          case GL_NEAREST_MIPMAP_NEAREST: break;
-          case GL_LINEAR_MIPMAP_NEAREST:  break;
-          case GL_NEAREST_MIPMAP_LINEAR:  break;
-          case GL_LINEAR_MIPMAP_LINEAR:   break;
-          default:
-//            setError(GL_INVALID_ENUM);
-            return;
-        };
-        pCurrentTex_->magFilter = (GLint)param;
-        break;
-      case GL_TEXTURE_WRAP_S:
-        switch((GLint)param)
-        {
-          case GL_CLAMP:  break;
-          case GL_REPEAT: break;
-          default:
-//            setError(GL_INVALID_ENUM);
-            return;
-        };
-        pCurrentTex_->wrapS = (GLint)param;
-        break;
-      case GL_TEXTURE_WRAP_T:
-        switch((GLint)param)
-        {
-          case GL_CLAMP:  break;
-          case GL_REPEAT: break;
-          default:
-//            setError(GL_INVALID_ENUM);
-            return;
-        };
-        pCurrentTex_->wrapT = (GLint)param;
-        break;
-      default:
-//        setError(GL_INVALID_ENUM);
-        return;
-    };
+      // point sampling (GL_NEAREST)
+      getTexel(iMipMapLevel0, upos, vpos, colors);
+    }
+    else
+    {
+      // bilinear filtering (GL_LINEAR)
+      float texels[4][4];
+      getTexel(iMipMapLevel0, upos    , vpos    , texels[0]);
+      getTexel(iMipMapLevel0, upos + 1, vpos    , texels[1]);
+      getTexel(iMipMapLevel0, upos    , vpos + 1, texels[2]);
+      getTexel(iMipMapLevel0, upos + 1, vpos + 1, texels[3]);
+
+      float ufrac = u - upos;
+      float vfrac = v - vpos;
+      for(int channel(0); channel < 4; channel++)
+        colors[channel] = mathlib::lerp_2d<float>(ufrac, vfrac, texels[0][channel], texels[1][channel], texels[2][channel], texels[3][channel]);
+    }
   }
+  else
+  {
+    // MipMapping
+    if((iFilter == GL_NEAREST) ||
+       (iFilter == GL_LINEAR_MIPMAP_NEAREST) ||
+       (iFilter == GL_NEAREST_MIPMAP_NEAREST))
+    {
+      // GL_LINEAR_MIPMAP_NEAREST
+      float texels0[4];
+      float texels1[4];
+      getTexel(iMipMapLevel0, upos, vpos, texels0);
+      getTexel(iMipMapLevel1, upos, vpos, texels1);
+
+      for(int channel(0); channel < 4; channel++)
+        colors[channel] = mathlib::lerp<float>(fMipMapBlend, texels0[channel], texels1[channel]);
+    }
+    else
+    {
+      // Trilinear filtering (GL_NEAREST_MIPMAP_NEAREST)
+      float texels0[4][4];
+      getTexel(iMipMapLevel0, upos    , vpos    , texels0[0]);
+      getTexel(iMipMapLevel0, upos + 1, vpos    , texels0[1]);
+      getTexel(iMipMapLevel0, upos    , vpos + 1, texels0[2]);
+      getTexel(iMipMapLevel0, upos + 1, vpos + 1, texels0[3]);
+
+      float texels1[4][4];
+      getTexel(iMipMapLevel1, upos    , vpos    , texels1[0]);
+      getTexel(iMipMapLevel1, upos + 1, vpos    , texels1[1]);
+      getTexel(iMipMapLevel1, upos    , vpos + 1, texels1[2]);
+      getTexel(iMipMapLevel1, upos + 1, vpos + 1, texels1[3]);
+
+      float ufrac = u - upos;
+      float vfrac = v - vpos;
+      for(int channel(0); channel < 4; channel++)
+      {
+        colors[channel] = mathlib::lerp_3d<float>(
+          ufrac,
+          vfrac,
+          fMipMapBlend,
+          texels0[0][channel], texels0[1][channel], texels0[2][channel], texels0[3][channel],
+          texels1[0][channel], texels1[1][channel], texels1[2][channel], texels1[3][channel]);
+      }
+    }
+  }
+
+  c.a = colors[0];
+  c.r = colors[1];
+  c.g = colors[2];
+  c.b = colors[3];
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESTextures::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
+CTexture::getTexel(raster::SColor & c, float u, float v, float lod)
 {
-  glTexParameterf(target, pname, gl_fptof(param));
+  raster::SColorF temp;
+
+  getTexel(temp, u, v, lod);
+
+  // Convert to fixed point
+  c.r = fpfromf(14, temp.r);
+  c.g = fpfromf(14, temp.g);
+  c.b = fpfromf(14, temp.b);
+  c.a = fpfromf(14, temp.a);
+}
+
+//-----------------------------------------------------------------------------
+void
+CTexture::getTexel(int _level, int u, int v, float * channels)
+{
+  // Wrap
+  u &= iWidthMask_;
+  v &= iHeightMask_;
+
+  uint32_t texel = ((uint32_t *)level[_level].data)[(v >> _level) * (width >> _level) + (u >> _level)];
+
+  channels[0] = (texel >> 24) & 0xff;
+  channels[1] = (texel >> 16) & 0xff;
+  channels[2] = (texel >>  8) & 0xff;
+  channels[3] = (texel      ) & 0xff;
+
+  channels[0] *= (1.0f / 255.0f);
+  channels[1] *= (1.0f / 255.0f);
+  channels[2] *= (1.0f / 255.0f);
+  channels[3] *= (1.0f / 255.0f);
 }

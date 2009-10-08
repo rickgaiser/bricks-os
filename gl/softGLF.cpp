@@ -18,15 +18,17 @@
  * 02111-1307 USA
  */
 
-
 #include "softGLF.h"
 #include "vhl/fixedPoint.h"
 #include "vhl/matrix.h"
-#include "bitResolution.h"
 #include "color.h"
+#ifdef ENABLE_PROFILING
+#include "prof/prof.h"
+#endif
 
 #include "stdlib.h"
 #include "math.h"
+#include "mathlib.h"
 
 
 //-----------------------------------------------------------------------------
@@ -62,8 +64,6 @@ inline void setClipFlags(SVertexF & v)
            ((v.vc.z >  w) << 5);
 }
 
-#define CALC_INTERSECTION(a,b,t) (b + ((a - b) * t))
-
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -72,6 +72,7 @@ CASoftGLESFloat::CASoftGLESFloat()
  , CAGLESBase()
  , CAGLESMatrixF()
 
+ , pRaster_(NULL)
  , depthTestEnabled_(false)
  , depthMask_(true)
  , depthFunction_(GL_LESS)
@@ -197,6 +198,26 @@ CASoftGLESFloat::~CASoftGLESFloat()
 
 //-----------------------------------------------------------------------------
 void
+CASoftGLESFloat::setRaster(raster::IRasterizer * rast)
+{
+  pRaster_ = rast;
+
+  if(renderSurface != NULL)
+    pRaster_->setSurface(renderSurface);
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftGLESFloat::setSurface(CSurface * surface)
+{
+  IRenderer::setSurface(surface);
+
+  if(pRaster_ != NULL)
+    pRaster_->setSurface(renderSurface);
+}
+
+//-----------------------------------------------------------------------------
+void
 CASoftGLESFloat::glAlphaFunc(GLenum func, GLclampf ref)
 {
   switch(func)
@@ -216,7 +237,7 @@ CASoftGLESFloat::glAlphaFunc(GLenum func, GLclampf ref)
   };
 
   alphaFunc_    = func;
-  alphaValue_   = clampf(ref);
+  alphaValue_   = mathlib::clamp<GLclampf>(ref, 0.0f, 1.0f);
   alphaValueFX_ = (int32_t)(alphaValue_ * (1 << SHIFT_COLOR));
 }
 
@@ -224,17 +245,21 @@ CASoftGLESFloat::glAlphaFunc(GLenum func, GLclampf ref)
 void
 CASoftGLESFloat::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
-  clClear.r = clampf(red);
-  clClear.g = clampf(green);
-  clClear.b = clampf(blue);
-  clClear.a = clampf(alpha);
+  pRaster_->clearColor(red, green, blue, alpha);
+
+  clClear.r = mathlib::clamp<GLclampf>(red,   0.0f, 1.0f);
+  clClear.g = mathlib::clamp<GLclampf>(green, 0.0f, 1.0f);
+  clClear.b = mathlib::clamp<GLclampf>(blue,  0.0f, 1.0f);
+  clClear.a = mathlib::clamp<GLclampf>(alpha, 0.0f, 1.0f);
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFloat::glClearDepthf(GLclampf depth)
 {
-  depthClear_ = clampf(depth);
+  pRaster_->clearDepthf(depth);
+
+  depthClear_ = mathlib::clamp<GLclampf>(depth, 0.0f, 1.0f);
 
   zClearValue_ = (uint32_t)(depthClear_ * ((1<<DEPTH_Z)-1));
 }
@@ -243,8 +268,10 @@ CASoftGLESFloat::glClearDepthf(GLclampf depth)
 void
 CASoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
 {
-  zRangeNear_ = clampf(zNear);
-  zRangeFar_  = clampf(zFar);
+  pRaster_->depthRangef(zNear, zFar);
+
+  zRangeNear_ = mathlib::clamp<GLclampf>(zNear, 0.0f, 1.0f);
+  zRangeFar_  = mathlib::clamp<GLclampf>(zFar,  0.0f, 1.0f);
 
   // FIXME: zA_ and zB_ need to be modified, this function is now useless
 }
@@ -253,6 +280,8 @@ CASoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
 void
 CASoftGLESFloat::glDepthFunc(GLenum func)
 {
+  pRaster_->depthFunc(func);
+
   depthFunction_ = func;
 }
 
@@ -270,7 +299,7 @@ CASoftGLESFloat::glDisable(GLenum cap)
   switch(cap)
   {
     case GL_ALPHA_TEST: alphaTestEnabled_  = false; break;
-    case GL_BLEND:      blendingEnabled_   = false; break;
+    case GL_BLEND:      blendingEnabled_   = false; pRaster_->enableBlending(false); break;
     case GL_LIGHTING:   lightingEnabled_   = false; break;
     case GL_LIGHT0:     lights_[0].enabled = false; break;
     case GL_LIGHT1:     lights_[1].enabled = false; break;
@@ -280,16 +309,11 @@ CASoftGLESFloat::glDisable(GLenum cap)
     case GL_LIGHT5:     lights_[5].enabled = false; break;
     case GL_LIGHT6:     lights_[6].enabled = false; break;
     case GL_LIGHT7:     lights_[7].enabled = false; break;
-
-    case GL_DEPTH_TEST:
-      depthTestEnabled_ = false;
-      zbuffer(false); // Notify rasterizer
-      break;
+    case GL_DEPTH_TEST: depthTestEnabled_  = false; pRaster_->enableDepthTest(false); break;
     case GL_CULL_FACE:  cullFaceEnabled_   = false; break;
     case GL_FOG:        fogEnabled_        = false; break;
-    case GL_TEXTURE_2D: texturesEnabled_   = false; break;
+    case GL_TEXTURE_2D: texturesEnabled_   = false; pRaster_->enableTextures(false); break;
     case GL_NORMALIZE:  normalizeEnabled_  = false; break;
-
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -310,7 +334,7 @@ CASoftGLESFloat::glEnable(GLenum cap)
   switch(cap)
   {
     case GL_ALPHA_TEST: alphaTestEnabled_  = true; break;
-    case GL_BLEND:      blendingEnabled_   = true; break;
+    case GL_BLEND:      blendingEnabled_   = true; pRaster_->enableBlending(true); break;
     case GL_LIGHTING:   lightingEnabled_   = true; break;
     case GL_LIGHT0:     lights_[0].enabled = true; break;
     case GL_LIGHT1:     lights_[1].enabled = true; break;
@@ -320,16 +344,11 @@ CASoftGLESFloat::glEnable(GLenum cap)
     case GL_LIGHT5:     lights_[5].enabled = true; break;
     case GL_LIGHT6:     lights_[6].enabled = true; break;
     case GL_LIGHT7:     lights_[7].enabled = true; break;
-
-    case GL_DEPTH_TEST:
-      depthTestEnabled_ = true;
-      zbuffer(true); // Notify rasterizer
-      break;
+    case GL_DEPTH_TEST: depthTestEnabled_  = true; pRaster_->enableDepthTest(true); break;
     case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
     case GL_FOG:        fogEnabled_        = true; break;
-    case GL_TEXTURE_2D: texturesEnabled_   = true; break;
+    case GL_TEXTURE_2D: texturesEnabled_   = true; pRaster_->enableTextures(true); break;
     case GL_NORMALIZE:  normalizeEnabled_  = true; break;
-
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -504,33 +523,8 @@ CASoftGLESFloat::glShadeModel(GLenum mode)
 {
   shadingModel_ = mode;
   bSmoothShading_ = (shadingModel_ == GL_SMOOTH);
-}
 
-//-----------------------------------------------------------------------------
-void
-CASoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-  viewportXOffset    = x;
-  viewportYOffset    = y;
-  viewportWidth      = width;
-  viewportHeight     = height;
-  viewportPixelCount = width * height;
-
-  xA_ =     (viewportWidth  >> 1);
-  xB_ = x + (viewportWidth  >> 1);
-  yA_ =     (viewportHeight >> 1);
-  yB_ = y + (viewportHeight >> 1);
-
-  // FIXME:
-  yA_  = -yA_;
-  xB_ -= x;
-  yB_ -= y;
-
-  // Use fixed point format for xy
-  xA_ *= (1<<SHIFT_XY);
-  xB_ *= (1<<SHIFT_XY);
-  yA_ *= (1<<SHIFT_XY);
-  yB_ *= (1<<SHIFT_XY);
+  pRaster_->enableSmoothShading(bSmoothShading_);
 }
 
 //-----------------------------------------------------------------------------
@@ -712,6 +706,8 @@ CASoftGLESFloat::glGetFloatv(GLenum pname, GLfloat * params)
 void
 CASoftGLESFloat::glBlendFunc(GLenum sfactor, GLenum dfactor)
 {
+  pRaster_->blendFunc(sfactor, dfactor);
+
   blendSFactor_ = sfactor;
   blendDFactor_ = dfactor;
 
@@ -932,12 +928,12 @@ CASoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufTexCoord_.type)
       {
         case GL_FLOAT:
-          v.t[0] =         ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
-          v.t[1] = (1.0f - ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++]);
+          v.t[0] = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
+          v.t[1] = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
           break;
         case GL_FIXED:
-          v.t[0] =         gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
-          v.t[1] = (1.0f - gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]));
+          v.t[0] = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+          v.t[1] = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
           break;
       };
     }
@@ -1031,7 +1027,7 @@ CASoftGLESFloat::_vertexShaderLight(SVertexF & v)
   if(fogEnabled_ == true)
   {
     GLfloat partFog, partColor;
-    partFog = clampf((abs(v.ve.z) - fogStart_) / (fogEnd_ - fogStart_));
+    partFog = mathlib::clamp<GLfloat>((mathlib::abs<GLfloat>(v.ve.z) - fogStart_) / (fogEnd_ - fogStart_), 0.0f, 1.0f);
     partColor = 1.0f - partFog;
     v.cl = ((v.cl * partColor) + (fogColor_ * partFog)).getClamped();
   }
@@ -1041,10 +1037,27 @@ CASoftGLESFloat::_vertexShaderLight(SVertexF & v)
 void
 CASoftGLESFloat::_fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
-  if(v0.clip & v1.clip & v2.clip)
-    return; // Not visible
+  // -------
+  // Culling
+  // -------
+  if(cullFaceEnabled_ == true)
+  {
+    // Always invisible when culling both front and back
+    if(cullFaceMode_ == GL_FRONT_AND_BACK)
+      return;
 
-  fragmentClip(v0, v1, v2);
+    GLfloat vnz =
+      (v0.vd.x - v2.vd.x) * (v1.vd.y - v2.vd.y) -
+      (v0.vd.y - v2.vd.y) * (v1.vd.x - v2.vd.x);
+
+    if(vnz == 0)
+      return;
+
+    if((vnz < 0) == bCullCW_)
+      return;
+  }
+
+  rasterTriangle(v0, v1, v2);
 }
 
 //-----------------------------------------------------------------------------
@@ -1091,7 +1104,7 @@ CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
     case GL_TRIANGLES:
     {
       if(vertIdx_ == 2)
-        fragmentCull(*triangle_[0], *triangle_[1], *triangle_[2]);
+        fragmentClip(*triangle_[0], *triangle_[1], *triangle_[2]);
       vertIdx_++;
       if(vertIdx_ > 2)
         vertIdx_ = 0;
@@ -1101,7 +1114,7 @@ CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
     {
       if(vertIdx_ == 2)
       {
-        fragmentCull(*triangle_[0], *triangle_[1], *triangle_[2]);
+        fragmentClip(*triangle_[0], *triangle_[1], *triangle_[2]);
         // Swap 3rd with 1st or 2nd vertex pointer
         if(bFlipFlop_ == true)
         {
@@ -1126,7 +1139,7 @@ CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
     {
       if(vertIdx_ == 2)
       {
-        fragmentCull(*triangle_[0], *triangle_[1], *triangle_[2]);
+        fragmentClip(*triangle_[0], *triangle_[1], *triangle_[2]);
         // Swap 3rd with 2nd vertex pointer
         SVertexF * pTemp = triangle_[1];
         triangle_[1] = triangle_[2];
@@ -1140,7 +1153,7 @@ CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
     {
       if(vertIdx_ == 2)
       {
-        fragmentCull(*triangle_[0], *triangle_[1], *triangle_[2]);
+        fragmentClip(*triangle_[0], *triangle_[1], *triangle_[2]);
         // Swap 3rd with 2nd vertex pointer
         SVertexF * pTemp = triangle_[1];
         triangle_[1] = triangle_[2];
@@ -1189,7 +1202,7 @@ clip_func(clip_ymax,+,y,x,z)
 clip_func(clip_zmin,-,z,x,y)
 clip_func(clip_zmax,+,z,x,y)
 
-GLfloat (*clip_proc[6])(TVector4<GLfloat> &, TVector4<GLfloat> &, TVector4<GLfloat> &) =
+GLfloat (*f_clip_proc[6])(TVector4<GLfloat> &, TVector4<GLfloat> &, TVector4<GLfloat> &) =
 {
   clip_xmin,
   clip_xmax,
@@ -1199,7 +1212,7 @@ GLfloat (*clip_proc[6])(TVector4<GLfloat> &, TVector4<GLfloat> &, TVector4<GLflo
   clip_zmax
 };
 
-#define CLIP_FUNC(plane,c,a,b) clip_proc[plane](c,a,b)
+#define CLIP_FUNC(plane,c,a,b) f_clip_proc[plane](c,a,b)
 
 //-----------------------------------------------------------------------------
 void
@@ -1217,7 +1230,7 @@ CASoftGLESFloat::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2,
   if(clipOr == 0)
   {
     // Completely inside
-    this->rasterTriangle(v0, v1, v2);
+    fragmentCull(v0, v1, v2);
   }
   else
   {
@@ -1296,15 +1309,15 @@ CASoftGLESFloat::interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLf
 {
   // Color
   if(bSmoothShading_ == true)
-    c.cl = CALC_INTERSECTION(a.cl, b.cl, t);
+    c.cl = mathlib_LERP(t, a.cl, b.cl);
   else
     c.cl = b.cl;
 
   // Texture coordinates
   if(texturesEnabled_ == true)
   {
-    c.t[0] = CALC_INTERSECTION(a.t[0], b.t[0], t);
-    c.t[1] = CALC_INTERSECTION(a.t[1], b.t[1], t);
+    c.t[0] = mathlib::lerp<GLfloat>(t, a.t[0], b.t[0]);
+    c.t[1] = mathlib::lerp<GLfloat>(t, a.t[1], b.t[1]);
   }
 
   // Set clip flags
@@ -1319,610 +1332,127 @@ CASoftGLESFloat::interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLf
 }
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-CSoftGLESFloat::CSoftGLESFloat()
- : CASoftGLESFloat()
- , CAGLESTextures()
- , pZBuffer_(NULL)
-{
-}
-
-//-----------------------------------------------------------------------------
-CSoftGLESFloat::~CSoftGLESFloat()
-{
-  if(pZBuffer_)
-    delete pZBuffer_;
-}
-
-//-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::glClear(GLbitfield mask)
+CASoftGLESFloat::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
-  if(mask & GL_COLOR_BUFFER_BIT)
-  {
-    color_t color = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(clClear.r * 255), (uint8_t)(clClear.g * 255), (uint8_t)(clClear.b * 255), (uint8_t)(clClear.a * 255));
-    int yoff = renderSurface->mode.height - (viewportHeight + viewportYOffset);
-    int xoff = viewportXOffset;
-
-    switch(renderSurface->mode.bpp)
-    {
-      case 8:
-      {
-        for(int32_t y(0); y < viewportHeight; y++)
-          for(int32_t x(0); x < viewportWidth; x++)
-            ((uint8_t  *)renderSurface->p)[(y + yoff) * renderSurface->mode.xpitch + (x + xoff)] = color;
-        break;
-      }
-      case 16:
-      {
-        for(int32_t y(0); y < viewportHeight; y++)
-          for(int32_t x(0); x < viewportWidth; x++)
-            ((uint16_t *)renderSurface->p)[(y + yoff) * renderSurface->mode.xpitch + (x + xoff)] = color;
-        break;
-      }
-      case 32:
-      {
-        uint32_t * pBuffer = (uint32_t *)renderSurface->p;
-        for(int i(0); i < viewportPixelCount; i++)
-          pBuffer[i] = color;
-        break;
-      }
-    };
-  }
-  if(mask & GL_DEPTH_BUFFER_BIT)
-  {
-    if(pZBuffer_ != NULL)
-    {
-      uint32_t zc = (zClearValue_ << 16) | zClearValue_;
-      for(int i(0); i < (viewportPixelCount / 2); i++)
-        ((uint32_t *)pZBuffer_)[i] = zc;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-  CASoftGLESFloat::glViewport(x, y, width, height);
-
-  // Update z-buffer
-  if(depthTestEnabled_ == true)
-    zbuffer(true);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
-{
-  _rasterTriangle(v0, v1, v2);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::zbuffer(bool enable)
-{
-  if(enable == true)
-  {
-    // (Re)create z-buffer
-    if(pZBuffer_ == 0)
-    {
-      if(pZBuffer_)
-        delete pZBuffer_;
-
-      // FIXME: Should be viewportPixelCount
-      pZBuffer_ = new uint16_t[(viewportWidth + viewportXOffset) * (viewportHeight + viewportYOffset)];
-      if(pZBuffer_ == NULL)
-        setError(GL_OUT_OF_MEMORY);
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-inline bool
-CSoftGLESFloat::rasterDepth(uint16_t z_pix, uint16_t z_buf)
-{
-  switch(depthFunction_)
-  {
-    case GL_LESS:     return (z_pix <  z_buf); break;
-    case GL_EQUAL:    return (z_pix == z_buf); break;
-    case GL_LEQUAL:   return (z_pix <= z_buf); break;
-    case GL_GREATER:  return (z_pix >  z_buf); break;
-    case GL_NOTEQUAL: return (z_pix != z_buf); break;
-    case GL_GEQUAL:   return (z_pix >= z_buf); break;
-    case GL_ALWAYS:   return true;             break;
-    case GL_NEVER:    return false;            break;
-  };
-
-  return false;
-}
-
-//-----------------------------------------------------------------------------
-inline void
-CSoftGLESFloat::rasterTexture(SRasterColor & out, const SRasterColor & cfragment, int32_t u, int32_t v, bool near)
-{
-  bool alphaChannel = pCurrentTex_->bRGBA_;
-  SRasterColor ctemp;
-
-  pCurrentTex_->getTexel(ctemp, u, v, near);
-
-  switch(texEnvMode_)
-  {
-    case GL_REPLACE:
-      out.r = ctemp.r;
-      out.g = ctemp.g;
-      out.b = ctemp.b;
-      out.a = alphaChannel ? ctemp.a : cfragment.a;
-      break;
-    case GL_MODULATE:
-      // Texture * Fragment color
-      out.r = COLOR_MUL_COMP(cfragment.r, ctemp.r);
-      out.g = COLOR_MUL_COMP(cfragment.g, ctemp.g);
-      out.b = COLOR_MUL_COMP(cfragment.b, ctemp.b);
-      out.a = alphaChannel ? COLOR_MUL_COMP(cfragment.a, ctemp.a) : cfragment.a;
-      break;
-    case GL_DECAL:
-      out.r = alphaChannel ? (COLOR_MUL_COMP(cfragment.r, ((1<<SHIFT_COLOR)-ctemp.a)) + COLOR_MUL_COMP(ctemp.r, ctemp.a)) : ctemp.r;
-      out.g = alphaChannel ? (COLOR_MUL_COMP(cfragment.g, ((1<<SHIFT_COLOR)-ctemp.a)) + COLOR_MUL_COMP(ctemp.g, ctemp.a)) : ctemp.g;
-      out.b = alphaChannel ? (COLOR_MUL_COMP(cfragment.b, ((1<<SHIFT_COLOR)-ctemp.a)) + COLOR_MUL_COMP(ctemp.b, ctemp.a)) : ctemp.b;
-      out.a = cfragment.a;
-      break;
-    case GL_BLEND:
-      out.r = COLOR_MUL_COMP(cfragment.r, ((1<<SHIFT_COLOR)-ctemp.r)) + COLOR_MUL_COMP(texEnvColorFX_.r, ctemp.r);
-      out.g = COLOR_MUL_COMP(cfragment.g, ((1<<SHIFT_COLOR)-ctemp.g)) + COLOR_MUL_COMP(texEnvColorFX_.g, ctemp.g);
-      out.b = COLOR_MUL_COMP(cfragment.b, ((1<<SHIFT_COLOR)-ctemp.b)) + COLOR_MUL_COMP(texEnvColorFX_.b, ctemp.b);
-      out.a = alphaChannel ? COLOR_MUL_COMP(cfragment.a, ctemp.a) : cfragment.a;
-      break;
-    case GL_ADD:
-      out.r = COLOR_ADD_COMP(cfragment.r, ctemp.r);
-      out.g = COLOR_ADD_COMP(cfragment.g, ctemp.g);
-      out.b = COLOR_ADD_COMP(cfragment.b, ctemp.b);
-      out.a = alphaChannel ? COLOR_MUL_COMP(cfragment.a, ctemp.a) : cfragment.a;
-      break;
-  };
-}
-
-//-----------------------------------------------------------------------------
-inline void
-CSoftGLESFloat::rasterBlend(SRasterColor & out, const SRasterColor & source, const SRasterColor & dest)
-{
-  #define BLEND_FACTOR(factor,c) \
-  switch(factor) \
-  { \
-    case GL_ONE: \
-      c.r = c.g = c.b = c.a = (1<<SHIFT_COLOR); \
-      break; \
-    case GL_SRC_COLOR: \
-      c.r = source.r; \
-      c.g = source.g; \
-      c.b = source.b; \
-      c.a = source.a; \
-      break; \
-    case GL_ONE_MINUS_SRC_COLOR: \
-      c.r = (1<<SHIFT_COLOR) - source.r; \
-      c.g = (1<<SHIFT_COLOR) - source.g; \
-      c.b = (1<<SHIFT_COLOR) - source.b; \
-      c.a = (1<<SHIFT_COLOR) - source.a; \
-      break; \
-    case GL_DST_COLOR: \
-      c.r = dest.r; \
-      c.g = dest.g; \
-      c.b = dest.b; \
-      c.a = dest.a; \
-      break; \
-    case GL_ONE_MINUS_DST_COLOR: \
-      c.r = (1<<SHIFT_COLOR) - dest.r; \
-      c.g = (1<<SHIFT_COLOR) - dest.g; \
-      c.b = (1<<SHIFT_COLOR) - dest.b; \
-      c.a = (1<<SHIFT_COLOR) - dest.a; \
-      break; \
-    case GL_SRC_ALPHA: \
-      c.r = c.g = c.b = c.a = source.a; \
-      break; \
-    case GL_ONE_MINUS_SRC_ALPHA: \
-      c.r = c.g = c.b = c.a = (1<<SHIFT_COLOR) - source.a; \
-      break; \
-    case GL_DST_ALPHA: \
-      c.r = c.g = c.b = c.a = dest.a; \
-      break; \
-    case GL_ONE_MINUS_DST_ALPHA: \
-      c.r = c.g = c.b = c.a = (1<<SHIFT_COLOR) - dest.a; \
-      break; \
-    case GL_ZERO: \
-    default: \
-      c.r = c.g = c.b = c.a = 0; \
-  }
-
-  switch(blendFast_)
-  {
-    case FB_SOURCE:
-      out.r = source.r;
-      out.g = source.g;
-      out.b = source.b;
-      out.a = source.a;
-      break;
-    case FB_DEST:
-      out.r = dest.r;
-      out.g = dest.g;
-      out.b = dest.b;
-      out.a = dest.a;
-      break;
-    case FB_BLEND:
-    {
-      COLOR_AVG(out, dest, source, source.a);
-      COLOR_CLAMP(out, out);
-      break;
-    }
-    default:
-    {
-      SRasterColor cs, cd;
-      BLEND_FACTOR(blendSFactor_, cs);
-      BLEND_FACTOR(blendDFactor_, cd);
-
-      cd.r = ((source.r * cs.r) + (dest.r * cd.r)) >> SHIFT_COLOR;
-      cd.g = ((source.g * cs.g) + (dest.g * cd.g)) >> SHIFT_COLOR;
-      cd.b = ((source.b * cs.b) + (dest.b * cd.b)) >> SHIFT_COLOR;
-      cd.a = ((source.a * cs.a) + (dest.a * cd.a)) >> SHIFT_COLOR;
-
-      COLOR_CLAMP_TOP(out, cd);
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-inline void
-FloorDivMod(int32_t Numerator, int32_t Denominator, int32_t &Floor, int32_t &Mod)
-{
-  if(Numerator >= 0)
-  {
-    // positive case, C is okay
-    Floor = Numerator / Denominator;
-    Mod   = Numerator % Denominator;
-  }
-  else
-  {
-    // Numerator is negative, do the right thing
-    Floor = -((-Numerator) / Denominator);
-    Mod   =   (-Numerator) % Denominator;
-    if(Mod)
-    {
-      // there is a remainder
-      Floor--; Mod = Denominator - Mod;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-inline void
-fxFloorDivMod(int32_t Numerator, int32_t Denominator, unsigned int shift, int32_t &Floor, int32_t &Mod)
-{
-  if(Numerator >= 0)
-  {
-    // positive case, C is okay
-    Floor = (((int64_t)Numerator) << shift) / Denominator;
-    Mod   = (((int64_t)Numerator) << shift) % Denominator;
-  }
-  else
-  {
-    // Numerator is negative, do the right thing
-    Floor = -((-(((int64_t)Numerator) << shift)) / Denominator);
-    Mod   =   (-(((int64_t)Numerator) << shift)) % Denominator;
-    if(Mod)
-    {
-      // there is a remainder
-      Floor--; Mod = Denominator - Mod;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::_rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
-{
-  // -------
-  // Culling
-  // -------
-  if(cullFaceEnabled_ == true)
-  {
-    // Always invisible when culling both front and back
-    if(cullFaceMode_ == GL_FRONT_AND_BACK)
-      return;
-
-    GLfloat vnz =
-      (v0.vd.x - v2.vd.x) * (v1.vd.y - v2.vd.y) -
-      (v0.vd.y - v2.vd.y) * (v1.vd.x - v2.vd.x);
-
-    if(vnz == 0.0f)
-      return;
-
-    if((vnz < 0.0f) == bCullCW_)
-      return;
-  }
-
-  SRasterVertex vtx0, vtx1, vtx2;
+  raster::SVertex vtx0, vtx1, vtx2;
 
   vtx0.x   = (int32_t)((xA_ * v0.vd.x) + xB_);
   vtx0.y   = (int32_t)((yA_ * v0.vd.y) + yB_);
   vtx0.z   = (int32_t)((zA_ * v0.vd.z) + zB_);
-  vtx0.c.r = (int32_t)(v0.cl.r * (1<<SHIFT_COLOR)); // float   to 1.17.14
-  vtx0.c.g = (int32_t)(v0.cl.g * (1<<SHIFT_COLOR)); // float   to 1.17.14
-  vtx0.c.b = (int32_t)(v0.cl.b * (1<<SHIFT_COLOR)); // float   to 1.17.14
-  vtx0.c.a = (int32_t)(v0.cl.a * (1<<SHIFT_COLOR)); // float   to 1.17.14
-#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-  vtx0.t.u = v0.t[0] * (1 << pCurrentTex_->bitWidth_);
-  vtx0.t.v = v0.t[1] * (1 << pCurrentTex_->bitHeight_);
-  vtx0.t.w = v0.vd.w;
-#else
-  vtx0.t.u = (int32_t)(v0.t[0] * (1<<(SHIFT_TEX + pCurrentTex_->bitWidth_)));
-  vtx0.t.v = (int32_t)(v0.t[1] * (1<<(SHIFT_TEX + pCurrentTex_->bitHeight_)));
-#endif
+  vtx0.w   = v0.vd.w;
+  vtx0.c.r = (int32_t)(v0.cl.r * (1<<SHIFT_COLOR));
+  vtx0.c.g = (int32_t)(v0.cl.g * (1<<SHIFT_COLOR));
+  vtx0.c.b = (int32_t)(v0.cl.b * (1<<SHIFT_COLOR));
+  vtx0.c.a = (int32_t)(v0.cl.a * (1<<SHIFT_COLOR));
+  vtx0.t.u = v0.t[0];
+  vtx0.t.v = v0.t[1];
 
   vtx1.x   = (int32_t)((xA_ * v1.vd.x) + xB_);
   vtx1.y   = (int32_t)((yA_ * v1.vd.y) + yB_);
   vtx1.z   = (int32_t)((zA_ * v1.vd.z) + zB_);
-  vtx1.c.r = (int32_t)(v1.cl.r * (1<<SHIFT_COLOR)); // float   to 1.17.14
-  vtx1.c.g = (int32_t)(v1.cl.g * (1<<SHIFT_COLOR)); // float   to 1.17.14
-  vtx1.c.b = (int32_t)(v1.cl.b * (1<<SHIFT_COLOR)); // float   to 1.17.14
-  vtx1.c.a = (int32_t)(v1.cl.a * (1<<SHIFT_COLOR)); // float   to 1.17.14
-#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-  vtx1.t.u = v1.t[0] * (1 << pCurrentTex_->bitWidth_);
-  vtx1.t.v = v1.t[1] * (1 << pCurrentTex_->bitHeight_);
-  vtx1.t.w = v1.vd.w;
-#else
-  vtx1.t.u = (int32_t)(v1.t[0] * (1<<(SHIFT_TEX + pCurrentTex_->bitWidth_)));
-  vtx1.t.v = (int32_t)(v1.t[1] * (1<<(SHIFT_TEX + pCurrentTex_->bitHeight_)));
-#endif
+  vtx1.w   = v1.vd.w;
+  vtx1.c.r = (int32_t)(v1.cl.r * (1<<SHIFT_COLOR));
+  vtx1.c.g = (int32_t)(v1.cl.g * (1<<SHIFT_COLOR));
+  vtx1.c.b = (int32_t)(v1.cl.b * (1<<SHIFT_COLOR));
+  vtx1.c.a = (int32_t)(v1.cl.a * (1<<SHIFT_COLOR));
+  vtx1.t.u = v1.t[0];
+  vtx1.t.v = v1.t[1];
 
   vtx2.x   = (int32_t)((xA_ * v2.vd.x) + xB_);
   vtx2.y   = (int32_t)((yA_ * v2.vd.y) + yB_);
   vtx2.z   = (int32_t)((zA_ * v2.vd.z) + zB_);
-  vtx2.c.r = (int32_t)(v2.cl.r * (1<<SHIFT_COLOR)); // float   to 1.17.14
-  vtx2.c.g = (int32_t)(v2.cl.g * (1<<SHIFT_COLOR)); // float   to 1.17.14
-  vtx2.c.b = (int32_t)(v2.cl.b * (1<<SHIFT_COLOR)); // float   to 1.17.14
-  vtx2.c.a = (int32_t)(v2.cl.a * (1<<SHIFT_COLOR)); // float   to 1.17.14
-#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-  vtx2.t.u = v2.t[0] * (1 << pCurrentTex_->bitWidth_);
-  vtx2.t.v = v2.t[1] * (1 << pCurrentTex_->bitHeight_);
-  vtx2.t.w = v2.vd.w;
-#else
-  vtx2.t.u = (int32_t)(v2.t[0] * (1<<(SHIFT_TEX + pCurrentTex_->bitWidth_)));
-  vtx2.t.v = (int32_t)(v2.t[1] * (1<<(SHIFT_TEX + pCurrentTex_->bitHeight_)));
-#endif
+  vtx2.w   = v2.vd.w;
+  vtx2.c.r = (int32_t)(v2.cl.r * (1<<SHIFT_COLOR));
+  vtx2.c.g = (int32_t)(v2.cl.g * (1<<SHIFT_COLOR));
+  vtx2.c.b = (int32_t)(v2.cl.b * (1<<SHIFT_COLOR));
+  vtx2.c.a = (int32_t)(v2.cl.a * (1<<SHIFT_COLOR));
+  vtx2.t.u = v2.t[0];
+  vtx2.t.v = v2.t[1];
 
-  // Calculate function code
-  uint32_t function_code =
-    (blendingEnabled_ << 3) |
-    (texturesEnabled_ << 2) |
-    (bSmoothShading_  << 1) |
-    (depthTestEnabled_    );
-
-  // We don't need smooth shading if all 3 colors are the same
-  if((bSmoothShading_ == true) &&
-     (vtx0.c.r == vtx1.c.r) && (vtx1.c.r == vtx2.c.r) &&
-     (vtx0.c.g == vtx1.c.g) && (vtx1.c.g == vtx2.c.g) &&
-     (vtx0.c.b == vtx1.c.b) && (vtx1.c.b == vtx2.c.b) &&
-     (vtx0.c.a == vtx1.c.a) && (vtx1.c.a == vtx2.c.a))
-  {
-    // Disable smooth shading for this triangle
-    function_code &= ~(bSmoothShading_ << 1);
-  }
-
-  // Bubble sort the 3 vertexes
-  const SRasterVertex * vhi(&vtx0);
-  const SRasterVertex * vmi(&vtx1);
-  const SRasterVertex * vlo(&vtx2);
-  {
-    const SRasterVertex * vtemp;
-    // Swap bottom with middle?
-    if(vlo->y > vmi->y)
-    {
-      vtemp = vmi;
-      vmi   = vlo;
-      vlo   = vtemp;
-    }
-    // Swap middle with top?
-    if(vmi->y > vhi->y)
-    {
-      vtemp = vhi;
-      vhi   = vmi;
-      vmi   = vtemp;
-      // Swap bottom with middle again?
-      if(vlo->y > vmi->y)
-      {
-        vtemp = vmi;
-        vmi   = vlo;
-        vlo   = vtemp;
-      }
-    }
-  }
-
-  switch(function_code)
-  {
-    case 0x00: raster    (vlo, vmi, vhi); break;
-    case 0x01: rasterZ   (vlo, vmi, vhi); break;
-    case 0x02: rasterC   (vlo, vmi, vhi); break;
-    case 0x03: rasterCZ  (vlo, vmi, vhi); break;
-    case 0x04: rasterT   (vlo, vmi, vhi); break;
-    case 0x05: rasterTZ  (vlo, vmi, vhi); break;
-    case 0x06: rasterTC  (vlo, vmi, vhi); break;
-    case 0x07: rasterTCZ (vlo, vmi, vhi); break;
-    case 0x08: rasterB   (vlo, vmi, vhi); break;
-    case 0x09: rasterBZ  (vlo, vmi, vhi); break;
-    case 0x0a: rasterBC  (vlo, vmi, vhi); break;
-    case 0x0b: rasterBCZ (vlo, vmi, vhi); break;
-    case 0x0c: rasterBT  (vlo, vmi, vhi); break;
-    case 0x0d: rasterBTZ (vlo, vmi, vhi); break;
-    case 0x0e: rasterBTC (vlo, vmi, vhi); break;
-    case 0x0f: rasterBTCZ(vlo, vmi, vhi); break;
-
-    default:
-      rasterC(vlo, vmi, vhi);
-  };
-}
-
-//-----------------------------------------------------------------------------
-template <class T>
-struct TInterpolation
-{
-  T current;
-  T increment;
-};
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::raster(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
-{
-  #include "rasterScanline.inl"
+  pRaster_->rasterTriangle(vtx0, vtx1, vtx2);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+CASoftGLESFloat::glBindTexture(GLenum target, GLuint texture)
 {
-  #define RASTER_ENABLE_DEPTH_TEST
-
-  #include "rasterScanline.inl"
+  pRaster_->bindTexture(target, texture);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterC(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+CASoftGLESFloat::glDeleteTextures(GLsizei n, const GLuint *textures)
 {
-  #define RASTER_ENABLE_SMOOTH_COLORS
-
-  #include "rasterScanline.inl"
+  pRaster_->deleteTextures(n, textures);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+CASoftGLESFloat::glGenTextures(GLsizei n, GLuint *textures)
 {
-  #define RASTER_ENABLE_DEPTH_TEST
-  #define RASTER_ENABLE_SMOOTH_COLORS
-
-  #include "rasterScanline.inl"
+  pRaster_->genTextures(n, textures);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterT(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+CASoftGLESFloat::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
-  #define RASTER_ENABLE_TEXTURES
-
-  #include "rasterScanline.inl"
+  pRaster_->texImage2D(target, level, internalformat, width, height, border, format, type, pixels);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterTZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+CASoftGLESFloat::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
 {
-  #define RASTER_ENABLE_DEPTH_TEST
-  #define RASTER_ENABLE_TEXTURES
-
-  #include "rasterScanline.inl"
+  pRaster_->texParameterf(target, pname, param);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterTC(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+CASoftGLESFloat::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 {
-  #define RASTER_ENABLE_SMOOTH_COLORS
-  #define RASTER_ENABLE_TEXTURES
-
-  #include "rasterScanline.inl"
+  pRaster_->texParameterf(target, pname, gl_fptof(param));
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterTCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+CASoftGLESFloat::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels)
 {
-  #define RASTER_ENABLE_DEPTH_TEST
-  #define RASTER_ENABLE_SMOOTH_COLORS
-  #define RASTER_ENABLE_TEXTURES
-
-  #include "rasterScanline.inl"
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterB(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+CASoftGLESFloat::glClear(GLbitfield mask)
 {
-  #define RASTER_ENABLE_BLENDING
-
-  #include "rasterScanline.inl"
+  pRaster_->clear(mask);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoftGLESFloat::rasterBZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
+CASoftGLESFloat::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-  #define RASTER_ENABLE_DEPTH_TEST
-  #define RASTER_ENABLE_BLENDING
+  pRaster_->viewport(x, y, width, height);
 
-  #include "rasterScanline.inl"
-}
+  viewportXOffset    = x;
+  viewportYOffset    = y;
+  viewportWidth      = width;
+  viewportHeight     = height;
+  viewportPixelCount = width * height;
 
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::rasterBC(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
-{
-  #define RASTER_ENABLE_SMOOTH_COLORS
-  #define RASTER_ENABLE_BLENDING
+  xA_ =     (viewportWidth  >> 1);
+  xB_ = x + (viewportWidth  >> 1);
+  yA_ =     (viewportHeight >> 1);
+  yB_ = y + (viewportHeight >> 1);
 
-  #include "rasterScanline.inl"
-}
+  // FIXME:
+  yA_  = -yA_;
+  xB_ -= x;
+  yB_ -= y;
 
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::rasterBCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
-{
-  #define RASTER_ENABLE_DEPTH_TEST
-  #define RASTER_ENABLE_SMOOTH_COLORS
-  #define RASTER_ENABLE_BLENDING
-
-  #include "rasterScanline.inl"
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::rasterBT(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
-{
-  #define RASTER_ENABLE_TEXTURES
-  #define RASTER_ENABLE_BLENDING
-
-  #include "rasterScanline.inl"
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::rasterBTZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
-{
-  #define RASTER_ENABLE_DEPTH_TEST
-  #define RASTER_ENABLE_TEXTURES
-  #define RASTER_ENABLE_BLENDING
-
-  #include "rasterScanline.inl"
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::rasterBTC(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
-{
-  #define RASTER_ENABLE_SMOOTH_COLORS
-  #define RASTER_ENABLE_TEXTURES
-  #define RASTER_ENABLE_BLENDING
-
-  #include "rasterScanline.inl"
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoftGLESFloat::rasterBTCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi)
-{
-  #define RASTER_ENABLE_DEPTH_TEST
-  #define RASTER_ENABLE_SMOOTH_COLORS
-  #define RASTER_ENABLE_TEXTURES
-  #define RASTER_ENABLE_BLENDING
-
-  #include "rasterScanline.inl"
+  // Use fixed point format for xy
+  xA_ *= (1<<SHIFT_XY);
+  xB_ *= (1<<SHIFT_XY);
+  yA_ *= (1<<SHIFT_XY);
+  yB_ *= (1<<SHIFT_XY);
 }

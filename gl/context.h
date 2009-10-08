@@ -24,16 +24,19 @@
 
 
 #include "GL/gl.h"
+#ifndef __BRICKS__
+#define GL_FIXED 0x140c
+#endif
 #include "kernel/videoManager.h"
 #include "kernel/3dRenderer.h"
 #include "vhl/fixedPoint.h"
 #include "vhl/vector.h"
 #include "vhl/color.h"
+
+#ifdef __BRICKS__
 #include "asm/arch/config.h"
+#endif
 
-
-#define clampf(f)    ((f) < 0.0f ? 0.0f : ((f) > 1.0f ? 1.0f : (f)))
-#define clampfx(i)   ((i) < 0 ? 0 : ((i) > gl_fpfromi(1) ? gl_fpfromi(1) : (i)))
 
 // Clipping flags
 #define CLIP_X_MIN (1<<0)
@@ -43,6 +46,15 @@
 #define CLIP_Z_MIN (1<<4)
 #define CLIP_Z_MAX (1<<5)
 
+
+//-----------------------------------------------------------------------------
+enum EFastBlendMode
+{
+  FB_OTHER,
+  FB_SOURCE,
+  FB_DEST,
+  FB_BLEND,
+};
 
 //-----------------------------------------------------------------------------
 typedef TColor<GLfloat> SColorF;
@@ -159,7 +171,7 @@ protected:
   bool        bError_;
 };
 
-#ifndef CONFIG_FPU
+#if !defined(__BRICKS__) || (defined(__BRICKS__) && !defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
 class CAGLESFloatToFxContext
  : public virtual I3DRenderer
@@ -190,7 +202,9 @@ public:
   virtual void glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q);
   virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
 };
-#else
+#endif
+
+#if !defined(__BRICKS__) || (defined(__BRICKS__) && defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
 class CAGLESFxToFloatContext
  : public virtual I3DRenderer
@@ -221,7 +235,7 @@ public:
   virtual void glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q);
   virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
 };
-#endif // CONFIG_FPU
+#endif
 
 
 #endif // GL_CONTEXT_H

@@ -34,25 +34,12 @@
 #include "vhl/fixedPoint.h"
 #include "vhl/vector.h"
 
-#include "asm/arch/config.h"
+#ifdef __BRICKS__
 #include "asm/arch/memory.h"
+#else
+#define FAST_CODE
+#endif
 
-
-#define fpRGB(r,g,b) \
-  (0x8000 | \
-  (((b.value*255) >>  9) & 0x7c00) | \
-  (((g.value*255) >> 14) & 0x03e0) | \
-  (((r.value*255) >> 19) & 0x001f))
-
-
-//-----------------------------------------------------------------------------
-enum EFastBlendMode
-{
-  FB_OTHER,
-  FB_SOURCE,
-  FB_DEST,
-  FB_BLEND,
-};
 
 //-----------------------------------------------------------------------------
 class CASoftGLESFixed
@@ -63,6 +50,10 @@ class CASoftGLESFixed
 public:
   CASoftGLESFixed();
   virtual ~CASoftGLESFixed();
+
+  void setRaster(raster::IRasterizer * rast);
+
+  virtual void setSurface(CSurface * surface);
 
   virtual void glAlphaFunc(GLenum func, GLclampf ref);
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
@@ -82,7 +73,6 @@ public:
   virtual void glMaterialx(GLenum face, GLenum pname, GLfixed param);
   virtual void glMaterialxv(GLenum face, GLenum pname, const GLfixed *params);
   virtual void glShadeModel(GLenum mode);
-  virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
   virtual void glBegin(GLenum mode);
   virtual void glEnd();
@@ -95,6 +85,18 @@ public:
   virtual void glBlendFunc(GLenum sfactor, GLenum dfactor);
   virtual void glTexEnvf(GLenum target, GLenum pname, GLfloat param);
   virtual void glTexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
+
+  // Textures
+  virtual void glBindTexture(GLenum target, GLuint texture);
+  virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
+  virtual void glGenTextures(GLsizei n, GLuint *textures);
+  virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+  virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
+  virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
+  virtual void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+  // Rasterization
+  virtual void glClear(GLbitfield mask);
+  virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
   // Vertex shader
@@ -109,13 +111,13 @@ protected:
   virtual void primitiveAssembly(SVertexFx & v);
 
   virtual void rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2, uint32_t clipBit = 0);
-  virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) = 0;
+  virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
 
   void interpolateVertex(SVertexFx & c, SVertexFx & a, SVertexFx & b, CFixed t);
 
-  virtual void zbuffer(bool enable) = 0;
-
 protected:
+  raster::IRasterizer * pRaster_;
+
   // Depth testing
   bool        depthTestEnabled_;
   bool        depthMask_;
@@ -177,7 +179,7 @@ protected:
   CFixed      texCoordCurrent_[4];
   GLenum      texEnvMode_;
   SColorFx    texEnvColor_;
-  SRasterColor texEnvColorFX_;
+  raster::SColor texEnvColorFX_;
 
   // Vertex transformations
   CFixed      xA_;
@@ -210,52 +212,6 @@ private:
   void _fragmentCull(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) FAST_CODE;
   void _fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) FAST_CODE;
   void _primitiveAssembly(SVertexFx & v)                             FAST_CODE;
-};
-
-//-----------------------------------------------------------------------------
-struct STexCoord
-{
-#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-  float u;
-  float v;
-  float w;
-#else
-  int32_t u;
-  int32_t v;
-#endif
-};
-
-//-----------------------------------------------------------------------------
-struct SRasterVertex
-{
-  int32_t      x;
-  int32_t      y;
-  int32_t      z;
-  SRasterColor c;
-  STexCoord    t;
-};
-
-//-----------------------------------------------------------------------------
-class CSoftGLESFixed
- : public CASoftGLESFixed
- , public CAGLESTextures
-{
-public:
-  CSoftGLESFixed();
-  virtual ~CSoftGLESFixed();
-
-  virtual void glClear(GLbitfield mask);
-  virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
-
-protected:
-  virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
-  virtual void zbuffer(bool enable);
-
-protected:
-  uint16_t * pZBuffer_;
-
-private:
-  void _rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) FAST_CODE;
 };
 
 

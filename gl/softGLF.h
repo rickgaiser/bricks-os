@@ -32,20 +32,15 @@
 #include "glMatrix.h"
 #include "textures.h"
 #include "color.h"
+#include "raster.h"
 #include "vhl/vector.h"
 
-#include "asm/arch/config.h"
+#ifdef __BRICKS__
 #include "asm/arch/memory.h"
+#else
+#define FAST_CODE
+#endif
 
-
-//-----------------------------------------------------------------------------
-enum EFastBlendMode
-{
-  FB_OTHER,
-  FB_SOURCE,
-  FB_DEST,
-  FB_BLEND,
-};
 
 //-----------------------------------------------------------------------------
 class CASoftGLESFloat
@@ -56,6 +51,10 @@ class CASoftGLESFloat
 public:
   CASoftGLESFloat();
   virtual ~CASoftGLESFloat();
+
+  void setRaster(raster::IRasterizer * rast);
+
+  virtual void setSurface(CSurface * surface);
 
   virtual void glAlphaFunc(GLenum func, GLclampf ref);
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
@@ -75,7 +74,6 @@ public:
   virtual void glMaterialf(GLenum face, GLenum pname, GLfloat param);
   virtual void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params);
   virtual void glShadeModel(GLenum mode);
-  virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
   virtual void glBegin(GLenum mode);
   virtual void glEnd();
@@ -88,6 +86,18 @@ public:
   virtual void glBlendFunc(GLenum sfactor, GLenum dfactor);
   virtual void glTexEnvf(GLenum target, GLenum pname, GLfloat param);
   virtual void glTexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
+
+  // Textures
+  virtual void glBindTexture(GLenum target, GLuint texture);
+  virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
+  virtual void glGenTextures(GLsizei n, GLuint *textures);
+  virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+  virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
+  virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
+  virtual void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+  // Rasterization
+  virtual void glClear(GLbitfield mask);
+  virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 protected:
   // Vertex shader
@@ -102,13 +112,13 @@ protected:
   virtual void primitiveAssembly(SVertexF & v);
 
   virtual void rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit = 0);
-  virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2) = 0;
+  virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2);
 
   void interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLfloat t);
 
-  virtual void zbuffer(bool enable) = 0;
-
 protected:
+  raster::IRasterizer * pRaster_;
+
   // Depth testing
   bool        depthTestEnabled_;
   bool        depthMask_;
@@ -169,7 +179,7 @@ protected:
   GLfloat     texCoordCurrent_[4];
   GLenum      texEnvMode_;
   SColorF     texEnvColor_;
-  SRasterColor texEnvColorFX_;
+  raster::SColor texEnvColorFX_;
 
   // Vertex transformations
   GLfloat     xA_;
@@ -202,74 +212,6 @@ private:
   void _fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2) FAST_CODE;
   void _fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2) FAST_CODE;
   void _primitiveAssembly(SVertexF & v)                           FAST_CODE;
-};
-
-//-----------------------------------------------------------------------------
-struct STexCoord
-{
-#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-  float u;
-  float v;
-  float w;
-#else
-  int32_t u;
-  int32_t v;
-#endif
-};
-
-//-----------------------------------------------------------------------------
-struct SRasterVertex
-{
-  int32_t      x;
-  int32_t      y;
-  int32_t      z;
-  SRasterColor c;
-  STexCoord    t;
-};
-
-//-----------------------------------------------------------------------------
-class CSoftGLESFloat
- : public CASoftGLESFloat
- , public CAGLESTextures
-{
-public:
-  CSoftGLESFloat();
-  virtual ~CSoftGLESFloat();
-
-  virtual void glClear(GLbitfield mask);
-  virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
-
-protected:
-  virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2);
-  virtual void zbuffer(bool enable);
-
-private:
-  uint16_t * pZBuffer_;
-
-private:
-  bool rasterDepth(uint16_t z_pix, uint16_t z_buf)                                              FAST_CODE;
-  void rasterTexture(SRasterColor & out, const SRasterColor & cfragment, int32_t u, int32_t v, bool near) FAST_CODE;
-  void rasterBlend(SRasterColor & out, const SRasterColor & source, const SRasterColor & dest)  FAST_CODE;
-
-
-  void _rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)                             FAST_CODE;
-
-  void raster    (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterZ   (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterC   (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterCZ  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterT   (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterTZ  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterTC  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterTCZ (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterB   (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterBZ  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterBC  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterBCZ (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterBT  (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterBTZ (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterBTC (const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
-  void rasterBTCZ(const SRasterVertex * vlo, const SRasterVertex * vmi, const SRasterVertex * vhi) FAST_CODE;
 };
 
 

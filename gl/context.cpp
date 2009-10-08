@@ -284,7 +284,7 @@ CAGLESBase::setError(GLenum error)
   }
 }
 
-#ifndef CONFIG_FPU
+#if !defined(__BRICKS__) || (defined(__BRICKS__) && !defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void
@@ -474,7 +474,9 @@ CAGLESFloatToFxContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 {
   glNormal3x(gl_fpfromf(nx), gl_fpfromf(ny), gl_fpfromf(nz));
 }
-#else
+#endif
+
+#if !defined(__BRICKS__) || (defined(__BRICKS__) && defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void
@@ -664,5 +666,4 @@ CAGLESFxToFloatContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 {
   glNormal3f(gl_fptof(nx), gl_fptof(ny), gl_fptof(nz));
 }
-
-#endif // CONFIG_FPU
+#endif
