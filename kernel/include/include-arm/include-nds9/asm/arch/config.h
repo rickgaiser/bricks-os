@@ -47,12 +47,8 @@
 // Video configuration
 #define CONFIG_FRAMEBUFFER
 #define CONFIG_GL
-// NOTE: The GL configuration applies to the SOFTWARE rendering only
-#undef  CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-#undef  CONFIG_GL_ENABLE_ALPHA_TEST
+#define CONFIG_GL_TINY
 #define CONFIG_GL_FRAMEBUFFER_16BIT
-#define CONFIG_GL_TEXTURES_16BIT // NOTE: Only used when NOT using SIMPLE textures
-#define CONFIG_GL_SIMPLE_TEXTURES
 
 // Library configuration
 #define CONFIG_BUILTIN_MM
