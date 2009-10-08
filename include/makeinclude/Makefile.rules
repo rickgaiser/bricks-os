@@ -37,6 +37,9 @@ MY_OBJS         +=$(addprefix $(VDIR),$(addsuffix .o,$(OBJS-y)))
 MY_DEPENDS      =$(MY_OBJS:.o=.d)
 
 #----------------------------------------------------------------------------
+MY_DEFINITIONS  += \
+                -D__BRICKS__
+
 MY_INCL_PATH    += \
                 -I. \
                 -I./include \
