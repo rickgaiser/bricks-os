@@ -29,22 +29,28 @@
                         (g.value * 255) >> 16, \
                         (b.value * 255) >> 16);
 
+#define BxColorFormat_FromFloatRGB(format,r,g,b) \
+  BxColorFormat_FromRGB(format, \
+                        (uint32_t)(r * 255), \
+                        (uint32_t)(g * 255), \
+                        (uint32_t)(b * 255));
+
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-CGBAGLESContext::CGBAGLESContext()
- : CSoftGLESFixed()
+CGBARasterizer::CGBARasterizer()
+ : raster::CRasterizerScanline()
 {
 }
 
 //-----------------------------------------------------------------------------
-CGBAGLESContext::~CGBAGLESContext()
+CGBARasterizer::~CGBARasterizer()
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CGBAGLESContext::glClear(GLbitfield mask)
+CGBARasterizer::clear(GLbitfield mask)
 {
   if(mask & GL_COLOR_BUFFER_BIT)
   {
@@ -55,7 +61,7 @@ CGBAGLESContext::glClear(GLbitfield mask)
       case 8:
       {
         // FIXME!
-        uint32_t color = BxColorFormat_FromFxRGB(renderSurface->mode.format, clClear.r, clClear.g, clClear.b);
+        uint32_t color = BxColorFormat_FromFloatRGB(renderSurface->mode.format, clClear.r, clClear.g, clClear.b);
         color = (color << 24) | (color << 16) | (color << 8) | color;
 
         if((int)renderSurface->mode.xpitch == viewportWidth)
@@ -74,7 +80,7 @@ CGBAGLESContext::glClear(GLbitfield mask)
       }
       case 16:
       {
-        uint32_t color = BxColorFormat_FromFxRGB(renderSurface->mode.format, clClear.r, clClear.g, clClear.b);
+        uint32_t color = BxColorFormat_FromFloatRGB(renderSurface->mode.format, clClear.r, clClear.g, clClear.b);
         color = (color << 16) | color;
         if((int)renderSurface->mode.xpitch == viewportWidth)
         {

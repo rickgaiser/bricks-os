@@ -391,8 +391,12 @@ void
 CGBAVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
 #ifdef GBA
-  *renderer = new CGBAGLESContext;
-//  *renderer = new CSoftGLESFixed;
+  CASoftGLESFixed     * pRender = new CASoftGLESFixed;
+  raster::IRasterizer * pRaster = new CGBARasterizer;
+
+  pRender->setRaster(pRaster);
+
+  *renderer = pRender;
 #endif // GBA
 #ifdef NDS9
   *renderer = new CNDSGLESContext;

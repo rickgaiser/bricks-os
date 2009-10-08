@@ -24,17 +24,18 @@
 
 
 #include "../../../../gl/softGLFx.h"
+#include "../../../../gl/rasterScanline.h"
 
 
 //-----------------------------------------------------------------------------
-class CGBAGLESContext
- : public CSoftGLESFixed
+class CGBARasterizer
+ : public raster::CRasterizerScanline
 {
 public:
-  CGBAGLESContext();
-  ~CGBAGLESContext();
+  CGBARasterizer();
+  ~CGBARasterizer();
 
-  virtual void glClear(GLbitfield mask);
+  virtual void clear(GLbitfield mask);
 };
 
 
