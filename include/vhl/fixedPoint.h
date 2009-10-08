@@ -27,12 +27,16 @@
 
 
 // Conversions
-#define fpfromi(c,a)       ((a)<<(c))
-#define fpfromf(c,a)       ((int32_t)((a)*(1<<(c))))
-#define fpfromd(c,a)       ((int32_t)((a)*(1<<(c))))
-#define fptoi(c,a)         ((a)>>(c))
-#define fptof(c,a)         ((float)(a)/(1<<(c)))
-#define fptod(c,a)         ((double)(a)/(1<<(c)))
+#define fpfromi(sh,fp)       ((fp)<<(sh))
+#define fpfromf(sh,fp)       ((int32_t)((fp)*(1<<(sh))))
+#define fpfromd(sh,fp)       ((int32_t)((fp)*(1<<(sh))))
+#define fptof(sh,fp)         ((float )(fp)*(1.0/(1<<(sh))))
+#define fptod(sh,fp)         ((double)(fp)*(1.0/(1<<(sh))))
+//#define fptoi(sh,fp)         ((fp)>>(sh))
+#define fpceil(sh,fp)        (((fp)+((1<<sh)-1)) >> sh)
+#define fpfloor(sh,fp)       ( (fp)              >> sh)
+#define fpround(sh,fp)       (((fp)+(1<<(sh-1))) >> sh)
+
 
 // Math (Use at own risk)
 //#define fpmul(c,a,b)       (((a)*(b))>>(c))
@@ -83,9 +87,9 @@ public:
   TFixed & operator= (double d)         {value = fpfromd(p, d); return (*this);}
   TFixed & operator= (int    i)         {value = fpfromi(p, i); return (*this);}
 
-  operator float()   const {return fptof(p, value);}
-  operator double()  const {return fptod(p, value);}
-  operator int()     const {return fptoi(p, value);}
+  operator float()   const {return fptof  (p, value);}
+  operator double()  const {return fptod  (p, value);}
+  operator int()     const {return fpfloor(p, value);}
 
   // Compound Assignment Operators
   TFixed & operator+=(const TFixed & fx){value += fx.value;                       return (*this);}
