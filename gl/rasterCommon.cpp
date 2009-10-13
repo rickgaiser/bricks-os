@@ -558,6 +558,18 @@ CASoftRasterizer::setUsePixelCenter(bool bCenter)
 
 //-----------------------------------------------------------------------------
 void
+CASoftRasterizer::begin(GLenum mode)
+{
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftRasterizer::end()
+{
+}
+
+//-----------------------------------------------------------------------------
+void
 CASoftRasterizer::flush()
 {
 }

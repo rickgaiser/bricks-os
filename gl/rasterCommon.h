@@ -114,12 +114,18 @@ public:
   // Blending
   virtual void blendFunc(GLenum sfactor, GLenum dfactor);
 
+  // Buffer
   virtual void clearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
   virtual void clear(GLbitfield mask);
   virtual void viewport(GLint x, GLint y, GLsizei width, GLsizei height);
   virtual void setUsePixelCenter(bool bCenter);
 
+  // RASTER!
+  virtual void begin(GLenum mode);
+  virtual void end();
   virtual void rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2) = 0;
+
+  // Flush all triangles (very important for tile based rendering)
   virtual void flush();
 
 protected:

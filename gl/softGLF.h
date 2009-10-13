@@ -124,7 +124,6 @@ protected:
   bool        depthMask_;
   GLenum      depthFunction_;
   GLfloat     depthClear_;
-  uint32_t    zClearValue_;
   GLclampf    zRangeNear_;
   GLclampf    zRangeFar_;
 
@@ -144,13 +143,11 @@ protected:
   bool        blendingEnabled_;
   GLenum      blendSFactor_;
   GLenum      blendDFactor_;
-  EFastBlendMode blendFast_;
 
   // Alpha testing
   bool        alphaTestEnabled_;
   GLenum      alphaFunc_;
   GLclampf    alphaValue_;
-  int32_t     alphaValueFX_;
 
   // Lighting
   bool        lightingEnabled_;
@@ -179,7 +176,6 @@ protected:
   GLfloat     texCoordCurrent_[4];
   GLenum      texEnvMode_;
   SColorF     texEnvColor_;
-  raster::SColor texEnvColorFX_;
 
   // Vertex transformations
   GLfloat     xA_;

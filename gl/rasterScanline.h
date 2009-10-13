@@ -32,7 +32,7 @@
 #include "asm/arch/config.h"
 #include "asm/arch/memory.h"
 #else
-#define CONFIG_GL_TINY
+//#define CONFIG_GL_TINY
 #define FAST_CODE
 #endif
 

@@ -97,6 +97,16 @@ inline T lerp_3d(T a, T b, T c,
    return lerp(c, temp0, temp1);
 }
 
+//-----------------------------------------------------------------------------
+template<class T>
+inline T fast_int_pow(T x, unsigned int y)
+{
+  T rv(1);
+  for(unsigned int i = 0; i < y; i++)
+    rv *= x;
+  return rv;
+}
+
 
 }
 

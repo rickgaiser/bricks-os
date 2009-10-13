@@ -185,6 +185,8 @@ public:
   virtual void setUsePixelCenter(bool bCenter) = 0;
 
   // RASTER!
+  virtual void begin(GLenum mode) = 0;
+  virtual void end() = 0;
   virtual void rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2) = 0;
 
   // Flush all triangles (very important for tile based rendering)

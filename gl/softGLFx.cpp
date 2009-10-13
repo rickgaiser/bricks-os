@@ -77,7 +77,6 @@ CASoftGLESFixed::CASoftGLESFixed()
  , depthMask_(true)
  , depthFunction_(GL_LESS)
  , depthClear_(1)
- , zClearValue_(0x0000ffff)
  , zRangeNear_(0)
  , zRangeFar_(1)
  , zNear_(0)
@@ -90,7 +89,6 @@ CASoftGLESFixed::CASoftGLESFixed()
  , alphaTestEnabled_(false)
  , alphaFunc_(GL_ALWAYS)
  , alphaValue_(0.0f)
- , alphaValueFX_(0)
  , lightingEnabled_(false)
  , normalizeEnabled_(false)
  , fogEnabled_(false)
@@ -178,11 +176,6 @@ CASoftGLESFixed::CASoftGLESFixed()
   zA_ = ((zsize - 0.5) / 2.0);
   zB_ = ((zsize - 0.5) / 2.0) + (1 << (SHIFT_Z-1));
 
-  texEnvColorFX_.r = texEnvColor_.r.value >> (16 - SHIFT_COLOR);
-  texEnvColorFX_.g = texEnvColor_.g.value >> (16 - SHIFT_COLOR);
-  texEnvColorFX_.b = texEnvColor_.b.value >> (16 - SHIFT_COLOR);
-  texEnvColorFX_.a = texEnvColor_.a.value >> (16 - SHIFT_COLOR);
-
   clipPlane_[0] = TVector4<CFixed>( 1.0,  0.0,  0.0,  1.0); // left
   clipPlane_[1] = TVector4<CFixed>(-1.0,  0.0,  0.0,  1.0); // right
   clipPlane_[2] = TVector4<CFixed>( 0.0,  1.0,  0.0,  1.0); // bottom
@@ -238,51 +231,48 @@ CASoftGLESFixed::glAlphaFunc(GLenum func, GLclampf ref)
 
   alphaFunc_    = func;
   alphaValue_   = mathlib::clamp<GLclampf>(ref, 0.0f, 1.0f);
-  alphaValueFX_ = (int32_t)(alphaValue_ * (1 << SHIFT_COLOR));
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFixed::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
-  pRaster_->clearColor(gl_fptof(red), gl_fptof(green), gl_fptof(blue), gl_fptof(alpha));
-
   clClear.r.value = mathlib::clamp<GLclampx>(red,   gl_fpfromi(0), gl_fpfromi(1));
   clClear.g.value = mathlib::clamp<GLclampx>(green, gl_fpfromi(0), gl_fpfromi(1));
   clClear.b.value = mathlib::clamp<GLclampx>(blue,  gl_fpfromi(0), gl_fpfromi(1));
   clClear.a.value = mathlib::clamp<GLclampx>(alpha, gl_fpfromi(0), gl_fpfromi(1));
+
+  pRaster_->clearColor(gl_fptof(clClear.r), gl_fptof(clClear.g), gl_fptof(clClear.b), gl_fptof(clClear.a));
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFixed::glClearDepthx(GLclampx depth)
 {
-  pRaster_->clearDepthf(gl_fptof(depth));
-
   depthClear_.value = mathlib::clamp<GLclampx>(depth, gl_fpfromi(0), gl_fpfromi(1));
 
-  zClearValue_ = (uint32_t)((float)depthClear_ * ((1<<DEPTH_Z)-1));
+  pRaster_->clearDepthf(gl_fptof(depthClear_.value));
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
 {
-  pRaster_->depthRangef(gl_fptof(zNear), gl_fptof(zFar));
+  // FIXME: zA_ and zB_ need to be modified, this function is now useless
 
   zNear_.value = mathlib::clamp<GLclampx>(zNear, gl_fpfromi(0), gl_fpfromi(1));
   zFar_.value  = mathlib::clamp<GLclampx>(zFar,  gl_fpfromi(0), gl_fpfromi(1));
 
-  // FIXME: zA_ and zB_ need to be modified, this function is now useless
+  pRaster_->depthRangef(gl_fptof(zNear_.value), gl_fptof(zFar_.value));
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFixed::glDepthFunc(GLenum func)
 {
-  pRaster_->depthFunc(func);
-
   depthFunction_ = func;
+
+  pRaster_->depthFunc(depthFunction_);
 }
 
 //-----------------------------------------------------------------------------
@@ -290,6 +280,8 @@ void
 CASoftGLESFixed::glDepthMask(GLboolean flag)
 {
   depthMask_ = flag;
+
+  //pRaster_->depthMask(depthMask_);
 }
 
 //-----------------------------------------------------------------------------
@@ -359,6 +351,7 @@ CASoftGLESFixed::glEnable(GLenum cap)
 void
 CASoftGLESFixed::glFinish(void)
 {
+  //pRaster_->finish();
 }
 
 //-----------------------------------------------------------------------------
@@ -366,6 +359,8 @@ void
 CASoftGLESFixed::glFlush(void)
 {
   flush();
+
+  pRaster_->flush();
 }
 
 //-----------------------------------------------------------------------------
@@ -564,6 +559,8 @@ CASoftGLESFixed::glBegin(GLenum mode)
   triangle_[2] = &vertices[2];
   bFlipFlop_ = true;
   vertIdx_   = 0;
+
+  pRaster_->begin(GL_TRIANGLES);
 }
 
 //-----------------------------------------------------------------------------
@@ -577,6 +574,8 @@ CASoftGLESFixed::glEnd()
   }
 
   beginValid_ = false;
+
+  pRaster_->end();
 }
 
 //-----------------------------------------------------------------------------
@@ -706,19 +705,10 @@ CASoftGLESFixed::glGetFloatv(GLenum pname, GLfloat * params)
 void
 CASoftGLESFixed::glBlendFunc(GLenum sfactor, GLenum dfactor)
 {
-  pRaster_->blendFunc(sfactor, dfactor);
-
   blendSFactor_ = sfactor;
   blendDFactor_ = dfactor;
 
-  if((sfactor == GL_ONE) && (dfactor == GL_ZERO))
-    blendFast_ = FB_SOURCE;
-  else if((sfactor == GL_ZERO) && (dfactor == GL_ONE))
-    blendFast_ = FB_DEST;
-  else if((sfactor == GL_SRC_ALPHA) && (dfactor == GL_ONE_MINUS_SRC_ALPHA))
-    blendFast_ = FB_BLEND;
-  else
-    blendFast_ = FB_OTHER;
+  pRaster_->blendFunc(blendSFactor_, blendDFactor_);
 }
 
 //-----------------------------------------------------------------------------
@@ -786,25 +776,11 @@ CASoftGLESFixed::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
       texEnvColor_.g = params[1];
       texEnvColor_.b = params[2];
       texEnvColor_.a = params[3];
-      texEnvColorFX_.r = texEnvColor_.r.value >> (16 - SHIFT_COLOR);
-      texEnvColorFX_.g = texEnvColor_.g.value >> (16 - SHIFT_COLOR);
-      texEnvColorFX_.b = texEnvColor_.b.value >> (16 - SHIFT_COLOR);
-      texEnvColorFX_.a = texEnvColor_.a.value >> (16 - SHIFT_COLOR);
       break;
     default:
       setError(GL_INVALID_ENUM);
       return;
   };
-}
-
-//-----------------------------------------------------------------------------
-inline CFixed
-my_pow(CFixed x, int y)
-{
-  CFixed rv(x);
-  for(int i(1); i < y; i++)
-    rv *= x;
-  return rv;
 }
 
 //-----------------------------------------------------------------------------
@@ -1008,7 +984,7 @@ CASoftGLESFixed::_vertexShaderLight(SVertexFx & v)
           CFixed specular = lights_[iLight].direction.getReflection(v.n2).dotProduct(eye);
           if(specular > 0.0f)
           {
-            specular = my_pow(specular, (int)(matShininess_ + 0.5f));
+            specular = mathlib::fast_int_pow<CFixed>(specular, (int)(matShininess_ + 0.5f));
             c += lights_[iLight].specular * matColorSpecular_ * specular;
           }
         }
@@ -1268,10 +1244,10 @@ CASoftGLESFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & 
 
       // Interpolate 1-0
       tt = CLIP_FUNC(clipBit, vNew1.vc, v[1]->vc, v[0]->vc);
-      interpolateVertex(vNew1, *v[0], *v[1], tt);
+      interpolateVertex(vNew1, *v[1], *v[0], tt);
       // Interpolate 2-0
       tt = CLIP_FUNC(clipBit, vNew2.vc, v[2]->vc, v[0]->vc);
-      interpolateVertex(vNew2, *v[0], *v[2], tt);
+      interpolateVertex(vNew2, *v[2], *v[0], tt);
 
       // Raster 2 new triangles
       this->rasterTriangleClip(vNew1, *v[1], *v[2], clipBit + 1);
@@ -1292,10 +1268,10 @@ CASoftGLESFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & 
 
       // Interpolate 0-1
       tt = CLIP_FUNC(clipBit, vNew1.vc, v[0]->vc, v[1]->vc);
-      interpolateVertex(vNew1, *v[1], *v[0], tt);
+      interpolateVertex(vNew1, *v[0], *v[1], tt);
       // Interpolate 0-2
       tt = CLIP_FUNC(clipBit, vNew2.vc, v[0]->vc, v[2]->vc);
-      interpolateVertex(vNew2, *v[2], *v[0], tt);
+      interpolateVertex(vNew2, *v[0], *v[2], tt);
 
       // Raster new triangle
       this->rasterTriangleClip(*v[0], vNew1, vNew2, clipBit + 1);

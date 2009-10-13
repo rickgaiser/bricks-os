@@ -123,11 +123,9 @@ protected:
   bool        depthMask_;
   GLenum      depthFunction_;
   CFixed      depthClear_;
-  uint32_t    zClearValue_;
   CFixed      zRangeNear_;
   CFixed      zRangeFar_;
 
-  GLfixed     zLoss_;
   CFixed      zNear_;
   CFixed      zFar_;
   CFixed      zA_;
@@ -144,13 +142,11 @@ protected:
   bool        blendingEnabled_;
   GLenum      blendSFactor_;
   GLenum      blendDFactor_;
-  EFastBlendMode blendFast_;
 
   // Alpha testing
   bool        alphaTestEnabled_;
   GLenum      alphaFunc_;
   GLclampf    alphaValue_;
-  int32_t     alphaValueFX_;
 
   // Lighting
   bool        lightingEnabled_;
@@ -179,7 +175,6 @@ protected:
   CFixed      texCoordCurrent_[4];
   GLenum      texEnvMode_;
   SColorFx    texEnvColor_;
-  raster::SColor texEnvColorFX_;
 
   // Vertex transformations
   CFixed      xA_;
