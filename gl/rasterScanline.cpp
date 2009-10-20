@@ -29,7 +29,7 @@
 
 
 #ifndef CONFIG_GL_TINY
-  //#define CONFIG_GL_ENABLE_ALPHA_TEST // FIXME!
+  #define CONFIG_GL_ENABLE_ALPHA_TEST
   #define CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
   //#define CONFIG_GL_SIMPLE_TEXTURES
 #else
@@ -79,12 +79,22 @@ namespace raster
 //-----------------------------------------------------------------------------
 CRasterizerScanline::CRasterizerScanline()
  : CASoftRasterizer()
+ , alphaValueFX_(0)
 {
 }
 
 //-----------------------------------------------------------------------------
 CRasterizerScanline::~CRasterizerScanline()
 {
+}
+
+//-----------------------------------------------------------------------------
+void
+CRasterizerScanline::alphaFunc(GLenum func, GLclampf ref)
+{
+  CASoftRasterizer::alphaFunc(func, ref);
+
+  alphaValueFX_ = fpfromf(SHIFT_COLOR_CALC, alphaValue_);
 }
 
 //-----------------------------------------------------------------------------
@@ -115,9 +125,6 @@ CRasterizerScanline::rasterTexture(SColor & out, const SColor & cfragment, const
   }
   else
     out = ctexture;
-#else
-#if 1
-  out = ctexture;
 #else
   bool alphaChannel = pCurrentTex_->bRGBA_;
 
@@ -155,7 +162,6 @@ CRasterizerScanline::rasterTexture(SColor & out, const SColor & cfragment, const
       out.a = alphaChannel ? COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.a, ctexture.a) : cfragment.a;
       break;
   };
-#endif
 #endif
 }
 

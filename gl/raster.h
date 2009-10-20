@@ -161,6 +161,7 @@ public:
   virtual void enableSmoothShading(bool enable) = 0;
   virtual void enableTextures(bool enable) = 0;
   virtual void enableBlending(bool enable) = 0;
+  virtual void enableAlphaTest(bool enable) = 0;
 
   // Depth testing
   virtual void clearDepthf(GLclampf depth) = 0;
@@ -176,6 +177,7 @@ public:
   virtual void texEnvf(GLenum target, GLenum pname, GLfloat param) = 0;
 
   // Blending
+  virtual void alphaFunc(GLenum func, GLclampf ref) = 0;
   virtual void blendFunc(GLenum sfactor, GLenum dfactor) = 0;
 
   // Buffer

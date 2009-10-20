@@ -24,6 +24,7 @@
 
 
 #include "context.h"
+#include "glstate.h"
 
 #include "GL/gl.h"
 
@@ -118,69 +119,17 @@ protected:
 protected:
   raster::IRasterizer * pRaster_;
 
-  // Depth testing
-  bool        depthTestEnabled_;
-  bool        depthMask_;
-  GLenum      depthFunction_;
-  CFixed      depthClear_;
-  CFixed      zRangeNear_;
-  CFixed      zRangeFar_;
+  TGLState<CFixed> state_;
 
-  CFixed      zNear_;
-  CFixed      zFar_;
-  CFixed      zA_;
-  CFixed      zB_;
-
-  GLenum      shadingModel_;
   bool        bSmoothShading_;
-
-  // Colors
-  SColorFx    clCurrent;
-  SColorFx    clClear;
-
-  // Alpha Blending
-  bool        blendingEnabled_;
-  GLenum      blendSFactor_;
-  GLenum      blendDFactor_;
-
-  // Alpha testing
-  bool        alphaTestEnabled_;
-  GLenum      alphaFunc_;
-  GLclampf    alphaValue_;
-
-  // Lighting
-  bool        lightingEnabled_;
-  SLightFx    lights_[8];
-
-  // Normals
-  bool        normalizeEnabled_;
-  TVector3<CFixed> normal_;
-
-  // Material
-  SColorFx    matColorAmbient_;
-  SColorFx    matColorDiffuse_;
-  SColorFx    matColorSpecular_;
-  SColorFx    matColorEmission_;
-  CFixed      matShininess_;
-
-  // Fog
-  bool        fogEnabled_;
-  GLfixed     fogDensity_;
-  GLfixed     fogStart_;
-  GLfixed     fogEnd_;
-  SColorFx    fogColor_;
-
-  // Textures
-  bool        texturesEnabled_;
-  CFixed      texCoordCurrent_[4];
-  GLenum      texEnvMode_;
-  SColorFx    texEnvColor_;
 
   // Vertex transformations
   CFixed      xA_;
   CFixed      xB_;
   CFixed      yA_;
   CFixed      yB_;
+  CFixed      zA_;
+  CFixed      zB_;
 
   // Primitive assembly
   bool        beginValid_;

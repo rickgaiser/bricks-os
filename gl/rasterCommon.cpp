@@ -52,7 +52,7 @@ CASoftRasterizer::CASoftRasterizer()
  , bDepthTestEnabled_(false)
  , depthFunction_(GL_LESS)
  , depthClear_(1.0f)
- , zClearValue_((1<<SHIFT_Z)-1)
+ , zClearValue_((1<<DEPTH_Z)-1)
  , zRangeNear_(0.0f)
  , zRangeFar_(1.0f)
  , bTexturesEnabled_(false)
@@ -61,6 +61,7 @@ CASoftRasterizer::CASoftRasterizer()
  , bBlendingEnabled_(false)
  , blendSFactor_(GL_ONE)
  , blendDFactor_(GL_ZERO)
+ , viewportPixelCount(0)
 {
   texEnvColor_.r = 0;
   texEnvColor_.g = 0;
@@ -77,7 +78,7 @@ CASoftRasterizer::CASoftRasterizer()
 //-----------------------------------------------------------------------------
 CASoftRasterizer::~CASoftRasterizer()
 {
-  if(pZBuffer_)
+  if(pZBuffer_ != NULL)
     delete pZBuffer_;
 
   for(int i(0); i < MAX_TEXTURE_COUNT; i++)
@@ -125,11 +126,18 @@ CASoftRasterizer::enableBlending(bool enable)
 
 //-----------------------------------------------------------------------------
 void
+CASoftRasterizer::enableAlphaTest(bool enable)
+{
+  bAlphaTestEnabled_ = enable;
+}
+
+//-----------------------------------------------------------------------------
+void
 CASoftRasterizer::clearDepthf(GLclampf depth)
 {
   depthClear_ = mathlib::clamp<GLclampf>(depth, 0.0f, 1.0f);
 
-  zClearValue_ = (int32_t)(depthClear_ * ((1<<SHIFT_Z)-1));
+  zClearValue_ = (int32_t)(depthClear_ * ((1<<DEPTH_Z)-1));
 }
 
 //-----------------------------------------------------------------------------
@@ -440,6 +448,14 @@ CASoftRasterizer::texEnvf(GLenum target, GLenum pname, GLfloat param)
       //setError(GL_INVALID_ENUM);
       return;
   };
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftRasterizer::alphaFunc(GLenum func, GLclampf ref)
+{
+  alphaFunc_  = func;
+  alphaValue_ = ref;
 }
 
 //-----------------------------------------------------------------------------

@@ -71,110 +71,119 @@ CASoftGLESFloat::CASoftGLESFloat()
  : CAGLESFxToFloatContext()
  , CAGLESBase()
  , CAGLESMatrixF()
-
  , pRaster_(NULL)
- , depthTestEnabled_(false)
- , depthMask_(true)
- , depthFunction_(GL_LESS)
- , depthClear_(1.0f)
- , zRangeNear_(0.0f)
- , zRangeFar_(1.0f)
- , zNear_(0.0f)
- , zFar_(1.0f)
- , shadingModel_(GL_FLAT)
- , bSmoothShading_(false)
- , blendingEnabled_(false)
- , blendSFactor_(GL_ONE)
- , blendDFactor_(GL_ZERO)
- , alphaTestEnabled_(false)
- , alphaFunc_(GL_ALWAYS)
- , alphaValue_(0.0f)
- , lightingEnabled_(false)
- , normalizeEnabled_(false)
- , fogEnabled_(false)
- , texturesEnabled_(false)
- , texEnvMode_(GL_MODULATE)
- , texEnvColor_(0, 0, 0, 0)
- , beginValid_(false)
 {
-  clCurrent.r = 1.0f;
-  clCurrent.g = 1.0f;
-  clCurrent.b = 1.0f;
-  clCurrent.a = 1.0f;
+  state_.clCurrent.r = 1.0f;
+  state_.clCurrent.g = 1.0f;
+  state_.clCurrent.b = 1.0f;
+  state_.clCurrent.a = 1.0f;
 
-  clClear.r = 0.0f;
-  clClear.g = 0.0f;
-  clClear.b = 0.0f;
-  clClear.a = 0.0f;
+  state_.clClear.r = 0.0f;
+  state_.clClear.g = 0.0f;
+  state_.clClear.b = 0.0f;
+  state_.clClear.a = 0.0f;
 
-  // Light properties
+  state_.shadingModel = GL_FLAT;
+  bSmoothShading_ = (state_.shadingModel == GL_SMOOTH);
+
+  state_.texturing.enabled = false;
+  state_.texturing.coordCurrent[0] = 0.0f;
+  state_.texturing.coordCurrent[1] = 0.0f;
+  state_.texturing.coordCurrent[2] = 0.0f;
+  state_.texturing.coordCurrent[3] = 1.0f;
+  state_.texturing.envMode = GL_MODULATE;
+  state_.texturing.envColor = TColor<GLfloat>(0, 0, 0, 0);
+
+  state_.depthTest.enabled = false;
+  state_.depthTest.mask = true;
+  state_.depthTest.function = GL_LESS;
+  state_.depthTest.clear = 0.0f;
+  state_.depthTest.rangeNear = 0.0f;
+  state_.depthTest.rangeFar = 1.0f;
+
+  state_.blending.enabled = false;
+  state_.blending.sourceFactor = GL_ONE;
+  state_.blending.destFactor = GL_ZERO;
+
+  state_.alphaTest.enabled = false;
+  state_.alphaTest.func = GL_ALWAYS;
+  state_.alphaTest.value = 0.0f;
+
+  state_.lighting.enabled = false;
   for(int iLight(0); iLight < 8; iLight++)
   {
-    lights_[iLight].ambient.r = 0.0f;
-    lights_[iLight].ambient.g = 0.0f;
-    lights_[iLight].ambient.b = 0.0f;
-    lights_[iLight].ambient.a = 1.0f;
+    state_.lighting.light[iLight].enabled = false;
+
+    state_.lighting.light[iLight].ambient.r = 0.0f;
+    state_.lighting.light[iLight].ambient.g = 0.0f;
+    state_.lighting.light[iLight].ambient.b = 0.0f;
+    state_.lighting.light[iLight].ambient.a = 1.0f;
 
     if(iLight == 0)
     {
-      lights_[iLight].diffuse.r = 1.0f;
-      lights_[iLight].diffuse.g = 1.0f;
-      lights_[iLight].diffuse.b = 1.0f;
-      lights_[iLight].diffuse.a = 1.0f;
+      state_.lighting.light[iLight].diffuse.r = 1.0f;
+      state_.lighting.light[iLight].diffuse.g = 1.0f;
+      state_.lighting.light[iLight].diffuse.b = 1.0f;
+      state_.lighting.light[iLight].diffuse.a = 1.0f;
 
-      lights_[iLight].specular.r = 1.0f;
-      lights_[iLight].specular.g = 1.0f;
-      lights_[iLight].specular.b = 1.0f;
-      lights_[iLight].specular.a = 1.0f;
+      state_.lighting.light[iLight].specular.r = 1.0f;
+      state_.lighting.light[iLight].specular.g = 1.0f;
+      state_.lighting.light[iLight].specular.b = 1.0f;
+      state_.lighting.light[iLight].specular.a = 1.0f;
     }
     else
     {
-      lights_[iLight].diffuse.r = 0.0f;
-      lights_[iLight].diffuse.g = 0.0f;
-      lights_[iLight].diffuse.b = 0.0f;
-      lights_[iLight].diffuse.a = 0.0f;
+      state_.lighting.light[iLight].diffuse.r = 0.0f;
+      state_.lighting.light[iLight].diffuse.g = 0.0f;
+      state_.lighting.light[iLight].diffuse.b = 0.0f;
+      state_.lighting.light[iLight].diffuse.a = 0.0f;
 
-      lights_[iLight].specular.r = 0.0f;
-      lights_[iLight].specular.g = 0.0f;
-      lights_[iLight].specular.b = 0.0f;
-      lights_[iLight].specular.a = 0.0f;
+      state_.lighting.light[iLight].specular.r = 0.0f;
+      state_.lighting.light[iLight].specular.g = 0.0f;
+      state_.lighting.light[iLight].specular.b = 0.0f;
+      state_.lighting.light[iLight].specular.a = 0.0f;
     }
 
-    lights_[iLight].position.x = 0.0f;
-    lights_[iLight].position.y = 0.0f;
-    lights_[iLight].position.z = 1.0f;
-    lights_[iLight].position.w = 0.0f;
-    lights_[iLight].direction  = lights_[iLight].position.getInverted();
-
-    lights_[iLight].enabled = false;
+    state_.lighting.light[iLight].position.x = 0.0f;
+    state_.lighting.light[iLight].position.y = 0.0f;
+    state_.lighting.light[iLight].position.z = 1.0f;
+    state_.lighting.light[iLight].position.w = 0.0f;
+    state_.lighting.light[iLight].positionNormal = state_.lighting.light[iLight].position;
   }
+  state_.lighting.normalizeEnabled = false;
+  state_.lighting.normal = TVector3<GLfloat>(0.0f, 0.0f, 1.0f);
 
-  // Material properties
-  matColorAmbient_.r  = 0.2f;
-  matColorAmbient_.g  = 0.2f;
-  matColorAmbient_.b  = 0.2f;
-  matColorAmbient_.a  = 1.0f;
+  state_.materialFront.ambient.r  = state_.materialBack.ambient.r  = 0.2f;
+  state_.materialFront.ambient.g  = state_.materialBack.ambient.g  = 0.2f;
+  state_.materialFront.ambient.b  = state_.materialBack.ambient.b  = 0.2f;
+  state_.materialFront.ambient.a  = state_.materialBack.ambient.a  = 1.0f;
+  state_.materialFront.diffuse.r  = state_.materialBack.diffuse.r  = 0.8f;
+  state_.materialFront.diffuse.g  = state_.materialBack.diffuse.g  = 0.8f;
+  state_.materialFront.diffuse.b  = state_.materialBack.diffuse.b  = 0.8f;
+  state_.materialFront.diffuse.a  = state_.materialBack.diffuse.a  = 1.0f;
+  state_.materialFront.specular.r = state_.materialBack.specular.r = 0.0f;
+  state_.materialFront.specular.g = state_.materialBack.specular.g = 0.0f;
+  state_.materialFront.specular.b = state_.materialBack.specular.b = 0.0f;
+  state_.materialFront.specular.a = state_.materialBack.specular.a = 1.0f;
+  state_.materialFront.emission.r = state_.materialBack.emission.r = 0.0f;
+  state_.materialFront.emission.g = state_.materialBack.emission.g = 0.0f;
+  state_.materialFront.emission.b = state_.materialBack.emission.b = 0.0f;
+  state_.materialFront.emission.a = state_.materialBack.emission.a = 1.0f;
+  state_.materialFront.shininess  = state_.materialBack.shininess  = 0.0f;
 
-  matColorDiffuse_.r  = 0.8f;
-  matColorDiffuse_.g  = 0.8f;
-  matColorDiffuse_.b  = 0.8f;
-  matColorDiffuse_.a  = 1.0f;
+  state_.fog.enabled = false;
+  state_.fog.mode = GL_EXP;
+  state_.fog.density = 1.0f;
+  state_.fog.start = 0.0f;
+  state_.fog.end = 1.0f;
+  state_.fog.color = TColor<GLfloat>(0.0f, 0.0f, 0.0f, 0.0f);
 
-  matColorSpecular_.r = 0.0f;
-  matColorSpecular_.g = 0.0f;
-  matColorSpecular_.b = 0.0f;
-  matColorSpecular_.a = 1.0f;
-
-  matColorEmission_.r = 0.0f;
-  matColorEmission_.g = 0.0f;
-  matColorEmission_.b = 0.0f;
-  matColorEmission_.a = 1.0f;
-
-  matShininess_       = 0.0f;
 
   float zsize = (1 << (DEPTH_Z + SHIFT_Z));
   zA_ = ((zsize - 0.5) / 2.0);
   zB_ = ((zsize - 0.5) / 2.0) + (1 << (SHIFT_Z-1));
+
+  beginValid_ = false;
 
   clipPlane_[0] = TVector4<GLfloat>( 1.0,  0.0,  0.0,  1.0); // left
   clipPlane_[1] = TVector4<GLfloat>(-1.0,  0.0,  0.0,  1.0); // right
@@ -229,29 +238,31 @@ CASoftGLESFloat::glAlphaFunc(GLenum func, GLclampf ref)
       return;
   };
 
-  alphaFunc_    = func;
-  alphaValue_   = mathlib::clamp<GLclampf>(ref, 0.0f, 1.0f);
+  state_.alphaTest.func = func;
+  state_.alphaTest.value = mathlib::clamp<GLclampf>(ref, 0.0f, 1.0f);
+
+  pRaster_->alphaFunc(state_.alphaTest.func, state_.alphaTest.value);
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFloat::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
-  clClear.r = mathlib::clamp<GLclampf>(red,   0.0f, 1.0f);
-  clClear.g = mathlib::clamp<GLclampf>(green, 0.0f, 1.0f);
-  clClear.b = mathlib::clamp<GLclampf>(blue,  0.0f, 1.0f);
-  clClear.a = mathlib::clamp<GLclampf>(alpha, 0.0f, 1.0f);
+  state_.clClear.r = mathlib::clamp<GLclampf>(red,   0.0f, 1.0f);
+  state_.clClear.g = mathlib::clamp<GLclampf>(green, 0.0f, 1.0f);
+  state_.clClear.b = mathlib::clamp<GLclampf>(blue,  0.0f, 1.0f);
+  state_.clClear.a = mathlib::clamp<GLclampf>(alpha, 0.0f, 1.0f);
 
-  pRaster_->clearColor(clClear.r, clClear.g, clClear.b, clClear.a);
+  pRaster_->clearColor(state_.clClear.r, state_.clClear.g, state_.clClear.b, state_.clClear.a);
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFloat::glClearDepthf(GLclampf depth)
 {
-  depthClear_ = mathlib::clamp<GLclampf>(depth, 0.0f, 1.0f);
+  state_.depthTest.clear = mathlib::clamp<GLclampf>(depth, 0.0f, 1.0f);
 
-  pRaster_->clearDepthf(depth);
+  pRaster_->clearDepthf(state_.depthTest.clear);
 }
 
 //-----------------------------------------------------------------------------
@@ -260,28 +271,28 @@ CASoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
 {
   // FIXME: zA_ and zB_ need to be modified, this function is now useless
 
-  zRangeNear_ = mathlib::clamp<GLclampf>(zNear, 0.0f, 1.0f);
-  zRangeFar_  = mathlib::clamp<GLclampf>(zFar,  0.0f, 1.0f);
+  state_.depthTest.rangeNear = mathlib::clamp<GLclampf>(zNear, 0.0f, 1.0f);
+  state_.depthTest.rangeFar  = mathlib::clamp<GLclampf>(zFar,  0.0f, 1.0f);
 
-  pRaster_->depthRangef(zRangeNear_, zRangeFar_);
+  pRaster_->depthRangef(state_.depthTest.rangeNear, state_.depthTest.rangeFar);
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFloat::glDepthFunc(GLenum func)
 {
-  depthFunction_ = func;
+  state_.depthTest.function = func;
 
-  pRaster_->depthFunc(depthFunction_);
+  pRaster_->depthFunc(state_.depthTest.function);
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFloat::glDepthMask(GLboolean flag)
 {
-  depthMask_ = flag;
+  state_.depthTest.mask = flag;
 
-  //pRaster_->depthMask(depthMask_);
+  //pRaster_->depthMask(state_.depthTest.mask);
 }
 
 //-----------------------------------------------------------------------------
@@ -290,22 +301,22 @@ CASoftGLESFloat::glDisable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_ALPHA_TEST: alphaTestEnabled_  = false; break;
-    case GL_BLEND:      blendingEnabled_   = false; pRaster_->enableBlending(false); break;
-    case GL_LIGHTING:   lightingEnabled_   = false; break;
-    case GL_LIGHT0:     lights_[0].enabled = false; break;
-    case GL_LIGHT1:     lights_[1].enabled = false; break;
-    case GL_LIGHT2:     lights_[2].enabled = false; break;
-    case GL_LIGHT3:     lights_[3].enabled = false; break;
-    case GL_LIGHT4:     lights_[4].enabled = false; break;
-    case GL_LIGHT5:     lights_[5].enabled = false; break;
-    case GL_LIGHT6:     lights_[6].enabled = false; break;
-    case GL_LIGHT7:     lights_[7].enabled = false; break;
-    case GL_DEPTH_TEST: depthTestEnabled_  = false; pRaster_->enableDepthTest(false); break;
-    case GL_CULL_FACE:  cullFaceEnabled_   = false; break;
-    case GL_FOG:        fogEnabled_        = false; break;
-    case GL_TEXTURE_2D: texturesEnabled_   = false; pRaster_->enableTextures(false); break;
-    case GL_NORMALIZE:  normalizeEnabled_  = false; break;
+    case GL_ALPHA_TEST: state_.alphaTest.enabled = false; pRaster_->enableAlphaTest(false); break;
+    case GL_BLEND:      state_.blending.enabled  = false; pRaster_->enableBlending(false); break;
+    case GL_LIGHTING:   state_.lighting.enabled  = false; break;
+    case GL_LIGHT0:     state_.lighting.light[0].enabled = false; break;
+    case GL_LIGHT1:     state_.lighting.light[1].enabled = false; break;
+    case GL_LIGHT2:     state_.lighting.light[2].enabled = false; break;
+    case GL_LIGHT3:     state_.lighting.light[3].enabled = false; break;
+    case GL_LIGHT4:     state_.lighting.light[4].enabled = false; break;
+    case GL_LIGHT5:     state_.lighting.light[5].enabled = false; break;
+    case GL_LIGHT6:     state_.lighting.light[6].enabled = false; break;
+    case GL_LIGHT7:     state_.lighting.light[7].enabled = false; break;
+    case GL_DEPTH_TEST: state_.depthTest.enabled = false; pRaster_->enableDepthTest(false); break;
+    case GL_CULL_FACE:  cullFaceEnabled_         = false; break;
+    case GL_FOG:        state_.fog.enabled       = false; break;
+    case GL_TEXTURE_2D: state_.texturing.enabled = false; pRaster_->enableTextures(false); break;
+    case GL_NORMALIZE:  state_.lighting.normalizeEnabled = false; break;
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -325,22 +336,22 @@ CASoftGLESFloat::glEnable(GLenum cap)
 {
   switch(cap)
   {
-    case GL_ALPHA_TEST: alphaTestEnabled_  = true; break;
-    case GL_BLEND:      blendingEnabled_   = true; pRaster_->enableBlending(true); break;
-    case GL_LIGHTING:   lightingEnabled_   = true; break;
-    case GL_LIGHT0:     lights_[0].enabled = true; break;
-    case GL_LIGHT1:     lights_[1].enabled = true; break;
-    case GL_LIGHT2:     lights_[2].enabled = true; break;
-    case GL_LIGHT3:     lights_[3].enabled = true; break;
-    case GL_LIGHT4:     lights_[4].enabled = true; break;
-    case GL_LIGHT5:     lights_[5].enabled = true; break;
-    case GL_LIGHT6:     lights_[6].enabled = true; break;
-    case GL_LIGHT7:     lights_[7].enabled = true; break;
-    case GL_DEPTH_TEST: depthTestEnabled_  = true; pRaster_->enableDepthTest(true); break;
-    case GL_CULL_FACE:  cullFaceEnabled_   = true; break;
-    case GL_FOG:        fogEnabled_        = true; break;
-    case GL_TEXTURE_2D: texturesEnabled_   = true; pRaster_->enableTextures(true); break;
-    case GL_NORMALIZE:  normalizeEnabled_  = true; break;
+    case GL_ALPHA_TEST: state_.alphaTest.enabled = true; pRaster_->enableAlphaTest(true); break;
+    case GL_BLEND:      state_.blending.enabled  = true; pRaster_->enableBlending(true); break;
+    case GL_LIGHTING:   state_.lighting.enabled  = true; break;
+    case GL_LIGHT0:     state_.lighting.light[0].enabled = true; break;
+    case GL_LIGHT1:     state_.lighting.light[1].enabled = true; break;
+    case GL_LIGHT2:     state_.lighting.light[2].enabled = true; break;
+    case GL_LIGHT3:     state_.lighting.light[3].enabled = true; break;
+    case GL_LIGHT4:     state_.lighting.light[4].enabled = true; break;
+    case GL_LIGHT5:     state_.lighting.light[5].enabled = true; break;
+    case GL_LIGHT6:     state_.lighting.light[6].enabled = true; break;
+    case GL_LIGHT7:     state_.lighting.light[7].enabled = true; break;
+    case GL_DEPTH_TEST: state_.depthTest.enabled = true; pRaster_->enableDepthTest(true); break;
+    case GL_CULL_FACE:  cullFaceEnabled_         = true; break;
+    case GL_FOG:        state_.fog.enabled       = true; break;
+    case GL_TEXTURE_2D: state_.texturing.enabled = true; pRaster_->enableTextures(true); break;
+    case GL_NORMALIZE:  state_.lighting.normalizeEnabled = true; break;
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -369,10 +380,10 @@ CASoftGLESFloat::glFogf(GLenum pname, GLfloat param)
 {
   switch(pname)
   {
-    case GL_FOG_DENSITY: fogDensity_ = param; break;
-    case GL_FOG_START:   fogStart_   = param; break;
-    case GL_FOG_END:     fogEnd_     = param; break;
-    case GL_FOG_MODE:                         break;
+    case GL_FOG_DENSITY: state_.fog.density = param; break;
+    case GL_FOG_START:   state_.fog.start   = param; break;
+    case GL_FOG_END:     state_.fog.end     = param; break;
+    case GL_FOG_MODE:    state_.fog.mode    = param; break;
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -385,11 +396,15 @@ CASoftGLESFloat::glFogfv(GLenum pname, const GLfloat * params)
 {
   switch(pname)
   {
+    case GL_FOG_DENSITY: state_.fog.density = params[0]; break;
+    case GL_FOG_START:   state_.fog.start   = params[0]; break;
+    case GL_FOG_END:     state_.fog.end     = params[0]; break;
+    case GL_FOG_MODE:    state_.fog.mode    = params[0]; break;
     case GL_FOG_COLOR:
-      fogColor_.r = params[0];
-      fogColor_.g = params[1];
-      fogColor_.b = params[2];
-      fogColor_.a = params[3];
+      state_.fog.color.r = params[0];
+      state_.fog.color.g = params[1];
+      state_.fog.color.b = params[2];
+      state_.fog.color.a = params[3];
       break;
     default:
       setError(GL_INVALID_ENUM);
@@ -407,23 +422,23 @@ CASoftGLESFloat::glLightf(GLenum light, GLenum pname, GLfloat param)
 void
 CASoftGLESFloat::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 {
-  SLightF * pLight = 0;
+  TLight<GLfloat> * pLight = 0;
   switch(light)
   {
-    case GL_LIGHT0: pLight = &lights_[0]; break;
-    case GL_LIGHT1: pLight = &lights_[1]; break;
-    case GL_LIGHT2: pLight = &lights_[2]; break;
-    case GL_LIGHT3: pLight = &lights_[3]; break;
-    case GL_LIGHT4: pLight = &lights_[4]; break;
-    case GL_LIGHT5: pLight = &lights_[5]; break;
-    case GL_LIGHT6: pLight = &lights_[6]; break;
-    case GL_LIGHT7: pLight = &lights_[7]; break;
+    case GL_LIGHT0: pLight = &state_.lighting.light[0]; break;
+    case GL_LIGHT1: pLight = &state_.lighting.light[1]; break;
+    case GL_LIGHT2: pLight = &state_.lighting.light[2]; break;
+    case GL_LIGHT3: pLight = &state_.lighting.light[3]; break;
+    case GL_LIGHT4: pLight = &state_.lighting.light[4]; break;
+    case GL_LIGHT5: pLight = &state_.lighting.light[5]; break;
+    case GL_LIGHT6: pLight = &state_.lighting.light[6]; break;
+    case GL_LIGHT7: pLight = &state_.lighting.light[7]; break;
     default:
       setError(GL_INVALID_ENUM);
       return;
   }
 
-  SColorF * pColor = 0;
+  TColor<GLfloat> * pColor = 0;
   switch(pname)
   {
     case GL_AMBIENT:  pColor = &pLight->ambient; break;
@@ -434,8 +449,7 @@ CASoftGLESFloat::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
       pLight->position.y = params[1];
       pLight->position.z = params[2];
       pLight->position.w = params[3];
-      // Invert and normalize
-      pLight->direction = pLight->position.getInverted().normalize();
+      pLight->positionNormal = pLight->position.getNormalized();
       return;
     default:
       setError(GL_INVALID_ENUM);
@@ -452,10 +466,29 @@ CASoftGLESFloat::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 void
 CASoftGLESFloat::glMaterialf(GLenum face, GLenum pname, GLfloat param)
 {
+  TMaterial<GLfloat> * pMaterial;
+
+  switch(face)
+  {
+    case GL_FRONT:
+      pMaterial = &state_.materialFront;
+      break;
+    case GL_BACK:
+      pMaterial = &state_.materialBack;
+      break;
+    case GL_FRONT_AND_BACK:
+      glMaterialf(GL_FRONT, pname, param);
+      glMaterialf(GL_BACK,  pname, param);
+      return;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
   switch(pname)
   {
     case GL_SHININESS:
-      matShininess_ = param;
+      pMaterial->shininess = param;
       break;
     default:
       setError(GL_INVALID_ENUM);
@@ -467,44 +500,63 @@ CASoftGLESFloat::glMaterialf(GLenum face, GLenum pname, GLfloat param)
 void
 CASoftGLESFloat::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
 {
+  TMaterial<GLfloat> * pMaterial;
+
+  switch(face)
+  {
+    case GL_FRONT:
+      pMaterial = &state_.materialFront;
+      break;
+    case GL_BACK:
+      pMaterial = &state_.materialBack;
+      break;
+    case GL_FRONT_AND_BACK:
+      glMaterialfv(GL_FRONT, pname, params);
+      glMaterialfv(GL_BACK,  pname, params);
+      return;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
   switch(pname)
   {
     case GL_AMBIENT:
-      matColorAmbient_.r = params[0];
-      matColorAmbient_.g = params[1];
-      matColorAmbient_.b = params[2];
-      matColorAmbient_.a = params[3];
+      pMaterial->ambient.r = params[0];
+      pMaterial->ambient.g = params[1];
+      pMaterial->ambient.b = params[2];
+      pMaterial->ambient.a = params[3];
       break;
     case GL_DIFFUSE:
-      matColorDiffuse_.r = params[0];
-      matColorDiffuse_.g = params[1];
-      matColorDiffuse_.b = params[2];
-      matColorDiffuse_.a = params[3];
+      pMaterial->diffuse.r = params[0];
+      pMaterial->diffuse.g = params[1];
+      pMaterial->diffuse.b = params[2];
+      pMaterial->diffuse.a = params[3];
       break;
     case GL_SPECULAR:
-      matColorSpecular_.r = params[0];
-      matColorSpecular_.g = params[1];
-      matColorSpecular_.b = params[2];
-      matColorSpecular_.a = params[3];
+      pMaterial->specular.r = params[0];
+      pMaterial->specular.g = params[1];
+      pMaterial->specular.b = params[2];
+      pMaterial->specular.a = params[3];
       break;
     case GL_EMISSION:
-      matColorEmission_.r = params[0];
-      matColorEmission_.g = params[1];
-      matColorEmission_.b = params[2];
-      matColorEmission_.a = params[3];
+      pMaterial->emission.r = params[0];
+      pMaterial->emission.g = params[1];
+      pMaterial->emission.b = params[2];
+      pMaterial->emission.a = params[3];
       break;
     case GL_SHININESS:
-      matShininess_ = params[0];
+      pMaterial->shininess = params[0];
       break;
     case GL_AMBIENT_AND_DIFFUSE:
-      matColorAmbient_.r = params[0];
-      matColorAmbient_.g = params[1];
-      matColorAmbient_.b = params[2];
-      matColorAmbient_.a = params[3];
-      matColorDiffuse_.r = params[0];
-      matColorDiffuse_.g = params[1];
-      matColorDiffuse_.b = params[2];
-      matColorDiffuse_.a = params[3];
+      pMaterial->ambient.r = params[0];
+      pMaterial->ambient.g = params[1];
+      pMaterial->ambient.b = params[2];
+      pMaterial->ambient.a = params[3];
+      pMaterial->diffuse.r = params[0];
+      pMaterial->diffuse.g = params[1];
+      pMaterial->diffuse.b = params[2];
+      pMaterial->diffuse.a = params[3];
       break;
     default:
       setError(GL_INVALID_ENUM);
@@ -516,8 +568,8 @@ CASoftGLESFloat::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
 void
 CASoftGLESFloat::glShadeModel(GLenum mode)
 {
-  shadingModel_ = mode;
-  bSmoothShading_ = (shadingModel_ == GL_SMOOTH);
+  state_.shadingModel = mode;
+  bSmoothShading_ = (state_.shadingModel == GL_SMOOTH);
 
   pRaster_->enableSmoothShading(bSmoothShading_);
 }
@@ -596,12 +648,12 @@ CASoftGLESFloat::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
   v.vo.z = z;
   v.vo.w = w;
   // Set normal
-  v.n = normal_;
+  v.n = state_.lighting.normal;
   // Set color
-  v.cl = clCurrent;
+  v.cl = state_.clCurrent;
   // Set texture
-  v.t[0] = texCoordCurrent_[0];
-  v.t[1] = texCoordCurrent_[1];
+  v.t[0] = state_.texturing.coordCurrent[0];
+  v.t[1] = state_.texturing.coordCurrent[1];
   // Vertex not processed yet
   v.processed = false;
 
@@ -612,32 +664,32 @@ CASoftGLESFloat::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 void
 CASoftGLESFloat::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
-  clCurrent.r = red;
-  clCurrent.g = green;
-  clCurrent.b = blue;
-  clCurrent.a = alpha;
+  state_.clCurrent.r = red;
+  state_.clCurrent.g = green;
+  state_.clCurrent.b = blue;
+  state_.clCurrent.a = alpha;
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFloat::glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 {
-  texCoordCurrent_[0] = s;
-  texCoordCurrent_[1] = t;
-  texCoordCurrent_[2] = r;
-  texCoordCurrent_[3] = q;
+  state_.texturing.coordCurrent[0] = s;
+  state_.texturing.coordCurrent[1] = t;
+  state_.texturing.coordCurrent[2] = r;
+  state_.texturing.coordCurrent[3] = q;
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftGLESFloat::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 {
-  normal_.x = nx;
-  normal_.y = ny;
-  normal_.z = nz;
+  state_.lighting.normal.x = nx;
+  state_.lighting.normal.y = ny;
+  state_.lighting.normal.z = nz;
 
-  if(normalizeEnabled_  == true)
-    normal_.normalize();
+  if(state_.lighting.normalizeEnabled == true)
+    state_.lighting.normal.normalize();
 }
 
 //-----------------------------------------------------------------------------
@@ -705,10 +757,10 @@ CASoftGLESFloat::glGetFloatv(GLenum pname, GLfloat * params)
 void
 CASoftGLESFloat::glBlendFunc(GLenum sfactor, GLenum dfactor)
 {
-  blendSFactor_ = sfactor;
-  blendDFactor_ = dfactor;
+  state_.blending.sourceFactor = sfactor;
+  state_.blending.destFactor   = dfactor;
 
-  pRaster_->blendFunc(blendSFactor_, blendDFactor_);
+  pRaster_->blendFunc(state_.blending.sourceFactor, state_.blending.destFactor);
 }
 
 //-----------------------------------------------------------------------------
@@ -732,7 +784,7 @@ CASoftGLESFloat::glTexEnvf(GLenum target, GLenum pname, GLfloat param)
     case GL_DECAL:
     case GL_BLEND:
     case GL_REPLACE:
-      texEnvMode_ = (GLenum)param;
+      state_.texturing.envMode = (GLenum)param;
       break;
     default:
       setError(GL_INVALID_ENUM);
@@ -764,7 +816,7 @@ CASoftGLESFloat::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
         case GL_DECAL:
         case GL_BLEND:
         case GL_REPLACE:
-          texEnvMode_ = (GLenum)params[0];
+          state_.texturing.envMode = (GLenum)params[0];
           break;
         default:
           setError(GL_INVALID_ENUM);
@@ -772,10 +824,10 @@ CASoftGLESFloat::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
       };
       break;
     case GL_TEXTURE_ENV_COLOR:
-      texEnvColor_.r = params[0];
-      texEnvColor_.g = params[1];
-      texEnvColor_.b = params[2];
-      texEnvColor_.a = params[3];
+      state_.texturing.envColor.r = params[0];
+      state_.texturing.envColor.g = params[1];
+      state_.texturing.envColor.b = params[2];
+      state_.texturing.envColor.a = params[3];
       break;
     default:
       setError(GL_INVALID_ENUM);
@@ -871,10 +923,10 @@ CASoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
       };
     }
     else
-      v.n = normal_;
+      v.n = state_.lighting.normal;
 
     // Color
-    if(lightingEnabled_ == false)
+    if(state_.lighting.enabled == false)
     {
       if(bBufColorEnabled_ == true)
       {
@@ -895,11 +947,11 @@ CASoftGLESFloat::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
         };
       }
       else
-        v.cl = clCurrent;
+        v.cl = state_.clCurrent;
     }
 
     // Textures
-    if((texturesEnabled_ == true) && (bBufTexCoordEnabled_ == true))
+    if((state_.texturing.enabled == true) && (bBufTexCoordEnabled_ == true))
     {
       switch(bufTexCoord_.type)
       {
@@ -955,37 +1007,67 @@ CASoftGLESFloat::_vertexShaderLight(SVertexF & v)
   // --------
   // Lighting
   // --------
-  if(lightingEnabled_ == true)
+  if(state_.lighting.enabled == true)
   {
-    SColorF c(0, 0, 0, 0);
+    TMaterial<GLfloat> * pMaterial;
+    TColor<GLfloat> c(0, 0, 0, 0);
 
-    // Normal Rotation
-    pCurrentModelView_->transform3(v.n, v.n2);
+    // Normalized vertex normal
+    TVector3<GLfloat> vVertexNormal;
+    pCurrentModelView_->transform3(v.n, vVertexNormal);
 
+    // Normalized vector from vertex to eye
+    TVector3<GLfloat> vVertexToEye = v.ve.getInverted();
+    vVertexToEye.normalize();
+
+    // Front or backfacing vertex
+    // FIXME: We need the fragment front/back, not the normal's direction
+    if(vVertexNormal.dotProduct(vVertexToEye) > 0)
+    {
+      pMaterial = &state_.materialFront;
+    }
+    else
+    {
+      pMaterial = &state_.materialBack;
+      vVertexNormal.invert();
+    }
+
+#define INFINITE_LIGHT
     for(int iLight(0); iLight < 8; iLight++)
     {
-      if(lights_[iLight].enabled == true)
+      if(state_.lighting.light[iLight].enabled == true)
       {
+#ifndef INFINITE_LIGHT
+        TVector3<GLfloat> vVertexToLightNormal = TVector3<GLfloat>(state_.lighting.light[iLight].position) - TVector3<GLfloat>(v.ve);
+        vVertexToLightNormal.normalize();
+#endif
+
         // Ambient light (it's everywhere!)
-        c += lights_[iLight].ambient * matColorAmbient_;
+        c += state_.lighting.light[iLight].ambient * pMaterial->ambient;
 
         // Diffuse light
-        GLfloat diffuse = lights_[iLight].direction.dotProduct(v.n2);
+#ifndef INFINITE_LIGHT
+        GLfloat diffuse = vVertexToLightNormal.dotProduct(vVertexNormal);
+#else
+        GLfloat diffuse = state_.lighting.light[iLight].positionNormal.dotProduct(vVertexNormal);
+#endif
         if(diffuse > 0.0f)
         {
-          c += lights_[iLight].diffuse * matColorDiffuse_ * diffuse;
+          c += state_.lighting.light[iLight].diffuse * pMaterial->diffuse * diffuse;
         }
 
-        if(matShininess_ >= 0.5f)
+        if(pMaterial->shininess >= 0.5f)
         {
           // Specular light
-          TVector3<GLfloat> eye(v.ve);
-          eye.normalize();
-          GLfloat specular = lights_[iLight].direction.getReflection(v.n2).dotProduct(eye);
+#ifndef INFINITE_LIGHT
+          GLfloat specular = vVertexToLightNormal.getReflection(vVertexNormal).dotProduct(vVertexToEye);
+#else
+          GLfloat specular = state_.lighting.light[iLight].positionNormal.getReflection(vVertexNormal).dotProduct(vVertexToEye);
+#endif
           if(specular > 0.0f)
           {
-            specular = mathlib::fast_int_pow<GLfloat>(specular, (int)(matShininess_ + 0.5f));
-            c += lights_[iLight].specular * matColorSpecular_ * specular;
+            specular = mathlib::fast_int_pow<GLfloat>(specular, (int)(pMaterial->shininess + 0.5f));
+            c += state_.lighting.light[iLight].specular * pMaterial->specular * specular;
           }
         }
       }
@@ -1000,12 +1082,24 @@ CASoftGLESFloat::_vertexShaderLight(SVertexF & v)
   // ---
   // Fog
   // ---
-  if(fogEnabled_ == true)
+  if(state_.fog.enabled == true)
   {
-    GLfloat partFog, partColor;
-    partFog = mathlib::clamp<GLfloat>((mathlib::abs<GLfloat>(v.ve.z) - fogStart_) / (fogEnd_ - fogStart_), 0.0f, 1.0f);
-    partColor = 1.0f - partFog;
-    v.cl = ((v.cl * partColor) + (fogColor_ * partFog)).getClamped();
+    GLfloat f;
+
+    //switch(fog_.mode)
+    //{
+    //  case GL_LINEAR:
+        f = (state_.fog.end - (-v.ve.z)) / (state_.fog.end - state_.fog.start);
+    //    break;
+    //  case GL_EXP:
+    //    break;
+    //  case GL_EXP2:
+    //    break;
+    //};
+
+    f = mathlib::clamp<GLfloat>(f, 0.0f, 1.0f);
+
+    v.cl = mathlib_LERP(f, state_.fog.color, v.cl);
   }
 }
 
@@ -1013,24 +1107,34 @@ CASoftGLESFloat::_vertexShaderLight(SVertexF & v)
 void
 CASoftGLESFloat::_fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
+  GLfloat vnz =
+    (v0.vd.x - v2.vd.x) * (v1.vd.y - v2.vd.y) -
+    (v0.vd.y - v2.vd.y) * (v1.vd.x - v2.vd.x);
+
+  // Not visible
+  if(vnz == 0)
+    return;
+
   // -------
   // Culling
   // -------
   if(cullFaceEnabled_ == true)
   {
     // Always invisible when culling both front and back
-    if(cullFaceMode_ == GL_FRONT_AND_BACK)
-      return;
-
-    GLfloat vnz =
-      (v0.vd.x - v2.vd.x) * (v1.vd.y - v2.vd.y) -
-      (v0.vd.y - v2.vd.y) * (v1.vd.x - v2.vd.x);
-
-    if(vnz == 0)
-      return;
-
-    if((vnz < 0) == bCullCW_)
-      return;
+    switch(cullFaceMode_)
+    {
+      case GL_BACK:
+        if(vnz < 0)
+          return;
+        break;
+      case GL_FRONT:
+        if(vnz > 0)
+          return;
+        break;
+      case GL_FRONT_AND_BACK:
+        return;
+        break;
+    };
   }
 
   rasterTriangle(v0, v1, v2);
@@ -1154,8 +1258,13 @@ CASoftGLESFloat::_primitiveAssembly(SVertexF & v)
 inline GLfloat                                     \
 name(TVector4<GLfloat> & c, TVector4<GLfloat> & a, TVector4<GLfloat> & b) \
 {                                                  \
-  TVector4<GLfloat> delta = b - a;                 \
+  TVector4<GLfloat> delta;                         \
   GLfloat t, den;                                  \
+                                                   \
+  delta.x = b.x - a.x;                             \
+  delta.y = b.y - a.y;                             \
+  delta.z = b.z - a.z;                             \
+  delta.w = b.w - a.w;                             \
                                                    \
   den = -(sign delta.dir) + delta.w;               \
   if(den == 0)                                     \
@@ -1290,7 +1399,7 @@ CASoftGLESFloat::interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLf
     c.cl = b.cl;
 
   // Texture coordinates
-  if(texturesEnabled_ == true)
+  if(state_.texturing.enabled == true)
   {
     c.t[0] = mathlib::lerp<GLfloat>(t, a.t[0], b.t[0]);
     c.t[1] = mathlib::lerp<GLfloat>(t, a.t[1], b.t[1]);

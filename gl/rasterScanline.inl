@@ -410,7 +410,7 @@
             // Alpha Test (RGBA only)
   #ifdef CONFIG_GL_ENABLE_ALPHA_TEST
             bool bAlphaPasses = true;
-            if(alphaTestEnabled_ == true)
+            if(bAlphaTestEnabled_ == true)
             {
               switch(alphaFunc_)
               {

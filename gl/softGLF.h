@@ -24,6 +24,7 @@
 
 
 #include "context.h"
+#include "glstate.h"
 
 #include "GL/gl.h"
 
@@ -31,8 +32,6 @@
 #include "kernel/3dRenderer.h"
 #include "glMatrix.h"
 #include "textures.h"
-#include "color.h"
-#include "raster.h"
 #include "vhl/vector.h"
 
 #ifdef __BRICKS__
@@ -119,69 +118,17 @@ protected:
 protected:
   raster::IRasterizer * pRaster_;
 
-  // Depth testing
-  bool        depthTestEnabled_;
-  bool        depthMask_;
-  GLenum      depthFunction_;
-  GLfloat     depthClear_;
-  GLclampf    zRangeNear_;
-  GLclampf    zRangeFar_;
+  TGLState<GLfloat> state_;
 
-  GLclampf    zNear_;
-  GLclampf    zFar_;
-  GLfloat     zA_;
-  GLfloat     zB_;
-
-  GLenum      shadingModel_;
   bool        bSmoothShading_;
-
-  // Colors
-  SColorF     clCurrent;
-  SColorF     clClear;
-
-  // Alpha Blending
-  bool        blendingEnabled_;
-  GLenum      blendSFactor_;
-  GLenum      blendDFactor_;
-
-  // Alpha testing
-  bool        alphaTestEnabled_;
-  GLenum      alphaFunc_;
-  GLclampf    alphaValue_;
-
-  // Lighting
-  bool        lightingEnabled_;
-  SLightF     lights_[8];
-
-  // Normals
-  bool        normalizeEnabled_;
-  TVector3<GLfloat> normal_;
-
-  // Material
-  SColorF     matColorAmbient_;
-  SColorF     matColorDiffuse_;
-  SColorF     matColorSpecular_;
-  SColorF     matColorEmission_;
-  GLfloat     matShininess_;
-
-  // Fog
-  bool        fogEnabled_;
-  GLfloat     fogDensity_;
-  GLfloat     fogStart_;
-  GLfloat     fogEnd_;
-  SColorF     fogColor_;
-
-  // Textures
-  bool        texturesEnabled_;
-  GLfloat     texCoordCurrent_[4];
-  GLenum      texEnvMode_;
-  SColorF     texEnvColor_;
 
   // Vertex transformations
   GLfloat     xA_;
   GLfloat     xB_;
   GLfloat     yA_;
   GLfloat     yB_;
+  GLfloat     zA_;
+  GLfloat     zB_;
 
   // Primitive assembly
   bool        beginValid_;

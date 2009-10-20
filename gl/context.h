@@ -57,10 +57,6 @@ enum EFastBlendMode
 };
 
 //-----------------------------------------------------------------------------
-typedef TColor<GLfloat> SColorF;
-typedef TColor<CFixed>  SColorFx;
-
-//-----------------------------------------------------------------------------
 template <class T>
 struct TVertex
 {
@@ -94,20 +90,6 @@ struct TVertex
 };
 typedef TVertex<GLfloat> SVertexF;
 typedef TVertex<CFixed>  SVertexFx;
-
-//-----------------------------------------------------------------------------
-template <class T>
-struct TLight
-{
-  TColor<T> diffuse;
-  TColor<T> ambient;
-  TColor<T> specular;
-  TVector4<T> position;
-  TVector3<T> direction;
-  bool enabled;
-};
-typedef TLight<GLfloat> SLightF;
-typedef TLight<CFixed>  SLightFx;
 
 //-----------------------------------------------------------------------------
 struct SBufferPointer

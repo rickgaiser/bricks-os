@@ -49,6 +49,8 @@ public:
   CRasterizerScanline();
   virtual ~CRasterizerScanline();
 
+  virtual void alphaFunc(GLenum func, GLclampf ref);
+
   void rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2);
 
 private:
@@ -86,6 +88,8 @@ private:
   TGradient<float>     grad_w; // Depth
 #endif
   TGradient<TTexCoord<float> >   grad_t; // Textures
+
+  int32_t alphaValueFX_;
 };
 
 
