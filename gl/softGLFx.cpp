@@ -273,8 +273,6 @@ CASoftGLESFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
 
   state_.depthTest.rangeNear.value = mathlib::clamp<GLclampx>(zNear, gl_fpfromi(0), gl_fpfromi(1));
   state_.depthTest.rangeFar.value  = mathlib::clamp<GLclampx>(zFar,  gl_fpfromi(0), gl_fpfromi(1));
-
-  pRaster_->depthRangef(state_.depthTest.rangeNear, state_.depthTest.rangeFar);
 }
 
 //-----------------------------------------------------------------------------

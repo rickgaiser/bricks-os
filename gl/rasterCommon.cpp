@@ -53,8 +53,6 @@ CASoftRasterizer::CASoftRasterizer()
  , depthFunction_(GL_LESS)
  , depthClear_(1.0f)
  , zClearValue_((1<<DEPTH_Z)-1)
- , zRangeNear_(0.0f)
- , zRangeFar_(1.0f)
  , bTexturesEnabled_(false)
  , texEnvMode_(GL_MODULATE)
  , pCurrentTex_(NULL)
@@ -138,14 +136,6 @@ CASoftRasterizer::clearDepthf(GLclampf depth)
   depthClear_ = mathlib::clamp<GLclampf>(depth, 0.0f, 1.0f);
 
   zClearValue_ = (int32_t)(depthClear_ * ((1<<DEPTH_Z)-1));
-}
-
-//-----------------------------------------------------------------------------
-void
-CASoftRasterizer::depthRangef(GLclampf zNear, GLclampf zFar)
-{
-  zRangeNear_ = mathlib::clamp<GLclampf>(zNear, 0.0f, 1.0f);
-  zRangeFar_  = mathlib::clamp<GLclampf>(zFar,  0.0f, 1.0f);
 }
 
 //-----------------------------------------------------------------------------

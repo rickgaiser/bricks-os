@@ -273,8 +273,6 @@ CASoftGLESFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
 
   state_.depthTest.rangeNear = mathlib::clamp<GLclampf>(zNear, 0.0f, 1.0f);
   state_.depthTest.rangeFar  = mathlib::clamp<GLclampf>(zFar,  0.0f, 1.0f);
-
-  pRaster_->depthRangef(state_.depthTest.rangeNear, state_.depthTest.rangeFar);
 }
 
 //-----------------------------------------------------------------------------

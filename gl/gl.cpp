@@ -20,6 +20,7 @@
 
 
 #include "GL/gl.h"
+#include "GLES/gl.h"
 #include "context.h"
 
 
