@@ -106,7 +106,7 @@ switch(matrixMode_)                                                   \
 #if !defined(__BRICKS__) || (defined(__BRICKS__) && defined(CONFIG_FPU))
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-CAGLESMatrixF::CAGLESMatrixF()
+CAGLMatrixFloat::CAGLMatrixFloat()
  : matrixMode_(GL_MODELVIEW)
  , iModelViewIndex_(0)
  , iProjectionIndex_(0)
@@ -127,13 +127,13 @@ CAGLESMatrixF::CAGLESMatrixF()
 }
 
 //---------------------------------------------------------------------------
-CAGLESMatrixF::~CAGLESMatrixF()
+CAGLMatrixFloat::~CAGLMatrixFloat()
 {
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixF::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+CAGLMatrixFloat::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
   GLfloat m[16];
 
@@ -166,21 +166,21 @@ CAGLESMatrixF::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat t
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixF::glLoadMatrixf(const GLfloat *m)
+CAGLMatrixFloat::glLoadMatrixf(const GLfloat *m)
 {
   *pCurrentMatrix_ = m;
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixF::glMultMatrixf(const GLfloat *m)
+CAGLMatrixFloat::glMultMatrixf(const GLfloat *m)
 {
   *pCurrentMatrix_ *= m;
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixF::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+CAGLMatrixFloat::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
   GLfloat m[16];
 
@@ -213,49 +213,49 @@ CAGLESMatrixF::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixF::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
+CAGLMatrixFloat::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
   pCurrentMatrix_->rotate(angle, x, y, z);
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixF::glScalef(GLfloat x, GLfloat y, GLfloat z)
+CAGLMatrixFloat::glScalef(GLfloat x, GLfloat y, GLfloat z)
 {
   pCurrentMatrix_->scale(x, y, z);
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixF::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
+CAGLMatrixFloat::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
   pCurrentMatrix_->translate(x, y, z);
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixF::glPopMatrix(void)
+CAGLMatrixFloat::glPopMatrix(void)
 {
   POP_MATRIX();
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixF::glPushMatrix(void)
+CAGLMatrixFloat::glPushMatrix(void)
 {
   PUSH_MATRIX();
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixF::glLoadIdentity(void)
+CAGLMatrixFloat::glLoadIdentity(void)
 {
   pCurrentMatrix_->loadIdentity();
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixF::glMatrixMode(GLenum mode)
+CAGLMatrixFloat::glMatrixMode(GLenum mode)
 {
   MATRIX_MODE();
 }
@@ -264,7 +264,7 @@ CAGLESMatrixF::glMatrixMode(GLenum mode)
 #if !defined(__BRICKS__) || (defined(__BRICKS__) && !defined(CONFIG_FPU))
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-CAGLESMatrixFx::CAGLESMatrixFx()
+CAGLMatrixFixed::CAGLMatrixFixed()
  : matrixMode_(GL_MODELVIEW)
  , iModelViewIndex_(0)
  , iProjectionIndex_(0)
@@ -283,13 +283,13 @@ CAGLESMatrixFx::CAGLESMatrixFx()
 }
 
 //---------------------------------------------------------------------------
-CAGLESMatrixFx::~CAGLESMatrixFx()
+CAGLMatrixFixed::~CAGLMatrixFixed()
 {
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
+CAGLMatrixFixed::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
   CFixed m[16];
 
@@ -322,21 +322,21 @@ CAGLESMatrixFx::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed 
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glLoadMatrixx(const GLfixed * m)
+CAGLMatrixFixed::glLoadMatrixx(const GLfixed * m)
 {
   *pCurrentMatrix_ = (CFixed *)m;
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glMultMatrixx(const GLfixed * m)
+CAGLMatrixFixed::glMultMatrixx(const GLfixed * m)
 {
   *pCurrentMatrix_ *= (CFixed *)m;
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
+CAGLMatrixFixed::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
   CFixed m[16];
 
@@ -369,7 +369,7 @@ CAGLESMatrixFx::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed to
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
+CAGLMatrixFixed::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
   CFixed fa, fx, fy, fz;
 
@@ -383,7 +383,7 @@ CAGLESMatrixFx::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glScalex(GLfixed x, GLfixed y, GLfixed z)
+CAGLMatrixFixed::glScalex(GLfixed x, GLfixed y, GLfixed z)
 {
   CFixed fx, fy, fz;
 
@@ -396,7 +396,7 @@ CAGLESMatrixFx::glScalex(GLfixed x, GLfixed y, GLfixed z)
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
+CAGLMatrixFixed::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
   CFixed fx, fy, fz;
 
@@ -409,28 +409,28 @@ CAGLESMatrixFx::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glPopMatrix(void)
+CAGLMatrixFixed::glPopMatrix(void)
 {
   POP_MATRIX();
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glPushMatrix(void)
+CAGLMatrixFixed::glPushMatrix(void)
 {
   PUSH_MATRIX();
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glLoadIdentity(void)
+CAGLMatrixFixed::glLoadIdentity(void)
 {
   pCurrentMatrix_->loadIdentity();
 }
 
 //---------------------------------------------------------------------------
 void
-CAGLESMatrixFx::glMatrixMode(GLenum mode)
+CAGLMatrixFixed::glMatrixMode(GLenum mode)
 {
   MATRIX_MODE();
 }

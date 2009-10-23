@@ -39,12 +39,12 @@
 
 #if !defined(__BRICKS__) || (defined(__BRICKS__) && defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
-class CAGLESMatrixF
+class CAGLMatrixFloat
  : public virtual I3DRenderer
 {
 public:
-  CAGLESMatrixF();
-  virtual ~CAGLESMatrixF();
+  CAGLMatrixFloat();
+  virtual ~CAGLMatrixFloat();
 
   virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
   virtual void glLoadMatrixf(const GLfloat *m);
@@ -84,12 +84,12 @@ protected:
 
 #if !defined(__BRICKS__) || (defined(__BRICKS__) && !defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
-class CAGLESMatrixFx
+class CAGLMatrixFixed
  : public virtual I3DRenderer
 {
 public:
-  CAGLESMatrixFx();
-  virtual ~CAGLESMatrixFx();
+  CAGLMatrixFixed();
+  virtual ~CAGLMatrixFixed();
 
   virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
   virtual void glLoadMatrixx(const GLfixed *m);

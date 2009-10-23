@@ -29,6 +29,24 @@
 
 
 //-----------------------------------------------------------------------------
+struct SCulling
+{
+  bool          enabled;
+  GLenum        mode;
+  GLenum        front;
+  bool          cullCW; // Cull Clock-Wise
+};
+
+//-----------------------------------------------------------------------------
+struct SHints
+{
+  GLenum        fog;
+  GLenum        lineSmooth;
+  GLenum        perspectiveCorrection;
+  GLenum        pointSmooth;
+};
+
+//-----------------------------------------------------------------------------
 template <class T>
 struct TTexturing
 {
@@ -90,12 +108,12 @@ template <class T>
 struct TLighting
 {
   bool          enabled;
-
   TLight<T>     light[8];
 
   bool          normalizeEnabled;
-
   TVector3<T>   normal;
+
+  bool          materialColorEnabled;
 };
 
 //-----------------------------------------------------------------------------
@@ -107,6 +125,7 @@ struct TMaterial
   TColor<T>   specular;
   TColor<T>   emission;
   T           shininess;
+  GLenum      colorMode;
 };
 
 //-----------------------------------------------------------------------------
@@ -115,10 +134,11 @@ struct TFog
 {
   bool        enabled;
 
-  T           mode;
+  GLint       mode;
   T           density;
   T           start;
   T           end;
+  T           linear_scale; // 1 / (end - start)
   TColor<T>   color;
 };
 
@@ -126,10 +146,15 @@ struct TFog
 template <class T>
 struct TGLState
 {
+  // Culling
+  SCulling        culling;
+  // Hints
+  SHints          hints;
   // Colors
   TColor<T>       clCurrent;
   TColor<T>       clClear;
   GLenum          shadingModel;
+  bool            smoothShading;
   // Textures
   TTexturing<T>   texturing;
   // Depth testing

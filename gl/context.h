@@ -101,12 +101,37 @@ struct SBufferPointer
 };
 
 //-----------------------------------------------------------------------------
-class CAGLESBase
- : public virtual I3DRenderer
+class IGLErrorHandler
 {
 public:
-  CAGLESBase();
-  virtual ~CAGLESBase();
+  virtual void setError(GLenum error) = 0;
+};
+
+//-----------------------------------------------------------------------------
+class CAGLErrorHandler
+ : public virtual I3DRenderer
+ , public IGLErrorHandler
+{
+public:
+  CAGLErrorHandler();
+  virtual ~CAGLErrorHandler();
+
+  virtual GLenum glGetError(void);
+  virtual void setError(GLenum error);
+
+private:
+  GLenum      errorCode_;
+  bool        bError_;
+};
+
+//-----------------------------------------------------------------------------
+class CAGLBuffers
+ : public virtual I3DRenderer
+ , public virtual CAGLErrorHandler
+{
+public:
+  CAGLBuffers();
+  virtual ~CAGLBuffers();
 
   virtual void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
   virtual void glDisableClientState(GLenum array);
@@ -114,16 +139,6 @@ public:
   virtual void glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer);
   virtual void glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
   virtual void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer);
-
-  virtual void glCullFace(GLenum mode);
-  virtual void glFrontFace(GLenum mode);
-
-  virtual void glHint(GLenum target, GLenum mode);
-
-  virtual GLenum glGetError(void);
-
-protected:
-  void setError(GLenum error);
 
 protected:
   // Buffers
@@ -135,32 +150,16 @@ protected:
   SBufferPointer bufNormal_;
   SBufferPointer bufTexCoord_;
   SBufferPointer bufVertex_;
-
-  // Culling
-  bool        cullFaceEnabled_;
-  GLenum      cullFaceMode_;
-  GLenum      frontFace_;
-  bool        bCullCW_;
-
-  // Hints
-  GLenum      hintFog_;
-  GLenum      hintLineSmooth_;
-  GLenum      hintPerspectiveCorrection_;
-  GLenum      hintPointSmooth_;
-
-  // Error
-  GLenum      errorCode_;
-  bool        bError_;
 };
 
 #if !defined(__BRICKS__) || (defined(__BRICKS__) && !defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
-class CAGLESFloatToFxContext
+class CAGLFloatToFixed
  : public virtual I3DRenderer
 {
 public:
-  CAGLESFloatToFxContext(){}
-  virtual ~CAGLESFloatToFxContext(){}
+  CAGLFloatToFixed(){}
+  virtual ~CAGLFloatToFixed(){}
 
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
   virtual void glClearDepthf(GLclampf depth);
@@ -188,12 +187,12 @@ public:
 
 #if !defined(__BRICKS__) || (defined(__BRICKS__) && defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
-class CAGLESFxToFloatContext
+class CAGLFixedToFloat
  : public virtual I3DRenderer
 {
 public:
-  CAGLESFxToFloatContext(){}
-  virtual ~CAGLESFxToFloatContext(){}
+  CAGLFixedToFloat(){}
+  virtual ~CAGLFixedToFloat(){}
 
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
   virtual void glClearDepthx(GLclampx depth);

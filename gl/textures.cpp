@@ -230,7 +230,6 @@ CTexture::bind()
 float
 CTexture::lambda(float dudx, float dudy, float dvdx, float dvdy)
 {
-#if 0
   float max, rho, lambda;
 
   dudx = mathlib::abs<float>(dudx);
@@ -243,13 +242,9 @@ CTexture::lambda(float dudx, float dudy, float dvdx, float dvdy)
   max = mathlib::max<float>(dvdx, dvdy) * height;
   rho = mathlib::max<float>(rho, max);
 
-  mathlib::initialize();
   lambda = mathlib::fast_log2(rho);
 
   return lambda;
-#else
-  return 0.0f;
-#endif
 }
 
 //-----------------------------------------------------------------------------

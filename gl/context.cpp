@@ -25,32 +25,58 @@
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-CAGLESBase::CAGLESBase()
- : bBufColorEnabled_(false)
- , bBufNormalEnabled_(false)
- , bBufTexCoordEnabled_(false)
- , bBufVertexEnabled_(false)
- , cullFaceEnabled_(false)
- , cullFaceMode_(GL_BACK)
- , frontFace_(GL_CCW)
- , bCullCW_(true)
- , hintFog_(GL_DONT_CARE)
- , hintLineSmooth_(GL_DONT_CARE)
- , hintPerspectiveCorrection_(GL_DONT_CARE)
- , hintPointSmooth_(GL_DONT_CARE)
- , errorCode_(GL_NO_ERROR)
+CAGLErrorHandler::CAGLErrorHandler()
+ : errorCode_(GL_NO_ERROR)
  , bError_(false)
 {
 }
 
 //-----------------------------------------------------------------------------
-CAGLESBase::~CAGLESBase()
+CAGLErrorHandler::~CAGLErrorHandler()
+{
+}
+
+//-----------------------------------------------------------------------------
+GLenum
+CAGLErrorHandler::glGetError(void)
+{
+  GLenum err(errorCode_);
+
+  bError_ = false;
+  errorCode_ = GL_NO_ERROR;
+
+  return err;
+}
+
+//-----------------------------------------------------------------------------
+void
+CAGLErrorHandler::setError(GLenum error)
+{
+  if(bError_ == false)
+  {
+    bError_ = true;
+    errorCode_ = error;
+  }
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+CAGLBuffers::CAGLBuffers()
+ : bBufColorEnabled_(false)
+ , bBufNormalEnabled_(false)
+ , bBufTexCoordEnabled_(false)
+ , bBufVertexEnabled_(false)
+{
+}
+
+//-----------------------------------------------------------------------------
+CAGLBuffers::~CAGLBuffers()
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBase::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+CAGLBuffers::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
   if((size != 4) || (stride < 0))
   {
@@ -79,7 +105,7 @@ CAGLESBase::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBase::glDisableClientState(GLenum array)
+CAGLBuffers::glDisableClientState(GLenum array)
 {
   switch(array)
   {
@@ -95,7 +121,7 @@ CAGLESBase::glDisableClientState(GLenum array)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBase::glEnableClientState(GLenum array)
+CAGLBuffers::glEnableClientState(GLenum array)
 {
   switch(array)
   {
@@ -111,7 +137,7 @@ CAGLESBase::glEnableClientState(GLenum array)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBase::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
+CAGLBuffers::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 {
   if(stride < 0)
   {
@@ -142,7 +168,7 @@ CAGLESBase::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBase::glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+CAGLBuffers::glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
   if((size < 2) || (size > 4) || (stride < 0))
   {
@@ -173,7 +199,7 @@ CAGLESBase::glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLv
 
 //-----------------------------------------------------------------------------
 void
-CAGLESBase::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
+CAGLBuffers::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
   if((size < 2) || (size > 4) || (stride < 0))
   {
@@ -202,121 +228,39 @@ CAGLESBase::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoi
   bufVertex_.pointer = pointer;
 }
 
-//-----------------------------------------------------------------------------
-void
-CAGLESBase::glCullFace(GLenum mode)
-{
-  cullFaceMode_ = mode;
-
-  bCullCW_ = (frontFace_ == GL_CCW) == (cullFaceMode_ == GL_BACK);
-}
-
-//-----------------------------------------------------------------------------
-void
-CAGLESBase::glFrontFace(GLenum mode)
-{
-  frontFace_ = mode;
-
-  bCullCW_ = (frontFace_ == GL_CCW) == (cullFaceMode_ == GL_BACK);
-}
-
-//-----------------------------------------------------------------------------
-void
-CAGLESBase::glHint(GLenum target, GLenum mode)
-{
-  GLenum * pHint;
-
-  switch(target)
-  {
-    case GL_FOG_HINT:
-      pHint = &hintFog_;
-      break;
-    case GL_LINE_SMOOTH_HINT:
-      pHint = &hintLineSmooth_;
-      break;
-    case GL_PERSPECTIVE_CORRECTION_HINT:
-      pHint = &hintPerspectiveCorrection_;
-      break;
-    case GL_POINT_SMOOTH_HINT:
-      pHint = &hintPointSmooth_;
-      break;
-    default:
-      setError(GL_INVALID_ENUM);
-      return;
-  };
-
-  switch(mode)
-  {
-    case GL_FASTEST:
-      break;
-    case GL_NICEST:
-      break;
-    case GL_DONT_CARE:
-      break;
-    default:
-      setError(GL_INVALID_ENUM);
-      return;
-  };
-
-  *pHint = mode;
-}
-
-//-----------------------------------------------------------------------------
-GLenum
-CAGLESBase::glGetError(void)
-{
-  GLenum err(errorCode_);
-
-  bError_ = false;
-  errorCode_ = GL_NO_ERROR;
-
-  return err;
-}
-
-//-----------------------------------------------------------------------------
-void
-CAGLESBase::setError(GLenum error)
-{
-  if(bError_ == false)
-  {
-    bError_ = true;
-    errorCode_ = error;
-  }
-}
-
 #if !defined(__BRICKS__) || (defined(__BRICKS__) && !defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+CAGLFloatToFixed::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
   glClearColorx(gl_fpfromf(red), gl_fpfromf(green), gl_fpfromf(blue), gl_fpfromf(alpha));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glClearDepthf(GLclampf depth)
+CAGLFloatToFixed::glClearDepthf(GLclampf depth)
 {
   glClearDepthx(gl_fpfromf(depth));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glDepthRangef(GLclampf zNear, GLclampf zFar)
+CAGLFloatToFixed::glDepthRangef(GLclampf zNear, GLclampf zFar)
 {
   glDepthRangex(gl_fpfromf(zNear), gl_fpfromf(zFar));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glFogf(GLenum pname, GLfloat param)
+CAGLFloatToFixed::glFogf(GLenum pname, GLfloat param)
 {
   glFogx(pname, gl_fpfromf(param));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glFogfv(GLenum pname, const GLfloat * params)
+CAGLFloatToFixed::glFogfv(GLenum pname, const GLfloat * params)
 {
   GLfixed xparams[] = {gl_fpfromf(params[0])
                      , gl_fpfromf(params[1])
@@ -328,7 +272,7 @@ CAGLESFloatToFxContext::glFogfv(GLenum pname, const GLfloat * params)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glLoadMatrixf(const GLfloat *m)
+CAGLFloatToFixed::glLoadMatrixf(const GLfloat *m)
 {
   GLfixed xparams[] = {gl_fpfromf(m[0])
                      , gl_fpfromf(m[1])
@@ -352,14 +296,14 @@ CAGLESFloatToFxContext::glLoadMatrixf(const GLfloat *m)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glMaterialf(GLenum face, GLenum pname, GLfloat param)
+CAGLFloatToFixed::glMaterialf(GLenum face, GLenum pname, GLfloat param)
 {
   glMaterialx(face, pname, gl_fpfromf(param));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
+CAGLFloatToFixed::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
 {
   GLfixed xparams[] = {gl_fpfromf(params[0])
                      , gl_fpfromf(params[1])
@@ -371,7 +315,7 @@ CAGLESFloatToFxContext::glMaterialfv(GLenum face, GLenum pname, const GLfloat * 
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glMultMatrixf(const GLfloat *m)
+CAGLFloatToFixed::glMultMatrixf(const GLfloat *m)
 {
   GLfixed xparams[] = {gl_fpfromf(m[0])
                      , gl_fpfromf(m[1])
@@ -395,21 +339,21 @@ CAGLESFloatToFxContext::glMultMatrixf(const GLfloat *m)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+CAGLFloatToFixed::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
   glFrustumx(gl_fpfromf(left), gl_fpfromf(right), gl_fpfromf(bottom), gl_fpfromf(top), gl_fpfromf(zNear), gl_fpfromf(zFar));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glLightf(GLenum light, GLenum pname, GLfloat param)
+CAGLFloatToFixed::glLightf(GLenum light, GLenum pname, GLfloat param)
 {
   glLightx(light, pname, gl_fpfromf(param));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
+CAGLFloatToFixed::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 {
   GLfixed xparams[] = {gl_fpfromf(params[0])
                      , gl_fpfromf(params[1])
@@ -421,56 +365,56 @@ CAGLESFloatToFxContext::glLightfv(GLenum light, GLenum pname, const GLfloat * pa
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
+CAGLFloatToFixed::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
   glOrthox(gl_fpfromf(left), gl_fpfromf(right), gl_fpfromf(bottom), gl_fpfromf(top), gl_fpfromf(zNear), gl_fpfromf(zFar));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
+CAGLFloatToFixed::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
   glRotatex(gl_fpfromf(angle), gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glScalef(GLfloat x, GLfloat y, GLfloat z)
+CAGLFloatToFixed::glScalef(GLfloat x, GLfloat y, GLfloat z)
 {
   glScalex(gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
+CAGLFloatToFixed::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
   glTranslatex(gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+CAGLFloatToFixed::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
   glVertex4x(gl_fpfromf(x), gl_fpfromf(y), gl_fpfromf(z), gl_fpfromf(w));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
+CAGLFloatToFixed::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
   glColor4x(gl_fpfromf(red), gl_fpfromf(green), gl_fpfromf(blue), gl_fpfromf(alpha));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
+CAGLFloatToFixed::glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 {
   glTexCoord4x(gl_fpfromf(s), gl_fpfromf(t), gl_fpfromf(r), gl_fpfromf(q));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFloatToFxContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
+CAGLFloatToFixed::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 {
   glNormal3x(gl_fpfromf(nx), gl_fpfromf(ny), gl_fpfromf(nz));
 }
@@ -480,35 +424,35 @@ CAGLESFloatToFxContext::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
+CAGLFixedToFloat::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
   glClearColor(gl_fptof(red), gl_fptof(green), gl_fptof(blue), gl_fptof(alpha));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glClearDepthx(GLclampx depth)
+CAGLFixedToFloat::glClearDepthx(GLclampx depth)
 {
   glClearDepthf(gl_fptof(depth));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glDepthRangex(GLclampx zNear, GLclampx zFar)
+CAGLFixedToFloat::glDepthRangex(GLclampx zNear, GLclampx zFar)
 {
   glDepthRangef(gl_fptof(zNear), gl_fptof(zFar));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glFogx(GLenum pname, GLfixed param)
+CAGLFixedToFloat::glFogx(GLenum pname, GLfixed param)
 {
   glFogf(pname, gl_fptof(param));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glFogxv(GLenum pname, const GLfixed *params)
+CAGLFixedToFloat::glFogxv(GLenum pname, const GLfixed *params)
 {
   GLfloat fparams[] = {gl_fptof(params[0])
                      , gl_fptof(params[1])
@@ -520,21 +464,21 @@ CAGLESFxToFloatContext::glFogxv(GLenum pname, const GLfixed *params)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
+CAGLFixedToFloat::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
   glFrustumf(gl_fptof(left), gl_fptof(right), gl_fptof(bottom), gl_fptof(top), gl_fptof(zNear), gl_fptof(zFar));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glLightx(GLenum light, GLenum pname, GLfixed param)
+CAGLFixedToFloat::glLightx(GLenum light, GLenum pname, GLfixed param)
 {
   glLightf(light, pname, gl_fptof(param));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
+CAGLFixedToFloat::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
 {
   GLfloat fparams[] = {gl_fptof(params[0])
                      , gl_fptof(params[1])
@@ -546,7 +490,7 @@ CAGLESFxToFloatContext::glLightxv(GLenum light, GLenum pname, const GLfixed * pa
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glLoadMatrixx(const GLfixed *m)
+CAGLFixedToFloat::glLoadMatrixx(const GLfixed *m)
 {
   GLfloat fparams[] = {gl_fptof(m[0])
                      , gl_fptof(m[1])
@@ -570,14 +514,14 @@ CAGLESFxToFloatContext::glLoadMatrixx(const GLfixed *m)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glMaterialx(GLenum face, GLenum pname, GLfixed param)
+CAGLFixedToFloat::glMaterialx(GLenum face, GLenum pname, GLfixed param)
 {
   glMaterialf(face, pname, gl_fptof(param));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glMaterialxv(GLenum face, GLenum pname, const GLfixed * params)
+CAGLFixedToFloat::glMaterialxv(GLenum face, GLenum pname, const GLfixed * params)
 {
   GLfloat fparams[] = {gl_fptof(params[0])
                      , gl_fptof(params[1])
@@ -589,7 +533,7 @@ CAGLESFxToFloatContext::glMaterialxv(GLenum face, GLenum pname, const GLfixed * 
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glMultMatrixx(const GLfixed *m)
+CAGLFixedToFloat::glMultMatrixx(const GLfixed *m)
 {
   GLfloat fparams[] = {gl_fptof(m[0])
                      , gl_fptof(m[1])
@@ -613,56 +557,56 @@ CAGLESFxToFloatContext::glMultMatrixx(const GLfixed *m)
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
+CAGLFixedToFloat::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
   glOrthof(gl_fptof(left), gl_fptof(right), gl_fptof(bottom), gl_fptof(top), gl_fptof(zNear), gl_fptof(zFar));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
+CAGLFixedToFloat::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
   glRotatef(gl_fptof(angle), gl_fptof(x), gl_fptof(y), gl_fptof(z));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glScalex(GLfixed x, GLfixed y, GLfixed z)
+CAGLFixedToFloat::glScalex(GLfixed x, GLfixed y, GLfixed z)
 {
   glScalef(gl_fptof(x), gl_fptof(y), gl_fptof(z));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
+CAGLFixedToFloat::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
   glTranslatef(gl_fptof(x), gl_fptof(y), gl_fptof(z));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
+CAGLFixedToFloat::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
 {
   glVertex4f(gl_fptof(x), gl_fptof(y), gl_fptof(z), gl_fptof(w));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
+CAGLFixedToFloat::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 {
   glColor4f(gl_fptof(red), gl_fptof(green), gl_fptof(blue), gl_fptof(alpha));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q)
+CAGLFixedToFloat::glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q)
 {
   glTexCoord4f(gl_fptof(s), gl_fptof(t), gl_fptof(r), gl_fptof(q));
 }
 
 //-----------------------------------------------------------------------------
 void
-CAGLESFxToFloatContext::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
+CAGLFixedToFloat::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 {
   glNormal3f(gl_fptof(nx), gl_fptof(ny), gl_fptof(nz));
 }

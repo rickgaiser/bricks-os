@@ -20,7 +20,9 @@
 
 
 #include "GL/gl.h"
+#ifdef __BRICKS__
 #include "GLES/gl.h"
+#endif
 #include "context.h"
 
 
@@ -161,6 +163,7 @@ GL_APIFUNCTION_3(glLightf,             GLenum, light, GLenum, pname, GLfloat, pa
 GL_APIFUNCTION_3(glLightfv,            GLenum, light, GLenum, pname, const GLfloat *, params);
 GL_APIFUNCTION_3(glMaterialf,          GLenum, face, GLenum, pname, GLfloat, param);
 GL_APIFUNCTION_3(glMaterialfv,         GLenum, face, GLenum, pname, const GLfloat *, params);
+GL_APIFUNCTION_2(glColorMaterial,      GLenum, face, GLenum, mode);
 // Raster functions
 // ...
 // Stenciling

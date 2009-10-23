@@ -19,8 +19,8 @@
  */
 
 
-#ifndef SOFTGLF_H
-#define SOFTGLF_H
+#ifndef GL_3DRENDERERFIXED_H
+#define GL_3DRENDERERFIXED_H
 
 
 #include "context.h"
@@ -32,6 +32,7 @@
 #include "kernel/3dRenderer.h"
 #include "glMatrix.h"
 #include "textures.h"
+#include "vhl/fixedPoint.h"
 #include "vhl/vector.h"
 
 #ifdef __BRICKS__
@@ -42,23 +43,27 @@
 
 
 //-----------------------------------------------------------------------------
-class CASoftGLESFloat
- : public virtual CAGLESFxToFloatContext
- , public virtual CAGLESBase
- , public virtual CAGLESMatrixF
+class CSoft3DRendererFixed
+ : public virtual I3DRenderer
+ , public virtual CAGLFloatToFixed
+ , public virtual CAGLErrorHandler
+ , public virtual CAGLBuffers
+ , public virtual CAGLMatrixFixed
 {
 public:
-  CASoftGLESFloat();
-  virtual ~CASoftGLESFloat();
+  CSoft3DRendererFixed();
+  virtual ~CSoft3DRendererFixed();
 
   void setRaster(raster::IRasterizer * rast);
 
   virtual void setSurface(CSurface * surface);
 
   virtual void glAlphaFunc(GLenum func, GLclampf ref);
-  virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-  virtual void glClearDepthf(GLclampf depth);
-  virtual void glDepthRangef(GLclampf zNear, GLclampf zFar);
+  virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
+  virtual void glClearDepthx(GLclampx depth);
+  virtual void glColorMaterial(GLenum face, GLenum mode);
+  virtual void glCullFace(GLenum mode);
+  virtual void glDepthRangex(GLclampx zNear, GLclampx zFar);
   virtual void glDepthFunc(GLenum func);
   virtual void glDepthMask(GLboolean flag);
   virtual void glDisable(GLenum cap);
@@ -66,20 +71,22 @@ public:
   virtual void glEnable(GLenum cap);
   virtual void glFinish(void);
   virtual void glFlush(void);
-  virtual void glFogf(GLenum pname, GLfloat param);
-  virtual void glFogfv(GLenum pname, const GLfloat *params);
-  virtual void glLightf(GLenum light, GLenum pname, GLfloat param);
-  virtual void glLightfv(GLenum light, GLenum pname, const GLfloat * params);
-  virtual void glMaterialf(GLenum face, GLenum pname, GLfloat param);
-  virtual void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params);
+  virtual void glFogx(GLenum pname, GLfixed param);
+  virtual void glFogxv(GLenum pname, const GLfixed *params);
+  virtual void glFrontFace(GLenum mode);
+  virtual void glHint(GLenum target, GLenum mode);
+  virtual void glLightx(GLenum light, GLenum pname, GLfixed param);
+  virtual void glLightxv(GLenum light, GLenum pname, const GLfixed * params);
+  virtual void glMaterialx(GLenum face, GLenum pname, GLfixed param);
+  virtual void glMaterialxv(GLenum face, GLenum pname, const GLfixed *params);
   virtual void glShadeModel(GLenum mode);
 
   virtual void glBegin(GLenum mode);
   virtual void glEnd();
-  virtual void glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-  virtual void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
-  virtual void glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q);
-  virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
+  virtual void glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w);
+  virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
+  virtual void glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q);
+  virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
 
   virtual void glGetFloatv(GLenum pname, GLfloat * params);
   virtual void glBlendFunc(GLenum sfactor, GLenum dfactor);
@@ -100,46 +107,44 @@ public:
 
 protected:
   // Vertex shader
-  virtual void vertexShaderTransform(SVertexF & v);
-  virtual void vertexShaderLight(SVertexF & v);
+  virtual void vertexShaderTransform(SVertexFx & v);
+  virtual void vertexShaderLight(SVertexFx & v);
 
   // Fragment shader
-  virtual void fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2);
-  virtual void fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2);
+  virtual void fragmentCull(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
+  virtual void fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
 
   // Rasterizer
-  virtual void primitiveAssembly(SVertexF & v);
+  virtual void primitiveAssembly(SVertexFx & v);
 
-  virtual void rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit = 0);
-  virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2);
+  virtual void rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2, uint32_t clipBit = 0);
+  virtual void rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2);
 
-  void interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLfloat t);
+  void interpolateVertex(SVertexFx & c, SVertexFx & a, SVertexFx & b, CFixed t);
 
 protected:
   raster::IRasterizer * pRaster_;
 
-  TGLState<GLfloat> state_;
-
-  bool        bSmoothShading_;
+  TGLState<CFixed> state_;
 
   // Vertex transformations
-  GLfloat     xA_;
-  GLfloat     xB_;
-  GLfloat     yA_;
-  GLfloat     yB_;
-  GLfloat     zA_;
-  GLfloat     zB_;
+  CFixed      xA_;
+  CFixed      xB_;
+  CFixed      yA_;
+  CFixed      yB_;
+  CFixed      zA_;
+  CFixed      zB_;
 
   // Primitive assembly
   bool        beginValid_;
   GLenum      rasterMode_;
-  SVertexF    vertices[3];  // Vertex buffer for primitive assembly
-  SVertexF  * triangle_[3]; // Assembled triangle
+  SVertexFx   vertices[3];  // Vertex buffer for primitive assembly
+  SVertexFx * triangle_[3]; // Assembled triangle
   bool        bFlipFlop_;   // Triangle strip
   GLint       vertIdx_;     // Current index into vertex buffer
 
   // Clipping planes
-  TVector4<GLfloat> clipPlane_[6];
+  TVector4<CFixed> clipPlane_[6];
 
   // Rasterizer
   GLint       viewportXOffset;
@@ -149,13 +154,13 @@ protected:
   GLsizei     viewportHeight;
 
 private:
-  void _glDrawArrays(GLenum mode, GLint first, GLsizei count)     FAST_CODE;
-  void _vertexShaderTransform(SVertexF & v)                       FAST_CODE;
-  void _vertexShaderLight(SVertexF & v)                           FAST_CODE;
-  void _fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2) FAST_CODE;
-  void _fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2) FAST_CODE;
-  void _primitiveAssembly(SVertexF & v)                           FAST_CODE;
+  void _glDrawArrays(GLenum mode, GLint first, GLsizei count)        FAST_CODE;
+  void _vertexShaderTransform(SVertexFx & v)                         FAST_CODE;
+  void _vertexShaderLight(SVertexFx & v)                             FAST_CODE;
+  void _fragmentCull(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) FAST_CODE;
+  void _fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2) FAST_CODE;
+  void _primitiveAssembly(SVertexFx & v)                             FAST_CODE;
 };
 
 
-#endif // GL_CONTEXT_H
+#endif // GL_3DRENDERERFIXED_H
