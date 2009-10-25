@@ -11,12 +11,13 @@ OBJS            =\
                 textures \
                 rasterCommon \
                 rasterScanline \
+                mathlib \
 
 
 ifeq ($(CONFIG_FPU),y)
-  OBJS                               += softGLF
+  OBJS                               += 3DRendererFloat
 else
-  OBJS                               += softGLFx
+  OBJS                               += 3DRendererFixed
 endif
 
 
