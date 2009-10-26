@@ -353,7 +353,7 @@ CSoft3DRendererFixed::glDepthMask(GLboolean flag)
 {
   state_.depthTest.mask = flag;
 
-  //pRaster_->depthMask(state_.depthTest.mask);
+  pRaster_->depthMask(state_.depthTest.mask);
 }
 
 //-----------------------------------------------------------------------------

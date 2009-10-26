@@ -166,6 +166,7 @@ public:
   // Depth testing
   virtual void clearDepthf(GLclampf depth) = 0;
   virtual void depthFunc(GLenum func) = 0;
+  virtual void depthMask(GLboolean flag) = 0;
 
   // Textures
   virtual void bindTexture(GLenum target, GLuint texture) = 0;
