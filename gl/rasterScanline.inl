@@ -435,7 +435,7 @@
   #endif
 
   #ifdef RASTER_ENABLE_DEPTH_TEST
-//              if(depthMask_ == true)
+              if(bDepthMask_ == true)
                 *pDepthPixel = zz;
   #endif
               // Write the resulting fragment color to the framebuffer
@@ -443,7 +443,7 @@
             }
 #else
   #ifdef RASTER_ENABLE_DEPTH_TEST
-//              if(depthMask_ == true)
+              if(bDepthMask_ == true)
                 *pDepthPixel = zz;
   #endif
   #ifdef RASTER_DIRECT_FLAT_COLOR

@@ -102,6 +102,7 @@ public:
   // Depth testing
   virtual void clearDepthf(GLclampf depth);
   virtual void depthFunc(GLenum func);
+  virtual void depthMask(GLboolean flag);
 
   // Textures
   virtual void bindTexture(GLenum target, GLuint texture);
@@ -110,6 +111,7 @@ public:
   virtual void texImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * pixels);
   virtual void texParameterf(GLenum target, GLenum pname, GLfloat param);
   virtual void texEnvf(GLenum target, GLenum pname, GLfloat param);
+  virtual void colorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table);
 
   // Blending
   virtual void alphaFunc(GLenum func, GLclampf ref);
@@ -144,6 +146,7 @@ protected:
   GLenum      depthFunction_;
   GLfloat     depthClear_;
   int32_t     zClearValue_;
+  bool        bDepthMask_;
 
   // Textures
   bool        bTexturesEnabled_;

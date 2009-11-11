@@ -123,7 +123,7 @@ GL_APIFUNCTION_0(glFinish);
 GL_APIFUNCTION_0(glFlush);
 GL_APIFUNCTION_2(glHint,               GLenum, target, GLenum, mode);
 // Depth Buffer
-GL_APIFUNCTION_1(glClearDepthf,        GLclampf, depth);
+GL_APIFUNCTION_1(glClearDepth,         GLclampd, depth);
 GL_APIFUNCTION_1(glDepthFunc,          GLenum, func);
 GL_APIFUNCTION_1(glDepthMask,          GLboolean, flag);
 GL_APIFUNCTION_2(glDepthRangef,        GLclampf, zNear, GLclampf, zFar);
@@ -206,8 +206,8 @@ GL_APIFUNCTION_2(glFogx,               GLenum, pname, GLfixed, param);
 GL_APIFUNCTION_2(glFogxv,              GLenum, pname, const GLfixed *, params);
 
 // Wrappers
-GLAPI void APIENTRY glClearDepth(GLclampd depth){
-  glClearDepthf(depth);}
+GLAPI void APIENTRY glClearDepthf(GLclampf depth){
+  glClearDepth(depth);}
 GLAPI void APIENTRY glDepthRange(GLclampd near_val, GLclampd far_val){
   glDepthRangef(near_val, far_val);}
 GLAPI void APIENTRY glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near_val, GLdouble far_val){
@@ -308,3 +308,6 @@ GL_APIFUNCTION_2(glAlphaFunc,          GLenum, func, GLclampf, ref);
 GL_APIFUNCTION_2(glBlendFunc,          GLenum, sfactor, GLenum, dfactor);
 GL_APIFUNCTION_3(glTexEnvf,            GLenum, target, GLenum, pname, GLfloat, param);
 GL_APIFUNCTION_3(glTexEnvfv,           GLenum, target, GLenum, pname, const GLfloat *, params);
+
+// 1.2 imaging extension functions
+GL_APIFUNCTION_6(glColorTable,         GLenum, target, GLenum, internalformat, GLsizei, width, GLenum, format, GLenum, type, const GLvoid *, table);

@@ -198,7 +198,7 @@ CSoft3DRendererFixed::CSoft3DRendererFixed()
   zA_ = ((zsize - 0.5) / 2.0);
   zB_ = ((zsize - 0.5) / 2.0) + (1 << (SHIFT_Z-1));
 
-  beginValid_ = false;
+  bInBeginEnd_ = false;
 
   clipPlane_[0] = TVector4<CFixed>( 1.0,  0.0,  0.0,  1.0); // left
   clipPlane_[1] = TVector4<CFixed>(-1.0,  0.0,  0.0,  1.0); // right
@@ -237,6 +237,12 @@ CSoft3DRendererFixed::setSurface(CSurface * surface)
 void
 CSoft3DRendererFixed::glAlphaFunc(GLenum func, GLclampf ref)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   switch(func)
   {
     case GL_NEVER:
@@ -261,8 +267,118 @@ CSoft3DRendererFixed::glAlphaFunc(GLenum func, GLclampf ref)
 
 //-----------------------------------------------------------------------------
 void
+CSoft3DRendererFixed::glBindTexture(GLenum target, GLuint texture)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  pRaster_->bindTexture(target, texture);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoft3DRendererFixed::glBlendFunc(GLenum sfactor, GLenum dfactor)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  switch(sfactor)
+  {
+    case GL_ZERO:
+    case GL_ONE:
+    case GL_DST_COLOR:
+    case GL_ONE_MINUS_DST_COLOR:
+    case GL_SRC_ALPHA:
+    case GL_ONE_MINUS_SRC_ALPHA:
+    case GL_DST_ALPHA:
+    case GL_ONE_MINUS_DST_ALPHA:
+    //case GL_CONSTANT_COLOR:
+    //case GL_CONSTANT_COLOR_EXT:
+    //case GL_ONE_MINUS_CONSTANT_COLOR:
+    //case GL_ONE_MINUS_CONSTANT_COLOR_EXT:
+    //case GL_CONSTANT_ALPHA:
+    //case GL_CONSTANT_ALPHA_EXT:
+    //case GL_ONE_MINUS_CONSTANT_ALPHA:
+    //case GL_ONE_MINUS_CONSTANT_ALPHA_EXT:
+    //case GL_SRC_ALPHA_SATURATE:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(dfactor)
+  {
+    case GL_ZERO:
+    case GL_ONE:
+    case GL_SRC_COLOR:
+    case GL_ONE_MINUS_SRC_COLOR:
+    case GL_SRC_ALPHA:
+    case GL_ONE_MINUS_SRC_ALPHA:
+    case GL_DST_ALPHA:
+    case GL_ONE_MINUS_DST_ALPHA:
+    //case GL_CONSTANT_COLOR:
+    //case GL_CONSTANT_COLOR_EXT:
+    //case GL_ONE_MINUS_CONSTANT_COLOR:
+    //case GL_ONE_MINUS_CONSTANT_COLOR_EXT:
+    //case GL_CONSTANT_ALPHA:
+    //case GL_CONSTANT_ALPHA_EXT:
+    //case GL_ONE_MINUS_CONSTANT_ALPHA:
+    //case GL_ONE_MINUS_CONSTANT_ALPHA_EXT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  state_.blending.sourceFactor = sfactor;
+  state_.blending.destFactor   = dfactor;
+
+  pRaster_->blendFunc(state_.blending.sourceFactor, state_.blending.destFactor);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoft3DRendererFixed::glClear(GLbitfield mask)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  if(mask &
+     ~(
+        GL_COLOR_BUFFER_BIT
+      | GL_DEPTH_BUFFER_BIT
+      //| GL_ACCUM_BUFFER_BIT
+      //| GL_STENCIL_BUFFER_BIT
+      )
+    )
+  {
+    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  pRaster_->clear(mask);
+}
+
+//-----------------------------------------------------------------------------
+void
 CSoft3DRendererFixed::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   state_.clClear.r.value = mathlib::clamp<GLclampx>(red,   gl_fpfromi(0), gl_fpfromi(1));
   state_.clClear.g.value = mathlib::clamp<GLclampx>(green, gl_fpfromi(0), gl_fpfromi(1));
   state_.clClear.b.value = mathlib::clamp<GLclampx>(blue,  gl_fpfromi(0), gl_fpfromi(1));
@@ -275,6 +391,12 @@ CSoft3DRendererFixed::glClearColorx(GLclampx red, GLclampx green, GLclampx blue,
 void
 CSoft3DRendererFixed::glClearDepthx(GLclampx depth)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   state_.depthTest.clear.value = mathlib::clamp<GLclampx>(depth, gl_fpfromi(0), gl_fpfromi(1));
 
   pRaster_->clearDepthf(state_.depthTest.clear);
@@ -284,6 +406,12 @@ CSoft3DRendererFixed::glClearDepthx(GLclampx depth)
 void
 CSoft3DRendererFixed::glColorMaterial(GLenum face, GLenum mode)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   GLenum * pColorMaterial;
 
   switch(face)
@@ -321,19 +449,61 @@ CSoft3DRendererFixed::glColorMaterial(GLenum face, GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
+CSoft3DRendererFixed::glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table)
+{
+  // NOTE: Parameters validated in rasterizer
+  pRaster_->colorTable(target, internalformat, width, format, type, table);
+}
+
+//-----------------------------------------------------------------------------
+void
 CSoft3DRendererFixed::glCullFace(GLenum mode)
 {
-  state_.culling.mode = mode;
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
 
+  switch(mode)
+  {
+    case GL_FRONT:
+    case GL_BACK:
+    case GL_FRONT_AND_BACK:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  state_.culling.mode = mode;
   state_.culling.cullCW = (state_.culling.front == GL_CCW) == (state_.culling.mode == GL_BACK);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoft3DRendererFixed::glDeleteTextures(GLsizei n, const GLuint *textures)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  pRaster_->deleteTextures(n, textures);
 }
 
 //-----------------------------------------------------------------------------
 void
 CSoft3DRendererFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
 {
-  // FIXME: zA_ and zB_ need to be modified, this function is now useless
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
 
+  // FIXME: zA_ and zB_ need to be modified, this function is now useless
   state_.depthTest.rangeNear.value = mathlib::clamp<GLclampx>(zNear, gl_fpfromi(0), gl_fpfromi(1));
   state_.depthTest.rangeFar.value  = mathlib::clamp<GLclampx>(zFar,  gl_fpfromi(0), gl_fpfromi(1));
 }
@@ -342,6 +512,28 @@ CSoft3DRendererFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
 void
 CSoft3DRendererFixed::glDepthFunc(GLenum func)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  switch(func)
+  {
+    case GL_NEVER:
+    case GL_LESS:
+    case GL_EQUAL:
+    case GL_LEQUAL:
+    case GL_GREATER:
+    case GL_NOTEQUAL:
+    case GL_GEQUAL:
+    case GL_ALWAYS:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
   state_.depthTest.function = func;
 
   pRaster_->depthFunc(state_.depthTest.function);
@@ -351,6 +543,12 @@ CSoft3DRendererFixed::glDepthFunc(GLenum func)
 void
 CSoft3DRendererFixed::glDepthMask(GLboolean flag)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   state_.depthTest.mask = flag;
 
   pRaster_->depthMask(state_.depthTest.mask);
@@ -360,12 +558,28 @@ CSoft3DRendererFixed::glDepthMask(GLboolean flag)
 void
 CSoft3DRendererFixed::glDisable(GLenum cap)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   switch(cap)
   {
     case GL_ALPHA_TEST: state_.alphaTest.enabled = false; pRaster_->enableAlphaTest(false); break;
+    //case GL_AUTO_NORMAL:
     case GL_BLEND:      state_.blending.enabled  = false; pRaster_->enableBlending(false); break;
+    //case GL_CLIP_PLANEi:
+    //case GL_COLOR_ARRAY_EXT:
+    //case GL_COLOR_LOGIC_OP:
     case GL_COLOR_MATERIAL: state_.lighting.materialColorEnabled = false; break;
-    case GL_LIGHTING:   state_.lighting.enabled  = false; break;
+    //case GL_COLOR_SUM_EXT:
+    case GL_CULL_FACE:  state_.culling.enabled   = false; break;
+    case GL_DEPTH_TEST: state_.depthTest.enabled = false; pRaster_->enableDepthTest(false); break;
+    //case GL_DITHER:
+    //case GL_EDGE_FLAG_ARRAY_EXT:
+    case GL_FOG:        state_.fog.enabled       = false; break;
+    //case GL_INDEX_ARRAY_EXT:
     case GL_LIGHT0:     state_.lighting.light[0].enabled = false; break;
     case GL_LIGHT1:     state_.lighting.light[1].enabled = false; break;
     case GL_LIGHT2:     state_.lighting.light[2].enabled = false; break;
@@ -374,11 +588,53 @@ CSoft3DRendererFixed::glDisable(GLenum cap)
     case GL_LIGHT5:     state_.lighting.light[5].enabled = false; break;
     case GL_LIGHT6:     state_.lighting.light[6].enabled = false; break;
     case GL_LIGHT7:     state_.lighting.light[7].enabled = false; break;
-    case GL_DEPTH_TEST: state_.depthTest.enabled = false; pRaster_->enableDepthTest(false); break;
-    case GL_CULL_FACE:  state_.culling.enabled   = false; break;
-    case GL_FOG:        state_.fog.enabled       = false; break;
-    case GL_TEXTURE_2D: state_.texturing.enabled = false; pRaster_->enableTextures(false); break;
+    case GL_LIGHTING:   state_.lighting.enabled  = false; break;
+    //case GL_LINE_SMOOTH:
+    //case GL_LINE_STIPPLE:
+    //case GL_LOGIC_OP:
+    //case GL_MAP1_COLOR_4:
+    //case GL_MAP1_INDEX:
+    //case GL_MAP1_NORMAL:
+    //case GL_MAP1_TEXTURE_COORD_1:
+    //case GL_MAP1_TEXTURE_COORD_2:
+    //case GL_MAP1_TEXTURE_COORD_3:
+    //case GL_MAP1_TEXTURE_COORD_4:
+    //case GL_MAP1_VERTEX_3:
+    //case GL_MAP1_VERTEX_4:
+    //case GL_MAP2_COLOR_4:
+    //case GL_MAP2_INDEX:
+    //case GL_MAP2_NORMAL:
+    //case GL_MAP2_TEXTURE_COORD_1:
+    //case GL_MAP2_TEXTURE_COORD_2:
+    //case GL_MAP2_TEXTURE_COORD_3:
+    //case GL_MAP2_TEXTURE_COORD_4:
+    //case GL_MAP2_VERTEX_3:
+    //case GL_MAP2_VERTEX_4:
+    //case GL_NORMAL_ARRAY_EXT:
     case GL_NORMALIZE:  state_.lighting.normalizeEnabled = false; break;
+    //case GL_POLYGON_OFFSET_EXT:
+    //case GL_POLYGON_OFFSET_FILL:
+    //case GL_POLYGON_OFFSET_LINE:
+    //case GL_POLYGON_OFFSET_POINT:
+    //case GL_POINT_SMOOTH:
+    //case GL_POLYGON_SMOOTH:
+    //case GL_POLYGON_STIPPLE:
+    //case GL_RESCALE_NORMAL:
+    //case GL_RESCALE_NORMAL_EXT:
+    //case GL_SCISSOR_TEST:
+    //case GL_STENCIL_TEST:
+    //case GL_TEXTURE_1D:
+    case GL_TEXTURE_2D: state_.texturing.enabled = false; pRaster_->enableTextures(false); break;
+    //case GL_TEXTURE_3D:
+    //case GL_TEXTURE_3D_EXT:
+    //case GL_TEXTURE_COLOR_TABLE_EXT:
+    //case GL_TEXTURE_COORD_ARRAY_EXT:
+    //case GL_TEXTURE_GEN_Q:
+    //case GL_TEXTURE_GEN_R:
+    //case GL_TEXTURE_GEN_S:
+    //case GL_TEXTURE_GEN_T:
+    //case GL_UPDATE_CLIP_VOLUME_HINT:
+    //case GL_VERTEX_ARRAY_EXT:
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -389,6 +645,36 @@ CSoft3DRendererFixed::glDisable(GLenum cap)
 void
 CSoft3DRendererFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  switch(mode)
+  {
+    //case GL_POINTS:
+    //case GL_LINE_STRIP:
+    //case GL_LINE_LOOP:
+    //case GL_LINES:
+    case GL_TRIANGLE_STRIP:
+    case GL_TRIANGLE_FAN:
+    case GL_TRIANGLES:
+    case GL_QUADS:
+    //case GL_QUAD_STRIP:
+    case GL_POLYGON:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  if(count < 0)
+  {
+    setError(GL_INVALID_VALUE);
+    return;
+  }
+
   _glDrawArrays(mode, first, count);
 }
 
@@ -396,12 +682,28 @@ CSoft3DRendererFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 void
 CSoft3DRendererFixed::glEnable(GLenum cap)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   switch(cap)
   {
     case GL_ALPHA_TEST: state_.alphaTest.enabled = true; pRaster_->enableAlphaTest(true); break;
+    //case GL_AUTO_NORMAL:
     case GL_BLEND:      state_.blending.enabled  = true; pRaster_->enableBlending(true); break;
+    //case GL_CLIP_PLANEi:
+    //case GL_COLOR_ARRAY_EXT:
+    //case GL_COLOR_LOGIC_OP:
     case GL_COLOR_MATERIAL: state_.lighting.materialColorEnabled = true; break;
-    case GL_LIGHTING:   state_.lighting.enabled  = true; break;
+    //case GL_COLOR_SUM_EXT:
+    case GL_CULL_FACE:  state_.culling.enabled   = true; break;
+    case GL_DEPTH_TEST: state_.depthTest.enabled = true; pRaster_->enableDepthTest(true); break;
+    //case GL_DITHER:
+    //case GL_EDGE_FLAG_ARRAY_EXT:
+    case GL_FOG:        state_.fog.enabled       = true; break;
+    //case GL_INDEX_ARRAY_EXT:
     case GL_LIGHT0:     state_.lighting.light[0].enabled = true; break;
     case GL_LIGHT1:     state_.lighting.light[1].enabled = true; break;
     case GL_LIGHT2:     state_.lighting.light[2].enabled = true; break;
@@ -410,11 +712,53 @@ CSoft3DRendererFixed::glEnable(GLenum cap)
     case GL_LIGHT5:     state_.lighting.light[5].enabled = true; break;
     case GL_LIGHT6:     state_.lighting.light[6].enabled = true; break;
     case GL_LIGHT7:     state_.lighting.light[7].enabled = true; break;
-    case GL_DEPTH_TEST: state_.depthTest.enabled = true; pRaster_->enableDepthTest(true); break;
-    case GL_CULL_FACE:  state_.culling.enabled   = true; break;
-    case GL_FOG:        state_.fog.enabled       = true; break;
-    case GL_TEXTURE_2D: state_.texturing.enabled = true; pRaster_->enableTextures(true); break;
+    case GL_LIGHTING:   state_.lighting.enabled  = true; break;
+    //case GL_LINE_SMOOTH:
+    //case GL_LINE_STIPPLE:
+    //case GL_LOGIC_OP:
+    //case GL_MAP1_COLOR_4:
+    //case GL_MAP1_INDEX:
+    //case GL_MAP1_NORMAL:
+    //case GL_MAP1_TEXTURE_COORD_1:
+    //case GL_MAP1_TEXTURE_COORD_2:
+    //case GL_MAP1_TEXTURE_COORD_3:
+    //case GL_MAP1_TEXTURE_COORD_4:
+    //case GL_MAP1_VERTEX_3:
+    //case GL_MAP1_VERTEX_4:
+    //case GL_MAP2_COLOR_4:
+    //case GL_MAP2_INDEX:
+    //case GL_MAP2_NORMAL:
+    //case GL_MAP2_TEXTURE_COORD_1:
+    //case GL_MAP2_TEXTURE_COORD_2:
+    //case GL_MAP2_TEXTURE_COORD_3:
+    //case GL_MAP2_TEXTURE_COORD_4:
+    //case GL_MAP2_VERTEX_3:
+    //case GL_MAP2_VERTEX_4:
+    //case GL_NORMAL_ARRAY_EXT:
     case GL_NORMALIZE:  state_.lighting.normalizeEnabled = true; break;
+    //case GL_POLYGON_OFFSET_EXT:
+    //case GL_POLYGON_OFFSET_FILL:
+    //case GL_POLYGON_OFFSET_LINE:
+    //case GL_POLYGON_OFFSET_POINT:
+    //case GL_POINT_SMOOTH:
+    //case GL_POLYGON_SMOOTH:
+    //case GL_POLYGON_STIPPLE:
+    //case GL_RESCALE_NORMAL:
+    //case GL_RESCALE_NORMAL_EXT:
+    //case GL_SCISSOR_TEST:
+    //case GL_STENCIL_TEST:
+    //case GL_TEXTURE_1D:
+    case GL_TEXTURE_2D: state_.texturing.enabled = true; pRaster_->enableTextures(true); break;
+    //case GL_TEXTURE_3D:
+    //case GL_TEXTURE_3D_EXT:
+    //case GL_TEXTURE_COLOR_TABLE_EXT:
+    //case GL_TEXTURE_COORD_ARRAY_EXT:
+    //case GL_TEXTURE_GEN_Q:
+    //case GL_TEXTURE_GEN_R:
+    //case GL_TEXTURE_GEN_S:
+    //case GL_TEXTURE_GEN_T:
+    //case GL_UPDATE_CLIP_VOLUME_HINT:
+    //case GL_VERTEX_ARRAY_EXT:
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -425,6 +769,12 @@ CSoft3DRendererFixed::glEnable(GLenum cap)
 void
 CSoft3DRendererFixed::glFinish(void)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   //pRaster_->finish();
 }
 
@@ -432,6 +782,12 @@ CSoft3DRendererFixed::glFinish(void)
 void
 CSoft3DRendererFixed::glFlush(void)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   flush();
 
   pRaster_->flush();
@@ -441,14 +797,37 @@ CSoft3DRendererFixed::glFlush(void)
 void
 CSoft3DRendererFixed::glFogx(GLenum pname, GLfixed param)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   bool bUpdateScale = false;
 
   switch(pname)
   {
-    case GL_FOG_DENSITY: state_.fog.density.value = param; break;
-    case GL_FOG_START:   state_.fog.start.value   = param; bUpdateScale = true; break;
-    case GL_FOG_END:     state_.fog.end.value     = param; bUpdateScale = true; break;
-    case GL_FOG_MODE:    state_.fog.mode          = param; break;
+    case GL_FOG_DENSITY:
+      if(param < 0)
+      {
+        setError(GL_INVALID_VALUE);
+        return;
+      }
+      state_.fog.density.value = param;
+      break;
+    case GL_FOG_START:
+      state_.fog.start.value = param;
+      bUpdateScale = true;
+      break;
+    case GL_FOG_END:
+      state_.fog.end.value = param;
+      bUpdateScale = true;
+      break;
+    case GL_FOG_MODE:
+      state_.fog.mode = param;
+      break;
+    //case GL_FOG_INDEX:
+    //case GL_FOG_COORDINATE_SOURCE_EXT:
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -459,26 +838,47 @@ CSoft3DRendererFixed::glFogx(GLenum pname, GLfixed param)
     if((state_.fog.end - state_.fog.start) != 0)
       state_.fog.linear_scale.value = gl_fpinverse((state_.fog.end - state_.fog.start).value);
   }
+
+  // FIXME: We assume fogging in the vertex shader, fogging in the fragment shader not possible.
+  //pRaster_->fogf(pname, param);
 }
 
 //-----------------------------------------------------------------------------
 void
 CSoft3DRendererFixed::glFogxv(GLenum pname, const GLfixed * params)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   bool bUpdateScale = false;
 
   switch(pname)
   {
-    case GL_FOG_DENSITY: state_.fog.density.value = params[0]; break;
-    case GL_FOG_START:   state_.fog.start.value   = params[0]; bUpdateScale = true; break;
-    case GL_FOG_END:     state_.fog.end.value     = params[0]; bUpdateScale = true; break;
-    case GL_FOG_MODE:    state_.fog.mode          = params[0]; break;
+    case GL_FOG_DENSITY:
+      state_.fog.density.value = params[0];
+      break;
+    case GL_FOG_START:
+      state_.fog.start.value = params[0];
+      bUpdateScale = true;
+      break;
+    case GL_FOG_END:
+      state_.fog.end.value = params[0];
+      bUpdateScale = true;
+      break;
+    case GL_FOG_MODE:
+      state_.fog.mode = params[0];
+      break;
     case GL_FOG_COLOR:
       state_.fog.color.r.value = params[0];
       state_.fog.color.g.value = params[1];
       state_.fog.color.b.value = params[2];
       state_.fog.color.a.value = params[3];
       break;
+    //case GL_FOG_INDEX:
+    //case GL_FOG_COORDINATE_SOURCE_EXT:
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -489,21 +889,123 @@ CSoft3DRendererFixed::glFogxv(GLenum pname, const GLfixed * params)
     if((state_.fog.end - state_.fog.start) != 0)
       state_.fog.linear_scale.value = gl_fpinverse((state_.fog.end - state_.fog.start).value);
   }
+
+  // FIXME: We assume fogging in the vertex shader, fogging in the fragment shader not possible.
+  //pRaster_->fogfv(pname, params);
 }
 
 //-----------------------------------------------------------------------------
 void
 CSoft3DRendererFixed::glFrontFace(GLenum mode)
 {
-  state_.culling.front = mode;
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
 
+  switch(mode)
+  {
+    case GL_CW:
+    case GL_CCW:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  state_.culling.front = mode;
   state_.culling.cullCW = (state_.culling.front == GL_CCW) == (state_.culling.mode == GL_BACK);
 }
 
 //-----------------------------------------------------------------------------
 void
+CSoft3DRendererFixed::glGenTextures(GLsizei n, GLuint *textures)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  pRaster_->genTextures(n, textures);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoft3DRendererFixed::glGetFloatv(GLenum pname, GLfloat * params)
+{
+  // Return 4x4 matrix
+#ifdef ROW_MAJOR
+  #define GL_GET_MATRIX_COPY(matrix) \
+    for(int i(0); i < 4; i++) \
+      for(int j(0); j < 4; j++) \
+        params[i*4+j] = matrix[j*4+i]
+#else
+  #define GL_GET_MATRIX_COPY(matrix) \
+    for(int i(0); i < 16; i++) \
+      params[i] = matrix[i]
+#endif
+
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  switch(pname)
+  {
+    case GL_MATRIX_MODE:
+      params[0] = matrixMode_;
+      break;
+    case GL_MODELVIEW_MATRIX:
+      {
+        GL_GET_MATRIX_COPY(pCurrentModelView_->matrix);
+      }
+      break;
+    case GL_MAX_MODELVIEW_STACK_DEPTH:
+    case GL_MODELVIEW_STACK_DEPTH:
+      {
+        params[0] = GL_MATRIX_MODELVIEW_STACK_SIZE;
+      }
+      break;
+    case GL_PROJECTION_MATRIX:
+      {
+        GL_GET_MATRIX_COPY(pCurrentProjection_->matrix);
+      }
+      break;
+    case GL_MAX_PROJECTION_STACK_DEPTH:
+    case GL_PROJECTION_STACK_DEPTH:
+      {
+        params[0] = GL_MATRIX_PROJECTION_STACK_SIZE;
+      }
+      break;
+    case GL_TEXTURE_MATRIX:
+      {
+        GL_GET_MATRIX_COPY(pCurrentTexture_->matrix);
+      }
+      break;
+    case GL_MAX_TEXTURE_STACK_DEPTH:
+    case GL_TEXTURE_STACK_DEPTH:
+      params[0] = GL_MATRIX_TEXTURE_STACK_SIZE;
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+}
+
+//-----------------------------------------------------------------------------
+// NOTE: No hints are used
+void
 CSoft3DRendererFixed::glHint(GLenum target, GLenum mode)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   GLenum * pHint;
 
   switch(target)
@@ -520,6 +1022,8 @@ CSoft3DRendererFixed::glHint(GLenum target, GLenum mode)
     case GL_POINT_SMOOTH_HINT:
       pHint = &state_.hints.pointSmooth;
       break;
+    //case GL_POLYGON_SMOOTH_HINT:
+    //case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -528,9 +1032,7 @@ CSoft3DRendererFixed::glHint(GLenum target, GLenum mode)
   switch(mode)
   {
     case GL_FASTEST:
-      break;
     case GL_NICEST:
-      break;
     case GL_DONT_CARE:
       break;
     default:
@@ -545,12 +1047,52 @@ CSoft3DRendererFixed::glHint(GLenum target, GLenum mode)
 void
 CSoft3DRendererFixed::glLightx(GLenum light, GLenum pname, GLfixed param)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  TLight<CFixed> * pLight = 0;
+  switch(light)
+  {
+    case GL_LIGHT0: pLight = &state_.lighting.light[0]; break;
+    case GL_LIGHT1: pLight = &state_.lighting.light[1]; break;
+    case GL_LIGHT2: pLight = &state_.lighting.light[2]; break;
+    case GL_LIGHT3: pLight = &state_.lighting.light[3]; break;
+    case GL_LIGHT4: pLight = &state_.lighting.light[4]; break;
+    case GL_LIGHT5: pLight = &state_.lighting.light[5]; break;
+    case GL_LIGHT6: pLight = &state_.lighting.light[6]; break;
+    case GL_LIGHT7: pLight = &state_.lighting.light[7]; break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  }
+
+  switch(pname)
+  {
+    //case GL_SPOT_EXPONENT:
+    //case GL_SPOT_CUTOFF:
+    //case GL_CONSTANT_ATTENUATION:
+    //case GL_LINEAR_ATTENUATION:
+    //case GL_QUADRATIC_ATTENUATION:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
 }
 
 //-----------------------------------------------------------------------------
 void
 CSoft3DRendererFixed::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
   TLight<CFixed> * pLight = 0;
   switch(light)
   {
@@ -580,6 +1122,12 @@ CSoft3DRendererFixed::glLightxv(GLenum light, GLenum pname, const GLfixed * para
       pLight->position.w.value = params[3];
       pLight->positionNormal = pLight->position.getNormalized();
       return;
+    //case GL_SPOT_DIRECTION:
+    //case GL_SPOT_EXPONENT:
+    //case GL_SPOT_CUTOFF:
+    //case GL_CONSTANT_ATTENUATION:
+    //case GL_LINEAR_ATTENUATION:
+    //case GL_QUADRATIC_ATTENUATION:
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -617,6 +1165,11 @@ CSoft3DRendererFixed::glMaterialx(GLenum face, GLenum pname, GLfixed param)
   switch(pname)
   {
     case GL_SHININESS:
+      if((param < 0) || (param > 128))
+      {
+        setError(GL_INVALID_VALUE);
+        return;
+      }
       pMaterial->shininess.value = param;
       break;
     default:
@@ -675,6 +1228,11 @@ CSoft3DRendererFixed::glMaterialxv(GLenum face, GLenum pname, const GLfixed *par
       pMaterial->emission.a.value = params[3];
       break;
     case GL_SHININESS:
+      if((params[0] < 0) || (params[0] > 128))
+      {
+        setError(GL_INVALID_VALUE);
+        return;
+      }
       pMaterial->shininess.value = params[0];
       break;
     case GL_AMBIENT_AND_DIFFUSE:
@@ -687,6 +1245,7 @@ CSoft3DRendererFixed::glMaterialxv(GLenum face, GLenum pname, const GLfixed *par
       pMaterial->diffuse.b.value = params[2];
       pMaterial->diffuse.a.value = params[3];
       break;
+    //case GL_COLOR_INDEXES:
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -697,6 +1256,22 @@ CSoft3DRendererFixed::glMaterialxv(GLenum face, GLenum pname, const GLfixed *par
 void
 CSoft3DRendererFixed::glShadeModel(GLenum mode)
 {
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  switch(mode)
+  {
+    case GL_FLAT:
+    case GL_SMOOTH:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
   state_.shadingModel = mode;
   state_.smoothShading = (state_.shadingModel == GL_SMOOTH);
 
@@ -705,9 +1280,252 @@ CSoft3DRendererFixed::glShadeModel(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
+CSoft3DRendererFixed::glTexEnvf(GLenum target, GLenum pname, GLfloat param)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  switch(target)
+  {
+    case GL_TEXTURE_ENV:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(pname)
+  {
+    case GL_TEXTURE_ENV_MODE:
+      switch((GLenum)param)
+      {
+        case GL_MODULATE:
+        case GL_DECAL:
+        case GL_BLEND:
+        //case GL_COMBINE_EXT:
+        case GL_ADD:
+        case GL_REPLACE:
+        //case GL_ADD_SIGNED_EXT:
+        //case GL_INTERPOLATE_EXT:
+          break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      state_.texturing.envMode = (GLenum)param;
+      break;
+    //case GL_COMBINE_RGB_EXT:
+    //case GL_COMBINE_ALPHA_EXT:
+    //case GL_SOURCE0_RGB_EXT:
+    //case GL_SOURCE1_RGB_EXT:
+    //case GL_SOURCE2_RGB_EXT:
+    //case GL_SOURCE0_ALPHA_EXT:
+    //case GL_SOURCE1_ALPHA_EXT:
+    //case GL_SOURCE2_ALPHA_EXT:
+    //case GL_OPERAND0_RGB_EXT:
+    //case GL_OPERAND1_RGB_EXT:
+    //case GL_OPERAND2_RGB_EXT:
+    //case GL_OPERAND0_ALPHA_EXT:
+    //case GL_OPERAND1_ALPHA_EXT:
+    //case GL_OPERAND2_ALPHA_EXT:
+    //case GL_RGB_SCALE_EXT:
+    //case GL_ALPHA_SCALE:
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  }
+
+  pRaster_->texEnvf(target, pname, param);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoft3DRendererFixed::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  switch(target)
+  {
+    case GL_TEXTURE_ENV:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(pname)
+  {
+    case GL_TEXTURE_ENV_MODE:
+      switch((GLenum)params[0])
+      {
+        case GL_MODULATE:
+        case GL_DECAL:
+        case GL_BLEND:
+        //case GL_COMBINE_EXT:
+        case GL_ADD:
+        case GL_REPLACE:
+        //case GL_ADD_SIGNED_EXT:
+        //case GL_INTERPOLATE_EXT:
+          break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      state_.texturing.envMode = (GLenum)params[0];
+      break;
+    case GL_TEXTURE_ENV_COLOR:
+      state_.texturing.envColor.r = params[0];
+      state_.texturing.envColor.g = params[1];
+      state_.texturing.envColor.b = params[2];
+      state_.texturing.envColor.a = params[3];
+      break;
+    //case GL_COMBINE_RGB_EXT:
+    //case GL_COMBINE_ALPHA_EXT:
+    //case GL_SOURCE0_RGB_EXT:
+    //case GL_SOURCE1_RGB_EXT:
+    //case GL_SOURCE2_RGB_EXT:
+    //case GL_SOURCE0_ALPHA_EXT:
+    //case GL_SOURCE1_ALPHA_EXT:
+    //case GL_SOURCE2_ALPHA_EXT:
+    //case GL_OPERAND0_RGB_EXT:
+    //case GL_OPERAND1_RGB_EXT:
+    //case GL_OPERAND2_RGB_EXT:
+    //case GL_OPERAND0_ALPHA_EXT:
+    //case GL_OPERAND1_ALPHA_EXT:
+    //case GL_OPERAND2_ALPHA_EXT:
+    //case GL_RGB_SCALE_EXT:
+    //case GL_ALPHA_SCALE:
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  // FIXME: Implement glTexEnvfv in rasterizer
+  //pRaster_->texEnvfv(target, pname, params);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoft3DRendererFixed::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  // NOTE: Parameters validated in rasterizer
+  pRaster_->texImage2D(target, level, internalformat, width, height, border, format, type, pixels);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoft3DRendererFixed::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  // NOTE: Parameters validated in rasterizer
+  pRaster_->texParameterf(target, pname, param);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoft3DRendererFixed::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  // NOTE: Parameters validated in rasterizer
+  pRaster_->texParameterf(target, pname, gl_fptof(param));
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoft3DRendererFixed::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  // FIXME: Implement glTexSubImage2D
+  //pRaster_->texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
+}
+
+//-----------------------------------------------------------------------------
+void
+CSoft3DRendererFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
+{
+  if(bInBeginEnd_ == true)
+  {
+    setError(GL_INVALID_OPERATION);
+    return;
+  }
+
+  if((width < 0) || (height < 0))
+  {
+    setError(GL_INVALID_VALUE);
+    return;
+  }
+
+  pRaster_->viewport(x, y, width, height);
+
+  viewportXOffset    = x;
+  viewportYOffset    = y;
+  viewportWidth      = width;
+  viewportHeight     = height;
+  viewportPixelCount = width * height;
+
+  xA_ =     (viewportWidth  >> 1);
+  xB_ = x + (viewportWidth  >> 1);
+  yA_ =     (viewportHeight >> 1);
+  yB_ = y + (viewportHeight >> 1);
+
+  // FIXME:
+  yA_  = 0-yA_;
+  xB_ -= x;
+  yB_ -= y;
+
+  // Use fixed point format for xy
+//  xA_ *= (1<<SHIFT_XY);
+//  xB_ *= (1<<SHIFT_XY);
+//  yA_ *= (1<<SHIFT_XY);
+//  yB_ *= (1<<SHIFT_XY);
+}
+
+//-----------------------------------------------------------------------------
+// (OpenGL 1.2) Accepted functions within glBegin/glEnd:
+//  - glVertex
+//  - glColor
+//  - glIndex
+//  - glNormal
+//  - glTexCoord
+//  - glEvalCoord
+//  - glEvalPoint
+//  - glMaterial
+//  - glEdgeFlag
+//  - glCallList
+//  - glCallLists
+//-----------------------------------------------------------------------------
+void
 CSoft3DRendererFixed::glBegin(GLenum mode)
 {
-  if(beginValid_ == true)
+  if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
     return;
@@ -725,13 +1543,13 @@ CSoft3DRendererFixed::glBegin(GLenum mode)
     case GL_QUADS:
 //    case GL_QUAD_STRIP:
     case GL_POLYGON:
-      beginValid_ = true;
       break;
     default:
       setError(GL_INVALID_ENUM);
       return;
   }
 
+  bInBeginEnd_ = true;
   rasterMode_ = mode;
 
   // Initialize for default triangle
@@ -748,13 +1566,13 @@ CSoft3DRendererFixed::glBegin(GLenum mode)
 void
 CSoft3DRendererFixed::glEnd()
 {
-  if(beginValid_ == false)
+  if(bInBeginEnd_ == false)
   {
     setError(GL_INVALID_OPERATION);
     return;
   }
 
-  beginValid_ = false;
+  bInBeginEnd_ = false;
 
   pRaster_->end();
 }
@@ -763,9 +1581,10 @@ CSoft3DRendererFixed::glEnd()
 void
 CSoft3DRendererFixed::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
 {
-  if(beginValid_ == false)
+  if(bInBeginEnd_ == false)
   {
-    setError(GL_INVALID_OPERATION);
+    // No error, but undefined behaviour
+    //setError(GL_INVALID_OPERATION);
     return;
   }
 
@@ -819,149 +1638,6 @@ CSoft3DRendererFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 
   if(state_.lighting.normalizeEnabled == true)
     state_.lighting.normal.normalize();
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glGetFloatv(GLenum pname, GLfloat * params)
-{
-  // Return 4x4 matrix
-#ifdef ROW_MAJOR
-  #define GL_GET_MATRIX_COPY(matrix) \
-    for(int i(0); i < 4; i++) \
-      for(int j(0); j < 4; j++) \
-        params[i*4+j] = matrix[j*4+i]
-#else
-  #define GL_GET_MATRIX_COPY(matrix) \
-    for(int i(0); i < 16; i++) \
-      params[i] = matrix[i]
-#endif
-
-  switch(pname)
-  {
-    case GL_MATRIX_MODE:
-    {
-      params[0] = matrixMode_;
-      break;
-    }
-    case GL_MODELVIEW_MATRIX:
-    {
-      GL_GET_MATRIX_COPY(pCurrentModelView_->matrix);
-      break;
-    }
-    case GL_MAX_MODELVIEW_STACK_DEPTH:
-    case GL_MODELVIEW_STACK_DEPTH:
-    {
-      params[0] = GL_MATRIX_MODELVIEW_STACK_SIZE;
-      break;
-    }
-    case GL_PROJECTION_MATRIX:
-    {
-      GL_GET_MATRIX_COPY(pCurrentProjection_->matrix);
-      break;
-    }
-    case GL_MAX_PROJECTION_STACK_DEPTH:
-    case GL_PROJECTION_STACK_DEPTH:
-    {
-      params[0] = GL_MATRIX_PROJECTION_STACK_SIZE;
-      break;
-    }
-    case GL_TEXTURE_MATRIX:
-    {
-      GL_GET_MATRIX_COPY(pCurrentTexture_->matrix);
-      break;
-    }
-    case GL_MAX_TEXTURE_STACK_DEPTH:
-    case GL_TEXTURE_STACK_DEPTH:
-    {
-      params[0] = GL_MATRIX_TEXTURE_STACK_SIZE;
-      break;
-    }
-    default:
-      setError(GL_INVALID_ENUM);
-  };
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glBlendFunc(GLenum sfactor, GLenum dfactor)
-{
-  state_.blending.sourceFactor = sfactor;
-  state_.blending.destFactor   = dfactor;
-
-  pRaster_->blendFunc(state_.blending.sourceFactor, state_.blending.destFactor);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glTexEnvf(GLenum target, GLenum pname, GLfloat param)
-{
-  if(target != GL_TEXTURE_ENV)
-  {
-    setError(GL_INVALID_ENUM);
-    return;
-  }
-  if(pname != GL_TEXTURE_ENV_MODE)
-  {
-    setError(GL_INVALID_ENUM);
-    return;
-  }
-
-  switch((GLenum)param)
-  {
-    case GL_MODULATE:
-    case GL_DECAL:
-    case GL_BLEND:
-    case GL_REPLACE:
-      state_.texturing.envMode = (GLenum)param;
-      break;
-    default:
-      setError(GL_INVALID_ENUM);
-      return;
-  };
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
-{
-  if(target != GL_TEXTURE_ENV)
-  {
-    setError(GL_INVALID_ENUM);
-    return;
-  }
-  if((pname != GL_TEXTURE_ENV_MODE) && (pname != GL_TEXTURE_ENV_COLOR))
-  {
-    setError(GL_INVALID_ENUM);
-    return;
-  }
-
-  switch(pname)
-  {
-    case GL_TEXTURE_ENV_MODE:
-      switch((GLenum)params[0])
-      {
-        case GL_MODULATE:
-        case GL_DECAL:
-        case GL_BLEND:
-        case GL_REPLACE:
-          state_.texturing.envMode = (GLenum)params[0];
-          break;
-        default:
-          setError(GL_INVALID_ENUM);
-          return;
-      };
-      break;
-    case GL_TEXTURE_ENV_COLOR:
-      state_.texturing.envColor.r = params[0];
-      state_.texturing.envColor.g = params[1];
-      state_.texturing.envColor.b = params[2];
-      state_.texturing.envColor.a = params[3];
-      break;
-    default:
-      setError(GL_INVALID_ENUM);
-      return;
-  };
 }
 
 //-----------------------------------------------------------------------------
@@ -1619,88 +2295,4 @@ CSoft3DRendererFixed::rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx &
   //vtx2.t.v = v2.t[1];
 
   pRaster_->rasterTriangle(vtx0, vtx1, vtx2);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glBindTexture(GLenum target, GLuint texture)
-{
-  pRaster_->bindTexture(target, texture);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glDeleteTextures(GLsizei n, const GLuint *textures)
-{
-  pRaster_->deleteTextures(n, textures);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glGenTextures(GLsizei n, GLuint *textures)
-{
-  pRaster_->genTextures(n, textures);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
-{
-  pRaster_->texImage2D(target, level, internalformat, width, height, border, format, type, pixels);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
-{
-  pRaster_->texParameterf(target, pname, param);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
-{
-  pRaster_->texParameterf(target, pname, gl_fptof(param));
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels)
-{
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glClear(GLbitfield mask)
-{
-  pRaster_->clear(mask);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-  pRaster_->viewport(x, y, width, height);
-
-  viewportXOffset    = x;
-  viewportYOffset    = y;
-  viewportWidth      = width;
-  viewportHeight     = height;
-  viewportPixelCount = width * height;
-
-  xA_ =     (viewportWidth  >> 1);
-  xB_ = x + (viewportWidth  >> 1);
-  yA_ =     (viewportHeight >> 1);
-  yB_ = y + (viewportHeight >> 1);
-
-  // FIXME:
-  yA_  = 0-yA_;
-  xB_ -= x;
-  yB_ -= y;
-
-  // Use fixed point format for xy
-//  xA_ *= (1<<SHIFT_XY);
-//  xB_ *= (1<<SHIFT_XY);
-//  yA_ *= (1<<SHIFT_XY);
-//  yB_ *= (1<<SHIFT_XY);
 }

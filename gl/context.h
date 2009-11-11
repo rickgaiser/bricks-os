@@ -162,7 +162,7 @@ public:
   virtual ~CAGLFloatToFixed(){}
 
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-  virtual void glClearDepthf(GLclampf depth);
+  virtual void glClearDepth(GLclampd depth);
   virtual void glDepthRangef(GLclampf zNear, GLclampf zFar);
   virtual void glFogf(GLenum pname, GLfloat param);
   virtual void glFogfv(GLenum pname, const GLfloat *params);

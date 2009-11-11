@@ -239,9 +239,9 @@ CAGLFloatToFixed::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLcl
 
 //-----------------------------------------------------------------------------
 void
-CAGLFloatToFixed::glClearDepthf(GLclampf depth)
+CAGLFloatToFixed::glClearDepth(GLclampd depth)
 {
-  glClearDepthx(gl_fpfromf(depth));
+  glClearDepthx(gl_fpfromd(depth));
 }
 
 //-----------------------------------------------------------------------------
@@ -433,7 +433,7 @@ CAGLFixedToFloat::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLc
 void
 CAGLFixedToFloat::glClearDepthx(GLclampx depth)
 {
-  glClearDepthf(gl_fptof(depth));
+  glClearDepth(gl_fptof(depth));
 }
 
 //-----------------------------------------------------------------------------

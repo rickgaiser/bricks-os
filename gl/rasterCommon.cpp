@@ -33,6 +33,10 @@
 #include "mathlib.h"
 
 
+// FIXME
+#define setError(x)
+
+
 #ifdef ENABLE_PROFILING
 CTimeProfiler prof_render("render");
 CTimeProfiler prof_clear ("clear");
@@ -53,6 +57,7 @@ CASoftRasterizer::CASoftRasterizer()
  , depthFunction_(GL_LESS)
  , depthClear_(1.0f)
  , zClearValue_((1<<DEPTH_Z)-1)
+ , bDepthMask_(true)
  , bTexturesEnabled_(false)
  , texEnvMode_(GL_MODULATE)
  , pCurrentTex_(NULL)
@@ -133,8 +138,7 @@ CASoftRasterizer::enableAlphaTest(bool enable)
 void
 CASoftRasterizer::clearDepthf(GLclampf depth)
 {
-  depthClear_ = mathlib::clamp<GLclampf>(depth, 0.0f, 1.0f);
-
+  depthClear_ = depth;
   zClearValue_ = (int32_t)(depthClear_ * ((1<<DEPTH_Z)-1));
 }
 
@@ -147,16 +151,32 @@ CASoftRasterizer::depthFunc(GLenum func)
 
 //-----------------------------------------------------------------------------
 void
+CASoftRasterizer::depthMask(GLboolean flag)
+{
+  bDepthMask_ = flag;
+}
+
+//-----------------------------------------------------------------------------
+void
 CASoftRasterizer::bindTexture(GLenum target, GLuint texture)
 {
-  if(target != GL_TEXTURE_2D)
+  pCurrentTex_ = NULL;
+
+  switch(target)
   {
-//    setError(GL_INVALID_ENUM);
-    return;
-  }
+    //case GL_TEXTURE_1D:
+    case GL_TEXTURE_2D:
+    //case GL_TEXTURE_3D:
+    //case GL_TEXTURE_3D_EXT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
   if((texture >= MAX_TEXTURE_COUNT) || (textures_[texture] == NULL))
   {
-//    setError(GL_INVALID_VALUE);
+    setError(GL_INVALID_VALUE);
     return;
   }
 
@@ -169,14 +189,24 @@ CASoftRasterizer::deleteTextures(GLsizei n, const GLuint *textures)
 {
   if(n < 0)
   {
-//    setError(GL_INVALID_VALUE);
+    setError(GL_INVALID_VALUE);
     return;
   }
 
   for(GLsizei i(0); i < n; i++)
+  {
     if(textures[i] < MAX_TEXTURE_COUNT)
+    {
       if(textures_[textures[i]] != NULL)
+      {
         delete textures_[textures[i]];
+
+        if(pCurrentTex_ == textures_[textures[i]])
+          pCurrentTex_ = NULL;
+        textures_[textures[i]] = NULL;
+      }
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -185,7 +215,7 @@ CASoftRasterizer::genTextures(GLsizei n, GLuint *textures)
 {
   if(n < 0)
   {
-//    setError(GL_INVALID_VALUE);
+    setError(GL_INVALID_VALUE);
     return;
   }
 
@@ -214,82 +244,191 @@ CASoftRasterizer::genTextures(GLsizei n, GLuint *textures)
 void
 CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
-  if(target != GL_TEXTURE_2D)
+  unsigned int iWidthLog2;
+  unsigned int iHeightLog2;
+  bool bAlpha;
+
+  if(pCurrentTex_ == NULL)
   {
-//    setError(GL_INVALID_ENUM);
-    return;
-  }
-  if(level < 0)
-  {
-//    setError(GL_INVALID_VALUE);
-    return;
-  }
-//  if((GLint)format != internalformat)
-//  {
-//    setError(GL_INVALID_OPERATION);
-//    return;
-//  }
-  if(((format != GL_RGB) && (format != GL_BGR)) &&
-     ((type == GL_UNSIGNED_SHORT_5_6_5) ||
-      (type == GL_UNSIGNED_SHORT_5_6_5_REV)))
-  {
-//    setError(GL_INVALID_OPERATION);
-    return;
-  }
-  if(((format != GL_RGBA) && (format != GL_BGRA)) &&
-     ((type == GL_UNSIGNED_SHORT_4_4_4_4) ||
-      (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) ||
-      (type == GL_UNSIGNED_SHORT_5_5_5_1) ||
-      (type == GL_UNSIGNED_SHORT_1_5_5_5_REV)))
-  {
-//    setError(GL_INVALID_OPERATION);
+    setError(GL_INVALID_OPERATION);
     return;
   }
 
-  if((pCurrentTex_ == 0) || (renderSurface == 0))
+  switch(target)
   {
-//    setError(GL_INVALID_OPERATION);
+    case GL_TEXTURE_2D:
+    //case GL_PROXY_TEXTURE_2D:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  if(level < 0)
+  {
+    setError(GL_INVALID_VALUE);
     return;
   }
+
+  switch(internalformat)
+  {
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    //case GL_ABGR_EXT:
+    //case GL_ALPHA:
+    //case GL_ALPHA4:
+    //case GL_ALPHA8:
+    //case GL_ALPHA12:
+    //case GL_ALPHA16:
+    //case GL_LUMINANCE:
+    //case GL_LUMINANCE4:
+    //case GL_LUMINANCE8:
+    //case GL_LUMINANCE12:
+    //case GL_LUMINANCE16:
+    //case GL_LUMINANCE_ALPHA:
+    //case GL_LUMINANCE4_ALPHA4:
+    //case GL_LUMINANCE6_ALPHA2:
+    //case GL_LUMINANCE8_ALPHA8:
+    //case GL_LUMINANCE12_ALPHA4:
+    //case GL_LUMINANCE12_ALPHA12:
+    //case GL_LUMINANCE16_ALPHA16:
+    //case GL_INTENSITY:
+    //case GL_INTENSITY4:
+    //case GL_INTENSITY8:
+    //case GL_INTENSITY12:
+    //case GL_INTENSITY16:
+    case GL_R3_G3_B2:
+    case GL_RGB:
+    case GL_RGB4:
+    case GL_RGB5:
+    case GL_RGB8:
+    case GL_RGB10:
+    case GL_RGB12:
+    case GL_RGB16:
+    case GL_RGBA:
+    case GL_RGBA2:
+    case GL_RGBA4:
+    case GL_RGB5_A1:
+    case GL_RGBA8:
+    case GL_RGB10_A2:
+    case GL_RGBA12:
+    case GL_RGBA16:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(width)
+  {
+    //case    1: iWidthLog2 =  0; break;
+    //case    2: iWidthLog2 =  1; break;
+    //case    4: iWidthLog2 =  2; break;
+    case    8: iWidthLog2 =  3; break;
+    case   16: iWidthLog2 =  4; break;
+    case   32: iWidthLog2 =  5; break;
+    case   64: iWidthLog2 =  6; break;
+    case  128: iWidthLog2 =  7; break;
+    case  256: iWidthLog2 =  8; break;
+    case  512: iWidthLog2 =  9; break;
+    case 1024: iWidthLog2 = 10; break;
+    default:
+      setError(GL_INVALID_VALUE);
+      return;
+  };
+
+  switch(height)
+  {
+    //case    1: iHeightLog2 =  0; break;
+    //case    2: iHeightLog2 =  1; break;
+    //case    4: iHeightLog2 =  2; break;
+    case    8: iHeightLog2 =  3; break;
+    case   16: iHeightLog2 =  4; break;
+    case   32: iHeightLog2 =  5; break;
+    case   64: iHeightLog2 =  6; break;
+    case  128: iHeightLog2 =  7; break;
+    case  256: iHeightLog2 =  8; break;
+    case  512: iHeightLog2 =  9; break;
+    case 1024: iHeightLog2 = 10; break;
+    default:
+      setError(GL_INVALID_VALUE);
+      return;
+  };
+
+  switch(border)
+  {
+    case 0:
+    case 1:
+      break;
+    default:
+      setError(GL_INVALID_VALUE);
+      return;
+  };
+
+  switch(format)
+  {
+    //case GL_COLOR_INDEX:
+    //case GL_RED:
+    //case GL_GREEN:
+    //case GL_BLUE:
+    //case GL_ALPHA:
+    case GL_RGB:      bAlpha = false; break;
+    case GL_RGBA:     bAlpha = true;  break;
+    case GL_BGR:      bAlpha = false; break;
+    case GL_BGRA:     bAlpha = true;  break;
+    //case GL_ABGR_EXT: bAlpha = true;  break;
+    //case GL_LUMINANCE:
+    //case GL_422_EXT:
+    //case GL_422_REV_EXT:
+    //case GL_422_AVERAGE_EXT:
+    //case GL_422_REV_AVERAGE_EXT:
+    //case GL_LUMINANCE_ALPHA:
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(type)
+  {
+    case GL_UNSIGNED_BYTE:
+    case GL_BYTE:
+    case GL_BITMAP:
+    case GL_UNSIGNED_SHORT:
+    case GL_SHORT:
+    case GL_UNSIGNED_INT:
+    case GL_INT:
+    case GL_FLOAT:
+    case GL_UNSIGNED_BYTE_3_3_2:
+    case GL_UNSIGNED_BYTE_2_3_3_REV:
+    case GL_UNSIGNED_SHORT_5_6_5:
+    case GL_UNSIGNED_SHORT_5_6_5_REV:
+    case GL_UNSIGNED_SHORT_4_4_4_4:
+    case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+    case GL_UNSIGNED_SHORT_5_5_5_1:
+    case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+    case GL_UNSIGNED_INT_8_8_8_8:
+    case GL_UNSIGNED_INT_8_8_8_8_REV:
+    case GL_UNSIGNED_INT_10_10_10_2:
+    case GL_UNSIGNED_INT_2_10_10_10_REV:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
 
   if(level == 0)
   {
     // MipMap level == 0
-    switch(width)
-    {
-      case    8: pCurrentTex_->bitWidth_ =  3; break;
-      case   16: pCurrentTex_->bitWidth_ =  4; break;
-      case   32: pCurrentTex_->bitWidth_ =  5; break;
-      case   64: pCurrentTex_->bitWidth_ =  6; break;
-      case  128: pCurrentTex_->bitWidth_ =  7; break;
-      case  256: pCurrentTex_->bitWidth_ =  8; break;
-      case  512: pCurrentTex_->bitWidth_ =  9; break;
-      case 1024: pCurrentTex_->bitWidth_ = 10; break;
-      default:
-  //      setError(GL_INVALID_VALUE);
-        return;
-    };
-    switch(height)
-    {
-      case    8: pCurrentTex_->bitHeight_ =  3; break;
-      case   16: pCurrentTex_->bitHeight_ =  4; break;
-      case   32: pCurrentTex_->bitHeight_ =  5; break;
-      case   64: pCurrentTex_->bitHeight_ =  6; break;
-      case  128: pCurrentTex_->bitHeight_ =  7; break;
-      case  256: pCurrentTex_->bitHeight_ =  8; break;
-      case  512: pCurrentTex_->bitHeight_ =  9; break;
-      case 1024: pCurrentTex_->bitHeight_ = 10; break;
-      default:
-  //      setError(GL_INVALID_VALUE);
-        return;
-    };
-
+    pCurrentTex_->bitWidth_    = iWidthLog2;
+    pCurrentTex_->bitHeight_   = iHeightLog2;
     pCurrentTex_->iMaxLevel_   = 0;
     pCurrentTex_->iWidthMask_  = width  - 1;
     pCurrentTex_->iHeightMask_ = height - 1;
     pCurrentTex_->width        = width;
     pCurrentTex_->height       = height;
-    pCurrentTex_->bRGBA_       = true; // FIXME
+    pCurrentTex_->bRGBA_       = bAlpha;
 
     // Delete old texture buffer if present
     if(pCurrentTex_->data_raw != NULL)
@@ -324,7 +463,7 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
     if((level != (pCurrentTex_->iMaxLevel_ + 1)) || (level >= TEXTURE_MIPMAP_LEVEL_COUNT))
     {
       // One level at a time!
-      //setError(GL_INVALID_OPERATION);
+      setError(GL_INVALID_OPERATION);
       return;
     }
     pCurrentTex_->iMaxLevel_++;
@@ -334,7 +473,7 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
   EColorFormat fmtFrom = convertGLToBxColorFormat(format, type);
   if(fmtFrom == cfUNKNOWN)
   {
-//    setError(GL_INVALID_ENUM);
+    setError(GL_INVALID_ENUM);
     return;
   }
 
@@ -345,97 +484,245 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
 void
 CASoftRasterizer::texParameterf(GLenum target, GLenum pname, GLfloat param)
 {
-  if(target != GL_TEXTURE_2D)
+  if(pCurrentTex_ == NULL)
   {
-//    setError(GL_INVALID_ENUM);
+    setError(GL_INVALID_OPERATION);
     return;
   }
 
-  if(pCurrentTex_ != 0)
+  switch(target)
   {
-    switch(pname)
-    {
-      case GL_TEXTURE_MIN_FILTER:
-        switch((GLint)param)
-        {
-          case GL_NEAREST:                break;
-          case GL_LINEAR:                 break;
-          case GL_NEAREST_MIPMAP_NEAREST: break;
-          case GL_LINEAR_MIPMAP_NEAREST:  break;
-          case GL_NEAREST_MIPMAP_LINEAR:  break;
-          case GL_LINEAR_MIPMAP_LINEAR:   break;
-          default:
-//            setError(GL_INVALID_ENUM);
-            return;
-        };
-        pCurrentTex_->minFilter = (GLint)param;
-        break;
-      case GL_TEXTURE_MAG_FILTER:
-        switch((GLint)param)
-        {
-          case GL_NEAREST: break;
-          case GL_LINEAR:  break;
-          default:
-//            setError(GL_INVALID_ENUM);
-            return;
-        };
-        pCurrentTex_->magFilter = (GLint)param;
-        break;
-      case GL_TEXTURE_WRAP_S:
-        switch((GLint)param)
-        {
-          case GL_CLAMP:  break;
-          case GL_REPEAT: break;
-          default:
-//            setError(GL_INVALID_ENUM);
-            return;
-        };
-        pCurrentTex_->uWrapMode = (GLint)param;
-        break;
-      case GL_TEXTURE_WRAP_T:
-        switch((GLint)param)
-        {
-          case GL_CLAMP:  break;
-          case GL_REPEAT: break;
-          default:
-//            setError(GL_INVALID_ENUM);
-            return;
-        };
-        pCurrentTex_->vWrapMode = (GLint)param;
-        break;
-      default:
-//        setError(GL_INVALID_ENUM);
-        return;
-    };
-  }
+    //case GL_TEXTURE_1D:
+    case GL_TEXTURE_2D:
+    //case GL_TEXTURE_3D:
+    //case GL_TEXTURE_CUBE_MAP:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(pname)
+  {
+    case GL_TEXTURE_MIN_FILTER:
+      switch((GLint)param)
+      {
+        case GL_NEAREST:                break;
+        case GL_LINEAR:                 break;
+        case GL_NEAREST_MIPMAP_NEAREST: break;
+        case GL_LINEAR_MIPMAP_NEAREST:  break;
+        case GL_NEAREST_MIPMAP_LINEAR:  break;
+        case GL_LINEAR_MIPMAP_LINEAR:   break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      pCurrentTex_->minFilter = (GLint)param;
+      break;
+    case GL_TEXTURE_MAG_FILTER:
+      switch((GLint)param)
+      {
+        case GL_NEAREST: break;
+        case GL_LINEAR:  break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      pCurrentTex_->magFilter = (GLint)param;
+      break;
+    case GL_TEXTURE_WRAP_S:
+      switch((GLint)param)
+      {
+        case GL_CLAMP:  break;
+        case GL_REPEAT: break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      pCurrentTex_->uWrapMode = (GLint)param;
+      break;
+    case GL_TEXTURE_WRAP_T:
+      switch((GLint)param)
+      {
+        case GL_CLAMP:  break;
+        case GL_REPEAT: break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      pCurrentTex_->vWrapMode = (GLint)param;
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
 }
 
 //-----------------------------------------------------------------------------
 void
 CASoftRasterizer::texEnvf(GLenum target, GLenum pname, GLfloat param)
 {
-  if(target != GL_TEXTURE_ENV)
+  switch(target)
   {
-    //setError(GL_INVALID_ENUM);
-    return;
-  }
-
-  if(pname != GL_TEXTURE_ENV_MODE)
-  {
-    //setError(GL_INVALID_ENUM);
-    return;
-  }
-
-  switch((GLenum)param)
-  {
-    case GL_MODULATE:
-    case GL_DECAL:
-    case GL_BLEND:
-    case GL_REPLACE:
-      texEnvMode_ = (GLenum)param;
+    case GL_TEXTURE_ENV:
       break;
     default:
-      //setError(GL_INVALID_ENUM);
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(pname)
+  {
+    case GL_TEXTURE_ENV_MODE:
+      switch((GLenum)param)
+      {
+        case GL_MODULATE:
+        case GL_DECAL:
+        case GL_BLEND:
+        //case GL_COMBINE_EXT:
+        case GL_ADD:
+        case GL_REPLACE:
+        //case GL_ADD_SIGNED_EXT:
+        //case GL_INTERPOLATE_EXT:
+          break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      texEnvMode_ = (GLenum)param;
+      break;
+    //case GL_COMBINE_RGB_EXT:
+    //case GL_COMBINE_ALPHA_EXT:
+    //case GL_SOURCE0_RGB_EXT:
+    //case GL_SOURCE1_RGB_EXT:
+    //case GL_SOURCE2_RGB_EXT:
+    //case GL_SOURCE0_ALPHA_EXT:
+    //case GL_SOURCE1_ALPHA_EXT:
+    //case GL_SOURCE2_ALPHA_EXT:
+    //case GL_OPERAND0_RGB_EXT:
+    //case GL_OPERAND1_RGB_EXT:
+    //case GL_OPERAND2_RGB_EXT:
+    //case GL_OPERAND0_ALPHA_EXT:
+    //case GL_OPERAND1_ALPHA_EXT:
+    //case GL_OPERAND2_ALPHA_EXT:
+    //case GL_RGB_SCALE_EXT:
+    //case GL_ALPHA_SCALE:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftRasterizer::colorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table)
+{
+  switch(target)
+  {
+    case GL_COLOR_TABLE:
+    //case GL_TEXTURE_COLOR_TABLE_EXT:
+    //case GL_PROXY_COLOR_TABLE:
+    //case GL_PROXY_TEXTURE_COLOR_TABLE_EXT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(internalformat)
+  {
+    //case GL_ABGR_EXT:
+    //case GL_ALPHA:
+    //case GL_ALPHA4:
+    //case GL_ALPHA8:
+    //case GL_ALPHA12:
+    //case GL_ALPHA16:
+    //case GL_LUMINANCE:
+    //case GL_LUMINANCE4:
+    //case GL_LUMINANCE8:
+    //case GL_LUMINANCE12:
+    //case GL_LUMINANCE16:
+    //case GL_LUMINANCE_ALPHA:
+    //case GL_LUMINANCE4_ALPHA4:
+    //case GL_LUMINANCE6_ALPHA2:
+    //case GL_LUMINANCE8_ALPHA8:
+    //case GL_LUMINANCE12_ALPHA4:
+    //case GL_LUMINANCE12_ALPHA12:
+    //case GL_LUMINANCE16_ALPHA16:
+    //case GL_INTENSITY:
+    //case GL_INTENSITY4:
+    //case GL_INTENSITY8:
+    //case GL_INTENSITY12:
+    //case GL_INTENSITY16:
+    case GL_R3_G3_B2:
+    case GL_RGB:
+    case GL_RGB4:
+    case GL_RGB5:
+    case GL_RGB8:
+    case GL_RGB10:
+    case GL_RGB12:
+    case GL_RGB16:
+    case GL_RGBA:
+    case GL_RGBA2:
+    case GL_RGBA4:
+    case GL_RGB5_A1:
+    case GL_RGBA8:
+    case GL_RGB10_A2:
+    case GL_RGBA12:
+    case GL_RGBA16:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(format)
+  {
+    //case GL_RED:
+    //case GL_GREEN:
+    //case GL_BLUE:
+    //case GL_ALPHA:
+    //case GL_LUMINANCE:
+    //case GL_LUMINANCE_ALPHA:
+    case GL_RGB:
+    case GL_BGR:
+    case GL_RGBA:
+    case GL_BGRA:
+    //case GL_422_EXT:
+    //case GL_422_REV_EXT:
+    //case GL_422_AVERAGE_EXT:
+    //case GL_422_REV_AVERAGE_EXT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(type)
+  {
+    case GL_UNSIGNED_BYTE:
+    //case GL_BYTE:
+    //case GL_UNSIGNED_SHORT:
+    //case GL_SHORT:
+    //case GL_UNSIGNED_INT:
+    //case GL_INT:
+    //case GL_FLOAT:
+    //case GL_UNSIGNED_BYTE_3_3_2:
+    //case GL_UNSIGNED_BYTE_2_3_3_REV:
+    case GL_UNSIGNED_SHORT_5_6_5:
+    case GL_UNSIGNED_SHORT_5_6_5_REV:
+    case GL_UNSIGNED_SHORT_4_4_4_4:
+    case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+    case GL_UNSIGNED_SHORT_5_5_5_1:
+    case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+    case GL_UNSIGNED_INT_8_8_8_8:
+    case GL_UNSIGNED_INT_8_8_8_8_REV:
+    //case GL_UNSIGNED_INT_10_10_10_2:
+    //case GL_UNSIGNED_INT_2_10_10_10_REV:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
       return;
   };
 }
@@ -469,10 +756,10 @@ CASoftRasterizer::blendFunc(GLenum sfactor, GLenum dfactor)
 void
 CASoftRasterizer::clearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
-  clClear.r = mathlib::clamp<GLclampf>(red,   0.0f, 1.0f);
-  clClear.g = mathlib::clamp<GLclampf>(green, 0.0f, 1.0f);
-  clClear.b = mathlib::clamp<GLclampf>(blue,  0.0f, 1.0f);
-  clClear.a = mathlib::clamp<GLclampf>(alpha, 0.0f, 1.0f);
+  clClear.r = red;
+  clClear.g = green;
+  clClear.b = blue;
+  clClear.a = alpha;
 }
 
 //-----------------------------------------------------------------------------

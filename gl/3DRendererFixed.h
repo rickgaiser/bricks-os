@@ -59,10 +59,15 @@ public:
   virtual void setSurface(CSurface * surface);
 
   virtual void glAlphaFunc(GLenum func, GLclampf ref);
+  virtual void glBindTexture(GLenum target, GLuint texture);
+  virtual void glBlendFunc(GLenum sfactor, GLenum dfactor);
+  virtual void glClear(GLbitfield mask);
   virtual void glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha);
   virtual void glClearDepthx(GLclampx depth);
   virtual void glColorMaterial(GLenum face, GLenum mode);
+  virtual void glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table);
   virtual void glCullFace(GLenum mode);
+  virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
   virtual void glDepthRangex(GLclampx zNear, GLclampx zFar);
   virtual void glDepthFunc(GLenum func);
   virtual void glDepthMask(GLboolean flag);
@@ -74,36 +79,29 @@ public:
   virtual void glFogx(GLenum pname, GLfixed param);
   virtual void glFogxv(GLenum pname, const GLfixed *params);
   virtual void glFrontFace(GLenum mode);
+  virtual void glGenTextures(GLsizei n, GLuint *textures);
+  virtual void glGetFloatv(GLenum pname, GLfloat * params);
   virtual void glHint(GLenum target, GLenum mode);
   virtual void glLightx(GLenum light, GLenum pname, GLfixed param);
   virtual void glLightxv(GLenum light, GLenum pname, const GLfixed * params);
   virtual void glMaterialx(GLenum face, GLenum pname, GLfixed param);
   virtual void glMaterialxv(GLenum face, GLenum pname, const GLfixed *params);
   virtual void glShadeModel(GLenum mode);
-
-  virtual void glBegin(GLenum mode);
-  virtual void glEnd();
-  virtual void glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w);
-  virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
-  virtual void glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q);
-  virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
-
-  virtual void glGetFloatv(GLenum pname, GLfloat * params);
-  virtual void glBlendFunc(GLenum sfactor, GLenum dfactor);
   virtual void glTexEnvf(GLenum target, GLenum pname, GLfloat param);
   virtual void glTexEnvfv(GLenum target, GLenum pname, const GLfloat *params);
-
-  // Textures
-  virtual void glBindTexture(GLenum target, GLuint texture);
-  virtual void glDeleteTextures(GLsizei n, const GLuint *textures);
-  virtual void glGenTextures(GLsizei n, GLuint *textures);
   virtual void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
   virtual void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
   virtual void glTexParameterx(GLenum target, GLenum pname, GLfixed param);
   virtual void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
-  // Rasterization
-  virtual void glClear(GLbitfield mask);
   virtual void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
+
+  virtual void glBegin(GLenum mode);
+  virtual void glEnd();
+
+  virtual void glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w);
+  virtual void glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha);
+  virtual void glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q);
+  virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
 
 protected:
   // Vertex shader
@@ -136,7 +134,7 @@ protected:
   CFixed      zB_;
 
   // Primitive assembly
-  bool        beginValid_;
+  bool        bInBeginEnd_;
   GLenum      rasterMode_;
   SVertexFx   vertices[3];  // Vertex buffer for primitive assembly
   SVertexFx * triangle_[3]; // Assembled triangle
