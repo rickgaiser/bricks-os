@@ -24,10 +24,10 @@
 #include "dma.h"
 #include "gif.h"
 #include "stdlib.h"
+#include "../../../../gl/textures.h"
 #include "../../../../gl/mathlib.h"
 
 
-#define CURRENT_PS2TEX ((CPS2Texture *)pCurrentTex_)
 #define setError(x)
 
 
@@ -35,6 +35,10 @@
 //-----------------------------------------------------------------------------
 CPS2TextureLevel::CPS2TextureLevel()
  : data(NULL)
+ , gsMemLocation_(0)
+ , iWidth_(0)
+ , iHeight_(0)
+ , iPsm_(GS_PSM_32)
  , used_(false)
 {
 }
@@ -42,12 +46,16 @@ CPS2TextureLevel::CPS2TextureLevel()
 //-----------------------------------------------------------------------------
 CPS2TextureLevel::~CPS2TextureLevel()
 {
+  free();
 }
 
 //-----------------------------------------------------------------------------
 void
-CPS2TextureLevel::init()
+CPS2TextureLevel::bind()
 {
+  // Load to fixed location
+  gsMemLocation_ = 3*1024*1024;
+  ee_to_gsBitBlt(gsMemLocation_, iPsm_, 0, 0, iWidth_, iHeight_, (unsigned int)data);
 }
 
 //-----------------------------------------------------------------------------
@@ -62,6 +70,7 @@ void
 CPS2TextureLevel::free()
 {
   used_ = false;
+
   if(data != NULL)
   {
     delete (uint8_t *)data;
@@ -70,9 +79,16 @@ CPS2TextureLevel::free()
 }
 
 //-----------------------------------------------------------------------------
+bool
+CPS2TextureLevel::used()
+{
+  return used_;
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CPS2Texture::CPS2Texture(CGIFPacket & packet)
- : CTexture()
+ : maxLevel_(0)
  , packet_(packet)
 {
   ps2MinFilter = GS_TEX1_NEAREST_MIPMAP_LINEAR;
@@ -90,28 +106,33 @@ void
 CPS2Texture::free()
 {
   for(int iLevel(0); iLevel < 7; iLevel++)
-  {
     level_[iLevel].free();
-  }
-
-  CTexture::free();
 }
 
 //-----------------------------------------------------------------------------
 void
-CPS2Texture::bind()
+CPS2Texture::bind(uint16_t envMode)
 {
   if(level_[0].used() == true)
   {
+    // Transfer all texture levels to video memory
+    for(int iLevel(0); iLevel < 7; iLevel++)
+    {
+      if(level_[iLevel].used() == false)
+        break;
+
+      level_[iLevel].bind();
+    }
+
     packet_.gifAddPackedAD(GIF::REG::tex0_1,
       GIF::REG::TEX0(
-        level_[0].ps2GSAddr >> 8,        // base pointer
-        level_[0].ps2Width,              // width
+        level_[0].gsMemLocation_ >> 8,   // base pointer
+        level_[0].ps2Width_,             // width
         psm_,                            // pixel store mode
-        widthBitNr,                      // width
-        heightBitNr,                     // height
+        iWidthLog2_,                     // width
+        iHeightLog2_,                    // height
         rgba_,                           // 0=RGB, 1=RGBA
-        GS_TEX0_DECAL,                   // GL_TEXTURE_ENV_MODE
+        envMode,                         // GL_TEXTURE_ENV_MODE
         0, 0, 0, 0, 0));                 // CLUT (currently not used)
 
     packet_.gifAddPackedAD(GIF::REG::tex1_1,
@@ -128,18 +149,18 @@ CPS2Texture::bind()
     {
       packet_.gifAddPackedAD(GIF::REG::miptbp1_1,
         GIF::REG::MIPTBP(
-          level_[1].ps2GSAddr >> 8, level_[1].ps2Width,
-          level_[2].ps2GSAddr >> 8, level_[2].ps2Width,
-          level_[3].ps2GSAddr >> 8, level_[3].ps2Width));
+          level_[1].gsMemLocation_ >> 8, level_[1].ps2Width_,
+          level_[2].gsMemLocation_ >> 8, level_[2].ps2Width_,
+          level_[3].gsMemLocation_ >> 8, level_[3].ps2Width_));
     }
 
     if(maxLevel_ > 3)
     {
       packet_.gifAddPackedAD(GIF::REG::miptbp2_1,
         GIF::REG::MIPTBP(
-          level_[4].ps2GSAddr >> 8, level_[4].ps2Width,
-          level_[5].ps2GSAddr >> 8, level_[5].ps2Width,
-          level_[6].ps2GSAddr >> 8, level_[6].ps2Width));
+          level_[4].gsMemLocation_ >> 8, level_[4].ps2Width_,
+          level_[5].gsMemLocation_ >> 8, level_[5].ps2Width_,
+          level_[6].gsMemLocation_ >> 8, level_[6].ps2Width_));
     }
   }
 }
@@ -149,17 +170,11 @@ CPS2Texture::bind()
 CPS23DRenderer::CPS23DRenderer(CPS2VideoDevice & device)
  : CAPS2Renderer()
  , device_(device)
- , ps2ZPSM_(GS_PSM_16S)
- , ps2ZBufferAddr_(0)
- , ps2Shading_(GS_PRIM_SHADE_FLAT)
- , ps2Textures_(GS_PRIM_TEXTURES_OFF)
- , ps2Fog_(GS_PRIM_FOG_OFF)
- , ps2AlphaBlend_(GS_PRIM_ALPHABLEND_OFF)
- , ps2Aliasing_(GS_PRIM_ALIASING_OFF)
- , ps2DepthFunction_(GS_ZTST_GREATER)
- , ps2DepthInvert_(true)
 {
-  // Select MAX z-value
+  clClear = TColor<GLfloat>(0, 0, 0, 0);
+
+  bDepthTestEnabled_ = false;
+  ps2ZPSM_ = GS_PSM_16S;
   switch(ps2ZPSM_)
   {
     case GS_PSM_16:
@@ -167,11 +182,40 @@ CPS23DRenderer::CPS23DRenderer(CPS2VideoDevice & device)
     case GS_PSM_24:  zMax_ = 0x00ffffff; break;
     case GS_PSM_32:  zMax_ = 0xffffffff; break;
   };
+  depthClear_ = 1.0f;
+  zClearValue_ = (uint32_t)(depthClear_ * (GLfloat)zMax_);
+  ps2ZBufferAddr_ = 0;
+  ps2DepthFunction_ = GS_ZTST_GREATER;
+  ps2DepthInvert_ = true;
+  bDepthMask_ = true;
 
-  // Setup alpha blending
-  packet_.gifAddPackedAD(GIF::REG::alpha_1, GIF::REG::ALPHA(0, 1, 0, 1, 0x00));
-  packet_.gifAddPackedAD(GIF::REG::pabe,    0);
-  packet_.gifAddPackedAD(GIF::REG::fba_1,   0);
+  bSmoothShadingEnabled_ = false;
+
+  bTexturesEnabled_ = false;
+  texEnvMode_ = GL_MODULATE;
+  pCurrentTex_ = NULL;
+  for(int i = 0; i < PS2_MAX_TEXTURE_COUNT; i++)
+    textures_[i] = NULL;
+
+  bAlphaTestEnabled_ = false;
+  alphaFunc_ = GL_ALWAYS;
+  ps2AlphaFunc_ = GS_ATST_ALWAYS;
+  alphaValue_ = 0.0f;
+  ps2AlphaValue_ = 0;
+
+  bBlendingEnabled_ = false;
+  blendSFactor_ = GL_ONE;
+  blendDFactor_ = GL_ZERO;
+
+  viewportXOffset = 0;
+  viewportYOffset = 0;
+  viewportWidth = 0;
+  viewportHeight = 0;
+
+  ps2Fog_ = GS_PRIM_FOG_OFF;
+  ps2Aliasing_ = GS_PRIM_ALIASING_OFF;
+
+  initializeGS();
 }
 
 //-----------------------------------------------------------------------------
@@ -181,9 +225,40 @@ CPS23DRenderer::~CPS23DRenderer()
 
 //-----------------------------------------------------------------------------
 void
+CPS23DRenderer::initializeGS()
+{
+  // ZBuffer
+  packet_.gifAddPackedAD(GIF::REG::zbuf_1, GIF::REG::ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, !bDepthMask_));
+
+  // Alpha blending
+  packet_.gifAddPackedAD(GIF::REG::alpha_1, GIF::REG::ALPHA(0, 1, 0, 1, 0x00));
+  packet_.gifAddPackedAD(GIF::REG::pabe,    0); // PABE: MSB of EACH pixels alpha value enables/disables alpha blending
+  packet_.gifAddPackedAD(GIF::REG::fba_1,   0); // Alpha correction value (for correcting the alpha values written to the FB)
+
+  // Test register:
+  //  - Source alpha testing
+  //  - Destination alpha testing (not used)
+  //  - Depth testing
+  packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(bAlphaTestEnabled_, ps2AlphaFunc_, ps2AlphaValue_, 0, 0, 0, bDepthTestEnabled_, ps2DepthFunction_));
+
+  // Primitive mode control: Primitive attributes are in
+  //  - 0: PRMODE register OR
+  //  - 1: PRIM register
+  packet_.gifAddPackedAD(GIF::REG::prmodecont, 1);
+}
+
+//-----------------------------------------------------------------------------
+void
 CPS23DRenderer::setSurface(CSurface * surface)
 {
   CAPS2Renderer::setSurface(surface);
+
+  // First time initialization
+  if(viewportXOffset == viewportYOffset == viewportWidth == viewportHeight == 0)
+  {
+    viewportWidth  = surface->width();
+    viewportHeight = surface->height();
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -199,7 +274,16 @@ CPS23DRenderer::enableDepthTest(bool enable)
 {
   bDepthTestEnabled_ = enable;
 
-  zbuffer(bDepthTestEnabled_);
+  if((enable == true) && (ps2ZBufferAddr_ == 0) && (pSurface_ != NULL))
+  {
+    // Allocate z-buffer
+    device_.allocFramebuffer(ps2ZBufferAddr_, pSurface_->mode.xpitch, pSurface_->mode.height, ps2ZPSM_);
+
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GIF::REG::ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, !bDepthMask_));
+  }
+
+  // Update test register
+  packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(bAlphaTestEnabled_, ps2AlphaFunc_, ps2AlphaValue_, 0, 0, 0, bDepthTestEnabled_, ps2DepthFunction_));
 }
 
 //-----------------------------------------------------------------------------
@@ -207,8 +291,6 @@ void
 CPS23DRenderer::enableSmoothShading(bool enable)
 {
   bSmoothShadingEnabled_ = enable;
-
-  ps2Shading_ = enable ? GS_PRIM_SHADE_GOURAUD : GS_PRIM_SHADE_FLAT;
 }
 
 //-----------------------------------------------------------------------------
@@ -216,8 +298,6 @@ void
 CPS23DRenderer::enableTextures(bool enable)
 {
   bTexturesEnabled_ = enable;
-
-  ps2Textures_ = enable ? GS_PRIM_TEXTURES_ON : GS_PRIM_TEXTURES_OFF;
 }
 
 //-----------------------------------------------------------------------------
@@ -229,27 +309,26 @@ CPS23DRenderer::enableBlending(bool enable)
 
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::clearDepthf(GLclampf depth)
+CPS23DRenderer::enableAlphaTest(bool enable)
 {
-  depthClear_ = mathlib::clamp<GLclampf>(depth, 0.0f, 1.0f);
+  bAlphaTestEnabled_ = enable;
 
-  zClearValue_ = (int32_t)(depthClear_ * ((1<<SHIFT_Z)-1));
+  // Update test register
+  packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(bAlphaTestEnabled_, ps2AlphaFunc_, ps2AlphaValue_, 0, 0, 0, bDepthTestEnabled_, ps2DepthFunction_));
 }
 
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::depthRangef(GLclampf zNear, GLclampf zFar)
+CPS23DRenderer::clearDepthf(GLclampf depth)
 {
-  zRangeNear_ = mathlib::clamp<GLclampf>(zNear, 0.0f, 1.0f);
-  zRangeFar_  = mathlib::clamp<GLclampf>(zFar,  0.0f, 1.0f);
+  depthClear_ = depth;
+  zClearValue_ = (uint32_t)(depthClear_ * (GLfloat)zMax_);
 }
 
 //-----------------------------------------------------------------------------
 void
 CPS23DRenderer::depthFunc(GLenum func)
 {
-  depthFunction_ = func;
-
   switch(func)
   {
     case GL_LESS:     ps2DepthFunction_ = GS_ZTST_GREATER; ps2DepthInvert_ = true;  break;
@@ -265,26 +344,113 @@ CPS23DRenderer::depthFunc(GLenum func)
 
   if(bDepthTestEnabled_ == true)
   {
-    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, bDepthTestEnabled_, ps2DepthFunction_));
+    // Update test register
+    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(bAlphaTestEnabled_, ps2AlphaFunc_, ps2AlphaValue_, 0, 0, 0, bDepthTestEnabled_, ps2DepthFunction_));
   }
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::depthMask(GLboolean flag)
+{
+  bDepthMask_ = flag;
+
+  // Update the zbuf register
+  packet_.gifAddPackedAD(GIF::REG::zbuf_1, GIF::REG::ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, !bDepthMask_));
 }
 
 //-----------------------------------------------------------------------------
 void
 CPS23DRenderer::bindTexture(GLenum target, GLuint texture)
 {
-  if(target != GL_TEXTURE_2D)
+  //pCurrentTex_ = NULL;
+
+  switch(target)
   {
-//    setError(GL_INVALID_ENUM);
-    return;
-  }
-  if((texture >= MAX_TEXTURE_COUNT) || (textures_[texture] == NULL))
+    //case GL_TEXTURE_1D:
+    case GL_TEXTURE_2D:
+    //case GL_TEXTURE_3D:
+    //case GL_TEXTURE_3D_EXT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  if((texture >= PS2_MAX_TEXTURE_COUNT) || (textures_[texture] == NULL))
   {
-//    setError(GL_INVALID_VALUE);
+    setError(GL_INVALID_VALUE);
     return;
   }
 
-  pCurrentTex_ = textures_[texture];
+  bindTexture(textures_[texture]);
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::bindTexture(CPS2Texture * texture)
+{
+  pCurrentTex_ = texture;
+
+  // Has the texture been loaded?
+  if(pCurrentTex_->level_[0].used() == true)
+  {
+    uint16_t ps2TexEnvMode_;
+    bTextureColor_ = false;
+    bForceWhiteColor_ = false;
+
+    // OpenGL Texture environment is difficult to translate to the ps2 texture environment
+    if(pCurrentTex_->rgba_ == true)
+    {
+      switch(texEnvMode_)
+      {
+        // GL_MODULATE is exactly the same as GS_TEX0_MODULATE
+        case GL_MODULATE:
+          ps2TexEnvMode_ = GS_TEX0_MODULATE;
+          bTextureColor_ = true;
+          break;
+        // GL_REPLACE is exactly the same as GS_TEX0_DECAL for RGBA textures
+        case GL_REPLACE:
+          ps2TexEnvMode_ = GS_TEX0_DECAL;
+          break;
+        // Not supported!!!, just show the texture
+        case GL_DECAL:
+        // Not supported!!!, just show the texture
+        case GL_BLEND:
+        // Not supported!!!, just show the texture
+        case GL_ADD:
+        default:
+          ps2TexEnvMode_ = GS_TEX0_DECAL;
+      };
+    }
+    else
+    {
+      switch(texEnvMode_)
+      {
+        // GL_MODULATE is exactly the same as GS_TEX0_MODULATE
+        case GL_MODULATE:
+          ps2TexEnvMode_ = GS_TEX0_MODULATE;
+          bTextureColor_ = true;
+          break;
+        // GL_REPLACE is the same as GL_DECAL for RGB textures
+        case GL_REPLACE:
+        // ps2 decal mode uses texture alpha! So use modulate and force a white color
+        case GL_DECAL:
+          ps2TexEnvMode_ = GS_TEX0_MODULATE;
+          bTextureColor_ = true;
+          bForceWhiteColor_ = true;
+          break;
+        // Not supported!!!, just show the texture
+        case GL_BLEND:
+        // Not supported!!!, just show the texture
+        case GL_ADD:
+        default:
+          ps2TexEnvMode_ = GS_TEX0_DECAL;
+      };
+    }
+
+    pCurrentTex_->bind(ps2TexEnvMode_);
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -293,14 +459,24 @@ CPS23DRenderer::deleteTextures(GLsizei n, const GLuint *textures)
 {
   if(n < 0)
   {
-//    setError(GL_INVALID_VALUE);
+    setError(GL_INVALID_VALUE);
     return;
   }
 
   for(GLsizei i(0); i < n; i++)
-    if(textures[i] < MAX_TEXTURE_COUNT)
+  {
+    if(textures[i] < PS2_MAX_TEXTURE_COUNT)
+    {
       if(textures_[textures[i]] != NULL)
+      {
         delete textures_[textures[i]];
+
+        if(pCurrentTex_ == textures_[textures[i]])
+          pCurrentTex_ = NULL;
+        textures_[textures[i]] = NULL;
+      }
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -309,7 +485,7 @@ CPS23DRenderer::genTextures(GLsizei n, GLuint *textures)
 {
   if(n < 0)
   {
-//    setError(GL_INVALID_VALUE);
+    setError(GL_INVALID_VALUE);
     return;
   }
 
@@ -317,7 +493,7 @@ CPS23DRenderer::genTextures(GLsizei n, GLuint *textures)
   {
     bool bFound(false);
 
-    for(GLuint idxTex(0); idxTex < MAX_TEXTURE_COUNT; idxTex++)
+    for(GLuint idxTex(0); idxTex < PS2_MAX_TEXTURE_COUNT; idxTex++)
     {
       if(textures_[idxTex] == NULL)
       {
@@ -338,40 +514,155 @@ CPS23DRenderer::genTextures(GLsizei n, GLuint *textures)
 void
 CPS23DRenderer::texImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
-  if(target != GL_TEXTURE_2D)
+  unsigned int iWidthLog2;
+  unsigned int iHeightLog2;
+  bool bAlpha;
+
+  if(pCurrentTex_ == NULL)
   {
-    setError(GL_INVALID_ENUM);
+    setError(GL_INVALID_OPERATION);
     return;
   }
+
+  switch(target)
+  {
+    case GL_TEXTURE_2D:
+    //case GL_PROXY_TEXTURE_2D:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
   if(level < 0)
   {
     setError(GL_INVALID_VALUE);
     return;
   }
-  if(((format != GL_RGB) && (format != GL_BGR)) &&
-     ((type == GL_UNSIGNED_SHORT_5_6_5) ||
-      (type == GL_UNSIGNED_SHORT_5_6_5_REV)))
-  {
-    setError(GL_INVALID_OPERATION);
-    return;
-  }
-  if(((format != GL_RGBA) && (format != GL_BGRA)) &&
-     ((type == GL_UNSIGNED_SHORT_4_4_4_4) ||
-      (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) ||
-      (type == GL_UNSIGNED_SHORT_5_5_5_1) ||
-      (type == GL_UNSIGNED_SHORT_1_5_5_5_REV)))
-  {
-    setError(GL_INVALID_OPERATION);
-    return;
-  }
 
-  if(level > 6)
+  switch(internalformat)
   {
-//    setError(GL_INVALID_OPERATION);
-    return;
-  }
+    //case 1:
+    //case 2:
+    case 3: bAlpha = false; break;
+    case 4: bAlpha = true;  break;
+    //case GL_ABGR_EXT:
+    //case GL_ALPHA:
+    //case GL_ALPHA4:
+    //case GL_ALPHA8:
+    //case GL_ALPHA12:
+    //case GL_ALPHA16:
+    //case GL_LUMINANCE:
+    //case GL_LUMINANCE4:
+    //case GL_LUMINANCE8:
+    //case GL_LUMINANCE12:
+    //case GL_LUMINANCE16:
+    //case GL_LUMINANCE_ALPHA:
+    //case GL_LUMINANCE4_ALPHA4:
+    //case GL_LUMINANCE6_ALPHA2:
+    //case GL_LUMINANCE8_ALPHA8:
+    //case GL_LUMINANCE12_ALPHA4:
+    //case GL_LUMINANCE12_ALPHA12:
+    //case GL_LUMINANCE16_ALPHA16:
+    //case GL_INTENSITY:
+    //case GL_INTENSITY4:
+    //case GL_INTENSITY8:
+    //case GL_INTENSITY12:
+    //case GL_INTENSITY16:
+    case GL_R3_G3_B2: bAlpha = false; break;
+    case GL_RGB:      bAlpha = false; break;
+    case GL_RGB4:     bAlpha = false; break;
+    case GL_RGB5:     bAlpha = false; break;
+    case GL_RGB8:     bAlpha = false; break;
+    case GL_RGB10:    bAlpha = false; break;
+    case GL_RGB12:    bAlpha = false; break;
+    case GL_RGB16:    bAlpha = false; break;
+    case GL_RGBA:     bAlpha = true;  break;
+    case GL_RGBA2:    bAlpha = true;  break;
+    case GL_RGBA4:    bAlpha = true;  break;
+    case GL_RGB5_A1:  bAlpha = true;  break;
+    case GL_RGBA8:    bAlpha = true;  break;
+    case GL_RGB10_A2: bAlpha = true;  break;
+    case GL_RGBA12:   bAlpha = true;  break;
+    case GL_RGBA16:   bAlpha = true;  break;
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
 
-  if((CURRENT_PS2TEX == 0) || (pSurface_ == 0))
+  switch(width)
+  {
+    //case    1: iWidthLog2 =  0; break;
+    //case    2: iWidthLog2 =  1; break;
+    //case    4: iWidthLog2 =  2; break;
+    case    8: iWidthLog2 =  3; break;
+    case   16: iWidthLog2 =  4; break;
+    case   32: iWidthLog2 =  5; break;
+    case   64: iWidthLog2 =  6; break;
+    case  128: iWidthLog2 =  7; break;
+    case  256: iWidthLog2 =  8; break;
+    case  512: iWidthLog2 =  9; break;
+    case 1024: iWidthLog2 = 10; break;
+    default:
+      setError(GL_INVALID_VALUE);
+      return;
+  };
+
+  switch(height)
+  {
+    //case    1: iHeightLog2 =  0; break;
+    //case    2: iHeightLog2 =  1; break;
+    //case    4: iHeightLog2 =  2; break;
+    case    8: iHeightLog2 =  3; break;
+    case   16: iHeightLog2 =  4; break;
+    case   32: iHeightLog2 =  5; break;
+    case   64: iHeightLog2 =  6; break;
+    case  128: iHeightLog2 =  7; break;
+    case  256: iHeightLog2 =  8; break;
+    case  512: iHeightLog2 =  9; break;
+    case 1024: iHeightLog2 = 10; break;
+    default:
+      setError(GL_INVALID_VALUE);
+      return;
+  };
+
+  switch(border)
+  {
+    case 0:
+    case 1:
+      break;
+    default:
+      setError(GL_INVALID_VALUE);
+      return;
+  };
+
+  switch(format)
+  {
+    //case GL_COLOR_INDEX:
+    //case GL_RED:
+    //case GL_GREEN:
+    //case GL_BLUE:
+    //case GL_ALPHA:
+    case GL_RGB:
+    case GL_RGBA:
+    case GL_BGR:
+    case GL_BGRA:
+    //case GL_ABGR_EXT: bAlpha = true;  break;
+    //case GL_LUMINANCE:
+    //case GL_422_EXT:
+    //case GL_422_REV_EXT:
+    //case GL_422_AVERAGE_EXT:
+    //case GL_422_REV_AVERAGE_EXT:
+    //case GL_LUMINANCE_ALPHA:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  // Limit the number of mipmap levels
+  if(level > 0)//6)
   {
     setError(GL_INVALID_OPERATION);
     return;
@@ -379,46 +670,24 @@ CPS23DRenderer::texImage2D(GLenum target, GLint level, GLint internalformat, GLs
 
   if(level == 0)
   {
-    GLint widthBit;
-    GLint heightBit;
+    // Clear entire texture
+    pCurrentTex_->free();
 
-    // Clear every level
-    for(int iLevel(0); iLevel < 7; iLevel++)
-      CURRENT_PS2TEX->level_[iLevel].free();
-
-    switch(width)
-    {
-      case   64: widthBit =  6; break;
-      case  128: widthBit =  7; break;
-      case  256: widthBit =  8; break;
-      case  512: widthBit =  9; break;
-      case 1024: widthBit = 10; break;
-      default:
-        setError(GL_INVALID_VALUE);
-        return;
-    };
-    switch(height)
-    {
-      case   64: heightBit =  6; break;
-      case  128: heightBit =  7; break;
-      case  256: heightBit =  8; break;
-      case  512: heightBit =  9; break;
-      case 1024: heightBit = 10; break;
-      default:
-        setError(GL_INVALID_VALUE);
-        return;
-    };
-
-    CURRENT_PS2TEX->widthBitNr  = widthBit;
-    CURRENT_PS2TEX->heightBitNr = heightBit;
-    CURRENT_PS2TEX->width       = width;
-    CURRENT_PS2TEX->height      = height;
-    CURRENT_PS2TEX->rgba_       = ((format == GL_RGBA) || (format == GL_BGRA));
+    pCurrentTex_->iWidthLog2_  = iWidthLog2;
+    pCurrentTex_->iHeightLog2_ = iHeightLog2;
+    pCurrentTex_->width        = width;
+    pCurrentTex_->height       = height;
+    pCurrentTex_->rgba_        = bAlpha;
+    pCurrentTex_->psm_         = GS_PSM_32;
 
     for(int iLevel(0); iLevel < 7; iLevel++)
     {
+      // Texture Buffer Width, in units of 64 texels (>= 1)
       uint16_t ps2Width = width >> (iLevel+6);
-      CURRENT_PS2TEX->level_[iLevel].ps2Width = (ps2Width >= 1) ? ps2Width : 1;
+      pCurrentTex_->level_[iLevel].ps2Width_ = (ps2Width >= 1) ? ps2Width : 1;
+      pCurrentTex_->level_[iLevel].iWidth_   = width  >> level;
+      pCurrentTex_->level_[iLevel].iHeight_  = height >> level;
+      pCurrentTex_->level_[iLevel].iPsm_     = pCurrentTex_->psm_;
     }
   }
   else
@@ -426,25 +695,25 @@ CPS23DRenderer::texImage2D(GLenum target, GLint level, GLint internalformat, GLs
     // MipMap level > 0
 
     // Previous level must be used
-    if(CURRENT_PS2TEX->level_[level-1].used() == false)
+    if(pCurrentTex_->level_[level-1].used() == false)
     {
       setError(GL_INVALID_OPERATION);
       return;
     }
-    // Width and height must be >= 8
-    if((width < 8) || (height < 8))
+    // Selected level must be free
+    if(pCurrentTex_->level_[level-1].used() == true)
     {
-//      setError(GL_INVALID_OPERATION);
+      setError(GL_INVALID_OPERATION);
       return;
     }
     // Width and height must match the selected level
-    if(((CURRENT_PS2TEX->width >> level) != width) || ((CURRENT_PS2TEX->height >> level) != height))
+    if(((pCurrentTex_->width >> level) != width) || ((pCurrentTex_->height >> level) != height))
     {
       setError(GL_INVALID_OPERATION);
       return;
     }
     // RGB/RGBA must match
-    if(CURRENT_PS2TEX->rgba_ != ((format == GL_RGBA) || (format == GL_BGRA)))
+    if(pCurrentTex_->rgba_ != bAlpha)
     {
       setError(GL_INVALID_OPERATION);
       return;
@@ -461,33 +730,14 @@ CPS23DRenderer::texImage2D(GLenum target, GLint level, GLint internalformat, GLs
     setError(GL_INVALID_ENUM);
     return;
   }
-
   // Get output format
-  if(level == 0)
-  {
-    // Select texture format
-    if(colorFormatOps[fmtFrom].bitsPerPixel <= 16)
-    {
-      CURRENT_PS2TEX->psm_ = GS_PSM_16;
-      fmtTo = cfA1B5G5R5;
-    }
-    else
-    {
-      CURRENT_PS2TEX->psm_ = GS_PSM_32;
-      fmtTo = cfA8B8G8R8;
-    }
-  }
+  if(pCurrentTex_->psm_ == GS_PSM_16)
+    fmtTo = cfA1B5G5R5;
   else
-  {
-    // Set texture format
-    if(CURRENT_PS2TEX->psm_ == GS_PSM_16)
-      fmtTo = cfA1B5G5R5;
-    else
-      fmtTo = cfA8B8G8R8;
-  }
+    fmtTo = cfA8B8G8R8;
 
-  // Transfer (and convert) texture to our own memory
-  void * pData = NULL;
+  // Convert texture to GS texture format
+  void * pData;
   if(colorFormatOps[fmtTo].bitsPerPixel <= 16)
     pData = new uint16_t[width*height];
   else
@@ -499,91 +749,90 @@ CPS23DRenderer::texImage2D(GLenum target, GLint level, GLint internalformat, GLs
   }
   convertImageFormat(pData, fmtTo, pixels, fmtFrom, width, height);
 
-  // Transfer to GS memory
-  uint32_t ps2GSAddr(0);
-  if(device_.allocTexture(ps2GSAddr, width, height, CURRENT_PS2TEX->psm_) == false)
-  {
-    setError(GL_OUT_OF_MEMORY);
-    delete (uint8_t *)pData;
-    return;
-  }
-  ee_to_gsBitBlt(ps2GSAddr, width, CURRENT_PS2TEX->psm_, 0, 0, width, height, (uint32_t)pData);
+  pCurrentTex_->level_[level].data = pData;
+  pCurrentTex_->maxLevel_ = level;
+  pCurrentTex_->level_[level].use();
 
-  // Fill in the blancs
-  CURRENT_PS2TEX->level_[level].data      = pData;
-  CURRENT_PS2TEX->level_[level].ps2GSAddr = ps2GSAddr;
-  if(level > CURRENT_PS2TEX->maxLevel_)
-    CURRENT_PS2TEX->maxLevel_ = level;
-  CURRENT_PS2TEX->level_[level].use();
+  // Transfer to video memory
+  bindTexture(pCurrentTex_);
 }
 
 //-----------------------------------------------------------------------------
 void
 CPS23DRenderer::texParameterf(GLenum target, GLenum pname, GLfloat param)
 {
-  if(target != GL_TEXTURE_2D)
+  if(pCurrentTex_ == NULL)
   {
-    setError(GL_INVALID_ENUM);
+    setError(GL_INVALID_OPERATION);
     return;
   }
 
-  if(CURRENT_PS2TEX != 0)
+  switch(target)
   {
-    switch(pname)
-    {
-      case GL_TEXTURE_MIN_FILTER:
-        switch((GLint)param)
-        {
-          case GL_NEAREST:                CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_NEAREST;                break;
-          case GL_LINEAR:                 CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_LINEAR;                 break;
-          case GL_NEAREST_MIPMAP_NEAREST: CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_NEAREST_MIPMAP_NEAREST; break;
-          case GL_LINEAR_MIPMAP_NEAREST:  CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_LINEAR_MIPMAP_NEAREST;  break;
-          case GL_NEAREST_MIPMAP_LINEAR:  CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_NEAREST_MIPMAP_LINEAR;  break;
-          case GL_LINEAR_MIPMAP_LINEAR:   CURRENT_PS2TEX->ps2MinFilter = GS_TEX1_LINEAR_MIPMAP_LINEAR;   break;
-          default:
-            setError(GL_INVALID_ENUM);
-            return;
-        };
-        CURRENT_PS2TEX->minFilter = (GLint)param;
-        break;
-      case GL_TEXTURE_MAG_FILTER:
-        switch((GLint)param)
-        {
-          case GL_NEAREST: CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_NEAREST; break;
-          case GL_LINEAR:  CURRENT_PS2TEX->ps2MagFilter = GS_TEX1_LINEAR; break;
-          default:
-            setError(GL_INVALID_ENUM);
-            return;
-        };
-        CURRENT_PS2TEX->magFilter = (GLint)param;
-        break;
-      case GL_TEXTURE_WRAP_S:
-        switch((GLint)param)
-        {
-          case GL_CLAMP:  break;
-          case GL_REPEAT: break;
-          default:
-            setError(GL_INVALID_ENUM);
-            return;
-        };
-        CURRENT_PS2TEX->uWrapMode = (GLint)param;
-        break;
-      case GL_TEXTURE_WRAP_T:
-        switch((GLint)param)
-        {
-          case GL_CLAMP:  break;
-          case GL_REPEAT: break;
-          default:
-            setError(GL_INVALID_ENUM);
-            return;
-        };
-        CURRENT_PS2TEX->vWrapMode = (GLint)param;
-        break;
-      default:
-        setError(GL_INVALID_ENUM);
-        return;
-    };
-  }
+    //case GL_TEXTURE_1D:
+    case GL_TEXTURE_2D:
+    //case GL_TEXTURE_3D:
+    //case GL_TEXTURE_3D_EXT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(pname)
+  {
+    case GL_TEXTURE_MIN_FILTER:
+      switch((GLint)param)
+      {
+        case GL_NEAREST:                pCurrentTex_->ps2MinFilter = GS_TEX1_NEAREST;                break;
+        case GL_LINEAR:                 pCurrentTex_->ps2MinFilter = GS_TEX1_LINEAR;                 break;
+        case GL_NEAREST_MIPMAP_NEAREST: pCurrentTex_->ps2MinFilter = GS_TEX1_NEAREST_MIPMAP_NEAREST; break;
+        case GL_LINEAR_MIPMAP_NEAREST:  pCurrentTex_->ps2MinFilter = GS_TEX1_LINEAR_MIPMAP_NEAREST;  break;
+        case GL_NEAREST_MIPMAP_LINEAR:  pCurrentTex_->ps2MinFilter = GS_TEX1_NEAREST_MIPMAP_LINEAR;  break;
+        case GL_LINEAR_MIPMAP_LINEAR:   pCurrentTex_->ps2MinFilter = GS_TEX1_LINEAR_MIPMAP_LINEAR;   break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      pCurrentTex_->minFilter = (GLint)param;
+      break;
+    case GL_TEXTURE_MAG_FILTER:
+      switch((GLint)param)
+      {
+        case GL_NEAREST: pCurrentTex_->ps2MagFilter = GS_TEX1_NEAREST; break;
+        case GL_LINEAR:  pCurrentTex_->ps2MagFilter = GS_TEX1_LINEAR; break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      pCurrentTex_->magFilter = (GLint)param;
+      break;
+    case GL_TEXTURE_WRAP_S:
+      switch((GLint)param)
+      {
+        case GL_CLAMP:  break;
+        case GL_REPEAT: break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      pCurrentTex_->uWrapMode = (GLint)param;
+      break;
+    case GL_TEXTURE_WRAP_T:
+      switch((GLint)param)
+      {
+        case GL_CLAMP:  break;
+        case GL_REPEAT: break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      pCurrentTex_->vWrapMode = (GLint)param;
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
 }
 
 //-----------------------------------------------------------------------------
@@ -592,13 +841,13 @@ CPS23DRenderer::texEnvf(GLenum target, GLenum pname, GLfloat param)
 {
   if(target != GL_TEXTURE_ENV)
   {
-    //setError(GL_INVALID_ENUM);
+    setError(GL_INVALID_ENUM);
     return;
   }
 
   if(pname != GL_TEXTURE_ENV_MODE)
   {
-    //setError(GL_INVALID_ENUM);
+    setError(GL_INVALID_ENUM);
     return;
   }
 
@@ -608,12 +857,158 @@ CPS23DRenderer::texEnvf(GLenum target, GLenum pname, GLfloat param)
     case GL_DECAL:
     case GL_BLEND:
     case GL_REPLACE:
-      texEnvMode_ = (GLenum)param;
+    case GL_ADD:
       break;
     default:
-      //setError(GL_INVALID_ENUM);
+      setError(GL_INVALID_ENUM);
       return;
   };
+
+  texEnvMode_ = (GLenum)param;
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::colorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table)
+{
+  switch(target)
+  {
+    case GL_COLOR_TABLE:
+    //case GL_TEXTURE_COLOR_TABLE_EXT:
+    //case GL_PROXY_COLOR_TABLE:
+    //case GL_PROXY_TEXTURE_COLOR_TABLE_EXT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(internalformat)
+  {
+    //case GL_ABGR_EXT:
+    //case GL_ALPHA:
+    //case GL_ALPHA4:
+    //case GL_ALPHA8:
+    //case GL_ALPHA12:
+    //case GL_ALPHA16:
+    //case GL_LUMINANCE:
+    //case GL_LUMINANCE4:
+    //case GL_LUMINANCE8:
+    //case GL_LUMINANCE12:
+    //case GL_LUMINANCE16:
+    //case GL_LUMINANCE_ALPHA:
+    //case GL_LUMINANCE4_ALPHA4:
+    //case GL_LUMINANCE6_ALPHA2:
+    //case GL_LUMINANCE8_ALPHA8:
+    //case GL_LUMINANCE12_ALPHA4:
+    //case GL_LUMINANCE12_ALPHA12:
+    //case GL_LUMINANCE16_ALPHA16:
+    //case GL_INTENSITY:
+    //case GL_INTENSITY4:
+    //case GL_INTENSITY8:
+    //case GL_INTENSITY12:
+    //case GL_INTENSITY16:
+    case GL_R3_G3_B2:
+    case GL_RGB:
+    case GL_RGB4:
+    case GL_RGB5:
+    case GL_RGB8:
+    case GL_RGB10:
+    case GL_RGB12:
+    case GL_RGB16:
+    case GL_RGBA:
+    case GL_RGBA2:
+    case GL_RGBA4:
+    case GL_RGB5_A1:
+    case GL_RGBA8:
+    case GL_RGB10_A2:
+    case GL_RGBA12:
+    case GL_RGBA16:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(format)
+  {
+    //case GL_RED:
+    //case GL_GREEN:
+    //case GL_BLUE:
+    //case GL_ALPHA:
+    //case GL_LUMINANCE:
+    //case GL_LUMINANCE_ALPHA:
+    case GL_RGB:
+    case GL_BGR:
+    case GL_RGBA:
+    case GL_BGRA:
+    //case GL_422_EXT:
+    //case GL_422_REV_EXT:
+    //case GL_422_AVERAGE_EXT:
+    //case GL_422_REV_AVERAGE_EXT:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(type)
+  {
+    case GL_UNSIGNED_BYTE:
+    //case GL_BYTE:
+    //case GL_UNSIGNED_SHORT:
+    //case GL_SHORT:
+    //case GL_UNSIGNED_INT:
+    //case GL_INT:
+    //case GL_FLOAT:
+    //case GL_UNSIGNED_BYTE_3_3_2:
+    //case GL_UNSIGNED_BYTE_2_3_3_REV:
+    case GL_UNSIGNED_SHORT_5_6_5:
+    case GL_UNSIGNED_SHORT_5_6_5_REV:
+    case GL_UNSIGNED_SHORT_4_4_4_4:
+    case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+    case GL_UNSIGNED_SHORT_5_5_5_1:
+    case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+    case GL_UNSIGNED_INT_8_8_8_8:
+    case GL_UNSIGNED_INT_8_8_8_8_REV:
+    //case GL_UNSIGNED_INT_10_10_10_2:
+    //case GL_UNSIGNED_INT_2_10_10_10_REV:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::alphaFunc(GLenum func, GLclampf ref)
+{
+  switch(func)
+  {
+    case GL_NEVER:    ps2AlphaFunc_ = GS_ATST_NEVER;    break;
+    case GL_LESS:     ps2AlphaFunc_ = GS_ATST_LESS;     break;
+    case GL_EQUAL:    ps2AlphaFunc_ = GS_ATST_EQUAL;    break;
+    case GL_LEQUAL:   ps2AlphaFunc_ = GS_ATST_LEQUAL;   break;
+    case GL_GREATER:  ps2AlphaFunc_ = GS_ATST_GREATER;  break;
+    case GL_NOTEQUAL: ps2AlphaFunc_ = GS_ATST_NOTEQUAL; break;
+    case GL_GEQUAL:   ps2AlphaFunc_ = GS_ATST_GEQUAL;   break;
+    case GL_ALWAYS:   ps2AlphaFunc_ = GS_ATST_ALWAYS;   break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  alphaFunc_  = func;
+  alphaValue_ = ref;
+
+  ps2AlphaValue_ = (uint8_t)(alphaValue_ * 0x80);
+
+  if(bAlphaTestEnabled_ == true)
+  {
+    // Update test register
+    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(bAlphaTestEnabled_, ps2AlphaFunc_, ps2AlphaValue_, 0, 0, 0, bDepthTestEnabled_, ps2DepthFunction_));
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -623,14 +1018,27 @@ CPS23DRenderer::blendFunc(GLenum sfactor, GLenum dfactor)
   blendSFactor_ = sfactor;
   blendDFactor_ = dfactor;
 
-  if((sfactor == GL_ONE) && (dfactor == GL_ZERO))
-    blendFast_ = FB_SOURCE;
-  else if((sfactor == GL_ZERO) && (dfactor == GL_ONE))
-    blendFast_ = FB_DEST;
-  else if((sfactor == GL_SRC_ALPHA) && (dfactor == GL_ONE_MINUS_SRC_ALPHA))
-    blendFast_ = FB_BLEND;
-  else
-    blendFast_ = FB_OTHER;
+  if((sfactor == GL_SRC_ALPHA) && (dfactor == GL_ONE_MINUS_SRC_ALPHA))
+  {
+    // Normal alpha blending
+    // (Cs - Cd) * As + Cd
+    packet_.gifAddPackedAD(GIF::REG::alpha_1, GIF::REG::ALPHA(ALPHA_COLOR_SRC, ALPHA_COLOR_DST, ALPHA_ALPHA_SRC, ALPHA_COLOR_DST, 0x00));
+  }
+  else if((sfactor == GL_ZERO) && (dfactor == GL_ONE_MINUS_SRC_ALPHA))
+  {
+    // (0 - Cd) * As + Cd
+    packet_.gifAddPackedAD(GIF::REG::alpha_1, GIF::REG::ALPHA(ALPHA_COLOR_ZERO, ALPHA_COLOR_DST, ALPHA_ALPHA_SRC, ALPHA_COLOR_DST, 0x00));
+  }
+  else if((sfactor == GL_ZERO) && (dfactor == GL_ONE_MINUS_SRC_COLOR))
+  {
+    // (0 - Cs) * 0x80 + Cs
+    packet_.gifAddPackedAD(GIF::REG::alpha_1, GIF::REG::ALPHA(ALPHA_COLOR_ZERO, ALPHA_COLOR_SRC, ALPHA_ALPHA_FIX, ALPHA_COLOR_SRC, 0x80));
+  }
+  else if((sfactor == GL_ONE) && (dfactor == GL_ONE))
+  {
+    // (Cs - 0) * 0x80 + Cd
+    packet_.gifAddPackedAD(GIF::REG::alpha_1, GIF::REG::ALPHA(ALPHA_COLOR_SRC, ALPHA_COLOR_ZERO, ALPHA_ALPHA_FIX, ALPHA_COLOR_DST, 0x80));
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -647,38 +1055,61 @@ CPS23DRenderer::clearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf
 void
 CPS23DRenderer::clear(GLbitfield mask)
 {
-  if(mask & GL_DEPTH_BUFFER_BIT)
+  if(pSurface_ == NULL)
+    return;
+
+  bool bClearZ = (mask & GL_DEPTH_BUFFER_BIT) && (ps2ZBufferAddr_ != 0);
+  bool bClearC = (mask & GL_COLOR_BUFFER_BIT);// && (pSurface_ != NULL);
+
+  if((bClearZ == false) && (bClearC == false))
+    return;
+
+  if(bClearC == false)
   {
+    // Only update zbuffer
+    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(bAlphaTestEnabled_, GS_ATST_NEVER, 0x80, GS_AFAIL_ZBONLY, 0, 0, 1, GS_ZTST_ALWAYS));
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GIF::REG::ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, 0));
+  }
+  else if(bClearZ == false)
+  {
+    // Only update cbuffer
+    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, 0, 0));
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GIF::REG::ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, 1));
+  }
+  else
+  {
+    // Update zbuffer and cbuffer
     packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, 1, GS_ZTST_ALWAYS));
+    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GIF::REG::ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, 0));
   }
 
-  if(mask & GL_COLOR_BUFFER_BIT)
-  {
-    uint8_t r = (uint8_t)(clClear.r * 255);
-    uint8_t g = (uint8_t)(clClear.g * 255);
-    uint8_t b = (uint8_t)(clClear.b * 255);
-    //uint8_t a = (uint8_t)(clClear.a * 255);
+  uint8_t r = (uint8_t)(clClear.r * 255);
+  uint8_t g = (uint8_t)(clClear.g * 255);
+  uint8_t b = (uint8_t)(clClear.b * 255);
+  //uint8_t a = (uint8_t)(clClear.a * 255);
 
-    packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
-    packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(r, g, b, 0x80, 0));
-    packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((0+GS_X_BASE)<<4, (0+GS_Y_BASE)<<4, 0));
-    packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((viewportWidth+GS_X_BASE)<<4, (viewportHeight+GS_Y_BASE)<<4, 0));
-  }
+  packet_.gifAddPackedAD(GIF::REG::prim,  GIF::REG::PRIM(GS_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+  packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(r, g, b, 0x80, 0));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((0                  + GS_X_BASE) << 4, (0                   + GS_Y_BASE) << 4, zMax_ - zClearValue_));
+  packet_.gifAddPackedAD(GIF::REG::xyz2,  GIF::REG::XYZ2((pSurface_->width() + GS_X_BASE) << 4, (pSurface_->height() + GS_Y_BASE) << 4, zMax_ - zClearValue_));
 
-  if(mask & GL_DEPTH_BUFFER_BIT)
-  {
-    packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, bDepthTestEnabled_, ps2DepthFunction_));
-  }
+  // Restore test register
+  packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(bAlphaTestEnabled_, ps2AlphaFunc_, ps2AlphaValue_, 0, 0, 0, bDepthTestEnabled_, ps2DepthFunction_));
+  // Restore z-buffer
+  packet_.gifAddPackedAD(GIF::REG::zbuf_1, GIF::REG::ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, !bDepthMask_));
+
   bDataWaiting_ = true;
+  flush();
 }
 
 //-----------------------------------------------------------------------------
 void
 CPS23DRenderer::viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-  // FIXME: Use offset also
-  viewportWidth  = width;
-  viewportHeight = height;
+  viewportXOffset = x;
+  viewportYOffset = y;
+  viewportWidth   = width;
+  viewportHeight  = height;
 }
 
 //-----------------------------------------------------------------------------
@@ -694,136 +1125,78 @@ CPS23DRenderer::flush()
 {
   CAPS2Renderer::flush();
 }
-/*
+
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::glBegin(GLenum mode)
+CPS23DRenderer::begin(GLenum mode)
 {
-  CASoftGLESFloat::glBegin(mode);
-
 //  switch(mode)
 //  {
 //    case GL_TRIANGLES:
-      packet_.gifAddPackedAD(GIF::REG::prim, GIF::REG::PRIM(GS_PRIM_TRI,       ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, GS_PRIM_TEXTURES_ST, 0, 0));
+      packet_.gifAddPackedAD(GIF::REG::prim, GIF::REG::PRIM(GS_PRIM_TRI,       bSmoothShadingEnabled_, bTexturesEnabled_, ps2Fog_, bBlendingEnabled_, ps2Aliasing_, GS_PRIM_TEXTURES_ST, 0, 0));
 //      break;
 //    case GL_TRIANGLE_STRIP:
-//      packet_.gifAddPackedAD(GIF::REG::prim, GIF::REG::PRIM(GS_PRIM_TRI_STRIP, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, GS_PRIM_TEXTURES_ST, 0, 0));
+//      packet_.gifAddPackedAD(GIF::REG::prim, GIF::REG::PRIM(GS_PRIM_TRI_STRIP, bSmoothShadingEnabled_, bTexturesEnabled_, ps2Fog_, bBlendingEnabled_, ps2Aliasing_, GS_PRIM_TEXTURES_ST, 0, 0));
 //      break;
 //    case GL_TRIANGLE_FAN:
-//      packet_.gifAddPackedAD(GIF::REG::prim, GIF::REG::PRIM(GS_PRIM_TRI_FAN,   ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, GS_PRIM_TEXTURES_ST, 0, 0));
+//      packet_.gifAddPackedAD(GIF::REG::prim, GIF::REG::PRIM(GS_PRIM_TRI_FAN,   bSmoothShadingEnabled_, bTexturesEnabled_, ps2Fog_, bBlendingEnabled_, ps2Aliasing_, GS_PRIM_TEXTURES_ST, 0, 0));
 //      break;
 //  };
 }
 
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::glEnd()
+CPS23DRenderer::end()
 {
-  CASoftGLESFloat::glEnd();
-
   bDataWaiting_ = true;
+  flush();
 }
-*/
+
 //-----------------------------------------------------------------------------
 void
 CPS23DRenderer::rasterTriangle(const raster::SVertex & v0, const raster::SVertex & v1, const raster::SVertex & v2)
 {
-  packet_.gifAddPackedAD(GIF::REG::prim, GIF::REG::PRIM(GS_PRIM_TRI, ps2Shading_, ps2Textures_, ps2Fog_, ps2AlphaBlend_, ps2Aliasing_, GS_PRIM_TEXTURES_ST, 0, 0));
-  bDataWaiting_ = true;
-
-/*
-  // -------
-  // Culling
-  // -------
-  if(cullFaceEnabled_ == true)
-  {
-    // Always invisible when culling both front and back
-    if(cullFaceMode_ == GL_FRONT_AND_BACK)
-      return;
-
-    GLfloat vnz =
-      (v0.vd.x - v2.vd.x) * (v1.vd.y - v2.vd.y) -
-      (v0.vd.y - v2.vd.y) * (v1.vd.x - v2.vd.x);
-
-    if(vnz == 0.0f)
-      return;
-
-    if((vnz < 0.0f) == bCullCW_)
-      return;
-  }
-*/
   const raster::SVertex * va[3] = {&v0, &v1, &v2};
-  uint8_t alpha;
 
   for(int iVertex(0); iVertex < 3; iVertex++)
   {
     const raster::SVertex & v = *va[iVertex];
 
-    //uint32_t z = 0;//ps2DepthInvert_ ? (zMax_ - v.sz) : v.sz;
-
-    // Determine alpha value (for aliasing and alpha blending)
-    // Both off: solid colors
-    if((ps2Aliasing_ == GS_PRIM_ALIASING_OFF) && (ps2AlphaBlend_ == GS_PRIM_ALPHABLEND_OFF))
-      alpha = 255;
-    // Only alpha blending: use alpha from color value
-    else if((ps2Aliasing_ == GS_PRIM_ALIASING_OFF) && (ps2AlphaBlend_ == GS_PRIM_ALPHABLEND_ON))
-      alpha = (v.c.a*255)>>SHIFT_COLOR;
-    // Only aliasing: use value 0x80
-    else if((ps2Aliasing_ == GS_PRIM_ALIASING_ON)  && (ps2AlphaBlend_ == GS_PRIM_ALPHABLEND_OFF))
-      alpha = 0x80;
-    // Both: Can't do both at the same time!!! Prefer alpha blending then...
-    else
-    {
-      alpha = (v.c.a*255)>>SHIFT_COLOR;
-      // Don't use 0x80, it's the 'magic' aliasing value
-      if(alpha == 0x80)
-        alpha = 0x81;
-    }
-
     // Add to message
     if(bTexturesEnabled_ == true)
     {
+      // Use S/T/Q for perspective correct texture mapping
       GLfloat tq = v.w;
       GLfloat ts = v.t.u * tq;
       GLfloat tt = v.t.v * tq;
 
-      packet_.gifAddPackedAD(GIF::REG::st,    GIF::REG::ST(ts, tt));
-      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((v.c.r*255)>>SHIFT_COLOR, (v.c.g*255)>>SHIFT_COLOR, (v.c.b*255)>>SHIFT_COLOR, alpha, tq));
+      packet_.gifAddPackedAD(GIF::REG::st, GIF::REG::ST(ts, tt));
+      if(bTextureColor_ == true)
+      {
+        // color range: 0x00 - 0x80 !!!! greater values will make the texture brighter
+        // alpha range: 0x00 - 0x80
+        if(bForceWhiteColor_ == true)
+          packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(0x80, 0x80, 0x80, (v.c.a*0x80)>>SHIFT_COLOR, tq));
+        else
+          packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((v.c.r*0x80)>>SHIFT_COLOR, (v.c.g*0x80)>>SHIFT_COLOR, (v.c.b*0x80)>>SHIFT_COLOR, (v.c.a*0x80)>>SHIFT_COLOR, tq));
+      }
+      else
+      {
+        // We still need Q
+        packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(0x80, 0x80, 0x80, 0x80, tq));
+      }
     }
     else
     {
-      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((v.c.r*255)>>SHIFT_COLOR, (v.c.g*255)>>SHIFT_COLOR, (v.c.b*255)>>SHIFT_COLOR, alpha, 0));
+      // color range: 0x00 - 0xff
+      // alpha range: 0x00 - 0x80
+      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((v.c.r*255)>>SHIFT_COLOR, (v.c.g*255)>>SHIFT_COLOR, (v.c.b*255)>>SHIFT_COLOR, (v.c.a*0x80)>>SHIFT_COLOR, 0));
     }
-    
-    int32_t x = v.x;//(int32_t)((xA_ * v.vd.x) + xB_);
-    int32_t y = v.y;//(int32_t)((yA_ * v.vd.y) + yB_);
-    int32_t z = v.z;//(int32_t)((zA_ * v.vd.z) + zB_);
-    if(ps2DepthInvert_ == true) z = zMax_ - z;
+
+    int32_t x = v.x;
+    int32_t y = v.y;
+    int32_t z = (ps2DepthInvert_ == true) ? (zMax_ - v.z) : v.z;
 
     packet_.gifAddPackedAD(GIF::REG::xyz2, GIF::REG::XYZ2((GS_X_BASE<<4) + x, (GS_Y_BASE<<4) + y, z));
   }
-}
-
-//-----------------------------------------------------------------------------
-void
-CPS23DRenderer::zbuffer(bool enable)
-{
-  if(enable == true)
-  {
-    if(ps2ZBufferAddr_ == 0)
-    {
-      // Allocate z-buffer
-      device_.allocFramebuffer(ps2ZBufferAddr_, pSurface_->mode.xpitch, pSurface_->mode.height, ps2ZPSM_);
-    }
-    // Register buffer location and pixel mode
-    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GIF::REG::ZBUF(ps2ZBufferAddr_ >> 13, ps2ZPSM_, GS_ZBUF_ENABLE));
-  }
-  else
-  {
-    // Z-Buffer
-    packet_.gifAddPackedAD(GIF::REG::zbuf_1, GIF::REG::ZBUF(0, ps2ZPSM_, GS_ZBUF_DISABLE));
-  }
-
-  // Z-Buffer test
-  packet_.gifAddPackedAD(GIF::REG::test_1, GIF::REG::TEST(0, 0, 0, 0, 0, 0, enable, ps2DepthFunction_));
 }

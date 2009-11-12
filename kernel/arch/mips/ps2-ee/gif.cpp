@@ -30,14 +30,15 @@ CGIFPacket gifData(gifData_Data, 50, DMAC::Channel::GIF);
 //-------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 void
-ee_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, uint32_t source)
+ee_to_gsBitBlt(uint32_t daddr, int dpsm, int dx, int dy, int w, int h, uint32_t source)
 {
   // BitBlt from EE to GS
   gifData.scTagOpenCnt();
   {
     gifData.gifTagOpenPacked();
     {
-      gifData.gifAddPackedAD(GIF::REG::bitbltbuf, GIF::REG::BITBLTBUF(0, 0, 0, daddr >> 8, dw >> 6, dpsm));
+      unsigned int bufWidth = ((w >> 6) > 1) ? (w >> 6) : 1;
+      gifData.gifAddPackedAD(GIF::REG::bitbltbuf, GIF::REG::BITBLTBUF(0, 0, 0, daddr >> 8, bufWidth, dpsm));
       gifData.gifAddPackedAD(GIF::REG::trxpos,    GIF::REG::TRXPOS(0, 0, dx, dy, 0));
       gifData.gifAddPackedAD(GIF::REG::trxreg,    GIF::REG::TRXREG(w, h));
       gifData.gifAddPackedAD(GIF::REG::trxdir,    GIF::REG::TRXDIR(GS_TRXDIR_EE_TO_GS));
@@ -88,11 +89,12 @@ ee_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, u
 
 //---------------------------------------------------------------------------
 void
-gs_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, uint32_t source, int sw, int spsm, int sx, int sy)
+gs_to_gsBitBlt(uint32_t daddr, int dpsm, int dx, int dy, int w, int h, uint32_t source, int spsm, int sx, int sy)
 {
   gifData.scTagOpenEnd();
     gifData.gifTagOpenPacked();
-      gifData.gifAddPackedAD(GIF::REG::bitbltbuf, GIF::REG::BITBLTBUF(source>>8, sw>>6, spsm, daddr>>8, dw>>6, dpsm));
+      unsigned int bufWidth = ((w >> 6) > 1) ? (w >> 6) : 1;
+      gifData.gifAddPackedAD(GIF::REG::bitbltbuf, GIF::REG::BITBLTBUF(source>>8, bufWidth, spsm, daddr>>8, bufWidth, dpsm));
       gifData.gifAddPackedAD(GIF::REG::trxpos,    GIF::REG::TRXPOS(sx, sy, dx, dy, 0));
       gifData.gifAddPackedAD(GIF::REG::trxreg,    GIF::REG::TRXREG(w, h));
       gifData.gifAddPackedAD(GIF::REG::trxdir,    GIF::REG::TRXDIR(GS_TRXDIR_GS_TO_GS));

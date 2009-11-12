@@ -675,6 +675,24 @@ typedef double          GLclampd;
 #define GL_ALL_CLIENT_ATTRIB_BITS               0xffffffff
 #define GL_CLIENT_ALL_ATTRIB_BITS               0xffffffff
 
+/* OpenGL 1.2 imaging subset */
+/* GL_EXT_color_table */
+#define GL_COLOR_TABLE                          0x80D0
+#define GL_POST_CONVOLUTION_COLOR_TABLE         0x80D1
+#define GL_POST_COLOR_MATRIX_COLOR_TABLE        0x80D2
+#define GL_PROXY_COLOR_TABLE                    0x80D3
+#define GL_PROXY_POST_CONVOLUTION_COLOR_TABLE   0x80D4
+#define GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE  0x80D5
+#define GL_COLOR_TABLE_SCALE                    0x80D6
+#define GL_COLOR_TABLE_BIAS                     0x80D7
+#define GL_COLOR_TABLE_FORMAT                   0x80D8
+#define GL_COLOR_TABLE_WIDTH                    0x80D9
+#define GL_COLOR_TABLE_RED_SIZE                 0x80DA
+#define GL_COLOR_TABLE_GREEN_SIZE               0x80DB
+#define GL_COLOR_TABLE_BLUE_SIZE                0x80DC
+#define GL_COLOR_TABLE_ALPHA_SIZE               0x80DD
+#define GL_COLOR_TABLE_LUMINANCE_SIZE           0x80DE
+#define GL_COLOR_TABLE_INTENSITY_SIZE           0x80DF
 
 // Miscellaneous
 //GLAPI void APIENTRY glClearIndex( GLfloat c );
@@ -1046,6 +1064,9 @@ GLAPI void APIENTRY glFogfv( GLenum pname, const GLfloat *params );
 //GLAPI void APIENTRY glLoadName( GLuint name );
 //GLAPI void APIENTRY glPushName( GLuint name );
 //GLAPI void APIENTRY glPopName( void );
+
+/* 1.2 imaging extension functions */
+GLAPI void APIENTRY glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table );
 
 
 #ifdef __cplusplus

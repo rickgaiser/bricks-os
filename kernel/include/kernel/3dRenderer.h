@@ -37,8 +37,10 @@ public:
 
   virtual void glAlphaFunc(GLenum func, GLclampf ref) = 0;
   virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) = 0;
-  virtual void glClearDepthf(GLclampf depth) = 0;
+  virtual void glClearDepth(GLclampd depth) = 0;
 //  virtual void glClipPlanef(GLenum plane, const GLfloat *equation) = 0;
+  virtual void glColorMaterial(GLenum face, GLenum mode) = 0;
+  virtual void glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table) = 0;
   virtual void glDepthRangef(GLclampf zNear, GLclampf zFar) = 0;
   virtual void glFogf(GLenum pname, GLfloat param) = 0;
   virtual void glFogfv(GLenum pname, const GLfloat *params) = 0;

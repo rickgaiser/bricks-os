@@ -77,7 +77,7 @@ CPS2DebugScreen::init()
 
   // Set font
   g2_font_tc = fixed_tc;
-  ee_to_gsBitBlt(g2_fontbuf_addr, g2_fontbuf_w, 0, 0, 0, 256, 128, (uint32_t)courier_new);
+  ee_to_gsBitBlt(g2_fontbuf_addr, 0, 0, 0, g2_fontbuf_w, g2_fontbuf_h, (uint32_t)courier_new);
 
   return 0;
 }

@@ -22,6 +22,7 @@
 #include "videoDevice.h"
 #include "2dRenderer.h"
 #include "3dRenderer.h"
+#include "../../../../gl/3DRendererFloat.h"
 #include "bios.h"
 #include "dma.h"
 #include "irq.h"
@@ -34,11 +35,11 @@
 //  1: Buffer SWAP with 2 full buffers. FIELD mode.
 //      + Frame rate is allowed to drop.
 //      - Only half of what is rendered is displayed.
-//  2 - Buffer SWAP. 2 half buffers. FRAME mode.
+//  2:  Buffer SWAP. 2 half buffers. FRAME mode.
 //      + Memory efficient.
 //      - Buffers need a half pixel offset.
 //      - Keep up the frame rate.
-//  3 - Buffer COPY. 1 full, 1 half buffer. FRAME mode.
+//  3:  Buffer COPY. 1 full, 1 half buffer. FRAME mode.
 //      + Vertical aliasing on copy.
 //      + 24bit display buffer allows extra 8/4bit textures.
 
@@ -229,7 +230,7 @@ CAPS2Renderer::setSurface(CSurface * surface)
   {
     flush();
 
-    packet_.gifAddPackedAD(GIF::REG::frame_1,   GIF::REG::FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.xpitch >> 6, pSurface_->psm_, 0));
+    packet_.gifAddPackedAD(GIF::REG::frame_1, GIF::REG::FRAME((uint32_t)pSurface_->p >> 13, pSurface_->mode.xpitch >> 6, pSurface_->psm_, 0));
   }
 }
 
@@ -509,7 +510,7 @@ void
 CPS2VideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
   // Create common renderer
-  CASoftGLESFloat * pRenderer   = new CASoftGLESFloat();
+  CSoft3DRendererFloat * pRenderer   = new CSoft3DRendererFloat();
 
   // Attach PS2 GS hardware rasterizer to it
   CPS23DRenderer  * pRasterizer = new CPS23DRenderer(*this);

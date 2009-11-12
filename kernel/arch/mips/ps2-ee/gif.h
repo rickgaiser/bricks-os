@@ -407,6 +407,12 @@ namespace GIF
          ((uint64_t)(Y0) << 32) |
          ((uint64_t)(Y1) << 48));
     }
+    #define ALPHA_COLOR_SRC  0
+    #define ALPHA_COLOR_DST  1
+    #define ALPHA_COLOR_ZERO 2
+    #define ALPHA_ALPHA_SRC  0
+    #define ALPHA_ALPHA_DST  1
+    #define ALPHA_ALPHA_FIX  2
     inline uint64_t ALPHA(uint8_t A, uint8_t B, uint8_t C, uint8_t D, uint8_t FIX)
     {
       // Alpha Formula is: Cv = (A-B)*C>>7 + D
@@ -614,8 +620,8 @@ namespace GIF
 
 
 //-------------------------------------------------------------------------
-void ee_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, uint32_t source);
-void gs_to_gsBitBlt(uint32_t daddr, int dw, int dpsm, int dx, int dy, int w, int h, uint32_t source, int sw, int spsm, int sx, int sy);
+void ee_to_gsBitBlt(uint32_t daddr, int dpsm, int dx, int dy, int w, int h, uint32_t source);
+void gs_to_gsBitBlt(uint32_t daddr, int dpsm, int dx, int dy, int w, int h, uint32_t source, int spsm, int sx, int sy);
 
 //-------------------------------------------------------------------------
 class CGIFPacket

@@ -272,10 +272,10 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
 
   switch(internalformat)
   {
-    case 1:
-    case 2:
-    case 3:
-    case 4:
+    //case 1:
+    //case 2:
+    case 3: bAlpha = false; break;
+    case 4: bAlpha = true;  break;
     //case GL_ABGR_EXT:
     //case GL_ALPHA:
     //case GL_ALPHA4:
@@ -299,22 +299,22 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
     //case GL_INTENSITY8:
     //case GL_INTENSITY12:
     //case GL_INTENSITY16:
-    case GL_R3_G3_B2:
-    case GL_RGB:
-    case GL_RGB4:
-    case GL_RGB5:
-    case GL_RGB8:
-    case GL_RGB10:
-    case GL_RGB12:
-    case GL_RGB16:
-    case GL_RGBA:
-    case GL_RGBA2:
-    case GL_RGBA4:
-    case GL_RGB5_A1:
-    case GL_RGBA8:
-    case GL_RGB10_A2:
-    case GL_RGBA12:
-    case GL_RGBA16:
+    case GL_R3_G3_B2: bAlpha = false; break;
+    case GL_RGB:      bAlpha = false; break;
+    case GL_RGB4:     bAlpha = false; break;
+    case GL_RGB5:     bAlpha = false; break;
+    case GL_RGB8:     bAlpha = false; break;
+    case GL_RGB10:    bAlpha = false; break;
+    case GL_RGB12:    bAlpha = false; break;
+    case GL_RGB16:    bAlpha = false; break;
+    case GL_RGBA:     bAlpha = true;  break;
+    case GL_RGBA2:    bAlpha = true;  break;
+    case GL_RGBA4:    bAlpha = true;  break;
+    case GL_RGB5_A1:  bAlpha = true;  break;
+    case GL_RGBA8:    bAlpha = true;  break;
+    case GL_RGB10_A2: bAlpha = true;  break;
+    case GL_RGBA12:   bAlpha = true;  break;
+    case GL_RGBA16:   bAlpha = true;  break;
       break;
     default:
       setError(GL_INVALID_ENUM);
@@ -374,10 +374,10 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
     //case GL_GREEN:
     //case GL_BLUE:
     //case GL_ALPHA:
-    case GL_RGB:      bAlpha = false; break;
-    case GL_RGBA:     bAlpha = true;  break;
-    case GL_BGR:      bAlpha = false; break;
-    case GL_BGRA:     bAlpha = true;  break;
+    case GL_RGB:
+    case GL_RGBA:
+    case GL_BGR:
+    case GL_BGRA:
     //case GL_ABGR_EXT: bAlpha = true;  break;
     //case GL_LUMINANCE:
     //case GL_422_EXT:
@@ -385,6 +385,7 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
     //case GL_422_AVERAGE_EXT:
     //case GL_422_REV_AVERAGE_EXT:
     //case GL_LUMINANCE_ALPHA:
+      break;
     default:
       setError(GL_INVALID_ENUM);
       return;
