@@ -33,22 +33,25 @@
 #define __LITTLE_ENDIAN__
 //#define __BIG_ENDIAN__
 #define CONFIG_FPU
-//#define CONFIG_MMU
+#define CONFIG_MMU
 
 // Kernel interface
-#define CONFIG_DIRECT_ACCESS_KERNEL
+#undef  CONFIG_DIRECT_ACCESS_KERNEL
 #undef  CONFIG_DIRECT_ACCESS_KERNEL_FUNC
 
 // File System
-#define CONFIG_FILESYSTEM
-#define CONFIG_FS_FAT
-#define CONFIG_PD_IBM
+#undef  CONFIG_FILESYSTEM
+#undef  CONFIG_FS_FAT
+#undef  CONFIG_PD_IBM
 
 // Video configuration
 #define CONFIG_FRAMEBUFFER
 #define CONFIG_GL
-#undef  CONFIG_GL_TINY
+#define CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+#define CONFIG_GL_ENABLE_ALPHA_TEST
 #define CONFIG_GL_FRAMEBUFFER_16BIT
+#undef  CONFIG_GL_TEXTURES_16BIT // NOTE: Only used when NOT using SIMPLE textures
+#undef  CONFIG_GL_SIMPLE_TEXTURES
 
 // Library configuration
 #define CONFIG_BUILTIN_MM

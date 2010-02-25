@@ -26,30 +26,26 @@
 #include "string.h"
 #include "asm/arch/config.h"
 #include "asm/hal.h"
-#include "mmap.h"
+#include "pmm.h"
 
 
+// Direct kernel access is BAD!
+// This makes the applications run with kernel privileges
 #ifdef CONFIG_DIRECT_ACCESS_KERNEL
   // Segments (Ring0 Privilege)
   #define USER_CODE_SEGMENT_SEL selCodeKernel
   #define USER_DATA_SEGMENT_SEL selDataKernel
 #else
   // Segments (Ring3 Privilege)
-  #define USER_CODE_SEGMENT_SEL selCodeUserTmp
-  #define USER_DATA_SEGMENT_SEL selDataUserTmp
+  #define USER_CODE_SEGMENT_SEL selCodeUser
+  #define USER_DATA_SEGMENT_SEL selDataUser
 #endif
-
-
-extern bool bPAEEnabled;
 
 
 CTask             * pMainTask;
 CThread           * pMainThread;
 CThreadImpl       * pMainThreadImpl;
 STaskStateSegment * pCurrentTSS;
-#ifdef CONFIG_MMU
-CAddressSpace FIXME;
-#endif
 
 
 // -----------------------------------------------------------------------------
@@ -61,17 +57,8 @@ task_init()
   pMainThread     = &pMainTask->thread();
   pMainThreadImpl = &pMainTask->thread().impl();
 
-#ifdef CONFIG_MMU
-  // Enable PAE (36 bit physical addressing)
-  if(bPAEEnabled == true)
-    setCR4(getCR4() | CR4_PAE);
-
   // Set CR3 (Page-Table Base Address)
   setCR3(pMainTask->aspace().cr3());
-
-  // Enable paging
-  setCR0(getCR0() | CR0_PG);
-#endif
 
   // Set the current running tasks TSS
   setTR(pMainThreadImpl->selTSS_);
@@ -82,14 +69,9 @@ task_init()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-#ifndef CONFIG_MMU
-CThreadImpl::CThreadImpl()
- : pStack_(NULL)
-#else
 CThreadImpl::CThreadImpl(CAddressSpace * pASpace)
  : pASpace_(pASpace)
  , pStack_(NULL)
-#endif
  , pSvcStack_(NULL)
 {
   // Initialize TSS
@@ -109,9 +91,10 @@ CThreadImpl::~CThreadImpl()
     delete pStack_;
   if(pSvcStack_ != NULL)
     delete pSvcStack_;
+    
+  cGDT.remove(selTSS_);
   if(pTSS_ != NULL)
     delete pTSS_;
-  // FIXME: Free TSS selector
 }
 
 // -----------------------------------------------------------------------------
@@ -119,11 +102,15 @@ void
 CThreadImpl::init(void * entry, int argc, char * argv[])
 {
   size_t stack(1024);
+#ifndef CONFIG_DIRECT_ACCESS_KERNEL
   size_t svcstack(1024);
+#endif
 
   // Allocate stacks
   pStack_    = new uint32_t[stack];
+#ifndef CONFIG_DIRECT_ACCESS_KERNEL
   pSvcStack_ = new uint32_t[svcstack];
+#endif
 
 #ifndef CONFIG_DIRECT_ACCESS_KERNEL
   // SVC stack
@@ -142,9 +129,7 @@ CThreadImpl::init(void * entry, int argc, char * argv[])
   pTSS_->fs   = USER_DATA_SEGMENT_SEL;
   pTSS_->gs   = USER_DATA_SEGMENT_SEL;
   // Other
-#ifdef CONFIG_MMU
   pTSS_->cr3  = pASpace_->cr3();
-#endif
   pTSS_->eip  = (uint32_t)entry;
   pTSS_->eflags = I386_IOPL_VALUE(0) | I386_IE_FLAG | I386_ON_FLAGS;
 }
@@ -177,14 +162,9 @@ CThreadImpl::runCall()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-#ifndef CONFIG_MMU
-CV86Thread::CV86Thread()
- : pStack_(NULL)
-#else
 CV86Thread::CV86Thread(CAddressSpace * pASpace)
  : pASpace_(pASpace)
  , pStack_(NULL)
-#endif
  , pSvcStack_(NULL)
 {
   // Initialize TSS
@@ -205,9 +185,10 @@ CV86Thread::~CV86Thread()
     physFreePage((uint64_t)pStack_);
   if(pSvcStack_ != NULL)
     delete pSvcStack_;
+  
+  cGDT.remove(selTSS_);
   if(pTSS_ != NULL)
     delete pTSS_;
-  // FIXME: Free TSS selector
 }
 
 // -----------------------------------------------------------------------------
@@ -218,7 +199,7 @@ CV86Thread::init()
   size_t svcstack(1024);
 
   // Allocate stacks
-  pStack_    = (uint32_t *)physAllocPageLow();
+  pStack_    = (uint32_t *)physAllocPageLower();
   pSvcStack_ = new uint32_t[svcstack];
 
   // SVC stack
@@ -234,9 +215,7 @@ CV86Thread::init()
   pTSS_->fs   = 0;
   pTSS_->gs   = 0;
   // Other
-#ifdef CONFIG_MMU
   pTSS_->cr3  = pASpace_->cr3();
-#endif
 //  pTSS_->eip  = ...;
   pTSS_->eflags = I386_VM_FLAG | I386_IOPL_VALUE(0) | I386_IE_FLAG | I386_ON_FLAGS;
 }

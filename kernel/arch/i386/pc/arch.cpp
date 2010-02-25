@@ -31,14 +31,15 @@
 #include "asm/cpu.h"
 #include "asm/task.h"
 
-#include "irq.h"
 #include "apic.h"
 #include "cpuid.h"
 #include "descriptor.h"
 #include "drivers.h"
 #include "gpf.h"
 #include "i8254.h"
-#include "mmap.h"
+#include "i8259.h"
+#include "pmm.h"
+#include "asm/vmm.h"
 #include "multiboot.h"
 #include "pci.h"
 
@@ -52,8 +53,8 @@
 extern char       start_text;
 extern char       end_bss;
 
-CIRQ              cIRQ;
-CI8254            c8254(0x40);
+CIRQ              c8259;       // Legacy IRQ, represents both master and slave controller
+CI8254            c8254(0x40); // Legacy Timer
 
 #ifdef CONFIG_DEBUGGING
 CI386DebugScreen  cDebug;
@@ -105,140 +106,164 @@ loadELF32(void * file, CTask & task)
 }
 
 // -----------------------------------------------------------------------------
-int
-arch_main(unsigned long magic, multiboot_info_t * mbi)
+void
+init_memmap(multiboot_info_t * mbi)
 {
-  unsigned char * pFirstFreeByte = 0;
-  uint64_t iMemFree(0);
-  uint64_t iMemTop(0);
-  uint64_t iMemReserved(0);
-  uint64_t iMemKernel(0);
-  unsigned int iMemPageCount(0);
-
-#ifdef CONFIG_DEBUGGING
-  cDebug.init();
-  pDebug = &cDebug;
-#endif // #ifdef CONFIG_DEBUGGING
-
-  cIRQ.init();
-  c8254.init();
-  c8254.setTimerFrequency(100.0f);
-
-  // ---------------------------------------
-  // Miltiboot loader and memorymap required
-  if(magic == MULTIBOOT_BOOTLOADER_MAGIC)
+  uint64_t iMemFree = 0;
+  uint64_t iMemTop = 0;
+  
+  // Determine usable memory
+  if(mbi->flags & (1<<0))
   {
-    if((mbi->flags & (1<<6)) == 0)
-    {
-      panic("ERROR: No multiboot memory map present\n");
-    }
+    // Memory ranging from 0..640KiB (in 1KiB units)
+    iMemFree += mbi->mem_lower * 1024;
+    // Memory ranging from 1MiB (in 1KiB units)
+    iMemFree += mbi->mem_upper * 1024;
+    
+    printk("Lower memory: %dKiB\n", mbi->mem_lower);
+    printk("Upper memory: %dKiB\n", mbi->mem_upper);
   }
   else
   {
-    panic("ERROR: Multiboot loader information not present\n");
-  }
-
-  // -----------------------------
-  // Initialize CPU identification
-  CPU::init();
-
-  // --------------------------------
-  // Setup Physical Memory Management
-  // --------------------------------
-  // Memory Map Type:
-  // 0x01 memory, available to OS
-  // 0x02 reserved, not available (e.g. system ROM, memory-mapped device)
-  // 0x03 ACPI Reclaim Memory (usable by OS after reading ACPI tables) (60 KiB ?)
-  // 0x04 ACPI NVS Memory (OS is required to save this memory between NVS sessions) (4 KiB ?)
-  //printk("Memory Map:\n");
-  for(memory_map_t * mmap = (memory_map_t *) mbi->mmap_addr; (unsigned long)mmap < mbi->mmap_addr + mbi->mmap_length; mmap = (memory_map_t *) ((unsigned long)mmap + mmap->size + sizeof (mmap->size)))
-  {
-    //printk(" - Type: %d, Addr: %d, Size: %d\n", mmap->type, mmap->base_addr_low, mmap->length_low);
-    // Determine top of memory
-    // Determine free memory
-    if(mmap->type == 1)
-    {
-      if(iMemTop < (mmap->base_addr_low + mmap->length_low))
-        iMemTop = mmap->base_addr_low + mmap->length_low;
-      iMemFree += mmap->length_low;
-    }
+    panic("ERROR: Can not detect usable memory");
   }
 
   if(iMemFree < (2 * 1024 * 1024))
   {
-    panic("ERROR: %dKiB free memory, need at least 2048KiB\n", iMemFree/1024);
+    panic("ERROR: %dKiB free memory, need at least 2MiB", (uint32_t)(iMemFree >> 10));
   }
-
-  iMemReserved = iMemTop - iMemFree;
-  iMemPageCount = iMemTop / 4096;
-
-  // Kernel location and size
-  //printk("Kernel: start: %d, size: %d\n", (unsigned int)&start_text, (unsigned int)&end_bss - (unsigned int)&start_text);
-  if((unsigned char *)&end_bss > pFirstFreeByte)
-    pFirstFreeByte = (unsigned char *)&end_bss;
-  // Module location and size
-  if((mbi->flags & (1<<3)) && ((int)mbi->mods_count > 0))
+  
+  // Determine the top of the physical memory
+  if(mbi->flags & (1<<6))
   {
-    module_t * mod = (module_t *) mbi->mods_addr;
-    for(unsigned int i(0); i < mbi->mods_count; i++, mod++)
+    // Use bios memory map provided by GRUB
+    // ------------------------------------
+    // Memory Map Type:
+    // 0x01 memory, available to OS
+    // 0x02 reserved, not available (e.g. system ROM, memory-mapped device)
+    // 0x03 ACPI Reclaim Memory (usable by OS after reading ACPI tables) (60 KiB ?)
+    // 0x04 ACPI NVS Memory (OS is required to save this memory between NVS sessions) (4 KiB ?)
+    //printk("Memory Map:\n");
+    for(memory_map_t * mmap = (memory_map_t *) mbi->mmap_addr; (unsigned long)mmap < mbi->mmap_addr + mbi->mmap_length; mmap = (memory_map_t *) ((unsigned long)mmap + mmap->size + sizeof (mmap->size)))
     {
-      //printk("Module: start: %d, size: %d\n", mod->mod_start, mod->mod_end - mod->mod_start);
-      if((unsigned char *)mod->mod_end > pFirstFreeByte)
-        pFirstFreeByte = (unsigned char *)mod->mod_end;
+      //printk(" - Type: %d, Addr: %d, Size: %d\n", mmap->type, mmap->base_addr_low, mmap->length_low);
+      // Determine top of memory
+      if((mmap->type == 1) || (mmap->type == 3) || (mmap->type == 4))
+      {
+        if(iMemTop < (mmap->base_addr_low + mmap->length_low))
+          iMemTop = mmap->base_addr_low + mmap->length_low;
+      }
     }
   }
+  else
+  {
+    printk("Warning: No BIOS memory map found\n");
+    
+    // Assume 1MiB + upper memory
+    iMemTop = (1 * 1024 * 1024) + (mbi->mem_upper * 1024);
+  }
+  
+  printk("Memory top: %dKiB\n", (uint32_t)(iMemTop >> 10));
 
-  // Create physical memory map, all pages will be initially marked used
-  uint8_t * pMemoryMap = pFirstFreeByte;
-  init_mmap(pMemoryMap, iMemPageCount);
-  //printk("MemMap: start: %d, size: %d\n", (unsigned int)pFirstFreeByte, iMemPageCount);
-  pFirstFreeByte += iMemPageCount;
+  // Create memory map right after our kernel and loaded modules
+  // 1 - Kernel location and size
+  //printk("Kernel: start: %d, size: %d\n", (unsigned int)&start_text, (unsigned int)&end_bss - (unsigned int)&start_text);
+  uint8_t * pMemoryMap = (uint8_t *)VIRT_TO_PHYS(&end_bss);
+  // 2 - Module location and size
+  if(mbi->flags & (1<<3))
+  {
+    module_t * mod = (module_t *) mbi->mods_addr;
+    
+    for(unsigned int i = 0; i < mbi->mods_count; i++, mod++)
+    {
+      //printk("Module: start: %d, size: %d\n", mod->mod_start, mod->mod_end - mod->mod_start);
+      if((uint8_t *)mod->mod_end > pMemoryMap)
+        pMemoryMap = (uint8_t *)mod->mod_end;
+    }
+  }
+  pMemoryMap = (uint8_t *)PHYS_TO_VIRT(pMemoryMap);
+
+  // Initialize memory map, all pages will be initially marked used
+  init_pmm(pMemoryMap, iMemTop >> 12);
 
   // Free memory that multiboot/bios reports available
-  for(memory_map_t * mmap = (memory_map_t *) mbi->mmap_addr; (unsigned long)mmap < mbi->mmap_addr + mbi->mmap_length; mmap = (memory_map_t *) ((unsigned long)mmap + mmap->size + sizeof (mmap->size)))
-    if(mmap->type == 1)
-      physFreeRange(mmap->base_addr_low, mmap->length_low);
+  if(mbi->flags & (1<<6))
+  {
+    for(memory_map_t * mmap = (memory_map_t *) mbi->mmap_addr; (unsigned long)mmap < mbi->mmap_addr + mbi->mmap_length; mmap = (memory_map_t *) ((unsigned long)mmap + mmap->size + sizeof (mmap->size)))
+      if(mmap->type == 1)
+        physFreeRange(mmap->base_addr_low, mmap->length_low);
+  }
+  else
+  {
+    // Free lower memory
+    physFreeRange(0, mbi->mem_lower * 1024);
+    // Free upper memory
+    physFreeRange(1 * 1024 * 1024, mbi->mem_upper * 1024);
+  }
 
   // Allocate interrupt area (start: 0, size: 4KiB)
-  physAllocRange((uint64_t)0x00000000, 0x00001000);
-  // Allocate kernel stack (start: 1MiB, size: 64KiB)
-  physAllocRange((uint64_t)0x00100000, 0x00010000);
+  physAllocRange(0, 4*1024);
   // Allocate kernel
-  physAllocRange((uint64_t)&start_text, (unsigned int)&end_bss - (unsigned int)&start_text);
+  physAllocRange(VIRT_TO_PHYS(&start_text), (unsigned int)&end_bss - (unsigned int)&start_text);
   // Allocate modules
   if((mbi->flags & (1<<3)) && ((int)mbi->mods_count > 0))
   {
     module_t * mod = (module_t *) mbi->mods_addr;
     for(unsigned int i(0); i < mbi->mods_count; i++, mod++)
-      physAllocRange((uint64_t)mod->mod_start, mod->mod_end - mod->mod_start);
+      physAllocRange(mod->mod_start, mod->mod_end - mod->mod_start);
   }
   // Allocate memory map
-  physAllocRange((uint64_t)pMemoryMap, iMemPageCount);
+  // FIXME: Uses bytes instead of bits
+  physAllocRange(VIRT_TO_PHYS(pMemoryMap), iMemTop >> 12);
+  
+  //printk("Memory Map: 0x%x + 0x%x = 0x%x\n", (uint32_t)pMemoryMap, (uint32_t)(iMemTop >> 12), (uint32_t)pMemoryMap + (uint32_t)(iMemTop >> 12));
+}
 
-  // ----------------
-  // Setup Interrupts
-  // ----------------
-  // Allocate & Create IDT (Max.: 8-Byte *  256 =  2-KiB)
-  physAllocRange((uint64_t)pFirstFreeByte, sizeof(SDescriptor) *  256);
-  //printk("IDT   : start: %d, size: %d\n", (unsigned int)pFirstFreeByte, sizeof(SDescriptor) * 256);
-  init_idt((SDescriptor *)pFirstFreeByte,  256);
-  pFirstFreeByte += sizeof(SDescriptor) *  256;
+// -----------------------------------------------------------------------------
+void
+init_cpu()
+{
+  // Activate the GDTR and reload the segment registers
+  setGDTR(&cGDT.dtr_);
+  setDS(selDataKernel);
+  setSS(selDataKernel);
+  setES(selDataKernel);
+  setFS(selDataKernel);
+  setGS(selDataKernel);
+  // Activate the IDTR
+  setIDTR(&cIDT.dtr_);
+}
 
-  // ---------
-  // Setup GDT
-  // ---------
-  // Align to page boundries (4KiB)
-  pFirstFreeByte = (unsigned char *)PAGE_ALIGN_UP_4K(pFirstFreeByte);
-  // Allocate & Create GDT (Max.: 8-Byte * 8192 = 64-KiB)
-  physAllocRange((uint64_t)pFirstFreeByte, sizeof(SDescriptor) * 8192);
-  //printk("GDT   : start: %d, size: %d\n", (unsigned int)pFirstFreeByte, sizeof(SDescriptor) * 8192);
-  init_gdt((SDescriptor *)pFirstFreeByte, 8192);
-  pFirstFreeByte += sizeof(SDescriptor) * 8192;
+// -----------------------------------------------------------------------------
+void
+arch_main(unsigned long magic, multiboot_info_t * mbi)
+{
+#ifdef CONFIG_DEBUGGING
+  cDebug.init();
+  pDebug = &cDebug;
+#endif // #ifdef CONFIG_DEBUGGING
 
-  // All static memory has been allocated now. At this point we create our heap for dynamic memory
-  // After this we can use new/delete/malloc/free
-  physAllocRange((uint64_t)pFirstFreeByte, 1 * 1024 * 1024);
-  init_heap(pFirstFreeByte, 1 * 1024 * 1024);
+  // ---------------------------------------
+  // Miltiboot loader required
+  if(magic != MULTIBOOT_BOOTLOADER_MAGIC)
+  {
+    panic("ERROR: Multiboot loader information not present\n");
+  }
+  
+  // Initialize the most essential data structures first
+  init_memmap(mbi);
+  init_gdt();
+  init_idt();
+  // Initialize CPU
+  init_cpu();
+  // Initialize CPU identification
+  CPU::init();
+
+  // Initialize legacy IRQ
+  c8259.init();
+  // Initialize legacy timer
+  c8254.init();
+  c8254.setTimerFrequency(100.0f);
 
   // ------------------------------------
   // Parse settings from the command line
@@ -247,83 +272,10 @@ arch_main(unsigned long magic, multiboot_info_t * mbi)
     cSettings.parse((char *)mbi->cmdline);
   }
 
-#ifdef CONFIG_MMU
-  // --------
-  // Use PAE?
-  if(CPU::hasPAE())
-  {
-    // PAE can be enabled/disabled on the command line (if present)
-    switch(cSettings.get("PAE"))
-    {
-      case SET_AUTO:
-        // PAE will only be enabled if physical memory is located above the 4GiB limit
-        // Note: Do we need PAE for page level data execution prevention?
-        //       Why not use segment level data execution prevention?
-        if(iMemTop > (uint64_t(4 * 1024 * 1024) * 1024))
-          bPAEEnabled = true;
-        else
-          bPAEEnabled = false;
-        break;
-      case SET_ON:
-        bPAEEnabled = true;
-        break;
-      case SET_OFF:
-        bPAEEnabled = false;
-        break;
-    };
-
-    // Display status
-    if(bPAEEnabled == true)
-      printk("PAE enabled\n");
-    else
-      printk("PAE disabled\n");
-  }
-  else
-  {
-    printk("PAE not available\n");
-    bPAEEnabled = false;
-  }
-#endif
-
-  // ---------
-  // Use APIC?
-  if(CPU::hasAPIC())
-  {
-    // APIC can be enabled/disabled on the command line (if present)
-    switch(cSettings.get("APIC"))
-    {
-      case SET_AUTO:
-      case SET_ON:
-        bAPICEnabled = true;
-        break;
-      case SET_OFF:
-        bAPICEnabled = false;
-        break;
-    };
-
-    // Display status
-    if(bAPICEnabled == true)
-      printk("APIC enabled\n");
-    else
-      printk("APIC disabled\n");
-  }
-  else
-  {
-    printk("APIC not available\n");
-    bAPICEnabled = false;
-  }
-
-  //if(bAPICEnabled == true)
-  //  init_apic();
-
   // ---------------------
-  // Setup Paging
   // Setup Task Management
   // ---------------------
   task_init();
-#ifdef CONFIG_MMU
-  printk("Paging enabled\n");
-#endif
 
   // ------------
   // Load modules
@@ -346,12 +298,6 @@ arch_main(unsigned long magic, multiboot_info_t * mbi)
     }
   }
 
-  iMemKernel = iMemTop - iMemReserved - (freePageCount() * 4096);
-  printk("Memory size:     %dKiB\n", iMemTop/1024);
-  printk("Memory reserved: %dKiB\n", iMemReserved/1024);
-  printk("Memory kernel:   %dKiB\n", iMemKernel/1024);
-  printk("Memory free:     %dKiB\n", freePageCount() * 4);
-
   // Initialize GPF handler task
   init_gpf();
 
@@ -368,5 +314,6 @@ arch_main(unsigned long magic, multiboot_info_t * mbi)
   printk("PC arch ready\n");
   //while(1);
 
-  return bricks_main();
+  // We should never return from bricks_main
+  bricks_main();
 }

@@ -20,11 +20,11 @@
 
 
 #include "vesa.h"
-#include "mmap.h"
+#include "pmm.h"
 #include "asm/hal.h"
 #include "kernel/debug.h"
 #include "stddef.h"
-#include "../../../../gl/softGLF.h"
+//#include "../../../../gl/softGLF.h"
 
 
 const char * sVBEFunction[] =
@@ -90,7 +90,7 @@ CVesaVideoDevice::CVesaVideoDevice()
  , pMode_(NULL)
  , iModeCount_(0)
 {
-  pInfo_ = (SVBEInfo *)physAllocPageLow();
+  pInfo_ = (SVBEInfo *)physAllocPageLower();
   pCurrentVBEMode_ = (SVBEMode *)(&((uint8_t *)pInfo_)[512]);
   pInfo_->sig[0] = 'V';
   pInfo_->sig[1] = 'B';
@@ -254,7 +254,7 @@ CVesaVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 void
 CVesaVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
-  *renderer = new CSoftGLESFloat;
+  //*renderer = new CSoftGLESFloat;
 }
 
 //---------------------------------------------------------------------------

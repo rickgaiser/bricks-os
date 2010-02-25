@@ -1,40 +1,50 @@
 OUTPUT_FORMAT("elf32-i386")
-ENTRY(entry)
+ENTRY(start)
 
-physical_load_addr	= 0x00110000;
-/*virtual_load_addr	= 0xC0000000;*/
-/*start = (entry - virtual_load_addr) + physical_load_addr;*/
+physical_load_addr = (0x00100000);
+virtual_load_addr  = (0xf8000000);
+virtual_offset  	 = (virtual_load_addr - physical_load_addr);
 
 SECTIONS
 {
-  . = physical_load_addr; /*virtual_load_addr*/
+  . = physical_load_addr;
+  . += virtual_offset;
 
-  .text : AT (physical_load_addr)
+  .text : AT(ADDR(.text) - virtual_offset)
   {
     start_text = .;
-    *(.text)
-    *(.rodata)
+    *(.text*)
     end_text = .;
   }
 
-  .data ALIGN (0x1000) : AT (physical_load_addr + (start_data - start_text))
+  .rodata ALIGN (0x1000) : AT(ADDR(.rodata) - virtual_offset)
+  {
+    start_rodata = .;
+    *(.rodata*)
+    end_rodata = .;
+  }
+
+  .data ALIGN (0x1000) : AT(ADDR(.data) - virtual_offset)
   {
     start_data = .;
-    __CTOR_LIST__ = .; LONG((__CTOR_END__ - __CTOR_LIST__) / 4 - 2) *(.ctors) LONG(0) __CTOR_END__ = .; 
-    __DTOR_LIST__ = .; LONG((__DTOR_END__ - __DTOR_LIST__) / 4 - 2) *(.dtors) LONG(0) __DTOR_END__ = .; 
+    start_ctors = .;
+    *(.ctor*)
+    end_ctors = .;
+    start_dtors = .;
+    *(.dtor*)
+    end_dtors = .;
+    *(.data*)
     *(.gnu*)
     *(.note*)
-    *(.data)
-    *(.rodata)
-    *(.comment)
+    *(.comment*)
     *(COMMON)
     end_data = .;
   }
 
-  .bss : AT (physical_load_addr + (start_bss - start_text))
+  .bss : AT(ADDR(.bss) - virtual_offset)
   {
     start_bss = .;
-    *(.bss)
+    *(.bss*)
     end_bss = .;
   }
 }

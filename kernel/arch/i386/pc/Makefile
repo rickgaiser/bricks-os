@@ -3,6 +3,7 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 
 OBJ             =arch
 OBJS            =\
+                icxxabi \
                 entry \
                 apic \
                 arch \
@@ -13,10 +14,12 @@ OBJS            =\
                 gpf \
                 i8042 \
                 i8254 \
-                irq \
+                i8259 \
                 isrWrapper \
+                isr \
                 keyboard \
-                mmap \
+                pmm \
+                vmm \
                 mouse \
                 pci \
                 serial \
@@ -27,7 +30,6 @@ OBJS            =\
 OBJS-$(CONFIG_DEBUGGING)           += debugScreen
 OBJS-$(CONFIG_FILESYSTEM)          += ata
 OBJS-$(CONFIG_FRAMEBUFFER)         += vesa
-OBJS-$(CONFIG_MMU)                 += aspace
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel

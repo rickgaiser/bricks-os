@@ -61,6 +61,9 @@ public:
   static void createTaskGate     (SDescriptor & desc, unsigned int privilege, selector_t selector);
   static void createInterruptGate(SDescriptor & desc, unsigned int privilege, selector_t selector, uint32_t offset);
   static void createTrapGate     (SDescriptor & desc, unsigned int privilege, selector_t selector, uint32_t offset);
+  
+  // Remove
+  void remove(selector_t selector);
 
   SDescriptorTableReg * getDTRPointer(); // Warning! This class will KEEP the ownership of the DTR
 
@@ -72,8 +75,8 @@ public:
 };
 
 // -----------------------------------------------------------------------------
-void init_gdt(SDescriptor * desc, unsigned int count);
-void init_idt(SDescriptor * desc, unsigned int count);
+void init_gdt();
+void init_idt();
 
 
 // -----------------------------------------------------------------------------

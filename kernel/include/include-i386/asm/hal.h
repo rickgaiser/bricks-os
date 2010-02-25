@@ -116,16 +116,26 @@ typedef struct
   uint32_t base;
 } __attribute__ ((__packed__)) SDescriptorTableReg;
 
-
-#define PG_PRESENT       0x001
-#define PG_WRITABLE      0x002
-#define PG_USER          0x004
-#define PG_WRITE_THROUGH 0x008
-#define PG_DISABLE_CACH  0x010
-#define PG_ACCESSED      0x020
-#define PG_DIRTY         0x040
-#define PG_LARGE_SIZE    0x080
-#define PG_GLOBAL        0x100
+// PDE Flags
+#define PDE_FLAG_PRESENT       (1<<0) // Present
+#define PDE_FLAG_WRITABLE      (1<<1) // Read/Write
+#define PDE_FLAG_USER          (1<<2) // User/Supervisor
+#define PDE_FLAG_WRITE_THROUGH (1<<3) // Write-Through
+#define PDE_FLAG_CACHE_DISABLE (1<<4) // Cache Disabled
+#define PDE_FLAG_ACCESSED      (1<<5) // Accessed
+#define PDE_FLAG_RESERVED      (1<<6) // Reserved (set to 0)
+#define PDE_FLAG_LARGE_SIZE    (1<<7) // Page Size (0=4KiB, 1=4MiB)
+#define PDE_FLAG_GLOBAL        (1<<8) // Global Page (ignored)                - Since "Pentium Pro"
+// PTE Flags
+#define PTE_FLAG_PRESENT       (1<<0) // Present
+#define PTE_FLAG_WRITABLE      (1<<1) // Read/Write
+#define PTE_FLAG_USER          (1<<2) // User/Supervisor
+#define PTE_FLAG_WRITE_THROUGH (1<<3) // Write-Through
+#define PTE_FLAG_CACHE_DISABLE (1<<4) // Cache Disabled
+#define PTE_FLAG_ACCESSED      (1<<5) // Accessed
+#define PTE_FLAG_DIRTY         (1<<6) // Dirty
+#define PTE_FLAG_PAT           (1<<7) // Page Table Attribute Index (PAT)
+#define PTE_FLAG_GLOBAL        (1<<8) // Global Page                          - Since "Pentium Pro"
 
 // Page Directory/Table Entry
 typedef uint32_t  pde32_t;

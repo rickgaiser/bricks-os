@@ -1,6 +1,6 @@
 /*
  * Bricks-OS, Operating System for Game Consoles
- * Copyright (C) 2008 Maximus32 <Maximus32@bricks-os.org>
+ * Copyright (C) 2008-2010 Maximus32 <Maximus32@bricks-os.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,11 +19,14 @@
  */
 
 
-#ifndef CPU_H
-#define CPU_H
+#ifndef ASM_CPU_H
+#define ASM_CPU_H
 
 
-#include "hal.h"
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 
 // -----------------------------------------------------------------------------
@@ -57,7 +60,16 @@ local_irq_enable(void)
 }
 
 // -----------------------------------------------------------------------------
-static inline void halt(){__asm__ __volatile__("hlt"::: "memory");}
+static inline void
+halt(void)
+{
+  __asm__ __volatile__("hlt"::: "memory");
+}
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

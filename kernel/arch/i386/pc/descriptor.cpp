@@ -21,6 +21,9 @@
 
 #include "descriptor.h"
 #include "isrWrapper.h"
+#include "pmm.h"
+#include "asm/cpu.h"
+#include "kernel/debug.h"
 #include "string.h"
 
 
@@ -32,41 +35,43 @@ selector_t selCodeKernel (0x08 | 0);
 selector_t selDataKernel (0x10 | 0);
 selector_t selCodeUser   (0x18 | 3);
 selector_t selDataUser   (0x20 | 3);
-selector_t selCodeUserTmp(0x28 | 3);  // Temporary full range selector for testing user space
-selector_t selDataUserTmp(0x30 | 3);  // Temporary full range selector for testing user space
 
 
 // -----------------------------------------------------------------------------
 void
-init_gdt(SDescriptor * desc, unsigned int count)
+init_gdt()
 {
+  unsigned int count = 8192;
+  SDescriptor * desc = (SDescriptor *)physAllocSize(sizeof(SDescriptor) * 8192);
+
   cGDT.init(desc, count, dttGlobal);
 
+  // Create GDT entries for all segments
   selNull        = cGDT.createSegment(dtDataR,  0, 0x00000000, 0x00000000);
-  selCodeKernel  = cGDT.createSegment(dtCodeR,  0, 0x00000000, 0xffffffff);  // Start: 0GiB, Size: 4GiB
-  selDataKernel  = cGDT.createSegment(dtDataRW, 0, 0x00000000, 0xffffffff);  // Start: 0GiB, Size: 4GiB
-  selCodeUser    = cGDT.createSegment(dtCodeR,  3, 0x00000000, 0xbfffffff);  // Start: 0GiB, Size: 3GiB
-  selDataUser    = cGDT.createSegment(dtDataRW, 3, 0x00000000, 0xbfffffff);  // Start: 0GiB, Size: 3GiB
-  selCodeUserTmp = cGDT.createSegment(dtCodeR,  3, 0x00000000, 0xffffffff);  // Start: 0GiB, Size: 4GiB
-  selDataUserTmp = cGDT.createSegment(dtDataRW, 3, 0x00000000, 0xffffffff);  // Start: 0GiB, Size: 4GiB
-
+  selCodeKernel  = cGDT.createSegment(dtCodeR,  0, 0x00000000, 0xffffffff);       // Start: 0GiB, Size: 4GiB
+  selDataKernel  = cGDT.createSegment(dtDataRW, 0, 0x00000000, 0xffffffff);       // Start: 0GiB, Size: 4GiB
+#if 0
+  selCodeUser    = cGDT.createSegment(dtCodeR,  3, 0x00000000, MM_KERNEL_BASE-1); // Start: 0GiB, Size: 4GiB - kernel_size
+  selDataUser    = cGDT.createSegment(dtDataRW, 3, 0x00000000, MM_KERNEL_BASE-1); // Start: 0GiB, Size: 4GiB - kernel_size
+#else
+  selCodeUser    = cGDT.createSegment(dtCodeR,  3, 0x00000000, 0xffffffff);       // Start: 0GiB, Size: 4GiB
+  selDataUser    = cGDT.createSegment(dtDataRW, 3, 0x00000000, 0xffffffff);       // Start: 0GiB, Size: 4GiB
+#endif
+  
   // Set the GDTR
   cGDT.dtr_.base  = (uint32_t)&cGDT.desc_[0];
   cGDT.dtr_.limit = (sizeof(SDescriptor) * cGDT.iCount_) - 1;
-  setGDTR(&cGDT.dtr_);
-
-  // Reload the segment registers with newly created segments
-  setDS(selDataKernel);
-  setSS(selDataKernel);
-  setES(selDataKernel);
-  setFS(selDataKernel);
-  setGS(selDataKernel);
 }
 
 // -----------------------------------------------------------------------------
+// Initialize the Interrupt Descriptor Table
+//   There is only one, for all CPUs
 void
-init_idt(SDescriptor * desc, unsigned int count)
+init_idt()
 {
+  unsigned int count = 256;
+  SDescriptor * desc = (SDescriptor *)physAllocSize(sizeof(SDescriptor) * 256);
+
   cIDT.init(desc, count, dttInterrupt);
 
   // Processor generated interrupts
@@ -120,14 +125,13 @@ init_idt(SDescriptor * desc, unsigned int count)
   CDescriptorTable::createInterruptGate(cIDT.desc_[0x2E], 0, selCodeKernel, (unsigned long)&isr_0x2e_wrapper);
   CDescriptorTable::createInterruptGate(cIDT.desc_[0x2F], 0, selCodeKernel, (unsigned long)&isr_0x2f_wrapper);
   // Software generated interrupts
-  CDescriptorTable::createInterruptGate(cIDT.desc_[0x30], 3, selCodeKernel, (unsigned long)&isr_0x30_wrapper);
+  CDescriptorTable::createTrapGate(cIDT.desc_[0x30], 3, selCodeKernel, (unsigned long)&isr_0x30_wrapper);
   for(unsigned int i(0x31); i < cIDT.iCount_; i++)
-    CDescriptorTable::createInterruptGate(cIDT.desc_[i],  3, selCodeKernel, (unsigned long)&isr_0x80_wrapper);
+    CDescriptorTable::createTrapGate(cIDT.desc_[i],  3, selCodeKernel, (unsigned long)&isr_0x80_wrapper);
 
   // Set the IDTR
   cIDT.dtr_.base  = (unsigned long)&cIDT.desc_[0];
   cIDT.dtr_.limit = (sizeof(SDescriptor) * cIDT.iCount_) - 1;
-  setIDTR(&cIDT.dtr_);
 }
 
 // -----------------------------------------------------------------------------
@@ -265,6 +269,16 @@ CDescriptorTable::createTrapGate(unsigned int privilege, selector_t selector, ui
   CDescriptorTable::createTrapGate(desc_[iIndex], privilege, selector, offset);
 
   return ((iIndex * 8) | privilege);
+}
+
+// -----------------------------------------------------------------------------
+void
+CDescriptorTable::remove(selector_t selector)
+{
+  unsigned int index = selector >> 3;
+  
+  if(index < iCount_)
+    ((uint32_t *)desc_)[index] = 0;
 }
 
 // -----------------------------------------------------------------------------

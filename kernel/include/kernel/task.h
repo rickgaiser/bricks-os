@@ -31,7 +31,7 @@
 #include "kernel/srrChannel.h"
 #include "kernel/srrConnection.h"
 #ifdef CONFIG_MMU
-#include "asm/aspace.h"
+#include "asm/vmm.h"
 #endif
 #include "asm/task.h"
 #include "inttypes.h"

@@ -258,11 +258,7 @@ void
 init_gpf()
 {
   // Create GPF Handler task
-#ifdef CONFIG_MMU
   pGPFThread = new CThreadImpl(&pMainTask->aspace());
-#else
-  pGPFThread = new CThreadImpl;
-#endif
   // Initialize GPF handler task
   pGPFThread->init((void *)_gpf);
   // Setup task-gate in IDT

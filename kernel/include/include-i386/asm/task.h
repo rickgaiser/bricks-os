@@ -26,7 +26,7 @@
 #include "asm/arch/config.h"
 #include "asm/irq.h"
 #include "asm/hal.h"
-#include "asm/aspace.h"
+#include "asm/vmm.h"
 
 
 // -----------------------------------------------------------------------------
@@ -36,22 +36,16 @@ void task_init();
 class CThreadImpl
 {
 public:
-#ifndef CONFIG_MMU
-  CThreadImpl();
-#else
   CThreadImpl(CAddressSpace * pASpace);
-#endif
   ~CThreadImpl();
 
   void init(void * entry, int argc = 0, char * argv[] = 0);
 
-  // Task switch #1: Jump to task immediately.
-  //  - Used from caller context
+  // Task switch: Jump to task immediately
   void runJump();
+
+  // Task switch: Call task (x86 specific, use iret to return to caller)
   void runCall();
-  // Task switch #2: Setup stack so interrupt return will couse this task to run.
-  //  - Used from interrupt context
-  //virtual void runReturn();
 
 public:
   // Task state
@@ -59,9 +53,7 @@ public:
   uint32_t iTSSSize_;
   selector_t selTSS_;
 
-#ifdef CONFIG_MMU
   CAddressSpace * pASpace_;
-#endif
 
   uint32_t * pStack_;
   uint32_t * pSvcStack_;
@@ -71,18 +63,15 @@ public:
 class CV86Thread
 {
 public:
-#ifndef CONFIG_MMU
-  CV86Thread();
-#else
   CV86Thread(CAddressSpace * pASpace);
-#endif
   ~CV86Thread();
 
   void init();
 
-  // Task switch #1: Jump to task immediately.
-  //  - Used from caller context
+  // Task switch: Jump to task immediately
   void runJump();
+
+  // Task switch: Call task (x86 specific, use iret to return to caller)
   void runCall();
 
   // Setup for v86 interrupt and runJump to the v86 task
@@ -94,9 +83,7 @@ public:
   uint32_t iTSSSize_;
   selector_t selTSS_;
 
-#ifdef CONFIG_MMU
   CAddressSpace * pASpace_;
-#endif
 
   uint32_t * pStack_;
   uint32_t * pSvcStack_;
