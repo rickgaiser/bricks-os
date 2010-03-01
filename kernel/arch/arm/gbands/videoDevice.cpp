@@ -26,6 +26,7 @@
 #include "stddef.h"
 
 #ifdef GBA
+#include "../../../../gl/3DRendererFixed.h"
 #include "glesContext.h"
 #endif // GBA
 #ifdef NDS9
@@ -391,8 +392,8 @@ void
 CGBAVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
 #ifdef GBA
-  CASoftGLESFixed     * pRender = new CASoftGLESFixed;
-  raster::IRasterizer * pRaster = new CGBARasterizer;
+  CSoft3DRendererFixed * pRender = new CSoft3DRendererFixed;
+  raster::IRasterizer  * pRaster = new CGBARasterizer;
 
   pRender->setRaster(pRaster);
 

@@ -23,7 +23,6 @@
 #define GBA_GLESCONTEXT_H
 
 
-#include "../../../../gl/softGLFx.h"
 #include "../../../../gl/rasterScanline.h"
 
 
