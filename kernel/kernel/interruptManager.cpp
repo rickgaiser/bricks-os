@@ -39,7 +39,8 @@ CInterruptManager::attach(unsigned int irq, IInterruptServiceRoutine * isr)
     // If this is the first ISR, enable the interrupt
     if(interrupt_[irq].isrCount() == 1)
     {
-      interrupt_[irq].hardware_->enable(irq);
+      if(interrupt_[irq].hardware_ != NULL)
+        interrupt_[irq].hardware_->enable(irq);
     }
   }
 }
@@ -54,7 +55,8 @@ CInterruptManager::detach(unsigned int irq, IInterruptServiceRoutine * isr)
     // If this is the last ISR, disable the interrupt
     if(interrupt_[irq].isrCount() == 0)
     {
-      interrupt_[irq].hardware_->disable(irq);
+      if(interrupt_[irq].hardware_ != NULL)
+        interrupt_[irq].hardware_->disable(irq);
     }
   }
 }
@@ -72,7 +74,7 @@ void
 CInterruptManager::detach(unsigned int irq, IInterruptProvider * irqhardware)
 {
   if(irq < MAX_INTERRUPTS)
-    interrupt_[irq].hardware_ = 0;
+    interrupt_[irq].hardware_ = NULL;
 }
 
 // -----------------------------------------------------------------------------
