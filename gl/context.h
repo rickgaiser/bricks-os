@@ -104,6 +104,8 @@ struct SBufferPointer
 class IGLErrorHandler
 {
 public:
+  virtual ~IGLErrorHandler(){}
+
   virtual void setError(GLenum error) = 0;
 };
 
