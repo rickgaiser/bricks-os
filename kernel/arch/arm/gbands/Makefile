@@ -24,7 +24,7 @@ OBJS-$(CONFIG_GBA_KEYBOARD)        += keyboard
 OBJS-$(CONFIG_GBA_SERIAL)          += gbaSerial
 OBJS-$(CONFIG_GBA_SOUND)           += gbaSound modPlayer SndData_s SndData_c
 OBJS-$(CONFIG_NDS_IPC)             += dsIPC
-OBJS-$(CONFIG_FILESYSTEM)          += superCardDriver
+OBJS-$(CONFIG_FILESYSTEM)          += superCardDriver gbfs gbfsDriver
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel

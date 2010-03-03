@@ -42,7 +42,7 @@ extern "C" {
 //double     atof(const char *);
 int        atoi(const char * str);
 //long int   atol(const char *);
-//void     * bsearch(const void *, const void *, size_t, size_t, int (*)(const void *, const void *));
+void     * bsearch(const void *, const void *, size_t, size_t, int (*)(const void *, const void *));
 //void     * calloc(size_t, size_t);
 //div_t      div(int, int);
 //double     drand48(void);
