@@ -25,6 +25,8 @@ OBJS            =\
                 serial \
                 support \
                 task \
+                mp \
+                mpBoot \
 
 
 OBJS-$(CONFIG_DEBUGGING)           += debugScreen
