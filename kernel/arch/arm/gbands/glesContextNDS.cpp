@@ -311,8 +311,12 @@ CNDSGLESContext::glAlphaFunc(GLenum func, GLclampf ref)
       return;
   };
 
+  GLclampf clampedRef = mathlib::clamp<GLclampf>(ref, 0.0f, 1.0f);
   state_.alphaTest.func = func;
-  state_.alphaTest.value = mathlib::clamp<GLclampf>(ref, 0.0f, 1.0f);
+  state_.alphaTest.value = clampedRef;
+
+  // NOTE: NDS only supports GL_GEQUAL function
+  GFX_ALPHA_TEST = (uint32_t)(clampedRef * 31);
 }
 
 //-----------------------------------------------------------------------------
@@ -617,9 +621,17 @@ CNDSGLESContext::glDisable(GLenum cap)
 
   switch(cap)
   {
-  case GL_ALPHA_TEST: state_.alphaTest.enabled = false; break;
+  case GL_ALPHA_TEST:
+    state_.alphaTest.enabled = false;
+    iNDSGFXControl_ &= ~NDS_ALPHA_TEST;
+    GFX_CONTROL = iNDSGFXControl_;
+    break;
   //case GL_AUTO_NORMAL:
-  case GL_BLEND:      state_.blending.enabled  = false; break;
+  case GL_BLEND:
+    state_.blending.enabled = false;
+    iNDSGFXControl_ &= ~NDS_BLEND;
+    GFX_CONTROL = iNDSGFXControl_;
+    break;
   //case GL_CLIP_PLANEi:
   //case GL_COLOR_ARRAY_EXT:
   //case GL_COLOR_LOGIC_OP:
@@ -722,9 +734,21 @@ CNDSGLESContext::glEnable(GLenum cap)
 
   switch(cap)
   {
-    case GL_ALPHA_TEST: state_.alphaTest.enabled = true; break;
+    case GL_ALPHA_TEST:
+      state_.alphaTest.enabled = true;
+      // NDS only supports GL_GEQUAL function, so only enable alpha testing if it's usefull
+      if((state_.alphaTest.func == GL_GEQUAL) || (state_.alphaTest.func == GL_GREATER))
+      {
+        iNDSGFXControl_ |= NDS_ALPHA_TEST;
+        GFX_CONTROL = iNDSGFXControl_;
+      }
+      break;
     //case GL_AUTO_NORMAL:
-    case GL_BLEND:      state_.blending.enabled  = true; break;
+    case GL_BLEND:
+      state_.blending.enabled = true;
+      iNDSGFXControl_ |= NDS_BLEND;
+      GFX_CONTROL = iNDSGFXControl_;
+      break;
     //case GL_CLIP_PLANEi:
     //case GL_COLOR_ARRAY_EXT:
     //case GL_COLOR_LOGIC_OP:
@@ -1770,12 +1794,14 @@ CNDSGLESContext::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed t
 void
 CNDSGLESContext::glPopMatrix(void)
 {
+  MATRIX_POP = 1;
 }
 
 //---------------------------------------------------------------------------
 void
 CNDSGLESContext::glPushMatrix(void)
 {
+  MATRIX_PUSH = 0;
 }
 
 //---------------------------------------------------------------------------

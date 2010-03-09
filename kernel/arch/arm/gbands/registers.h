@@ -310,7 +310,7 @@ enum ESerialMode
 // "REG_MATRIX_CONTROL" bits
 #define NDS_PROJECTION        0
 #define NDS_POSITION          1
-#define NDS_MODELVIEW         2
+#define NDS_MODELVIEW         2 // NDS_POSITION & VECTOR matrix
 #define NDS_TEXTURE           3
 // "REG_GFX_BEGIN" bits
 #define NDS_TRIANGLES         0
@@ -589,7 +589,7 @@ enum ESerialMode
 #define GFX_SHININESS         (*(vuint32_t*)0x040004D0)
 
 #define GFX_POLY_FORMAT       (*(vuint32_t*)0x040004A4)
-#define GFX_ALPHA_TEST        (*(vuint16_t*)0x04000340)
+#define GFX_ALPHA_TEST        (*(vuint32_t*)0x04000340)
 
 #define GFX_BEGIN             (*(vuint32_t*)0x04000500)
 #define GFX_END               (*(vuint32_t*)0x04000504)
