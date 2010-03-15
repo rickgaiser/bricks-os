@@ -104,5 +104,82 @@ dmaFill32(uint32_t data, void * dest, uint32_t count)
   DMA3FILL(data, dest, DMA_DST_INC | DMA_SRC_FIXED | DMA32 | count);
 }
 
+#ifdef NDS9
+// NDS Divide and sqrt
+// -----------------------------------------------------------------------------
+#define REG_DIVCNT_BUSY() (REG_DIVCNT & DIV_BUSY)
+#define REG_DIVCNT_WAIT() while(REG_DIVCNT_BUSY()){}
+#define REG_SQRTCNT_BUSY() (REG_SQRTCNT & SQRT_BUSY)
+#define REG_SQRTCNT_WAIT() while(REG_SQRTCNT_BUSY()){}
+
+// -----------------------------------------------------------------------------
+inline int32_t
+nds_div_64_64(int64_t num, int64_t den)
+{
+  REG_DIVCNT = DIV_64_64;
+
+  REG_DIVCNT_WAIT();
+  REG_DIV_NUMER = num;
+  REG_DIV_DENOM = den;
+  REG_DIVCNT_WAIT();
+
+  return REG_DIV_RESULT_L;
+}
+
+// -----------------------------------------------------------------------------
+inline int32_t
+nds_div_64_32(int64_t num, int32_t den)
+{
+  REG_DIVCNT = DIV_64_32;
+
+  REG_DIVCNT_WAIT();
+  REG_DIV_NUMER = num;
+  REG_DIV_DENOM_L = den;
+  REG_DIVCNT_WAIT();
+
+  return REG_DIV_RESULT_L;
+}
+
+// -----------------------------------------------------------------------------
+inline int32_t
+nds_div_32_32(int32_t num, int32_t den)
+{
+  REG_DIVCNT = DIV_32_32;
+
+  REG_DIVCNT_WAIT();
+  REG_DIV_NUMER_L = num;
+  REG_DIV_DENOM_L = den;
+  REG_DIVCNT_WAIT();
+
+  return REG_DIV_RESULT_L;
+}
+
+// -----------------------------------------------------------------------------
+inline uint32_t
+nds_sqrt_32(uint32_t value)
+{
+  REG_SQRTCNT = SQRT_32;
+
+  REG_SQRTCNT_WAIT();
+  REG_SQRT_PARAM_L = value;
+  REG_SQRTCNT_WAIT();
+
+  return REG_SQRT_RESULT;
+}
+
+// -----------------------------------------------------------------------------
+inline uint32_t
+nds_sqrt_64(uint64_t value)
+{
+  REG_SQRTCNT = SQRT_64;
+
+  REG_SQRTCNT_WAIT();
+  REG_SQRT_PARAM = value;
+  REG_SQRTCNT_WAIT();
+
+  return REG_SQRT_RESULT;
+}
+#endif // NDS9
+
 
 #endif

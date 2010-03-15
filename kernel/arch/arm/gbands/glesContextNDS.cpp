@@ -251,6 +251,13 @@ CNDSGLESContext::CNDSGLESContext()
   GFX_POLY_FORMAT = iNDSPolyFormat_;
   GFX_CLEAR_DEPTH = 0x7fff;
 
+  // Setup shinyness table
+  uint8_t * shiny8 = (uint8_t *)ndsMatShinyness_;
+  for(int i(0); i < (128 * 2); i += 2)
+    shiny8[i>>1] = i;
+  for(int i(0); i < (128 / 4); i++)
+    GFX_SHININESS = ndsMatShinyness_[i];
+
   // Set the fog density table
   for(int i(0); i < 32; i++)
     GFX_FOG_TABLE[i] = (i << 2);
@@ -1127,17 +1134,7 @@ CNDSGLESContext::glMaterialx(GLenum face, GLenum pname, GLfixed param)
       return;
   }
 
-/*
-  if(pname == GL_SHININESS)
-  {
-    // Setup shinyness table
-    uint8_t * shiny8 = (uint8_t *)ndsMatShinyness_;
-    for(int i(0); i < (128 * 2); i += 2)
-      shiny8[i>>1] = i;
-    for(int i(0); i < (128 / 4); i++)
-      GFX_SHININESS = ndsMatShinyness_[i];
-  }
-*/
+  // NDS uses shininess table, initialized in constructor
 }
 
 //-----------------------------------------------------------------------------
@@ -1213,36 +1210,36 @@ CNDSGLESContext::glMaterialxv(GLenum face, GLenum pname, const GLfixed *params)
       return;
   }
 
-/*
-  switch(pname)
+  // NDS Only lights the front face
+  if(face != GL_BACK)
   {
-    case GL_AMBIENT:
-      ndsMatColorAmbient_ = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
-      GFX_DIFFUSE_AMBIENT = (ndsMatColorDiffuse_  << 16) | ndsMatColorAmbient_;
-      break;
-    case GL_DIFFUSE:
-      ndsMatColorDiffuse_ = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
-      GFX_DIFFUSE_AMBIENT = (ndsMatColorDiffuse_  << 16) | ndsMatColorAmbient_;
-      break;
-    case GL_SPECULAR:
-      ndsMatColorSpecular_  = 0x8000 | fpgl_to_ndsRGB555(params[0], params[1], params[2]);
-      GFX_SPECULAR_EMISSION = (ndsMatColorSpecular_ << 16) | ndsMatColorEmission_;
-      break;
-    case GL_EMISSION:
-      ndsMatColorEmission_  = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
-      GFX_SPECULAR_EMISSION = (ndsMatColorSpecular_ << 16) | ndsMatColorEmission_;
-      break;
-    case GL_SHININESS:
-//      matShininess_.value = params[0];
-      break;
-    case GL_AMBIENT_AND_DIFFUSE:
-      ndsMatColorAmbient_ = ndsMatColorDiffuse_ = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
-      GFX_DIFFUSE_AMBIENT = (ndsMatColorDiffuse_  << 16) | ndsMatColorAmbient_;
-      break;
-    default:
-      return;
+    switch(pname)
+    {
+      case GL_AMBIENT:
+        ndsMatColorAmbient_ = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
+        GFX_DIFFUSE_AMBIENT = (ndsMatColorDiffuse_  << 16) | ndsMatColorAmbient_;
+        break;
+      case GL_DIFFUSE:
+        ndsMatColorDiffuse_ = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
+        GFX_DIFFUSE_AMBIENT = (ndsMatColorDiffuse_  << 16) | ndsMatColorAmbient_;
+        break;
+      case GL_SPECULAR:
+        ndsMatColorSpecular_  = 0x8000 | fpgl_to_ndsRGB555(params[0], params[1], params[2]);
+        GFX_SPECULAR_EMISSION = (ndsMatColorSpecular_ << 16) | ndsMatColorEmission_;
+        break;
+      case GL_EMISSION:
+        ndsMatColorEmission_  = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
+        GFX_SPECULAR_EMISSION = (ndsMatColorSpecular_ << 16) | ndsMatColorEmission_;
+        break;
+      case GL_SHININESS:
+        // NDS uses shininess table, initialized in constructor
+        break;
+      case GL_AMBIENT_AND_DIFFUSE:
+        ndsMatColorAmbient_ = ndsMatColorDiffuse_ = fpgl_to_ndsRGB555(params[0], params[1], params[2]);
+        GFX_DIFFUSE_AMBIENT = (ndsMatColorDiffuse_  << 16) | ndsMatColorAmbient_;
+        break;
+    };
   }
-*/
 }
 
 //-----------------------------------------------------------------------------
@@ -1558,7 +1555,7 @@ CNDSGLESContext::glBegin(GLenum mode)
     case GL_TRIANGLE_STRIP:
     case GL_TRIANGLE_FAN:
     case GL_QUADS:
-//    case GL_QUAD_STRIP:
+    case GL_QUAD_STRIP:
     case GL_POLYGON:
       break;
     default:
@@ -1577,7 +1574,14 @@ CNDSGLESContext::glBegin(GLenum mode)
     case GL_TRIANGLE_STRIP:
       GFX_BEGIN = NDS_TRIANGLE_STRIP;
       break;
-    // Simulate triangle fan using triangles
+    case GL_QUADS:
+      GFX_BEGIN = NDS_QUADS;
+      break;
+    case GL_QUAD_STRIP:
+      GFX_BEGIN = NDS_QUAD_STRIP;
+      break;
+    // Simulate polygon and triangle fan using triangles
+    case GL_POLYGON:
     case GL_TRIANGLE_FAN:
       GFX_BEGIN = NDS_TRIANGLES;
       break;
@@ -1686,7 +1690,8 @@ CNDSGLESContext::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed
   MATRIX_MULT4x4 = gl_to_ndsv(-gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear)));
   MATRIX_MULT4x4 = nds_fpfromi(0);
 
-//  MATRIX_STORE = ndsCurrentMatrixId_;
+  //MATRIX_STORE = ndsCurrentMatrixId_;
+  //MATRIX_STORE = 0;
 }
 
 //---------------------------------------------------------------------------
@@ -1787,7 +1792,8 @@ CNDSGLESContext::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed t
   MATRIX_MULT4x4 = gl_to_ndsv(-gl_fpdiv((gl_fpmul(zFar, zNear) << 1), (zFar - zNear)));
   MATRIX_MULT4x4 = nds_fpfromi(1);
 
-//  MATRIX_STORE = ndsCurrentMatrixId_;
+  //MATRIX_STORE = ndsCurrentMatrixId_;
+  //MATRIX_STORE = 0;
 }
 
 //---------------------------------------------------------------------------
@@ -1921,14 +1927,14 @@ void
 CNDSGLESContext::vertexShaderTransform(SVertexFx & v)
 {
   // Color or normal
-  //if(lightingEnabled_ == true)
-  //  GFX_NORMAL = fp_to_ndsNormal(v.n.x,  v.n.y,  v.n.z);
-  //else
+  if(state_.lighting.enabled == true)
+    GFX_NORMAL = fp_to_ndsNormal(v.n.x,  v.n.y,  v.n.z);
+  else
     GFX_COLOR  = fp_to_ndsRGB555(v.cl.r, v.cl.g, v.cl.b);
 
   // Textures
-  //if(texturesEnabled_ == true)
-  //  GFX_TEX_COORD = fp_to_ndsTexCoord(v.t[0], v.t[1]);
+  if(state_.texturing.enabled == true)
+    GFX_TEX_COORD = fp_to_ndsTexCoord(v.t[0], v.t[1]);
 
   // Vertex
   GFX_VERTEX16 = ((gl_to_ndsv(v.vo[1].value) << 16) & 0xffff0000) | (gl_to_ndsv(v.vo[0].value) & 0xffff);
@@ -1940,26 +1946,33 @@ CNDSGLESContext::vertexShaderTransform(SVertexFx & v)
 void
 CNDSGLESContext::updateLights()
 {
-/*
   iNDSPolyFormat_ &= ~(NDS_LIGHT0 | NDS_LIGHT1 | NDS_LIGHT2 | NDS_LIGHT3);
-  if(lightingEnabled_ == true)
+  if(state_.lighting.enabled == true)
   {
     // Set color to white
     GFX_COLOR = 0x7fff;
 
-    for(int iLight(0); iLight < 4; iLight++)
+    for(int iLight = 0; iLight < 4; iLight++)
     {
-      if(lights_[iLight].enabled == true)
+      if(state_.lighting.light[iLight].enabled == true)
       {
         iNDSPolyFormat_ |= 1 << iLight;
 
-        GFX_LIGHT_VECTOR = (iLight << 30) | fp_to_ndsNormal(lights_[iLight].direction.x, lights_[iLight].direction.y, lights_[iLight].direction.z);
-        GFX_LIGHT_COLOR  = (iLight << 30) | fp_to_ndsRGB555(lights_[iLight].ambient.r,   lights_[iLight].ambient.g,   lights_[iLight].ambient.b);
+        // We need to set the light vector with an identity mapped model-view matrix
+        // If we don't, the light vector will be rotated
+        MATRIX_CONTROL = NDS_MODELVIEW;
+        glPushMatrix();
+        glLoadIdentity();
+
+        GFX_LIGHT_VECTOR = (iLight << 30) | fp_to_ndsNormal(state_.lighting.light[iLight].positionNormal.x, state_.lighting.light[iLight].positionNormal.y, state_.lighting.light[iLight].positionNormal.z);
+        GFX_LIGHT_COLOR  = (iLight << 30) | fp_to_ndsRGB555(state_.lighting.light[iLight].ambient.r,        state_.lighting.light[iLight].ambient.g,        state_.lighting.light[iLight].ambient.b);
+
+        glPopMatrix();
+        MATRIX_CONTROL = ndsCurrentMatrixId_;
       }
     }
   }
   GFX_POLY_FORMAT = iNDSPolyFormat_;
-*/
 }
 
 //-----------------------------------------------------------------------------

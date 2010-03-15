@@ -34,8 +34,8 @@
 #define nds_fptoi(i)     fptoi(NDS_MATRIX_PRECISION,i)
 #define nds_fpfromf(i)   fpfromf(NDS_MATRIX_PRECISION,i)
 #define nds_fptof(i)     fptof(NDS_MATRIX_PRECISION,i)
-#define nds_fpmul(i1,i2) fpmul32(NDS_MATRIX_PRECISION,i1,i2)
-#define nds_fpdiv(i1,i2) fpdiv32(NDS_MATRIX_PRECISION,i1,i2)
+#define nds_fpmul(i1,i2) fpmul(NDS_MATRIX_PRECISION,i1,i2)
+#define nds_fpdiv(i1,i2) fpdiv(NDS_MATRIX_PRECISION,i1,i2)
 
 #define gl_to_ndsv(i)    ((i)>>4)  // Vertex  format  4.12
 #define gl_to_ndst(i)    ((i)>>12) // Texture format 12.4

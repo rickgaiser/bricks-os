@@ -1830,7 +1830,7 @@ CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
 #if 0
     // Front or backfacing vertex
     // FIXME: We need the fragment front/back, not the normal's direction
-    if(vVertexNormal.dotProduct(vVertexToEye) > 0)
+    if(vVertexNormal.dot(vVertexToEye) > 0)
     {
       pMaterial = &state_.materialFront;
     }
@@ -1858,9 +1858,9 @@ CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
 
         // Diffuse light
 #ifndef INFINITE_LIGHT
-        CFixed diffuse = vVertexToLightNormal.dotProduct(vVertexNormal);
+        CFixed diffuse = vVertexToLightNormal.dot(vVertexNormal);
 #else
-        CFixed diffuse = state_.lighting.light[iLight].positionNormal.dotProduct(vVertexNormal);
+        CFixed diffuse = state_.lighting.light[iLight].positionNormal.dot(vVertexNormal);
 #endif
         if(diffuse > 0.0f)
         {
@@ -1871,9 +1871,9 @@ CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
         {
           // Specular light
 #ifndef INFINITE_LIGHT
-          CFixed specular = vVertexToLightNormal.getReflection(vVertexNormal).dotProduct(vVertexToEye);
+          CFixed specular = vVertexToLightNormal.getReflection(vVertexNormal).dot(vVertexToEye);
 #else
-          CFixed specular = state_.lighting.light[iLight].positionNormal.getReflection(vVertexNormal).dotProduct(vVertexToEye);
+          CFixed specular = state_.lighting.light[iLight].positionNormal.getReflection(vVertexNormal).dot(vVertexToEye);
 #endif
           if(specular > 0.0f)
           {

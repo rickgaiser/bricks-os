@@ -24,52 +24,49 @@
 
 
 #include "inttypes.h"
+#ifdef NDS9
+#include "../../kernel/arch/arm/gbands/macros.h"
+#endif
 
 
+// Macro's for 32bit fixed points
 // Conversions
 #define fpfromi(sh,fp)       ((fp)<<(sh))
 #define fpfromf(sh,fp)       ((int32_t)((fp)*(1<<(sh))))
 #define fpfromd(sh,fp)       ((int32_t)((fp)*(1<<(sh))))
 #define fptof(sh,fp)         ((float )(fp)*(1.0/(1<<(sh))))
 #define fptod(sh,fp)         ((double)(fp)*(1.0/(1<<(sh))))
-//#define fptoi(sh,fp)         ((fp)>>(sh))
 #define fpceil(sh,fp)        (((fp)+((1<<sh)-1)) >> sh)
 #define fpfloor(sh,fp)       ( (fp)              >> sh)
 #define fpround(sh,fp)       (((fp)+(1<<(sh-1))) >> sh)
-
-
-// Math (Use at own risk)
-//#define fpmul(c,a,b)       (((a)*(b))>>(c))
-#define fpmul(c,a,b)       (( ((a)>>((c)/2)) * ((b)>>((c)/2)))             ) // normal multiplication (loses half of the precision on both values)
-#define fpipmul(c,a,b)     (( ((a)>>((c)/2)) * ((b)>>1      ))>>(((c)/2)-1)) // intepolated mul (loses half of the precision on ONLY FIRST value, and 1 bit of precision on the second)
-#define fpipipmul(c,a,b)   (( ((a)>>1      ) * ((b)>>1      ))>>(((c)  )-2)) // 2 interpolation values mul (loses 1 bit of precision on both values)
-#define fpdiv(c,a,b)       (((a)<<(c))/(b))
-// Math (16 bit)
-#define fpmul16(c,a,b)     ((((int32_t)(a))*((int32_t)(b)))>>(c))
-#define fpdiv16(c,a,b)     ((((int32_t)(a))<<(c))/(b))
-#define fpmul16to32(c,a,b) ((((int32_t)(a))*((int32_t)(b))))
-// Math (32 bit)
-#define fpmul32(c,a,b)     ((((int64_t)(a))*((int64_t)(b)))>>(c))
-#define fpdiv32(c,a,b)     ((((int64_t)(a))<<(c))/(b))
-#define fpmul32to64(c,a,b) (((int64_t)(a))*((int64_t)(b)))
+// Math
+#define fpmul(sh,a,b)        ((((int64_t)(a))*((int64_t)(b)))>>(sh))
+#define fpmul_fast(sh,a,b)   ((((a)>>((sh)>>1)) * ((b)>>((sh)>>1)))) // loses half of the precision on both values
+#ifndef NDS9
+#define fpdiv(sh,a,b)        ((((int64_t)(a))<<(sh))/(b))
+#else
+#define fpdiv(sh,a,b)        nds_div_64_32(((int64_t)(a))<<(sh), b)
+#endif
 
 // Macro's for OpenGL (16.16)
 #define FP_PRESICION_GL 16
-#define gl_fpfromi(i)   fpfromi(FP_PRESICION_GL,(i))
-#define gl_fpfromf(i)   fpfromf(FP_PRESICION_GL,(i))
-#define gl_fpfromd(i)   fpfromd(FP_PRESICION_GL,(i))
-#define gl_fptof(i)     fptof(FP_PRESICION_GL,(i))
-#define gl_fptod(i)     fptod(FP_PRESICION_GL,(i))
-//#define gl_fptoi(sh,fp) fptoi(FP_PRESICION_GL,(i))
-#define gl_fpceil(i)    fpceil(FP_PRESICION_GL,(i))
-#define gl_fpfloor(i)   fpfloor(FP_PRESICION_GL,(i))
-#define gl_fpround(i)   fpround(FP_PRESICION_GL,(i))
-//#define gl_fpmul(i1,i2) fpmul32(FP_PRESICION_GL,(i1),(i2))
-#define gl_fpmul(i1,i2) fpmul(FP_PRESICION_GL,(i1),(i2))
-#define gl_fpipmul(i1,i2) fpipmul(FP_PRESICION_GL,(i1),(i2))
-#define gl_fpipipmul(i1,i2) fpipipmul(FP_PRESICION_GL,(i1),(i2))
-#define gl_fpdiv(i1,i2) fpdiv32(FP_PRESICION_GL,(i1),(i2))
-#define gl_fpinverse(i) ((0xffffffff) / (i)) // 1<<16<<16 == 0x100000000 ~~ 0xffffffff
+// Conversions
+#define gl_fpfromi(i)        fpfromi(FP_PRESICION_GL,(i))
+#define gl_fpfromf(i)        fpfromf(FP_PRESICION_GL,(i))
+#define gl_fpfromd(i)        fpfromd(FP_PRESICION_GL,(i))
+#define gl_fptof(i)          fptof(FP_PRESICION_GL,(i))
+#define gl_fptod(i)          fptod(FP_PRESICION_GL,(i))
+#define gl_fpceil(i)         fpceil(FP_PRESICION_GL,(i))
+#define gl_fpfloor(i)        fpfloor(FP_PRESICION_GL,(i))
+#define gl_fpround(i)        fpround(FP_PRESICION_GL,(i))
+// Math
+#define gl_fpmul(i1,i2)      fpmul(FP_PRESICION_GL,(i1),(i2))
+#define gl_fpdiv(i1,i2)      fpdiv(FP_PRESICION_GL,(i1),(i2))
+#ifndef NDS9
+#define gl_fpinverse(i)      (0xffffffff / (i)) // 1<<16<<16 == 0x100000000 ~~ 0xffffffff
+#else
+#define gl_fpinverse(i)      nds_div_32_32(0xffffffff, i)
+#endif
 
 
 #ifdef __cplusplus
@@ -221,6 +218,26 @@ template <int p> inline bool      operator> (int      i, const TFixed<p> & fx){r
 template <int p> inline bool      operator< (int      i, const TFixed<p> & fx){return (i <  (int)fx);}
 template <int p> inline bool      operator>=(int      i, const TFixed<p> & fx){return (i >= (int)fx);}
 template <int p> inline bool      operator<=(int      i, const TFixed<p> & fx){return (i <= (int)fx);}
+
+#ifdef NDS9
+//-----------------------------------------------------------------------------
+template <int p>
+inline TFixed<p>
+sqrt(const TFixed<p> & fix)
+{
+  TFixed<p> retval;
+  retval.value = nds_sqrt_64((uint64_t)fix.value << p);
+  return retval;
+}
+
+//-----------------------------------------------------------------------------
+template <int p>
+inline TFixed<p>
+sqrtf(const TFixed<p> & fix)
+{
+  return sqrt(fix);
+}
+#endif
 
 
 typedef TFixed<16> CFixed;

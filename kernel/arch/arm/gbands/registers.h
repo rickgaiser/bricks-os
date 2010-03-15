@@ -307,6 +307,16 @@ enum ESerialMode
 #define SIO_UART_RECV_ENABLE  (1<<11)
 #endif // GBA
 
+#ifdef NDS
+// "REG_DIVCNT" bits
+#define DIV_64_64             2
+#define DIV_64_32             1
+#define DIV_32_32             0
+#define DIV_BUSY              (1<<15)
+// "REG_SQRTCNT" bits
+#define SQRT_64               1
+#define SQRT_32               0
+#define SQRT_BUSY             (1<<15)
 // "REG_MATRIX_CONTROL" bits
 #define NDS_PROJECTION        0
 #define NDS_POSITION          1
@@ -350,6 +360,7 @@ enum ESerialMode
 #define NDS_FOG_ALPHACOLOR    (0<<6)
 #define NDS_FOG_ALPHA         (1<<6)
 #define NDS_FOG               (1<<7)
+#endif
 #ifdef GBA
 // "REG_SOUNDCNT_H" bits
 #define SNDA_VOL_100          (1<< 2)
@@ -559,6 +570,26 @@ enum ESerialMode
 #define REG_IPC_FIFO_RX       (*(vuint32_t*)0x04100000)
 
 #ifdef NDS9
+// NDS Math Coprocessor: Divide and Square-root
+#define REG_DIVCNT            (*(vuint16_t*)0x04000280)
+#define REG_DIV_NUMER         (*(vint64_t *)0x04000290)
+#define REG_DIV_NUMER_L       (*(vint32_t *)0x04000290)
+#define REG_DIV_NUMER_H       (*(vint32_t *)0x04000294)
+#define REG_DIV_DENOM         (*(vint64_t *)0x04000298)
+#define REG_DIV_DENOM_L       (*(vint32_t *)0x04000298)
+#define REG_DIV_DENOM_H       (*(vint32_t *)0x0400029C)
+#define REG_DIV_RESULT        (*(vint64_t *)0x040002A0)
+#define REG_DIV_RESULT_L      (*(vint32_t *)0x040002A0)
+#define REG_DIV_RESULT_H      (*(vint32_t *)0x040002A4)
+#define REG_DIVREM_RESULT     (*(vint64_t *)0x040002A8)
+#define REG_DIVREM_RESULT_L   (*(vint32_t *)0x040002A8)
+#define REG_DIVREM_RESULT_H   (*(vint32_t *)0x040002AC)
+#define REG_SQRTCNT           (*(vuint16_t*)0x040002B0)
+#define REG_SQRT_PARAM        (*(vuint64_t*)0x040002B8)
+#define REG_SQRT_PARAM_L      (*(vuint32_t*)0x040002B8)
+#define REG_SQRT_PARAM_H      (*(vuint32_t*)0x040002BC)
+#define REG_SQRT_RESULT       (*(vuint32_t*)0x040002B4)
+
 // NDS 3D Core Registers
 #define GFX_CONTROL           (*(vuint16_t*)0x04000060)
 

@@ -26,6 +26,13 @@
 //---------------------------------------------------------------------------
 template <class T>
 inline
+TVector3<T>::TVector3()
+{
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+inline
 TVector3<T>::TVector3(const T * vec)
  : x(vec[0]), y(vec[1]), z(vec[2])
 {
@@ -43,7 +50,7 @@ TVector3<T>::TVector3(const TVector3 & vec)
 template <class T>
 inline
 TVector3<T>::TVector3(const TVector4<T> & vec)
- : x(vec.x), y(vec.y), z(vec.z)
+ : x(vec.x * vec.w), y(vec.y * vec.w), z(vec.z * vec.w)
 {
 }
 
@@ -104,9 +111,9 @@ template <class T>
 inline TVector3<T> &
 TVector3<T>::operator= (const TVector4<T> & vec)
 {
-  x = vec.x;
-  y = vec.y;
-  z = vec.z;
+  x = vec.x * vec.w;
+  y = vec.y * vec.w;
+  z = vec.z * vec.w;
 
   return (*this);
 }
@@ -131,30 +138,6 @@ TVector3<T>::operator-(const TVector3 & vec) const
   TVector3 rv(*this);
 
   rv -= vec;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-template <class T>
-inline TVector3<T>
-TVector3<T>::operator* (const TVector3 & vec) const
-{
-  TVector3 rv(*this);
-
-  rv *= vec;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-template <class T>
-inline TVector3<T>
-TVector3<T>::operator/ (const TVector3 & vec) const
-{
-  TVector3 rv(*this);
-
-  rv /= vec;
 
   return rv;
 }
@@ -222,13 +205,30 @@ TVector3<T>::getCrossProduct(const TVector3 & vec) const
 //---------------------------------------------------------------------------
 template <class T>
 inline TVector3<T>
-TVector3<T>::getReflection(const TVector3 & vec) const
+TVector3<T>::getReflection(const TVector3 & normal) const
 {
   TVector3 rv(*this);
 
-  rv.reflection(vec);
+  rv.reflect(normal);
 
   return rv;
+}
+
+//---------------------------------------------------------------------------
+template <class T>
+T
+TVector3<T>::getLength() const
+{
+  return sqrtf((x*x) + (y*y) + (z*z));
+}
+
+//---------------------------------------------------------------------------
+// Scalar product or Dot product
+template <class T>
+T
+TVector3<T>::getDotProduct(const TVector3<T> & vec) const
+{
+  return ((x*vec.x) + (y*vec.y) + (z*vec.z));
 }
 
 //---------------------------------------------------------------------------
@@ -258,30 +258,6 @@ TVector3<T>::operator-=(const TVector3 & vec)
 //---------------------------------------------------------------------------
 template <class T>
 inline TVector3<T> &
-TVector3<T>::operator*=(const TVector3 & vec)
-{
-  x *= vec.x;
-  y *= vec.y;
-  z *= vec.z;
-
-  return (*this);
-}
-
-//---------------------------------------------------------------------------
-template <class T>
-inline TVector3<T> &
-TVector3<T>::operator/=(const TVector3 & vec)
-{
-  x /= vec.x;
-  y /= vec.y;
-  z /= vec.z;
-
-  return (*this);
-}
-
-//---------------------------------------------------------------------------
-template <class T>
-inline TVector3<T> &
 TVector3<T>::operator*=(const T s)
 {
   x *= s;
@@ -296,14 +272,9 @@ template <class T>
 inline TVector3<T> &
 TVector3<T>::operator/=(const T s)
 {
-  if(s != 0)
-  {
-    T s2 = 1.0f / s;
-
-    x *= s2;
-    y *= s2;
-    z *= s2;
-  }
+  x /= s;
+  y /= s;
+  z /= s;
 
   return (*this);
 }
@@ -325,7 +296,7 @@ template <class T>
 inline TVector3<T> &
 TVector3<T>::normalize()
 {
-  return *this *= inv_length();
+  return ::normalize(*this);
 }
 
 //---------------------------------------------------------------------------
@@ -345,41 +316,70 @@ TVector3<T>::crossProduct(const TVector3 & vec)
 }
 
 //---------------------------------------------------------------------------
-// Reflect this vector around "vec". "vec" will usually be a normal vector.
+// Reflect this vector around normal
 template <class T>
 inline TVector3<T> &
-TVector3<T>::reflection(const TVector3 & vec)
+TVector3<T>::reflect(const TVector3 & normal)
 {
-  *this = vec * 2 * (vec.dotProduct(*this)) - *this;
+  *this = normal * 2 * (normal.getDotProduct(*this)) - *this;
 
   return (*this);
 }
 
 //---------------------------------------------------------------------------
 template <class T>
-inline T
+T
 TVector3<T>::length() const
 {
-  return sqrtf(x*x + y*y + z*z);
+  return getLength();
 }
 
 //---------------------------------------------------------------------------
 template <class T>
-inline T
-TVector3<T>::inv_length() const
+T
+TVector3<T>::dot(const TVector3<T> & vec) const
 {
-  return inv_sqrtf(x*x + y*y + z*z);
+  return getDotProduct(vec);
 }
 
+//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 template <class T>
-inline T
-TVector3<T>::dotProduct(const TVector3 & vec) const
+inline TVector3<T> &
+normalize(TVector3<T> & vec)
 {
-  return (x*vec.x + y*vec.y + z*vec.z);
+  T inv_length = 1 / vec.getLength();
+
+  vec.x *= inv_length;
+  vec.y *= inv_length;
+  vec.z *= inv_length;
+
+  return vec;
 }
 
 //---------------------------------------------------------------------------
+// Special case for TFixed class
+template <int p>
+inline TVector3< TFixed<p> > &
+normalize(TVector3< TFixed<p> > & vec)
+{
+  TFixed<p> length = vec.getLength();
+
+  vec.x /= length;
+  vec.y /= length;
+  vec.z /= length;
+
+  return vec;
+}
+
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+template <class T>
+inline
+TVector4<T>::TVector4()
+{
+}
+
 //---------------------------------------------------------------------------
 template <class T>
 inline
@@ -498,30 +498,6 @@ TVector4<T>::operator-(const TVector4 & vec) const
 //---------------------------------------------------------------------------
 template <class T>
 inline TVector4<T>
-TVector4<T>::operator* (const TVector4 & vec) const
-{
-  TVector4 rv(*this);
-
-  rv *= vec;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-template <class T>
-inline TVector4<T>
-TVector4<T>::operator/ (const TVector4 & vec) const
-{
-  TVector4 rv(*this);
-
-  rv /= vec;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-template <class T>
-inline TVector4<T>
 TVector4<T>::operator*(T s) const
 {
   TVector4 rv(*this);
@@ -569,26 +545,10 @@ TVector4<T>::getNormalized() const
 
 //---------------------------------------------------------------------------
 template <class T>
-inline TVector4<T>
-TVector4<T>::getCrossProduct(const TVector4 & vec) const
+inline T
+TVector4<T>::getLength() const
 {
-  TVector4 rv(*this);
-
-  rv.crossProduct(vec);
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-template <class T>
-inline TVector4<T>
-TVector4<T>::getReflection(const TVector4 & vec) const
-{
-  TVector4 rv(*this);
-
-  rv.reflection(vec);
-
-  return rv;
+  return (w * sqrtf((x*x) + (y*y) + (z*z)));
 }
 
 //---------------------------------------------------------------------------
@@ -596,10 +556,18 @@ template <class T>
 inline TVector4<T> &
 TVector4<T>::operator+=(const TVector4 & vec)
 {
-  x += vec.x;
-  y += vec.y;
-  z += vec.z;
-  w += vec.w;
+#if 0
+  // Don't change w
+  x += (vec.x * vec.w) / w;
+  y += (vec.y * vec.w) / w;
+  z += (vec.z * vec.w) / w;
+#else
+  // Normalize w
+  x = (x * w) + (vec.x * vec.w);
+  y = (y * w) + (vec.y * vec.w);
+  z = (z * w) + (vec.z * vec.w);
+  w = 1;
+#endif
 
   return (*this);
 }
@@ -609,36 +577,18 @@ template <class T>
 inline TVector4<T> &
 TVector4<T>::operator-=(const TVector4 & vec)
 {
-  x -= vec.x;
-  y -= vec.y;
-  z -= vec.z;
-  w -= vec.w;
-
-  return (*this);
-}
-
-//---------------------------------------------------------------------------
-template <class T>
-inline TVector4<T> &
-TVector4<T>::operator*=(const TVector4 & vec)
-{
-  x *= vec.x;
-  y *= vec.y;
-  z *= vec.z;
-  w *= vec.w;
-
-  return (*this);
-}
-
-//---------------------------------------------------------------------------
-template <class T>
-inline TVector4<T> &
-TVector4<T>::operator/=(const TVector4 & vec)
-{
-  x /= vec.x;
-  y /= vec.y;
-  z /= vec.z;
-  w /= vec.w;
+#if 0
+  // Don't change w
+  x -= (vec.x * vec.w) / w;
+  y -= (vec.y * vec.w) / w;
+  z -= (vec.z * vec.w) / w;
+#else
+  // Normalize w
+  x = (x * w) - (vec.x * vec.w);
+  y = (y * w) - (vec.y * vec.w);
+  z = (z * w) - (vec.z * vec.w);
+  w = 1;
+#endif
 
   return (*this);
 }
@@ -648,10 +598,15 @@ template <class T>
 inline TVector4<T> &
 TVector4<T>::operator*=(const T s)
 {
+#if 0
+  // Don't change w
   x *= s;
   y *= s;
   z *= s;
+#else
+  // Scale w
   w *= s;
+#endif
 
   return (*this);
 }
@@ -661,15 +616,15 @@ template <class T>
 inline TVector4<T> &
 TVector4<T>::operator/=(const T s)
 {
-  if(s != 0)
-  {
-    T s2 = 1.0f / s;
-
-    x *= s2;
-    y *= s2;
-    z *= s2;
-    w *= s2;
-  }
+#if 0
+  // Don't change w
+  x /= s;
+  y /= s;
+  z /= s;
+#else
+  // Scale w
+  w /= s;
+#endif
 
   return (*this);
 }
@@ -679,10 +634,15 @@ template <class T>
 inline TVector4<T> &
 TVector4<T>::invert()
 {
+#if 0
+  // Don't change w
   x = 0 - x;
   y = 0 - y;
   z = 0 - z;
+#else
+  // Invert w
   w = 0 - w;
+#endif
 
   return (*this);
 }
@@ -692,34 +652,7 @@ template <class T>
 inline TVector4<T> &
 TVector4<T>::normalize()
 {
-  return *this *= inv_length();
-}
-
-//---------------------------------------------------------------------------
-template <class T>
-inline TVector4<T> &
-TVector4<T>::crossProduct(const TVector4 & vec)
-{
-  T tx, ty;
-
-  tx = ((y * vec.z) - (z * vec.y));
-  ty = ((z * vec.x) - (x * vec.z));
-  z  = ((x * vec.y) - (y * vec.x));
-  x  = tx;
-  y  = ty;
-
-  return (*this);
-}
-
-//---------------------------------------------------------------------------
-// Reflect this vector around "vec". "vec" will usually be a normal vector.
-template <class T>
-inline TVector4<T> &
-TVector4<T>::reflection(const TVector4 & vec)
-{
-  *this = vec * 2 * (vec.dotProduct(*this)) - *this;
-
-  return (*this);
+  return ::normalize(*this);
 }
 
 //---------------------------------------------------------------------------
@@ -727,21 +660,37 @@ template <class T>
 inline T
 TVector4<T>::length() const
 {
-  return w * sqrtf(x*x + y*y + z*z);
+  return getLength();
 }
 
 //---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 template <class T>
-inline T
-TVector4<T>::inv_length() const
+inline TVector4<T> &
+normalize(TVector4<T> & vec)
 {
-  return inv_sqrtf(x*x + y*y + z*z) / w;
+  T inv_length = 1 / vec.getLength();
+
+  vec.x = vec.x * vec.w * inv_length;
+  vec.y = vec.y * vec.w * inv_length;
+  vec.z = vec.z * vec.w * inv_length;
+  vec.w = 1;
+
+  return vec;
 }
 
 //---------------------------------------------------------------------------
-template <class T>
-inline T
-TVector4<T>::dotProduct(const TVector4 & vec) const
+// Special case for TFixed class
+template <int p>
+inline TVector4< TFixed<p> > &
+normalize(TVector4< TFixed<p> > & vec)
 {
-  return (x*vec.x + y*vec.y + z*vec.z + w*vec.w);
+  TFixed<p> length = vec.getLength();
+
+  vec.x = (vec.x * vec.w) / length;
+  vec.y = (vec.y * vec.w) / length;
+  vec.z = (vec.z * vec.w) / length;
+  vec.w = 1;
+  
+  return vec;
 }
