@@ -21,7 +21,10 @@
 
 #include "videoDevice.h"
 #include "kernel/2dRenderer.h"
-#include "../../../../gl/softGLF.h"
+#ifdef CONFIG_GL
+#include "../../../../gl/3DRendererFloat.h"
+#include "../../../../gl/rasterScanline.h"
+#endif
 
 
 #define DC_VIDEO_CABLE_VGA          0
@@ -272,7 +275,12 @@ void
 CDCVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
 #ifdef CONFIG_GL
-  *renderer = new CSoftGLESFloat;
+  CSoft3DRendererFloat * pRender = new CSoft3DRendererFloat;
+  raster::IRasterizer  * pRaster = new raster::CRasterizerScanline;
+
+  pRender->setRaster(pRaster);
+
+  *renderer = pRender;
 #else
   *renderer = NULL;
 #endif

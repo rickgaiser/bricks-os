@@ -25,7 +25,8 @@
 
 #include "kernel/videoManager.h"
 #include "kernel/2dRenderer.h"
-#include "../../../../gl/softGLF.h"
+#include "kernel/3dRenderer.h"
+#include "../../../../gl/rasterScanline.h"
 
 
 //---------------------------------------------------------------------------
@@ -47,16 +48,15 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-class CNGC3DRenderer
- : public CSoftGLESFloat
+class CNGCSoftRasterizer
+: public raster::CRasterizerScanline
 {
 public:
-  CNGC3DRenderer(CNGCVideoDevice * dev);
-  virtual ~CNGC3DRenderer();
+  CNGCSoftRasterizer(CNGCVideoDevice * dev);
+  virtual ~CNGCSoftRasterizer();
 
   // Flush operations to surface
   virtual void flush();
-  virtual void glFlush(){flush();}
 
 private:
   CNGCVideoDevice * pDev_;

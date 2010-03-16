@@ -24,7 +24,10 @@
 #include "asm/hal.h"
 #include "kernel/debug.h"
 #include "stddef.h"
-//#include "../../../../gl/softGLF.h"
+#ifdef CONFIG_GL
+#include "../../../../gl/3DRendererFloat.h"
+#include "../../../../gl/rasterScanline.h"
+#endif
 
 
 const char * sVBEFunction[] =
@@ -254,7 +257,16 @@ CVesaVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 void
 CVesaVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
-  //*renderer = new CSoftGLESFloat;
+#ifdef CONFIG_GL
+  CSoft3DRendererFloat * pRender = new CSoft3DRendererFloat;
+  raster::IRasterizer  * pRaster = new raster::CRasterizerScanline;
+
+  pRender->setRaster(pRaster);
+
+  *renderer = pRender;
+#else
+  *renderer = NULL;
+#endif
 }
 
 //---------------------------------------------------------------------------

@@ -21,7 +21,10 @@
 
 #include "videoDevice.h"
 #include "kernel/2dRenderer.h"
-#include "../../../../gl/softGLF.h"
+#ifdef CONFIG_GL
+#include "../../../../gl/3DRendererFloat.h"
+#include "../../../../gl/rasterScanline.h"
+#endif
 #include <pspdebug.h>
 #include <pspdisplay.h>
 #include <pspkernel.h>
@@ -127,7 +130,16 @@ CPSPVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 void
 CPSPVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
-  *renderer = new CSoftGLESFloat;
+#ifdef CONFIG_GL
+  CSoft3DRendererFloat * pRender = new CSoft3DRendererFloat;
+  raster::IRasterizer  * pRaster = new raster::CRasterizerScanline;
+
+  pRender->setRaster(pRaster);
+
+  *renderer = pRender;
+#else
+  *renderer = NULL;
+#endif
 }
 
 //---------------------------------------------------------------------------

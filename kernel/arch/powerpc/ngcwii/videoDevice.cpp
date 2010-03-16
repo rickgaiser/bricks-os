@@ -23,6 +23,7 @@
 #include "registers.h"
 #include <gccore.h>
 #include "gx.h"
+#include "../../../../gl/3DRendererFloat.h"
 
 
 // NOTE:
@@ -221,21 +222,23 @@ CNGC2DRenderer::flush()
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-CNGC3DRenderer::CNGC3DRenderer(CNGCVideoDevice * dev)
- : CSoftGLESFloat()
+CNGCSoftRasterizer::CNGCSoftRasterizer(CNGCVideoDevice * dev)
+ : raster::CRasterizerScanline()
  , pDev_(dev)
 {
 }
 
 //---------------------------------------------------------------------------
-CNGC3DRenderer::~CNGC3DRenderer()
+CNGCSoftRasterizer::~CNGCSoftRasterizer()
 {
 }
 
 //---------------------------------------------------------------------------
 void
-CNGC3DRenderer::flush()
+CNGCSoftRasterizer::flush()
 {
+  raster::CRasterizerScanline::flush();
+
   // BitBlt RGB Surface to Native Surface
   pDev_->flush(renderSurface);
 }
@@ -352,7 +355,12 @@ CNGCVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 void
 CNGCVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
-  *renderer = new CNGC3DRenderer(this);
+  CSoft3DRendererFloat * pRender = new CSoft3DRendererFloat;
+  raster::IRasterizer  * pRaster = new CNGCSoftRasterizer(this);
+
+  pRender->setRaster(pRaster);
+
+  *renderer = pRender;
 }
 
 //---------------------------------------------------------------------------
