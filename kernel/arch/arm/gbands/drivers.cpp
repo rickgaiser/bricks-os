@@ -39,9 +39,9 @@
 #include "gbaSerial.h"
 #endif // CONFIG_GBA_SERIAL
 
-#ifdef CONFIG_GBA_SOUND
-#include "gbaSound.h"
-#endif // CONFIG_GBA_SOUND
+//#ifdef CONFIG_GBA_SOUND
+//#include "gbaSound.h"
+//#endif // CONFIG_GBA_SOUND
 
 #ifdef CONFIG_FRAMEBUFFER
 #include "videoDevice.h"
@@ -93,9 +93,9 @@ public:
   CKernelFileDriver fdSerial;
 #endif // CONFIG_GBA_SERIAL
 
-#ifdef CONFIG_GBA_SOUND
-  CGBASound         cSound;
-#endif // CONFIG_GBA_SOUND
+//#ifdef CONFIG_GBA_SOUND
+//  CGBASound         cSound;
+//#endif // CONFIG_GBA_SOUND
 
 #ifdef CONFIG_FRAMEBUFFER
   CGBAVideoDevice   cVideoDevice;
@@ -176,9 +176,9 @@ init_drivers()
   pDrivers->cSerial.init();
 #endif // CONFIG_GBA_SERIAL
 
-#ifdef CONFIG_GBA_SOUND
-  pDrivers->cSound.init();
-#endif // CONFIG_GBA_SOUND
+//#ifdef CONFIG_GBA_SOUND
+//  pDrivers->cSound.init();
+//#endif // CONFIG_GBA_SOUND
 
 #ifdef CONFIG_FILESYSTEM
   CFileSystem::addPartitionDriver(&(pDrivers->cIBMPartitionDriver));

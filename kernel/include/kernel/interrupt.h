@@ -23,7 +23,7 @@
 #define INTERRUPT_H
 
 
-#define MAX_OBSERVERS 2
+#define MAX_OBSERVERS 4
 
 
 // -----------------------------------------------------------------------------

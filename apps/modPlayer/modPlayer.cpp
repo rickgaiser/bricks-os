@@ -216,8 +216,8 @@ const int8_t vibratoRandomTab[32] =
 
 
 // -----------------------------------------------------------------------------
-CMODPlayer::CMODPlayer(CGBASound * driver)
- : driver_(driver)
+CMODPlayer::CMODPlayer()
+ : mixer_()
 {
 }
 
@@ -233,6 +233,8 @@ CMODPlayer::init()
   mixBufferSize_ = 528;//freqTable[freq].bufSize;
   mixFreq_       = 31536;//freqTable[freq].freq;
   mixFreqPeriod_ = div(AMIGA_VAL<<9, mixFreq_) << (MIXCHN_FRAC_BITS-9);
+
+  mixer_.init();
 
   for(int iChannel(0); iChannel < MOD_CHANNEL_COUNT; iChannel++)
   {
@@ -268,12 +270,12 @@ CMODPlayer::update()
     // Figure out if this is the last batch of samples for this frame
     if((samplesUntilMODTick_>>12) < samplesLeft && mod_.state == MOD_STATE_PLAY)
     {
-      driver_->setChannel(0, &channel_[0]);
-      driver_->setChannel(1, &channel_[1]);
-      driver_->setChannel(2, &channel_[2]);
-      driver_->setChannel(3, &channel_[3]);
+      mixer_.setChannel(0, &channel_[0]);
+      mixer_.setChannel(1, &channel_[1]);
+      mixer_.setChannel(2, &channel_[2]);
+      mixer_.setChannel(3, &channel_[3]);
       // Song will need updated before we're out of samples, so mix up to the song tick
-      driver_->mix(samplesUntilMODTick_>>12);
+      mixer_.mix(samplesUntilMODTick_>>12);
       // Subtract the number we just mixed
       samplesLeft -= samplesUntilMODTick_>>12;
 
@@ -282,14 +284,14 @@ CMODPlayer::update()
     }
     else
     {
-      driver_->setChannel(0, &channel_[0]);
-      driver_->setChannel(1, &channel_[1]);
-      driver_->setChannel(2, &channel_[2]);
-      driver_->setChannel(3, &channel_[3]);
+      mixer_.setChannel(0, &channel_[0]);
+      mixer_.setChannel(1, &channel_[1]);
+      mixer_.setChannel(2, &channel_[2]);
+      mixer_.setChannel(3, &channel_[3]);
       // Either song is not playing, so just mix a full buffer, or
       // not enough samples left to make it to another song tick,
       // so mix what's left and exit
-      driver_->mix(samplesLeft);
+      mixer_.mix(samplesLeft);
       // This is how many samples will get mixed first thing next frame
       // before updating the song
       samplesUntilMODTick_ -= samplesLeft<<12;
@@ -1086,4 +1088,95 @@ CMODPlayer::MODFXSpeed(SMODUpdateInfo *vars)
     mod_.speed = vars->param;
   else                          // 32-255 = set tempo
     MODSetTempo(vars->param);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+CSoundMixer::CSoundMixer()
+{
+}
+
+// -----------------------------------------------------------------------------
+CSoundMixer::~CSoundMixer()
+{
+}
+
+// -----------------------------------------------------------------------------
+int
+CSoundMixer::init()
+{
+  // Clear channels
+  for(int iChannel(0); iChannel < SOUND_CHANNEL_COUNT; iChannel++)
+    channel_[iChannel] = NULL;
+
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+void
+CSoundMixer::setChannel(uint8_t nr, SSoundChannel * data)
+{
+  if(nr < SOUND_CHANNEL_COUNT)
+  {
+    channel_[nr] = data;
+  }
+}
+
+// -----------------------------------------------------------------------------
+void
+CSoundMixer::mix(uint32_t samplesToMix)
+{
+  int iActiveChannels(0);  // Count active channels
+  int16_t temp[736];
+
+  // Clear temp buffer
+  memset(temp, 0, samplesToMix * 2);
+
+  for(int iChannel(0); iChannel < SOUND_CHANNEL_COUNT; iChannel++)
+  {
+    SSoundChannel * pChannel = channel_[iChannel];
+
+    if((pChannel != NULL) && (pChannel->data != NULL))
+    {
+      iActiveChannels++;
+
+      if((pChannel->pos + (pChannel->inc * samplesToMix)) >= pChannel->length)
+      {
+        // Channel will end, so check it
+        for(uint32_t i(0); i < samplesToMix; i++)
+        {
+          temp[i] += pChannel->data[pChannel->pos >> 12] * pChannel->vol;
+          pChannel->pos += pChannel->inc;
+
+          if(pChannel->pos >= pChannel->length)
+          {
+            if(pChannel->loopLength == 0)
+            {
+              // Stop
+              pChannel->data = NULL;
+              i = samplesToMix;
+            }
+            else
+            {
+              // Loop
+              while(pChannel->pos >= pChannel->length)
+                pChannel->pos -= pChannel->loopLength;
+            }
+          }
+        }
+      }
+      else
+      {
+        // Channel will not end, fast processing
+        for(uint32_t i(0); i < samplesToMix; i++)
+        {
+          temp[i] += pChannel->data[pChannel->pos >> 12] * pChannel->vol;
+          pChannel->pos += pChannel->inc;
+        }
+      }
+    }
+  }
+
+  // Write temp buffer to output channel
+  channelA_.write(temp, samplesToMix);
 }

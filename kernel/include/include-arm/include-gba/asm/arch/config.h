@@ -59,7 +59,7 @@
 
 // GBA specific configuration
 #define CONFIG_GBA_SERIAL
-#undef  CONFIG_GBA_SOUND
+#define CONFIG_GBA_SOUND
 
 
 #endif

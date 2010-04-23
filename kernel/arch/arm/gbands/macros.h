@@ -59,10 +59,23 @@ inline void dmaWait(){DMA3WAIT();}
 #define DMA3COPY(source, dest, mode) DMACOPY(3, source, dest, mode)
 
 inline void
-dmaCopy(const void * source, void * dest, uint32_t size)
+dmaCopy16(const void * source, void * dest, uint32_t size)
 {
   DMA3WAIT();
   DMA3COPY(source, dest, DMA_DST_INC | DMA_SRC_INC | DMA16 | size>>1);
+}
+
+inline void
+dmaCopy32(const void * source, void * dest, uint32_t size)
+{
+  DMA3WAIT();
+  DMA3COPY(source, dest, DMA_DST_INC | DMA_SRC_INC | DMA32 | size>>1);
+}
+
+inline void
+dmaCopy(const void * source, void * dest, uint32_t size)
+{
+  dmaCopy16(source, dest, size);
 }
 
 // DMA fill macros

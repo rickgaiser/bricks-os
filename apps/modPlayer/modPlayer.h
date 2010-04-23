@@ -25,11 +25,14 @@
 #define MODPLAYER_H
 
 
-#include "gbaSound.h"
 #include "inttypes.h"
+#include "asm/arch/memory.h"
+#include "../../../kernel/arch/arm/gbands/gbaSound.h"
+#include "../../../kernel/arch/arm/gbands/drivers.h"
 
 
 #define MOD_CHANNEL_COUNT 4
+#define SOUND_CHANNEL_COUNT 4
 
 
 enum MOD_STATE
@@ -146,6 +149,38 @@ struct SMOD
 };
 
 // -----------------------------------------------------------------------------
+struct SSoundChannel
+{
+  const int8_t * data;
+  uint32_t pos;
+  uint32_t inc;
+  uint32_t vol;
+  uint32_t length;
+  uint32_t loopLength;
+};
+
+// -----------------------------------------------------------------------------
+class CSoundMixer
+{
+public:
+  CSoundMixer();
+  virtual ~CSoundMixer();
+
+  int init();
+
+  void setChannel(uint8_t nr, SSoundChannel * data);
+  void mix(uint32_t samplesToMix) FAST_CODE;
+
+private:
+  // Input channels
+  SSoundChannel * channel_[SOUND_CHANNEL_COUNT];
+
+  // Hardware output channels
+  CGBASoundChannel channelA_;
+  //CGBASoundChannel channelB_;
+};
+
+// -----------------------------------------------------------------------------
 struct SMODUpdateInfo
 {
   SMODChannel   * modChn;
@@ -165,7 +200,7 @@ struct SMODUpdateInfo
 class CMODPlayer
 {
 public:
-  CMODPlayer(CGBASound * driver);
+  CMODPlayer();
   virtual ~CMODPlayer();
 
   int  init();
@@ -213,7 +248,7 @@ private:
   void MODFXSpeed(SMODUpdateInfo *vars);
 
 private:
-  CGBASound * driver_;
+  CSoundMixer   mixer_;
   SSoundChannel channel_[MOD_CHANNEL_COUNT];
 
   SMOD       mod_;
