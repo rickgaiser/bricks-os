@@ -44,6 +44,10 @@
 #undef  CONFIG_FS_FAT
 #undef  CONFIG_PD_IBM
 
+// Audio configuration
+#undef  CONFIG_AUDIO
+#undef  CONFIG_AUDIO_SB16
+
 // Video configuration
 #define CONFIG_FRAMEBUFFER
 #define CONFIG_GL

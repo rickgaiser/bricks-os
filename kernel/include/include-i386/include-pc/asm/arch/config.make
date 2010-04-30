@@ -17,6 +17,10 @@ CONFIG_MMU=y
 #CONFIG_FS_FAT=y
 #CONFIG_PD_IBM=y
 
+# Audio configuration
+#CONFIG_AUDIO=y
+#CONFIG_AUDIO_SB16=y
+
 # Video configuration
 CONFIG_FRAMEBUFFER=y
 CONFIG_GL=y

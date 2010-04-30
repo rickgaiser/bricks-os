@@ -13,6 +13,7 @@ OBJS            =\
                 _gpf \
                 gpf \
                 i8042 \
+                i8237 \
                 i8254 \
                 i8259 \
                 isrWrapper \
@@ -32,6 +33,7 @@ OBJS            =\
 OBJS-$(CONFIG_DEBUGGING)           += debugScreen
 OBJS-$(CONFIG_FILESYSTEM)          += ata
 OBJS-$(CONFIG_FRAMEBUFFER)         += vesa
+OBJS-$(CONFIG_AUDIO_SB16)          += sb16
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.kernel
