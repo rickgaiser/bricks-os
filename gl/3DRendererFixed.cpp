@@ -1885,7 +1885,7 @@ CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
     }
 
     // Color material
-    if(state_.lighting.materialColorEnabled = true)
+    if(state_.lighting.materialColorEnabled == true)
     {
       switch(pMaterial->colorMode)
       {

@@ -235,7 +235,7 @@ CASoftRasterizer::genTextures(GLsizei n, GLuint *textures)
       }
     }
 
-    if(bFound = false)
+    if(bFound == false)
       break;
   }
 }
