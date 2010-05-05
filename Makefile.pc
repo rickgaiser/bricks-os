@@ -7,10 +7,17 @@ all:
 clean:
 	make -f Makefile clean ARCH=i386 TARGET=pc
 
-floppy:
+floppy: floppy-fd0
+
+floppy-fd0:
 	sudo mount /dev/fd0
 	sudo cp bin/pc/Bricks.elf /media/floppy/boot/kernel/Bricks.elf
 	sudo umount /dev/fd0
+
+floppy-sdb:
+	sudo mount /dev/sdb
+	sudo cp bin/pc/Bricks.elf /media/floppy1/boot/kernel/Bricks.elf
+	sudo umount /dev/sdb
 
 floppy-img:
 	sudo mount bin/pc/floppy.img bin/pc/floppy -o loop
@@ -24,6 +31,9 @@ cdrom-img:
 grub:
 	sudo cp bin/pc/Bricks.elf /boot/Bricks.elf
 
-run-qemu:
-	qemu -m 32 -fda bin/pc/floppy.img -boot a
+qemu: floppy-img
+	qemu -hda /dev/zero -fda bin/pc/floppy.img -soundhw sb16
 
+qemu-debug: floppy-img
+	qemu -s -S -hda /dev/zero -fda bin/pc/floppy.img -soundhw sb16
+	
