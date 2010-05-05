@@ -22,6 +22,7 @@
 #include "kernel/debug.h"
 #include "kernel/genwait.h"
 #include "kernel/task.h"
+#include "kernel/taskManager.h"
 
 
 // -----------------------------------------------------------------------------

@@ -22,6 +22,7 @@
 #include "kernel/fileDriver.h"
 #include "kernel/debug.h"
 #include "kernel/task.h"
+#include "kernel/taskManager.h"
 #include "kernel/unistd_k.h"
 #include "kernel/srr_k.h"
 #include "stddef.h"

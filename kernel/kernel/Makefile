@@ -22,6 +22,7 @@ OBJS            =\
                 srrNameServer \
                 srrNodes \
                 task \
+                taskManager \
                 timeValue \
                 unistd \
                 video \

@@ -19,30 +19,39 @@
  */
 
 
-#include "kernel/debug.h"
-#include "kernel/unistd_k.h"
-#include "kernel/genwait.h"
+#ifndef TASKMANAGER_H
+#define TASKMANAGER_H
+
+
+#include "asm/arch/config.h"
 #include "kernel/task.h"
-#include "kernel/taskManager.h"
+#include "inttypes.h"
 
 
 // -----------------------------------------------------------------------------
-pid_t
-k_getpid(void)
+class CTaskManager
 {
-  return CTaskManager::pCurrentTask_->iPID_;
-}
+public:
+  static void updateSleepers(useconds_t us);
+  static void destroyDeadThreads();
+  static bool schedule(bool timeout = false);
+  static CTask * getTaskFromPID(pid_t pid);
 
-// -----------------------------------------------------------------------------
-unsigned int
-k_sleep(unsigned int iSeconds)
-{
-  return genwait_wait(NULL, iSeconds * 1000000);
-}
+  static CTask * pCurrentTask_;
+  static CThread * pCurrentThread_;
+  static CThread * pIdleThread_;
+  static STaskQueue task_queue;        // All tasks
+  static SThreadQueue thread_queue;    // All threads
+  static SThreadQueue ready_queue;     // Ready to run threads
+  static SThreadQueue timer_queue;     // Sleeping on timer threads
+  static SThreadQueue wait_queue;      // Sleeping on objects
+  static SThreadQueue dead_queue;      // Ready to be destroyed
+  static uint32_t iPIDCount_;
+  static useconds_t iCurrentTime_;
 
-// -----------------------------------------------------------------------------
-int
-k_usleep(useconds_t useconds)
-{
-  return genwait_wait(NULL, useconds);
-}
+private:
+  CTaskManager(){}
+};
+
+
+#endif

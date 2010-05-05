@@ -154,30 +154,5 @@ private:
   CThread thr_;
 };
 
-// -----------------------------------------------------------------------------
-class CTaskManager
-{
-public:
-  static void updateSleepers();
-  static void removeDestroyed();
-  static bool schedule(bool timeout = false);
-  static CTask * getTaskFromPID(pid_t pid);
-
-  static CTask * pCurrentTask_;
-  static CThread * pCurrentThread_;
-  static CThread * pIdleThread_;
-  static STaskQueue task_queue;        // All tasks
-  static SThreadQueue thread_queue;    // All threads
-  static SThreadQueue ready_queue;     // Ready to run threads
-  static SThreadQueue timer_queue;     // Sleeping on timer threads
-  static SThreadQueue wait_queue;      // Sleeping on objects
-  static SThreadQueue dead_queue;      // Ready to be destroyed
-  static uint32_t iPIDCount_;
-  static useconds_t iCurrentTime_;
-
-private:
-  CTaskManager(){}
-};
-
 
 #endif

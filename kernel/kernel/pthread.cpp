@@ -22,6 +22,7 @@
 #include "pthread.h"
 #include "kernel/debug.h"
 #include "kernel/task.h"
+#include "kernel/taskManager.h"
 #include "kernel/genwait.h"
 #include "asm/cpu.h"
 

@@ -24,6 +24,7 @@
 #include "kernel/debug.h"
 #include "kernel/queue.h"
 #include "kernel/task.h"
+#include "kernel/taskManager.h"
 #include "string.h"
 
 

@@ -24,6 +24,7 @@
 #include "kernel/srrChannel.h"
 #include "kernel/srrConnection.h"
 #include "kernel/task.h"
+#include "kernel/taskManager.h"
 #include "kernel/pthread_k.h"
 #include "kernel/unistd_k.h"
 #include "kernel/syscall.h"
