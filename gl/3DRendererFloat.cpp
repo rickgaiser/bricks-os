@@ -1076,7 +1076,7 @@ CSoft3DRendererFloat::glLightf(GLenum light, GLenum pname, GLfloat param)
     //case GL_CONSTANT_ATTENUATION:
     //case GL_LINEAR_ATTENUATION:
     //case GL_QUADRATIC_ATTENUATION:
-      break;
+    //  break;
     default:
       setError(GL_INVALID_ENUM);
       return;

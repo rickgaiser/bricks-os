@@ -1076,7 +1076,7 @@ CSoft3DRendererFixed::glLightx(GLenum light, GLenum pname, GLfixed param)
     //case GL_CONSTANT_ATTENUATION:
     //case GL_LINEAR_ATTENUATION:
     //case GL_QUADRATIC_ATTENUATION:
-      break;
+    //  break;
     default:
       setError(GL_INVALID_ENUM);
       return;
