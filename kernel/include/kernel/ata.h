@@ -48,18 +48,21 @@
 #define ATA_ERROR_TK0NF 0x02 // Track 0 Not Found
 #define ATA_ERROR_AMNF  0x01 // Address Mark Not Found
 
-// Commands
-#define ATA_COMMAND_READ_SECTORS   0x20
-#define ATA_COMMAND_IDENTIFY_DRIVE 0xec
-
-// drvHead bits
+// Drive/Head register bits
 #define ATA_DRV_HEAD_MASTER 0x00
 #define ATA_DRV_HEAD_SLAVE  0x10
-#define ATA_DRV_HEAD_LBA    0x40
+#define ATA_DRV_HEAD_CHS    0xa0
+#define ATA_DRV_HEAD_LBA28  0xe0
+#define ATA_DRV_HEAD_LBA48  0x40
+
+// Commands
+#define ATA_COMMAND_READ_SECTORS      0x20
+#define ATA_COMMAND_DEVICE_DIAGNOSTIC 0x90
+#define ATA_COMMAND_IDENTIFY_DRIVE    0xec
 
 
 // -----------------------------------------------------------------------------
-struct SATAIdentifyDevice
+struct SATADeviceInformation
 {
   uint16_t words000_009[10];
   uint8_t  serial_no[20];
@@ -90,7 +93,7 @@ struct SATARegisters
   uint32_t lbaLow;       // (rw) LBA Low
   uint32_t lbaMid;       // (rw) LBA Mid
   uint32_t lbaHigh;      // (rw) LBA High
-  uint32_t device;       // (rw) Device
+  uint32_t device;       // (rw) Device (Drive/Head)
   union{
     uint32_t status;     // (r)  Status
     uint32_t command;    // (w)  Command

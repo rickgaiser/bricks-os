@@ -24,29 +24,9 @@
 
 
 #include "inttypes.h"
+#include "kernel/ata.h"
 #include "kernel/fileSystem.h"
 #include "kernel/interrupt.h"
-
-
-struct SATADeviceInformation
-{
-  uint16_t iGeneralConfig;
-  uint16_t words001_009[9];
-  char     sSerialNumber[20];
-  uint16_t words020_022[3];
-  char     sFirmwareRevision[8];
-  char     sModelNumber[40];
-  uint16_t words047_079[33];
-  uint16_t major_rev_num;
-  uint16_t minor_rev_num;
-  uint16_t command_set_1;
-  uint16_t command_set_2;
-  uint16_t command_set_extension;
-  uint16_t cfs_enable_1;
-  uint16_t word086;
-  uint16_t csf_default;
-  uint16_t words088_255[168];
-} __attribute__ ((__packed__));
 
 
 // -----------------------------------------------------------------------------
@@ -55,7 +35,7 @@ class CATADrive
  , public IInterruptServiceRoutine
 {
 public:
-  CATADrive(uint32_t iobase, bool master);
+  CATADrive(const SATARegisters * regs, bool master);
   virtual ~CATADrive();
 
   virtual int init();
@@ -68,7 +48,7 @@ public:
   virtual int isr(int irq);
 
 private:
-  uint32_t iIOBase_;
+  const SATARegisters * pRegs_;
   uint8_t iMaster_;
 
   SATADeviceInformation info_;
@@ -79,7 +59,7 @@ class CATAChannel
  : public IInterruptServiceRoutine
 {
 public:
-  CATAChannel(uint32_t iobase);
+  CATAChannel(const SATARegisters * regs);
   virtual ~CATAChannel();
 
   virtual int init();
@@ -88,7 +68,7 @@ public:
   virtual int isr(int irq);
 
 private:
-  uint32_t iIOBase_;
+  const SATARegisters * pRegs_;
 
   CATADrive * pMaster_;
   CATADrive * pSlave_;
