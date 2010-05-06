@@ -22,6 +22,7 @@
 #include "asm/task.h"
 #include "kernel/debug.h"
 #include "kernel/task.h"
+#include "kernel/taskManager.h"
 #include "asm/cpu.h"
 
 

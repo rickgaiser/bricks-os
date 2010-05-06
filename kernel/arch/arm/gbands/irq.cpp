@@ -23,6 +23,7 @@
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "kernel/task.h"
+#include "kernel/taskManager.h"
 #include "kernel/srr_k.h"
 #include "asm/irq.h"
 #include "asm/arch/memory.h"

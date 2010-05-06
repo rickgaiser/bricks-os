@@ -23,6 +23,7 @@
 #include "kernel/debug.h"
 #include "kernel/pthread_k.h"
 #include "kernel/task.h"
+#include "kernel/taskManager.h"
 #include "asm/arch/config.h"
 #include "asm/cpu.h"
 
