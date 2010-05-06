@@ -41,11 +41,13 @@ public:
 
   void init(void * entry, int argc = 0, char * argv[] = 0);
 
-  // Task switch: Jump to task immediately
-  void runJump();
+  // Selects this thread for execution on interrupt return
+  void run();
 
-  // Task switch: Call task (x86 specific, use iret to return to caller)
-  void runCall();
+  // Jump to task
+  void jump();
+  // Call task (use iret to return to caller)
+  void call();
 
 public:
   // Task state
@@ -68,13 +70,15 @@ public:
 
   void init();
 
-  // Task switch: Jump to task immediately
-  void runJump();
+  // Selects this thread for execution on interrupt return
+  void run();
 
-  // Task switch: Call task (x86 specific, use iret to return to caller)
-  void runCall();
+  // Jump to task
+  void jump();
+  // Call task (use iret to return to caller)
+  void call();
 
-  // Setup for v86 interrupt and runJump to the v86 task
+  // Setup for v86 interrupt and jump to the v86 task
   void interrupt(uint8_t nr);
 
 public:

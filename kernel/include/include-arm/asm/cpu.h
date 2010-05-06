@@ -23,13 +23,21 @@
 #define CPU_H
 
 
+#ifdef __cplusplus
 extern "C"
 {
+#endif
+
+
 unsigned long local_save_flags(void);
 void local_irq_restore(unsigned long flags);
 void local_irq_disable(void);
 void local_irq_enable(void);
+
+
+#ifdef __cplusplus
 };
+#endif
 
 
 static inline void halt(){while(true){}}

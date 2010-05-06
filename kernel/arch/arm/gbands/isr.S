@@ -12,8 +12,7 @@
 .global local_irq_restore
 .global local_irq_disable
 .global local_irq_enable
-.global runJump
-.global interruptReturn
+.global __jump
 .global __gba_isr
 .global __isr
 .global current_thread
@@ -105,7 +104,7 @@ local_irq_enableARM:
   bx      lr
 
 @ -----------------------------------------------------------------------------
-@ void runJump(pt_regs * current_thread, pt_regs * new_thread);
+@ void __jump(pt_regs * current_thread, pt_regs * new_thread);
 @   Special function for task switching WITHOUT interrupt. Saves the current
 @   state and loads the state of the new task.
 @  - code: THUMB
@@ -116,16 +115,16 @@ local_irq_enableARM:
   .text
   .code 16
   .thumb_func
-runJump:
-  ldr     r2, =runJumpARM
+__jump:
+  ldr     r2, =__jump_ARM
   bx      r2
   .data
   .code 32
-runJumpARM:
+__jump_ARM:
   @ Save r0-r12,r14
   stmia   r0!, {r1-r12}               @ Save r1-r12
   stmia   r0!, {r0}                   @ Save r0
-  ldr     r2, =runJumpReturn
+  ldr     r2, =__jump_Return
   stmia   r0!, {r2}                   @ Save pc
 
   mrs     r4, cpsr
@@ -134,10 +133,10 @@ runJumpARM:
   str     sp, [r0], #4                @ Save sp
 
   str     r1, current_thread
-  b       interruptReturn
+  b       __isr_Return
 
   nop
-runJumpReturn:
+__jump_Return:
   bx      lr
 
 
@@ -183,20 +182,19 @@ __isr:
   str     sp, [r0], #4                @ Save sp
 
   @ Call generic interrupt handler, THUMB mode
-  ldr     lr, =interruptReturn
+  ldr     lr, =__isr_Return
   ldr     r0, current_thread
   ldr     r1, =isr
   bx      r1
 
 @ -----------------------------------------------------------------------------
-@ void interruptReturn();
 @   Return from interrupt. Loads "current_state" and returns to it.
 @   NOTE: Current context is destoyed!
 @  - code: ARM
 @  - mode: System/User
 @ -----------------------------------------------------------------------------
   .code 32
-interruptReturn:
+__isr_Return:
   ldr     r0, current_thread
   add     r0, r0, #68                 @ set pointer to end of current task state
 

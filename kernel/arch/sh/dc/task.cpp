@@ -48,6 +48,6 @@ CThreadImpl::init(void * entry, int argc, char * argv[])
 
 // -----------------------------------------------------------------------------
 void
-CThreadImpl::runJump()
+CThreadImpl::run()
 {
 }

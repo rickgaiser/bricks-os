@@ -136,7 +136,16 @@ CThreadImpl::init(void * entry, int argc, char * argv[])
 
 // -----------------------------------------------------------------------------
 void
-CThreadImpl::runJump()
+CThreadImpl::run()
+{
+  // FIXME: this task should be selected for interrupt return,
+  //        not executed immediately
+  jump();
+}
+
+// -----------------------------------------------------------------------------
+void
+CThreadImpl::jump()
 {
   if(cGDT.desc_[selTSS_ >> 3].access & (1<<1))
     panic("Can't jump to busy task!\n");
@@ -149,7 +158,7 @@ CThreadImpl::runJump()
 
 // -----------------------------------------------------------------------------
 void
-CThreadImpl::runCall()
+CThreadImpl::call()
 {
   if(cGDT.desc_[selTSS_ >> 3].access & (1<<1))
     panic("Can't call busy task!\n");
@@ -222,7 +231,16 @@ CV86Thread::init()
 
 // -----------------------------------------------------------------------------
 void
-CV86Thread::runJump()
+CV86Thread::run()
+{
+  // FIXME: this task should be selected for interrupt return,
+  //        not executed immediately
+  jump();
+}
+
+// -----------------------------------------------------------------------------
+void
+CV86Thread::jump()
 {
   if(cGDT.desc_[selTSS_ >> 3].access & (1<<1))
     panic("Can't jump to busy task!\n");
@@ -235,7 +253,7 @@ CV86Thread::runJump()
 
 // -----------------------------------------------------------------------------
 void
-CV86Thread::runCall()
+CV86Thread::call()
 {
   if(cGDT.desc_[selTSS_ >> 3].access & (1<<1))
     panic("Can't call busy task!\n");

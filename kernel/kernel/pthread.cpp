@@ -54,8 +54,6 @@ k_pthread_exit(void * status)
   CTaskManager::pCurrentThread_->state(TS_DEAD);
   // Schedule next thread
   CTaskManager::schedule();
-  // Jump to next task
-  CTaskManager::pCurrentThread_->impl().runJump();
 }
 
 // -----------------------------------------------------------------------------

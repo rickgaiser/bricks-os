@@ -35,6 +35,7 @@
 extern "C" void __gba_isr();
 // Function __gba_isr calls
 extern "C" void isr(pt_regs * regs) INTERRUPT_CODE;
+bool bInISR = false;
 
 
 // -----------------------------------------------------------------------------
@@ -42,7 +43,11 @@ extern "C" void isr(pt_regs * regs) INTERRUPT_CODE;
 extern "C" void
 isr(pt_regs * regs)
 {
-  bool bTimeout(false);
+  bool bTimeout = false;
+
+  // CThreadImpl needs to know if it's called from witin the isr
+  bInISR = true;
+
   // Find out who triggered the interrupt
   unsigned long iFlags(REG_IF & REG_IE);
 
@@ -77,13 +82,9 @@ isr(pt_regs * regs)
   }
 
   // Run the scheduler
-  if(CTaskManager::schedule(bTimeout) == true)
-  {
-    // Load return stack
-    CTaskManager::pCurrentThread_->impl().runReturn();
-    // Jump to task
-    //CTaskManager::pCurrentThread_->impl().runJump();
-  }
+  CTaskManager::schedule(bTimeout);
+
+  bInISR = false;
 }
 
 // -----------------------------------------------------------------------------

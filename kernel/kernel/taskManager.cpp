@@ -126,6 +126,9 @@ CTaskManager::schedule(bool timeout)
     }
 
     bSchedule = true;
+
+    // Select thread for execution
+    pCurrentThread_->impl().run();
   }
 
   return bSchedule;

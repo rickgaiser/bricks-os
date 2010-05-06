@@ -27,9 +27,9 @@
 
 
 extern pt_regs * current_thread;   // Return state for the current thread, only valid in interrupt
-extern "C" void kill();
-extern "C" void kill_thread();     // Return function for thread, kills the current thread
+void kill_thread();                // Return function for thread, kills the current thread
 extern "C" void runJump(pt_regs * current_thread, pt_regs * new_thread);
+extern bool bInISR;
 CTask             * pMainTask;
 CThread           * pMainThread;
 CThreadImpl       * pMainThreadImpl;
@@ -86,32 +86,32 @@ CThreadImpl::init(void * entry, int argc, char * argv[])
   threadState_.r11       = 0;
   threadState_.r12       = 0;
   threadState_.sp        = reinterpret_cast<uint32_t>(pStack_) + stackSize;
-  threadState_.lr        = reinterpret_cast<uint32_t>(kill);
+  threadState_.lr        = reinterpret_cast<uint32_t>(kill_thread);
   threadState_.pc        = reinterpret_cast<uint32_t>(entry) + 8;
   threadState_.cpsr      = CPU_MODE_SYSTEM | CPU_MODE_THUMB; // Mode on irq return
 }
 
 // -----------------------------------------------------------------------------
 void
-CThreadImpl::runJump()
+CThreadImpl::run()
 {
-  // Jump to "threadState_" (current state saved in "current_thread")
-  ::runJump(current_thread, &threadState_);
+  if(bInISR == true)
+  {
+    // Set this threads state as the new "current_thread"
+    // An interrupt return will activate this task
+    current_thread = &threadState_;
+  }
+  else
+  {
+    // Jump to "threadState_" (current state saved in "current_thread")
+    __jump(current_thread, &threadState_);
 
-  // "current_thread" will resume here, after it is has been scheduled again
+    // "current_thread" will resume here, after it is has been scheduled again
+  }
 }
 
 // -----------------------------------------------------------------------------
 void
-CThreadImpl::runReturn()
-{
-  // Set this threads state as the new "current_thread"
-  // An interrupt return will activate this task
-  current_thread = &threadState_;
-}
-
-// -----------------------------------------------------------------------------
-extern "C" void
 kill_thread()
 {
   printk("kill_thread\n");

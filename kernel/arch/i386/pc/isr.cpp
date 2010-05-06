@@ -314,8 +314,7 @@ isr(pt_regs * regs)
           //  - Destroy task
           CTaskManager::pCurrentThread_->state(TS_DEAD);
           //  - Schedule another task/thread
-          if(CTaskManager::schedule() == true)
-            CTaskManager::pCurrentThread_->impl().runJump();
+          CTaskManager::schedule();
           //  - We will never get here
           deadThreadPanic();
           break;
@@ -334,8 +333,6 @@ isr(pt_regs * regs)
       panic("Unknown Interrupt(0x%x)", regs->iIntNumber);
   };
 
-  // Run scheduler
-  if(bTimeout==true)
-  if(CTaskManager::schedule(bTimeout) == true)
-    CTaskManager::pCurrentThread_->impl().runJump();
+  // Run the scheduler
+  CTaskManager::schedule(bTimeout);
 }
