@@ -20,6 +20,8 @@
 
 
 #include "gbaSerial.h"
+#include "multiBoot.h"
+#include "isr.h"
 #include "asm/cpu.h"
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
@@ -31,39 +33,6 @@
 #define WAIT_62_5_MS()  for(vuint32_t tmout(0); tmout < 50000; tmout++) // FIXME: How much is this?
 #define WAIT_36_US()    for(vuint32_t tmout(0); tmout <   500; tmout++) // FIXME: How much is this?
 #define whileTxNotReady()  while(REG_SIOCNT & SIO_UART_SEND_FULL)
-
-struct MultiBootParam
-{
-  uint32_t   reserved1[5];
-  uint8_t    handshake_data;
-  uint8_t    padding;
-  uint16_t   handshake_timeout;
-  uint8_t    probe_count;
-  uint8_t    client_data[3];
-  uint8_t    palette_data;
-  uint8_t    response_bit;
-  uint8_t    client_bit;
-  uint8_t    reserved2;
-  uint8_t  * boot_srcp;
-  uint8_t  * boot_endp;
-  uint8_t  * masterp;
-  uint8_t  * reserved3[3];
-  uint32_t   system_work2[4];
-  uint8_t    sendflag;
-  uint8_t    probe_target_bit;
-  uint8_t    check_wait;
-  uint8_t    server_type;
-};
-
-extern "C" uint32_t MultiBoot(MultiBootParam * mp, uint32_t mode);
-
-enum MULTIBOOT_MODES
-{
-  MODE32_NORMAL = 0,
-  MODE16_MULTI  = 1,
-  MODE32_2MHZ   = 2
-};
-
 #define pHeader ((uint8_t *)0x8000000)
 #define pData   ((uint8_t *)0x80000c0)
 

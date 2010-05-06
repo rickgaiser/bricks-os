@@ -20,6 +20,7 @@
 
 
 #include "asm/task.h"
+#include "isr.h"
 #include "kernel/debug.h"
 #include "kernel/task.h"
 #include "kernel/taskManager.h"
@@ -28,7 +29,6 @@
 
 extern pt_regs * current_thread;   // Return state for the current thread, only valid in interrupt
 void kill_thread();                // Return function for thread, kills the current thread
-extern "C" void runJump(pt_regs * current_thread, pt_regs * new_thread);
 extern bool bInISR;
 CTask             * pMainTask;
 CThread           * pMainThread;

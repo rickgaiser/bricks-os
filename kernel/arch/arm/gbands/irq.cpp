@@ -20,6 +20,7 @@
 
 
 #include "irq.h"
+#include "isr.h"
 #include "kernel/debug.h"
 #include "kernel/interruptManager.h"
 #include "kernel/task.h"
@@ -30,9 +31,6 @@
 #include "asm/arch/config.h"
 
 
-// Assembler isr function calling our "C" isr function
-//extern "C" void __isr();
-extern "C" void __gba_isr();
 // Function __gba_isr calls
 extern "C" void isr(pt_regs * regs) INTERRUPT_CODE;
 bool bInISR = false;
