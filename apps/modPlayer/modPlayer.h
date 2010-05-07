@@ -25,6 +25,7 @@
 #define MODPLAYER_H
 
 
+#include "mod.h"
 #include "inttypes.h"
 #include "asm/arch/memory.h"
 #include "../../../kernel/arch/arm/gbands/gbaSound.h"
@@ -43,31 +44,6 @@ enum MOD_STATE
 };
 
 typedef void (*MOD_CALLBACK)(uint32_t param, bool bRowTick);
-
-// -----------------------------------------------------------------------------
-// This is the layout of the sample info in ROM
-struct SAMPLE_HEADER
-{
-  uint16_t  length;
-  uint8_t   finetune;
-  uint8_t   vol;
-  uint16_t  loopStart;
-  uint16_t  loopLength;
-
-  const int8_t * smpData;   // Pointer to sample data in ROM
-};
-
-// -----------------------------------------------------------------------------
-// This is the MOD data layout in ROM
-struct MOD_HEADER
-{
-  const SAMPLE_HEADER * sample;
-  const uint8_t * order;
-  const uint8_t ** pattern;
-
-  uint8_t orderCount;
-  uint8_t pad[3];
-};
 
 // -----------------------------------------------------------------------------
 // Used in the SMODChannel struct below, to make recycling code for
@@ -204,6 +180,8 @@ public:
   virtual ~CMODPlayer();
 
   int  init();
+  void play(MOD_HEADER const * modHeader);
+  void stop();
   void update();
 
 private:
@@ -212,8 +190,6 @@ private:
   void MODUpdateEffects();
   void MODHandleUpdateFlags(SMODUpdateInfo *vars);
   void MODPlayNote(SMODUpdateInfo *vars);
-  void MODPlay(MOD_HEADER const *modHeader);
-  void MODStop();
   bool MODSeek(uint32_t order, uint32_t row);
   void MODSetTempo(uint32_t tempo);
   uint32_t  MODVolumeSlide(uint32_t volume, int32_t slide);
@@ -222,30 +198,30 @@ private:
   void MODInitVibrato(SMODUpdateInfo *vars, SMODVibrato *vibrato);
   void MODUpdateVibrato(SMODVibrato *vibrato);
 
-  void MODFXArpeggioRow(SMODUpdateInfo *vars);
-  void MODFXArpeggioMid(SMODUpdateInfo *vars);
-  void MODFXPortaRow(SMODUpdateInfo *vars);
-  void MODFXPortaDownMid(SMODUpdateInfo *vars);
-  void MODFXPortaUpMid(SMODUpdateInfo *vars);
-  void MODFXTonePortaRow(SMODUpdateInfo *vars);
-  void MODFXTonePortaMid(SMODUpdateInfo *vars);
-  void MODFXVibratoRow(SMODUpdateInfo *vars);
-  void MODFXVibratoMid(SMODUpdateInfo *vars);
-  void MODFXVSldTPortaRow(SMODUpdateInfo *vars);
-  void MODFXVSldTPortaMid(SMODUpdateInfo *vars);
-  void MODFXVSldVibratoRow(SMODUpdateInfo *vars);
-  void MODFXVSldVibratoMid(SMODUpdateInfo *vars);
-  void MODFXTremoloRow(SMODUpdateInfo *vars);
-  void MODFXTremoloMid(SMODUpdateInfo *vars);
-  void MODFXSampleOffset(SMODUpdateInfo *vars);
-  void MODFXVolslideRow(SMODUpdateInfo *vars);
-  void MODFXVolslideMid(SMODUpdateInfo *vars);
-  void MODFXJumpToOrder(SMODUpdateInfo *vars);
-  void MODFXSetVol(SMODUpdateInfo *vars);
-  void MODFXBreakToRow(SMODUpdateInfo *vars);
-  void MODFXSpecialRow(SMODUpdateInfo *vars);
-  void MODFXSpecialMid(SMODUpdateInfo *vars);
-  void MODFXSpeed(SMODUpdateInfo *vars);
+  void fxArpeggioRow(SMODUpdateInfo *vars);
+  void fxArpeggioMid(SMODUpdateInfo *vars);
+  void fxPortaRow(SMODUpdateInfo *vars);
+  void fxPortaDownMid(SMODUpdateInfo *vars);
+  void fxPortaUpMid(SMODUpdateInfo *vars);
+  void fxTonePortaRow(SMODUpdateInfo *vars);
+  void fxTonePortaMid(SMODUpdateInfo *vars);
+  void fxVibratoRow(SMODUpdateInfo *vars);
+  void fxVibratoMid(SMODUpdateInfo *vars);
+  void fxVSldTPortaRow(SMODUpdateInfo *vars);
+  void fxVSldTPortaMid(SMODUpdateInfo *vars);
+  void fxVSldVibratoRow(SMODUpdateInfo *vars);
+  void fxVSldVibratoMid(SMODUpdateInfo *vars);
+  void fxTremoloRow(SMODUpdateInfo *vars);
+  void fxTremoloMid(SMODUpdateInfo *vars);
+  void fxSampleOffset(SMODUpdateInfo *vars);
+  void fxVolslideRow(SMODUpdateInfo *vars);
+  void fxVolslideMid(SMODUpdateInfo *vars);
+  void fxJumpToOrder(SMODUpdateInfo *vars);
+  void fxSetVol(SMODUpdateInfo *vars);
+  void fxBreakToRow(SMODUpdateInfo *vars);
+  void fxSpecialRow(SMODUpdateInfo *vars);
+  void fxSpecialMid(SMODUpdateInfo *vars);
+  void fxSpeed(SMODUpdateInfo *vars);
 
 private:
   CSoundMixer   mixer_;
@@ -260,9 +236,6 @@ private:
   uint32_t   samplesPerMODTick_;    // 12-bit fixed-point
   uint8_t    channelBlocked_;       // One bit per mixer channel
 };
-
-
-extern MOD_HEADER dModTable[];
 
 
 #endif

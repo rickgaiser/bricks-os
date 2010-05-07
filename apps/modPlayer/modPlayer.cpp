@@ -246,9 +246,39 @@ CMODPlayer::init()
     channel_[iChannel].loopLength = 0;
   }
 
-  MODPlay(&dModTable[0]);
-
   return 0;
+}
+
+// -----------------------------------------------------------------------------
+void
+CMODPlayer::play(MOD_HEADER const * modHeader)
+{
+  memset(&mod_, 0, sizeof(SMOD));
+
+  mod_.sample     = modHeader->sample;
+  mod_.pattern    = modHeader->pattern;
+  mod_.order      = modHeader->order;
+  mod_.orderCount = modHeader->orderCount;
+  mod_.tick       = 0;
+  mod_.speed      = MOD_DEFAULT_SPEED;
+  mod_.state      = MOD_STATE_PLAY;
+
+  // Set the order/row/rowPtr
+  MODSeek(0, 0);
+  // Set to default
+  MODSetTempo(MOD_DEFAULT_TEMPO);
+  // Update the MOD first thing next time the mixer is called
+  samplesUntilMODTick_ = 0;
+}
+
+// -----------------------------------------------------------------------------
+void
+CMODPlayer::stop()
+{
+  for(int iChannel(0); iChannel < MOD_CHANNEL_COUNT; iChannel++)
+    channel_[iChannel].data = NULL;
+
+  mod_.state = MOD_STATE_STOP;
 }
 
 // -----------------------------------------------------------------------------
@@ -383,22 +413,22 @@ CMODPlayer::MODProcessRow()
     {
       switch(vars.effect)
       {
-        case 0x0: MODFXArpeggioRow(&vars); break;
-        case 0x1: MODFXPortaRow(&vars); break;
-        case 0x2: MODFXPortaRow(&vars); break;
-        case 0x3: MODFXTonePortaRow(&vars); break;
-        case 0x4: MODFXVibratoRow(&vars); break;
-        case 0x5: MODFXVSldTPortaRow(&vars); break;
-        case 0x6: MODFXVSldVibratoRow(&vars); break;
-        case 0x7: MODFXTremoloRow(&vars); break;
+        case 0x0: fxArpeggioRow(&vars); break;
+        case 0x1: fxPortaRow(&vars); break;
+        case 0x2: fxPortaRow(&vars); break;
+        case 0x3: fxTonePortaRow(&vars); break;
+        case 0x4: fxVibratoRow(&vars); break;
+        case 0x5: fxVSldTPortaRow(&vars); break;
+        case 0x6: fxVSldVibratoRow(&vars); break;
+        case 0x7: fxTremoloRow(&vars); break;
         // 0x8: Set panning (unsupported)
-        case 0x9: MODFXSampleOffset(&vars); break;
-        case 0xa: MODFXVolslideRow(&vars); break;
-        case 0xb: MODFXJumpToOrder(&vars); break;
-        case 0xc: MODFXSetVol(&vars); break;
-        case 0xd: MODFXBreakToRow(&vars); break;
-        case 0xe: MODFXSpecialRow(&vars); break;
-        case 0xf: MODFXSpeed(&vars); break;
+        case 0x9: fxSampleOffset(&vars); break;
+        case 0xa: fxVolslideRow(&vars); break;
+        case 0xb: fxJumpToOrder(&vars); break;
+        case 0xc: fxSetVol(&vars); break;
+        case 0xd: fxBreakToRow(&vars); break;
+        case 0xe: fxSpecialRow(&vars); break;
+        case 0xf: fxSpeed(&vars); break;
         default:
           ;
       };
@@ -424,21 +454,21 @@ CMODPlayer::MODUpdateEffects()
 
       switch(vars.modChn->effect)
       {
-        case 0x0: MODFXArpeggioMid(&vars); break;
-        case 0x1: MODFXPortaUpMid(&vars); break;
-        case 0x2: MODFXPortaDownMid(&vars); break;
-        case 0x3: MODFXTonePortaMid(&vars); break;
-        case 0x4: MODFXVibratoMid(&vars); break;
-        case 0x5: MODFXVSldTPortaMid(&vars); break;
-        case 0x6: MODFXVSldVibratoMid(&vars); break;
-        case 0x7: MODFXTremoloMid(&vars); break;
+        case 0x0: fxArpeggioMid(&vars); break;
+        case 0x1: fxPortaUpMid(&vars); break;
+        case 0x2: fxPortaDownMid(&vars); break;
+        case 0x3: fxTonePortaMid(&vars); break;
+        case 0x4: fxVibratoMid(&vars); break;
+        case 0x5: fxVSldTPortaMid(&vars); break;
+        case 0x6: fxVSldVibratoMid(&vars); break;
+        case 0x7: fxTremoloMid(&vars); break;
         // 0x8: Set panning
         // 0x9: Sample offset
-        case 0xa: MODFXVolslideMid(&vars); break;
+        case 0xa: fxVolslideMid(&vars); break;
         // 0xB: Jump to order
         // 0xC: Set volume
         // 0xD: Break to row
-        case 0xe: MODFXSpecialMid(&vars); break;
+        case 0xe: fxSpecialMid(&vars); break;
         // 0xF: Speed/Tempo
         default:
           ;
@@ -529,38 +559,6 @@ CMODPlayer::MODPlayNote(SMODUpdateInfo *vars)
 }
 
 // -----------------------------------------------------------------------------
-void
-CMODPlayer::MODPlay(MOD_HEADER const *modHeader)
-{
-  memset(&mod_, 0, sizeof(SMOD));
-
-  mod_.sample     = modHeader->sample;
-  mod_.pattern    = modHeader->pattern;
-  mod_.order      = modHeader->order;
-  mod_.orderCount = modHeader->orderCount;
-  mod_.tick       = 0;
-  mod_.speed      = MOD_DEFAULT_SPEED;
-  mod_.state      = MOD_STATE_PLAY;
-
-  // Set the order/row/rowPtr
-  MODSeek(0, 0);
-  // Set to default
-  MODSetTempo(MOD_DEFAULT_TEMPO);
-  // Update the MOD first thing next time the mixer is called
-  samplesUntilMODTick_ = 0;
-}
-
-// -----------------------------------------------------------------------------
-void
-CMODPlayer::MODStop()
-{
-  for(int iChannel(0); iChannel < MOD_CHANNEL_COUNT; iChannel++)
-    channel_[iChannel].data = NULL;
-
-  mod_.state = MOD_STATE_STOP;
-}
-
-// -----------------------------------------------------------------------------
 // Returns false if song ended, true if still playing
 bool
 CMODPlayer::MODSeek(uint32_t order, uint32_t row)
@@ -568,7 +566,7 @@ CMODPlayer::MODSeek(uint32_t order, uint32_t row)
   mod_.curOrder = order;
   if(mod_.curOrder >= mod_.orderCount)
   {
-    MODStop();      // Hit the end of the song, so stop it
+    stop();         // Hit the end of the song, so stop it
     return false;   // false = song ended
   }
 
@@ -683,7 +681,7 @@ CMODPlayer::MODUpdateVibrato(SMODVibrato *vibrato)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXArpeggioRow(SMODUpdateInfo *vars)
+CMODPlayer::fxArpeggioRow(SMODUpdateInfo *vars)
 {
   vars->modChn->arpeggioTick = 0;
   // Cancel the effect if no note has been played on this channel
@@ -693,7 +691,7 @@ CMODPlayer::MODFXArpeggioRow(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXArpeggioMid(SMODUpdateInfo *vars)
+CMODPlayer::fxArpeggioMid(SMODUpdateInfo *vars)
 {
   uint32_t arpNote = 0;
 
@@ -717,7 +715,7 @@ CMODPlayer::MODFXArpeggioMid(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXPortaRow(SMODUpdateInfo *vars)
+CMODPlayer::fxPortaRow(SMODUpdateInfo *vars)
 {
   if(vars->param != 0)
     vars->modChn->portaSpeed = vars->param;
@@ -725,7 +723,7 @@ CMODPlayer::MODFXPortaRow(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXPortaDownMid(SMODUpdateInfo *vars)
+CMODPlayer::fxPortaDownMid(SMODUpdateInfo *vars)
 {
   vars->modChn->period =
     MODPitchSlide(vars->modChn->period, vars->modChn->portaSpeed);
@@ -735,7 +733,7 @@ CMODPlayer::MODFXPortaDownMid(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXPortaUpMid(SMODUpdateInfo *vars)
+CMODPlayer::fxPortaUpMid(SMODUpdateInfo *vars)
 {
   vars->modChn->period =
     MODPitchSlide(vars->modChn->period, -vars->modChn->portaSpeed);
@@ -745,7 +743,7 @@ CMODPlayer::MODFXPortaUpMid(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXTonePortaRow(SMODUpdateInfo *vars)
+CMODPlayer::fxTonePortaRow(SMODUpdateInfo *vars)
 {
   if(vars->modChn->sample != MOD_NO_SAMPLE)
   {
@@ -768,7 +766,7 @@ CMODPlayer::MODFXTonePortaRow(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXTonePortaMid(SMODUpdateInfo *vars)
+CMODPlayer::fxTonePortaMid(SMODUpdateInfo *vars)
 {
   uint32_t tonePortaDestFreq;
 
@@ -805,14 +803,14 @@ CMODPlayer::MODFXTonePortaMid(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXVibratoRow(SMODUpdateInfo *vars)
+CMODPlayer::fxVibratoRow(SMODUpdateInfo *vars)
 {
   MODInitVibrato(vars, &vars->modChn->vibrato);
 }
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXVibratoMid(SMODUpdateInfo *vars)
+CMODPlayer::fxVibratoMid(SMODUpdateInfo *vars)
 {
   MODUpdateVibrato(&vars->modChn->vibrato);
   vars->updateFlags |= MOD_UPD_FLG_SET_FREQ;
@@ -820,58 +818,58 @@ CMODPlayer::MODFXVibratoMid(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXVSldTPortaRow(SMODUpdateInfo *vars)
+CMODPlayer::fxVSldTPortaRow(SMODUpdateInfo *vars)
 {
   // Param goes with the volslide part, tone porta just continues
   // So handle volslide like normal
-  MODFXVolslideRow(vars);
+  fxVolslideRow(vars);
   // Now trick the tone porta into thinking there was a
   // 0 'continue' param. This local param won't be used again,
   // so changing it won't hurt anything
   vars->param = 0;
-  MODFXTonePortaRow(vars);
+  fxTonePortaRow(vars);
 }
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXVSldTPortaMid(SMODUpdateInfo *vars)
+CMODPlayer::fxVSldTPortaMid(SMODUpdateInfo *vars)
 {
-  MODFXVolslideMid(vars);
-  MODFXTonePortaMid(vars);
+  fxVolslideMid(vars);
+  fxTonePortaMid(vars);
 }
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXVSldVibratoRow(SMODUpdateInfo *vars)
+CMODPlayer::fxVSldVibratoRow(SMODUpdateInfo *vars)
 {
   // Param goes with the volslide part, tone porta just continues
   // So handle volslide like normal
-  MODFXVolslideRow(vars);
+  fxVolslideRow(vars);
   // Now trick the vibrato into thinking there was a
   // 0 'continue' param. This local param won't be used again,
   // so changing it won't hurt anything
   vars->param = 0;
-  MODFXVibratoRow(vars);
+  fxVibratoRow(vars);
 }
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXVSldVibratoMid(SMODUpdateInfo *vars)
+CMODPlayer::fxVSldVibratoMid(SMODUpdateInfo *vars)
 {
-  MODFXVolslideMid(vars);
-  MODFXVibratoMid(vars);
+  fxVolslideMid(vars);
+  fxVibratoMid(vars);
 }
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXTremoloRow(SMODUpdateInfo *vars)
+CMODPlayer::fxTremoloRow(SMODUpdateInfo *vars)
 {
   MODInitVibrato(vars, &vars->modChn->tremolo);
 }
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXTremoloMid(SMODUpdateInfo *vars)
+CMODPlayer::fxTremoloMid(SMODUpdateInfo *vars)
 {
   MODUpdateVibrato(&vars->modChn->tremolo);
   vars->updateFlags |= MOD_UPD_FLG_SET_VOL;
@@ -879,14 +877,14 @@ CMODPlayer::MODFXTremoloMid(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXSampleOffset(SMODUpdateInfo *vars)
+CMODPlayer::fxSampleOffset(SMODUpdateInfo *vars)
 {
   vars->smpOffset = vars->param;
 }
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXVolslideRow(SMODUpdateInfo *vars)
+CMODPlayer::fxVolslideRow(SMODUpdateInfo *vars)
 {
   if(vars->param != 0)
   {
@@ -901,7 +899,7 @@ CMODPlayer::MODFXVolslideRow(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXVolslideMid(SMODUpdateInfo *vars)
+CMODPlayer::fxVolslideMid(SMODUpdateInfo *vars)
 {
   vars->modChn->vol =
     MODVolumeSlide(vars->modChn->vol, vars->modChn->volslideSpeed);
@@ -910,7 +908,7 @@ CMODPlayer::MODFXVolslideMid(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXJumpToOrder(SMODUpdateInfo *vars)
+CMODPlayer::fxJumpToOrder(SMODUpdateInfo *vars)
 {
   mod_.nextOrder = vars->param;
   mod_.curRow = MOD_PATTERN_ROWS; // Break next update
@@ -918,7 +916,7 @@ CMODPlayer::MODFXJumpToOrder(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXSetVol(SMODUpdateInfo *vars)
+CMODPlayer::fxSetVol(SMODUpdateInfo *vars)
 {
   vars->modChn->vol = vars->param;
   if(vars->modChn->vol > 64)
@@ -928,7 +926,7 @@ CMODPlayer::MODFXSetVol(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXBreakToRow(SMODUpdateInfo *vars)
+CMODPlayer::fxBreakToRow(SMODUpdateInfo *vars)
 {
   mod_.breakRow = vars->param;
   mod_.curRow = MOD_PATTERN_ROWS; // Break next update
@@ -936,7 +934,7 @@ CMODPlayer::MODFXBreakToRow(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXSpecialRow(SMODUpdateInfo *vars)
+CMODPlayer::fxSpecialRow(SMODUpdateInfo *vars)
 {
   // Since the upper 4 bits of the parameter are used as the effect
   // type, this saves us having to extract the lower bits every time
@@ -1022,7 +1020,7 @@ CMODPlayer::MODFXSpecialRow(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXSpecialMid(SMODUpdateInfo *vars)
+CMODPlayer::fxSpecialMid(SMODUpdateInfo *vars)
 {
   switch(vars->modChn->param >> 4)
   {
@@ -1082,7 +1080,7 @@ CMODPlayer::MODFXSpecialMid(SMODUpdateInfo *vars)
 
 // -----------------------------------------------------------------------------
 void
-CMODPlayer::MODFXSpeed(SMODUpdateInfo *vars)
+CMODPlayer::fxSpeed(SMODUpdateInfo *vars)
 {
   if(vars->param < 32)          //  0- 31 = set speed
     mod_.speed = vars->param;

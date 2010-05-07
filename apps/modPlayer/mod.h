@@ -1,6 +1,6 @@
 /*
  * Bricks-OS, Operating System for Game Consoles
- * Copyright (C) 2010 Maximus32 <Maximus32@bricks-os.org>
+ * Copyright (C) 2008 Maximus32 <Maximus32@bricks-os.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,33 +16,42 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
+ *
+ * Based on Deku's gba-mod tutorial: http://deku.gbadev.org/
  */
 
 
-#include "kernel/debug.h"
-#include "mod.h"
-#include "modPlayer.h"
+#ifndef MOD_H
+#define MOD_H
 
 
-extern MOD_HEADER dModTable[];
+#include "inttypes.h"
 
 
-//---------------------------------------------------------------------------
-extern "C" int
-appMain(int argc, char * argv[])
+// -----------------------------------------------------------------------------
+// This is the layout of the sample info in ROM
+struct SAMPLE_HEADER
 {
-  printk("Simple mod player\n");
+  uint16_t  length;
+  uint8_t   finetune;
+  uint8_t   vol;
+  uint16_t  loopStart;
+  uint16_t  loopLength;
 
-  CMODPlayer player;
-  player.init();
-  player.play(&dModTable[0]);
+  const int8_t * smpData;   // Pointer to sample data in ROM
+};
 
-  while(true)
-  {
-    player.update();
-    //printk(".");
-  }
+// -----------------------------------------------------------------------------
+// This is the MOD data layout in ROM
+struct MOD_HEADER
+{
+  const SAMPLE_HEADER * sample;
+  const uint8_t * order;
+  const uint8_t ** pattern;
 
-  return 0;
-}
+  uint8_t orderCount;
+  uint8_t pad[3];
+};
 
+
+#endif
