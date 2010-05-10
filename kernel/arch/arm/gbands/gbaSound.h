@@ -30,13 +30,16 @@
 #include "inttypes.h"
 
 
+//#define STEREO_SOUND
+
+
 // -----------------------------------------------------------------------------
-class CGBASoundChannel
+class CGBASound
  : public IInterruptServiceRoutine
 {
 public:
-  CGBASoundChannel();
-  virtual ~CGBASoundChannel();
+   CGBASound();
+  virtual ~CGBASound();
 
   // Inherited from IInterruptServiceRoutine
   virtual int isr(int irq) INTERRUPT_CODE;
@@ -44,13 +47,12 @@ public:
   void write(const int16_t * sampleData, unsigned int sampleCount) FAST_CODE;
 
 private:
-  void start();
-  void stop();
-
-private:
   unsigned int   iFragmentSize_;
 
-  int8_t       * pDMABuffer_;
+  int8_t       * pDMABufferA_;
+#ifdef STEREO_SOUND
+  int8_t       * pDMABufferB_;
+#endif
   unsigned int   iDMABufferSize_;
   unsigned int   iDMAFragmentCount_;
   volatile int   iDMARead_;
