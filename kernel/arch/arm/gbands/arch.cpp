@@ -89,6 +89,13 @@ main(int, char *[])
 {
   int iRetVal(0);
 
+#ifdef GBA
+  // Change the Gamepak ROM waitstates. Buscycles 8/16/32:
+  // from: 5/5/8
+  // to:   4/4/6
+  REG_WAITCNT = 0x4317;
+#endif
+
   init_heap((void *)HEAP_START, HEAP_END - HEAP_START);
 
   if(cIRQ.init() == -1)
@@ -112,7 +119,8 @@ main(int, char *[])
   local_irq_disable();  // Disable in cpu interrupt enable flag
   REG_IME = 1;          // Enable REG_IME interrupt enable flag
 
-  printk("heap: %dKiB\n", (HEAP_END - HEAP_START) / 1024);
+  printk("iwram: %dKiB free\n", ((uint32_t)(&__iwram_top) - (uint32_t)(&__iheap_start)) / 1024);
+  printk("ewram: %dKiB heap\n", ((uint32_t)(&__eheap_end) - (uint32_t)(&__eheap_start)) / 1024);
 
   // Enable interrupts
   local_irq_enable();

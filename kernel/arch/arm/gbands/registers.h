@@ -551,6 +551,7 @@ enum ESerialMode
 #ifdef GBA
 #define REG_IE                (*(vuint16_t*)0x04000200) // See bits above
 #define REG_IF                (*(vuint16_t*)0x04000202) // See bits above
+#define REG_WAITCNT           (*(vuint16_t*)0x04000204) // GBA Gamepak ROM wait states
 #endif // GBA
 #define REG_IME               (*(vuint16_t*)0x04000208)
 #ifdef NDS
