@@ -119,8 +119,12 @@ main(int, char *[])
   local_irq_disable();  // Disable in cpu interrupt enable flag
   REG_IME = 1;          // Enable REG_IME interrupt enable flag
 
+#ifdef GBA
   printk("iwram: %dKiB free\n", ((uint32_t)(&__iwram_top) - (uint32_t)(&__iheap_start)) / 1024);
   printk("ewram: %dKiB heap\n", ((uint32_t)(&__eheap_end) - (uint32_t)(&__eheap_start)) / 1024);
+#else
+  printk("heap: %dKiB\n", ((uint32_t)(HEAP_END - HEAP_START)) / 1024);
+#endif
 
   // Enable interrupts
   local_irq_enable();
