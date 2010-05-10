@@ -44,10 +44,18 @@ extern fnptr    __irq_vector; // DTCM + 0x3ffc
 
 // CPU Frequencies
 #ifdef GBA
-#define CPU_FREQUENCY 16780000
+  #define BUS_FREQUENCY   16777216 // 2^24
+  #define TIMER_FREQUENCY (BUS_FREQUENCY)
+  #define CPU_FREQUENCY   (BUS_FREQUENCY)       // ~16MHz
 #endif
 #ifdef NDS
-#define CPU_FREQUENCY 33513982
+  #define BUS_FREQUENCY   33513982
+  #define TIMER_FREQUENCY (BUS_FREQUENCY)
+  #ifdef NDS7
+    #define CPU_FREQUENCY   (BUS_FREQUENCY)     // ~33MHz
+  #else
+    #define CPU_FREQUENCY   (BUS_FREQUENCY * 2) // ~66MHz
+  #endif
 #endif
 
 // "REG_DISPCNT" bits

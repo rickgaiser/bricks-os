@@ -18,6 +18,12 @@
  * 02111-1307 USA
  */
 
+/*
+ * - Timer 0: Reserved for DMA sound
+ * - Timer 1: Reserved for DMA sound
+ * - Timer 2: Free
+ * - Timer 3: Free
+ */
 
 #include "timer.h"
 #include "registers.h"
@@ -25,10 +31,10 @@
 
 
 // Max frequencies (Hz)                                     //            GBA    NDS ARM7&9
-const float maxTimerFreq0(CPU_FREQUENCY);                   //   ~16780000 Hz  ~33513982 Hz
-const float maxTimerFreq1(maxTimerFreq0 /   64.0f);         //     ~262188 Hz
-const float maxTimerFreq2(maxTimerFreq0 /  256.0f);         //      ~65547 Hz
-const float maxTimerFreq3(maxTimerFreq0 / 1024.0f);         //      ~16386 Hz
+const float maxTimerFreq0(TIMER_FREQUENCY);                 //    16777216 Hz  ~33513982 Hz
+const float maxTimerFreq1(maxTimerFreq0 /   64.0f);         //      262144 Hz
+const float maxTimerFreq2(maxTimerFreq0 /  256.0f);         //       65536 Hz
+const float maxTimerFreq3(maxTimerFreq0 / 1024.0f);         //       16384 Hz
 
 // Min frequencies (Hz)
 const float minTimerFreq0(maxTimerFreq0 / 0x10000);         //        ~256 Hz
