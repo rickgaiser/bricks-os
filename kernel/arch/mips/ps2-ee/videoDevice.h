@@ -28,6 +28,7 @@
 #include "kernel/fs.h"
 #include "kernel/interruptManager.h"
 #include "asm/arch/memory.h"
+#include "asm/arch/config.h"
 #include "dma.h"
 #include "gif.h"
 

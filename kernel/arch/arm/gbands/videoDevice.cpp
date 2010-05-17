@@ -25,13 +25,15 @@
 #include "kernel/debug.h"
 #include "stddef.h"
 
-#ifdef GBA
-#include "../../../../gl/3DRendererFixed.h"
-#include "glesContext.h"
-#endif // GBA
-#ifdef NDS9
-#include "glesContextNDS.h"
-#endif // NDS9
+#ifdef CONFIG_GL
+  #ifdef GBA
+    #include "../../../../gl/3DRendererFixed.h"
+    #include "glesContext.h"
+  #endif // GBA
+  #ifdef NDS9
+    #include "glesContextNDS.h"
+  #endif // NDS9
+#endif
 
 
 #ifdef GBA
@@ -391,17 +393,21 @@ CGBAVideoDevice::get2DRenderer(I2DRenderer ** renderer)
 void
 CGBAVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
-#ifdef GBA
+#ifdef CONFIG_GL
+  #ifdef GBA
   CSoft3DRendererFixed * pRender = new CSoft3DRendererFixed;
   raster::IRasterizer  * pRaster = new CGBARasterizer;
 
   pRender->setRaster(pRaster);
 
   *renderer = pRender;
-#endif // GBA
-#ifdef NDS9
+  #endif // GBA
+  #ifdef NDS9
   *renderer = new CNDSGLESContext;
-#endif // NDS9
+  #endif // NDS9
+#else
+  *renderer = NULL;
+#endif // CONFIG_GL
 }
 
 //---------------------------------------------------------------------------

@@ -22,12 +22,15 @@
 #include "videoDevice.h"
 #include "2dRenderer.h"
 #include "3dRenderer.h"
-#include "../../../../gl/3DRendererFloat.h"
 #include "bios.h"
 #include "dma.h"
 #include "irq.h"
 #include "gif.h"
 #include "string.h"
+
+#ifdef CONFIG_GL
+  #include "../../../../gl/3DRendererFloat.h"
+#endif
 
 
 //---------------------------------------------------------------------------
@@ -509,6 +512,7 @@ CPS2VideoDevice::get2DRenderer(I2DRenderer ** renderer)
 void
 CPS2VideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
+#ifdef CONFIG_GL
   // Create common renderer
   CSoft3DRendererFloat * pRenderer   = new CSoft3DRendererFloat();
 
@@ -517,6 +521,9 @@ CPS2VideoDevice::get3DRenderer(I3DRenderer ** renderer)
   pRenderer->setRaster(pRasterizer);
 
   *renderer = pRenderer;
+#else
+  *renderer = NULL;
+#endif // CONFIG_GL
 }
 
 //---------------------------------------------------------------------------

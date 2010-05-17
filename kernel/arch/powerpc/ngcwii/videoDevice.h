@@ -26,7 +26,11 @@
 #include "kernel/videoManager.h"
 #include "kernel/2dRenderer.h"
 #include "kernel/3dRenderer.h"
-#include "../../../../gl/rasterScanline.h"
+#include "asm/arch/config.h"
+
+#ifdef CONFIG_GL
+  #include "../../../../gl/rasterScanline.h"
+#endif
 
 
 //---------------------------------------------------------------------------
@@ -47,6 +51,7 @@ private:
   CNGCVideoDevice * pDev_;
 };
 
+#ifdef CONFIG_GL
 //-----------------------------------------------------------------------------
 class CNGCSoftRasterizer
 : public raster::CRasterizerScanline
@@ -61,6 +66,7 @@ public:
 private:
   CNGCVideoDevice * pDev_;
 };
+#endif
 
 //---------------------------------------------------------------------------
 class CNGCVideoDevice
