@@ -1,38 +1,38 @@
 MAKEFLAGS	+=--no-print-directory -s
 
 
-all: alldirs bin/gba/Bricks.gba bin/gba/Bricks_mb.gba
+all: alldirs bin/gba/Bricks.gba
 
-all_gbfs: alldirs bin/gba/Bricks_gbfs.gba bin/gba/Bricks_mb_gbfs.gba
+all_mb: alldirs bin/gba/Bricks_mb.gba
+
+all_gbfs: alldirs bin/gba/Bricks_gbfs.gba
+
+all_mb_gbfs: alldirs bin/gba/Bricks_mb_gbfs.gba
+
+alldirs:
+	make -f Makefile all ARCH=arm TARGET=gba
 
 clean:
 	make -f Makefile clean ARCH=arm TARGET=gba
-
-bin/gba/Bricks.gba: bin/gba/Bricks.elf
-	@echo [GBA] $@
-	arm-eabi-objcopy -O binary $< $@
-	gbafix $@ -tBricks-OS -cBRKS -mOS
-
-bin/gba/Bricks_gbfs.gba: bin/gba/Bricks.gba bin/gba/fs.gbfs
-	cp bin/gba/Bricks.gba bin/gba/Bricks.gba.tmp
-	padbin 256 bin/gba/Bricks.gba.tmp
-	cat bin/gba/Bricks.gba.tmp bin/gba/fs.gbfs > $@
-	rm bin/gba/Bricks.gba.tmp
-
-bin/gba/Bricks_mb.gba: bin/gba/Bricks_mb.elf
-	@echo [GBA] $@
-	arm-eabi-objcopy -O binary $< $@
-	gbafix $@ -tBricks-OS -cBRKS -mOS
-
-bin/gba/Bricks_mb_gbfs.gba: bin/gba/Bricks_mb.gba bin/gba/fs.gbfs
-	cp bin/gba/Bricks_mb.gba bin/gba/Bricks_mb.gba.tmp
-	padbin 256 bin/gba/Bricks_mb.gba.tmp
-	cat bin/gba/Bricks_mb.gba.tmp bin/gba/fs.gbfs > $@
-	rm bin/gba/Bricks_mb.gba.tmp
 
 bin/gba/fs.gbfs: bin/gba/gbfs/*
 	@echo [GBFS] $@
 	gbfs $@ $^
 
-alldirs:
-	make -f Makefile all ARCH=arm TARGET=gba
+%_gbfs.gba: %.gba.pad bin/gba/fs.gbfs
+	@echo [CAT] $@
+	cat $^ > $@
+
+%.gba.pad: %.gba
+	@echo [PAD] $@
+	cp $< $@
+	padbin 256 $@
+
+%.gba: %.bin
+	@echo [GBA] $@
+	cp $< $@
+	gbafix $@ -tBricks-OS -cBRKS -mOS
+
+%.bin: %.elf
+	@echo [BIN] $@
+	arm-eabi-objcopy -O binary $< $@

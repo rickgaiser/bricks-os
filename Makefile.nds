@@ -1,30 +1,30 @@
 MAKEFLAGS	+=--no-print-directory -s
 
 
-all: all7dirs all9dirs bin/nds9/Bricks.nds bin/nds/Bricks.nds
+all: all7dirs all9dirs bin/nds/Bricks.nds
 
-clean:
-	make -f Makefile clean ARCH=arm TARGET=nds7
-	make -f Makefile clean ARCH=arm TARGET=nds9
+all7: all7dirs bin/nds/Bricks.nds
 
-bin/nds9/Bricks.nds: bin/nds9/Bricks.bin
-	@echo [NDS] $@
-	ndstool -c $@ -9 bin/nds9/Bricks.bin -b bin/nds/banner.bmp "Bricks-OS;;" -g BRKS OS BRICKS-OS
-
-bin/nds/Bricks.nds: bin/nds7/Bricks.bin bin/nds9/Bricks.bin
-	@echo [NDS] $@
-	ndstool -c $@ -9 bin/nds9/Bricks.bin -7 bin/nds7/Bricks.bin -b bin/nds/banner.bmp "Bricks-OS;;" -g BRKS OS BRICKS-OS
-
-bin/nds7/Bricks.bin: bin/nds7/Bricks.elf
-	@echo [BIN] $@
-	arm-eabi-objcopy -O binary $< $@
-
-bin/nds9/Bricks.bin: bin/nds9/Bricks.elf
-	@echo [BIN] $@
-	arm-eabi-objcopy -O binary $< $@
+all9: all9dirs bin/nds/Bricks.nds
 
 all7dirs:
 	make -f Makefile all ARCH=arm TARGET=nds7
 
 all9dirs:
 	make -f Makefile all ARCH=arm TARGET=nds9
+
+clean: clean7 clean9
+
+clean7:
+	make -f Makefile clean ARCH=arm TARGET=nds7
+
+clean9:
+	make -f Makefile clean ARCH=arm TARGET=nds9
+
+bin/nds/Bricks.nds: bin/nds7/Bricks.bin bin/nds9/Bricks.bin
+	@echo [NDS] $@
+	ndstool -c $@ -9 bin/nds9/Bricks.bin -7 bin/nds7/Bricks.bin -b bin/nds/banner.bmp "Bricks-OS;;" -g BRKS OS BRICKS-OS
+
+%.bin: %.elf
+	@echo [BIN] $@
+	arm-eabi-objcopy -O binary $< $@
