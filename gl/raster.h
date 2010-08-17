@@ -33,43 +33,20 @@ namespace raster
 
 
 //-----------------------------------------------------------------------------
-// OLD: Too much data in there
 template <class T>
 struct TGradient
 {
   T ddx;          // This needs to be added when moving 1 pixel in x direction
   T ddy;          // This needs to be added when moving 1 pixel in y direction
   T start;        // Value at x=0, y=0
-  T ddy_left;     // This needs to be added when moving 1 pixel in y direction, and moving x by the left scanline
-
-  T current;      // Current value of the current pixel
-  T current_left; // Current value of the left edge
 };
 
 //-----------------------------------------------------------------------------
-// Gradient for scanline interpolation
 template <class T>
-struct TGradientScanline
+struct TScanline
 {
-  T ddx;          // This needs to be added when moving 1 pixel in x direction
-  T ddy;          // This needs to be added when moving 1 pixel in y direction
-  T ddy_left;     // This needs to be added when moving 1 pixel in y direction, and moving x by the left scanline
-};
-
-//-----------------------------------------------------------------------------
-// Gradient for block interpolation
-template <class T>
-struct TGradientBlock
-{
-  T ddx;          // This needs to be added when moving 1 pixel in x direction
-  T ddy;          // This needs to be added when moving 1 pixel in y direction
-  T start;        // Value at x=0, y=0
-};
-template <class T>
-struct TGradientBlockInterpolator
-{
-  T current;      // Current value of the current pixel
-  T current_left; // Current value of the left edge
+  T current;
+  T increment;
 };
 
 //-----------------------------------------------------------------------------

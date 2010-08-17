@@ -36,6 +36,16 @@
 #define FAST_CODE
 #endif
 
+#ifndef CONFIG_GL_TINY
+  #define CONFIG_GL_ENABLE_ALPHA_TEST
+  #define CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+  //#define CONFIG_GL_SIMPLE_TEXTURES
+#else
+  //#define CONFIG_GL_ENABLE_ALPHA_TEST
+  //#define CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+  #define CONFIG_GL_SIMPLE_TEXTURES
+#endif
+
 
 namespace raster
 {
@@ -81,13 +91,29 @@ private:
 #endif
 
 private:
-  // Triangle gradients
-  TGradient<SColor>    grad_c; // Color
-  TGradient<int32_t>   grad_z; // Depth
-#ifndef CONFIG_GL_TINY
-  TGradient<float>     grad_w; // Depth
+  // Color
+  TGradient<SColor>       grad_c; // Gradient
+  TScanline<SColor>       edge_c; // Left edge
+  TScanline<SColor>       scan_c; // Scanline
+  // Depth (z=1/w)
+  TGradient<int32_t>      grad_z; // Gradient
+  TScanline<int32_t>      edge_z; // Left edge
+  TScanline<int32_t>      scan_z; // Scanline
+#ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+  // Depth (w=1/z)
+  TGradient<float>        grad_w; // Gradient
+  TScanline<float>        edge_w; // Left edge
+  TScanline<float>        scan_w; // Scanline
+  // Texture (t/z)
+  TGradient<TTexCoord<float> > grad_tz; // Gradient
+  TScanline<TTexCoord<float> > edge_tz; // Left edge
+  TScanline<TTexCoord<float> > scan_tz; // Scanline
+#else
+  // Texture
+  TGradient<TTexCoord<float> > grad_t; // Gradient
+  TScanline<TTexCoord<float> > edge_t; // Left edge
+  TScanline<TTexCoord<float> > scan_t; // Scanline
 #endif
-  TGradient<TTexCoord<float> >   grad_t; // Textures
 
   int32_t alphaValueFX_;
 };
