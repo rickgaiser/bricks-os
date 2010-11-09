@@ -11,14 +11,14 @@ OBJS            =\
                 timer \
 
 
-OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
-
 ifeq ($(TARGET),nds9)
+OBJS                               += ds_mpu_setup
 OBJS-$(CONFIG_GL)                  += glesContextNDS
 else
 OBJS-$(CONFIG_GL)                  += glesContext
 endif
 
+OBJS-$(CONFIG_FRAMEBUFFER)         += videoDevice
 OBJS-$(CONFIG_DEBUGGING)           += font8x8 debugScreen
 OBJS-$(CONFIG_GBA_KEYBOARD)        += keyboard
 OBJS-$(CONFIG_GBA_SERIAL)          += gbaSerial

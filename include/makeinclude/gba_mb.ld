@@ -47,12 +47,15 @@ MEMORY {
 	ewram	: ORIGIN = 0x02000000, LENGTH = 256K
 }
 
+
+
 __text_start	=	ORIGIN(ewram);
 __eheap_end	=	ORIGIN(ewram) + LENGTH(ewram);
 __iwram_start	=	ORIGIN(iwram);
 __iwram_top	=	ORIGIN(iwram) + LENGTH(iwram);;
-__sp_irq	=	__iwram_top - 0x100;
-__sp_usr	=	__sp_irq - 0x100;
+
+__sp_irq	=	__iwram_top - 0x060;
+__sp_usr	=	__sp_irq - 0x0a0;
 __irq_flags	=	0x03007ff8;
 
 SECTIONS
@@ -73,13 +76,11 @@ SECTIONS
 	.text  ALIGN (4):
 	{
 		*(EXCLUDE_FILE (*.iwram*) .text)
-		*(.text.*)
-		*(.stub)
+		*(.text .stub .text.* .gnu.linkonce.t.*)
+		KEEP (*(.text.*personality*))
 		/* .gnu.warning sections are handled specially by elf32.em.  */
 		*(.gnu.warning)
-		*(.gnu.linkonce.t*)
-		*(.glue_7)
-		*(.glue_7t)
+		*(.glue_7t) *(.glue_7) *(.vfp11_veneer)
 		. = ALIGN(4);  /* REQUIRED. LD is flaky without it. */
 	} >ewram = 0xff
 
@@ -169,7 +170,7 @@ SECTIONS
 
 	__data_lma = __iwram_lma + SIZEOF(.iwram) ;
 
-	.bss ALIGN(4) :
+	.bss ALIGN(4) (NOLOAD):
 	{
 		__bss_start = ABSOLUTE(.);
 		__bss_start__ = ABSOLUTE(.);
@@ -228,7 +229,7 @@ SECTIONS
 
 	__ewram_overlay_lma = __ewram_lma + SIZEOF(.ewram);
 
-	.sbss ALIGN(4):
+	.sbss ALIGN(4)(NOLOAD):
  	{
 		__sbss_start = ABSOLUTE(.);
 		*(.sbss)
@@ -253,15 +254,13 @@ SECTIONS
 		.ewram8 { *(.ewram8) . = ALIGN(4);}
 		.ewram9 { *(.ewram9) . = ALIGN(4);}
 	} >ewram = 0xff
+	__ewram_overlay_end  = ABSOLUTE(.);
 
-	__ewram_overlay_end = __load_stop_ewram9 ;
+	__eheap_start = __ewram_overlay_end ;
 
-	__eheap_start = __load_stop_ewram1 ;
-
-	_end = __load_stop_ewram1;
-	__end__ = __load_stop_ewram1 ; /* v1.3 */
-	end = __load_stop_ewram1;
-
+	_end = __ewram_overlay_end;
+	__end__ = __ewram_overlay_end;
+	__rom_end__ = __ewram_overlay_end;
 
 	/* Stabs debugging sections.  */
 	.stab 0 : { *(.stab) }

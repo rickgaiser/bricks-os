@@ -80,6 +80,9 @@ extern "C"
   void initSystem(void)
   {
   }
+  void __libnds_exit(int rc)
+  {
+  }
 #endif // NDS
 }
 
