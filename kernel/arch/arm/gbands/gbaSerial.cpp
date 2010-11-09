@@ -36,7 +36,7 @@
 #define pHeader ((uint8_t *)0x8000000)
 #define pData   ((uint8_t *)0x80000c0)
 
-char * bootModes[] =
+const char * bootModes[] =
 {
   "NULL",
   "Joybus",
