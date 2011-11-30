@@ -139,22 +139,22 @@
   // Color interpolation
   d1 = INTERFACE_TO_INTERP_COLOR(vmiddle->c.r - vtop->c.r);
   d2 = INTERFACE_TO_INTERP_COLOR(vbottom->c.r - vtop->c.r);
-  grad_c.ddx.r = (int32_t)DDX();
-  grad_c.ddy.r = (int32_t)DDY();
+  grad_c_ddx.r = (int32_t)DDX();
+  grad_c_ddy.r = (int32_t)DDY();
   d1 = INTERFACE_TO_INTERP_COLOR(vmiddle->c.g - vtop->c.g);
   d2 = INTERFACE_TO_INTERP_COLOR(vbottom->c.g - vtop->c.g);
-  grad_c.ddx.g = (int32_t)DDX();
-  grad_c.ddy.g = (int32_t)DDY();
+  grad_c_ddx.g = (int32_t)DDX();
+  grad_c_ddy.g = (int32_t)DDY();
   d1 = INTERFACE_TO_INTERP_COLOR(vmiddle->c.b - vtop->c.b);
   d2 = INTERFACE_TO_INTERP_COLOR(vbottom->c.b - vtop->c.b);
-  grad_c.ddx.b = (int32_t)DDX();
-  grad_c.ddy.b = (int32_t)DDY();
+  grad_c_ddx.b = (int32_t)DDX();
+  grad_c_ddy.b = (int32_t)DDY();
   d1 = INTERFACE_TO_INTERP_COLOR(vmiddle->c.a - vtop->c.a);
   d2 = INTERFACE_TO_INTERP_COLOR(vbottom->c.a - vtop->c.a);
-  grad_c.ddx.a = (int32_t)DDX();
-  grad_c.ddy.a = (int32_t)DDY();
+  grad_c_ddx.a = (int32_t)DDX();
+  grad_c_ddy.a = (int32_t)DDY();
 
-  scan_c.increment = grad_c.ddx;
+  scan_c_ddx = grad_c_ddx;
 #else
   #ifdef RASTER_DIRECT
     #ifdef RASTER_DIRECT_FLAT_COLOR
@@ -163,10 +163,10 @@
     #endif
   #else
   // Setup a flat color
-  scan_c.current.r = INTERFACE_TO_CALC_COLOR(vtop->c.r);
-  scan_c.current.g = INTERFACE_TO_CALC_COLOR(vtop->c.g);
-  scan_c.current.b = INTERFACE_TO_CALC_COLOR(vtop->c.b);
-  scan_c.current.a = INTERFACE_TO_CALC_COLOR(vtop->c.a);
+  scan_c_current.r = INTERFACE_TO_CALC_COLOR(vtop->c.r);
+  scan_c_current.g = INTERFACE_TO_CALC_COLOR(vtop->c.g);
+  scan_c_current.b = INTERFACE_TO_CALC_COLOR(vtop->c.b);
+  scan_c_current.a = INTERFACE_TO_CALC_COLOR(vtop->c.a);
   #endif
 #endif
 
@@ -174,20 +174,20 @@
   // Depth interpolation
   d1 = vmiddle->z - vtop->z;
   d2 = vbottom->z - vtop->z;
-  grad_z.ddx = (int32_t)DDX();
-  grad_z.ddy = (int32_t)DDY();
+  grad_z_ddx = (int32_t)DDX();
+  grad_z_ddy = (int32_t)DDY();
 
-  scan_z.increment = grad_z.ddx;
+  scan_z_ddx = grad_z_ddx;
 #endif
 
 #ifdef RASTER_INTERPOLATE_W
   // Linear depth interpolation (for perspective correct rendering)
   d1 = vmiddle->w - vtop->w;
   d2 = vbottom->w - vtop->w;
-  grad_w.ddx = DDX();
-  grad_w.ddy = DDY();
+  grad_w_ddx = DDX();
+  grad_w_ddy = DDY();
 
-  scan_w.increment = grad_w.ddx;
+  scan_w_ddx = grad_w_ddx;
 #endif
 
 #ifdef RASTER_ENABLE_TEXTURES
@@ -195,29 +195,29 @@
   #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
   d1 = middle_u_inv - top_u_inv;
   d2 = bottom_u_inv - top_u_inv;
-  grad_tz.ddx.u = DDX();
-  grad_tz.ddy.u = DDY();
+  grad_tz_ddx.u = DDX();
+  grad_tz_ddy.u = DDY();
   d1 = middle_v_inv - top_v_inv;
   d2 = bottom_v_inv - top_v_inv;
-  grad_tz.ddx.v = DDX();
-  grad_tz.ddy.v = DDY();
+  grad_tz_ddx.v = DDX();
+  grad_tz_ddy.v = DDY();
 
-  scan_tz.increment = grad_tz.ddx;
+  scan_tz_ddx = grad_tz_ddx;
   #else
   d1 = vmiddle->t.u - vtop->t.u;
   d2 = vbottom->t.u - vtop->t.u;
-  grad_t.ddx.u = DDX();
-  grad_t.ddy.u = DDY();
+  grad_t_ddx.u = DDX();
+  grad_t_ddy.u = DDY();
   d1 = vmiddle->t.v - vtop->t.v;
   d2 = vbottom->t.v - vtop->t.v;
-  grad_t.ddx.v = DDX();
-  grad_t.ddy.v = DDY();
+  grad_t_ddx.v = DDX();
+  grad_t_ddy.v = DDY();
 
-  scan_t.increment = grad_t.ddx;
+  scan_t_ddx = grad_t_ddx;
 
   // Get the level of detail (lambda)
   float lodbias = 0.0f;
-  float lod = pCurrentTex_->lambda(grad_t.ddx.u, grad_t.ddy.u, grad_t.ddx.v, grad_t.ddy.v) + lodbias;
+  float lod = pCurrentTex_->lambda(grad_t_ddx.u, grad_t_ddy.u, grad_t_ddx.v, grad_t_ddy.v) + lodbias;
   #endif
 #endif
 
@@ -300,37 +300,37 @@
 #endif
 
 #ifdef RASTER_ENABLE_SMOOTH_SHADING
-      edge_c.increment.r = (dxdy_left * grad_c.ddx.r) + grad_c.ddy.r;
-      edge_c.increment.g = (dxdy_left * grad_c.ddx.g) + grad_c.ddy.g;
-      edge_c.increment.b = (dxdy_left * grad_c.ddx.b) + grad_c.ddy.b;
-      edge_c.increment.a = (dxdy_left * grad_c.ddx.a) + grad_c.ddy.a;
-      edge_c.current.r = INTERFACE_TO_INTERP_COLOR(vtop_l->c.r) + i_mul_shr(grad_c.ddx.r, fxXOff, SHIFT_XY) + i_mul_shr(grad_c.ddy.r, fxYOff, SHIFT_XY);
-      edge_c.current.g = INTERFACE_TO_INTERP_COLOR(vtop_l->c.g) + i_mul_shr(grad_c.ddx.g, fxXOff, SHIFT_XY) + i_mul_shr(grad_c.ddy.g, fxYOff, SHIFT_XY);
-      edge_c.current.b = INTERFACE_TO_INTERP_COLOR(vtop_l->c.b) + i_mul_shr(grad_c.ddx.b, fxXOff, SHIFT_XY) + i_mul_shr(grad_c.ddy.b, fxYOff, SHIFT_XY);
-      edge_c.current.a = INTERFACE_TO_INTERP_COLOR(vtop_l->c.a) + i_mul_shr(grad_c.ddx.a, fxXOff, SHIFT_XY) + i_mul_shr(grad_c.ddy.a, fxYOff, SHIFT_XY);
+      edge_c_increment.r = (dxdy_left * grad_c_ddx.r) + grad_c_ddy.r;
+      edge_c_increment.g = (dxdy_left * grad_c_ddx.g) + grad_c_ddy.g;
+      edge_c_increment.b = (dxdy_left * grad_c_ddx.b) + grad_c_ddy.b;
+      edge_c_increment.a = (dxdy_left * grad_c_ddx.a) + grad_c_ddy.a;
+      edge_c_current.r = INTERFACE_TO_INTERP_COLOR(vtop_l->c.r) + i_mul_shr(grad_c_ddx.r, fxXOff, SHIFT_XY) + i_mul_shr(grad_c_ddy.r, fxYOff, SHIFT_XY);
+      edge_c_current.g = INTERFACE_TO_INTERP_COLOR(vtop_l->c.g) + i_mul_shr(grad_c_ddx.g, fxXOff, SHIFT_XY) + i_mul_shr(grad_c_ddy.g, fxYOff, SHIFT_XY);
+      edge_c_current.b = INTERFACE_TO_INTERP_COLOR(vtop_l->c.b) + i_mul_shr(grad_c_ddx.b, fxXOff, SHIFT_XY) + i_mul_shr(grad_c_ddy.b, fxYOff, SHIFT_XY);
+      edge_c_current.a = INTERFACE_TO_INTERP_COLOR(vtop_l->c.a) + i_mul_shr(grad_c_ddx.a, fxXOff, SHIFT_XY) + i_mul_shr(grad_c_ddy.a, fxYOff, SHIFT_XY);
 #endif
 
 #ifdef RASTER_ENABLE_DEPTH_TEST
-      edge_z.increment = (dxdy_left * grad_z.ddx) + grad_z.ddy;
-      edge_z.current = vtop_l->z + i_mul_shr(grad_z.ddx, fxXOff, SHIFT_XY) + i_mul_shr(grad_z.ddy, fxYOff, SHIFT_XY);
+      edge_z_increment = (dxdy_left * grad_z_ddx) + grad_z_ddy;
+      edge_z_current = vtop_l->z + i_mul_shr(grad_z_ddx, fxXOff, SHIFT_XY) + i_mul_shr(grad_z_ddy, fxYOff, SHIFT_XY);
 #endif
 
 #ifdef RASTER_INTERPOLATE_W
-      edge_w.increment = (f_dxdy_left * grad_w.ddx) + grad_w.ddy;
-      edge_w.current = vtop_l->w + (grad_w.ddx * fXOff) + (grad_w.ddy * fYOff);
+      edge_w_increment = (f_dxdy_left * grad_w_ddx) + grad_w_ddy;
+      edge_w_current = vtop_l->w + (grad_w_ddx * fXOff) + (grad_w_ddy * fYOff);
 #endif
 
 #ifdef RASTER_ENABLE_TEXTURES
   #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-      edge_tz.increment.u = (f_dxdy_left * grad_tz.ddx.u) + grad_tz.ddy.u;
-      edge_tz.increment.v = (f_dxdy_left * grad_tz.ddx.v) + grad_tz.ddy.v;
-      edge_tz.current.u = (vtop_l->t.u * vtop_l->w)+ (grad_tz.ddx.u * fXOff) + (grad_tz.ddy.u * fYOff);
-      edge_tz.current.v = (vtop_l->t.v * vtop_l->w)+ (grad_tz.ddx.v * fXOff) + (grad_tz.ddy.v * fYOff);
+      edge_tz_increment.u = (f_dxdy_left * grad_tz_ddx.u) + grad_tz_ddy.u;
+      edge_tz_increment.v = (f_dxdy_left * grad_tz_ddx.v) + grad_tz_ddy.v;
+      edge_tz_current.u = (vtop_l->t.u * vtop_l->w)+ (grad_tz_ddx.u * fXOff) + (grad_tz_ddy.u * fYOff);
+      edge_tz_current.v = (vtop_l->t.v * vtop_l->w)+ (grad_tz_ddx.v * fXOff) + (grad_tz_ddy.v * fYOff);
   #else
-      edge_t.increment.u = (f_dxdy_left * grad_t.ddx.u) + grad_t.ddy.u;
-      edge_t.increment.v = (f_dxdy_left * grad_t.ddx.v) + grad_t.ddy.v;
-      edge_t.current.u = vtop_l->t.u + (grad_t.ddx.u * fXOff) + (grad_t.ddy.u * fYOff);
-      edge_t.current.v = vtop_l->t.v + (grad_t.ddx.v * fXOff) + (grad_t.ddy.v * fYOff);
+      edge_t_increment.u = (f_dxdy_left * grad_t_ddx.u) + grad_t_ddy.u;
+      edge_t_increment.v = (f_dxdy_left * grad_t_ddx.v) + grad_t_ddy.v;
+      edge_t_current.u = vtop_l->t.u + (grad_t_ddx.u * fXOff) + (grad_t_ddy.u * fYOff);
+      edge_t_current.v = vtop_l->t.v + (grad_t_ddx.v * fXOff) + (grad_t_ddy.v * fYOff);
   #endif
 #endif
 
@@ -359,19 +359,19 @@
       if(iLineWidth > 0)
       {
 #ifdef RASTER_ENABLE_SMOOTH_SHADING
-        scan_c.current = edge_c.current;
+        scan_c_current = edge_c_current;
 #endif
 #ifdef RASTER_ENABLE_DEPTH_TEST
-        scan_z.current = edge_z.current;
+        scan_z_current = edge_z_current;
 #endif
 #ifdef RASTER_INTERPOLATE_W
-        scan_w.current = edge_w.current;
+        scan_w_current = edge_w_current;
 #endif
 #ifdef RASTER_ENABLE_TEXTURES
   #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-        scan_tz.current = edge_tz.current;
+        scan_tz_current = edge_tz_current;
   #else
-        scan_t.current = edge_t.current;
+        scan_t_current = edge_t_current;
   #endif
 #endif
 
@@ -387,7 +387,7 @@
           //   if this fails, we don't have to calculate the
           //   color of the pixel. (the most time consuming part of the loop)
 #ifdef RASTER_ENABLE_DEPTH_TEST
-          uint32_t zz = scan_z.current >> SHIFT_Z;
+          uint32_t zz = scan_z_current >> SHIFT_Z;
           if(rasterDepth(zz, *pDepthPixel) == true)
 #endif
           {
@@ -395,28 +395,28 @@
             // Get the fragment color
   #ifdef RASTER_ENABLE_SMOOTH_SHADING
             // Get smoothly interpolated color
-            caccu.r = INTERP_TO_CALC_COLOR(scan_c.current.r);
-            caccu.g = INTERP_TO_CALC_COLOR(scan_c.current.g);
-            caccu.b = INTERP_TO_CALC_COLOR(scan_c.current.b);
-            caccu.a = INTERP_TO_CALC_COLOR(scan_c.current.a);
+            caccu.r = INTERP_TO_CALC_COLOR(scan_c_current.r);
+            caccu.g = INTERP_TO_CALC_COLOR(scan_c_current.g);
+            caccu.b = INTERP_TO_CALC_COLOR(scan_c_current.b);
+            caccu.a = INTERP_TO_CALC_COLOR(scan_c_current.a);
   #else
             // Set flat filled color
-            caccu = scan_c.current;
+            caccu = scan_c_current;
   #endif
 
             // Get the fragment texel
   #ifdef RASTER_ENABLE_TEXTURES
             SColor ctexture;
     #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-            float z = 1.0f / scan_w.current;
+            float z = 1.0f / scan_w_current;
 
             // Get the level of detail (lambda)
             float lodbias = 0.0f;
-            float lod = pCurrentTex_->lambda(grad_tz.ddx.u * z, grad_tz.ddy.u * z, grad_tz.ddx.v * z, grad_tz.ddy.v * z) + lodbias;
+            float lod = pCurrentTex_->lambda(grad_tz_ddx.u * z, grad_tz_ddy.u * z, grad_tz_ddx.v * z, grad_tz_ddy.v * z) + lodbias;
 
-            pCurrentTex_->getTexel(ctexture, scan_tz.current.u * z, scan_tz.current.v * z, lod);
+            pCurrentTex_->getTexel(ctexture, scan_tz_current.u * z, scan_tz_current.v * z, lod);
     #else
-            pCurrentTex_->getTexel(ctexture, scan_t.current.u, scan_t.current.v, lod);
+            pCurrentTex_->getTexel(ctexture, scan_t_current.u, scan_t_current.v, lod);
     #endif
             rasterTexture(caccu, caccu, ctexture);
   #endif
@@ -465,25 +465,25 @@
   #endif
   #ifdef RASTER_DIRECT_TEXTURES
             SColor ctexture;
-            pCurrentTex_->getTexel(ctexture, scan_t.current.u, scan_t.current.v, lod);
+            pCurrentTex_->getTexel(ctexture, scan_t_current.u, scan_t_current.v, lod);
             *pDestPixel = RASTER_COLOR_SAVE(ctexture, SHIFT_COLOR_CALC);
   #endif
 #endif
           }
 #ifdef RASTER_ENABLE_SMOOTH_SHADING
-          scan_c.current += scan_c.increment;
+          scan_c_current += scan_c_ddx;
 #endif
 #ifdef RASTER_ENABLE_DEPTH_TEST
-          scan_z.current += scan_z.increment;
+          scan_z_current += scan_z_ddx;
 #endif
 #ifdef RASTER_INTERPOLATE_W
-          scan_w.current += scan_w.increment;
+          scan_w_current += scan_w_ddx;
 #endif
 #ifdef RASTER_ENABLE_TEXTURES
   #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-          scan_tz.current += scan_tz.increment;
+          scan_tz_current += scan_tz_ddx;
   #else
-          scan_t.current += scan_t.increment;
+          scan_t_current += scan_t_ddx;
   #endif
 #endif
           pDestPixel++;
@@ -505,43 +505,43 @@
 
         left_x++;
 #ifdef RASTER_ENABLE_SMOOTH_SHADING
-        edge_c.current += edge_c.increment;
-        edge_c.current += grad_c.ddx;
+        edge_c_current += edge_c_increment;
+        edge_c_current += grad_c_ddx;
 #endif
 #ifdef RASTER_ENABLE_DEPTH_TEST
-        edge_z.current += edge_z.increment;
-        edge_z.current += grad_z.ddx;
+        edge_z_current += edge_z_increment;
+        edge_z_current += grad_z_ddx;
 #endif
 #ifdef RASTER_INTERPOLATE_W
-        edge_w.current += edge_w.increment;
-        edge_w.current += grad_w.ddx;
+        edge_w_current += edge_w_increment;
+        edge_w_current += grad_w_ddx;
 #endif
 #ifdef RASTER_ENABLE_TEXTURES
   #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-        edge_tz.current += edge_tz.increment;
-        edge_tz.current += grad_tz.ddx;
+        edge_tz_current += edge_tz_increment;
+        edge_tz_current += grad_tz_ddx;
   #else
-        edge_t.current += edge_t.increment;
-        edge_t.current += grad_t.ddx;
+        edge_t_current += edge_t_increment;
+        edge_t_current += grad_t_ddx;
   #endif
 #endif
       }
       else
       {
 #ifdef RASTER_ENABLE_SMOOTH_SHADING
-        edge_c.current += edge_c.increment;
+        edge_c_current += edge_c_increment;
 #endif
 #ifdef RASTER_ENABLE_DEPTH_TEST
-        edge_z.current += edge_z.increment;
+        edge_z_current += edge_z_increment;
 #endif
 #ifdef RASTER_INTERPOLATE_W
-        edge_w.current += edge_w.increment;
+        edge_w_current += edge_w_increment;
 #endif
 #ifdef RASTER_ENABLE_TEXTURES
   #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-        edge_tz.current += edge_tz.increment;
+        edge_tz_current += edge_tz_increment;
   #else
-        edge_t.current += edge_t.increment;
+        edge_t_current += edge_t_increment;
   #endif
 #endif
       }

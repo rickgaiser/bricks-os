@@ -92,27 +92,42 @@ private:
 
 private:
   // Color
-  TGradient<SColor>       grad_c; // Gradient
-  TScanline<SColor>       edge_c; // Left edge
-  TScanline<SColor>       scan_c; // Scanline
+  SColor                  grad_c_ddx;
+  SColor                  grad_c_ddy;
+  SColor                  edge_c_current;
+  SColor                  edge_c_increment;
+  SColor                  scan_c_current;
+  SColor                  scan_c_ddx;
   // Depth (z=1/w)
-  TGradient<int32_t>      grad_z; // Gradient
-  TScanline<int32_t>      edge_z; // Left edge
-  TScanline<int32_t>      scan_z; // Scanline
+  int32_t                 grad_z_ddx;
+  int32_t                 grad_z_ddy;
+  int32_t                 edge_z_current;
+  int32_t                 edge_z_increment;
+  int32_t                 scan_z_current;
+  int32_t                 scan_z_ddx;
 #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
   // Depth (w=1/z)
-  TGradient<float>        grad_w; // Gradient
-  TScanline<float>        edge_w; // Left edge
-  TScanline<float>        scan_w; // Scanline
+  float                   grad_w_ddx;
+  float                   grad_w_ddy;
+  float                   edge_w_current;
+  float                   edge_w_increment;
+  float                   scan_w_current;
+  float                   scan_w_ddx;
   // Texture (t/z)
-  TGradient<TTexCoord<float> > grad_tz; // Gradient
-  TScanline<TTexCoord<float> > edge_tz; // Left edge
-  TScanline<TTexCoord<float> > scan_tz; // Scanline
+  TTexCoord<float>        grad_tz_ddx;
+  TTexCoord<float>        grad_tz_ddy;
+  TTexCoord<float>        edge_tz_current;
+  TTexCoord<float>        edge_tz_increment;
+  TTexCoord<float>        scan_tz_current;
+  TTexCoord<float>        scan_tz_ddx;
 #else
   // Texture
-  TGradient<TTexCoord<float> > grad_t; // Gradient
-  TScanline<TTexCoord<float> > edge_t; // Left edge
-  TScanline<TTexCoord<float> > scan_t; // Scanline
+  TTexCoord<float>        grad_t_ddx;
+  TTexCoord<float>        grad_t_ddy;
+  TTexCoord<float>        edge_t_current;
+  TTexCoord<float>        edge_t_increment;
+  TTexCoord<float>        scan_t_current;
+  TTexCoord<float>        scan_t_ddx;
 #endif
 
   int32_t alphaValueFX_;

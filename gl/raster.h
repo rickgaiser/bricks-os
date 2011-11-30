@@ -34,23 +34,6 @@ namespace raster
 
 //-----------------------------------------------------------------------------
 template <class T>
-struct TGradient
-{
-  T ddx;          // This needs to be added when moving 1 pixel in x direction
-  T ddy;          // This needs to be added when moving 1 pixel in y direction
-  T start;        // Value at x=0, y=0
-};
-
-//-----------------------------------------------------------------------------
-template <class T>
-struct TScanline
-{
-  T current;
-  T increment;
-};
-
-//-----------------------------------------------------------------------------
-template <class T>
 struct TColorFx
 {
   inline void operator+=(const TColorFx & c)
