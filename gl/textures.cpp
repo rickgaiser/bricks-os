@@ -232,15 +232,15 @@ CTexture::lambda(float dudx, float dudy, float dvdx, float dvdy)
 {
   float max, rho, lambda;
 
-  dudx = mathlib::abs<float>(dudx);
-  dudy = mathlib::abs<float>(dudy);
-  max = mathlib::max<float>(dudx, dudy) * width;
+  dudx = mathlib::abs(dudx);
+  dudy = mathlib::abs(dudy);
+  max = mathlib::max(dudx, dudy) * width;
   rho = max;
 
-  dvdx = mathlib::abs<float>(dvdx);
-  dvdy = mathlib::abs<float>(dvdy);
-  max = mathlib::max<float>(dvdx, dvdy) * height;
-  rho = mathlib::max<float>(rho, max);
+  dvdx = mathlib::abs(dvdx);
+  dvdy = mathlib::abs(dvdy);
+  max = mathlib::max(dvdx, dvdy) * height;
+  rho = mathlib::max(rho, max);
 
   lambda = mathlib::fast_log2(rho);
 
@@ -249,7 +249,7 @@ CTexture::lambda(float dudx, float dudy, float dvdx, float dvdy)
 
 //-----------------------------------------------------------------------------
 void
-CTexture::getTexel(raster::SColorF & c, float u, float v, float lod)
+CTexture::getTexel(raster::TColor<GLfloat> & c, float u, float v, float lod)
 {
   int upos, vpos;
   float colors[4];
@@ -287,15 +287,15 @@ CTexture::getTexel(raster::SColorF & c, float u, float v, float lod)
       // Linear MipMap filtering
       int level = (int)lod;
       fMipMapBlend = lod - level;
-      iMipMapLevel0 = mathlib::clamp<int>(level  , 0, iMaxLevel_);
-      iMipMapLevel1 = mathlib::clamp<int>(level+1, 0, iMaxLevel_);
+      iMipMapLevel0 = mathlib::clamp(level  , 0, iMaxLevel_);
+      iMipMapLevel1 = mathlib::clamp(level+1, 0, iMaxLevel_);
     }
     else if((iFilter == GL_NEAREST_MIPMAP_NEAREST) || (iFilter == GL_NEAREST_MIPMAP_LINEAR))
     {
       // Nearest MipMap filtering
       int level = (int)(lod + 0.5f);
       iMipMapLevel0 =
-      iMipMapLevel1 = mathlib::clamp<int>(level  , 0, iMaxLevel_);
+      iMipMapLevel1 = mathlib::clamp(level  , 0, iMaxLevel_);
     }
     else
     {
@@ -327,7 +327,7 @@ CTexture::getTexel(raster::SColorF & c, float u, float v, float lod)
       float ufrac = u - upos;
       float vfrac = v - vpos;
       for(int channel(0); channel < 4; channel++)
-        colors[channel] = mathlib::lerp_2d<float>(ufrac, vfrac, texels[0][channel], texels[1][channel], texels[2][channel], texels[3][channel]);
+        colors[channel] = mathlib::lerp_2d(ufrac, vfrac, texels[0][channel], texels[1][channel], texels[2][channel], texels[3][channel]);
     }
   }
   else
@@ -344,7 +344,7 @@ CTexture::getTexel(raster::SColorF & c, float u, float v, float lod)
       getTexel(iMipMapLevel1, upos, vpos, texels1);
 
       for(int channel(0); channel < 4; channel++)
-        colors[channel] = mathlib::lerp<float>(fMipMapBlend, texels0[channel], texels1[channel]);
+        colors[channel] = mathlib::lerp(fMipMapBlend, texels0[channel], texels1[channel]);
     }
     else
     {
@@ -365,7 +365,7 @@ CTexture::getTexel(raster::SColorF & c, float u, float v, float lod)
       float vfrac = v - vpos;
       for(int channel(0); channel < 4; channel++)
       {
-        colors[channel] = mathlib::lerp_3d<float>(
+        colors[channel] = mathlib::lerp_3d(
           ufrac,
           vfrac,
           fMipMapBlend,
@@ -388,9 +388,9 @@ CTexture::getTexel(raster::SColorF & c, float u, float v, float lod)
 
 //-----------------------------------------------------------------------------
 void
-CTexture::getTexel(raster::SColor & c, float u, float v, float lod)
+CTexture::getTexel(raster::TColor<int32_t> & c, float u, float v, float lod)
 {
-  raster::SColorF temp;
+  raster::TColor<GLfloat> temp;
 
   getTexel(temp, u, v, lod);
 

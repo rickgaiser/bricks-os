@@ -260,7 +260,7 @@ CSoft3DRendererFixed::glAlphaFunc(GLenum func, GLclampf ref)
   };
 
   state_.alphaTest.func = func;
-  state_.alphaTest.value = mathlib::clamp<GLclampf>(ref, 0.0f, 1.0f);
+  state_.alphaTest.value = mathlib::clamp(ref, 0.0f, 1.0f);
 
   pRaster_->alphaFunc(state_.alphaTest.func, state_.alphaTest.value);
 }
@@ -379,10 +379,10 @@ CSoft3DRendererFixed::glClearColorx(GLclampx red, GLclampx green, GLclampx blue,
     return;
   }
 
-  state_.clClear.r.value = mathlib::clamp<GLclampx>(red,   gl_fpfromi(0), gl_fpfromi(1));
-  state_.clClear.g.value = mathlib::clamp<GLclampx>(green, gl_fpfromi(0), gl_fpfromi(1));
-  state_.clClear.b.value = mathlib::clamp<GLclampx>(blue,  gl_fpfromi(0), gl_fpfromi(1));
-  state_.clClear.a.value = mathlib::clamp<GLclampx>(alpha, gl_fpfromi(0), gl_fpfromi(1));
+  state_.clClear.r.value = mathlib::clamp(red,   gl_fpfromi(0), gl_fpfromi(1));
+  state_.clClear.g.value = mathlib::clamp(green, gl_fpfromi(0), gl_fpfromi(1));
+  state_.clClear.b.value = mathlib::clamp(blue,  gl_fpfromi(0), gl_fpfromi(1));
+  state_.clClear.a.value = mathlib::clamp(alpha, gl_fpfromi(0), gl_fpfromi(1));
 
   pRaster_->clearColor(state_.clClear.r, state_.clClear.g, state_.clClear.b, state_.clClear.a);
 }
@@ -397,7 +397,7 @@ CSoft3DRendererFixed::glClearDepthx(GLclampx depth)
     return;
   }
 
-  state_.depthTest.clear.value = mathlib::clamp<GLclampx>(depth, gl_fpfromi(0), gl_fpfromi(1));
+  state_.depthTest.clear.value = mathlib::clamp(depth, gl_fpfromi(0), gl_fpfromi(1));
 
   pRaster_->clearDepthf(state_.depthTest.clear);
 }
@@ -504,8 +504,8 @@ CSoft3DRendererFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
   }
 
   // FIXME: zA_ and zB_ need to be modified, this function is now useless
-  state_.depthTest.rangeNear.value = mathlib::clamp<GLclampx>(zNear, gl_fpfromi(0), gl_fpfromi(1));
-  state_.depthTest.rangeFar.value  = mathlib::clamp<GLclampx>(zFar,  gl_fpfromi(0), gl_fpfromi(1));
+  state_.depthTest.rangeNear.value = mathlib::clamp(zNear, gl_fpfromi(0), gl_fpfromi(1));
+  state_.depthTest.rangeFar.value  = mathlib::clamp(zFar,  gl_fpfromi(0), gl_fpfromi(1));
 }
 
 //-----------------------------------------------------------------------------
@@ -568,27 +568,27 @@ CSoft3DRendererFixed::glDisable(GLenum cap)
   {
     case GL_ALPHA_TEST: state_.alphaTest.enabled = false; pRaster_->enableAlphaTest(false); break;
     //case GL_AUTO_NORMAL:
-    case GL_BLEND:      state_.blending.enabled  = false; pRaster_->enableBlending(false); break;
+    case GL_BLEND: state_.blending.enabled  = false; pRaster_->enableBlending(false); break;
     //case GL_CLIP_PLANEi:
     //case GL_COLOR_ARRAY_EXT:
     //case GL_COLOR_LOGIC_OP:
     case GL_COLOR_MATERIAL: state_.lighting.materialColorEnabled = false; break;
     //case GL_COLOR_SUM_EXT:
-    case GL_CULL_FACE:  state_.culling.enabled   = false; break;
+    case GL_CULL_FACE: state_.culling.enabled = false; break;
     case GL_DEPTH_TEST: state_.depthTest.enabled = false; pRaster_->enableDepthTest(false); break;
     //case GL_DITHER:
     //case GL_EDGE_FLAG_ARRAY_EXT:
-    case GL_FOG:        state_.fog.enabled       = false; break;
+    case GL_FOG: state_.fog.enabled = false; break;
     //case GL_INDEX_ARRAY_EXT:
-    case GL_LIGHT0:     state_.lighting.light[0].enabled = false; break;
-    case GL_LIGHT1:     state_.lighting.light[1].enabled = false; break;
-    case GL_LIGHT2:     state_.lighting.light[2].enabled = false; break;
-    case GL_LIGHT3:     state_.lighting.light[3].enabled = false; break;
-    case GL_LIGHT4:     state_.lighting.light[4].enabled = false; break;
-    case GL_LIGHT5:     state_.lighting.light[5].enabled = false; break;
-    case GL_LIGHT6:     state_.lighting.light[6].enabled = false; break;
-    case GL_LIGHT7:     state_.lighting.light[7].enabled = false; break;
-    case GL_LIGHTING:   state_.lighting.enabled  = false; break;
+    case GL_LIGHT0: state_.lighting.light[0].enabled = false; break;
+    case GL_LIGHT1: state_.lighting.light[1].enabled = false; break;
+    case GL_LIGHT2: state_.lighting.light[2].enabled = false; break;
+    case GL_LIGHT3: state_.lighting.light[3].enabled = false; break;
+    case GL_LIGHT4: state_.lighting.light[4].enabled = false; break;
+    case GL_LIGHT5: state_.lighting.light[5].enabled = false; break;
+    case GL_LIGHT6: state_.lighting.light[6].enabled = false; break;
+    case GL_LIGHT7: state_.lighting.light[7].enabled = false; break;
+    case GL_LIGHTING: state_.lighting.enabled = false; break;
     //case GL_LINE_SMOOTH:
     //case GL_LINE_STIPPLE:
     //case GL_LOGIC_OP:
@@ -692,27 +692,27 @@ CSoft3DRendererFixed::glEnable(GLenum cap)
   {
     case GL_ALPHA_TEST: state_.alphaTest.enabled = true; pRaster_->enableAlphaTest(true); break;
     //case GL_AUTO_NORMAL:
-    case GL_BLEND:      state_.blending.enabled  = true; pRaster_->enableBlending(true); break;
+    case GL_BLEND: state_.blending.enabled = true; pRaster_->enableBlending(true); break;
     //case GL_CLIP_PLANEi:
     //case GL_COLOR_ARRAY_EXT:
     //case GL_COLOR_LOGIC_OP:
     case GL_COLOR_MATERIAL: state_.lighting.materialColorEnabled = true; break;
     //case GL_COLOR_SUM_EXT:
-    case GL_CULL_FACE:  state_.culling.enabled   = true; break;
+    case GL_CULL_FACE: state_.culling.enabled = true; break;
     case GL_DEPTH_TEST: state_.depthTest.enabled = true; pRaster_->enableDepthTest(true); break;
     //case GL_DITHER:
     //case GL_EDGE_FLAG_ARRAY_EXT:
-    case GL_FOG:        state_.fog.enabled       = true; break;
+    case GL_FOG: state_.fog.enabled = true; break;
     //case GL_INDEX_ARRAY_EXT:
-    case GL_LIGHT0:     state_.lighting.light[0].enabled = true; break;
-    case GL_LIGHT1:     state_.lighting.light[1].enabled = true; break;
-    case GL_LIGHT2:     state_.lighting.light[2].enabled = true; break;
-    case GL_LIGHT3:     state_.lighting.light[3].enabled = true; break;
-    case GL_LIGHT4:     state_.lighting.light[4].enabled = true; break;
-    case GL_LIGHT5:     state_.lighting.light[5].enabled = true; break;
-    case GL_LIGHT6:     state_.lighting.light[6].enabled = true; break;
-    case GL_LIGHT7:     state_.lighting.light[7].enabled = true; break;
-    case GL_LIGHTING:   state_.lighting.enabled  = true; break;
+    case GL_LIGHT0: state_.lighting.light[0].enabled = true; break;
+    case GL_LIGHT1: state_.lighting.light[1].enabled = true; break;
+    case GL_LIGHT2: state_.lighting.light[2].enabled = true; break;
+    case GL_LIGHT3: state_.lighting.light[3].enabled = true; break;
+    case GL_LIGHT4: state_.lighting.light[4].enabled = true; break;
+    case GL_LIGHT5: state_.lighting.light[5].enabled = true; break;
+    case GL_LIGHT6: state_.lighting.light[6].enabled = true; break;
+    case GL_LIGHT7: state_.lighting.light[7].enabled = true; break;
+    case GL_LIGHTING: state_.lighting.enabled = true; break;
     //case GL_LINE_SMOOTH:
     //case GL_LINE_STIPPLE:
     //case GL_LOGIC_OP:
@@ -735,7 +735,7 @@ CSoft3DRendererFixed::glEnable(GLenum cap)
     //case GL_MAP2_VERTEX_3:
     //case GL_MAP2_VERTEX_4:
     //case GL_NORMAL_ARRAY_EXT:
-    case GL_NORMALIZE:  state_.lighting.normalizeEnabled = true; break;
+    case GL_NORMALIZE: state_.lighting.normalizeEnabled = true; break;
     //case GL_POLYGON_OFFSET_EXT:
     //case GL_POLYGON_OFFSET_FILL:
     //case GL_POLYGON_OFFSET_LINE:
@@ -936,16 +936,9 @@ void
 CSoft3DRendererFixed::glGetFloatv(GLenum pname, GLfloat * params)
 {
   // Return 4x4 matrix
-#ifdef ROW_MAJOR
-  #define GL_GET_MATRIX_COPY(matrix) \
-    for(int i(0); i < 4; i++) \
-      for(int j(0); j < 4; j++) \
-        params[i*4+j] = matrix[j*4+i]
-#else
   #define GL_GET_MATRIX_COPY(matrix) \
     for(int i(0); i < 16; i++) \
       params[i] = matrix[i]
-#endif
 
   if(bInBeginEnd_ == true)
   {
@@ -2240,8 +2233,8 @@ CSoft3DRendererFixed::interpolateVertex(SVertexFx & c, SVertexFx & a, SVertexFx 
   // Texture coordinates
   if(state_.texturing.enabled == true)
   {
-    c.t[0] = mathlib::lerp<CFixed>(t, a.t[0], b.t[0]);
-    c.t[1] = mathlib::lerp<CFixed>(t, a.t[1], b.t[1]);
+    c.t[0] = mathlib::lerp(t, a.t[0], b.t[0]);
+    c.t[1] = mathlib::lerp(t, a.t[1], b.t[1]);
   }
 
   // Set clip flags

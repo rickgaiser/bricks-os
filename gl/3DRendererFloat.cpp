@@ -260,7 +260,7 @@ CSoft3DRendererFloat::glAlphaFunc(GLenum func, GLclampf ref)
   };
 
   state_.alphaTest.func = func;
-  state_.alphaTest.value = mathlib::clamp<GLclampf>(ref, 0.0f, 1.0f);
+  state_.alphaTest.value = mathlib::clamp(ref, 0.0f, 1.0f);
 
   pRaster_->alphaFunc(state_.alphaTest.func, state_.alphaTest.value);
 }
@@ -379,10 +379,10 @@ CSoft3DRendererFloat::glClearColor(GLclampf red, GLclampf green, GLclampf blue, 
     return;
   }
 
-  state_.clClear.r = mathlib::clamp<GLclampf>(red,   0.0f, 1.0f);
-  state_.clClear.g = mathlib::clamp<GLclampf>(green, 0.0f, 1.0f);
-  state_.clClear.b = mathlib::clamp<GLclampf>(blue,  0.0f, 1.0f);
-  state_.clClear.a = mathlib::clamp<GLclampf>(alpha, 0.0f, 1.0f);
+  state_.clClear.r = mathlib::clamp(red,   0.0f, 1.0f);
+  state_.clClear.g = mathlib::clamp(green, 0.0f, 1.0f);
+  state_.clClear.b = mathlib::clamp(blue,  0.0f, 1.0f);
+  state_.clClear.a = mathlib::clamp(alpha, 0.0f, 1.0f);
 
   pRaster_->clearColor(state_.clClear.r, state_.clClear.g, state_.clClear.b, state_.clClear.a);
 }
@@ -397,7 +397,7 @@ CSoft3DRendererFloat::glClearDepth(GLclampd depth)
     return;
   }
 
-  state_.depthTest.clear = mathlib::clamp<GLclampf>(depth, 0.0f, 1.0f);
+  state_.depthTest.clear = mathlib::clamp(depth, (GLclampd)0.0f, (GLclampd)1.0f);
 
   pRaster_->clearDepthf(state_.depthTest.clear);
 }
@@ -504,8 +504,8 @@ CSoft3DRendererFloat::glDepthRangef(GLclampf zNear, GLclampf zFar)
   }
 
   // FIXME: zA_ and zB_ need to be modified, this function is now useless
-  state_.depthTest.rangeNear = mathlib::clamp<GLclampf>(zNear, 0.0f, 1.0f);
-  state_.depthTest.rangeFar  = mathlib::clamp<GLclampf>(zFar,  0.0f, 1.0f);
+  state_.depthTest.rangeNear = mathlib::clamp(zNear, 0.0f, 1.0f);
+  state_.depthTest.rangeFar  = mathlib::clamp(zFar,  0.0f, 1.0f);
 }
 
 //-----------------------------------------------------------------------------
@@ -936,16 +936,9 @@ void
 CSoft3DRendererFloat::glGetFloatv(GLenum pname, GLfloat * params)
 {
   // Return 4x4 matrix
-#ifdef ROW_MAJOR
-  #define GL_GET_MATRIX_COPY(matrix) \
-    for(int i(0); i < 4; i++) \
-      for(int j(0); j < 4; j++) \
-        params[i*4+j] = matrix[j*4+i]
-#else
   #define GL_GET_MATRIX_COPY(matrix) \
     for(int i(0); i < 16; i++) \
       params[i] = matrix[i]
-#endif
 
   if(bInBeginEnd_ == true)
   {
@@ -1877,7 +1870,7 @@ CSoft3DRendererFloat::_vertexShaderLight(SVertexF & v)
 #endif
           if(specular > 0.0f)
           {
-            specular = mathlib::fast_int_pow<GLfloat>(specular, (int)(pMaterial->shininess + 0.5f));
+            specular = mathlib::fast_int_pow(specular, (int)(pMaterial->shininess + 0.5f));
             cSpecular += state_.lighting.light[iLight].specular * pMaterial->specular * specular;
           }
         }
@@ -1936,7 +1929,7 @@ CSoft3DRendererFloat::_vertexShaderLight(SVertexF & v)
         f = mathlib::fast_exp (state_.fog.density * v.ve.z);
     };
 
-    f = mathlib::clamp<GLfloat>(f, 0.0f, 1.0f);
+    f = mathlib::clamp(f, 0.0f, 1.0f);
 
     v.cl = mathlib_LERP(f, state_.fog.color, v.cl);
   }
@@ -2240,8 +2233,8 @@ CSoft3DRendererFloat::interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b
   // Texture coordinates
   if(state_.texturing.enabled == true)
   {
-    c.t[0] = mathlib::lerp<GLfloat>(t, a.t[0], b.t[0]);
-    c.t[1] = mathlib::lerp<GLfloat>(t, a.t[1], b.t[1]);
+    c.t[0] = mathlib::lerp(t, a.t[0], b.t[0]);
+    c.t[1] = mathlib::lerp(t, a.t[1], b.t[1]);
   }
 
   // Set clip flags

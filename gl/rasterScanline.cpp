@@ -103,7 +103,7 @@ CRasterizerScanline::rasterTriangle(const SVertex & v0, const SVertex & v1, cons
 
 //-----------------------------------------------------------------------------
 void
-CRasterizerScanline::rasterTexture(SColor & out, const SColor & cfragment, const SColor & ctexture)
+CRasterizerScanline::rasterTexture(TColor<int32_t> & out, const TColor<int32_t> & cfragment, const TColor<int32_t> & ctexture)
 {
 #ifdef CONFIG_GL_TINY
   if(texEnvMode_ == GL_MODULATE)
@@ -157,7 +157,7 @@ CRasterizerScanline::rasterTexture(SColor & out, const SColor & cfragment, const
 #ifndef CONFIG_GL_TINY
 //-----------------------------------------------------------------------------
 void
-CRasterizerScanline::rasterBlend(SColor & out, const SColor & source, const SColor & dest)
+CRasterizerScanline::rasterBlend(TColor<int32_t> & out, const TColor<int32_t> & source, const TColor<int32_t> & dest)
 {
   #define BLEND_FACTOR(factor,c) \
   switch(factor) \
@@ -228,7 +228,7 @@ CRasterizerScanline::rasterBlend(SColor & out, const SColor & source, const SCol
     }
     default:
     {
-      SColor cs, cd;
+      TColor<int32_t> cs, cd;
       BLEND_FACTOR(blendSFactor_, cs);
       BLEND_FACTOR(blendDFactor_, cd);
 
@@ -255,16 +255,16 @@ CRasterizerScanline::_rasterTriangle(const SVertex & v0, const SVertex & v1, con
   {
     // Swap bottom with middle?
     if(vtop->y > vmiddle->y)
-      mathlib::swap<const SVertex *>(vtop, vmiddle);
+      mathlib::swap(vtop, vmiddle);
 
     // Swap middle with top?
     if(vmiddle->y > vbottom->y)
     {
-      mathlib::swap<const SVertex *>(vmiddle, vbottom);
+      mathlib::swap(vmiddle, vbottom);
 
       // Swap bottom with middle again?
       if(vtop->y > vmiddle->y)
-        mathlib::swap<const SVertex *>(vtop, vmiddle);
+        mathlib::swap(vtop, vmiddle);
     }
   }
 

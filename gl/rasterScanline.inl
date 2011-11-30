@@ -90,7 +90,7 @@
 
 #ifndef RASTER_DIRECT
   // Color accumulator, used in inner loop
-  SColor caccu;
+  TColor<int32_t> caccu;
 #endif
 
 #ifdef RASTER_ENABLE_TEXTURES
@@ -244,10 +244,10 @@
         vbottom_r = vbottom;
       }
       // height = bottom - top;
-      iYTop    = fpfloor(SHIFT_XY, vtop->y    + pixelFloorOffset_);
-      iYBottom = fpfloor(SHIFT_XY, vmiddle->y + pixelFloorOffset_);
+      iYTop    = fpfloor(SHIFT_XY, vtop->y    + fxPixelFloorOffset_);
+      iYBottom = fpfloor(SHIFT_XY, vmiddle->y + fxPixelFloorOffset_);
       // Y Offset from vertex to pixel center
-      fxYOff   = (iYTop << SHIFT_XY) + pixelCenterOffset_ - vtop->y;
+      fxYOff   = (iYTop << SHIFT_XY) + fxPixelCenterOffset_ - vtop->y;
     }
     else
     {
@@ -264,10 +264,10 @@
         vbottom_l = vbottom;
       }
       // height = bottom - top;
-      iYTop    = fpfloor(SHIFT_XY, vmiddle->y + pixelFloorOffset_);
-      iYBottom = fpfloor(SHIFT_XY, vbottom->y + pixelFloorOffset_);
+      iYTop    = fpfloor(SHIFT_XY, vmiddle->y + fxPixelFloorOffset_);
+      iYBottom = fpfloor(SHIFT_XY, vbottom->y + fxPixelFloorOffset_);
       // Y Offset from vertex to pixel center
-      fxYOff   = (iYTop << SHIFT_XY) + pixelCenterOffset_ - vmiddle->y;
+      fxYOff   = (iYTop << SHIFT_XY) + fxPixelCenterOffset_ - vmiddle->y;
     }
 
     // Need to draw at least one line
@@ -285,12 +285,12 @@
       int32_t initial_numerator = 0;
       initial_numerator += fxDY * vtop_l->x;                  // Add x
       initial_numerator += fxDX * fxYOff;                     // Move down to pixel center
-      initial_numerator += fxDY * oneMinusPixelCenterOffset_; // Add 0.5 or 1 to x
+      initial_numerator += fxDY * fxOneMinusPixelCenterOffset_; // Add 0.5 or 1 to x
       FloorDivMod(initial_numerator,  (fxDY << SHIFT_XY), left_x,    dxdy_left_err);
       FloorDivMod((fxDX << SHIFT_XY), (fxDY << SHIFT_XY), dxdy_left, dxdy_left_mod);
       dxdy_left_den = fxDY << SHIFT_XY;
 #if defined(RASTER_ENABLE_DEPTH_TEST) || defined(RASTER_ENABLE_SMOOTH_SHADING) || defined(RASTER_ENABLE_TEXTURES) || defined(RASTER_INTERPOLATE_W)
-      int32_t fxXOff = (left_x << SHIFT_XY) + pixelCenterOffset_ - vtop_l->x;
+      int32_t fxXOff = (left_x << SHIFT_XY) + fxPixelCenterOffset_ - vtop_l->x;
 #endif
 
 #ifdef RASTER_INTERPOLATE_FLOATS
@@ -346,7 +346,7 @@
       int32_t initial_numerator = 0;
       initial_numerator += fxDY * vtop_r->x;                  // Add x
       initial_numerator += fxDX * fxYOff;                     // Move down to pixel center
-      initial_numerator += fxDY * oneMinusPixelCenterOffset_; // Add 0.5 or 1 to x
+      initial_numerator += fxDY * fxOneMinusPixelCenterOffset_; // Add 0.5 or 1 to x
       FloorDivMod(initial_numerator,  (fxDY << SHIFT_XY), right_x,    dxdy_right_err);
       FloorDivMod((fxDX << SHIFT_XY), (fxDY << SHIFT_XY), dxdy_right, dxdy_right_mod);
       dxdy_right_den = fxDY << SHIFT_XY;
@@ -406,7 +406,7 @@
 
             // Get the fragment texel
   #ifdef RASTER_ENABLE_TEXTURES
-            SColor ctexture;
+            TColor<int32_t> ctexture;
     #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
             float z = 1.0f / scan_w_current;
 
@@ -443,7 +443,7 @@
             {
               // Blending (RGBA only): Blend the fragment color with the framebuffer color
   #ifdef RASTER_ENABLE_BLENDING
-              SColor screen_pix;
+              TColor<int32_t> screen_pix;
               RASTER_COLOR_LOAD(screen_pix, *pDestPixel, SHIFT_COLOR_CALC);
               rasterBlend(caccu, caccu, screen_pix);
   #endif

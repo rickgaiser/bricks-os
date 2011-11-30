@@ -60,13 +60,13 @@ enum EFastBlendMode
 template <class T>
 struct TVertex
 {
-  // Vertex itself
+  // Vertices
   TVector4<T> vo; // Object Coordinates
   TVector4<T> ve; // Eye Coordinates
   TVector4<T> vc; // Clip Coordinates
   TVector4<T> vd; // Normalized Device Coordinates
 
-  // Normal vector
+  // Normals
   TVector3<T> n;  // Vertex Normal
   TVector3<T> n2; // Vertex Normal, rotated
 

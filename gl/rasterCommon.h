@@ -135,7 +135,7 @@ protected:
   bool rasterDepth(uint32_t z_pix, uint32_t z_buf);
 
 protected:
-  SColorF     clClear;
+  TColor<GLfloat> clClear;
   int32_t   * pZBuffer_;
 
   // Shading model
@@ -151,7 +151,7 @@ protected:
   // Textures
   bool        bTexturesEnabled_;
   GLenum      texEnvMode_;
-  SColorF     texEnvColor_;
+  TColor<GLfloat> texEnvColor_;
   CTexture  * pCurrentTex_;
   CTexture  * textures_[MAX_TEXTURE_COUNT];
 
@@ -166,6 +166,7 @@ protected:
   GLenum      blendDFactor_;
   EFastBlendMode blendFast_;
 
+  // Viewport
   GLint       viewportXOffset;
   GLint       viewportYOffset;
   GLsizei     viewportWidth;
@@ -174,9 +175,9 @@ protected:
 
   // Pixel center
   bool        bUsePixelCenter_;
-  int32_t     pixelFloorOffset_;
-  int32_t     pixelCenterOffset_;
-  int32_t     oneMinusPixelCenterOffset_;
+  int32_t     fxPixelFloorOffset_;
+  int32_t     fxPixelCenterOffset_;
+  int32_t     fxOneMinusPixelCenterOffset_;
 };
 
 

@@ -50,8 +50,8 @@ public:
   void bind();
 
   float lambda(float dudx, float dudy, float dvdx, float dvdy);
-  void getTexel(raster::SColorF & c, float u, float v, float lod);
-  void getTexel(raster::SColor  & c, float u, float v, float lod);
+  void getTexel(raster::TColor<GLfloat> & c, float u, float v, float lod);
+  void getTexel(raster::TColor<int32_t> & c, float u, float v, float lod);
 
 public:
   inline void getTexel(int level, int u, int v, float * channels);

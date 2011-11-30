@@ -85,11 +85,17 @@ CASoftRasterizer::CASoftRasterizer()
 CASoftRasterizer::~CASoftRasterizer()
 {
   if(pZBuffer_ != NULL)
+  {
     delete pZBuffer_;
+  }
 
   for(int i(0); i < MAX_TEXTURE_COUNT; i++)
+  {
     if(textures_[i] == NULL)
+    {
       delete textures_[i];
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -849,16 +855,16 @@ CASoftRasterizer::setUsePixelCenter(bool bCenter)
 
   if(bCenter == true)
   {
-    pixelFloorOffset_  = (1 << (SHIFT_XY - 1)) - 1; // Half a pixel minus one
-    pixelCenterOffset_ = (1 << (SHIFT_XY - 1));     // Half a pixel (the center)
+    fxPixelFloorOffset_  = (1 << (SHIFT_XY - 1)) - 1; // Half a pixel minus one
+    fxPixelCenterOffset_ = (1 << (SHIFT_XY - 1));     // Half a pixel (the center)
   }
   else
   {
-    pixelFloorOffset_  = (1 << (SHIFT_XY    )) - 1; // A whole pixel minus one
-    pixelCenterOffset_ = 0;                         // Zero (Top-Left corner)
+    fxPixelFloorOffset_  = (1 << (SHIFT_XY    )) - 1; // A whole pixel minus one
+    fxPixelCenterOffset_ = 0;                         // Zero (Top-Left corner)
   }
 
-  oneMinusPixelCenterOffset_ = (1 << SHIFT_XY) - pixelCenterOffset_;
+  fxOneMinusPixelCenterOffset_ = (1 << SHIFT_XY) - fxPixelCenterOffset_;
 }
 
 //-----------------------------------------------------------------------------

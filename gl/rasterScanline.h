@@ -59,14 +59,14 @@ public:
   CRasterizerScanline();
   virtual ~CRasterizerScanline();
 
-  virtual void alphaFunc(GLenum func, GLclampf ref);
+  void alphaFunc(GLenum func, GLclampf ref);
 
   void rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2);
 
 private:
-  void rasterTexture(raster::SColor & out, const raster::SColor & cfragment, const raster::SColor & ctexture) FAST_CODE;
+  void rasterTexture(raster::TColor<int32_t> & out, const raster::TColor<int32_t> & cfragment, const raster::TColor<int32_t> & ctexture) FAST_CODE;
 #ifndef CONFIG_GL_TINY
-  void rasterBlend(raster::SColor & out, const raster::SColor & source, const raster::SColor & dest) FAST_CODE;
+  void rasterBlend(raster::TColor<int32_t> & out, const raster::TColor<int32_t> & source, const raster::TColor<int32_t> & dest) FAST_CODE;
 #endif
 
   void _rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2) FAST_CODE;
@@ -92,12 +92,12 @@ private:
 
 private:
   // Color
-  SColor                  grad_c_ddx;
-  SColor                  grad_c_ddy;
-  SColor                  edge_c_current;
-  SColor                  edge_c_increment;
-  SColor                  scan_c_current;
-  SColor                  scan_c_ddx;
+  TColor<int32_t>         grad_c_ddx;
+  TColor<int32_t>         grad_c_ddy;
+  TColor<int32_t>         edge_c_current;
+  TColor<int32_t>         edge_c_increment;
+  TColor<int32_t>         scan_c_current;
+  TColor<int32_t>         scan_c_ddx;
   // Depth (z=1/w)
   int32_t                 grad_z_ddx;
   int32_t                 grad_z_ddy;

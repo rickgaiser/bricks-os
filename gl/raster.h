@@ -34,9 +34,9 @@ namespace raster
 
 //-----------------------------------------------------------------------------
 template <class T>
-struct TColorFx
+struct TColor
 {
-  inline void operator+=(const TColorFx & c)
+  inline void operator+=(const TColor & c)
   {
     r += c.r;
     g += c.g;
@@ -44,25 +44,7 @@ struct TColorFx
     a += c.a;
   }
 
-  T r;
-  T g;
-  T b;
-  T a;
-};
-typedef TColorFx<int32_t> SColor;
-//-----------------------------------------------------------------------------
-template <class T>
-struct TColorF
-{
-  inline void operator+=(const TColorF & c)
-  {
-    r += c.r;
-    g += c.g;
-    b += c.b;
-    a += c.a;
-  }
-
-  inline void operator*=(const TColorF & c)
+  inline void operator*=(const TColor & c)
   {
     r *= c.r;
     g *= c.g;
@@ -70,12 +52,19 @@ struct TColorF
     a *= c.a;
   }
 
+  inline void operator*=(const T & s)
+  {
+    r *= s;
+    g *= s;
+    b *= s;
+    a *= s;
+  }
+
   T r;
   T g;
   T b;
   T a;
 };
-typedef TColorF<GLfloat> SColorF;
 
 //-----------------------------------------------------------------------------
 template <class T>
@@ -90,8 +79,6 @@ struct TTexCoord
   T u;
   T v;
 };
-typedef TTexCoord<int32_t> STexCoord;
-typedef TTexCoord<GLfloat> STexCoordF;
 
 //-----------------------------------------------------------------------------
 #define SHIFT_XY       4
@@ -105,8 +92,8 @@ struct SVertex
   int32_t            z;
   float              w;
 
-  TColorFx<int32_t>  c;
-  TTexCoord<float>   t;
+  TColor<int32_t>    c;
+  TTexCoord<GLfloat> t;
 };
 
 //-----------------------------------------------------------------------------
