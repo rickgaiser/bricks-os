@@ -73,6 +73,9 @@ CASoftRasterizer::CASoftRasterizer()
 
   for(int i(0); i < MAX_TEXTURE_COUNT; i++)
     textures_[i] = NULL;
+  // Create default texture
+  textures_[0] = new CTexture;
+  pCurrentTex_ = textures_[0];
 
   // Default pixel center OpenGL (center)
   this->setUsePixelCenter(true);
@@ -174,11 +177,14 @@ CASoftRasterizer::bindTexture(GLenum target, GLuint texture)
       return;
   };
 
-  if((texture >= MAX_TEXTURE_COUNT) || (textures_[texture] == NULL))
+  if(texture >= MAX_TEXTURE_COUNT)
   {
     setError(GL_INVALID_VALUE);
     return;
   }
+
+  if(textures_[texture] == NULL)
+    textures_[texture] = new CTexture;
 
   pCurrentTex_ = textures_[texture];
 }
@@ -764,6 +770,14 @@ CASoftRasterizer::clearColor(GLclampf red, GLclampf green, GLclampf blue, GLclam
 }
 
 //-----------------------------------------------------------------------------
+template<class T>
+inline void
+fastFill(T * buffer, unsigned int size, T value)
+{
+  while(size--) *buffer++ = value;
+}
+
+//-----------------------------------------------------------------------------
 void
 CASoftRasterizer::clear(GLbitfield mask)
 {
@@ -795,9 +809,7 @@ CASoftRasterizer::clear(GLbitfield mask)
       }
       case 32:
       {
-        uint32_t * pBuffer = (uint32_t *)renderSurface->p;
-        for(int i(0); i < viewportPixelCount; i++)
-          pBuffer[i] = color;
+        fastFill((uint32_t *)renderSurface->p, viewportPixelCount, color);
         break;
       }
     };
@@ -806,8 +818,7 @@ CASoftRasterizer::clear(GLbitfield mask)
   {
     if(pZBuffer_ != NULL)
     {
-      for(int i(0); i < viewportPixelCount; i++)
-        pZBuffer_[i] = zClearValue_;
+      fastFill(pZBuffer_, viewportPixelCount, zClearValue_);
     }
   }
 #ifdef ENABLE_PROFILING
