@@ -960,7 +960,7 @@ CSoft3DRendererFixed::glGetFloatv(GLenum pname, GLfloat * params)
       break;
     case GL_MODELVIEW_MATRIX:
       {
-        GL_GET_MATRIX_COPY(pCurrentModelView_->matrix);
+        GL_GET_MATRIX_COPY(pCurrentModelView_->m_);
       }
       break;
     case GL_MAX_MODELVIEW_STACK_DEPTH:
@@ -971,7 +971,7 @@ CSoft3DRendererFixed::glGetFloatv(GLenum pname, GLfloat * params)
       break;
     case GL_PROJECTION_MATRIX:
       {
-        GL_GET_MATRIX_COPY(pCurrentProjection_->matrix);
+        GL_GET_MATRIX_COPY(pCurrentProjection_->m_);
       }
       break;
     case GL_MAX_PROJECTION_STACK_DEPTH:
@@ -982,7 +982,7 @@ CSoft3DRendererFixed::glGetFloatv(GLenum pname, GLfloat * params)
       break;
     case GL_TEXTURE_MATRIX:
       {
-        GL_GET_MATRIX_COPY(pCurrentTexture_->matrix);
+        GL_GET_MATRIX_COPY(pCurrentTexture_->m_);
       }
       break;
     case GL_MAX_TEXTURE_STACK_DEPTH:
