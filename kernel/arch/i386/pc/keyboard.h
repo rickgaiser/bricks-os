@@ -25,7 +25,7 @@
 
 #include "i8042.h"
 #include "kernel/fs.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #define KBD_DATA_REG       0x60

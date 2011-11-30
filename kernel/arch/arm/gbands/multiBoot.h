@@ -23,7 +23,7 @@
 #define GBANDS_MULTIBOOT_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 struct MultiBootParam

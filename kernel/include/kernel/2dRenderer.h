@@ -23,7 +23,7 @@
 #define KERNEL_2DRENDERER_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "kernel/videoManager.h"
 
 

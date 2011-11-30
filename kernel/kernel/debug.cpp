@@ -20,7 +20,7 @@
 
 
 #include "kernel/debug.h"
-#include "inttypes.h"
+#include "stdint.h"
 #include "string.h"
 #include "asm/cpu.h"
 

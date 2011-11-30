@@ -20,7 +20,7 @@
 
 
 #include "stdlib.h"
-#include "inttypes.h"
+#include "stdint.h"
 #include "errno.h"
 #include "ctype.h"
 #include "limits.h"
@@ -69,7 +69,7 @@ rand(void)
 
 // -----------------------------------------------------------------------------
 long int
-strtol(const char * str, char ** endptr, int base)
+__attribute__((weak)) strtol(const char * str, char ** endptr, int base)
 {
   register const char *s = str;
   register unsigned long acc;

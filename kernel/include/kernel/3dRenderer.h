@@ -23,7 +23,7 @@
 #define KERNEL_3DRENDERER_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "kernel/videoManager.h"
 #include "GL/gl.h"
 

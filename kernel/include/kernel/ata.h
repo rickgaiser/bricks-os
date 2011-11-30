@@ -23,7 +23,7 @@
 #define ATA_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "kernel/fileSystem.h"
 #include "kernel/interrupt.h"
 

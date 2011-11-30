@@ -23,7 +23,7 @@
 #define PS2_SIF_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 class CIOP

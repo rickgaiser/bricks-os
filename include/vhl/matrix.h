@@ -23,7 +23,7 @@
 #define CMATRIX_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "vector.h"
 
 

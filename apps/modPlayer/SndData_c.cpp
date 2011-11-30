@@ -22,7 +22,7 @@
 
 
 #include "mod.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 extern const uint8_t dMod0Pattern0[];

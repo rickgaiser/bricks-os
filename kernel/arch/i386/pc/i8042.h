@@ -24,7 +24,7 @@
 
 
 #include "kernel/interrupt.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #define I8042_DATA_REG        0x60

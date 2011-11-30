@@ -23,7 +23,7 @@
 #define ASM_ARCH_REGISTERS_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "asm/cpu.h"
 #include "asm/arch/config.h"
 

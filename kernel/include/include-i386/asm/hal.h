@@ -23,7 +23,7 @@
 #define HAL_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 // CPU flags

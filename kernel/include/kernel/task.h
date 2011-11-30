@@ -34,7 +34,7 @@
 #include "asm/vmm.h"
 #endif
 #include "asm/task.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #define MAX_CHANNEL_COUNT         10

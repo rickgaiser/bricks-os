@@ -3,7 +3,7 @@
 // Author:	Tony Saveski, t_saveski@yahoo.com
 // Notes:	Texture Coordinates for fixed width fonts.
 //---------------------------------------------------------------------------
-#include "inttypes.h"
+#include "stdint.h"
 
 uint16_t fixed_tc[] = {
 	0,		0, 		1, 		1,		// 000 -

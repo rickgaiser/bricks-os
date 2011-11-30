@@ -26,7 +26,7 @@
 #include "kernel/syscall.h"
 #include "kernel/fs.h"
 #include "sys/types.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #define MAX_IN_CONNECTION_COUNT 10

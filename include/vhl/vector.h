@@ -23,7 +23,7 @@
 #define GL_VECTOR_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "fixedPoint.h"
 
 

@@ -23,7 +23,7 @@
 #define SB16_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "i8237.h"
 #include "kernel/interrupt.h"
 #include "kernel/pthread_k.h"

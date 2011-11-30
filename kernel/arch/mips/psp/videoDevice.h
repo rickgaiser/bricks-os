@@ -25,7 +25,7 @@
 
 #include "kernel/video.h"
 #include "kernel/videoManager.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 //---------------------------------------------------------------------------

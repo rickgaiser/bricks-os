@@ -2,7 +2,7 @@
 #define FONT8X8_h
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 extern const uint8_t font8x8_pal[];

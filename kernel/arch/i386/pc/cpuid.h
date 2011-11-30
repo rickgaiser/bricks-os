@@ -23,7 +23,7 @@
 #define I386_CPUID_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 // CPUID Feature Information

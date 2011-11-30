@@ -25,7 +25,7 @@
 
 #include "kernel/fileSystem.h"
 #include "kernel/ata.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 class CSuperCardDriver

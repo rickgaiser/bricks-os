@@ -26,7 +26,7 @@
 
 
 #include "mod.h"
-#include "inttypes.h"
+#include "stdint.h"
 #include "asm/arch/memory.h"
 #include "../../../kernel/arch/arm/gbands/gbaSound.h"
 #include "../../../kernel/arch/arm/gbands/drivers.h"

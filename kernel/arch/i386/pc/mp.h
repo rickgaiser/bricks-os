@@ -23,7 +23,7 @@
 #define I386_MP_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #define MP_FLOATING_SIGNATURE 0x5f504d5f // "_MP_"

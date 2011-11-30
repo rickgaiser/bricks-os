@@ -23,7 +23,7 @@
 #define GBANDS_REGISTERS_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 // Function pointer definitions

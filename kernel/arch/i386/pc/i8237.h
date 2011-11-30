@@ -35,7 +35,7 @@
 #define I8237_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 // Transfer type

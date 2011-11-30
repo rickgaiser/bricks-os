@@ -29,7 +29,7 @@
 #include "kernel/unistd_k.h"
 #include "asm/arch/config.h"
 #include "sys/types.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #ifdef __cplusplus

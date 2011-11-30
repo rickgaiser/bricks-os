@@ -24,7 +24,7 @@
 #define PC_PCI_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #define PCI_VID         0x00    /* Vendor ID, 16-bit */

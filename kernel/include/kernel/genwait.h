@@ -23,7 +23,7 @@
 #define GENWAIT_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 int genwait_wait(void * obj, useconds_t useconds);

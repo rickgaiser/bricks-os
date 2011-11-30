@@ -27,7 +27,7 @@
 #include "kernel/interrupt.h"
 #include "kernel/pthread_k.h"
 #include "asm/arch/memory.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 //#define STEREO_SOUND

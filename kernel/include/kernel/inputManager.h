@@ -23,7 +23,7 @@
 #define KERNEL_INPUT_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 enum EInputDeviceType

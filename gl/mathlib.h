@@ -2,7 +2,7 @@
 #define MATHLIB_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #undef abs

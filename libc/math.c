@@ -20,7 +20,7 @@
 
 
 #include "math.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #define MATH_TABLE_BITS (10) // 10bits == 1024 values

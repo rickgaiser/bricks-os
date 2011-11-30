@@ -26,7 +26,7 @@
 #include "kernel/syscall.h"
 #include "kernel/fs.h"
 #include "sys/types.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 // -----------------------------------------------------------------------------

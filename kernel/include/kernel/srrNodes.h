@@ -26,7 +26,7 @@
 #include "kernel/syscall.h"
 #include "kernel/srrChannel.h"
 #include "sys/types.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #define MAX_NODES         10

@@ -24,7 +24,7 @@
 
 
 #include "kernel/video.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 class CNGCDebugScreen

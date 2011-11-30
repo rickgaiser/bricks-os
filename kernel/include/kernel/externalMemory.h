@@ -24,7 +24,7 @@
 
 
 #include "kernel/queue.h"
-#include "inttypes.h"
+#include "stdint.h"
 #include "stddef.h"
 
 

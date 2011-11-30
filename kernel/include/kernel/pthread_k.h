@@ -25,7 +25,7 @@
 
 #include "kernel/syscall.h"
 #include "sys/types.h"
-#include "inttypes.h"
+#include "stdint.h"
 #include "time.h"
 
 

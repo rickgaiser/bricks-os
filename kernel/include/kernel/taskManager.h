@@ -25,7 +25,7 @@
 
 #include "asm/arch/config.h"
 #include "kernel/task.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 // -----------------------------------------------------------------------------

@@ -24,7 +24,7 @@
 
 
 #include "hal.h"
-#include "inttypes.h"
+#include "stdint.h"
 #include "stddef.h"
 #include "../../../arch/i386/pc/pmm.h"
 

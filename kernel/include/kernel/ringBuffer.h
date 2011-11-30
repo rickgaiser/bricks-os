@@ -24,7 +24,7 @@
 
 
 #include "kernel/pthread_k.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #define RINGBUFFER_SIZE 512

@@ -23,7 +23,7 @@
 #define ASM_ARCH_SYSCALL_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 // Function pointer definitions

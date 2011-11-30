@@ -23,7 +23,7 @@
 #define ASM_IRQ_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "asm/arch/irq.h"
 
 

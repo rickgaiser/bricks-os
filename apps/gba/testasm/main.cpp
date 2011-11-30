@@ -20,7 +20,7 @@
 
 
 #include "kernel/debug.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 extern "C" int32_t asm_fx_mul_64(int32_t a, int32_t b);

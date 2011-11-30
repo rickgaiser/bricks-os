@@ -23,7 +23,7 @@
 #define ARCH_REGISTERS_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 // "BIOS_TV_MODE"

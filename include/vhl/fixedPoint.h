@@ -23,7 +23,7 @@
 #define FIXEDPOINT_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #ifdef NDS9
 #include "../../kernel/arch/arm/gbands/macros.h"
 #endif

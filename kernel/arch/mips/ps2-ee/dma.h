@@ -23,7 +23,7 @@
 #define PS2_DMA_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "asm/irq.h"
 #include "asm/arch/config.h"
 #ifdef CONFIG_KERNEL_MODE

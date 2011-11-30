@@ -23,7 +23,7 @@
 #define KERNEL_VIDEOMANAGER_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "stddef.h"
 
 

@@ -1,4 +1,4 @@
-#include "inttypes.h"
+#include "stdint.h"
 #include "font8x8.h"
 
 

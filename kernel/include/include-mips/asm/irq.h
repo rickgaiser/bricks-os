@@ -23,7 +23,7 @@
 #define ASM_IRQ_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #define MAX_INTERRUPTS 0x0b

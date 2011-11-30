@@ -23,7 +23,7 @@
 #define GBANDS_ISR_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "multiBoot.h"
 #include "asm/irq.h"
 

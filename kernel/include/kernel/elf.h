@@ -1,7 +1,7 @@
 #ifndef _LINUX_ELF_H
 #define _LINUX_ELF_H
 
-#include "inttypes.h"
+#include "stdint.h"
 //#include <asm/elf.h>
 
 struct file;

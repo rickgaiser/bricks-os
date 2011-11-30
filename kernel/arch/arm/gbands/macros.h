@@ -23,7 +23,7 @@
 #define ASM_ARCH_MACROS_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "registers.h"
 
 

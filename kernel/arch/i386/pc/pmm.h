@@ -69,7 +69,7 @@
 
 
 #ifndef ASM
-#include "inttypes.h"
+#include "stdint.h"
 
 
 #define VIRT_TO_PHYS(a) ((uint32_t)(a) - KERNEL_VIRTUAL_OFFSET)

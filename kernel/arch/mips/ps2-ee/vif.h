@@ -23,7 +23,7 @@
 #define PS2_VIF_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "dma.h"
 
 

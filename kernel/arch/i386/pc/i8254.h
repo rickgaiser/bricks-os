@@ -25,7 +25,7 @@
 #define I8254_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 #include "kernel/interrupt.h"
 
 

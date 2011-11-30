@@ -23,7 +23,7 @@
 #define NGC_GX_H
 
 
-#include "inttypes.h"
+#include "stdint.h"
 
 
 namespace GX

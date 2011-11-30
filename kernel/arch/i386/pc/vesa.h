@@ -26,7 +26,7 @@
 #include "asm/task.h"
 #include "kernel/videoManager.h"
 #include "kernel/2dRenderer.h"
-#include "inttypes.h"
+#include "stdint.h"
 
 
 //---------------------------------------------------------------------------
