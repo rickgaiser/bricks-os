@@ -194,7 +194,7 @@ getBitNr(uint32_t value)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CTexture::CTexture()
- : iMaxLevel_(0)
+ : iMaxLevel_(-1)
  , minFilter(GL_NEAREST_MIPMAP_LINEAR)
  , magFilter(GL_LINEAR)
  , uWrapMode(GL_REPEAT)
@@ -251,12 +251,19 @@ CTexture::lambda(float dudx, float dudy, float dvdx, float dvdy)
 void
 CTexture::getTexel(raster::SColorF & c, float u, float v, float lod)
 {
+  int upos, vpos;
+  float colors[4];
+
+  if(iMaxLevel_ < 0)
+    return;
+
   u *= width;
   v *= height;
 
-  int upos = (int)u;
-  int vpos = (int)v;
+  upos = (int)u;
+  vpos = (int)v;
 
+#if 1
   int iFilter;
   int iMipMapLevel0;
   int iMipMapLevel1;
@@ -297,8 +304,6 @@ CTexture::getTexel(raster::SColorF & c, float u, float v, float lod)
       iMipMapLevel1 = 0;
     }
   }
-
-  float colors[4];
 
   if(iMipMapLevel0 == iMipMapLevel1)
   {
@@ -369,6 +374,11 @@ CTexture::getTexel(raster::SColorF & c, float u, float v, float lod)
       }
     }
   }
+
+#else
+  // point sampling (GL_NEAREST)
+  getTexel(0, upos, vpos, colors);
+#endif
 
   c.a = colors[0];
   c.r = colors[1];
