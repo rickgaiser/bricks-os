@@ -36,9 +36,9 @@
 #define fpfromd(sh,fp)       ((int32_t)((fp)*(1<<(sh))))
 #define fptof(sh,fp)         ((float )(fp)*(1.0/(1<<(sh))))
 #define fptod(sh,fp)         ((double)(fp)*(1.0/(1<<(sh))))
-#define fpceil(sh,fp)        (((fp)+((1<<sh)-1)) >> sh)
-#define fpfloor(sh,fp)       ( (fp)              >> sh)
-#define fpround(sh,fp)       (((fp)+(1<<(sh-1))) >> sh)
+#define fpceil(sh,fp)        (((fp)+((1<<sh)-1)) >> (sh))
+#define fpfloor(sh,fp)       ( (fp)              >> (sh))
+#define fpround(sh,fp)       (((fp)+(1<<(sh-1))) >> (sh))
 // Math
 #define fpmul(sh,a,b)        ((((int64_t)(a))*((int64_t)(b)))>>(sh))
 #define fpmul_fast(sh,a,b)   ((((a)>>((sh)>>1)) * ((b)>>((sh)>>1)))) // loses half of the precision on both values

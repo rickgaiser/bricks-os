@@ -30,51 +30,30 @@
 #define MATRIX_MATH_TABLE_BITS (10) // 10bits == 1024 values
 #define MATRIX_MATH_TABLE_SIZE 1024 // (1<<MATRIX_MATH_TABLE_BITS) <-- Does not work with GCC 3.2.2
 
-#define ROW_MAJOR
-//#define COLUMN_MAJOR // OpenGL
+
+// Row major vs column major notation:
+//
+//   Row major matrix, row vector (Notation used by DirectX)
+//
+//                 [ 0  1  2  3]
+//     [x y z w] * [ 4  5  6  7]
+//                 [ 8  9 10 11]
+//                 [12 13 14 15]
+//
+//   Column major matrix, column vector (Notation used by OpenGL)
+//
+//     [ 0  4  8 12]   [x]
+//     [ 1  5  9 13] * [y]
+//     [ 2  6 10 14]   [z]
+//     [ 3  7 11 15]   [w]
+//
+//   They both have the same layout in memory, and produce the same result.
 
 
 //---------------------------------------------------------------------------
 template <class T>
 class TMatrix4x4
 {
-public:
-#ifdef ROW_MAJOR
-  static const int ROW0 = 0*4;
-  static const int ROW1 = 1*4;
-  static const int ROW2 = 2*4;
-  static const int ROW3 = 3*4;
-  static const int COL0 = 0;
-  static const int COL1 = 1;
-  static const int COL2 = 2;
-  static const int COL3 = 3;
-#else
-  static const int ROW0 = 0;
-  static const int ROW1 = 1;
-  static const int ROW2 = 2;
-  static const int ROW3 = 3;
-  static const int COL0 = 0*4;
-  static const int COL1 = 1*4;
-  static const int COL2 = 2*4;
-  static const int COL3 = 3*4;
-#endif
-  static const int RC00 = ROW0 + COL0;
-  static const int RC01 = ROW0 + COL1;
-  static const int RC02 = ROW0 + COL2;
-  static const int RC03 = ROW0 + COL3;
-  static const int RC10 = ROW1 + COL0;
-  static const int RC11 = ROW1 + COL1;
-  static const int RC12 = ROW1 + COL2;
-  static const int RC13 = ROW1 + COL3;
-  static const int RC20 = ROW2 + COL0;
-  static const int RC21 = ROW2 + COL1;
-  static const int RC22 = ROW2 + COL2;
-  static const int RC23 = ROW2 + COL3;
-  static const int RC30 = ROW3 + COL0;
-  static const int RC31 = ROW3 + COL1;
-  static const int RC32 = ROW3 + COL2;
-  static const int RC33 = ROW3 + COL3;
-
 public:
   // Constructors
   TMatrix4x4();
@@ -122,7 +101,7 @@ public:
   void transform4(const TVector4<T> & from, TVector4<T> & to);
 
 public:
-  T matrix[16];
+  T m_[16];
 
 private:
   static bool bInitialized_;
