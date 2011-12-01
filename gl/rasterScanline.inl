@@ -464,7 +464,7 @@
             *pDestPixel = flat_color;
   #endif
   #ifdef RASTER_DIRECT_TEXTURES
-            SColor ctexture;
+            TColor<int32_t> ctexture;
             pCurrentTex_->getTexel(ctexture, scan_t_current.u, scan_t_current.v, lod);
             *pDestPixel = RASTER_COLOR_SAVE(ctexture, SHIFT_COLOR_CALC);
   #endif

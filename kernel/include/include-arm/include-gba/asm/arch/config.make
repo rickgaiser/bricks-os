@@ -19,7 +19,7 @@ CONFIG_PD_IBM=y
 
 # Video configuration
 CONFIG_FRAMEBUFFER=y
-CONFIG_GL=y
+CONFIG_GL=n
 
 # Library configuration
 CONFIG_BUILTIN_MM=y

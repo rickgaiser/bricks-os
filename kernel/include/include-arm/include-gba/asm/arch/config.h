@@ -46,9 +46,7 @@
 
 // Video configuration
 #define CONFIG_FRAMEBUFFER
-#define CONFIG_GL
-#define CONFIG_GL_TINY
-#define CONFIG_GL_FRAMEBUFFER_16BIT
+#undef  CONFIG_GL
 
 // Library configuration
 #define CONFIG_BUILTIN_MM
