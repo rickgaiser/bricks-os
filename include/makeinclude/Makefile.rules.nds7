@@ -17,6 +17,7 @@ CFLAGS          +=\
                 -mthumb-interwork \
                 -mlong-calls \
                 -falign-functions=32 \
+                -Wno-psabi \
                 -DNDS \
                 -DNDS7 \
 
@@ -30,6 +31,7 @@ CXXFLAGS        +=\
                 -mthumb-interwork \
                 -mlong-calls \
                 -falign-functions=32 \
+                -Wno-psabi \
                 -DNDS \
                 -DNDS7 \
 

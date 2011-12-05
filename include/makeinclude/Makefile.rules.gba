@@ -23,6 +23,7 @@ CFLAGS          +=\
                 -mthumb \
                 -mthumb-interwork \
                 -mlong-calls \
+                -Wno-psabi \
                 -DGBA \
 
 CXXFLAGS        +=\
@@ -33,6 +34,7 @@ CXXFLAGS        +=\
                 -mthumb \
                 -mthumb-interwork \
                 -mlong-calls \
+                -Wno-psabi \
                 -DGBA \
 
 LINK_FLAGS      =\

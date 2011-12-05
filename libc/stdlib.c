@@ -67,9 +67,10 @@ rand(void)
   return seed;
 }
 
+#ifndef NDS9
 // -----------------------------------------------------------------------------
 long int
-__attribute__((weak)) strtol(const char * str, char ** endptr, int base)
+strtol(const char * str, char ** endptr, int base)
 {
   register const char *s = str;
   register unsigned long acc;
@@ -152,3 +153,4 @@ __attribute__((weak)) strtol(const char * str, char ** endptr, int base)
 
   return (acc);
 }
+#endif

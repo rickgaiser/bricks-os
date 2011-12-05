@@ -1,6 +1,6 @@
 /*
  * Bricks-OS, Operating System for Game Consoles
- * Copyright (C) 2008 Maximus32 <Maximus32@bricks-os.org>
+ * Copyright (C) 2011 Maximus32 <Maximus32@bricks-os.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,39 +19,18 @@
  */
 
 
-#ifndef DIRENT_H
-#define DIRENT_H
+#ifndef STDARG_H
+#define STDARG_H
 
 
-#include "sys/types.h"
-
-
-#ifdef __cplusplus
-extern "C" {
+#define va_list         __builtin_va_list
+#if __GNUC__ >= 4
+  #define va_start(v,l)   __builtin_va_start(v,l)
+#else
+  #define va_start(v,l)   __builtin_stdarg_start(v,l)
 #endif
-
-
-typedef void * DIR;
-
-struct dirent
-{
-  ino_t  d_ino;        // file serial number
-  char   d_name[256];  // name of entry
-};
-
-
-int             closedir (DIR * dirp);
-DIR           * opendir  (const char * dirname);
-struct dirent * readdir  (DIR * dirp);
-int             readdir_r(DIR * dirp, struct dirent * entry, struct dirent ** result);
-void            rewinddir(DIR * dirp);
-void            seekdir  (DIR * dirp, long int loc);
-long int        telldir  (DIR * dirp);
-
-
-#ifdef __cplusplus
-}
-#endif
+#define va_end(v)       __builtin_va_end(v)
+#define va_arg(v,l)     __builtin_va_arg(v,l)
 
 
 #endif
