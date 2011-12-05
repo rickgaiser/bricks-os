@@ -496,6 +496,10 @@
         }
       }
 
+#ifdef ENABLE_PROFILING
+      fillRate += iLineWidth;
+#endif
+
       // Advance to the next line
       left_x += dxdy_left;
       dxdy_left_err += dxdy_left_mod;

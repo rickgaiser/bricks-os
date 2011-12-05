@@ -20,6 +20,9 @@
 
 
 #include "rasterScanline.h"
+#ifdef ENABLE_PROFILING
+#include "glProfiling.h"
+#endif
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -91,13 +94,13 @@ void
 CRasterizerScanline::rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2)
 {
 #ifdef ENABLE_PROFILING
-  prof_raster.start();
+  prof_rasterMain.start();
 #endif
 
   _rasterTriangle(v0, v1, v2);
 
 #ifdef ENABLE_PROFILING
-  prof_raster.end();
+  prof_rasterMain.end();
 #endif
 }
 

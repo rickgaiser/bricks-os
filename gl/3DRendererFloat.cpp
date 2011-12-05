@@ -22,9 +22,6 @@
 #include "vhl/fixedPoint.h"
 #include "vhl/matrix.h"
 #include "color.h"
-#ifdef ENABLE_PROFILING
-#include "prof/prof.h"
-#endif
 
 #include "stdlib.h"
 #include "math.h"

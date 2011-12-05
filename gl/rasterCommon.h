@@ -26,20 +26,9 @@
 #include "GL/gl.h"
 #include "raster.h"
 #include "textures.h"
-#ifdef ENABLE_PROFILING
-#include "prof/prof.h"
-#endif
 
 
 #define MAX_TEXTURE_COUNT 1024
-
-
-#ifdef ENABLE_PROFILING
-extern CTimeProfiler prof_clear;
-extern CTimeProfiler prof_init;
-extern CTimeProfiler prof_raster;
-extern uint64_t fillRate;
-#endif
 
 
 namespace raster

@@ -20,6 +20,9 @@
 
 
 #include "rasterCommon.h"
+#ifdef ENABLE_PROFILING
+#include "glProfiling.h"
+#endif
 #include "GL/gl.h"
 #ifndef __BRICKS__
 #include "GL/glext.h"
@@ -35,15 +38,6 @@
 
 // FIXME
 #define setError(x)
-
-
-#ifdef ENABLE_PROFILING
-CTimeProfiler prof_render("render");
-CTimeProfiler prof_clear ("clear");
-CTimeProfiler prof_init  ("init");
-CTimeProfiler prof_raster("raster");
-uint64_t fillRate;
-#endif
 
 
 namespace raster
@@ -788,7 +782,7 @@ void
 CASoftRasterizer::clear(GLbitfield mask)
 {
 #ifdef ENABLE_PROFILING
-  prof_clear.start();
+  prof_rasterClear.start();
 #endif
 
   if(mask & GL_COLOR_BUFFER_BIT)
@@ -828,7 +822,7 @@ CASoftRasterizer::clear(GLbitfield mask)
     }
   }
 #ifdef ENABLE_PROFILING
-  prof_clear.end();
+  prof_rasterClear.end();
 #endif
 }
 
