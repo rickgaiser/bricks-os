@@ -71,8 +71,7 @@ struct TVertex
   TVector3<T> n2; // Vertex Normal, rotated
 
   // Color
-  TColor<T> cl;  // Vertex Color
-
+  TColor<T> c;    // Color
   // Texture coordinates
   T t[2];
 

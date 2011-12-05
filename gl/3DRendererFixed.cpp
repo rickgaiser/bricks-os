@@ -22,9 +22,6 @@
 #include "vhl/fixedPoint.h"
 #include "vhl/matrix.h"
 #include "color.h"
-#ifdef ENABLE_PROFILING
-#include "prof/prof.h"
-#endif
 
 #include "stdlib.h"
 #include "math.h"
@@ -1591,7 +1588,7 @@ CSoft3DRendererFixed::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
   // Set normal
   v.n = state_.lighting.normal;
   // Set color
-  v.cl = state_.clCurrent;
+  v.c = state_.clCurrent;
   // Set texture
   v.t[0] = state_.texturing.coordCurrent[0];
   v.t[1] = state_.texturing.coordCurrent[1];
@@ -1731,21 +1728,21 @@ CSoft3DRendererFixed::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
         switch(bufColor_.type)
         {
           case GL_FLOAT:
-            v.cl.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v.cl.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v.cl.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v.cl.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.c.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.c.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.c.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.c.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
             break;
           case GL_FIXED:
-            v.cl.r.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
-            v.cl.g.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
-            v.cl.b.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
-            v.cl.a.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
+            v.c.r.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
+            v.c.g.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
+            v.c.b.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
+            v.c.a.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
             break;
         };
       }
       else
-        v.cl = state_.clCurrent;
+        v.c = state_.clCurrent;
     }
 
     // Textures
@@ -1885,25 +1882,25 @@ CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
         case GL_EMISSION:
           break;
         case GL_AMBIENT:
-          cAmbient *= v.cl;
+          cAmbient *= v.c;
           break;
         case GL_DIFFUSE:
-          cDiffuse *= v.cl;
+          cDiffuse *= v.c;
           break;
         case GL_SPECULAR:
-          cSpecular *= v.cl;
+          cSpecular *= v.c;
           break;
         case GL_AMBIENT_AND_DIFFUSE:
         default:
-          cAmbient *= v.cl;
-          cDiffuse *= v.cl;
+          cAmbient *= v.c;
+          cDiffuse *= v.c;
       };
     }
 
     // Final color
-    v.cl = cAmbient + cDiffuse + cSpecular;
+    v.c = cAmbient + cDiffuse + cSpecular;
     // Clamp to 0..1
-    v.cl.clamp();
+    v.c.clamp();
   }
 
   // ---
@@ -1931,7 +1928,7 @@ CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
 
     f = mathlib::clamp<CFixed>(f, 0, 1);
 
-    v.cl = mathlib_LERP(f, state_.fog.color, v.cl);
+    v.c = mathlib_LERP(f, state_.fog.color, v.c);
   }
 }
 
@@ -2226,9 +2223,9 @@ CSoft3DRendererFixed::interpolateVertex(SVertexFx & c, SVertexFx & a, SVertexFx 
 {
   // Color
   if(state_.smoothShading == true)
-    c.cl = mathlib_LERP(t, a.cl, b.cl);
+    c.c = mathlib_LERP(t, a.c, b.c);
   else
-    c.cl = b.cl;
+    c.c = b.c;
 
   // Texture coordinates
   if(state_.texturing.enabled == true)
@@ -2258,10 +2255,10 @@ CSoft3DRendererFixed::rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx &
   vtx0.y   = ((yA_ * v0.vd.y) + yB_).value >> (16 - SHIFT_XY);
   vtx0.z   = 0;//((zA_ * v0.vd.z) + zB_).value >> (16 - SHIFT_XY);
   vtx0.w   = v0.vd.w;
-  vtx0.c.r = v0.cl.r.value >> (16 - SHIFT_COLOR);
-  vtx0.c.g = v0.cl.g.value >> (16 - SHIFT_COLOR);
-  vtx0.c.b = v0.cl.b.value >> (16 - SHIFT_COLOR);
-  vtx0.c.a = v0.cl.a.value >> (16 - SHIFT_COLOR);
+  vtx0.c.r = v0.c.r.value >> (16 - SHIFT_COLOR);
+  vtx0.c.g = v0.c.g.value >> (16 - SHIFT_COLOR);
+  vtx0.c.b = v0.c.b.value >> (16 - SHIFT_COLOR);
+  vtx0.c.a = v0.c.a.value >> (16 - SHIFT_COLOR);
   //vtx0.t.u = v0.t[0];
   //vtx0.t.v = v0.t[1];
 
@@ -2269,10 +2266,10 @@ CSoft3DRendererFixed::rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx &
   vtx1.y   = ((yA_ * v1.vd.y) + yB_).value >> (16 - SHIFT_XY);
   vtx1.z   = 0;//((zA_ * v1.vd.z) + zB_).value >> (16 - SHIFT_XY);
   vtx1.w   = v1.vd.w;
-  vtx1.c.r = v1.cl.r.value >> (16 - SHIFT_COLOR);
-  vtx1.c.g = v1.cl.g.value >> (16 - SHIFT_COLOR);
-  vtx1.c.b = v1.cl.b.value >> (16 - SHIFT_COLOR);
-  vtx1.c.a = v1.cl.a.value >> (16 - SHIFT_COLOR);
+  vtx1.c.r = v1.c.r.value >> (16 - SHIFT_COLOR);
+  vtx1.c.g = v1.c.g.value >> (16 - SHIFT_COLOR);
+  vtx1.c.b = v1.c.b.value >> (16 - SHIFT_COLOR);
+  vtx1.c.a = v1.c.a.value >> (16 - SHIFT_COLOR);
   //vtx1.t.u = v1.t[0];
   //vtx1.t.v = v1.t[1];
 
@@ -2280,10 +2277,10 @@ CSoft3DRendererFixed::rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx &
   vtx2.y   = ((yA_ * v2.vd.y) + yB_).value >> (16 - SHIFT_XY);
   vtx2.z   = 0;//((zA_ * v2.vd.z) + zB_).value >> (16 - SHIFT_XY);
   vtx2.w   = v2.vd.w;
-  vtx2.c.r = v2.cl.r.value >> (16 - SHIFT_COLOR);
-  vtx2.c.g = v2.cl.g.value >> (16 - SHIFT_COLOR);
-  vtx2.c.b = v2.cl.b.value >> (16 - SHIFT_COLOR);
-  vtx2.c.a = v2.cl.a.value >> (16 - SHIFT_COLOR);
+  vtx2.c.r = v2.c.r.value >> (16 - SHIFT_COLOR);
+  vtx2.c.g = v2.c.g.value >> (16 - SHIFT_COLOR);
+  vtx2.c.b = v2.c.b.value >> (16 - SHIFT_COLOR);
+  vtx2.c.a = v2.c.a.value >> (16 - SHIFT_COLOR);
   //vtx2.t.u = v2.t[0];
   //vtx2.t.v = v2.t[1];
 
