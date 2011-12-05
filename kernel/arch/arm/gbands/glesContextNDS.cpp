@@ -1624,7 +1624,7 @@ CNDSGLESContext::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
   // Set normal
   v.n = state_.lighting.normal;
   // Set color
-  v.cl = state_.clCurrent;
+  v.c = state_.clCurrent;
   // Set texture
   v.t[0] = state_.texturing.coordCurrent[0];
   v.t[1] = state_.texturing.coordCurrent[1];
@@ -1930,7 +1930,7 @@ CNDSGLESContext::vertexShaderTransform(SVertexFx & v)
   if(state_.lighting.enabled == true)
     GFX_NORMAL = fp_to_ndsNormal(v.n.x,  v.n.y,  v.n.z);
   else
-    GFX_COLOR  = fp_to_ndsRGB555(v.cl.r, v.cl.g, v.cl.b);
+    GFX_COLOR  = fp_to_ndsRGB555(v.c.r, v.c.g, v.c.b);
 
   // Textures
   if(state_.texturing.enabled == true)
