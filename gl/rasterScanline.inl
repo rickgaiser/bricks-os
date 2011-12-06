@@ -83,7 +83,7 @@
 #endif
 
 // Do we need floating point interpolation
-#if defined(RASTER_ENABLE_TEXTURES) || defined(RASTER_INTERPOLATE_W)
+#if defined(RASTER_ENABLE_TEXTURES) || defined(RASTER_ENABLE_DEPTH_TEST) || defined(RASTER_INTERPOLATE_W)
   #define RASTER_INTERPOLATE_FLOATS
 #endif
 
@@ -174,8 +174,8 @@
   // Depth interpolation
   d1 = vmiddle->z - vtop->z;
   d2 = vbottom->z - vtop->z;
-  grad_z_ddx = (int32_t)DDX();
-  grad_z_ddy = (int32_t)DDY();
+  grad_z_ddx = DDX();
+  grad_z_ddy = DDY();
 
   scan_z_ddx = grad_z_ddx;
 #endif
@@ -311,8 +311,8 @@
 #endif
 
 #ifdef RASTER_ENABLE_DEPTH_TEST
-      edge_z_increment = (dxdy_left * grad_z_ddx) + grad_z_ddy;
-      edge_z_current = vtop_l->z + i_mul_shr(grad_z_ddx, fxXOff, SHIFT_XY) + i_mul_shr(grad_z_ddy, fxYOff, SHIFT_XY);
+      edge_z_increment = (f_dxdy_left * grad_z_ddx) + grad_z_ddy;
+      edge_z_current = vtop_l->z + (grad_z_ddx * fXOff) + (grad_z_ddy * fYOff);
 #endif
 
 #ifdef RASTER_INTERPOLATE_W
@@ -378,7 +378,7 @@
         uint32_t pixelIndex = iY * renderSurface->width() + left_x;
         RASTER_PIXEL_TYPE * pDestPixel = ((RASTER_PIXEL_TYPE *)renderSurface->p) + pixelIndex;
 #ifdef RASTER_ENABLE_DEPTH_TEST
-        int32_t * pDepthPixel = pZBuffer_ + pixelIndex;
+        GLfloat * pDepthPixel = pZBuffer_ + pixelIndex;
 #endif
         while(iLineWidth--)
         {
@@ -387,8 +387,7 @@
           //   if this fails, we don't have to calculate the
           //   color of the pixel. (the most time consuming part of the loop)
 #ifdef RASTER_ENABLE_DEPTH_TEST
-          uint32_t zz = scan_z_current >> SHIFT_Z;
-          if(rasterDepth(zz, *pDepthPixel) == true)
+          if(rasterTest(depthFunction_, scan_z_current, *pDepthPixel) == true)
 #endif
           {
 #ifndef RASTER_DIRECT
@@ -423,22 +422,7 @@
 
             // Alpha Test (RGBA only)
   #ifdef CONFIG_GL_ENABLE_ALPHA_TEST
-            bool bAlphaPasses = true;
-            if(bAlphaTestEnabled_ == true)
-            {
-              switch(alphaFunc_)
-              {
-                case GL_NEVER:    bAlphaPasses = false;                    break;
-                case GL_LESS:     bAlphaPasses = caccu.a <  alphaValueFX_; break;
-                case GL_EQUAL:    bAlphaPasses = caccu.a == alphaValueFX_; break;
-                case GL_LEQUAL:   bAlphaPasses = caccu.a <= alphaValueFX_; break;
-                case GL_GREATER:  bAlphaPasses = caccu.a >  alphaValueFX_; break;
-                case GL_NOTEQUAL: bAlphaPasses = caccu.a != alphaValueFX_; break;
-                case GL_GEQUAL:   bAlphaPasses = caccu.a >= alphaValueFX_; break;
-                case GL_ALWAYS:   bAlphaPasses = true;                     break;
-              };
-            }
-            if(bAlphaPasses == true)
+            if((bAlphaTestEnabled_ == false) || (rasterTest(alphaFunc_, caccu.a, alphaValueFX_) == true))
   #endif
             {
               // Blending (RGBA only): Blend the fragment color with the framebuffer color
@@ -450,7 +434,7 @@
 
   #ifdef RASTER_ENABLE_DEPTH_TEST
               if(bDepthMask_ == true)
-                *pDepthPixel = zz;
+                *pDepthPixel = scan_z_current;
   #endif
               // Write the resulting fragment color to the framebuffer
               *pDestPixel = RASTER_COLOR_SAVE(caccu, SHIFT_COLOR_CALC);
@@ -458,7 +442,7 @@
 #else
   #ifdef RASTER_ENABLE_DEPTH_TEST
               if(bDepthMask_ == true)
-                *pDepthPixel = zz;
+                *pDepthPixel = scan_z_current;
   #endif
   #ifdef RASTER_DIRECT_FLAT_COLOR
             *pDestPixel = flat_color;

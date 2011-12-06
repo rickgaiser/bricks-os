@@ -23,6 +23,7 @@
 #define GL_RASTER_H
 
 
+#include "context.h"
 #include "GL/gl.h"
 #include "vhl/color.h"
 #include "kernel/videoManager.h"
@@ -31,40 +32,6 @@
 namespace raster
 {
 
-
-//-----------------------------------------------------------------------------
-template <class T>
-struct TColor
-{
-  inline void operator+=(const TColor & c)
-  {
-    r += c.r;
-    g += c.g;
-    b += c.b;
-    a += c.a;
-  }
-
-  inline void operator*=(const TColor & c)
-  {
-    r *= c.r;
-    g *= c.g;
-    b *= c.b;
-    a *= c.a;
-  }
-
-  inline void operator*=(const T & s)
-  {
-    r *= s;
-    g *= s;
-    b *= s;
-    a *= s;
-  }
-
-  T r;
-  T g;
-  T b;
-  T a;
-};
 
 //-----------------------------------------------------------------------------
 template <class T>
@@ -89,8 +56,8 @@ struct SVertex
 {
   int32_t            x;
   int32_t            y;
-  int32_t            z;
-  float              w;
+  GLfloat            z;
+  GLfloat            w;
 
   TColor<int32_t>    c;
   TTexCoord<GLfloat> t;
@@ -112,6 +79,7 @@ public:
 
   // Depth testing
   virtual void clearDepthf(GLclampf depth) = 0;
+  virtual void depthRange(GLclampf zNear, GLclampf zFar) = 0;
   virtual void depthFunc(GLenum func) = 0;
   virtual void depthMask(GLboolean flag) = 0;
 
@@ -137,7 +105,7 @@ public:
   // RASTER!
   virtual void begin(GLenum mode) = 0;
   virtual void end() = 0;
-  virtual void rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2) = 0;
+  virtual void rasterTriangle(const SVertexF & v0, const SVertexF & v1, const SVertexF & v2) = 0;
 
   // Flush all triangles (very important for tile based rendering)
   virtual void flush() = 0;

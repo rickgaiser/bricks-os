@@ -74,6 +74,26 @@ FloorDivMod(int32_t Numerator, int32_t Denominator, int32_t &Floor, int32_t &Mod
 }
 
 //-----------------------------------------------------------------------------
+template<class T>
+inline bool
+rasterTest(GLenum func, const T & a, const T & b)
+{
+  switch(func)
+  {
+    case GL_LESS:     return (a <  b); break;
+    case GL_EQUAL:    return (a == b); break;
+    case GL_LEQUAL:   return (a <= b); break;
+    case GL_GREATER:  return (a >  b); break;
+    case GL_NOTEQUAL: return (a != b); break;
+    case GL_GEQUAL:   return (a >= b); break;
+    case GL_ALWAYS:   return true;     break;
+    case GL_NEVER:    return false;    break;
+  };
+
+  return false;
+}
+
+//-----------------------------------------------------------------------------
 class CASoftRasterizer
  : public IRasterizer
 {
@@ -90,6 +110,7 @@ public:
 
   // Depth testing
   virtual void clearDepthf(GLclampf depth);
+  virtual void depthRange(GLclampf zNear, GLclampf zFar);
   virtual void depthFunc(GLenum func);
   virtual void depthMask(GLboolean flag);
 
@@ -115,17 +136,14 @@ public:
   // RASTER!
   virtual void begin(GLenum mode);
   virtual void end();
-  virtual void rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2) = 0;
+  virtual void rasterTriangle(const SVertexF & v0, const SVertexF & v1, const SVertexF & v2) = 0;
 
   // Flush all triangles (very important for tile based rendering)
   virtual void flush();
 
 protected:
-  bool rasterDepth(uint32_t z_pix, uint32_t z_buf);
-
-protected:
   TColor<GLfloat> clClear;
-  int32_t   * pZBuffer_;
+  GLfloat   * pZBuffer_;
 
   // Shading model
   bool        bSmoothShadingEnabled_;
@@ -134,8 +152,9 @@ protected:
   bool        bDepthTestEnabled_;
   GLenum      depthFunction_;
   GLfloat     depthClear_;
-  int32_t     zClearValue_;
   bool        bDepthMask_;
+  GLclampf    zNear_;
+  GLclampf    zFar_;
 
   // Textures
   bool        bTexturesEnabled_;
@@ -167,6 +186,21 @@ protected:
   int32_t     fxPixelFloorOffset_;
   int32_t     fxPixelCenterOffset_;
   int32_t     fxOneMinusPixelCenterOffset_;
+  //float     fPixelFloorOffset_;
+  GLfloat     fPixelCenterOffset_;
+  GLfloat     fOneMinusPixelCenterOffset_;
+
+  // Vertex transformations
+  int32_t     iXA_;
+  int32_t     iXB_;
+  int32_t     iYA_;
+  int32_t     iYB_;
+  GLfloat     fXA_;
+  GLfloat     fXB_;
+  GLfloat     fYA_;
+  GLfloat     fYB_;
+  GLfloat     fZA_;
+  GLfloat     fZB_;
 };
 
 

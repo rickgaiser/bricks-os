@@ -24,12 +24,7 @@
 
 
 #include "context.h"
-#include "vhl/fixedPoint.h"
 #include "vhl/matrix.h"
-
-#ifdef __BRICKS__
-#include "asm/arch/config.h"
-#endif
 
 
 #define GL_MATRIX_MODELVIEW_STACK_SIZE  32
@@ -37,7 +32,6 @@
 #define GL_MATRIX_TEXTURE_STACK_SIZE     2
 
 
-#if !defined(__BRICKS__) || (defined(__BRICKS__) && defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
 class CAGLMatrixFloat
  : public virtual I3DRenderer
@@ -80,52 +74,6 @@ protected:
 
   TMatrix4x4<GLfloat> * pCurrentMatrix_;
 };
-#endif
-
-#if !defined(__BRICKS__) || (defined(__BRICKS__) && !defined(CONFIG_FPU))
-//-----------------------------------------------------------------------------
-class CAGLMatrixFixed
- : public virtual I3DRenderer
-{
-public:
-  CAGLMatrixFixed();
-  virtual ~CAGLMatrixFixed();
-
-  virtual void glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
-  virtual void glLoadMatrixx(const GLfixed *m);
-  virtual void glMultMatrixx(const GLfixed *m);
-  virtual void glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar);
-  virtual void glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z);
-  virtual void glScalex(GLfixed x, GLfixed y, GLfixed z);
-  virtual void glTranslatex(GLfixed x, GLfixed y, GLfixed z);
-
-  virtual void glPopMatrix(void);
-  virtual void glPushMatrix(void);
-
-  virtual void glLoadIdentity(void);
-  virtual void glMatrixMode(GLenum mode);
-
-protected:
-  GLenum               matrixMode_;
-
-  // ModelView
-  TMatrix4x4<CFixed>   stackModelView[GL_MATRIX_MODELVIEW_STACK_SIZE];
-  TMatrix4x4<CFixed> * pCurrentModelView_;
-  int                  iModelViewIndex_;
-
-  // Projection
-  TMatrix4x4<CFixed>   stackProjection[GL_MATRIX_PROJECTION_STACK_SIZE];
-  TMatrix4x4<CFixed> * pCurrentProjection_;
-  int                  iProjectionIndex_;
-
-  // Texture
-  TMatrix4x4<CFixed>   stackTexture[GL_MATRIX_TEXTURE_STACK_SIZE];
-  TMatrix4x4<CFixed> * pCurrentTexture_;
-  int                  iTextureIndex_;
-
-  TMatrix4x4<CFixed> * pCurrentMatrix_;
-};
-#endif
 
 
 #endif

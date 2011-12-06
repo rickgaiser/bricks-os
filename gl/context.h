@@ -33,19 +33,6 @@
 #include "vhl/vector.h"
 #include "vhl/color.h"
 
-#ifdef __BRICKS__
-#include "asm/arch/config.h"
-#endif
-
-
-// Clipping flags
-#define CLIP_X_MIN (1<<0)
-#define CLIP_X_MAX (1<<1)
-#define CLIP_Y_MIN (1<<2)
-#define CLIP_Y_MAX (1<<3)
-#define CLIP_Z_MIN (1<<4)
-#define CLIP_Z_MAX (1<<5)
-
 
 //-----------------------------------------------------------------------------
 enum EFastBlendMode
@@ -88,7 +75,6 @@ struct TVertex
   bool processed;
 };
 typedef TVertex<GLfloat> SVertexF;
-typedef TVertex<CFixed>  SVertexFx;
 
 //-----------------------------------------------------------------------------
 struct SBufferPointer
@@ -153,40 +139,6 @@ protected:
   SBufferPointer bufVertex_;
 };
 
-#if !defined(__BRICKS__) || (defined(__BRICKS__) && !defined(CONFIG_FPU))
-//-----------------------------------------------------------------------------
-class CAGLFloatToFixed
- : public virtual I3DRenderer
-{
-public:
-  CAGLFloatToFixed(){}
-  virtual ~CAGLFloatToFixed(){}
-
-  virtual void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-  virtual void glClearDepth(GLclampd depth);
-  virtual void glDepthRangef(GLclampf zNear, GLclampf zFar);
-  virtual void glFogf(GLenum pname, GLfloat param);
-  virtual void glFogfv(GLenum pname, const GLfloat *params);
-  virtual void glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
-  virtual void glLightf(GLenum light, GLenum pname, GLfloat param);
-  virtual void glLightfv(GLenum light, GLenum pname, const GLfloat * params);
-  virtual void glLoadMatrixf(const GLfloat *m);
-  virtual void glMaterialf(GLenum face, GLenum pname, GLfloat param);
-  virtual void glMaterialfv(GLenum face, GLenum pname, const GLfloat *params);
-  virtual void glMultMatrixf(const GLfloat *m);
-  virtual void glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar);
-  virtual void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
-  virtual void glScalef(GLfloat x, GLfloat y, GLfloat z);
-  virtual void glTranslatef(GLfloat x, GLfloat y, GLfloat z);
-
-  virtual void glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-  virtual void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
-  virtual void glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q);
-  virtual void glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz);
-};
-#endif
-
-#if !defined(__BRICKS__) || (defined(__BRICKS__) && defined(CONFIG_FPU))
 //-----------------------------------------------------------------------------
 class CAGLFixedToFloat
  : public virtual I3DRenderer
@@ -217,7 +169,6 @@ public:
   virtual void glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q);
   virtual void glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz);
 };
-#endif
 
 
 #endif // GL_CONTEXT_H

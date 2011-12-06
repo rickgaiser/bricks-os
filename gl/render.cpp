@@ -18,7 +18,7 @@
  * 02111-1307 USA
  */
 
-#include "3DRendererFixed.h"
+#include "render.h"
 #include "vhl/fixedPoint.h"
 #include "vhl/matrix.h"
 #include "color.h"
@@ -42,33 +42,33 @@
 // Perspective division
 //   from 'clip coordinates' to 'normalized device coordinates'
 #define CALC_CLIP_TO_NDEV(v) \
-  CFixed inv_w; \
-  inv_w.value = gl_fpinverse((v).vc.w.value); \
+  GLfloat inv_w; \
+  inv_w = 1.0f / (v).vc.w; \
   (v).vd.x = (v).vc.x * inv_w; \
   (v).vd.y = (v).vc.y * inv_w; \
   (v).vd.z = (v).vc.z * inv_w; \
   (v).vd.w = inv_w
 
-#define CLIP_ROUNDING_ERROR (CFixed(0.00001f)) // (1E-5)
-inline void setClipFlags(SVertexFx & v)
+#define CLIP_ROUNDING_ERROR (0.00001f) // (1E-5)
+inline void setClipFlags(SVertexF & v)
 {
-  CFixed w = v.vc.w * (CFixed(1) + CLIP_ROUNDING_ERROR);
-  v.clip = ((v.vc.x.value < -w.value)     ) |
-           ((v.vc.x.value >  w.value) << 1) |
-           ((v.vc.y.value < -w.value) << 2) |
-           ((v.vc.y.value >  w.value) << 3) |
-           ((v.vc.z.value < -w.value) << 4) |
-           ((v.vc.z.value >  w.value) << 5);
+  GLfloat w = v.vc.w * (1.0f + CLIP_ROUNDING_ERROR);
+  v.clip = ((v.vc.x < -w)     ) |
+           ((v.vc.x >  w) << 1) |
+           ((v.vc.y < -w) << 2) |
+           ((v.vc.y >  w) << 3) |
+           ((v.vc.z < -w) << 4) |
+           ((v.vc.z >  w) << 5);
 }
 
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-CSoft3DRendererFixed::CSoft3DRendererFixed()
- : CAGLFloatToFixed()
+CRenderer::CRenderer()
+ : CAGLFixedToFloat()
  , CAGLErrorHandler()
  , CAGLBuffers()
- , CAGLMatrixFixed()
+ , CAGLMatrixFloat()
  , pRaster_(NULL)
 {
   state_.culling.enabled = false;
@@ -100,7 +100,7 @@ CSoft3DRendererFixed::CSoft3DRendererFixed()
   state_.texturing.coordCurrent[2] = 0.0f;
   state_.texturing.coordCurrent[3] = 1.0f;
   state_.texturing.envMode = GL_MODULATE;
-  state_.texturing.envColor = TColor<CFixed>(0, 0, 0, 0);
+  state_.texturing.envColor = TColor<GLfloat>(0, 0, 0, 0);
 
   state_.depthTest.enabled = false;
   state_.depthTest.mask = true;
@@ -162,7 +162,7 @@ CSoft3DRendererFixed::CSoft3DRendererFixed()
     state_.lighting.light[iLight].positionNormal = state_.lighting.light[iLight].position;
   }
   state_.lighting.normalizeEnabled = false;
-  state_.lighting.normal = TVector3<CFixed>(0.0f, 0.0f, 1.0f);
+  state_.lighting.normal = TVector3<GLfloat>(0.0f, 0.0f, 1.0f);
 
   state_.materialFront.ambient.r  = state_.materialBack.ambient.r  = 0.2f;
   state_.materialFront.ambient.g  = state_.materialBack.ambient.g  = 0.2f;
@@ -188,31 +188,26 @@ CSoft3DRendererFixed::CSoft3DRendererFixed()
   state_.fog.start = 0.0f;
   state_.fog.end = 1.0f;
   state_.fog.linear_scale = 1.0f;
-  state_.fog.color = TColor<CFixed>(0.0f, 0.0f, 0.0f, 0.0f);
-
-
-  float zsize = (1 << (DEPTH_Z + SHIFT_Z));
-  zA_ = ((zsize - 0.5) / 2.0);
-  zB_ = ((zsize - 0.5) / 2.0) + (1 << (SHIFT_Z-1));
+  state_.fog.color = TColor<GLfloat>(0.0f, 0.0f, 0.0f, 0.0f);
 
   bInBeginEnd_ = false;
 
-  clipPlane_[0] = TVector4<CFixed>( 1.0,  0.0,  0.0,  1.0); // left
-  clipPlane_[1] = TVector4<CFixed>(-1.0,  0.0,  0.0,  1.0); // right
-  clipPlane_[2] = TVector4<CFixed>( 0.0,  1.0,  0.0,  1.0); // bottom
-  clipPlane_[3] = TVector4<CFixed>( 0.0, -1.0,  0.0,  1.0); // top
-  clipPlane_[4] = TVector4<CFixed>( 0.0,  0.0,  1.0,  1.0); // near
-  clipPlane_[5] = TVector4<CFixed>( 0.0,  0.0, -1.0,  1.0); // far
+  clipPlane_[0] = TVector4<GLfloat>( 1.0,  0.0,  0.0,  1.0); // left
+  clipPlane_[1] = TVector4<GLfloat>(-1.0,  0.0,  0.0,  1.0); // right
+  clipPlane_[2] = TVector4<GLfloat>( 0.0,  1.0,  0.0,  1.0); // bottom
+  clipPlane_[3] = TVector4<GLfloat>( 0.0, -1.0,  0.0,  1.0); // top
+  clipPlane_[4] = TVector4<GLfloat>( 0.0,  0.0,  1.0,  1.0); // near
+  clipPlane_[5] = TVector4<GLfloat>( 0.0,  0.0, -1.0,  1.0); // far
 }
 
 //-----------------------------------------------------------------------------
-CSoft3DRendererFixed::~CSoft3DRendererFixed()
+CRenderer::~CRenderer()
 {
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::setRaster(raster::IRasterizer * rast)
+CRenderer::setRaster(raster::IRasterizer * rast)
 {
   pRaster_ = rast;
 
@@ -222,7 +217,7 @@ CSoft3DRendererFixed::setRaster(raster::IRasterizer * rast)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::setSurface(CSurface * surface)
+CRenderer::setSurface(CSurface * surface)
 {
   IRenderer::setSurface(surface);
 
@@ -232,7 +227,7 @@ CSoft3DRendererFixed::setSurface(CSurface * surface)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glAlphaFunc(GLenum func, GLclampf ref)
+CRenderer::glAlphaFunc(GLenum func, GLclampf ref)
 {
   if(bInBeginEnd_ == true)
   {
@@ -264,7 +259,7 @@ CSoft3DRendererFixed::glAlphaFunc(GLenum func, GLclampf ref)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glBindTexture(GLenum target, GLuint texture)
+CRenderer::glBindTexture(GLenum target, GLuint texture)
 {
   if(bInBeginEnd_ == true)
   {
@@ -277,7 +272,7 @@ CSoft3DRendererFixed::glBindTexture(GLenum target, GLuint texture)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glBlendFunc(GLenum sfactor, GLenum dfactor)
+CRenderer::glBlendFunc(GLenum sfactor, GLenum dfactor)
 {
   if(bInBeginEnd_ == true)
   {
@@ -342,7 +337,7 @@ CSoft3DRendererFixed::glBlendFunc(GLenum sfactor, GLenum dfactor)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glClear(GLbitfield mask)
+CRenderer::glClear(GLbitfield mask)
 {
   if(bInBeginEnd_ == true)
   {
@@ -368,7 +363,7 @@ CSoft3DRendererFixed::glClear(GLbitfield mask)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
+CRenderer::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
   if(bInBeginEnd_ == true)
   {
@@ -376,17 +371,17 @@ CSoft3DRendererFixed::glClearColorx(GLclampx red, GLclampx green, GLclampx blue,
     return;
   }
 
-  state_.clClear.r.value = mathlib::clamp(red,   gl_fpfromi(0), gl_fpfromi(1));
-  state_.clClear.g.value = mathlib::clamp(green, gl_fpfromi(0), gl_fpfromi(1));
-  state_.clClear.b.value = mathlib::clamp(blue,  gl_fpfromi(0), gl_fpfromi(1));
-  state_.clClear.a.value = mathlib::clamp(alpha, gl_fpfromi(0), gl_fpfromi(1));
+  state_.clClear.r = mathlib::clamp(red,   0.0f, 1.0f);
+  state_.clClear.g = mathlib::clamp(green, 0.0f, 1.0f);
+  state_.clClear.b = mathlib::clamp(blue,  0.0f, 1.0f);
+  state_.clClear.a = mathlib::clamp(alpha, 0.0f, 1.0f);
 
   pRaster_->clearColor(state_.clClear.r, state_.clClear.g, state_.clClear.b, state_.clClear.a);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glClearDepthx(GLclampx depth)
+CRenderer::glClearDepth(GLclampd depth)
 {
   if(bInBeginEnd_ == true)
   {
@@ -394,14 +389,14 @@ CSoft3DRendererFixed::glClearDepthx(GLclampx depth)
     return;
   }
 
-  state_.depthTest.clear.value = mathlib::clamp(depth, gl_fpfromi(0), gl_fpfromi(1));
+  state_.depthTest.clear = mathlib::clamp(depth, (GLclampd)0.0f, (GLclampd)1.0f);
 
   pRaster_->clearDepthf(state_.depthTest.clear);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glColorMaterial(GLenum face, GLenum mode)
+CRenderer::glColorMaterial(GLenum face, GLenum mode)
 {
   if(bInBeginEnd_ == true)
   {
@@ -446,7 +441,7 @@ CSoft3DRendererFixed::glColorMaterial(GLenum face, GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table)
+CRenderer::glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table)
 {
   // NOTE: Parameters validated in rasterizer
   pRaster_->colorTable(target, internalformat, width, format, type, table);
@@ -454,7 +449,7 @@ CSoft3DRendererFixed::glColorTable(GLenum target, GLenum internalformat, GLsizei
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glCullFace(GLenum mode)
+CRenderer::glCullFace(GLenum mode)
 {
   if(bInBeginEnd_ == true)
   {
@@ -479,7 +474,7 @@ CSoft3DRendererFixed::glCullFace(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glDeleteTextures(GLsizei n, const GLuint *textures)
+CRenderer::glDeleteTextures(GLsizei n, const GLuint *textures)
 {
   if(bInBeginEnd_ == true)
   {
@@ -492,7 +487,7 @@ CSoft3DRendererFixed::glDeleteTextures(GLsizei n, const GLuint *textures)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
+CRenderer::glDepthRangef(GLclampf zNear, GLclampf zFar)
 {
   if(bInBeginEnd_ == true)
   {
@@ -500,14 +495,15 @@ CSoft3DRendererFixed::glDepthRangex(GLclampx zNear, GLclampx zFar)
     return;
   }
 
-  // FIXME: zA_ and zB_ need to be modified, this function is now useless
-  state_.depthTest.rangeNear.value = mathlib::clamp(zNear, gl_fpfromi(0), gl_fpfromi(1));
-  state_.depthTest.rangeFar.value  = mathlib::clamp(zFar,  gl_fpfromi(0), gl_fpfromi(1));
+  state_.depthTest.rangeNear = mathlib::clamp(zNear, 0.0f, 1.0f);
+  state_.depthTest.rangeFar  = mathlib::clamp(zFar,  0.0f, 1.0f);
+
+  pRaster_->depthRange(state_.depthTest.rangeNear, state_.depthTest.rangeFar);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glDepthFunc(GLenum func)
+CRenderer::glDepthFunc(GLenum func)
 {
   if(bInBeginEnd_ == true)
   {
@@ -538,7 +534,7 @@ CSoft3DRendererFixed::glDepthFunc(GLenum func)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glDepthMask(GLboolean flag)
+CRenderer::glDepthMask(GLboolean flag)
 {
   if(bInBeginEnd_ == true)
   {
@@ -553,7 +549,7 @@ CSoft3DRendererFixed::glDepthMask(GLboolean flag)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glDisable(GLenum cap)
+CRenderer::glDisable(GLenum cap)
 {
   if(bInBeginEnd_ == true)
   {
@@ -640,7 +636,7 @@ CSoft3DRendererFixed::glDisable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
+CRenderer::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
   if(bInBeginEnd_ == true)
   {
@@ -672,12 +668,108 @@ CSoft3DRendererFixed::glDrawArrays(GLenum mode, GLint first, GLsizei count)
     return;
   }
 
-  _glDrawArrays(mode, first, count);
+  if(bBufVertexEnabled_ == false)
+    return;
+
+  GLint idxVertex  (first * bufVertex_.size);
+  GLint idxColor   (first * bufColor_.size);
+  GLint idxNormal  (first * bufNormal_.size);
+  GLint idxTexCoord(first * bufTexCoord_.size);
+  SVertexF v;
+
+  glBegin(mode);
+
+  // Process all vertices
+  for(GLint i(0); i < count; i++)
+  {
+    // Vertex
+    switch(bufVertex_.type)
+    {
+      case GL_FLOAT:
+        v.vo.x = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.vo.y = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.vo.z = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
+        v.vo.w = 1.0f;
+        break;
+      case GL_FIXED:
+        v.vo.x = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.vo.y = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.vo.z = gl_fptof(((GLfixed *)bufVertex_.pointer)[idxVertex++]);
+        v.vo.w = 1.0f;
+        break;
+    };
+
+    // Normal
+    if(bBufNormalEnabled_ == true)
+    {
+      switch(bufNormal_.type)
+      {
+        case GL_FLOAT:
+          v.n.x = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n.y = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.n.z = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          break;
+        case GL_FIXED:
+          v.n.x = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n.y = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.n.z = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          break;
+      };
+    }
+    else
+      v.n = state_.lighting.normal;
+
+    // Color
+    if(state_.lighting.enabled == false)
+    {
+      if(bBufColorEnabled_ == true)
+      {
+        switch(bufColor_.type)
+        {
+          case GL_FLOAT:
+            v.c.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.c.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.c.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            v.c.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
+            break;
+          case GL_FIXED:
+            v.c.r = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            v.c.g = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            v.c.b = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            v.c.a = gl_fptof(((GLfixed *)bufColor_.pointer)[idxColor++]);
+            break;
+        };
+      }
+      else
+        v.c = state_.clCurrent;
+    }
+
+    // Textures
+    if((state_.texturing.enabled == true) && (bBufTexCoordEnabled_ == true))
+    {
+      switch(bufTexCoord_.type)
+      {
+        case GL_FLOAT:
+          v.t[0] = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
+          v.t[1] = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
+          break;
+        case GL_FIXED:
+          v.t[0] = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+          v.t[1] = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+          break;
+      };
+    }
+
+    v.processed = false;
+    vertexShaderTransform(v);
+  }
+
+  glEnd();
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glEnable(GLenum cap)
+CRenderer::glEnable(GLenum cap)
 {
   if(bInBeginEnd_ == true)
   {
@@ -764,7 +856,7 @@ CSoft3DRendererFixed::glEnable(GLenum cap)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glFinish(void)
+CRenderer::glFinish(void)
 {
   if(bInBeginEnd_ == true)
   {
@@ -777,7 +869,7 @@ CSoft3DRendererFixed::glFinish(void)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glFlush(void)
+CRenderer::glFlush(void)
 {
   if(bInBeginEnd_ == true)
   {
@@ -792,7 +884,7 @@ CSoft3DRendererFixed::glFlush(void)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glFogx(GLenum pname, GLfixed param)
+CRenderer::glFogf(GLenum pname, GLfloat param)
 {
   if(bInBeginEnd_ == true)
   {
@@ -810,18 +902,18 @@ CSoft3DRendererFixed::glFogx(GLenum pname, GLfixed param)
         setError(GL_INVALID_VALUE);
         return;
       }
-      state_.fog.density.value = param;
+      state_.fog.density = param;
       break;
     case GL_FOG_START:
-      state_.fog.start.value = param;
+      state_.fog.start = param;
       bUpdateScale = true;
       break;
     case GL_FOG_END:
-      state_.fog.end.value = param;
+      state_.fog.end = param;
       bUpdateScale = true;
       break;
     case GL_FOG_MODE:
-      state_.fog.mode = param;
+      state_.fog.mode = (GLint)param;
       break;
     //case GL_FOG_INDEX:
     //case GL_FOG_COORDINATE_SOURCE_EXT:
@@ -833,7 +925,7 @@ CSoft3DRendererFixed::glFogx(GLenum pname, GLfixed param)
   if(bUpdateScale == true)
   {
     if((state_.fog.end - state_.fog.start) != 0)
-      state_.fog.linear_scale.value = gl_fpinverse((state_.fog.end - state_.fog.start).value);
+      state_.fog.linear_scale = 1.0f / (state_.fog.end - state_.fog.start);
   }
 
   // FIXME: We assume fogging in the vertex shader, fogging in the fragment shader not possible.
@@ -842,7 +934,7 @@ CSoft3DRendererFixed::glFogx(GLenum pname, GLfixed param)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glFogxv(GLenum pname, const GLfixed * params)
+CRenderer::glFogfv(GLenum pname, const GLfloat * params)
 {
   if(bInBeginEnd_ == true)
   {
@@ -855,24 +947,24 @@ CSoft3DRendererFixed::glFogxv(GLenum pname, const GLfixed * params)
   switch(pname)
   {
     case GL_FOG_DENSITY:
-      state_.fog.density.value = params[0];
+      state_.fog.density = params[0];
       break;
     case GL_FOG_START:
-      state_.fog.start.value = params[0];
+      state_.fog.start = params[0];
       bUpdateScale = true;
       break;
     case GL_FOG_END:
-      state_.fog.end.value = params[0];
+      state_.fog.end = params[0];
       bUpdateScale = true;
       break;
     case GL_FOG_MODE:
-      state_.fog.mode = params[0];
+      state_.fog.mode = (GLint)params[0];
       break;
     case GL_FOG_COLOR:
-      state_.fog.color.r.value = params[0];
-      state_.fog.color.g.value = params[1];
-      state_.fog.color.b.value = params[2];
-      state_.fog.color.a.value = params[3];
+      state_.fog.color.r = params[0];
+      state_.fog.color.g = params[1];
+      state_.fog.color.b = params[2];
+      state_.fog.color.a = params[3];
       break;
     //case GL_FOG_INDEX:
     //case GL_FOG_COORDINATE_SOURCE_EXT:
@@ -884,7 +976,7 @@ CSoft3DRendererFixed::glFogxv(GLenum pname, const GLfixed * params)
   if(bUpdateScale == true)
   {
     if((state_.fog.end - state_.fog.start) != 0)
-      state_.fog.linear_scale.value = gl_fpinverse((state_.fog.end - state_.fog.start).value);
+      state_.fog.linear_scale = 1.0f / (state_.fog.end - state_.fog.start);
   }
 
   // FIXME: We assume fogging in the vertex shader, fogging in the fragment shader not possible.
@@ -893,7 +985,7 @@ CSoft3DRendererFixed::glFogxv(GLenum pname, const GLfixed * params)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glFrontFace(GLenum mode)
+CRenderer::glFrontFace(GLenum mode)
 {
   if(bInBeginEnd_ == true)
   {
@@ -917,7 +1009,7 @@ CSoft3DRendererFixed::glFrontFace(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glGenTextures(GLsizei n, GLuint *textures)
+CRenderer::glGenTextures(GLsizei n, GLuint *textures)
 {
   if(bInBeginEnd_ == true)
   {
@@ -930,7 +1022,7 @@ CSoft3DRendererFixed::glGenTextures(GLsizei n, GLuint *textures)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glGetFloatv(GLenum pname, GLfloat * params)
+CRenderer::glGetFloatv(GLenum pname, GLfloat * params)
 {
   // Return 4x4 matrix
   #define GL_GET_MATRIX_COPY(matrix) \
@@ -988,7 +1080,7 @@ CSoft3DRendererFixed::glGetFloatv(GLenum pname, GLfloat * params)
 //-----------------------------------------------------------------------------
 // NOTE: No hints are used
 void
-CSoft3DRendererFixed::glHint(GLenum target, GLenum mode)
+CRenderer::glHint(GLenum target, GLenum mode)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1035,7 +1127,7 @@ CSoft3DRendererFixed::glHint(GLenum target, GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glLightx(GLenum light, GLenum pname, GLfixed param)
+CRenderer::glLightf(GLenum light, GLenum pname, GLfloat param)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1043,7 +1135,7 @@ CSoft3DRendererFixed::glLightx(GLenum light, GLenum pname, GLfixed param)
     return;
   }
 
-  TLight<CFixed> * pLight = 0;
+  TLight<GLfloat> * pLight = 0;
   switch(light)
   {
     case GL_LIGHT0: pLight = &state_.lighting.light[0]; break;
@@ -1075,7 +1167,7 @@ CSoft3DRendererFixed::glLightx(GLenum light, GLenum pname, GLfixed param)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
+CRenderer::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1083,7 +1175,7 @@ CSoft3DRendererFixed::glLightxv(GLenum light, GLenum pname, const GLfixed * para
     return;
   }
 
-  TLight<CFixed> * pLight = 0;
+  TLight<GLfloat> * pLight = 0;
   switch(light)
   {
     case GL_LIGHT0: pLight = &state_.lighting.light[0]; break;
@@ -1099,17 +1191,17 @@ CSoft3DRendererFixed::glLightxv(GLenum light, GLenum pname, const GLfixed * para
       return;
   }
 
-  TColor<CFixed> * pColor = 0;
+  TColor<GLfloat> * pColor = 0;
   switch(pname)
   {
     case GL_AMBIENT:  pColor = &pLight->ambient; break;
     case GL_DIFFUSE:  pColor = &pLight->diffuse; break;
     case GL_SPECULAR: pColor = &pLight->specular; break;
     case GL_POSITION:
-      pLight->position.x.value = params[0];
-      pLight->position.y.value = params[1];
-      pLight->position.z.value = params[2];
-      pLight->position.w.value = params[3];
+      pLight->position.x = params[0];
+      pLight->position.y = params[1];
+      pLight->position.z = params[2];
+      pLight->position.w = params[3];
       pLight->positionNormal = pLight->position.getNormalized();
       return;
     //case GL_SPOT_DIRECTION:
@@ -1123,17 +1215,17 @@ CSoft3DRendererFixed::glLightxv(GLenum light, GLenum pname, const GLfixed * para
       return;
   }
 
-  pColor->r.value = params[0];
-  pColor->g.value = params[1];
-  pColor->b.value = params[2];
-  pColor->a.value = params[3];
+  pColor->r = params[0];
+  pColor->g = params[1];
+  pColor->b = params[2];
+  pColor->a = params[3];
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glMaterialx(GLenum face, GLenum pname, GLfixed param)
+CRenderer::glMaterialf(GLenum face, GLenum pname, GLfloat param)
 {
-  TMaterial<CFixed> * pMaterial;
+  TMaterial<GLfloat> * pMaterial;
 
   switch(face)
   {
@@ -1144,8 +1236,8 @@ CSoft3DRendererFixed::glMaterialx(GLenum face, GLenum pname, GLfixed param)
       pMaterial = &state_.materialBack;
       break;
     case GL_FRONT_AND_BACK:
-      glMaterialx(GL_FRONT, pname, param);
-      glMaterialx(GL_BACK,  pname, param);
+      glMaterialf(GL_FRONT, pname, param);
+      glMaterialf(GL_BACK,  pname, param);
       return;
     default:
       setError(GL_INVALID_ENUM);
@@ -1160,7 +1252,7 @@ CSoft3DRendererFixed::glMaterialx(GLenum face, GLenum pname, GLfixed param)
         setError(GL_INVALID_VALUE);
         return;
       }
-      pMaterial->shininess.value = param;
+      pMaterial->shininess = param;
       break;
     default:
       setError(GL_INVALID_ENUM);
@@ -1170,9 +1262,9 @@ CSoft3DRendererFixed::glMaterialx(GLenum face, GLenum pname, GLfixed param)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glMaterialxv(GLenum face, GLenum pname, const GLfixed *params)
+CRenderer::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
 {
-  TMaterial<CFixed> * pMaterial;
+  TMaterial<GLfloat> * pMaterial;
 
   switch(face)
   {
@@ -1183,8 +1275,8 @@ CSoft3DRendererFixed::glMaterialxv(GLenum face, GLenum pname, const GLfixed *par
       pMaterial = &state_.materialBack;
       break;
     case GL_FRONT_AND_BACK:
-      glMaterialxv(GL_FRONT, pname, params);
-      glMaterialxv(GL_BACK,  pname, params);
+      glMaterialfv(GL_FRONT, pname, params);
+      glMaterialfv(GL_BACK,  pname, params);
       return;
     default:
       setError(GL_INVALID_ENUM);
@@ -1194,28 +1286,28 @@ CSoft3DRendererFixed::glMaterialxv(GLenum face, GLenum pname, const GLfixed *par
   switch(pname)
   {
     case GL_AMBIENT:
-      pMaterial->ambient.r.value = params[0];
-      pMaterial->ambient.g.value = params[1];
-      pMaterial->ambient.b.value = params[2];
-      pMaterial->ambient.a.value = params[3];
+      pMaterial->ambient.r = params[0];
+      pMaterial->ambient.g = params[1];
+      pMaterial->ambient.b = params[2];
+      pMaterial->ambient.a = params[3];
       break;
     case GL_DIFFUSE:
-      pMaterial->diffuse.r.value = params[0];
-      pMaterial->diffuse.g.value = params[1];
-      pMaterial->diffuse.b.value = params[2];
-      pMaterial->diffuse.a.value = params[3];
+      pMaterial->diffuse.r = params[0];
+      pMaterial->diffuse.g = params[1];
+      pMaterial->diffuse.b = params[2];
+      pMaterial->diffuse.a = params[3];
       break;
     case GL_SPECULAR:
-      pMaterial->specular.r.value = params[0];
-      pMaterial->specular.g.value = params[1];
-      pMaterial->specular.b.value = params[2];
-      pMaterial->specular.a.value = params[3];
+      pMaterial->specular.r = params[0];
+      pMaterial->specular.g = params[1];
+      pMaterial->specular.b = params[2];
+      pMaterial->specular.a = params[3];
       break;
     case GL_EMISSION:
-      pMaterial->emission.r.value = params[0];
-      pMaterial->emission.g.value = params[1];
-      pMaterial->emission.b.value = params[2];
-      pMaterial->emission.a.value = params[3];
+      pMaterial->emission.r = params[0];
+      pMaterial->emission.g = params[1];
+      pMaterial->emission.b = params[2];
+      pMaterial->emission.a = params[3];
       break;
     case GL_SHININESS:
       if((params[0] < 0) || (params[0] > 128))
@@ -1223,17 +1315,17 @@ CSoft3DRendererFixed::glMaterialxv(GLenum face, GLenum pname, const GLfixed *par
         setError(GL_INVALID_VALUE);
         return;
       }
-      pMaterial->shininess.value = params[0];
+      pMaterial->shininess = params[0];
       break;
     case GL_AMBIENT_AND_DIFFUSE:
-      pMaterial->ambient.r.value = params[0];
-      pMaterial->ambient.g.value = params[1];
-      pMaterial->ambient.b.value = params[2];
-      pMaterial->ambient.a.value = params[3];
-      pMaterial->diffuse.r.value = params[0];
-      pMaterial->diffuse.g.value = params[1];
-      pMaterial->diffuse.b.value = params[2];
-      pMaterial->diffuse.a.value = params[3];
+      pMaterial->ambient.r = params[0];
+      pMaterial->ambient.g = params[1];
+      pMaterial->ambient.b = params[2];
+      pMaterial->ambient.a = params[3];
+      pMaterial->diffuse.r = params[0];
+      pMaterial->diffuse.g = params[1];
+      pMaterial->diffuse.b = params[2];
+      pMaterial->diffuse.a = params[3];
       break;
     //case GL_COLOR_INDEXES:
     default:
@@ -1244,7 +1336,7 @@ CSoft3DRendererFixed::glMaterialxv(GLenum face, GLenum pname, const GLfixed *par
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glShadeModel(GLenum mode)
+CRenderer::glShadeModel(GLenum mode)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1270,7 +1362,7 @@ CSoft3DRendererFixed::glShadeModel(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glTexEnvf(GLenum target, GLenum pname, GLfloat param)
+CRenderer::glTexEnvf(GLenum target, GLenum pname, GLfloat param)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1333,7 +1425,7 @@ CSoft3DRendererFixed::glTexEnvf(GLenum target, GLenum pname, GLfloat param)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
+CRenderer::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1403,7 +1495,7 @@ CSoft3DRendererFixed::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * pa
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
+CRenderer::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1417,7 +1509,7 @@ CSoft3DRendererFixed::glTexImage2D(GLenum target, GLint level, GLint internalfor
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
+CRenderer::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1431,7 +1523,7 @@ CSoft3DRendererFixed::glTexParameterf(GLenum target, GLenum pname, GLfloat param
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
+CRenderer::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1445,7 +1537,7 @@ CSoft3DRendererFixed::glTexParameterx(GLenum target, GLenum pname, GLfixed param
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels)
+CRenderer::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1459,7 +1551,7 @@ CSoft3DRendererFixed::glTexSubImage2D(GLenum target, GLint level, GLint xoffset,
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
+CRenderer::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1474,28 +1566,6 @@ CSoft3DRendererFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height
   }
 
   pRaster_->viewport(x, y, width, height);
-
-  viewportXOffset    = x;
-  viewportYOffset    = y;
-  viewportWidth      = width;
-  viewportHeight     = height;
-  viewportPixelCount = width * height;
-
-  xA_ =     (viewportWidth  >> 1);
-  xB_ = x + (viewportWidth  >> 1);
-  yA_ =     (viewportHeight >> 1);
-  yB_ = y + (viewportHeight >> 1);
-
-  // FIXME:
-  yA_  = 0-yA_;
-  xB_ -= x;
-  yB_ -= y;
-
-  // Use fixed point format for xy
-//  xA_ *= (1<<SHIFT_XY);
-//  xB_ *= (1<<SHIFT_XY);
-//  yA_ *= (1<<SHIFT_XY);
-//  yB_ *= (1<<SHIFT_XY);
 }
 
 //-----------------------------------------------------------------------------
@@ -1513,7 +1583,7 @@ CSoft3DRendererFixed::glViewport(GLint x, GLint y, GLsizei width, GLsizei height
 //  - glCallLists
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glBegin(GLenum mode)
+CRenderer::glBegin(GLenum mode)
 {
   if(bInBeginEnd_ == true)
   {
@@ -1543,9 +1613,9 @@ CSoft3DRendererFixed::glBegin(GLenum mode)
   rasterMode_ = mode;
 
   // Initialize for default triangle
-  triangle_[0] = &vertices[0];
-  triangle_[1] = &vertices[1];
-  triangle_[2] = &vertices[2];
+  triangle_[0] = &vertices_[0];
+  triangle_[1] = &vertices_[1];
+  triangle_[2] = &vertices_[2];
   bFlipFlop_ = true;
   vertIdx_   = 0;
 
@@ -1554,7 +1624,7 @@ CSoft3DRendererFixed::glBegin(GLenum mode)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glEnd()
+CRenderer::glEnd()
 {
   if(bInBeginEnd_ == false)
   {
@@ -1569,7 +1639,7 @@ CSoft3DRendererFixed::glEnd()
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
+CRenderer::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
   if(bInBeginEnd_ == false)
   {
@@ -1578,13 +1648,13 @@ CSoft3DRendererFixed::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
     return;
   }
 
-  SVertexFx v;
+  SVertexF v;
 
   // Set vertex
-  v.vo.x.value = x;
-  v.vo.y.value = y;
-  v.vo.z.value = z;
-  v.vo.w.value = w;
+  v.vo.x = x;
+  v.vo.y = y;
+  v.vo.z = z;
+  v.vo.w = w;
   // Set normal
   v.n = state_.lighting.normal;
   // Set color
@@ -1600,31 +1670,31 @@ CSoft3DRendererFixed::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
+CRenderer::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
-  state_.clCurrent.r.value = red;
-  state_.clCurrent.g.value = green;
-  state_.clCurrent.b.value = blue;
-  state_.clCurrent.a.value = alpha;
+  state_.clCurrent.r = red;
+  state_.clCurrent.g = green;
+  state_.clCurrent.b = blue;
+  state_.clCurrent.a = alpha;
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q)
+CRenderer::glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 {
-  state_.texturing.coordCurrent[0].value = s;
-  state_.texturing.coordCurrent[1].value = t;
-  state_.texturing.coordCurrent[2].value = r;
-  state_.texturing.coordCurrent[3].value = q;
+  state_.texturing.coordCurrent[0] = s;
+  state_.texturing.coordCurrent[1] = t;
+  state_.texturing.coordCurrent[2] = r;
+  state_.texturing.coordCurrent[3] = q;
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
+CRenderer::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 {
-  state_.lighting.normal.x.value = nx;
-  state_.lighting.normal.y.value = ny;
-  state_.lighting.normal.z.value = nz;
+  state_.lighting.normal.x = nx;
+  state_.lighting.normal.y = ny;
+  state_.lighting.normal.z = nz;
 
   if(state_.lighting.normalizeEnabled == true)
     state_.lighting.normal.normalize();
@@ -1632,145 +1702,7 @@ CSoft3DRendererFixed::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::vertexShaderTransform(SVertexFx & v)
-{
-  _vertexShaderTransform(v);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::vertexShaderLight(SVertexFx & v)
-{
-  _vertexShaderLight(v);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::fragmentCull(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
-{
-  _fragmentCull(v0, v1, v2);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
-{
-  _fragmentClip(v0, v1, v2);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::primitiveAssembly(SVertexFx & v)
-{
-  _primitiveAssembly(v);
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::_glDrawArrays(GLenum mode, GLint first, GLsizei count)
-{
-  if(bBufVertexEnabled_ == false)
-    return;
-
-  GLint idxVertex  (first * bufVertex_.size);
-  GLint idxColor   (first * bufColor_.size);
-  GLint idxNormal  (first * bufNormal_.size);
-  GLint idxTexCoord(first * bufTexCoord_.size);
-  SVertexFx v;
-
-  glBegin(mode);
-
-  // Process all vertices
-  for(GLint i(0); i < count; i++)
-  {
-    // Vertex
-    switch(bufVertex_.type)
-    {
-      case GL_FLOAT:
-        v.vo.x = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.vo.y = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.vo.z = ((GLfloat *)bufVertex_.pointer)[idxVertex++];
-        v.vo.w = 1;
-        break;
-      case GL_FIXED:
-        v.vo.x.value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.vo.y.value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.vo.z.value = ((GLfixed *)bufVertex_.pointer)[idxVertex++];
-        v.vo.w = 1;
-        break;
-    };
-
-    // Normal
-    if(bBufNormalEnabled_ == true)
-    {
-      switch(bufNormal_.type)
-      {
-        case GL_FLOAT:
-          v.n.x = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n.y = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n.z = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          break;
-        case GL_FIXED:
-          v.n.x.value = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
-          v.n.y.value = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
-          v.n.z.value = ((GLfixed *)bufNormal_.pointer)[idxNormal++];
-          break;
-      };
-    }
-    else
-      v.n = state_.lighting.normal;
-
-    // Color
-    if(state_.lighting.enabled == false)
-    {
-      if(bBufColorEnabled_ == true)
-      {
-        switch(bufColor_.type)
-        {
-          case GL_FLOAT:
-            v.c.r = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v.c.g = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v.c.b = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            v.c.a = ((GLfloat *)bufColor_.pointer)[idxColor++];
-            break;
-          case GL_FIXED:
-            v.c.r.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
-            v.c.g.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
-            v.c.b.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
-            v.c.a.value = ((GLfixed *)bufColor_.pointer)[idxColor++];
-            break;
-        };
-      }
-      else
-        v.c = state_.clCurrent;
-    }
-
-    // Textures
-    if((state_.texturing.enabled == true) && (bBufTexCoordEnabled_ == true))
-    {
-      switch(bufTexCoord_.type)
-      {
-        case GL_FLOAT:
-          v.t[0] = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
-          v.t[1] = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
-          break;
-        case GL_FIXED:
-          v.t[0].value = ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++];
-          v.t[1].value = ((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++];
-          break;
-      };
-    }
-
-    v.processed = false;
-    vertexShaderTransform(v);
-  }
-
-  glEnd();
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::_vertexShaderTransform(SVertexFx & v)
+CRenderer::vertexShaderTransform(SVertexF & v)
 {
   // --------------
   // Transformation
@@ -1797,24 +1729,24 @@ CSoft3DRendererFixed::_vertexShaderTransform(SVertexFx & v)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
+CRenderer::vertexShaderLight(SVertexF & v)
 {
   // --------
   // Lighting
   // --------
   if(state_.lighting.enabled == true)
   {
-    TMaterial<CFixed> * pMaterial;
-    TColor<CFixed> cAmbient (0, 0, 0, 0);
-    TColor<CFixed> cDiffuse (0, 0, 0, 0);
-    TColor<CFixed> cSpecular(0, 0, 0, 0);
+    TMaterial<GLfloat> * pMaterial;
+    TColor<GLfloat> cAmbient (0, 0, 0, 0);
+    TColor<GLfloat> cDiffuse (0, 0, 0, 0);
+    TColor<GLfloat> cSpecular(0, 0, 0, 0);
 
     // Normalized vertex normal
-    TVector3<CFixed> vVertexNormal;
+    TVector3<GLfloat> vVertexNormal;
     pCurrentModelView_->transform3(v.n, vVertexNormal);
 
     // Normalized vector from vertex to eye
-    TVector3<CFixed> vVertexToEye = v.ve.getInverted();
+    TVector3<GLfloat> vVertexToEye = v.ve.getInverted();
     vVertexToEye.normalize();
 
 #if 0
@@ -1839,7 +1771,7 @@ CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
       if(state_.lighting.light[iLight].enabled == true)
       {
 #ifndef INFINITE_LIGHT
-        TVector3<CFixed> vVertexToLightNormal = TVector3<CFixed>(state_.lighting.light[iLight].position) - TVector3<CFixed>(v.ve);
+        TVector3<GLfloat> vVertexToLightNormal = TVector3<GLfloat>(state_.lighting.light[iLight].position) - TVector3<GLfloat>(v.ve);
         vVertexToLightNormal.normalize();
 #endif
 
@@ -1848,9 +1780,9 @@ CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
 
         // Diffuse light
 #ifndef INFINITE_LIGHT
-        CFixed diffuse = vVertexToLightNormal.dot(vVertexNormal);
+        GLfloat diffuse = vVertexToLightNormal.dot(vVertexNormal);
 #else
-        CFixed diffuse = state_.lighting.light[iLight].positionNormal.dot(vVertexNormal);
+        GLfloat diffuse = state_.lighting.light[iLight].positionNormal.dot(vVertexNormal);
 #endif
         if(diffuse > 0.0f)
         {
@@ -1861,13 +1793,13 @@ CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
         {
           // Specular light
 #ifndef INFINITE_LIGHT
-          CFixed specular = vVertexToLightNormal.getReflection(vVertexNormal).dot(vVertexToEye);
+          GLfloat specular = vVertexToLightNormal.getReflection(vVertexNormal).dot(vVertexToEye);
 #else
-          CFixed specular = state_.lighting.light[iLight].positionNormal.getReflection(vVertexNormal).dot(vVertexToEye);
+          GLfloat specular = state_.lighting.light[iLight].positionNormal.getReflection(vVertexNormal).dot(vVertexToEye);
 #endif
           if(specular > 0.0f)
           {
-            specular = mathlib::fast_int_pow<CFixed>(specular, (int)(pMaterial->shininess + 0.5f));
+            specular = mathlib::fast_int_pow(specular, (int)(pMaterial->shininess + 0.5f));
             cSpecular += state_.lighting.light[iLight].specular * pMaterial->specular * specular;
           }
         }
@@ -1908,25 +1840,25 @@ CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
   // ---
   if(state_.fog.enabled == true)
   {
-    CFixed f;
+    GLfloat f;
 
     switch(state_.fog.mode)
     {
       case GL_LINEAR:
-        //f = (state_.fog.end - (0-v.ve.z)) * state_.fog.linear_scale;
+        //f = (state_.fog.end - (-v.ve.z)) * state_.fog.linear_scale;
         f = (state_.fog.end + v.ve.z) * state_.fog.linear_scale;
         break;
       case GL_EXP2:
-        //f = mathlib::fast_exp2(0-state_.fog.density * (0-v.ve.z));
+        //f = mathlib::fast_exp2(-state_.fog.density * (-v.ve.z));
         f = mathlib::fast_exp2(state_.fog.density * v.ve.z);
         break;
       case GL_EXP:
       default:
-        //f = mathlib::fast_exp (0-state_.fog.density * (0-v.ve.z));
+        //f = mathlib::fast_exp (-state_.fog.density * (-v.ve.z));
         f = mathlib::fast_exp (state_.fog.density * v.ve.z);
     };
 
-    f = mathlib::clamp<CFixed>(f, 0, 1);
+    f = mathlib::clamp(f, 0.0f, 1.0f);
 
     v.c = mathlib_LERP(f, state_.fog.color, v.c);
   }
@@ -1934,9 +1866,9 @@ CSoft3DRendererFixed::_vertexShaderLight(SVertexFx & v)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::_fragmentCull(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
+CRenderer::fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
-  CFixed vnz =
+  GLfloat vnz =
     (v0.vd.x - v2.vd.x) * (v1.vd.y - v2.vd.y) -
     (v0.vd.y - v2.vd.y) * (v1.vd.x - v2.vd.x);
 
@@ -1966,12 +1898,12 @@ CSoft3DRendererFixed::_fragmentCull(SVertexFx & v0, SVertexFx & v1, SVertexFx & 
     };
   }
 
-  rasterTriangle(v0, v1, v2);
+  pRaster_->rasterTriangle(v0, v1, v2);
 }
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::_fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
+CRenderer::fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
   // ----------------------
   // Vertex shader lighting
@@ -2000,7 +1932,7 @@ CSoft3DRendererFixed::_fragmentClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & 
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::_primitiveAssembly(SVertexFx & v)
+CRenderer::primitiveAssembly(SVertexF & v)
 {
   // Copy vertex into vertex buffer
   *triangle_[vertIdx_] = v;
@@ -2027,13 +1959,13 @@ CSoft3DRendererFixed::_primitiveAssembly(SVertexFx & v)
         // Swap 3rd with 1st or 2nd vertex pointer
         if(bFlipFlop_ == true)
         {
-          SVertexFx * pTemp = triangle_[0];
+          SVertexF * pTemp = triangle_[0];
           triangle_[0] = triangle_[2];
           triangle_[2] = pTemp;
         }
         else
         {
-          SVertexFx * pTemp = triangle_[1];
+          SVertexF * pTemp = triangle_[1];
           triangle_[1] = triangle_[2];
           triangle_[2] = pTemp;
         }
@@ -2050,7 +1982,7 @@ CSoft3DRendererFixed::_primitiveAssembly(SVertexFx & v)
       {
         fragmentClip(*triangle_[0], *triangle_[1], *triangle_[2]);
         // Swap 3rd with 2nd vertex pointer
-        SVertexFx * pTemp = triangle_[1];
+        SVertexF * pTemp = triangle_[1];
         triangle_[1] = triangle_[2];
         triangle_[2] = pTemp;
       }
@@ -2064,7 +1996,7 @@ CSoft3DRendererFixed::_primitiveAssembly(SVertexFx & v)
       {
         fragmentClip(*triangle_[0], *triangle_[1], *triangle_[2]);
         // Swap 3rd with 2nd vertex pointer
-        SVertexFx * pTemp = triangle_[1];
+        SVertexF * pTemp = triangle_[1];
         triangle_[1] = triangle_[2];
         triangle_[2] = pTemp;
         // QUADS are TRIANGLE_FAN with only 2 triangles
@@ -2084,27 +2016,27 @@ CSoft3DRendererFixed::_primitiveAssembly(SVertexFx & v)
 // Clipping based on code from TinyGL
 // t = -(plane.dotProduct(from) + planeDistance) / plane.dotProduct(delta);
 #define clip_func(name,sign,dir,dir1,dir2)         \
-inline CFixed                                      \
-name(TVector4<CFixed> & c, TVector4<CFixed> & a, TVector4<CFixed> & b) \
+inline GLfloat                                     \
+name(TVector4<GLfloat> & c, TVector4<GLfloat> & a, TVector4<GLfloat> & b) \
 {                                                  \
-  TVector4<CFixed> delta;                          \
-  CFixed t, den;                                   \
+  TVector4<GLfloat> delta;                         \
+  GLfloat t, den;                                  \
                                                    \
   delta.x = b.x - a.x;                             \
   delta.y = b.y - a.y;                             \
   delta.z = b.z - a.z;                             \
   delta.w = b.w - a.w;                             \
                                                    \
-  den = 0 - (0 sign delta.dir) + delta.w;          \
+  den = -(sign delta.dir) + delta.w;               \
   if(den == 0)                                     \
     t = 0;                                         \
   else                                             \
-    t = (0 sign a.dir - a.w) / den;                \
+    t = (sign a.dir - a.w) / den;                  \
                                                    \
   c.dir1 = a.dir1 + t * delta.dir1;                \
   c.dir2 = a.dir2 + t * delta.dir2;                \
   c.w    = a.w    + t * delta.w;                   \
-  c.dir  = 0 sign c.w;                             \
+  c.dir  = sign c.w;                               \
                                                    \
   return t;                                        \
 }
@@ -2116,7 +2048,7 @@ clip_func(clip_ymax,+,y,x,z)
 clip_func(clip_zmin,-,z,x,y)
 clip_func(clip_zmax,+,z,x,y)
 
-CFixed (*fx_clip_proc[6])(TVector4<CFixed> &, TVector4<CFixed> &, TVector4<CFixed> &) =
+GLfloat (*f_clip_proc[6])(TVector4<GLfloat> &, TVector4<GLfloat> &, TVector4<GLfloat> &) =
 {
   clip_xmin,
   clip_xmax,
@@ -2126,11 +2058,11 @@ CFixed (*fx_clip_proc[6])(TVector4<CFixed> &, TVector4<CFixed> &, TVector4<CFixe
   clip_zmax
 };
 
-#define CLIP_FUNC(plane,c,a,b) fx_clip_proc[plane](c,a,b)
+#define CLIP_FUNC(plane,c,a,b) f_clip_proc[plane](c,a,b)
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2, uint32_t clipBit)
+CRenderer::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit)
 {
   uint32_t cc[3] =
   {
@@ -2170,12 +2102,12 @@ CSoft3DRendererFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertex
     if(clipXor != 0)
     {
       // 1 vertex outside
-      SVertexFx vNew1;  // Intersection of 1 line
-      SVertexFx vNew2;  // Intersection of 1 line
-      CFixed tt;
+      SVertexF vNew1;  // Intersection of 1 line
+      SVertexF vNew2;  // Intersection of 1 line
+      GLfloat tt;
 
       // Rearrange vertices
-      SVertexFx * v[3];
+      SVertexF * v[3];
            if(cc[0] & clipMask){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v0 == outside
       else if(cc[1] & clipMask){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v1 == outside
       else                     {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v2 == outside
@@ -2194,12 +2126,12 @@ CSoft3DRendererFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertex
     else
     {
       // 2 vertices outside
-      SVertexFx vNew1;  // Intersection of 1 line
-      SVertexFx vNew2;  // Intersection of 1 line
-      CFixed tt;
+      SVertexF vNew1;  // Intersection of 1 line
+      SVertexF vNew2;  // Intersection of 1 line
+      GLfloat tt;
 
       // Rearrange vertices
-      SVertexFx * v[3];
+      SVertexF * v[3];
            if((cc[0] & clipMask) == 0){v[0] = &v0; v[1] = &v1; v[2] = &v2;} // v0 == inside
       else if((cc[1] & clipMask) == 0){v[0] = &v1; v[1] = &v2; v[2] = &v0;} // v1 == inside
       else                            {v[0] = &v2; v[1] = &v0; v[2] = &v1;} // v2 == inside
@@ -2219,7 +2151,7 @@ CSoft3DRendererFixed::rasterTriangleClip(SVertexFx & v0, SVertexFx & v1, SVertex
 
 //-----------------------------------------------------------------------------
 void
-CSoft3DRendererFixed::interpolateVertex(SVertexFx & c, SVertexFx & a, SVertexFx & b, CFixed t)
+CRenderer::interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLfloat t)
 {
   // Color
   if(state_.smoothShading == true)
@@ -2243,46 +2175,4 @@ CSoft3DRendererFixed::interpolateVertex(SVertexFx & c, SVertexFx & a, SVertexFx 
     //   from 'clip coordinates' to 'normalized device coordinates'
     CALC_CLIP_TO_NDEV(c);
   }
-}
-
-//-----------------------------------------------------------------------------
-void
-CSoft3DRendererFixed::rasterTriangle(SVertexFx & v0, SVertexFx & v1, SVertexFx & v2)
-{
-  raster::SVertex vtx0, vtx1, vtx2;
-
-  vtx0.x   = ((xA_ * v0.vd.x) + xB_).value >> (16 - SHIFT_XY);
-  vtx0.y   = ((yA_ * v0.vd.y) + yB_).value >> (16 - SHIFT_XY);
-  vtx0.z   = 0;//((zA_ * v0.vd.z) + zB_).value >> (16 - SHIFT_XY);
-  vtx0.w   = v0.vd.w;
-  vtx0.c.r = v0.c.r.value >> (16 - SHIFT_COLOR);
-  vtx0.c.g = v0.c.g.value >> (16 - SHIFT_COLOR);
-  vtx0.c.b = v0.c.b.value >> (16 - SHIFT_COLOR);
-  vtx0.c.a = v0.c.a.value >> (16 - SHIFT_COLOR);
-  //vtx0.t.u = v0.t[0];
-  //vtx0.t.v = v0.t[1];
-
-  vtx1.x   = ((xA_ * v1.vd.x) + xB_).value >> (16 - SHIFT_XY);
-  vtx1.y   = ((yA_ * v1.vd.y) + yB_).value >> (16 - SHIFT_XY);
-  vtx1.z   = 0;//((zA_ * v1.vd.z) + zB_).value >> (16 - SHIFT_XY);
-  vtx1.w   = v1.vd.w;
-  vtx1.c.r = v1.c.r.value >> (16 - SHIFT_COLOR);
-  vtx1.c.g = v1.c.g.value >> (16 - SHIFT_COLOR);
-  vtx1.c.b = v1.c.b.value >> (16 - SHIFT_COLOR);
-  vtx1.c.a = v1.c.a.value >> (16 - SHIFT_COLOR);
-  //vtx1.t.u = v1.t[0];
-  //vtx1.t.v = v1.t[1];
-
-  vtx2.x   = ((xA_ * v2.vd.x) + xB_).value >> (16 - SHIFT_XY);
-  vtx2.y   = ((yA_ * v2.vd.y) + yB_).value >> (16 - SHIFT_XY);
-  vtx2.z   = 0;//((zA_ * v2.vd.z) + zB_).value >> (16 - SHIFT_XY);
-  vtx2.w   = v2.vd.w;
-  vtx2.c.r = v2.c.r.value >> (16 - SHIFT_COLOR);
-  vtx2.c.g = v2.c.g.value >> (16 - SHIFT_COLOR);
-  vtx2.c.b = v2.c.b.value >> (16 - SHIFT_COLOR);
-  vtx2.c.a = v2.c.a.value >> (16 - SHIFT_COLOR);
-  //vtx2.t.u = v2.t[0];
-  //vtx2.t.v = v2.t[1];
-
-  pRaster_->rasterTriangle(vtx0, vtx1, vtx2);
 }

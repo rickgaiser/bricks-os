@@ -28,23 +28,10 @@
 #include "rasterCommon.h"
 #include "textures.h"
 
-#ifdef __BRICKS__
-#include "asm/arch/config.h"
-#include "asm/arch/memory.h"
-#else
-//#define CONFIG_GL_TINY
-#define FAST_CODE
-#endif
 
-#ifndef CONFIG_GL_TINY
-  #define CONFIG_GL_ENABLE_ALPHA_TEST
-  #define CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-  //#define CONFIG_GL_SIMPLE_TEXTURES
-#else
-  //#define CONFIG_GL_ENABLE_ALPHA_TEST
-  //#define CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-  #define CONFIG_GL_SIMPLE_TEXTURES
-#endif
+#define CONFIG_GL_ENABLE_ALPHA_TEST
+#define CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+//#define CONFIG_GL_SIMPLE_TEXTURES
 
 
 namespace raster
@@ -61,34 +48,30 @@ public:
 
   void alphaFunc(GLenum func, GLclampf ref);
 
-  void rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2);
+  void rasterTriangle(const SVertexF & v0, const SVertexF & v1, const SVertexF & v2);
 
 private:
-  void rasterTexture(raster::TColor<int32_t> & out, const raster::TColor<int32_t> & cfragment, const raster::TColor<int32_t> & ctexture) FAST_CODE;
-#ifndef CONFIG_GL_TINY
-  void rasterBlend(raster::TColor<int32_t> & out, const raster::TColor<int32_t> & source, const raster::TColor<int32_t> & dest) FAST_CODE;
-#endif
+  void rasterTexture(TColor<int32_t> & out, const TColor<int32_t> & cfragment, const TColor<int32_t> & ctexture);
+  void rasterBlend(TColor<int32_t> & out, const TColor<int32_t> & source, const TColor<int32_t> & dest);
 
-  void _rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2) FAST_CODE;
+  void _rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2);
 
-  void raster    (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterZ   (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterT   (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterTZ  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-#ifndef CONFIG_GL_TINY
-  void rasterC   (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterCZ  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterCT  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterCTZ (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterB   (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterBZ  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterBT  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterBTZ (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterBC  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterBCZ (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterBCT (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-  void rasterBCTZ(const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom) FAST_CODE;
-#endif
+  void raster    (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterZ   (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterT   (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterTZ  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterC   (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterCZ  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterCT  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterCTZ (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterB   (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterBZ  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterBT  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterBTZ (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterBC  (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterBCZ (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterBCT (const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
+  void rasterBCTZ(const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom);
 
 private:
   // Color
@@ -99,35 +82,35 @@ private:
   TColor<int32_t>         scan_c_current;
   TColor<int32_t>         scan_c_ddx;
   // Depth (z=1/w)
-  int32_t                 grad_z_ddx;
-  int32_t                 grad_z_ddy;
-  int32_t                 edge_z_current;
-  int32_t                 edge_z_increment;
-  int32_t                 scan_z_current;
-  int32_t                 scan_z_ddx;
+  GLfloat                 grad_z_ddx;
+  GLfloat                 grad_z_ddy;
+  GLfloat                 edge_z_current;
+  GLfloat                 edge_z_increment;
+  GLfloat                 scan_z_current;
+  GLfloat                 scan_z_ddx;
 #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
   // Depth (w=1/z)
-  float                   grad_w_ddx;
-  float                   grad_w_ddy;
-  float                   edge_w_current;
-  float                   edge_w_increment;
-  float                   scan_w_current;
-  float                   scan_w_ddx;
+  GLfloat                 grad_w_ddx;
+  GLfloat                 grad_w_ddy;
+  GLfloat                 edge_w_current;
+  GLfloat                 edge_w_increment;
+  GLfloat                 scan_w_current;
+  GLfloat                 scan_w_ddx;
   // Texture (t/z)
-  TTexCoord<float>        grad_tz_ddx;
-  TTexCoord<float>        grad_tz_ddy;
-  TTexCoord<float>        edge_tz_current;
-  TTexCoord<float>        edge_tz_increment;
-  TTexCoord<float>        scan_tz_current;
-  TTexCoord<float>        scan_tz_ddx;
+  TTexCoord<GLfloat>      grad_tz_ddx;
+  TTexCoord<GLfloat>      grad_tz_ddy;
+  TTexCoord<GLfloat>      edge_tz_current;
+  TTexCoord<GLfloat>      edge_tz_increment;
+  TTexCoord<GLfloat>      scan_tz_current;
+  TTexCoord<GLfloat>      scan_tz_ddx;
 #else
   // Texture
-  TTexCoord<float>        grad_t_ddx;
-  TTexCoord<float>        grad_t_ddy;
-  TTexCoord<float>        edge_t_current;
-  TTexCoord<float>        edge_t_increment;
-  TTexCoord<float>        scan_t_current;
-  TTexCoord<float>        scan_t_ddx;
+  TTexCoord<GLfloat>      grad_t_ddx;
+  TTexCoord<GLfloat>      grad_t_ddy;
+  TTexCoord<GLfloat>      edge_t_current;
+  TTexCoord<GLfloat>      edge_t_increment;
+  TTexCoord<GLfloat>      scan_t_current;
+  TTexCoord<GLfloat>      scan_t_ddx;
 #endif
 
   int32_t alphaValueFX_;

@@ -24,86 +24,6 @@
 #include "math.h"
 
 
-#define POP_MATRIX()                                                 \
-switch(matrixMode_)                                                  \
-{                                                                    \
-  case GL_MODELVIEW:                                                 \
-    if(iModelViewIndex_ > 0)                                         \
-    {                                                                \
-      pCurrentModelView_ = &stackModelView[iModelViewIndex_ - 1];    \
-      iModelViewIndex_--;                                            \
-      pCurrentMatrix_ = pCurrentModelView_;                          \
-    }                                                                \
-    break;                                                           \
-  case GL_PROJECTION:                                                \
-    if(iProjectionIndex_ > 0)                                        \
-    {                                                                \
-      pCurrentProjection_ = &stackProjection[iProjectionIndex_ - 1]; \
-      iProjectionIndex_--;                                           \
-      pCurrentMatrix_ = pCurrentProjection_;                         \
-    }                                                                \
-    break;                                                           \
-  case GL_TEXTURE:                                                   \
-    if(iTextureIndex_ > 0)                                           \
-    {                                                                \
-      pCurrentTexture_ = &stackTexture[iTextureIndex_ - 1];          \
-      iTextureIndex_--;                                              \
-      pCurrentMatrix_ = pCurrentTexture_;                            \
-    }                                                                \
-    break;                                                           \
-}
-
-#define PUSH_MATRIX()                                                \
-switch(matrixMode_)                                                  \
-{                                                                    \
-  case GL_MODELVIEW:                                                 \
-    if((iModelViewIndex_ + 1) < GL_MATRIX_MODELVIEW_STACK_SIZE)      \
-    {                                                                \
-      stackModelView[iModelViewIndex_ + 1] = *pCurrentModelView_;    \
-      iModelViewIndex_++;                                            \
-      pCurrentModelView_ = &stackModelView[iModelViewIndex_];        \
-      pCurrentMatrix_ = pCurrentModelView_;                          \
-    }                                                                \
-    break;                                                           \
-  case GL_PROJECTION:                                                \
-    if((iProjectionIndex_ + 1) < GL_MATRIX_PROJECTION_STACK_SIZE)    \
-    {                                                                \
-      stackProjection[iProjectionIndex_ + 1] = *pCurrentProjection_; \
-      iProjectionIndex_++;                                           \
-      pCurrentProjection_ = &stackProjection[iProjectionIndex_];     \
-      pCurrentMatrix_ = pCurrentProjection_;                         \
-    }                                                                \
-    break;                                                           \
-  case GL_TEXTURE:                                                   \
-    if((iTextureIndex_ + 1) < GL_MATRIX_TEXTURE_STACK_SIZE)          \
-    {                                                                \
-      stackTexture[iTextureIndex_ + 1] = *pCurrentTexture_;          \
-      iTextureIndex_++;                                              \
-      pCurrentTexture_ = &stackTexture[iTextureIndex_];              \
-      pCurrentMatrix_ = pCurrentTexture_;                            \
-    }                                                                \
-    break;                                                           \
-}
-
-#define MATRIX_MODE()                                          \
-matrixMode_ = mode;                                            \
-switch(matrixMode_)                                                   \
-{                                                              \
-  case GL_MODELVIEW:                                           \
-    pCurrentModelView_ = &stackModelView[iModelViewIndex_];    \
-    pCurrentMatrix_ = pCurrentModelView_;                      \
-    break;                                                     \
-  case GL_PROJECTION:                                          \
-    pCurrentProjection_ = &stackProjection[iProjectionIndex_]; \
-    pCurrentMatrix_ = pCurrentProjection_;                     \
-    break;                                                     \
-  case GL_TEXTURE:                                             \
-    pCurrentTexture_ = &stackTexture[iTextureIndex_];          \
-    pCurrentMatrix_ = pCurrentTexture_;                        \
-    break;                                                     \
-}
-
-#if !defined(__BRICKS__) || (defined(__BRICKS__) && defined(CONFIG_FPU))
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 CAGLMatrixFloat::CAGLMatrixFloat()
@@ -236,14 +156,69 @@ CAGLMatrixFloat::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 void
 CAGLMatrixFloat::glPopMatrix(void)
 {
-  POP_MATRIX();
+  switch(matrixMode_)
+  {
+    case GL_MODELVIEW:
+      if(iModelViewIndex_ > 0)
+      {
+        pCurrentModelView_ = &stackModelView[iModelViewIndex_ - 1];
+        iModelViewIndex_--;
+        pCurrentMatrix_ = pCurrentModelView_;
+      }
+      break;
+    case GL_PROJECTION:
+      if(iProjectionIndex_ > 0)
+      {
+        pCurrentProjection_ = &stackProjection[iProjectionIndex_ - 1];
+        iProjectionIndex_--;
+        pCurrentMatrix_ = pCurrentProjection_;
+      }
+      break;
+    case GL_TEXTURE:
+      if(iTextureIndex_ > 0)
+      {
+        pCurrentTexture_ = &stackTexture[iTextureIndex_ - 1];
+        iTextureIndex_--;
+        pCurrentMatrix_ = pCurrentTexture_;
+      }
+      break;
+  }
 }
 
 //---------------------------------------------------------------------------
 void
 CAGLMatrixFloat::glPushMatrix(void)
 {
-  PUSH_MATRIX();
+  switch(matrixMode_)
+  {
+    case GL_MODELVIEW:
+      if((iModelViewIndex_ + 1) < GL_MATRIX_MODELVIEW_STACK_SIZE)
+      {
+        stackModelView[iModelViewIndex_ + 1] = *pCurrentModelView_;
+        iModelViewIndex_++;
+        pCurrentModelView_ = &stackModelView[iModelViewIndex_];
+        pCurrentMatrix_ = pCurrentModelView_;
+      }
+      break;
+    case GL_PROJECTION:
+      if((iProjectionIndex_ + 1) < GL_MATRIX_PROJECTION_STACK_SIZE)
+      {
+        stackProjection[iProjectionIndex_ + 1] = *pCurrentProjection_;
+        iProjectionIndex_++;
+        pCurrentProjection_ = &stackProjection[iProjectionIndex_];
+        pCurrentMatrix_ = pCurrentProjection_;
+      }
+      break;
+    case GL_TEXTURE:
+      if((iTextureIndex_ + 1) < GL_MATRIX_TEXTURE_STACK_SIZE)
+      {
+        stackTexture[iTextureIndex_ + 1] = *pCurrentTexture_;
+        iTextureIndex_++;
+        pCurrentTexture_ = &stackTexture[iTextureIndex_];
+        pCurrentMatrix_ = pCurrentTexture_;
+      }
+      break;
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -257,181 +232,21 @@ CAGLMatrixFloat::glLoadIdentity(void)
 void
 CAGLMatrixFloat::glMatrixMode(GLenum mode)
 {
-  MATRIX_MODE();
+  matrixMode_ = mode;
+
+  switch(matrixMode_)
+  {
+    case GL_MODELVIEW:
+      pCurrentModelView_ = &stackModelView[iModelViewIndex_];
+      pCurrentMatrix_ = pCurrentModelView_;
+      break;
+    case GL_PROJECTION:
+      pCurrentProjection_ = &stackProjection[iProjectionIndex_];
+      pCurrentMatrix_ = pCurrentProjection_;
+      break;
+    case GL_TEXTURE:
+      pCurrentTexture_ = &stackTexture[iTextureIndex_];
+      pCurrentMatrix_ = pCurrentTexture_;
+      break;
+  }
 }
-#endif
-
-#if !defined(__BRICKS__) || (defined(__BRICKS__) && !defined(CONFIG_FPU))
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-CAGLMatrixFixed::CAGLMatrixFixed()
- : matrixMode_(GL_MODELVIEW)
- , iModelViewIndex_(0)
- , iProjectionIndex_(0)
- , iTextureIndex_(0)
-{
-  // All stacks contain 1 identity matrix
-  stackModelView[0].loadIdentity();
-  stackProjection[0].loadIdentity();
-  stackTexture[0].loadIdentity();
-
-  // Setup current pointers
-  pCurrentModelView_  = &stackModelView[0];
-  pCurrentProjection_ = &stackProjection[0];
-  pCurrentTexture_    = &stackTexture[0];
-  pCurrentMatrix_     = pCurrentModelView_;
-}
-
-//---------------------------------------------------------------------------
-CAGLMatrixFixed::~CAGLMatrixFixed()
-{
-}
-
-//---------------------------------------------------------------------------
-void
-CAGLMatrixFixed::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
-{
-  CFixed m[16];
-
-  GLfixed idw = gl_fpinverse(right - left);
-  GLfixed idh = gl_fpinverse(top - bottom);
-  GLfixed idz = gl_fpinverse(zFar - zNear);
-
-  m[ 0].value = gl_fpmul((zNear << 1), idw);
-  m[ 1].value = gl_fpfromi(0);
-  m[ 2].value = gl_fpmul((right + left), idw);
-  m[ 3].value = gl_fpfromi(0);
-
-  m[ 4].value = gl_fpfromi(0);
-  m[ 5].value = gl_fpmul((zNear << 1), idh);
-  m[ 6].value = gl_fpmul((top + bottom), idh);
-  m[ 7].value = gl_fpfromi(0);
-
-  m[ 8].value = gl_fpfromi(0);
-  m[ 9].value = gl_fpfromi(0);
-  m[10].value = -gl_fpmul((zFar + zNear), idz);
-  m[11].value = -gl_fpmul((gl_fpmul(zFar, zNear) << 1), idz);
-
-  m[12].value = gl_fpfromi(0);
-  m[13].value = gl_fpfromi(0);
-  m[14].value = gl_fpfromi(-1);
-  m[15].value = gl_fpfromi(0);
-
-  *pCurrentMatrix_ *= m;
-}
-
-//---------------------------------------------------------------------------
-void
-CAGLMatrixFixed::glLoadMatrixx(const GLfixed * m)
-{
-  *pCurrentMatrix_ = (CFixed *)m;
-}
-
-//---------------------------------------------------------------------------
-void
-CAGLMatrixFixed::glMultMatrixx(const GLfixed * m)
-{
-  *pCurrentMatrix_ *= (CFixed *)m;
-}
-
-//---------------------------------------------------------------------------
-void
-CAGLMatrixFixed::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
-{
-  CFixed m[16];
-
-  GLfixed idw = gl_fpinverse(right - left);
-  GLfixed idh = gl_fpinverse(top - bottom);
-  GLfixed idz = gl_fpinverse(zFar - zNear);
-
-  m[ 0].value = gl_fpmul(gl_fpfromi(2), idw);
-  m[ 1].value = gl_fpfromi(0);
-  m[ 2].value = gl_fpfromi(0);
-  m[ 3].value = -gl_fpmul((right + left), idw);
-
-  m[ 4].value = gl_fpfromi(0);
-  m[ 5].value = gl_fpmul(gl_fpfromi(2), idh);
-  m[ 6].value = gl_fpfromi(0);
-  m[ 7].value = -gl_fpmul((top + bottom), idh);
-
-  m[ 8].value = gl_fpfromi(0);
-  m[ 9].value = gl_fpfromi(0);
-  m[10].value = gl_fpmul(gl_fpfromi(-2), idz);
-  m[11].value = -gl_fpmul((zFar + zNear), idz);
-
-  m[12].value = gl_fpfromi(0);
-  m[13].value = gl_fpfromi(0);
-  m[14].value = gl_fpfromi(0);
-  m[15].value = gl_fpfromi(1);
-
-  *pCurrentMatrix_ *= m;
-}
-
-//---------------------------------------------------------------------------
-void
-CAGLMatrixFixed::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
-{
-  CFixed fa, fx, fy, fz;
-
-  fa.value = angle;
-  fx.value = x;
-  fy.value = y;
-  fz.value = z;
-
-  pCurrentMatrix_->rotate(fa, fx, fy, fz);
-}
-
-//---------------------------------------------------------------------------
-void
-CAGLMatrixFixed::glScalex(GLfixed x, GLfixed y, GLfixed z)
-{
-  CFixed fx, fy, fz;
-
-  fx.value = x;
-  fy.value = y;
-  fz.value = z;
-
-  pCurrentMatrix_->scale(fx, fy, fz);
-}
-
-//---------------------------------------------------------------------------
-void
-CAGLMatrixFixed::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
-{
-  CFixed fx, fy, fz;
-
-  fx.value = x;
-  fy.value = y;
-  fz.value = z;
-
-  pCurrentMatrix_->translate(fx, fy, fz);
-}
-
-//---------------------------------------------------------------------------
-void
-CAGLMatrixFixed::glPopMatrix(void)
-{
-  POP_MATRIX();
-}
-
-//---------------------------------------------------------------------------
-void
-CAGLMatrixFixed::glPushMatrix(void)
-{
-  PUSH_MATRIX();
-}
-
-//---------------------------------------------------------------------------
-void
-CAGLMatrixFixed::glLoadIdentity(void)
-{
-  pCurrentMatrix_->loadIdentity();
-}
-
-//---------------------------------------------------------------------------
-void
-CAGLMatrixFixed::glMatrixMode(GLenum mode)
-{
-  MATRIX_MODE();
-}
-#endif

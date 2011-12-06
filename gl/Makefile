@@ -12,13 +12,7 @@ OBJS            =\
                 rasterCommon \
                 rasterScanline \
                 mathlib \
-
-
-ifeq ($(CONFIG_FPU),y)
-  OBJS                               += 3DRendererFloat
-else
-  OBJS                               += 3DRendererFixed
-endif
+                render \
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.user

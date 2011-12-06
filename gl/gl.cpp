@@ -311,3 +311,44 @@ GL_APIFUNCTION_3(glTexEnvfv,           GLenum, target, GLenum, pname, const GLfl
 
 // 1.2 imaging extension functions
 GL_APIFUNCTION_6(glColorTable,         GLenum, target, GLenum, internalformat, GLsizei, width, GLenum, format, GLenum, type, const GLvoid *, table);
+
+//---------------------------------------------------------------------------
+GLAPI void
+APIENTRY glDrawBuffer(GLenum mode)
+{
+}
+
+//---------------------------------------------------------------------------
+GLAPI void
+APIENTRY glReadBuffer(GLenum mode)
+{
+}
+
+//---------------------------------------------------------------------------
+GLAPI void
+APIENTRY glReadPixels(GLint x, GLint y,
+  GLsizei width, GLsizei height,
+  GLenum format, GLenum type,
+  GLvoid *pixels)
+{
+}
+
+//---------------------------------------------------------------------------
+GLAPI const GLubyte*
+APIENTRY glGetString(GLenum name)
+{
+  switch(name)
+  {
+    case GL_VENDOR:   return (const GLubyte*)"Bricks-OS.org";
+    case GL_RENDERER: return (const GLubyte*)"BricksGL";
+    case GL_VERSION:  return (const GLubyte*)"1.1";
+  };
+
+  return (const GLubyte*)"";
+}
+
+//---------------------------------------------------------------------------
+GLAPI void
+APIENTRY glPolygonMode(GLenum face, GLenum mode)
+{
+}

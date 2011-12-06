@@ -50,7 +50,6 @@ CASoftRasterizer::CASoftRasterizer()
  , bDepthTestEnabled_(false)
  , depthFunction_(GL_LESS)
  , depthClear_(1.0f)
- , zClearValue_((1<<DEPTH_Z)-1)
  , bDepthMask_(true)
  , bTexturesEnabled_(false)
  , texEnvMode_(GL_MODULATE)
@@ -73,6 +72,9 @@ CASoftRasterizer::CASoftRasterizer()
 
   // Default pixel center OpenGL (center)
   this->setUsePixelCenter(true);
+
+  fZA_  = 0.5f;
+  fZB_  = 0.5f;
 }
 
 //-----------------------------------------------------------------------------
@@ -98,15 +100,12 @@ CASoftRasterizer::enableDepthTest(bool enable)
 {
   bDepthTestEnabled_ = enable;
 
-  if(enable == true)
+  if((bDepthTestEnabled_ == true) && (pZBuffer_ == NULL) && (viewportPixelCount > 0))
   {
-    if(pZBuffer_)
-      delete pZBuffer_;
-
-    // FIXME: Should be viewportPixelCount
-    pZBuffer_ = new int32_t[(viewportWidth + viewportXOffset) * (viewportHeight + viewportYOffset)];
-    //if(pZBuffer_ == NULL)
-    //  setError(GL_OUT_OF_MEMORY);
+    // Allocate z-buffer
+    pZBuffer_ = new GLfloat[viewportPixelCount];
+    if(pZBuffer_ == NULL)
+      setError(GL_OUT_OF_MEMORY);
   }
 }
 
@@ -123,6 +122,7 @@ CASoftRasterizer::enableTextures(bool enable)
 {
   bTexturesEnabled_ = enable;
 }
+
 //-----------------------------------------------------------------------------
 void
 CASoftRasterizer::enableBlending(bool enable)
@@ -142,7 +142,17 @@ void
 CASoftRasterizer::clearDepthf(GLclampf depth)
 {
   depthClear_ = depth;
-  zClearValue_ = (int32_t)(depthClear_ * ((1<<DEPTH_Z)-1));
+}
+
+//-----------------------------------------------------------------------------
+void
+CASoftRasterizer::depthRange(GLclampf zNear, GLclampf zFar)
+{
+  zNear_ = zNear;
+  zFar_  = zFar;
+
+  fZA_   = (zFar - zNear) / 2;
+  fZB_   = (mathlib::abs(zFar - zNear) / 2) + mathlib::min(zNear, zFar);
 }
 
 //-----------------------------------------------------------------------------
@@ -400,25 +410,25 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
   switch(type)
   {
     case GL_UNSIGNED_BYTE:
-    case GL_BYTE:
-    case GL_BITMAP:
-    case GL_UNSIGNED_SHORT:
-    case GL_SHORT:
-    case GL_UNSIGNED_INT:
-    case GL_INT:
-    case GL_FLOAT:
-    case GL_UNSIGNED_BYTE_3_3_2:
-    case GL_UNSIGNED_BYTE_2_3_3_REV:
+    //case GL_BYTE:
+    //case GL_BITMAP:
+    //case GL_UNSIGNED_SHORT:
+    //case GL_SHORT:
+    //case GL_UNSIGNED_INT:
+    //case GL_INT:
+    //case GL_FLOAT:
+    //case GL_UNSIGNED_BYTE_3_3_2:
+    //case GL_UNSIGNED_BYTE_2_3_3_REV:
     case GL_UNSIGNED_SHORT_5_6_5:
     case GL_UNSIGNED_SHORT_5_6_5_REV:
     case GL_UNSIGNED_SHORT_4_4_4_4:
     case GL_UNSIGNED_SHORT_4_4_4_4_REV:
     case GL_UNSIGNED_SHORT_5_5_5_1:
     case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-    case GL_UNSIGNED_INT_8_8_8_8:
-    case GL_UNSIGNED_INT_8_8_8_8_REV:
-    case GL_UNSIGNED_INT_10_10_10_2:
-    case GL_UNSIGNED_INT_2_10_10_10_REV:
+    //case GL_UNSIGNED_INT_8_8_8_8:
+    //case GL_UNSIGNED_INT_8_8_8_8_REV:
+    //case GL_UNSIGNED_INT_10_10_10_2:
+    //case GL_UNSIGNED_INT_2_10_10_10_REV:
       break;
     default:
       setError(GL_INVALID_ENUM);
@@ -476,7 +486,7 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
     pCurrentTex_->iMaxLevel_++;
   }
 
-  EColorFormat fmtTo   = cfA8R8G8B8;//renderSurface->mode.format;
+  EColorFormat fmtTo   = cfA8R8G8B8;
   EColorFormat fmtFrom = convertGLToBxColorFormat(format, type);
   if(fmtFrom == cfUNKNOWN)
   {
@@ -818,7 +828,7 @@ CASoftRasterizer::clear(GLbitfield mask)
   {
     if(pZBuffer_ != NULL)
     {
-      fastFill(pZBuffer_, viewportPixelCount, zClearValue_);
+      fastFill(pZBuffer_, viewportPixelCount, depthClear_);
     }
   }
 #ifdef ENABLE_PROFILING
@@ -836,9 +846,19 @@ CASoftRasterizer::viewport(GLint x, GLint y, GLsizei width, GLsizei height)
   viewportHeight     = height;
   viewportPixelCount = width * height;
 
-  // Update z-buffer
-  if(bDepthTestEnabled_ == true)
-    enableDepthTest(true);
+  iXA_ =     (viewportWidth  >> 1);
+  iXB_ = x + (viewportWidth  >> 1);
+  iYA_ =     (viewportHeight >> 1);
+  iYB_ = y + (viewportHeight >> 1);
+  // FIXME:
+  iYA_  = -iYA_;
+  iXB_ -= x;
+  iYB_ -= y;
+
+  fXA_ = iXA_;
+  fXB_ = iXB_;
+  fYA_ = iYA_;
+  fYB_ = iYB_;
 }
 
 //-----------------------------------------------------------------------------
@@ -851,14 +871,17 @@ CASoftRasterizer::setUsePixelCenter(bool bCenter)
   {
     fxPixelFloorOffset_  = (1 << (SHIFT_XY - 1)) - 1; // Half a pixel minus one
     fxPixelCenterOffset_ = (1 << (SHIFT_XY - 1));     // Half a pixel (the center)
+    fPixelCenterOffset_  = 0.5f;
   }
   else
   {
     fxPixelFloorOffset_  = (1 << (SHIFT_XY    )) - 1; // A whole pixel minus one
     fxPixelCenterOffset_ = 0;                         // Zero (Top-Left corner)
+    fPixelCenterOffset_  = 0.0f;
   }
 
   fxOneMinusPixelCenterOffset_ = (1 << SHIFT_XY) - fxPixelCenterOffset_;
+  fOneMinusPixelCenterOffset_  = 1.0f - fPixelCenterOffset_;
 }
 
 //-----------------------------------------------------------------------------
@@ -877,25 +900,6 @@ CASoftRasterizer::end()
 void
 CASoftRasterizer::flush()
 {
-}
-
-//-----------------------------------------------------------------------------
-bool
-CASoftRasterizer::rasterDepth(uint32_t z_pix, uint32_t z_buf)
-{
-  switch(depthFunction_)
-  {
-    case GL_LESS:     return (z_pix <  z_buf); break;
-    case GL_EQUAL:    return (z_pix == z_buf); break;
-    case GL_LEQUAL:   return (z_pix <= z_buf); break;
-    case GL_GREATER:  return (z_pix >  z_buf); break;
-    case GL_NOTEQUAL: return (z_pix != z_buf); break;
-    case GL_GEQUAL:   return (z_pix >= z_buf); break;
-    case GL_ALWAYS:   return true;             break;
-    case GL_NEVER:    return false;            break;
-  };
-
-  return false;
 }
 
 

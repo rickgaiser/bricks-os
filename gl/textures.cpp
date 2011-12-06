@@ -152,10 +152,17 @@ convertGLToBxColorFormat(GLenum format, GLenum type)
     {
       switch(format)
       {
+#ifdef __BIG_ENDIAN__
         case GL_RGB:  fmt = cfR8G8B8;   break;
         case GL_BGR:  fmt = cfB8G8R8;   break;
         case GL_RGBA: fmt = cfR8G8B8A8; break;
         case GL_BGRA: fmt = cfB8G8R8A8; break;
+#else
+        case GL_RGB:  fmt = cfB8G8R8;   break;
+        case GL_BGR:  fmt = cfR8G8B8;   break;
+        case GL_RGBA: fmt = cfA8B8G8R8; break;
+        case GL_BGRA: fmt = cfA8R8G8B8; break;
+#endif
         default:      fmt = cfUNKNOWN;
       };
       break;
@@ -249,7 +256,7 @@ CTexture::lambda(float dudx, float dudy, float dvdx, float dvdy)
 
 //-----------------------------------------------------------------------------
 void
-CTexture::getTexel(raster::TColor<GLfloat> & c, float u, float v, float lod)
+CTexture::getTexel(TColor<GLfloat> & c, float u, float v, float lod)
 {
   int upos, vpos;
   float colors[4];
@@ -388,17 +395,36 @@ CTexture::getTexel(raster::TColor<GLfloat> & c, float u, float v, float lod)
 
 //-----------------------------------------------------------------------------
 void
-CTexture::getTexel(raster::TColor<int32_t> & c, float u, float v, float lod)
+CTexture::getTexel(TColor<int32_t> & c, float u, float v, float lod)
 {
-  raster::TColor<GLfloat> temp;
+#if 0
+  TColor<GLfloat> temp = {0};
 
   getTexel(temp, u, v, lod);
 
   // Convert to fixed point
+  c.a = fpfromf(14, temp.a);
   c.r = fpfromf(14, temp.r);
   c.g = fpfromf(14, temp.g);
   c.b = fpfromf(14, temp.b);
-  c.a = fpfromf(14, temp.a);
+#else
+  int iU, iV;
+  uint32_t texel;
+
+  iU = u * width;
+  iV = v * height;
+  // Wrap
+  iU &= iWidthMask_;
+  iV &= iHeightMask_;
+
+  texel = ((uint32_t *)level[0].data)[(iV * width) + iU];
+
+  // Convert to fixed point
+  c.a = ((texel >> 24) & 0xff) * ((1<<14) / 255);
+  c.r = ((texel >> 16) & 0xff) * ((1<<14) / 255);
+  c.g = ((texel >>  8) & 0xff) * ((1<<14) / 255);
+  c.b = ((texel      ) & 0xff) * ((1<<14) / 255);
+#endif
 }
 
 //-----------------------------------------------------------------------------

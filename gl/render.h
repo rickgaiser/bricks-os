@@ -19,30 +19,167 @@
  */
 
 
-#ifndef GL_3DRENDERERFLOAT_H
-#define GL_3DRENDERERFLOAT_H
+#ifndef GL_RENDER_H
+#define GL_RENDER_H
 
 
 #include "context.h"
-#include "glstate.h"
-
 #include "GL/gl.h"
-
 #include "kernel/videoManager.h"
 #include "kernel/3dRenderer.h"
 #include "glMatrix.h"
 #include "textures.h"
 #include "vhl/vector.h"
-
-#ifdef __BRICKS__
-#include "asm/arch/memory.h"
-#else
-#define FAST_CODE
-#endif
+#include "vhl/color.h"
 
 
 //-----------------------------------------------------------------------------
-class CSoft3DRendererFloat
+struct SCulling
+{
+  bool          enabled;
+  GLenum        mode;
+  GLenum        front;
+  bool          cullCW; // Cull Clock-Wise
+};
+
+//-----------------------------------------------------------------------------
+struct SHints
+{
+  GLenum        fog;
+  GLenum        lineSmooth;
+  GLenum        perspectiveCorrection;
+  GLenum        pointSmooth;
+};
+
+//-----------------------------------------------------------------------------
+template <class T>
+struct TTexturing
+{
+  bool          enabled;
+
+  T             coordCurrent[4];
+  GLenum        envMode;
+  TColor<T>     envColor;
+};
+
+//-----------------------------------------------------------------------------
+template <class T>
+struct TDepthTest
+{
+  bool          enabled;
+
+  bool          mask;
+  GLenum        function;
+  T             clear;
+  T             rangeNear;
+  T             rangeFar;
+};
+
+//-----------------------------------------------------------------------------
+struct SBlending
+{
+  bool          enabled;
+
+  GLenum        sourceFactor;
+  GLenum        destFactor;
+};
+
+//-----------------------------------------------------------------------------
+template <class T>
+struct TAlphaTest
+{
+  bool        enabled;
+
+  GLenum      func;
+  T           value;
+};
+
+//-----------------------------------------------------------------------------
+template <class T>
+struct TLight
+{
+  bool          enabled;
+
+  TColor<T>     ambient;
+  TColor<T>     diffuse;
+  TColor<T>     specular;
+
+  TVector4<T>   position;
+  TVector3<T>   positionNormal;
+};
+
+//-----------------------------------------------------------------------------
+template <class T>
+struct TLighting
+{
+  bool          enabled;
+  TLight<T>     light[8];
+
+  bool          normalizeEnabled;
+  TVector3<T>   normal;
+
+  bool          materialColorEnabled;
+};
+
+//-----------------------------------------------------------------------------
+template <class T>
+struct TMaterial
+{
+  TColor<T>   ambient;
+  TColor<T>   diffuse;
+  TColor<T>   specular;
+  TColor<T>   emission;
+  T           shininess;
+  GLenum      colorMode;
+};
+
+//-----------------------------------------------------------------------------
+template <class T>
+struct TFog
+{
+  bool        enabled;
+
+  GLint       mode;
+  T           density;
+  T           start;
+  T           end;
+  T           linear_scale; // 1 / (end - start)
+  TColor<T>   color;
+};
+
+//-----------------------------------------------------------------------------
+template <class T>
+struct TGLState
+{
+  // Culling
+  SCulling        culling;
+  // Hints
+  SHints          hints;
+  // Colors
+  TColor<T>       clCurrent;
+  TColor<T>       clClear;
+  GLenum          shadingModel;
+  bool            smoothShading;
+  // Textures
+  TTexturing<T>   texturing;
+  // Depth testing
+  TDepthTest<T>   depthTest;
+  // Alpha Blending
+  SBlending       blending;
+  // Alpha testing
+  TAlphaTest<T>   alphaTest;
+  // Lighting
+  TLighting<T>    lighting;
+  // Material
+  TMaterial<T>    materialFront;
+  TMaterial<T>    materialBack;
+  // Fog
+  TFog<T>         fog;
+};
+
+
+//-----------------------------------------------------------------------------
+class CRenderer
  : public virtual I3DRenderer
  , public virtual CAGLFixedToFloat
  , public virtual CAGLErrorHandler
@@ -50,8 +187,8 @@ class CSoft3DRendererFloat
  , public virtual CAGLMatrixFloat
 {
 public:
-  CSoft3DRendererFloat();
-  virtual ~CSoft3DRendererFloat();
+  CRenderer();
+  virtual ~CRenderer();
 
   void setRaster(raster::IRasterizer * rast);
 
@@ -115,7 +252,6 @@ protected:
   virtual void primitiveAssembly(SVertexF & v);
 
   virtual void rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit = 0);
-  virtual void rasterTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2);
 
   void interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLfloat t);
 
@@ -124,40 +260,17 @@ protected:
 
   TGLState<GLfloat> state_;
 
-  // Vertex transformations
-  GLfloat     xA_;
-  GLfloat     xB_;
-  GLfloat     yA_;
-  GLfloat     yB_;
-  GLfloat     zA_;
-  GLfloat     zB_;
-
   // Primitive assembly
   bool        bInBeginEnd_;
   GLenum      rasterMode_;
-  SVertexF    vertices[3];  // Vertex buffer for primitive assembly
+  SVertexF    vertices_[3]; // Vertex buffer for primitive assembly
   SVertexF  * triangle_[3]; // Assembled triangle
   bool        bFlipFlop_;   // Triangle strip
   GLint       vertIdx_;     // Current index into vertex buffer
 
   // Clipping planes
   TVector4<GLfloat> clipPlane_[6];
-
-  // Rasterizer
-  GLint       viewportXOffset;
-  GLint       viewportYOffset;
-  GLsizei     viewportPixelCount;
-  GLsizei     viewportWidth;
-  GLsizei     viewportHeight;
-
-private:
-  void _glDrawArrays(GLenum mode, GLint first, GLsizei count)     FAST_CODE;
-  void _vertexShaderTransform(SVertexF & v)                       FAST_CODE;
-  void _vertexShaderLight(SVertexF & v)                           FAST_CODE;
-  void _fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2) FAST_CODE;
-  void _fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2) FAST_CODE;
-  void _primitiveAssembly(SVertexF & v)                           FAST_CODE;
 };
 
 
-#endif // GL_3DRENDERERFLOAT_H
+#endif // GL_RENDERER_H

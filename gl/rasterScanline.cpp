@@ -91,13 +91,48 @@ CRasterizerScanline::alphaFunc(GLenum func, GLclampf ref)
 
 //-----------------------------------------------------------------------------
 void
-CRasterizerScanline::rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2)
+CRasterizerScanline::rasterTriangle(const SVertexF & v0, const SVertexF & v1, const SVertexF & v2)
 {
+  SVertex vtx0, vtx1, vtx2;
+
 #ifdef ENABLE_PROFILING
   prof_rasterMain.start();
 #endif
 
-  _rasterTriangle(v0, v1, v2);
+  vtx0.x   = fpfromf(SHIFT_XY, (fXA_ * v0.vd.x) + fXB_);
+  vtx0.y   = fpfromf(SHIFT_XY, (fYA_ * v0.vd.y) + fYB_);
+  vtx0.z   = (fZA_ * v0.vd.z) + fZB_;
+  vtx0.w   = v0.vd.w;
+  vtx0.c.r = (int32_t)(v0.c.r * (1<<SHIFT_COLOR));
+  vtx0.c.g = (int32_t)(v0.c.g * (1<<SHIFT_COLOR));
+  vtx0.c.b = (int32_t)(v0.c.b * (1<<SHIFT_COLOR));
+  vtx0.c.a = (int32_t)(v0.c.a * (1<<SHIFT_COLOR));
+  vtx0.t.u = v0.t[0];
+  vtx0.t.v = v0.t[1];
+
+  vtx1.x   = fpfromf(SHIFT_XY, (fXA_ * v1.vd.x) + fXB_);
+  vtx1.y   = fpfromf(SHIFT_XY, (fYA_ * v1.vd.y) + fYB_);
+  vtx1.z   = (fZA_ * v1.vd.z) + fZB_;
+  vtx1.w   = v1.vd.w;
+  vtx1.c.r = (int32_t)(v1.c.r * (1<<SHIFT_COLOR));
+  vtx1.c.g = (int32_t)(v1.c.g * (1<<SHIFT_COLOR));
+  vtx1.c.b = (int32_t)(v1.c.b * (1<<SHIFT_COLOR));
+  vtx1.c.a = (int32_t)(v1.c.a * (1<<SHIFT_COLOR));
+  vtx1.t.u = v1.t[0];
+  vtx1.t.v = v1.t[1];
+
+  vtx2.x   = fpfromf(SHIFT_XY, (fXA_ * v2.vd.x) + fXB_);
+  vtx2.y   = fpfromf(SHIFT_XY, (fYA_ * v2.vd.y) + fYB_);
+  vtx2.z   = (fZA_ * v2.vd.z) + fZB_;
+  vtx2.w   = v2.vd.w;
+  vtx2.c.r = (int32_t)(v2.c.r * (1<<SHIFT_COLOR));
+  vtx2.c.g = (int32_t)(v2.c.g * (1<<SHIFT_COLOR));
+  vtx2.c.b = (int32_t)(v2.c.b * (1<<SHIFT_COLOR));
+  vtx2.c.a = (int32_t)(v2.c.a * (1<<SHIFT_COLOR));
+  vtx2.t.u = v2.t[0];
+  vtx2.t.v = v2.t[1];
+
+  _rasterTriangle(vtx0, vtx1, vtx2);
 
 #ifdef ENABLE_PROFILING
   prof_rasterMain.end();
@@ -108,16 +143,6 @@ CRasterizerScanline::rasterTriangle(const SVertex & v0, const SVertex & v1, cons
 void
 CRasterizerScanline::rasterTexture(TColor<int32_t> & out, const TColor<int32_t> & cfragment, const TColor<int32_t> & ctexture)
 {
-#ifdef CONFIG_GL_TINY
-  if(texEnvMode_ == GL_MODULATE)
-  {
-    out.r = (cfragment.r * ctexture.r) >> SHIFT_COLOR_CALC;
-    out.g = (cfragment.g * ctexture.g) >> SHIFT_COLOR_CALC;
-    out.b = (cfragment.b * ctexture.b) >> SHIFT_COLOR_CALC;
-  }
-  else
-    out = ctexture;
-#else
   bool alphaChannel = pCurrentTex_->bRGBA_;
 
   switch(texEnvMode_)
@@ -154,10 +179,8 @@ CRasterizerScanline::rasterTexture(TColor<int32_t> & out, const TColor<int32_t> 
       out.a = alphaChannel ? COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.a, ctexture.a) : cfragment.a;
       break;
   };
-#endif
 }
 
-#ifndef CONFIG_GL_TINY
 //-----------------------------------------------------------------------------
 void
 CRasterizerScanline::rasterBlend(TColor<int32_t> & out, const TColor<int32_t> & source, const TColor<int32_t> & dest)
@@ -244,7 +267,6 @@ CRasterizerScanline::rasterBlend(TColor<int32_t> & out, const TColor<int32_t> & 
     }
   }
 }
-#endif
 
 //-----------------------------------------------------------------------------
 void
@@ -273,10 +295,8 @@ CRasterizerScanline::_rasterTriangle(const SVertex & v0, const SVertex & v1, con
 
   // Calculate function code
   uint32_t function_code =
-#ifndef CONFIG_GL_TINY
     (bBlendingEnabled_      << 3) |
     (bSmoothShadingEnabled_ << 2) |
-#endif
     (bTexturesEnabled_      << 1) |
     (bDepthTestEnabled_         );
   // Execute selected function
@@ -286,7 +306,6 @@ CRasterizerScanline::_rasterTriangle(const SVertex & v0, const SVertex & v1, con
     case 0x01: rasterZ   (vtop, vmiddle, vbottom); break;
     case 0x02: rasterT   (vtop, vmiddle, vbottom); break;
     case 0x03: rasterTZ  (vtop, vmiddle, vbottom); break;
-#ifndef CONFIG_GL_TINY
     case 0x04: rasterC   (vtop, vmiddle, vbottom); break;
     case 0x05: rasterCZ  (vtop, vmiddle, vbottom); break;
     case 0x06: rasterCT  (vtop, vmiddle, vbottom); break;
@@ -299,7 +318,6 @@ CRasterizerScanline::_rasterTriangle(const SVertex & v0, const SVertex & v1, con
     case 0x0d: rasterBCZ (vtop, vmiddle, vbottom); break;
     case 0x0e: rasterBCT (vtop, vmiddle, vbottom); break;
     case 0x0f: rasterBCTZ(vtop, vmiddle, vbottom); break;
-#endif
   };
 }
 
@@ -338,7 +356,6 @@ CRasterizerScanline::rasterTZ(const SVertex * vtop, const SVertex * vmiddle, con
   #include "rasterScanline.inl"
 }
 
-#ifndef CONFIG_GL_TINY
 //-----------------------------------------------------------------------------
 void
 CRasterizerScanline::rasterC(const SVertex * vtop, const SVertex * vmiddle, const SVertex * vbottom)
@@ -462,7 +479,6 @@ CRasterizerScanline::rasterBCTZ(const SVertex * vtop, const SVertex * vmiddle, c
 
   #include "rasterScanline.inl"
 }
-#endif
 
 
 };
