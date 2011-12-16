@@ -51,6 +51,8 @@ CASoftRasterizer::CASoftRasterizer()
  , depthFunction_(GL_LESS)
  , depthClear_(1.0f)
  , bDepthMask_(true)
+ , zNear_(0.0f)
+ , zFar_(1.0f)
  , bTexturesEnabled_(false)
  , texEnvMode_(GL_MODULATE)
  , pCurrentTex_(NULL)
@@ -58,6 +60,8 @@ CASoftRasterizer::CASoftRasterizer()
  , blendSFactor_(GL_ONE)
  , blendDFactor_(GL_ZERO)
  , viewportPixelCount(0)
+ , fZA_(0.5f)
+ , fZB_(0.5f)
 {
   texEnvColor_.r = 0;
   texEnvColor_.g = 0;
@@ -72,9 +76,6 @@ CASoftRasterizer::CASoftRasterizer()
 
   // Default pixel center OpenGL (center)
   this->setUsePixelCenter(true);
-
-  fZA_  = 0.5f;
-  fZB_  = 0.5f;
 }
 
 //-----------------------------------------------------------------------------
@@ -633,6 +634,67 @@ CASoftRasterizer::texEnvf(GLenum target, GLenum pname, GLfloat param)
 
 //-----------------------------------------------------------------------------
 void
+CASoftRasterizer::texEnvfv(GLenum target, GLenum pname, const GLfloat * params)
+{
+  switch(target)
+  {
+    case GL_TEXTURE_ENV:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(pname)
+  {
+    case GL_TEXTURE_ENV_MODE:
+      switch((GLenum)params[0])
+      {
+        case GL_MODULATE:
+        case GL_DECAL:
+        case GL_BLEND:
+        //case GL_COMBINE_EXT:
+        case GL_ADD:
+        case GL_REPLACE:
+        //case GL_ADD_SIGNED_EXT:
+        //case GL_INTERPOLATE_EXT:
+          break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      texEnvMode_ = (GLenum)params[0];
+      break;
+    case GL_TEXTURE_ENV_COLOR:
+      texEnvColor_.r = params[0];
+      texEnvColor_.g = params[1];
+      texEnvColor_.b = params[2];
+      texEnvColor_.a = params[3];
+      break;
+    //case GL_COMBINE_RGB_EXT:
+    //case GL_COMBINE_ALPHA_EXT:
+    //case GL_SOURCE0_RGB_EXT:
+    //case GL_SOURCE1_RGB_EXT:
+    //case GL_SOURCE2_RGB_EXT:
+    //case GL_SOURCE0_ALPHA_EXT:
+    //case GL_SOURCE1_ALPHA_EXT:
+    //case GL_SOURCE2_ALPHA_EXT:
+    //case GL_OPERAND0_RGB_EXT:
+    //case GL_OPERAND1_RGB_EXT:
+    //case GL_OPERAND2_RGB_EXT:
+    //case GL_OPERAND0_ALPHA_EXT:
+    //case GL_OPERAND1_ALPHA_EXT:
+    //case GL_OPERAND2_ALPHA_EXT:
+    //case GL_RGB_SCALE_EXT:
+    //case GL_ALPHA_SCALE:
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+}
+
+//-----------------------------------------------------------------------------
+void
 CASoftRasterizer::colorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table)
 {
   switch(target)
@@ -759,10 +821,14 @@ CASoftRasterizer::blendFunc(GLenum sfactor, GLenum dfactor)
   blendSFactor_ = sfactor;
   blendDFactor_ = dfactor;
 
-  if((sfactor == GL_ONE) && (dfactor == GL_ZERO))
+  if((sfactor == GL_ZERO) && (dfactor == GL_ZERO))
+    blendFast_ = FB_ZERO;
+  else if((sfactor == GL_ONE) && (dfactor == GL_ZERO))
     blendFast_ = FB_SOURCE;
   else if((sfactor == GL_ZERO) && (dfactor == GL_ONE))
     blendFast_ = FB_DEST;
+  else if((sfactor == GL_ONE) && (dfactor == GL_ONE))
+    blendFast_ = FB_ADD;
   else if((sfactor == GL_SRC_ALPHA) && (dfactor == GL_ONE_MINUS_SRC_ALPHA))
     blendFast_ = FB_BLEND;
   else
@@ -837,28 +903,24 @@ CASoftRasterizer::clear(GLbitfield mask)
 }
 
 //-----------------------------------------------------------------------------
+// Convert from normalized device coordinates. Example (640x480)
+// x: in = -1..1  out = 0..640
+// y: in = -1..1  out = 480..0 (NOTE: y is inverted)
 void
 CASoftRasterizer::viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-  viewportXOffset    = x;
-  viewportYOffset    = y;
-  viewportWidth      = width;
-  viewportHeight     = height;
-  viewportPixelCount = width * height;
+  if(renderSurface == NULL)
+    return;
 
-  iXA_ =     (viewportWidth  >> 1);
-  iXB_ = x + (viewportWidth  >> 1);
-  iYA_ =     (viewportHeight >> 1);
-  iYB_ = y + (viewportHeight >> 1);
-  // FIXME:
-  iYA_  = -iYA_;
-  iXB_ -= x;
-  iYB_ -= y;
+  viewportXOffset = x;
+  viewportYOffset = (renderSurface->height() - height) - y;
+  viewportWidth   = width;
+  viewportHeight  = height;
 
-  fXA_ = iXA_;
-  fXB_ = iXB_;
-  fYA_ = iYA_;
-  fYB_ = iYB_;
+  fXA_ = (GLfloat)(  (viewportWidth  >> 1));
+  fXB_ = (GLfloat)(  (viewportWidth  >> 1) + viewportXOffset);
+  fYA_ = (GLfloat)(- (viewportHeight >> 1));
+  fYB_ = (GLfloat)(  (viewportHeight >> 1) + viewportYOffset);
 }
 
 //-----------------------------------------------------------------------------
@@ -871,12 +933,14 @@ CASoftRasterizer::setUsePixelCenter(bool bCenter)
   {
     fxPixelFloorOffset_  = (1 << (SHIFT_XY - 1)) - 1; // Half a pixel minus one
     fxPixelCenterOffset_ = (1 << (SHIFT_XY - 1));     // Half a pixel (the center)
+    fPixelFloorOffset_   = 0.49f;
     fPixelCenterOffset_  = 0.5f;
   }
   else
   {
     fxPixelFloorOffset_  = (1 << (SHIFT_XY    )) - 1; // A whole pixel minus one
     fxPixelCenterOffset_ = 0;                         // Zero (Top-Left corner)
+    fPixelFloorOffset_   = 0.99f;
     fPixelCenterOffset_  = 0.0f;
   }
 

@@ -1489,8 +1489,7 @@ CRenderer::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
       return;
   };
 
-  // FIXME: Implement glTexEnvfv in rasterizer
-  //pRaster_->texEnvfv(target, pname, params);
+  pRaster_->texEnvfv(target, pname, params);
 }
 
 //-----------------------------------------------------------------------------

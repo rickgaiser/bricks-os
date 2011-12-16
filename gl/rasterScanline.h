@@ -46,6 +46,7 @@ public:
   CRasterizerScanline();
   virtual ~CRasterizerScanline();
 
+  void texEnvfv(GLenum target, GLenum pname, const GLfloat * params);
   void alphaFunc(GLenum func, GLclampf ref);
 
   void rasterTriangle(const SVertexF & v0, const SVertexF & v1, const SVertexF & v2);
@@ -113,6 +114,7 @@ private:
   TTexCoord<GLfloat>      scan_t_ddx;
 #endif
 
+  TColor<int32_t> texEnvColorFX_;
   int32_t alphaValueFX_;
 };
 

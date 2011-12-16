@@ -45,8 +45,10 @@ namespace raster
 enum EFastBlendMode
 {
   FB_OTHER,
+  FB_ZERO,
   FB_SOURCE,
   FB_DEST,
+  FB_ADD,
   FB_BLEND,
 };
 
@@ -121,6 +123,7 @@ public:
   virtual void texImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * pixels);
   virtual void texParameterf(GLenum target, GLenum pname, GLfloat param);
   virtual void texEnvf(GLenum target, GLenum pname, GLfloat param);
+  virtual void texEnvfv(GLenum target, GLenum pname, const GLfloat * params);
   virtual void colorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table);
 
   // Blending
@@ -186,15 +189,11 @@ protected:
   int32_t     fxPixelFloorOffset_;
   int32_t     fxPixelCenterOffset_;
   int32_t     fxOneMinusPixelCenterOffset_;
-  //float     fPixelFloorOffset_;
+  GLfloat     fPixelFloorOffset_;
   GLfloat     fPixelCenterOffset_;
   GLfloat     fOneMinusPixelCenterOffset_;
 
   // Vertex transformations
-  int32_t     iXA_;
-  int32_t     iXB_;
-  int32_t     iYA_;
-  int32_t     iYB_;
   GLfloat     fXA_;
   GLfloat     fXB_;
   GLfloat     fYA_;

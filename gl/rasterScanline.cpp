@@ -71,13 +71,30 @@ namespace raster
 //-----------------------------------------------------------------------------
 CRasterizerScanline::CRasterizerScanline()
  : CASoftRasterizer()
- , alphaValueFX_(0)
 {
+  texEnvColorFX_.r = fpfromf(SHIFT_COLOR_CALC, texEnvColor_.r);
+  texEnvColorFX_.g = fpfromf(SHIFT_COLOR_CALC, texEnvColor_.r);
+  texEnvColorFX_.b = fpfromf(SHIFT_COLOR_CALC, texEnvColor_.r);
+  texEnvColorFX_.a = fpfromf(SHIFT_COLOR_CALC, texEnvColor_.r);
+
+  alphaValueFX_ = fpfromf(SHIFT_COLOR_CALC, alphaValue_);
 }
 
 //-----------------------------------------------------------------------------
 CRasterizerScanline::~CRasterizerScanline()
 {
+}
+
+//-----------------------------------------------------------------------------
+void
+CRasterizerScanline::texEnvfv(GLenum target, GLenum pname, const GLfloat * params)
+{
+  CASoftRasterizer::texEnvfv(target, pname, params);
+
+  texEnvColorFX_.r = fpfromf(SHIFT_COLOR_CALC, texEnvColor_.r);
+  texEnvColorFX_.g = fpfromf(SHIFT_COLOR_CALC, texEnvColor_.r);
+  texEnvColorFX_.b = fpfromf(SHIFT_COLOR_CALC, texEnvColor_.r);
+  texEnvColorFX_.a = fpfromf(SHIFT_COLOR_CALC, texEnvColor_.r);
 }
 
 //-----------------------------------------------------------------------------
@@ -167,10 +184,10 @@ CRasterizerScanline::rasterTexture(TColor<int32_t> & out, const TColor<int32_t> 
       out.a = cfragment.a;
       break;
     case GL_BLEND:
-      //out.r = COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.r, ((1<<SHIFT_COLOR_CALC)-ctexture.r)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, texEnvColorFX_.r, ctexture.r);
-      //out.g = COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.g, ((1<<SHIFT_COLOR_CALC)-ctexture.g)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, texEnvColorFX_.g, ctexture.g);
-      //out.b = COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.b, ((1<<SHIFT_COLOR_CALC)-ctexture.b)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, texEnvColorFX_.b, ctexture.b);
-      //out.a = alphaChannel ? COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.a, ctexture.a) : cfragment.a;
+      out.r = COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.r, ((1<<SHIFT_COLOR_CALC)-ctexture.r)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, texEnvColorFX_.r, ctexture.r);
+      out.g = COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.g, ((1<<SHIFT_COLOR_CALC)-ctexture.g)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, texEnvColorFX_.g, ctexture.g);
+      out.b = COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.b, ((1<<SHIFT_COLOR_CALC)-ctexture.b)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, texEnvColorFX_.b, ctexture.b);
+      out.a = alphaChannel ? COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.a, ctexture.a) : cfragment.a;
       break;
     case GL_ADD:
       out.r = cfragment.r + ctexture.r;
@@ -234,6 +251,12 @@ CRasterizerScanline::rasterBlend(TColor<int32_t> & out, const TColor<int32_t> & 
 
   switch(blendFast_)
   {
+    case FB_ZERO:
+      out.r = 0;
+      out.g = 0;
+      out.b = 0;
+      out.a = 0;
+      break;
     case FB_SOURCE:
       out.r = source.r;
       out.g = source.g;
@@ -245,6 +268,12 @@ CRasterizerScanline::rasterBlend(TColor<int32_t> & out, const TColor<int32_t> & 
       out.g = dest.g;
       out.b = dest.b;
       out.a = dest.a;
+      break;
+    case FB_ADD:
+      out.r = COLOR_CLAMP_TOP_COMP(source.r + dest.r, SHIFT_COLOR_CALC);
+      out.g = COLOR_CLAMP_TOP_COMP(source.g + dest.g, SHIFT_COLOR_CALC);
+      out.b = COLOR_CLAMP_TOP_COMP(source.b + dest.b, SHIFT_COLOR_CALC);
+      out.a = COLOR_CLAMP_TOP_COMP(source.a + dest.a, SHIFT_COLOR_CALC);
       break;
     case FB_BLEND:
     {

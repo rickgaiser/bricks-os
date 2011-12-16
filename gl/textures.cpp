@@ -411,8 +411,8 @@ CTexture::getTexel(TColor<int32_t> & c, float u, float v, float lod)
   int iU, iV;
   uint32_t texel;
 
-  iU = u * width;
-  iV = v * height;
+  iU = (int)(u * width);
+  iV = (int)(v * height);
   // Wrap
   iU &= iWidthMask_;
   iV &= iHeightMask_;

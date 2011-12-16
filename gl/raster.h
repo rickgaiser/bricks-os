@@ -90,6 +90,7 @@ public:
   virtual void texImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * pixels) = 0;
   virtual void texParameterf(GLenum target, GLenum pname, GLfloat param) = 0;
   virtual void texEnvf(GLenum target, GLenum pname, GLfloat param) = 0;
+  virtual void texEnvfv(GLenum target, GLenum pname, const GLfloat * params) = 0;
   virtual void colorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table) = 0;
 
   // Blending
