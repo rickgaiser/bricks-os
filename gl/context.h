@@ -45,8 +45,8 @@ struct TVertex
   TVector4<T> vd; // Normalized Device Coordinates
 
   // Normals
-  TVector3<T> n;  // Vertex Normal
-  TVector3<T> n2; // Vertex Normal, rotated
+  TVector3<T> no; // Object Coordinates
+  TVector3<T> ne; // Eye Coordinates
 
   // Color
   TColor<T> c;    // Color

@@ -705,19 +705,19 @@ CRenderer::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufNormal_.type)
       {
         case GL_FLOAT:
-          v.n.x = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n.y = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
-          v.n.z = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.no.x = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.no.y = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
+          v.no.z = ((GLfloat *)bufNormal_.pointer)[idxNormal++];
           break;
         case GL_FIXED:
-          v.n.x = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n.y = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
-          v.n.z = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.no.x = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.no.y = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
+          v.no.z = gl_fptof(((GLfixed *)bufNormal_.pointer)[idxNormal++]);
           break;
       };
     }
     else
-      v.n = state_.lighting.normal;
+      v.no = state_.lighting.normal;
 
     // Color
     if(state_.lighting.enabled == false)
@@ -1655,7 +1655,7 @@ CRenderer::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
   v.vo.z = z;
   v.vo.w = w;
   // Set normal
-  v.n = state_.lighting.normal;
+  v.no = state_.lighting.normal;
   // Set color
   v.c = state_.clCurrent;
   // Set texture
@@ -1716,15 +1716,15 @@ CRenderer::vertexShaderTransform(SVertexF & v)
   // Set clip flags
   setClipFlags(v);
 
-  if(v.clip == 0)
-  {
-    // Perspective division
-    //   from 'clip coordinates' to 'normalized device coordinates'
-    CALC_CLIP_TO_NDEV(v);
-  }
+    if(v.clip == 0)
+    {
+      // Perspective division
+      //   from 'clip coordinates' to 'normalized device coordinates'
+      CALC_CLIP_TO_NDEV(v);
+    }
 
-  primitiveAssembly(v);
-}
+    primitiveAssembly(v);
+  }
 
 //-----------------------------------------------------------------------------
 void
@@ -1741,48 +1741,23 @@ CRenderer::vertexShaderLight(SVertexF & v)
     TColor<GLfloat> cSpecular(0, 0, 0, 0);
 
     // Normalized vertex normal
-    TVector3<GLfloat> vVertexNormal;
-    pCurrentModelView_->transform3(v.n, vVertexNormal);
+    pCurrentModelView_->transform3(v.no, v.ne);
 
     // Normalized vector from vertex to eye
     TVector3<GLfloat> vVertexToEye = v.ve.getInverted();
     vVertexToEye.normalize();
 
-#if 0
-    // Front or backfacing vertex
-    // FIXME: We need the fragment front/back, not the normal's direction
-    if(vVertexNormal.dot(vVertexToEye) > 0)
-    {
-      pMaterial = &state_.materialFront;
-    }
-    else
-    {
-      pMaterial = &state_.materialBack;
-      vVertexNormal.invert();
-    }
-#else
     pMaterial = &state_.materialFront;
-#endif
 
-#define INFINITE_LIGHT
     for(int iLight(0); iLight < 8; iLight++)
     {
       if(state_.lighting.light[iLight].enabled == true)
       {
-#ifndef INFINITE_LIGHT
-        TVector3<GLfloat> vVertexToLightNormal = TVector3<GLfloat>(state_.lighting.light[iLight].position) - TVector3<GLfloat>(v.ve);
-        vVertexToLightNormal.normalize();
-#endif
-
         // Ambient light (it's everywhere!)
         cAmbient += state_.lighting.light[iLight].ambient * pMaterial->ambient;
 
         // Diffuse light
-#ifndef INFINITE_LIGHT
-        GLfloat diffuse = vVertexToLightNormal.dot(vVertexNormal);
-#else
-        GLfloat diffuse = state_.lighting.light[iLight].positionNormal.dot(vVertexNormal);
-#endif
+        GLfloat diffuse = state_.lighting.light[iLight].positionNormal.dot(v.ne);
         if(diffuse > 0.0f)
         {
           cDiffuse += state_.lighting.light[iLight].diffuse * pMaterial->diffuse * diffuse;
@@ -1791,11 +1766,7 @@ CRenderer::vertexShaderLight(SVertexF & v)
         if(pMaterial->shininess >= 0.5f)
         {
           // Specular light
-#ifndef INFINITE_LIGHT
-          GLfloat specular = vVertexToLightNormal.getReflection(vVertexNormal).dot(vVertexToEye);
-#else
-          GLfloat specular = state_.lighting.light[iLight].positionNormal.getReflection(vVertexNormal).dot(vVertexToEye);
-#endif
+          GLfloat specular = state_.lighting.light[iLight].positionNormal.getReflection(v.ne).dot(vVertexToEye);
           if(specular > 0.0f)
           {
             specular = mathlib::fast_int_pow(specular, (int)(pMaterial->shininess + 0.5f));
@@ -1967,7 +1938,7 @@ CRenderer::primitiveAssembly(SVertexF & v)
           SVertexF * pTemp = triangle_[1];
           triangle_[1] = triangle_[2];
           triangle_[2] = pTemp;
-        }
+      }
         bFlipFlop_ = !bFlipFlop_;
       }
       else
