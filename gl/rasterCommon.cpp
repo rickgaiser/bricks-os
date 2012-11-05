@@ -101,10 +101,10 @@ CASoftRasterizer::enableDepthTest(bool enable)
 {
   bDepthTestEnabled_ = enable;
 
-  if((bDepthTestEnabled_ == true) && (pZBuffer_ == NULL) && (viewportPixelCount > 0))
+  if((bDepthTestEnabled_ == true) && (pZBuffer_ == NULL))
   {
     // Allocate z-buffer
-    pZBuffer_ = new GLfloat[viewportPixelCount];
+    pZBuffer_ = new GLfloat[renderSurface->mode.width * renderSurface->mode.height];
     if(pZBuffer_ == NULL)
       setError(GL_OUT_OF_MEMORY);
   }
@@ -861,40 +861,24 @@ CASoftRasterizer::clear(GLbitfield mask)
   prof_rasterClear.start();
 #endif
 
+  unsigned int iPixelCount = renderSurface->mode.width * renderSurface->mode.height;
+
   if(mask & GL_COLOR_BUFFER_BIT)
   {
-    color_t color = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(clClear.r * 255), (uint8_t)(clClear.g * 255), (uint8_t)(clClear.b * 255), (uint8_t)(clClear.a * 255));
-    int yoff = renderSurface->mode.height - (viewportHeight + viewportYOffset);
-    int xoff = viewportXOffset;
+    uint32_t color = BxColorFormat_FromRGBA(renderSurface->mode.format, (uint8_t)(clClear.r * 255), (uint8_t)(clClear.g * 255), (uint8_t)(clClear.b * 255), (uint8_t)(clClear.a * 255));
 
     switch(renderSurface->mode.bpp)
     {
-      case 8:
-      {
-        for(int32_t y(0); y < viewportHeight; y++)
-          for(int32_t x(0); x < viewportWidth; x++)
-            ((uint8_t  *)renderSurface->p)[(y + yoff) * renderSurface->mode.xpitch + (x + xoff)] = color;
-        break;
-      }
-      case 16:
-      {
-        for(int32_t y(0); y < viewportHeight; y++)
-          for(int32_t x(0); x < viewportWidth; x++)
-            ((uint16_t *)renderSurface->p)[(y + yoff) * renderSurface->mode.xpitch + (x + xoff)] = color;
-        break;
-      }
-      case 32:
-      {
-        fastFill((uint32_t *)renderSurface->p, viewportPixelCount, color);
-        break;
-      }
+      case 8:  fastFill<uint8_t >((uint8_t  *)renderSurface->p, iPixelCount, color); break;
+      case 16: fastFill<uint16_t>((uint16_t *)renderSurface->p, iPixelCount, color); break;
+      case 32: fastFill<uint32_t>((uint32_t *)renderSurface->p, iPixelCount, color); break;
     };
   }
   if(mask & GL_DEPTH_BUFFER_BIT)
   {
     if(pZBuffer_ != NULL)
     {
-      fastFill(pZBuffer_, viewportPixelCount, depthClear_);
+      fastFill(pZBuffer_, iPixelCount, depthClear_);
     }
   }
 #ifdef ENABLE_PROFILING
