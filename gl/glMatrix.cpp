@@ -61,7 +61,7 @@ CAGLMatrixFloat::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat
 {
   FUNCTION_DEBUG();
 
-  GLfloat m[16];
+  GLfloat m[16] __attribute__ ((aligned (16)));
 
   GLfloat idw = 1.0f / (right - left);
   GLfloat idh = 1.0f / (top - bottom);
@@ -114,7 +114,7 @@ CAGLMatrixFloat::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat t
 {
   FUNCTION_DEBUG();
 
-  GLfloat m[16];
+  GLfloat m[16] __attribute__ ((aligned (16)));
 
   GLfloat idw = 1.0f / (right - left);
   GLfloat idh = 1.0f / (top - bottom);
