@@ -34,7 +34,7 @@ extern CTimeProfiler prof_renderTransform; //  |- Vertex transformation
 extern CTimeProfiler prof_renderLight;     //  |- Lighting
 //extern CTimeProfiler prof_renderClip;      //  |- Clipping
 
-//extern CTimeProfiler prof_rasterTotal;     // Rasterizer
+extern CTimeProfiler prof_rasterTotal;     // Rasterizer
 extern CTimeProfiler prof_rasterClear;     //  |- Clearing the buffers (color/depth)
 extern CTimeProfiler prof_rasterInit;      //  |- Initialization of raster buffers (tile-based only?)
 extern CTimeProfiler prof_rasterMain;      //  |- Main rasterization process

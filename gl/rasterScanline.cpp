@@ -113,6 +113,7 @@ CRasterizerScanline::rasterTriangle(const SVertexF & v0, const SVertexF & v1, co
   SVertex vtx0, vtx1, vtx2;
 
 #ifdef ENABLE_PROFILING
+  prof_rasterTotal.start();
   prof_rasterMain.start();
 #endif
 
@@ -153,6 +154,7 @@ CRasterizerScanline::rasterTriangle(const SVertexF & v0, const SVertexF & v1, co
 
 #ifdef ENABLE_PROFILING
   prof_rasterMain.end();
+  prof_rasterTotal.end();
 #endif
 }
 

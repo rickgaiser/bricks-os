@@ -439,20 +439,20 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
   if(level == 0)
   {
     // MipMap level == 0
-    pCurrentTex_->bitWidth_    = iWidthLog2;
-    pCurrentTex_->bitHeight_   = iHeightLog2;
+  pCurrentTex_->bitWidth_    = iWidthLog2;
+  pCurrentTex_->bitHeight_   = iHeightLog2;
     pCurrentTex_->iMaxLevel_   = 0;
-    pCurrentTex_->iWidthMask_  = width  - 1;
-    pCurrentTex_->iHeightMask_ = height - 1;
-    pCurrentTex_->width        = width;
-    pCurrentTex_->height       = height;
-    pCurrentTex_->bRGBA_       = bAlpha;
+  pCurrentTex_->iWidthMask_  = width  - 1;
+  pCurrentTex_->iHeightMask_ = height - 1;
+  pCurrentTex_->width        = width;
+  pCurrentTex_->height       = height;
+  pCurrentTex_->bRGBA_       = bAlpha;
 
-    // Delete old texture buffer if present
+  // Delete old texture buffer if present
     if(pCurrentTex_->data_raw != NULL)
       delete ((uint8_t *)pCurrentTex_->data_raw);
 
-    // Allocate texture data
+  // Allocate texture data
     //  - Alligned to 256bit == 32byte
     //  - Allocate MipMap levels also (1/3 of original size)
     // FIXME: dataSize is too much!
@@ -858,6 +858,7 @@ void
 CASoftRasterizer::clear(GLbitfield mask)
 {
 #ifdef ENABLE_PROFILING
+  prof_rasterTotal.start();
   prof_rasterClear.start();
 #endif
 
@@ -883,6 +884,7 @@ CASoftRasterizer::clear(GLbitfield mask)
   }
 #ifdef ENABLE_PROFILING
   prof_rasterClear.end();
+  prof_rasterTotal.end();
 #endif
 }
 
