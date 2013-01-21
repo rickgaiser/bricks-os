@@ -20,47 +20,30 @@
 
 
 #include "rasterScanline.h"
+#include "CDDA.h"
 #ifdef ENABLE_PROFILING
 #include "glProfiling.h"
 #endif
+#include "mathlib.h"
 
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
 #include "math.h"
-#include "mathlib.h"
 
+
+//#define SHIFT_XY            4
+#define DEPTH_Z            14 // Resolution of depth buffer
+#define SHIFT_Z            15 // Added resolution for interpolation
+#define SHIFT_COLOR        12
 
 #define SHIFT_COLOR_INTERP (30 - SHIFT_XY)
 #define SHIFT_COLOR_CALC   14
 
 
-// INTERFACE_TO_INTERP_COLOR
-#if SHIFT_COLOR > SHIFT_COLOR_INTERP
-  #define INTERFACE_TO_INTERP_COLOR(c) ((c) >> (SHIFT_COLOR - SHIFT_COLOR_INTERP))
-#elif SHIFT_COLOR < SHIFT_COLOR_INTERP
-  #define INTERFACE_TO_INTERP_COLOR(c) ((c) << (SHIFT_COLOR_INTERP - SHIFT_COLOR))
-#else
-  #define INTERFACE_TO_INTERP_COLOR(c) ((c))
-#endif
-
-// INTERFACE_TO_CALC_COLOR
-#if SHIFT_COLOR > SHIFT_COLOR_CALC
-  #define INTERFACE_TO_CALC_COLOR(c) ((c) >> (SHIFT_COLOR - SHIFT_COLOR_CALC))
-#elif SHIFT_COLOR < SHIFT_COLOR_CALC
-  #define INTERFACE_TO_CALC_COLOR(c) ((c) << (SHIFT_COLOR_CALC - SHIFT_COLOR))
-#else
-  #define INTERFACE_TO_CALC_COLOR(c) ((c))
-#endif
-
-// INTERP_TO_CALC_COLOR
-#if SHIFT_COLOR_INTERP > SHIFT_COLOR_CALC
-  #define INTERP_TO_CALC_COLOR(c) ((c) >> (SHIFT_COLOR_INTERP - SHIFT_COLOR_CALC))
-#elif SHIFT_COLOR_INTERP < SHIFT_COLOR_CALC
-  #define INTERP_TO_CALC_COLOR(c) ((c) << (SHIFT_COLOR_CALC - SHIFT_COLOR_INTERP))
-#else
-  #define INTERP_TO_CALC_COLOR(c) ((c))
-#endif
+#define INTERFACE_TO_INTERP_COLOR(c) ((c) << (SHIFT_COLOR_INTERP - SHIFT_COLOR))
+#define INTERFACE_TO_CALC_COLOR(c)   ((c) << (SHIFT_COLOR_CALC   - SHIFT_COLOR))
+#define INTERP_TO_CALC_COLOR(c)      ((c) >> (SHIFT_COLOR_INTERP - SHIFT_COLOR_CALC))
 
 
 namespace raster
@@ -121,10 +104,7 @@ CRasterizerScanline::rasterTriangle(const SVertexF & v0, const SVertexF & v1, co
   vtx0.y   = fpfromf(SHIFT_XY, (fYA_ * v0.vd.y) + fYB_);
   vtx0.z   = (fZA_ * v0.vd.z) + fZB_;
   vtx0.w   = v0.vd.w;
-  vtx0.c.r = (int32_t)(v0.c.r * (1<<SHIFT_COLOR));
-  vtx0.c.g = (int32_t)(v0.c.g * (1<<SHIFT_COLOR));
-  vtx0.c.b = (int32_t)(v0.c.b * (1<<SHIFT_COLOR));
-  vtx0.c.a = (int32_t)(v0.c.a * (1<<SHIFT_COLOR));
+  vtx0.c   = v0.c;
   vtx0.t.u = v0.t[0];
   vtx0.t.v = v0.t[1];
 
@@ -132,10 +112,7 @@ CRasterizerScanline::rasterTriangle(const SVertexF & v0, const SVertexF & v1, co
   vtx1.y   = fpfromf(SHIFT_XY, (fYA_ * v1.vd.y) + fYB_);
   vtx1.z   = (fZA_ * v1.vd.z) + fZB_;
   vtx1.w   = v1.vd.w;
-  vtx1.c.r = (int32_t)(v1.c.r * (1<<SHIFT_COLOR));
-  vtx1.c.g = (int32_t)(v1.c.g * (1<<SHIFT_COLOR));
-  vtx1.c.b = (int32_t)(v1.c.b * (1<<SHIFT_COLOR));
-  vtx1.c.a = (int32_t)(v1.c.a * (1<<SHIFT_COLOR));
+  vtx1.c   = v1.c;
   vtx1.t.u = v1.t[0];
   vtx1.t.v = v1.t[1];
 
@@ -143,10 +120,7 @@ CRasterizerScanline::rasterTriangle(const SVertexF & v0, const SVertexF & v1, co
   vtx2.y   = fpfromf(SHIFT_XY, (fYA_ * v2.vd.y) + fYB_);
   vtx2.z   = (fZA_ * v2.vd.z) + fZB_;
   vtx2.w   = v2.vd.w;
-  vtx2.c.r = (int32_t)(v2.c.r * (1<<SHIFT_COLOR));
-  vtx2.c.g = (int32_t)(v2.c.g * (1<<SHIFT_COLOR));
-  vtx2.c.b = (int32_t)(v2.c.b * (1<<SHIFT_COLOR));
-  vtx2.c.a = (int32_t)(v2.c.a * (1<<SHIFT_COLOR));
+  vtx2.c   = v2.c;
   vtx2.t.u = v2.t[0];
   vtx2.t.v = v2.t[1];
 
@@ -159,8 +133,14 @@ CRasterizerScanline::rasterTriangle(const SVertexF & v0, const SVertexF & v1, co
 }
 
 //-----------------------------------------------------------------------------
+const CInt32_4 constColorOne (1<<SHIFT_COLOR_CALC, 1<<SHIFT_COLOR_CALC, 1<<SHIFT_COLOR_CALC, 1<<SHIFT_COLOR_CALC);
+const CInt32_4 constColorZero(0<<SHIFT_COLOR_CALC, 0<<SHIFT_COLOR_CALC, 0<<SHIFT_COLOR_CALC, 0<<SHIFT_COLOR_CALC);
+//-----------------------------------------------------------------------------
+const int32_t  constColorCompOne (1<<SHIFT_COLOR_CALC);
+const int32_t  constColorCompZero(0<<SHIFT_COLOR_CALC);
+//-----------------------------------------------------------------------------
 void
-CRasterizerScanline::rasterTexture(TColor<int32_t> & out, const TColor<int32_t> & cfragment, const TColor<int32_t> & ctexture)
+CRasterizerScanline::rasterTexture(CInt32_4 & out, const CInt32_4 & cfragment, const CInt32_4 & ctexture)
 {
   bool alphaChannel = pCurrentTex_->bRGBA_;
 
@@ -180,121 +160,88 @@ CRasterizerScanline::rasterTexture(TColor<int32_t> & out, const TColor<int32_t> 
       out.a = alphaChannel ? ((cfragment.a * ctexture.a) >> SHIFT_COLOR_CALC) : cfragment.a;
       break;
     case GL_DECAL:
-      out.r = alphaChannel ? (COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.r, ((1<<SHIFT_COLOR_CALC)-ctexture.a)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, ctexture.r, ctexture.a)) : ctexture.r;
-      out.g = alphaChannel ? (COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.g, ((1<<SHIFT_COLOR_CALC)-ctexture.a)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, ctexture.g, ctexture.a)) : ctexture.g;
-      out.b = alphaChannel ? (COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.b, ((1<<SHIFT_COLOR_CALC)-ctexture.a)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, ctexture.b, ctexture.a)) : ctexture.b;
+      out.r = alphaChannel ? ((cfragment.r * (constColorCompOne - ctexture.a)) >> SHIFT_COLOR_CALC) + ((ctexture.r * ctexture.a) >> SHIFT_COLOR_CALC) : ctexture.r;
+      out.g = alphaChannel ? ((cfragment.g * (constColorCompOne - ctexture.a)) >> SHIFT_COLOR_CALC) + ((ctexture.g * ctexture.a) >> SHIFT_COLOR_CALC) : ctexture.g;
+      out.b = alphaChannel ? ((cfragment.b * (constColorCompOne - ctexture.a)) >> SHIFT_COLOR_CALC) + ((ctexture.b * ctexture.a) >> SHIFT_COLOR_CALC) : ctexture.b;
       out.a = cfragment.a;
       break;
     case GL_BLEND:
-      out.r = COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.r, ((1<<SHIFT_COLOR_CALC)-ctexture.r)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, texEnvColorFX_.r, ctexture.r);
-      out.g = COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.g, ((1<<SHIFT_COLOR_CALC)-ctexture.g)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, texEnvColorFX_.g, ctexture.g);
-      out.b = COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.b, ((1<<SHIFT_COLOR_CALC)-ctexture.b)) + COLOR_MUL_COMP(SHIFT_COLOR_CALC, texEnvColorFX_.b, ctexture.b);
-      out.a = alphaChannel ? COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.a, ctexture.a) : cfragment.a;
+      out.r = ((cfragment.r * (constColorCompOne - ctexture.r)) >> SHIFT_COLOR_CALC) + ((texEnvColorFX_.r * ctexture.r) >> SHIFT_COLOR_CALC);
+      out.g = ((cfragment.g * (constColorCompOne - ctexture.g)) >> SHIFT_COLOR_CALC) + ((texEnvColorFX_.g * ctexture.g) >> SHIFT_COLOR_CALC);
+      out.b = ((cfragment.b * (constColorCompOne - ctexture.b)) >> SHIFT_COLOR_CALC) + ((texEnvColorFX_.b * ctexture.b) >> SHIFT_COLOR_CALC);
+      out.a = alphaChannel ? (cfragment.a * ctexture.a) >> SHIFT_COLOR_CALC : cfragment.a;
       break;
     case GL_ADD:
       out.r = cfragment.r + ctexture.r;
       out.g = cfragment.g + ctexture.g;
       out.b = cfragment.b + ctexture.b;
-      out.a = alphaChannel ? COLOR_MUL_COMP(SHIFT_COLOR_CALC, cfragment.a, ctexture.a) : cfragment.a;
+      out.a = alphaChannel ? (cfragment.a * ctexture.a) >> SHIFT_COLOR_CALC : cfragment.a;
       break;
   };
 }
 
 //-----------------------------------------------------------------------------
-void
-CRasterizerScanline::rasterBlend(TColor<int32_t> & out, const TColor<int32_t> & source, const TColor<int32_t> & dest)
+inline CInt32_4
+colorBlendFactor(const GLenum & factor, const CInt32_4 & source, const CInt32_4 & dest)
 {
-  #define BLEND_FACTOR(factor,c) \
-  switch(factor) \
-  { \
-    case GL_ONE: \
-      c.r = c.g = c.b = c.a = (1<<SHIFT_COLOR_CALC); \
-      break; \
-    case GL_SRC_COLOR: \
-      c.r = source.r; \
-      c.g = source.g; \
-      c.b = source.b; \
-      c.a = source.a; \
-      break; \
-    case GL_ONE_MINUS_SRC_COLOR: \
-      c.r = (1<<SHIFT_COLOR_CALC) - source.r; \
-      c.g = (1<<SHIFT_COLOR_CALC) - source.g; \
-      c.b = (1<<SHIFT_COLOR_CALC) - source.b; \
-      c.a = (1<<SHIFT_COLOR_CALC) - source.a; \
-      break; \
-    case GL_DST_COLOR: \
-      c.r = dest.r; \
-      c.g = dest.g; \
-      c.b = dest.b; \
-      c.a = dest.a; \
-      break; \
-    case GL_ONE_MINUS_DST_COLOR: \
-      c.r = (1<<SHIFT_COLOR_CALC) - dest.r; \
-      c.g = (1<<SHIFT_COLOR_CALC) - dest.g; \
-      c.b = (1<<SHIFT_COLOR_CALC) - dest.b; \
-      c.a = (1<<SHIFT_COLOR_CALC) - dest.a; \
-      break; \
-    case GL_SRC_ALPHA: \
-      c.r = c.g = c.b = c.a = source.a; \
-      break; \
-    case GL_ONE_MINUS_SRC_ALPHA: \
-      c.r = c.g = c.b = c.a = (1<<SHIFT_COLOR_CALC) - source.a; \
-      break; \
-    case GL_DST_ALPHA: \
-      c.r = c.g = c.b = c.a = dest.a; \
-      break; \
-    case GL_ONE_MINUS_DST_ALPHA: \
-      c.r = c.g = c.b = c.a = (1<<SHIFT_COLOR_CALC) - dest.a; \
-      break; \
-    case GL_ZERO: \
-    default: \
-      c.r = c.g = c.b = c.a = 0; \
+  switch(factor)
+  {
+    case GL_ONE:                 return constColorOne;
+    case GL_SRC_COLOR:           return source;
+    case GL_ONE_MINUS_SRC_COLOR: return constColorOne - source;
+    case GL_DST_COLOR:           return dest;
+    case GL_ONE_MINUS_DST_COLOR: return constColorOne - dest;
+    case GL_SRC_ALPHA:           { CInt32_4 c; c.r = c.g = c.b = c.a = source.a;                     return c; }
+    case GL_ONE_MINUS_SRC_ALPHA: { CInt32_4 c; c.r = c.g = c.b = c.a = constColorCompOne - source.a; return c; }
+    case GL_DST_ALPHA:           { CInt32_4 c; c.r = c.g = c.b = c.a = dest.a;                       return c; }
+    case GL_ONE_MINUS_DST_ALPHA: { CInt32_4 c; c.r = c.g = c.b = c.a = constColorCompOne - dest.a;   return c; }
+    case GL_ZERO:
+    default:
+      return constColorZero;
   }
+}
 
+//-----------------------------------------------------------------------------
+inline CInt32_4
+color_clamp_max(const CInt32_4 & c)
+{
+  CInt32_4 ret;
+  ret.r = mathlib::clamp_max(c.r, constColorCompOne);
+  ret.g = mathlib::clamp_max(c.g, constColorCompOne);
+  ret.b = mathlib::clamp_max(c.b, constColorCompOne);
+  ret.a = mathlib::clamp_max(c.a, constColorCompOne);
+  return ret;
+}
+
+//-----------------------------------------------------------------------------
+inline CInt32_4
+color_clamp(const CInt32_4 & c)
+{
+  CInt32_4 ret;
+  ret.r = mathlib::clamp(c.r, constColorCompZero, constColorCompOne);
+  ret.g = mathlib::clamp(c.g, constColorCompZero, constColorCompOne);
+  ret.b = mathlib::clamp(c.b, constColorCompZero, constColorCompOne);
+  ret.a = mathlib::clamp(c.a, constColorCompZero, constColorCompOne);
+  return ret;
+}
+
+//-----------------------------------------------------------------------------
+void
+CRasterizerScanline::rasterBlend(CInt32_4 & out, const CInt32_4 & source, const CInt32_4 & dest)
+{
   switch(blendFast_)
   {
-    case FB_ZERO:
-      out.r = 0;
-      out.g = 0;
-      out.b = 0;
-      out.a = 0;
-      break;
-    case FB_SOURCE:
-      out.r = source.r;
-      out.g = source.g;
-      out.b = source.b;
-      out.a = source.a;
-      break;
-    case FB_DEST:
-      out.r = dest.r;
-      out.g = dest.g;
-      out.b = dest.b;
-      out.a = dest.a;
-      break;
-    case FB_ADD:
-      out.r = COLOR_CLAMP_TOP_COMP(source.r + dest.r, SHIFT_COLOR_CALC);
-      out.g = COLOR_CLAMP_TOP_COMP(source.g + dest.g, SHIFT_COLOR_CALC);
-      out.b = COLOR_CLAMP_TOP_COMP(source.b + dest.b, SHIFT_COLOR_CALC);
-      out.a = COLOR_CLAMP_TOP_COMP(source.a + dest.a, SHIFT_COLOR_CALC);
-      break;
-    case FB_BLEND:
-    {
-      COLOR_AVG(out, dest, source, source.a, SHIFT_COLOR_CALC);
-      COLOR_CLAMP(out, out, SHIFT_COLOR_CALC);
-      break;
-    }
+    case FB_ZERO:   out = constColorZero; break;
+    case FB_SOURCE: out = source; break;
+    case FB_DEST:   out = dest; break;
+    case FB_ADD:    out = color_clamp_max(source + dest); break;
+    case FB_BLEND:  out = mathlib::lerp_fx(source.a, dest, source, SHIFT_COLOR_CALC); break;
+
     default:
     {
-      TColor<int32_t> cs, cd;
-      BLEND_FACTOR(blendSFactor_, cs);
-      BLEND_FACTOR(blendDFactor_, cd);
-
-      cd.r = ((source.r * cs.r) + (dest.r * cd.r)) >> SHIFT_COLOR_CALC;
-      cd.g = ((source.g * cs.g) + (dest.g * cd.g)) >> SHIFT_COLOR_CALC;
-      cd.b = ((source.b * cs.b) + (dest.b * cd.b)) >> SHIFT_COLOR_CALC;
-      cd.a = ((source.a * cs.a) + (dest.a * cd.a)) >> SHIFT_COLOR_CALC;
-
-      COLOR_CLAMP_TOP(out, cd, SHIFT_COLOR_CALC);
+      CInt32_4 cs = colorBlendFactor(blendSFactor_, source, dest);
+      CInt32_4 cd = colorBlendFactor(blendDFactor_, source, dest);
+      out = color_clamp_max(((source * cs) + (dest * cd)) >> SHIFT_COLOR_CALC);
     }
   }
 }

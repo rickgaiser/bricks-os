@@ -28,6 +28,7 @@
 #include "textures.h"
 
 
+#define SHIFT_XY 4
 #define MAX_TEXTURE_COUNT 1024
 
 

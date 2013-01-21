@@ -27,6 +27,9 @@
 #include "raster.h"
 #include "rasterCommon.h"
 #include "textures.h"
+#include "vhl/color.h"
+#include "vhl/CInt32_4.h"
+#include "vhl/TTexCoord.h"
 
 
 #define CONFIG_GL_ENABLE_ALPHA_TEST
@@ -37,6 +40,18 @@
 namespace raster
 {
 
+
+//-----------------------------------------------------------------------------
+struct SVertex
+{
+  int32_t            x;
+  int32_t            y;
+  GLfloat            z;
+  GLfloat            w;
+
+  TColor<GLfloat>    c;
+  TTexCoord<GLfloat> t;
+};
 
 //-----------------------------------------------------------------------------
 class CRasterizerScanline
@@ -52,8 +67,8 @@ public:
   void rasterTriangle(const SVertexF & v0, const SVertexF & v1, const SVertexF & v2);
 
 private:
-  void rasterTexture(TColor<int32_t> & out, const TColor<int32_t> & cfragment, const TColor<int32_t> & ctexture);
-  void rasterBlend(TColor<int32_t> & out, const TColor<int32_t> & source, const TColor<int32_t> & dest);
+  void rasterTexture(CInt32_4 & out, const CInt32_4 & cfragment, const CInt32_4 & ctexture);
+  void rasterBlend(CInt32_4 & out, const CInt32_4 & source, const CInt32_4 & dest);
 
   void _rasterTriangle(const SVertex & v0, const SVertex & v1, const SVertex & v2);
 
@@ -76,12 +91,12 @@ private:
 
 private:
   // Color
-  TColor<int32_t>         grad_c_ddx;
-  TColor<int32_t>         grad_c_ddy;
-  TColor<int32_t>         edge_c_current;
-  TColor<int32_t>         edge_c_increment;
-  TColor<int32_t>         scan_c_current;
-  TColor<int32_t>         scan_c_ddx;
+  CInt32_4                grad_c_ddx;
+  CInt32_4                grad_c_ddy;
+  CInt32_4                edge_c_current;
+  CInt32_4                edge_c_increment;
+  CInt32_4                scan_c_current;
+  CInt32_4                scan_c_ddx;
   // Depth (z=1/w)
   GLfloat                 grad_z_ddx;
   GLfloat                 grad_z_ddy;
@@ -114,8 +129,8 @@ private:
   TTexCoord<GLfloat>      scan_t_ddx;
 #endif
 
-  TColor<int32_t> texEnvColorFX_;
-  int32_t alphaValueFX_;
+  CInt32_4                texEnvColorFX_;
+  int32_t                 alphaValueFX_;
 };
 
 

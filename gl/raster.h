@@ -25,43 +25,12 @@
 
 #include "context.h"
 #include "GL/gl.h"
-#include "vhl/color.h"
 #include "kernel/videoManager.h"
 
 
 namespace raster
 {
 
-
-//-----------------------------------------------------------------------------
-template <class T>
-struct TTexCoord
-{
-  inline void operator+=(const TTexCoord & t)
-  {
-    u += t.u;
-    v += t.v;
-  }
-
-  T u;
-  T v;
-};
-
-//-----------------------------------------------------------------------------
-#define SHIFT_XY       4
-#define DEPTH_Z       14 // Resolution of depth buffer
-#define SHIFT_Z       15 // Added resolution for interpolation
-#define SHIFT_COLOR   12
-struct SVertex
-{
-  int32_t            x;
-  int32_t            y;
-  GLfloat            z;
-  GLfloat            w;
-
-  TColor<int32_t>    c;
-  TTexCoord<GLfloat> t;
-};
 
 //-----------------------------------------------------------------------------
 class IRasterizer

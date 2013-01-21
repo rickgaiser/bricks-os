@@ -22,6 +22,9 @@
 #include "vhl/fixedPoint.h"
 #include "vhl/matrix.h"
 #include "color.h"
+#ifdef ENABLE_PROFILING
+#include "glProfiling.h"
+#endif
 
 #include "stdlib.h"
 #include "math.h"
@@ -29,16 +32,6 @@
 #include "CFuncDebug.h"
 
 
-//-----------------------------------------------------------------------------
-// Model-View matrix
-//   from 'object coordinates' to 'eye coordinates'
-#define CALC_OBJ_TO_EYE(v) \
-  pCurrentModelView_->transform4((v).vo, (v).ve)
-//-----------------------------------------------------------------------------
-// Projection matrix
-//   from 'eye coordinates' to 'clip coordinates'
-#define CALC_EYE_TO_CLIP(v) \
-  pCurrentProjection_->transform4((v).ve, (v).vc)
 //-----------------------------------------------------------------------------
 // Perspective division
 //   from 'clip coordinates' to 'normalized device coordinates'
@@ -51,15 +44,16 @@
   (v).vd.w = inv_w
 
 #define CLIP_ROUNDING_ERROR (0.00001f) // (1E-5)
-inline void setClipFlags(SVertexF & v)
+inline uint32_t
+getClipFlags(TVector4<GLfloat> & v)
 {
-  GLfloat w = v.vc.w * (1.0f + CLIP_ROUNDING_ERROR);
-  v.clip = ((v.vc.x < -w)     ) |
-           ((v.vc.x >  w) << 1) |
-           ((v.vc.y < -w) << 2) |
-           ((v.vc.y >  w) << 3) |
-           ((v.vc.z < -w) << 4) |
-           ((v.vc.z >  w) << 5);
+  GLfloat w_clip = v.w * (1.0f + CLIP_ROUNDING_ERROR);
+  return ((v.x < -w_clip)     ) |
+         ((v.x >  w_clip) << 1) |
+         ((v.y < -w_clip) << 2) |
+         ((v.y >  w_clip) << 3) |
+         ((v.z < -w_clip) << 4) |
+         ((v.z >  w_clip) << 5);
 }
 
 
@@ -1802,23 +1796,22 @@ CRenderer::vertexShaderTransform(SVertexF & v)
   // --------------
   // Model-View matrix
   //   from 'object coordinates' to 'eye coordinates'
-  CALC_OBJ_TO_EYE(v);
+  pCurrentModelView_->transform4(v.vo, v.ve);
   // Projection matrix
   //   from 'eye coordinates' to 'clip coordinates'
-  CALC_EYE_TO_CLIP(v);
+  pCurrentProjection_->transform4(v.ve, v.vc);
 
-    // Set clip flags
-  setClipFlags(v);
-
-    if(v.clip == 0)
-    {
-      // Perspective division
-      //   from 'clip coordinates' to 'normalized device coordinates'
-      CALC_CLIP_TO_NDEV(v);
-    }
-
-    primitiveAssembly(v);
+  // Set clip flags
+  v.clip = getClipFlags(v.vc);
+  if(v.clip == 0)
+  {
+    // Perspective division
+    //   from 'clip coordinates' to 'normalized device coordinates'
+    CALC_CLIP_TO_NDEV(v);
   }
+
+  primitiveAssembly(v);
+}
 
 //-----------------------------------------------------------------------------
 void
@@ -2241,7 +2234,7 @@ CRenderer::interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLfloat t
   }
 
   // Set clip flags
-  setClipFlags(c);
+  c.clip = getClipFlags(c.vc);
 
   if(c.clip == 0)
   {

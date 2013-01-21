@@ -26,18 +26,11 @@
 #include "context.h"
 #include "raster.h"
 #include "color.h"
+#include "vhl/CInt32_4.h"
 
 
 #define MAX_TEXTURE_COUNT 1024
 
-
-//-----------------------------------------------------------------------------
-#define TEXTURE_MIPMAP_LEVEL_COUNT 11
-// One texture (MipMap) level
-struct STextureLevel
-{
-  void * data;
-};
 
 //-----------------------------------------------------------------------------
 class CTexture
@@ -47,14 +40,10 @@ public:
   virtual ~CTexture();
 
   void free();
-  void bind();
 
-  float lambda(float dudx, float dudy, float dvdx, float dvdy);
-  void getTexel(TColor<GLfloat> & c, float u, float v, float lod);
-  void getTexel(TColor<int32_t> & c, float u, float v, float lod);
-
-public:
-  inline void getTexel(int level, int u, int v, float * channels);
+  void getTexel(CInt32_4 & c, float u, float v);
+  void getTexel(CInt32_4 & c, int   u, int   v);
+  void getTexel(uint32_t & c, int   u, int   v);
 
   // Pointers to MipMap levels:
   // Nr Width Tiles
@@ -69,8 +58,7 @@ public:
   //  8    4
   //  9    2
   // 10    1
-  STextureLevel level[TEXTURE_MIPMAP_LEVEL_COUNT];
-  int iMaxLevel_;
+  void * pData_;
 
   int32_t width;
   int32_t height;
@@ -85,9 +73,6 @@ public:
 
   uint32_t iWidthMask_;
   uint32_t iHeightMask_;
-
-  void * data;
-  void * data_raw;
 };
 
 //-----------------------------------------------------------------------------

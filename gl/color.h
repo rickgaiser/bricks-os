@@ -23,34 +23,6 @@
 #define RASTER_COLOR_H
 
 
-// Averaging
-#define COLOR_AVG_COMP(c0,c1,t,res) ((c0) + ((((c1) - (c0)) * (t)) >> res))
-#define COLOR_AVG(cto,c0,c1,t,res) \
-  cto.r = COLOR_AVG_COMP(c0.r,c1.r,t,res); \
-  cto.g = COLOR_AVG_COMP(c0.g,c1.g,t,res); \
-  cto.b = COLOR_AVG_COMP(c0.b,c1.b,t,res); \
-  cto.a = COLOR_AVG_COMP(c0.a,c1.a,t,res)
-// Multiply
-#define COLOR_MUL_COMP(c0,c1,res) ((c0 * c1) >> res)
-#define COLOR_MUL(cto,c0,c1,res) \
-  cto.r = COLOR_MUL_COMP(c0.r,c1.r,res); \
-  cto.g = COLOR_MUL_COMP(c0.g,c1.g,res); \
-  cto.b = COLOR_MUL_COMP(c0.b,c1.b,res); \
-  cto.a = COLOR_MUL_COMP(c0.a,c1.a,res)
-// Clamp
-#define COLOR_CLAMP_TOP_COMP(c,res) ((c > (1<<res)) ? (1<<res) : c)
-#define COLOR_CLAMP_TOP(cto,c,res) \
-  cto.r = COLOR_CLAMP_TOP_COMP(c.r,res); \
-  cto.g = COLOR_CLAMP_TOP_COMP(c.g,res); \
-  cto.b = COLOR_CLAMP_TOP_COMP(c.b,res); \
-  cto.a = COLOR_CLAMP_TOP_COMP(c.a,res)
-#define COLOR_CLAMP_COMP(c,res) ((c < 0) ? 0 : ((c > (1<<res)) ? (1<<res) : c))
-#define COLOR_CLAMP(cto,c,res) \
-  cto.r = COLOR_CLAMP_COMP(c.r,res); \
-  cto.g = COLOR_CLAMP_COMP(c.g,res); \
-  cto.b = COLOR_CLAMP_COMP(c.b,res); \
-  cto.a = COLOR_CLAMP_COMP(c.a,res)
-
 // Load colors
 #define COLOR_LOAD_555(c,t,res) \
   c.b = ((t & 0x7c00) >> 10) * ((1<<res) / 31); \

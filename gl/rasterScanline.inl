@@ -90,7 +90,7 @@
 
 #ifndef RASTER_DIRECT
   // Color accumulator, used in inner loop
-  TColor<int32_t> caccu;
+  CInt32_4 caccu;
 #endif
 
 #ifdef RASTER_ENABLE_TEXTURES
@@ -128,45 +128,41 @@
   float d2;
 #endif
 
-  // X Interpolation
-  //  - mod: dx modulo dy
-  //  - den: denominator (dy)
-  //  - err: error (added modulo's)
-  int32_t left_x  = 0, dxdy_left  = 0, dxdy_left_mod  = 0, dxdy_left_den  = 0, dxdy_left_err  = 0;
-  int32_t right_x = 0, dxdy_right = 0, dxdy_right_mod = 0, dxdy_right_den = 0, dxdy_right_err = 0;
+  CDDA left_edge;
+  CDDA right_edge;
 
 #ifdef RASTER_ENABLE_SMOOTH_SHADING
   // Color interpolation
-  d1 = INTERFACE_TO_INTERP_COLOR(vmiddle->c.r - vtop->c.r);
-  d2 = INTERFACE_TO_INTERP_COLOR(vbottom->c.r - vtop->c.r);
-  grad_c_ddx.r = (int32_t)DDX();
-  grad_c_ddy.r = (int32_t)DDY();
-  d1 = INTERFACE_TO_INTERP_COLOR(vmiddle->c.g - vtop->c.g);
-  d2 = INTERFACE_TO_INTERP_COLOR(vbottom->c.g - vtop->c.g);
-  grad_c_ddx.g = (int32_t)DDX();
-  grad_c_ddy.g = (int32_t)DDY();
-  d1 = INTERFACE_TO_INTERP_COLOR(vmiddle->c.b - vtop->c.b);
-  d2 = INTERFACE_TO_INTERP_COLOR(vbottom->c.b - vtop->c.b);
-  grad_c_ddx.b = (int32_t)DDX();
-  grad_c_ddy.b = (int32_t)DDY();
-  d1 = INTERFACE_TO_INTERP_COLOR(vmiddle->c.a - vtop->c.a);
-  d2 = INTERFACE_TO_INTERP_COLOR(vbottom->c.a - vtop->c.a);
-  grad_c_ddx.a = (int32_t)DDX();
-  grad_c_ddy.a = (int32_t)DDY();
+  d1 = vmiddle->c.r - vtop->c.r;
+  d2 = vbottom->c.r - vtop->c.r;
+  grad_c_ddx.r = fpfromf(SHIFT_COLOR_INTERP, DDX());
+  grad_c_ddy.r = fpfromf(SHIFT_COLOR_INTERP, DDY());
+  d1 = vmiddle->c.g - vtop->c.g;
+  d2 = vbottom->c.g - vtop->c.g;
+  grad_c_ddx.g = fpfromf(SHIFT_COLOR_INTERP, DDX());
+  grad_c_ddy.g = fpfromf(SHIFT_COLOR_INTERP, DDY());
+  d1 = vmiddle->c.b - vtop->c.b;
+  d2 = vbottom->c.b - vtop->c.b;
+  grad_c_ddx.b = fpfromf(SHIFT_COLOR_INTERP, DDX());
+  grad_c_ddy.b = fpfromf(SHIFT_COLOR_INTERP, DDY());
+  d1 = vmiddle->c.a - vtop->c.a;
+  d2 = vbottom->c.a - vtop->c.a;
+  grad_c_ddx.a = fpfromf(SHIFT_COLOR_INTERP, DDX());
+  grad_c_ddy.a = fpfromf(SHIFT_COLOR_INTERP, DDY());
 
   scan_c_ddx = grad_c_ddx;
 #else
   #ifdef RASTER_DIRECT
     #ifdef RASTER_DIRECT_FLAT_COLOR
   // Directly ouput flat color
-  RASTER_PIXEL_TYPE flat_color = RASTER_COLOR_SAVE(vtop->c, SHIFT_COLOR);
+  RASTER_PIXEL_TYPE flat_color = vtop->c; // FIXME
     #endif
   #else
   // Setup a flat color
-  scan_c_current.r = INTERFACE_TO_CALC_COLOR(vtop->c.r);
-  scan_c_current.g = INTERFACE_TO_CALC_COLOR(vtop->c.g);
-  scan_c_current.b = INTERFACE_TO_CALC_COLOR(vtop->c.b);
-  scan_c_current.a = INTERFACE_TO_CALC_COLOR(vtop->c.a);
+  scan_c_current.r = fpfromf(SHIFT_COLOR_CALC, vtop->c.r);
+  scan_c_current.g = fpfromf(SHIFT_COLOR_CALC, vtop->c.g);
+  scan_c_current.b = fpfromf(SHIFT_COLOR_CALC, vtop->c.b);
+  scan_c_current.a = fpfromf(SHIFT_COLOR_CALC, vtop->c.a);
   #endif
 #endif
 
@@ -264,7 +260,7 @@
         vbottom_l = vbottom;
       }
       // height = bottom - top;
-      iYTop    = fpfloor(SHIFT_XY, vmiddle->y + fxPixelFloorOffset_);
+      iYTop    = iYBottom;
       iYBottom = fpfloor(SHIFT_XY, vbottom->y + fxPixelFloorOffset_);
       // Y Offset from vertex to pixel center
       fxYOff   = (iYTop << SHIFT_XY) + fxPixelCenterOffset_ - vmiddle->y;
@@ -277,37 +273,25 @@
     if(bUpdateLeft == true)
     {
       bUpdateLeft = false;
+      left_edge.init(vtop_l->x, vtop_l->y, vbottom_l->x, vbottom_l->y);
 
-      // Get the real width and height
-      int32_t fxDX = vbottom_l->x - vtop_l->x;
-      int32_t fxDY = vbottom_l->y - vtop_l->y;
-
-      int32_t initial_numerator = 0;
-      initial_numerator += fxDY * vtop_l->x;                  // Add x
-      initial_numerator += fxDX * fxYOff;                     // Move down to pixel center
-      initial_numerator += fxDY * fxOneMinusPixelCenterOffset_; // Add 0.5 or 1 to x
-      FloorDivMod(initial_numerator,  (fxDY << SHIFT_XY), left_x,    dxdy_left_err);
-      FloorDivMod((fxDX << SHIFT_XY), (fxDY << SHIFT_XY), dxdy_left, dxdy_left_mod);
-      dxdy_left_den = fxDY << SHIFT_XY;
 #if defined(RASTER_ENABLE_DEPTH_TEST) || defined(RASTER_ENABLE_SMOOTH_SHADING) || defined(RASTER_ENABLE_TEXTURES) || defined(RASTER_INTERPOLATE_W)
-      int32_t fxXOff = (left_x << SHIFT_XY) + fxPixelCenterOffset_ - vtop_l->x;
+      int32_t fxXOff = (left_edge.x() << SHIFT_XY) + fxPixelCenterOffset_ - vtop_l->x;
 #endif
 
 #ifdef RASTER_INTERPOLATE_FLOATS
-      float f_dxdy_left = (float)dxdy_left;
+      float f_dxdy_left = (float)left_edge.dxdy();
       float fXOff = fptof(SHIFT_XY, fxXOff);
       float fYOff = fptof(SHIFT_XY, fxYOff);
 #endif
 
 #ifdef RASTER_ENABLE_SMOOTH_SHADING
-      edge_c_increment.r = (dxdy_left * grad_c_ddx.r) + grad_c_ddy.r;
-      edge_c_increment.g = (dxdy_left * grad_c_ddx.g) + grad_c_ddy.g;
-      edge_c_increment.b = (dxdy_left * grad_c_ddx.b) + grad_c_ddy.b;
-      edge_c_increment.a = (dxdy_left * grad_c_ddx.a) + grad_c_ddy.a;
-      edge_c_current.r = INTERFACE_TO_INTERP_COLOR(vtop_l->c.r) + i_mul_shr(grad_c_ddx.r, fxXOff, SHIFT_XY) + i_mul_shr(grad_c_ddy.r, fxYOff, SHIFT_XY);
-      edge_c_current.g = INTERFACE_TO_INTERP_COLOR(vtop_l->c.g) + i_mul_shr(grad_c_ddx.g, fxXOff, SHIFT_XY) + i_mul_shr(grad_c_ddy.g, fxYOff, SHIFT_XY);
-      edge_c_current.b = INTERFACE_TO_INTERP_COLOR(vtop_l->c.b) + i_mul_shr(grad_c_ddx.b, fxXOff, SHIFT_XY) + i_mul_shr(grad_c_ddy.b, fxYOff, SHIFT_XY);
-      edge_c_current.a = INTERFACE_TO_INTERP_COLOR(vtop_l->c.a) + i_mul_shr(grad_c_ddx.a, fxXOff, SHIFT_XY) + i_mul_shr(grad_c_ddy.a, fxYOff, SHIFT_XY);
+      edge_c_increment = (grad_c_ddx * left_edge.dxdy()) + grad_c_ddy;
+      edge_c_current.r = fpfromf(SHIFT_COLOR_INTERP, vtop_l->c.r);
+      edge_c_current.g = fpfromf(SHIFT_COLOR_INTERP, vtop_l->c.g);
+      edge_c_current.b = fpfromf(SHIFT_COLOR_INTERP, vtop_l->c.b);
+      edge_c_current.a = fpfromf(SHIFT_COLOR_INTERP, vtop_l->c.a);
+      edge_c_current += (((grad_c_ddx * fxXOff) + (grad_c_ddy * fxYOff)) >> SHIFT_XY);
 #endif
 
 #ifdef RASTER_ENABLE_DEPTH_TEST
@@ -338,26 +322,18 @@
     if(bUpdateRight == true)
     {
       bUpdateRight = false;
-
-      // Get the real width and height
-      int32_t fxDX = vbottom_r->x - vtop_r->x;
-      int32_t fxDY = vbottom_r->y - vtop_r->y;
-
-      int32_t initial_numerator = 0;
-      initial_numerator += fxDY * vtop_r->x;                  // Add x
-      initial_numerator += fxDX * fxYOff;                     // Move down to pixel center
-      initial_numerator += fxDY * fxOneMinusPixelCenterOffset_; // Add 0.5 or 1 to x
-      FloorDivMod(initial_numerator,  (fxDY << SHIFT_XY), right_x,    dxdy_right_err);
-      FloorDivMod((fxDX << SHIFT_XY), (fxDY << SHIFT_XY), dxdy_right, dxdy_right_mod);
-      dxdy_right_den = fxDY << SHIFT_XY;
+      right_edge.init(vtop_r->x, vtop_r->y, vbottom_r->x, vbottom_r->y);
     }
 
     for(int32_t iY = iYTop; iY < iYBottom; iY++)
     {
-      int32_t iLineWidth = right_x - left_x;
+      int32_t iLineWidth = right_edge.x() - left_edge.x();
 
       if(iLineWidth > 0)
       {
+#ifdef ENABLE_PROFILING
+        fillRate += iLineWidth;
+#endif
 #ifdef RASTER_ENABLE_SMOOTH_SHADING
         scan_c_current = edge_c_current;
 #endif
@@ -375,7 +351,7 @@
   #endif
 #endif
 
-        uint32_t pixelIndex = iY * renderSurface->width() + left_x;
+        uint32_t pixelIndex = iY * renderSurface->width() + left_edge.x();
         RASTER_PIXEL_TYPE * pDestPixel = ((RASTER_PIXEL_TYPE *)renderSurface->p) + pixelIndex;
 #ifdef RASTER_ENABLE_DEPTH_TEST
         GLfloat * pDepthPixel = pZBuffer_ + pixelIndex;
@@ -394,10 +370,7 @@
             // Get the fragment color
   #ifdef RASTER_ENABLE_SMOOTH_SHADING
             // Get smoothly interpolated color
-            caccu.r = INTERP_TO_CALC_COLOR(scan_c_current.r);
-            caccu.g = INTERP_TO_CALC_COLOR(scan_c_current.g);
-            caccu.b = INTERP_TO_CALC_COLOR(scan_c_current.b);
-            caccu.a = INTERP_TO_CALC_COLOR(scan_c_current.a);
+            caccu = scan_c_current >> (SHIFT_COLOR_INTERP - SHIFT_COLOR_CALC);
   #else
             // Set flat filled color
             caccu = scan_c_current;
@@ -405,17 +378,17 @@
 
             // Get the fragment texel
   #ifdef RASTER_ENABLE_TEXTURES
-            TColor<int32_t> ctexture;
+            CInt32_4 ctexture;
     #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
             float z = 1.0f / scan_w_current;
 
             // Get the level of detail (lambda)
-            float lodbias = 0.0f;
-            float lod = pCurrentTex_->lambda(grad_tz_ddx.u * z, grad_tz_ddy.u * z, grad_tz_ddx.v * z, grad_tz_ddy.v * z) + lodbias;
+            //float lodbias = 0.0f;
+            //float lod = pCurrentTex_->lambda(grad_tz_ddx.u * z, grad_tz_ddy.u * z, grad_tz_ddx.v * z, grad_tz_ddy.v * z) + lodbias;
 
-            pCurrentTex_->getTexel(ctexture, scan_tz_current.u * z, scan_tz_current.v * z, lod);
+            pCurrentTex_->getTexel(ctexture, scan_tz_current.u * z, scan_tz_current.v * z/*, lod*/);
     #else
-            pCurrentTex_->getTexel(ctexture, scan_t_current.u, scan_t_current.v, lod);
+            pCurrentTex_->getTexel(ctexture, scan_t_current.u, scan_t_current.v/*, lod*/);
     #endif
             rasterTexture(caccu, caccu, ctexture);
   #endif
@@ -427,7 +400,7 @@
             {
               // Blending (RGBA only): Blend the fragment color with the framebuffer color
   #ifdef RASTER_ENABLE_BLENDING
-              TColor<int32_t> screen_pix;
+              CInt32_4 screen_pix;
               RASTER_COLOR_LOAD(screen_pix, *pDestPixel, SHIFT_COLOR_CALC);
               rasterBlend(caccu, caccu, screen_pix);
   #endif
@@ -448,7 +421,7 @@
             *pDestPixel = flat_color;
   #endif
   #ifdef RASTER_DIRECT_TEXTURES
-            TColor<int32_t> ctexture;
+            CInt32_4 ctexture;
             pCurrentTex_->getTexel(ctexture, scan_t_current.u, scan_t_current.v, lod);
             *pDestPixel = RASTER_COLOR_SAVE(ctexture, SHIFT_COLOR_CALC);
   #endif
@@ -474,74 +447,50 @@
 #ifdef RASTER_ENABLE_DEPTH_TEST
           pDepthPixel++;
 #endif
-#ifdef ENABLE_PROFILING
-          fillRate++;
-#endif
         }
       }
 
-#ifdef ENABLE_PROFILING
-      fillRate += iLineWidth;
+#ifdef RASTER_ENABLE_SMOOTH_SHADING
+      edge_c_current += edge_c_increment;
+#endif
+#ifdef RASTER_ENABLE_DEPTH_TEST
+      edge_z_current += edge_z_increment;
+#endif
+#ifdef RASTER_INTERPOLATE_W
+      edge_w_current += edge_w_increment;
+#endif
+#ifdef RASTER_ENABLE_TEXTURES
+  #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
+      edge_tz_current += edge_tz_increment;
+  #else
+      edge_t_current += edge_t_increment;
+  #endif
 #endif
 
-      // Advance to the next line
-      left_x += dxdy_left;
-      dxdy_left_err += dxdy_left_mod;
-      if(dxdy_left_err >= dxdy_left_den)
+      // Advance left edge to the next line
+      // If x makes an extra step, all others need to make an extra step as well
+      if(left_edge.advance())
       {
-        dxdy_left_err -= dxdy_left_den;
-
-        left_x++;
 #ifdef RASTER_ENABLE_SMOOTH_SHADING
-        edge_c_current += edge_c_increment;
         edge_c_current += grad_c_ddx;
 #endif
 #ifdef RASTER_ENABLE_DEPTH_TEST
-        edge_z_current += edge_z_increment;
         edge_z_current += grad_z_ddx;
 #endif
 #ifdef RASTER_INTERPOLATE_W
-        edge_w_current += edge_w_increment;
         edge_w_current += grad_w_ddx;
 #endif
 #ifdef RASTER_ENABLE_TEXTURES
   #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-        edge_tz_current += edge_tz_increment;
         edge_tz_current += grad_tz_ddx;
   #else
-        edge_t_current += edge_t_increment;
         edge_t_current += grad_t_ddx;
   #endif
 #endif
       }
-      else
-      {
-#ifdef RASTER_ENABLE_SMOOTH_SHADING
-        edge_c_current += edge_c_increment;
-#endif
-#ifdef RASTER_ENABLE_DEPTH_TEST
-        edge_z_current += edge_z_increment;
-#endif
-#ifdef RASTER_INTERPOLATE_W
-        edge_w_current += edge_w_increment;
-#endif
-#ifdef RASTER_ENABLE_TEXTURES
-  #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-        edge_tz_current += edge_tz_increment;
-  #else
-        edge_t_current += edge_t_increment;
-  #endif
-#endif
-      }
 
-      // Advance to the next line
-      right_x += dxdy_right;
-      dxdy_right_err += dxdy_right_mod;
-      if(dxdy_right_err >= dxdy_right_den)
-      {
-        dxdy_right_err -= dxdy_right_den;
-        right_x++;
-      }
+      // Advance right edge to the next line
+      right_edge.advance();
     }
   }
 

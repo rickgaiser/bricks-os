@@ -88,7 +88,7 @@ CASoftRasterizer::~CASoftRasterizer()
 
   for(int i(0); i < MAX_TEXTURE_COUNT; i++)
   {
-    if(textures_[i] == NULL)
+    if(textures_[i] != NULL)
     {
       delete textures_[i];
     }
@@ -287,6 +287,13 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
     return;
   }
 
+  // Just the base texture for now
+  if(level != 0)
+  {
+    //setError(GL_INVALID_VALUE);
+    return;
+  }
+
   switch(internalformat)
   {
     //case 1:
@@ -436,12 +443,8 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
       return;
   };
 
-  if(level == 0)
-  {
-    // MipMap level == 0
   pCurrentTex_->bitWidth_    = iWidthLog2;
   pCurrentTex_->bitHeight_   = iHeightLog2;
-    pCurrentTex_->iMaxLevel_   = 0;
   pCurrentTex_->iWidthMask_  = width  - 1;
   pCurrentTex_->iHeightMask_ = height - 1;
   pCurrentTex_->width        = width;
@@ -449,43 +452,11 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
   pCurrentTex_->bRGBA_       = bAlpha;
 
   // Delete old texture buffer if present
-    if(pCurrentTex_->data_raw != NULL)
-      delete ((uint8_t *)pCurrentTex_->data_raw);
+  if(pCurrentTex_->pData_ != NULL)
+    delete ((uint8_t *)pCurrentTex_->pData_);
 
   // Allocate texture data
-    //  - Alligned to 256bit == 32byte
-    //  - Allocate MipMap levels also (1/3 of original size)
-    // FIXME: dataSize is too much!
-    int bpp = 32; // FIXME
-    int dataSize = width * height * (bpp / 8);
-    dataSize = dataSize + (dataSize >> 1);
-    pCurrentTex_->data_raw = new unsigned char[dataSize + 32 - 1];
-    pCurrentTex_->data     = (unsigned char *)((((unsigned int)pCurrentTex_->data_raw) + 32 - 1) & ~(32 - 1));
-
-    // Set MipMap pointers
-    unsigned char * pData = (unsigned char *)pCurrentTex_->data;
-    int level_width  = pCurrentTex_->width;
-    int level_height = pCurrentTex_->height;
-    for(int iLevel(0); (level_width > 1) && (level_height > 1) && (iLevel < TEXTURE_MIPMAP_LEVEL_COUNT); iLevel++)
-    {
-      pCurrentTex_->level[iLevel].data = pData;
-
-      pData += level_width * level_height * (bpp / 8);
-      level_width  >>= 1;
-      level_height >>= 1;
-    }
-  }
-  else
-  {
-    // MipMap level > 0
-    if((level != (pCurrentTex_->iMaxLevel_ + 1)) || (level >= TEXTURE_MIPMAP_LEVEL_COUNT))
-    {
-      // One level at a time!
-      setError(GL_INVALID_OPERATION);
-      return;
-    }
-    pCurrentTex_->iMaxLevel_++;
-  }
+  pCurrentTex_->pData_ = new unsigned char[width * height * 4];
 
   EColorFormat fmtTo   = cfA8R8G8B8;
   EColorFormat fmtFrom = convertGLToBxColorFormat(format, type);
@@ -495,7 +466,7 @@ CASoftRasterizer::texImage2D(GLenum target, GLint level, GLint internalformat, G
     return;
   }
 
-  convertImageFormat(pCurrentTex_->level[level].data, fmtTo, pixels, fmtFrom, width, height);
+  convertImageFormat(pCurrentTex_->pData_, fmtTo, pixels, fmtFrom, width, height);
 }
 
 //-----------------------------------------------------------------------------
@@ -910,6 +881,10 @@ CASoftRasterizer::viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 }
 
 //-----------------------------------------------------------------------------
+// Define the center of a pixel. Only used for coverage testing.
+//  - Direct3D  9 and older use the top-left corner
+//  - Direct3D 10 and later use the center
+//  - OpenGL uses the center
 void
 CASoftRasterizer::setUsePixelCenter(bool bCenter)
 {

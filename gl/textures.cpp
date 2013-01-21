@@ -201,12 +201,11 @@ getBitNr(uint32_t value)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 CTexture::CTexture()
- : iMaxLevel_(-1)
+ : pData_(NULL)
  , minFilter(GL_NEAREST_MIPMAP_LINEAR)
  , magFilter(GL_LINEAR)
  , uWrapMode(GL_REPEAT)
  , vWrapMode(GL_REPEAT)
- , data_raw(NULL)
 {
 }
 
@@ -220,230 +219,42 @@ CTexture::~CTexture()
 void
 CTexture::free()
 {
-  if(data_raw != NULL)
+  if(pData_ != NULL)
   {
-    delete (uint8_t *)data_raw;
-    data_raw = NULL;
+    delete (uint8_t *)pData_;
+    pData_ = NULL;
   }
 }
 
 //-----------------------------------------------------------------------------
 void
-CTexture::bind()
+CTexture::getTexel(CInt32_4 & c, float u, float v)
 {
-}
-
-//-----------------------------------------------------------------------------
-float
-CTexture::lambda(float dudx, float dudy, float dvdx, float dvdy)
-{
-  float max, rho, lambda;
-
-  dudx = mathlib::abs(dudx);
-  dudy = mathlib::abs(dudy);
-  max = mathlib::max(dudx, dudy) * width;
-  rho = max;
-
-  dvdx = mathlib::abs(dvdx);
-  dvdy = mathlib::abs(dvdy);
-  max = mathlib::max(dvdx, dvdy) * height;
-  rho = mathlib::max(rho, max);
-
-  lambda = mathlib::fast_log2(rho);
-
-  return lambda;
+  getTexel(c, (int)(u * width), (int)(v * height));
 }
 
 //-----------------------------------------------------------------------------
 void
-CTexture::getTexel(TColor<GLfloat> & c, float u, float v, float lod)
+CTexture::getTexel(CInt32_4 & c, int u, int v)
 {
-  int upos, vpos;
-  float colors[4];
-
-  if(iMaxLevel_ < 0)
-    return;
-
-  u *= width;
-  v *= height;
-
-  upos = (int)u;
-  vpos = (int)v;
-
-#if 1
-  int iFilter;
-  int iMipMapLevel0;
-  int iMipMapLevel1;
-  float fMipMapBlend = 0.0f; // LERP between level0 and level1
-  if(lod < 0.0f)
-  {
-    // Magnify
-    iFilter = magFilter;
-
-    // No MipMapping
-    iMipMapLevel0 =
-    iMipMapLevel1 = 0;
-  }
-  else
-  {
-    // Minify
-    iFilter = minFilter;
-
-    if((iFilter == GL_LINEAR_MIPMAP_NEAREST) || (iFilter == GL_LINEAR_MIPMAP_LINEAR))
-    {
-      // Linear MipMap filtering
-      int level = (int)lod;
-      fMipMapBlend = lod - level;
-      iMipMapLevel0 = mathlib::clamp(level  , 0, iMaxLevel_);
-      iMipMapLevel1 = mathlib::clamp(level+1, 0, iMaxLevel_);
-    }
-    else if((iFilter == GL_NEAREST_MIPMAP_NEAREST) || (iFilter == GL_NEAREST_MIPMAP_LINEAR))
-    {
-      // Nearest MipMap filtering
-      int level = (int)(lod + 0.5f);
-      iMipMapLevel0 =
-      iMipMapLevel1 = mathlib::clamp(level  , 0, iMaxLevel_);
-    }
-    else
-    {
-      // No MipMapping
-      iMipMapLevel0 =
-      iMipMapLevel1 = 0;
-    }
-  }
-
-  if(iMipMapLevel0 == iMipMapLevel1)
-  {
-    // No MipMapping
-    if((iFilter == GL_NEAREST) ||
-       (iFilter == GL_LINEAR_MIPMAP_NEAREST) ||
-       (iFilter == GL_NEAREST_MIPMAP_NEAREST))
-    {
-      // point sampling (GL_NEAREST)
-      getTexel(iMipMapLevel0, upos, vpos, colors);
-    }
-    else
-    {
-      // bilinear filtering (GL_LINEAR)
-      float texels[4][4];
-      getTexel(iMipMapLevel0, upos    , vpos    , texels[0]);
-      getTexel(iMipMapLevel0, upos + 1, vpos    , texels[1]);
-      getTexel(iMipMapLevel0, upos    , vpos + 1, texels[2]);
-      getTexel(iMipMapLevel0, upos + 1, vpos + 1, texels[3]);
-
-      float ufrac = u - upos;
-      float vfrac = v - vpos;
-      for(int channel(0); channel < 4; channel++)
-        colors[channel] = mathlib::lerp_2d(ufrac, vfrac, texels[0][channel], texels[1][channel], texels[2][channel], texels[3][channel]);
-    }
-  }
-  else
-  {
-    // MipMapping
-    if((iFilter == GL_NEAREST) ||
-       (iFilter == GL_LINEAR_MIPMAP_NEAREST) ||
-       (iFilter == GL_NEAREST_MIPMAP_NEAREST))
-    {
-      // GL_LINEAR_MIPMAP_NEAREST
-      float texels0[4];
-      float texels1[4];
-      getTexel(iMipMapLevel0, upos, vpos, texels0);
-      getTexel(iMipMapLevel1, upos, vpos, texels1);
-
-      for(int channel(0); channel < 4; channel++)
-        colors[channel] = mathlib::lerp(fMipMapBlend, texels0[channel], texels1[channel]);
-    }
-    else
-    {
-      // Trilinear filtering (GL_NEAREST_MIPMAP_NEAREST)
-      float texels0[4][4];
-      getTexel(iMipMapLevel0, upos    , vpos    , texels0[0]);
-      getTexel(iMipMapLevel0, upos + 1, vpos    , texels0[1]);
-      getTexel(iMipMapLevel0, upos    , vpos + 1, texels0[2]);
-      getTexel(iMipMapLevel0, upos + 1, vpos + 1, texels0[3]);
-
-      float texels1[4][4];
-      getTexel(iMipMapLevel1, upos    , vpos    , texels1[0]);
-      getTexel(iMipMapLevel1, upos + 1, vpos    , texels1[1]);
-      getTexel(iMipMapLevel1, upos    , vpos + 1, texels1[2]);
-      getTexel(iMipMapLevel1, upos + 1, vpos + 1, texels1[3]);
-
-      float ufrac = u - upos;
-      float vfrac = v - vpos;
-      for(int channel(0); channel < 4; channel++)
-      {
-        colors[channel] = mathlib::lerp_3d(
-          ufrac,
-          vfrac,
-          fMipMapBlend,
-          texels0[0][channel], texels0[1][channel], texels0[2][channel], texels0[3][channel],
-          texels1[0][channel], texels1[1][channel], texels1[2][channel], texels1[3][channel]);
-      }
-    }
-  }
-
-#else
-  // point sampling (GL_NEAREST)
-  getTexel(0, upos, vpos, colors);
-#endif
-
-  c.a = colors[0];
-  c.r = colors[1];
-  c.g = colors[2];
-  c.b = colors[3];
-}
-
-//-----------------------------------------------------------------------------
-void
-CTexture::getTexel(TColor<int32_t> & c, float u, float v, float lod)
-{
-#if 0
-  TColor<GLfloat> temp = {0};
-
-  getTexel(temp, u, v, lod);
-
-  // Convert to fixed point
-  c.a = fpfromf(14, temp.a);
-  c.r = fpfromf(14, temp.r);
-  c.g = fpfromf(14, temp.g);
-  c.b = fpfromf(14, temp.b);
-#else
-  int iU, iV;
   uint32_t texel;
 
-  iU = (int)(u * width);
-  iV = (int)(v * height);
-  // Wrap
-  iU &= iWidthMask_;
-  iV &= iHeightMask_;
-
-  texel = ((uint32_t *)level[0].data)[(iV * width) + iU];
+  getTexel(texel, u, v);
 
   // Convert to fixed point
   c.a = ((texel >> 24) & 0xff) * ((1<<14) / 255);
   c.r = ((texel >> 16) & 0xff) * ((1<<14) / 255);
   c.g = ((texel >>  8) & 0xff) * ((1<<14) / 255);
   c.b = ((texel      ) & 0xff) * ((1<<14) / 255);
-#endif
 }
 
 //-----------------------------------------------------------------------------
 void
-CTexture::getTexel(int _level, int u, int v, float * channels)
+CTexture::getTexel(uint32_t & c, int u, int v)
 {
   // Wrap
   u &= iWidthMask_;
   v &= iHeightMask_;
 
-  uint32_t texel = ((uint32_t *)level[_level].data)[(v >> _level) * (width >> _level) + (u >> _level)];
-
-  channels[0] = (texel >> 24) & 0xff;
-  channels[1] = (texel >> 16) & 0xff;
-  channels[2] = (texel >>  8) & 0xff;
-  channels[3] = (texel      ) & 0xff;
-
-  channels[0] *= (1.0f / 255.0f);
-  channels[1] *= (1.0f / 255.0f);
-  channels[2] *= (1.0f / 255.0f);
-  channels[3] *= (1.0f / 255.0f);
+  c = ((uint32_t *)pData_)[v * width + u];
 }
