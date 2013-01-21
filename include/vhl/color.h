@@ -28,7 +28,7 @@ template <class T>
 class TColor
 {
 public:
-  TColor(){}
+  TColor();
   TColor(const TColor & c);
   TColor(const T * c);
   TColor(T _r, T _g, T _b, T _a);
@@ -67,4 +67,4 @@ public:
 #include "color.inl"
 
 
-#endif // GL_VECTOR_H
+#endif // GL_COLOR_H
