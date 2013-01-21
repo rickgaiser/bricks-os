@@ -31,14 +31,14 @@
 
 // Macro's for 32bit fixed points
 // Conversions
-#define fpfromi(sh,fp)       ((fp)<<(sh))
-#define fpfromf(sh,fp)       ((int32_t)((fp)*(1<<(sh))))
-#define fpfromd(sh,fp)       ((int32_t)((fp)*(1<<(sh))))
-#define fptof(sh,fp)         ((float )(fp)*(1.0/(1<<(sh))))
-#define fptod(sh,fp)         ((double)(fp)*(1.0/(1<<(sh))))
-#define fpceil(sh,fp)        (((fp)+((1<<sh)-1)) >> (sh))
-#define fpfloor(sh,fp)       ( (fp)              >> (sh))
-#define fpround(sh,fp)       (((fp)+(1<<(sh-1))) >> (sh))
+#define fpfromi(sh,fp) ((fp)<<(sh))
+inline int32_t fpfromf(unsigned int sh, const float   & f ) { return (int32_t)(f  * (1 << sh)); }
+inline int32_t fpfromd(unsigned int sh, const double  & d ) { return (int32_t)(d  * (1 << sh)); }
+inline float   fptof  (unsigned int sh, const int32_t & fp) { return (float  )(fp * (1.0 / (1 << sh))); }
+inline double  fptod  (unsigned int sh, const int32_t & fp) { return (double )(fp * (1.0 / (1 << sh))); }
+inline int32_t fpceil (unsigned int sh, const int32_t & fp) { return (fp + ((1 << sh) - 1)) >> sh; }
+inline int32_t fpfloor(unsigned int sh, const int32_t & fp) { return  fp                    >> sh; }
+inline int32_t fpround(unsigned int sh, const int32_t & fp) { return (fp + (1 << (sh - 1))) >> sh; }
 // Math
 #define fpmul(sh,a,b)        ((((int64_t)(a))*((int64_t)(b)))>>(sh))
 #define fpmul_fast(sh,a,b)   ((((a)>>((sh)>>1)) * ((b)>>((sh)>>1)))) // loses half of the precision on both values
@@ -51,17 +51,17 @@
 // Macro's for OpenGL (16.16)
 #define FP_PRESICION_GL 16
 // Conversions
-#define gl_fpfromi(i)        fpfromi(FP_PRESICION_GL,(i))
-#define gl_fpfromf(i)        fpfromf(FP_PRESICION_GL,(i))
-#define gl_fpfromd(i)        fpfromd(FP_PRESICION_GL,(i))
-#define gl_fptof(i)          fptof(FP_PRESICION_GL,(i))
-#define gl_fptod(i)          fptod(FP_PRESICION_GL,(i))
-#define gl_fpceil(i)         fpceil(FP_PRESICION_GL,(i))
-#define gl_fpfloor(i)        fpfloor(FP_PRESICION_GL,(i))
-#define gl_fpround(i)        fpround(FP_PRESICION_GL,(i))
+#define gl_fpfromi(i) fpfromi(FP_PRESICION_GL,(i))
+inline int32_t gl_fpfromf(const float   & f ) { return fpfromf(FP_PRESICION_GL,(f )); }
+inline int32_t gl_fpfromd(const double  & d ) { return fpfromd(FP_PRESICION_GL,(d )); }
+inline float   gl_fptof  (const int32_t & fp) { return fptof  (FP_PRESICION_GL,(fp)); }
+inline double  gl_fptod  (const int32_t & fp) { return fptod  (FP_PRESICION_GL,(fp)); }
+inline int32_t gl_fpceil (const int32_t & fp) { return fpceil (FP_PRESICION_GL,(fp)); }
+inline int32_t gl_fpfloor(const int32_t & fp) { return fpfloor(FP_PRESICION_GL,(fp)); }
+inline int32_t gl_fpround(const int32_t & fp) { return fpround(FP_PRESICION_GL,(fp)); }
 // Math
-#define gl_fpmul(i1,i2)      fpmul(FP_PRESICION_GL,(i1),(i2))
-#define gl_fpdiv(i1,i2)      fpdiv(FP_PRESICION_GL,(i1),(i2))
+inline int32_t gl_fpmul  (const int32_t & fp1, const int32_t & fp2) { return fpmul(FP_PRESICION_GL,(fp1),(fp2)); }
+inline int32_t gl_fpdiv  (const int32_t & fp1, const int32_t & fp2) { return fpdiv(FP_PRESICION_GL,(fp1),(fp2)); }
 #ifndef NDS9
 #define gl_fpinverse(i)      (0xffffffff / (i)) // 1<<16<<16 == 0x100000000 ~~ 0xffffffff
 #else
