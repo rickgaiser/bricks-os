@@ -107,7 +107,7 @@ private:
   static bool bInitialized_;
   static T sinTable_[MATRIX_MATH_TABLE_SIZE];
   static T cosTable_[MATRIX_MATH_TABLE_SIZE];
-};
+} __attribute__ ((aligned (16)));
 
 
 #include "matrix.inl"

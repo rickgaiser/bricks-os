@@ -79,7 +79,7 @@ public:
   T x;
   T y;
   T z;
-};
+} __attribute__ ((aligned (16)));
 // Normalize needs an optimized version for TFixed class
 template <class T> inline TVector3<T> & normalize(TVector3<T> & vec);
 template <int p> inline TVector3< TFixed<p> > & normalize(TVector3< TFixed<p> > & vec);
@@ -133,7 +133,8 @@ public:
   T y;
   T z;
   T w;
-};
+} __attribute__ ((aligned (16)));
+
 // Normalize needs an optimized version for TFixed class
 template <class T> inline TVector4<T> & normalize(TVector4<T> & vec);
 template <int p> inline TVector4< TFixed<p> > & normalize(TVector4< TFixed<p> > & vec);

@@ -23,10 +23,10 @@
 
 
 #if defined(__SSE4_1__)
-  #define CINT32_4_USE_SSE2
-  #define CINT32_4_USE_SSE4_1
+  //#define CINT32_4_USE_SSE2
+  //#define CINT32_4_USE_SSE4_1
 #elif defined(__SSE2__)
-  #define CINT32_4_USE_SSE2
+  //#define CINT32_4_USE_SSE2
 #endif
 
 

@@ -19,8 +19,61 @@
  */
 
 
+#ifdef __SSE__
+  //#define USE_SSE
+#endif
+
 #include "matrix.h"
 #include "math.h"
+#ifdef USE_SSE
+  #include <xmmintrin.h>
+
+  struct float4
+  {
+    __m128 xmm;
+
+    float4 (__m128 v) : xmm (v) {}
+
+    float4 (float v) { xmm = _mm_set1_ps(v); }
+
+    float4 (float x, float y, float z, float w)
+
+
+    { xmm = _mm_set_ps(w,z,y,x); }
+
+    float4 (const float *v) { xmm = _mm_load_ps(v); }
+
+    float4 operator* (const float4 &v) const
+    { return float4(_mm_mul_ps(xmm, v.xmm)); }
+
+    float4 operator+ (const float4 &v) const
+    { return float4(_mm_add_ps(xmm, v.xmm)); }
+
+    float4 operator- (const float4 &v) const
+    { return float4(_mm_sub_ps(xmm, v.xmm)); }
+
+    float4 operator/ (const float4 &v) const
+    { return float4(_mm_div_ps(xmm, v.xmm)); }
+
+    void operator*= (const float4 &v)
+    { xmm = _mm_mul_ps(xmm, v.xmm); }
+
+    void operator+= (const float4 &v)
+    { xmm = _mm_add_ps(xmm, v.xmm); }
+
+    void operator-= (const float4 &v)
+    { xmm = _mm_sub_ps(xmm, v.xmm); }
+
+    void operator/= (const float4 &v)
+    { xmm = _mm_div_ps(xmm, v.xmm); }
+
+    void operator>> (float *v)
+    { _mm_store_ps(v, xmm); }
+
+    float sum()
+    {return ((float *)&xmm)[0] + ((float *)&xmm)[1] + ((float *)&xmm)[2] + ((float *)&xmm)[3];}
+  };
+#endif
 
 
 #define matrix_copy(mto, mfrom) \
@@ -168,58 +221,27 @@ template <class T>
 inline TMatrix4x4<T> &
 TMatrix4x4<T>::operator*=(const T * m)
 {
-  T   mtemp[16];
+  T mtemp[16] __attribute__ ((aligned (16)));
 
-#if 0
-  for(int iRow = 0; iRow < 4; iRow++)
+#ifdef USE_SSE
+  for(int i = 0; i < 16; i += 4)
   {
-    for(int iCol = 0; iCol < 4; iCol++)
-    {
-      mtemp[iRow * 4 + iCol] = 0;
-
-      for(int i = 0; i < 4; i++)
-      {
-        mtemp[iRow * 4 + iCol] += m_[iRow * 4 + i] * m[i * 4 + iCol];
-      }
-    }
+    float4 rl = float4(m) * float4(m_[i]);
+    for(int j = 1; j < 4; j++)
+      rl += float4(&m[j*4]) * float4(m_[i+j]);
+    rl >> &mtemp[i];
   }
 #else
-  T   mx0, mx1, mx2, mx3;
-  T * ptemp(mtemp);
-  T * pmatrix(m_);
-
-  mx0 = *pmatrix++;
-  mx1 = *pmatrix++;
-  mx2 = *pmatrix++;
-  mx3 = *pmatrix++;
-  *ptemp++ = mx0 * m[ 0] + mx1 * m[ 4] + mx2 * m[ 8] + mx3 * m[12];
-  *ptemp++ = mx0 * m[ 1] + mx1 * m[ 5] + mx2 * m[ 9] + mx3 * m[13];
-  *ptemp++ = mx0 * m[ 2] + mx1 * m[ 6] + mx2 * m[10] + mx3 * m[14];
-  *ptemp++ = mx0 * m[ 3] + mx1 * m[ 7] + mx2 * m[11] + mx3 * m[15];
-  mx0 = *pmatrix++;
-  mx1 = *pmatrix++;
-  mx2 = *pmatrix++;
-  mx3 = *pmatrix++;
-  *ptemp++ = mx0 * m[ 0] + mx1 * m[ 4] + mx2 * m[ 8] + mx3 * m[12];
-  *ptemp++ = mx0 * m[ 1] + mx1 * m[ 5] + mx2 * m[ 9] + mx3 * m[13];
-  *ptemp++ = mx0 * m[ 2] + mx1 * m[ 6] + mx2 * m[10] + mx3 * m[14];
-  *ptemp++ = mx0 * m[ 3] + mx1 * m[ 7] + mx2 * m[11] + mx3 * m[15];
-  mx0 = *pmatrix++;
-  mx1 = *pmatrix++;
-  mx2 = *pmatrix++;
-  mx3 = *pmatrix++;
-  *ptemp++ = mx0 * m[ 0] + mx1 * m[ 4] + mx2 * m[ 8] + mx3 * m[12];
-  *ptemp++ = mx0 * m[ 1] + mx1 * m[ 5] + mx2 * m[ 9] + mx3 * m[13];
-  *ptemp++ = mx0 * m[ 2] + mx1 * m[ 6] + mx2 * m[10] + mx3 * m[14];
-  *ptemp++ = mx0 * m[ 3] + mx1 * m[ 7] + mx2 * m[11] + mx3 * m[15];
-  mx0 = *pmatrix++;
-  mx1 = *pmatrix++;
-  mx2 = *pmatrix++;
-  mx3 = *pmatrix++;
-  *ptemp++ = mx0 * m[ 0] + mx1 * m[ 4] + mx2 * m[ 8] + mx3 * m[12];
-  *ptemp++ = mx0 * m[ 1] + mx1 * m[ 5] + mx2 * m[ 9] + mx3 * m[13];
-  *ptemp++ = mx0 * m[ 2] + mx1 * m[ 6] + mx2 * m[10] + mx3 * m[14];
-  *ptemp++ = mx0 * m[ 3] + mx1 * m[ 7] + mx2 * m[11] + mx3 * m[15];
+  for(int i = 0; i < 16; i += 4)
+  {
+    for(int j = 0; j < 4; j++)
+    {
+      mtemp[i + j]  = m_[i    ] * m[j     ];
+      mtemp[i + j] += m_[i + 1] * m[j +  4];
+      mtemp[i + j] += m_[i + 2] * m[j +  8];
+      mtemp[i + j] += m_[i + 3] * m[j + 12];
+    }
+  }
 #endif
 
   return (*this = mtemp);
@@ -254,7 +276,8 @@ template <class T>
 inline void
 TMatrix4x4<T>::translate(T x, T y, T z)
 {
-  T m[16];
+  T m[16] __attribute__ ((aligned (16)));
+
   matrix_identity(m);
   m[ 3] = x;
   m[ 7] = y;
@@ -275,7 +298,8 @@ template <class T>
 inline void
 TMatrix4x4<T>::scale(T x, T y, T z)
 {
-  T m[16];
+  T m[16] __attribute__ ((aligned (16)));
+
   matrix_identity(m);
   m[ 0] = x;
   m[ 5] = y;
@@ -303,7 +327,7 @@ TMatrix4x4<T>::rotate(T angle, T x, T y, T z)
   T s = sinTable_[index];
   T c = cosTable_[index];
 
-  T m[16];
+  T m[16] __attribute__ ((aligned (16)));
 
   m[ 0] = x*x*(1-c)+c;
   m[ 1] = x*y*(1-c)-z*s;
@@ -340,7 +364,8 @@ TMatrix4x4<T>::rotatex(T angle)
   T iSin = sinTable_[index];
   T iCos = cosTable_[index];
 
-  T m[16];
+  T m[16] __attribute__ ((aligned (16)));
+
   matrix_identity(m);
   m[ 5] = iCos;
   m[ 6] = 0 - iSin;
@@ -361,7 +386,8 @@ TMatrix4x4<T>::rotatey(T angle)
   T iSin = sinTable_[index];
   T iCos = cosTable_[index];
 
-  T m[16];
+  T m[16] __attribute__ ((aligned (16)));
+
   matrix_identity(m);
   m[ 0] = iCos;
   m[ 2] = iSin;
@@ -382,7 +408,8 @@ TMatrix4x4<T>::rotatez(T angle)
   T iSin = sinTable_[index];
   T iCos = cosTable_[index];
 
-  T m[16];
+  T m[16] __attribute__ ((aligned (16)));
+
   matrix_identity(m);
   m[ 0] = iCos;
   m[ 1] = iSin;
@@ -438,6 +465,14 @@ template <class T>
 inline void
 TMatrix4x4<T>::transform4(const T * from, T * to)
 {
+#ifdef USE_SSE
+  float4 vFrom(from);
+
+  to.x = (float4(&m_[ 0]) * vFrom).sum();
+  to.y = (float4(&m_[ 4]) * vFrom).sum();
+  to.z = (float4(&m_[ 8]) * vFrom).sum();
+  to.w = (float4(&m_[12]) * vFrom).sum();
+#else
   T x(from[0]);
   T y(from[1]);
   T z(from[2]);
@@ -447,6 +482,7 @@ TMatrix4x4<T>::transform4(const T * from, T * to)
   to[1] = m_[ 4] * x + m_[ 5] * y + m_[ 6] * z + m_[ 7] * w;
   to[2] = m_[ 8] * x + m_[ 9] * y + m_[10] * z + m_[11] * w;
   to[3] = m_[12] * x + m_[13] * y + m_[14] * z + m_[15] * w;
+#endif
 }
 
 //---------------------------------------------------------------------------
@@ -454,6 +490,14 @@ template <class T>
 inline void
 TMatrix4x4<T>::transform4(const TVector4<T> & from, TVector4<T> & to)
 {
+#ifdef USE_SSE
+  float4 vFrom(from.x, from.y, from.z, from.w);
+
+  to.x = (float4(&m_[ 0]) * vFrom).sum();
+  to.y = (float4(&m_[ 4]) * vFrom).sum();
+  to.z = (float4(&m_[ 8]) * vFrom).sum();
+  to.w = (float4(&m_[12]) * vFrom).sum();
+#else
   T x(from.x);
   T y(from.y);
   T z(from.z);
@@ -463,4 +507,5 @@ TMatrix4x4<T>::transform4(const TVector4<T> & from, TVector4<T> & to)
   to.y = m_[ 4] * x + m_[ 5] * y + m_[ 6] * z + m_[ 7] * w;
   to.z = m_[ 8] * x + m_[ 9] * y + m_[10] * z + m_[11] * w;
   to.w = m_[12] * x + m_[13] * y + m_[14] * z + m_[15] * w;
+#endif
 }
