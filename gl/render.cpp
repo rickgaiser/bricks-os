@@ -26,6 +26,7 @@
 #include "stdlib.h"
 #include "math.h"
 #include "mathlib.h"
+#include "CFuncDebug.h"
 
 
 //-----------------------------------------------------------------------------
@@ -71,6 +72,8 @@ CRenderer::CRenderer()
  , CAGLMatrixFloat()
  , pRaster_(NULL)
 {
+  FUNCTION_DEBUG();
+
   state_.culling.enabled = false;
   state_.culling.mode = GL_BACK;
   state_.culling.front = GL_CCW;
@@ -203,12 +206,15 @@ CRenderer::CRenderer()
 //-----------------------------------------------------------------------------
 CRenderer::~CRenderer()
 {
+  FUNCTION_DEBUG();
 }
 
 //-----------------------------------------------------------------------------
 void
 CRenderer::setRaster(raster::IRasterizer * rast)
 {
+  FUNCTION_DEBUG();
+
   pRaster_ = rast;
 
   if(renderSurface != NULL)
@@ -219,6 +225,8 @@ CRenderer::setRaster(raster::IRasterizer * rast)
 void
 CRenderer::setSurface(CSurface * surface)
 {
+  FUNCTION_DEBUG();
+
   IRenderer::setSurface(surface);
 
   if(pRaster_ != NULL)
@@ -229,6 +237,8 @@ CRenderer::setSurface(CSurface * surface)
 void
 CRenderer::glAlphaFunc(GLenum func, GLclampf ref)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -261,6 +271,8 @@ CRenderer::glAlphaFunc(GLenum func, GLclampf ref)
 void
 CRenderer::glBindTexture(GLenum target, GLuint texture)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -274,6 +286,8 @@ CRenderer::glBindTexture(GLenum target, GLuint texture)
 void
 CRenderer::glBlendFunc(GLenum sfactor, GLenum dfactor)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -339,6 +353,8 @@ CRenderer::glBlendFunc(GLenum sfactor, GLenum dfactor)
 void
 CRenderer::glClear(GLbitfield mask)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -365,6 +381,8 @@ CRenderer::glClear(GLbitfield mask)
 void
 CRenderer::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -383,6 +401,8 @@ CRenderer::glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf al
 void
 CRenderer::glClearDepth(GLclampd depth)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -398,6 +418,8 @@ CRenderer::glClearDepth(GLclampd depth)
 void
 CRenderer::glColorMaterial(GLenum face, GLenum mode)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -443,6 +465,8 @@ CRenderer::glColorMaterial(GLenum face, GLenum mode)
 void
 CRenderer::glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table)
 {
+  FUNCTION_DEBUG();
+
   // NOTE: Parameters validated in rasterizer
   pRaster_->colorTable(target, internalformat, width, format, type, table);
 }
@@ -451,6 +475,8 @@ CRenderer::glColorTable(GLenum target, GLenum internalformat, GLsizei width, GLe
 void
 CRenderer::glCullFace(GLenum mode)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -476,6 +502,8 @@ CRenderer::glCullFace(GLenum mode)
 void
 CRenderer::glDeleteTextures(GLsizei n, const GLuint *textures)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -489,6 +517,8 @@ CRenderer::glDeleteTextures(GLsizei n, const GLuint *textures)
 void
 CRenderer::glDepthRangef(GLclampf zNear, GLclampf zFar)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -505,6 +535,8 @@ CRenderer::glDepthRangef(GLclampf zNear, GLclampf zFar)
 void
 CRenderer::glDepthFunc(GLenum func)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -536,6 +568,8 @@ CRenderer::glDepthFunc(GLenum func)
 void
 CRenderer::glDepthMask(GLboolean flag)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -551,6 +585,8 @@ CRenderer::glDepthMask(GLboolean flag)
 void
 CRenderer::glDisable(GLenum cap)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -638,6 +674,8 @@ CRenderer::glDisable(GLenum cap)
 void
 CRenderer::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -771,6 +809,8 @@ CRenderer::glDrawArrays(GLenum mode, GLint first, GLsizei count)
 void
 CRenderer::glEnable(GLenum cap)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -858,6 +898,8 @@ CRenderer::glEnable(GLenum cap)
 void
 CRenderer::glFinish(void)
 {
+  FUNCTION_DEBUG3();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -871,6 +913,8 @@ CRenderer::glFinish(void)
 void
 CRenderer::glFlush(void)
 {
+  FUNCTION_DEBUG3();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -886,6 +930,8 @@ CRenderer::glFlush(void)
 void
 CRenderer::glFogf(GLenum pname, GLfloat param)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -936,6 +982,8 @@ CRenderer::glFogf(GLenum pname, GLfloat param)
 void
 CRenderer::glFogfv(GLenum pname, const GLfloat * params)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -987,6 +1035,8 @@ CRenderer::glFogfv(GLenum pname, const GLfloat * params)
 void
 CRenderer::glFrontFace(GLenum mode)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1011,6 +1061,8 @@ CRenderer::glFrontFace(GLenum mode)
 void
 CRenderer::glGenTextures(GLsizei n, GLuint *textures)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1024,6 +1076,8 @@ CRenderer::glGenTextures(GLsizei n, GLuint *textures)
 void
 CRenderer::glGetFloatv(GLenum pname, GLfloat * params)
 {
+  FUNCTION_DEBUG();
+
   // Return 4x4 matrix
   #define GL_GET_MATRIX_COPY(matrix) \
     for(int i(0); i < 16; i++) \
@@ -1082,6 +1136,8 @@ CRenderer::glGetFloatv(GLenum pname, GLfloat * params)
 void
 CRenderer::glHint(GLenum target, GLenum mode)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1129,6 +1185,8 @@ CRenderer::glHint(GLenum target, GLenum mode)
 void
 CRenderer::glLightf(GLenum light, GLenum pname, GLfloat param)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1169,6 +1227,8 @@ CRenderer::glLightf(GLenum light, GLenum pname, GLfloat param)
 void
 CRenderer::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1225,6 +1285,8 @@ CRenderer::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
 void
 CRenderer::glMaterialf(GLenum face, GLenum pname, GLfloat param)
 {
+  FUNCTION_DEBUG();
+
   TMaterial<GLfloat> * pMaterial;
 
   switch(face)
@@ -1264,6 +1326,8 @@ CRenderer::glMaterialf(GLenum face, GLenum pname, GLfloat param)
 void
 CRenderer::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
 {
+  FUNCTION_DEBUG();
+
   TMaterial<GLfloat> * pMaterial;
 
   switch(face)
@@ -1338,6 +1402,8 @@ CRenderer::glMaterialfv(GLenum face, GLenum pname, const GLfloat * params)
 void
 CRenderer::glShadeModel(GLenum mode)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1364,6 +1430,8 @@ CRenderer::glShadeModel(GLenum mode)
 void
 CRenderer::glTexEnvf(GLenum target, GLenum pname, GLfloat param)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1427,6 +1495,8 @@ CRenderer::glTexEnvf(GLenum target, GLenum pname, GLfloat param)
 void
 CRenderer::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1496,6 +1566,8 @@ CRenderer::glTexEnvfv(GLenum target, GLenum pname, const GLfloat * params)
 void
 CRenderer::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1510,6 +1582,8 @@ CRenderer::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsize
 void
 CRenderer::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1524,6 +1598,8 @@ CRenderer::glTexParameterf(GLenum target, GLenum pname, GLfloat param)
 void
 CRenderer::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1538,6 +1614,8 @@ CRenderer::glTexParameterx(GLenum target, GLenum pname, GLfixed param)
 void
 CRenderer::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1552,6 +1630,8 @@ CRenderer::glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoff
 void
 CRenderer::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+  FUNCTION_DEBUG();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1584,6 +1664,8 @@ CRenderer::glViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 void
 CRenderer::glBegin(GLenum mode)
 {
+  FUNCTION_DEBUG3();
+
   if(bInBeginEnd_ == true)
   {
     setError(GL_INVALID_OPERATION);
@@ -1625,6 +1707,8 @@ CRenderer::glBegin(GLenum mode)
 void
 CRenderer::glEnd()
 {
+  FUNCTION_DEBUG3();
+
   if(bInBeginEnd_ == false)
   {
     setError(GL_INVALID_OPERATION);
@@ -1640,6 +1724,8 @@ CRenderer::glEnd()
 void
 CRenderer::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
+  FUNCTION_DEBUG2();
+
   if(bInBeginEnd_ == false)
   {
     // No error, but undefined behaviour
@@ -1671,6 +1757,8 @@ CRenderer::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 void
 CRenderer::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
+  FUNCTION_DEBUG2();
+
   state_.clCurrent.r = red;
   state_.clCurrent.g = green;
   state_.clCurrent.b = blue;
@@ -1681,6 +1769,8 @@ CRenderer::glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 void
 CRenderer::glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 {
+  FUNCTION_DEBUG2();
+
   state_.texturing.coordCurrent[0] = s;
   state_.texturing.coordCurrent[1] = t;
   state_.texturing.coordCurrent[2] = r;
@@ -1691,6 +1781,8 @@ CRenderer::glTexCoord4f(GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 void
 CRenderer::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 {
+  FUNCTION_DEBUG2();
+
   state_.lighting.normal.x = nx;
   state_.lighting.normal.y = ny;
   state_.lighting.normal.z = nz;
@@ -1703,6 +1795,8 @@ CRenderer::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 void
 CRenderer::vertexShaderTransform(SVertexF & v)
 {
+  FUNCTION_DEBUG();
+
   // --------------
   // Transformation
   // --------------
@@ -1713,7 +1807,7 @@ CRenderer::vertexShaderTransform(SVertexF & v)
   //   from 'eye coordinates' to 'clip coordinates'
   CALC_EYE_TO_CLIP(v);
 
-  // Set clip flags
+    // Set clip flags
   setClipFlags(v);
 
     if(v.clip == 0)
@@ -1730,6 +1824,8 @@ CRenderer::vertexShaderTransform(SVertexF & v)
 void
 CRenderer::vertexShaderLight(SVertexF & v)
 {
+  FUNCTION_DEBUG2();
+
   // --------
   // Lighting
   // --------
@@ -1838,6 +1934,8 @@ CRenderer::vertexShaderLight(SVertexF & v)
 void
 CRenderer::fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 {
+  FUNCTION_DEBUG2();
+
   GLfloat vnz =
     (v0.vd.x - v2.vd.x) * (v1.vd.y - v2.vd.y) -
     (v0.vd.y - v2.vd.y) * (v1.vd.x - v2.vd.x);
@@ -1904,6 +2002,8 @@ CRenderer::fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2)
 void
 CRenderer::primitiveAssembly(SVertexF & v)
 {
+  FUNCTION_DEBUG2();
+
   // Copy vertex into vertex buffer
   *triangle_[vertIdx_] = v;
 
@@ -1928,7 +2028,7 @@ CRenderer::primitiveAssembly(SVertexF & v)
         fragmentClip(*triangle_[0], *triangle_[1], *triangle_[2]);
         // Swap 3rd with 1st or 2nd vertex pointer
         if(bFlipFlop_ == true)
-        {
+      {
           SVertexF * pTemp = triangle_[0];
           triangle_[0] = triangle_[2];
           triangle_[2] = pTemp;
@@ -2034,6 +2134,8 @@ GLfloat (*f_clip_proc[6])(TVector4<GLfloat> &, TVector4<GLfloat> &, TVector4<GLf
 void
 CRenderer::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit)
 {
+  FUNCTION_DEBUG2();
+
   uint32_t cc[3] =
   {
     v0.clip,
@@ -2123,6 +2225,8 @@ CRenderer::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint3
 void
 CRenderer::interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLfloat t)
 {
+  FUNCTION_DEBUG2();
+
   // Color
   if(state_.smoothShading == true)
     c.c = mathlib_LERP(t, a.c, b.c);

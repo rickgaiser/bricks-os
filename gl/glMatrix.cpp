@@ -20,6 +20,7 @@
 
 
 #include "glMatrix.h"
+#include "CFuncDebug.h"
 #include "string.h"
 #include "math.h"
 
@@ -32,6 +33,8 @@ CAGLMatrixFloat::CAGLMatrixFloat()
  , iProjectionIndex_(0)
  , iTextureIndex_(0)
 {
+  FUNCTION_DEBUG();
+
   TMatrix4x4<GLfloat>::init();
 
   // All stacks contain 1 identity matrix
@@ -49,12 +52,15 @@ CAGLMatrixFloat::CAGLMatrixFloat()
 //---------------------------------------------------------------------------
 CAGLMatrixFloat::~CAGLMatrixFloat()
 {
+  FUNCTION_DEBUG();
 }
 
 //---------------------------------------------------------------------------
 void
 CAGLMatrixFloat::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
+  FUNCTION_DEBUG();
+
   GLfloat m[16];
 
   GLfloat idw = 1.0f / (right - left);
@@ -88,6 +94,8 @@ CAGLMatrixFloat::glFrustumf(GLfloat left, GLfloat right, GLfloat bottom, GLfloat
 void
 CAGLMatrixFloat::glLoadMatrixf(const GLfloat *m)
 {
+  FUNCTION_DEBUG();
+
   *pCurrentMatrix_ = m;
 }
 
@@ -95,6 +103,8 @@ CAGLMatrixFloat::glLoadMatrixf(const GLfloat *m)
 void
 CAGLMatrixFloat::glMultMatrixf(const GLfloat *m)
 {
+  FUNCTION_DEBUG();
+
   *pCurrentMatrix_ *= m;
 }
 
@@ -102,6 +112,8 @@ CAGLMatrixFloat::glMultMatrixf(const GLfloat *m)
 void
 CAGLMatrixFloat::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat zNear, GLfloat zFar)
 {
+  FUNCTION_DEBUG();
+
   GLfloat m[16];
 
   GLfloat idw = 1.0f / (right - left);
@@ -135,6 +147,8 @@ CAGLMatrixFloat::glOrthof(GLfloat left, GLfloat right, GLfloat bottom, GLfloat t
 void
 CAGLMatrixFloat::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 {
+  FUNCTION_DEBUG();
+
   pCurrentMatrix_->rotate(angle, x, y, z);
 }
 
@@ -142,6 +156,8 @@ CAGLMatrixFloat::glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
 void
 CAGLMatrixFloat::glScalef(GLfloat x, GLfloat y, GLfloat z)
 {
+  FUNCTION_DEBUG();
+
   pCurrentMatrix_->scale(x, y, z);
 }
 
@@ -149,6 +165,8 @@ CAGLMatrixFloat::glScalef(GLfloat x, GLfloat y, GLfloat z)
 void
 CAGLMatrixFloat::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 {
+  FUNCTION_DEBUG();
+
   pCurrentMatrix_->translate(x, y, z);
 }
 
@@ -156,6 +174,8 @@ CAGLMatrixFloat::glTranslatef(GLfloat x, GLfloat y, GLfloat z)
 void
 CAGLMatrixFloat::glPopMatrix(void)
 {
+  FUNCTION_DEBUG();
+
   switch(matrixMode_)
   {
     case GL_MODELVIEW:
@@ -189,6 +209,8 @@ CAGLMatrixFloat::glPopMatrix(void)
 void
 CAGLMatrixFloat::glPushMatrix(void)
 {
+  FUNCTION_DEBUG();
+
   switch(matrixMode_)
   {
     case GL_MODELVIEW:
@@ -225,6 +247,8 @@ CAGLMatrixFloat::glPushMatrix(void)
 void
 CAGLMatrixFloat::glLoadIdentity(void)
 {
+  FUNCTION_DEBUG();
+
   pCurrentMatrix_->loadIdentity();
 }
 
@@ -232,6 +256,8 @@ CAGLMatrixFloat::glLoadIdentity(void)
 void
 CAGLMatrixFloat::glMatrixMode(GLenum mode)
 {
+  FUNCTION_DEBUG();
+
   matrixMode_ = mode;
 
   switch(matrixMode_)

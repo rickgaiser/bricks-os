@@ -20,6 +20,7 @@
 
 
 #include "context.h"
+#include "CFuncDebug.h"
 #include "vhl/fixedPoint.h"
 
 
@@ -29,17 +30,21 @@ CAGLErrorHandler::CAGLErrorHandler()
  : errorCode_(GL_NO_ERROR)
  , bError_(false)
 {
+  FUNCTION_DEBUG();
 }
 
 //-----------------------------------------------------------------------------
 CAGLErrorHandler::~CAGLErrorHandler()
 {
+  FUNCTION_DEBUG();
 }
 
 //-----------------------------------------------------------------------------
 GLenum
 CAGLErrorHandler::glGetError(void)
 {
+  FUNCTION_DEBUG();
+
   GLenum err(errorCode_);
 
   bError_ = false;
@@ -52,6 +57,8 @@ CAGLErrorHandler::glGetError(void)
 void
 CAGLErrorHandler::setError(GLenum error)
 {
+  FUNCTION_DEBUG();
+
   if(bError_ == false)
   {
     bError_ = true;
@@ -67,17 +74,21 @@ CAGLBuffers::CAGLBuffers()
  , bBufTexCoordEnabled_(false)
  , bBufVertexEnabled_(false)
 {
+  FUNCTION_DEBUG();
 }
 
 //-----------------------------------------------------------------------------
 CAGLBuffers::~CAGLBuffers()
 {
+  FUNCTION_DEBUG();
 }
 
 //-----------------------------------------------------------------------------
 void
 CAGLBuffers::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
+  FUNCTION_DEBUG();
+
   if((size != 4) || (stride < 0))
   {
     setError(GL_INVALID_VALUE);
@@ -107,6 +118,8 @@ CAGLBuffers::glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoi
 void
 CAGLBuffers::glDisableClientState(GLenum array)
 {
+  FUNCTION_DEBUG();
+
   switch(array)
   {
     case GL_COLOR_ARRAY:         bBufColorEnabled_    = false; break;
@@ -123,6 +136,8 @@ CAGLBuffers::glDisableClientState(GLenum array)
 void
 CAGLBuffers::glEnableClientState(GLenum array)
 {
+  FUNCTION_DEBUG();
+
   switch(array)
   {
     case GL_COLOR_ARRAY:         bBufColorEnabled_    = true; break;
@@ -139,6 +154,8 @@ CAGLBuffers::glEnableClientState(GLenum array)
 void
 CAGLBuffers::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 {
+  FUNCTION_DEBUG();
+
   if(stride < 0)
   {
     setError(GL_INVALID_VALUE);
@@ -170,6 +187,8 @@ CAGLBuffers::glNormalPointer(GLenum type, GLsizei stride, const GLvoid * pointer
 void
 CAGLBuffers::glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
+  FUNCTION_DEBUG();
+
   if((size < 2) || (size > 4) || (stride < 0))
   {
     setError(GL_INVALID_VALUE);
@@ -201,6 +220,8 @@ CAGLBuffers::glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GL
 void
 CAGLBuffers::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid * pointer)
 {
+  FUNCTION_DEBUG();
+
   if((size < 2) || (size > 4) || (stride < 0))
   {
     setError(GL_INVALID_VALUE);
@@ -233,6 +254,8 @@ CAGLBuffers::glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvo
 void
 CAGLFixedToFloat::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLclampx alpha)
 {
+  FUNCTION_DEBUG();
+
   glClearColor(gl_fptof(red), gl_fptof(green), gl_fptof(blue), gl_fptof(alpha));
 }
 
@@ -240,6 +263,8 @@ CAGLFixedToFloat::glClearColorx(GLclampx red, GLclampx green, GLclampx blue, GLc
 void
 CAGLFixedToFloat::glClearDepthx(GLclampx depth)
 {
+  FUNCTION_DEBUG();
+
   glClearDepth(gl_fptof(depth));
 }
 
@@ -247,6 +272,8 @@ CAGLFixedToFloat::glClearDepthx(GLclampx depth)
 void
 CAGLFixedToFloat::glDepthRangex(GLclampx zNear, GLclampx zFar)
 {
+  FUNCTION_DEBUG();
+
   glDepthRangef(gl_fptof(zNear), gl_fptof(zFar));
 }
 
@@ -254,6 +281,8 @@ CAGLFixedToFloat::glDepthRangex(GLclampx zNear, GLclampx zFar)
 void
 CAGLFixedToFloat::glFogx(GLenum pname, GLfixed param)
 {
+  FUNCTION_DEBUG();
+
   glFogf(pname, gl_fptof(param));
 }
 
@@ -261,6 +290,8 @@ CAGLFixedToFloat::glFogx(GLenum pname, GLfixed param)
 void
 CAGLFixedToFloat::glFogxv(GLenum pname, const GLfixed *params)
 {
+  FUNCTION_DEBUG();
+
   GLfloat fparams[] = {gl_fptof(params[0])
                      , gl_fptof(params[1])
                      , gl_fptof(params[2])
@@ -273,6 +304,8 @@ CAGLFixedToFloat::glFogxv(GLenum pname, const GLfixed *params)
 void
 CAGLFixedToFloat::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
+  FUNCTION_DEBUG();
+
   glFrustumf(gl_fptof(left), gl_fptof(right), gl_fptof(bottom), gl_fptof(top), gl_fptof(zNear), gl_fptof(zFar));
 }
 
@@ -280,6 +313,8 @@ CAGLFixedToFloat::glFrustumx(GLfixed left, GLfixed right, GLfixed bottom, GLfixe
 void
 CAGLFixedToFloat::glLightx(GLenum light, GLenum pname, GLfixed param)
 {
+  FUNCTION_DEBUG();
+
   glLightf(light, pname, gl_fptof(param));
 }
 
@@ -287,6 +322,8 @@ CAGLFixedToFloat::glLightx(GLenum light, GLenum pname, GLfixed param)
 void
 CAGLFixedToFloat::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
 {
+  FUNCTION_DEBUG();
+
   GLfloat fparams[] = {gl_fptof(params[0])
                      , gl_fptof(params[1])
                      , gl_fptof(params[2])
@@ -299,6 +336,8 @@ CAGLFixedToFloat::glLightxv(GLenum light, GLenum pname, const GLfixed * params)
 void
 CAGLFixedToFloat::glLoadMatrixx(const GLfixed *m)
 {
+  FUNCTION_DEBUG();
+
   GLfloat fparams[] = {gl_fptof(m[0])
                      , gl_fptof(m[1])
                      , gl_fptof(m[2])
@@ -323,6 +362,8 @@ CAGLFixedToFloat::glLoadMatrixx(const GLfixed *m)
 void
 CAGLFixedToFloat::glMaterialx(GLenum face, GLenum pname, GLfixed param)
 {
+  FUNCTION_DEBUG();
+
   glMaterialf(face, pname, gl_fptof(param));
 }
 
@@ -330,6 +371,8 @@ CAGLFixedToFloat::glMaterialx(GLenum face, GLenum pname, GLfixed param)
 void
 CAGLFixedToFloat::glMaterialxv(GLenum face, GLenum pname, const GLfixed * params)
 {
+  FUNCTION_DEBUG();
+
   GLfloat fparams[] = {gl_fptof(params[0])
                      , gl_fptof(params[1])
                      , gl_fptof(params[2])
@@ -342,6 +385,8 @@ CAGLFixedToFloat::glMaterialxv(GLenum face, GLenum pname, const GLfixed * params
 void
 CAGLFixedToFloat::glMultMatrixx(const GLfixed *m)
 {
+  FUNCTION_DEBUG();
+
   GLfloat fparams[] = {gl_fptof(m[0])
                      , gl_fptof(m[1])
                      , gl_fptof(m[2])
@@ -366,6 +411,8 @@ CAGLFixedToFloat::glMultMatrixx(const GLfixed *m)
 void
 CAGLFixedToFloat::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed top, GLfixed zNear, GLfixed zFar)
 {
+  FUNCTION_DEBUG();
+
   glOrthof(gl_fptof(left), gl_fptof(right), gl_fptof(bottom), gl_fptof(top), gl_fptof(zNear), gl_fptof(zFar));
 }
 
@@ -373,6 +420,8 @@ CAGLFixedToFloat::glOrthox(GLfixed left, GLfixed right, GLfixed bottom, GLfixed 
 void
 CAGLFixedToFloat::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 {
+  FUNCTION_DEBUG();
+
   glRotatef(gl_fptof(angle), gl_fptof(x), gl_fptof(y), gl_fptof(z));
 }
 
@@ -380,6 +429,8 @@ CAGLFixedToFloat::glRotatex(GLfixed angle, GLfixed x, GLfixed y, GLfixed z)
 void
 CAGLFixedToFloat::glScalex(GLfixed x, GLfixed y, GLfixed z)
 {
+  FUNCTION_DEBUG();
+
   glScalef(gl_fptof(x), gl_fptof(y), gl_fptof(z));
 }
 
@@ -387,6 +438,8 @@ CAGLFixedToFloat::glScalex(GLfixed x, GLfixed y, GLfixed z)
 void
 CAGLFixedToFloat::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 {
+  FUNCTION_DEBUG();
+
   glTranslatef(gl_fptof(x), gl_fptof(y), gl_fptof(z));
 }
 
@@ -394,6 +447,8 @@ CAGLFixedToFloat::glTranslatex(GLfixed x, GLfixed y, GLfixed z)
 void
 CAGLFixedToFloat::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
 {
+  FUNCTION_DEBUG();
+
   glVertex4f(gl_fptof(x), gl_fptof(y), gl_fptof(z), gl_fptof(w));
 }
 
@@ -401,6 +456,8 @@ CAGLFixedToFloat::glVertex4x(GLfixed x, GLfixed y, GLfixed z, GLfixed w)
 void
 CAGLFixedToFloat::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha)
 {
+  FUNCTION_DEBUG();
+
   glColor4f(gl_fptof(red), gl_fptof(green), gl_fptof(blue), gl_fptof(alpha));
 }
 
@@ -408,6 +465,8 @@ CAGLFixedToFloat::glColor4x(GLfixed red, GLfixed green, GLfixed blue, GLfixed al
 void
 CAGLFixedToFloat::glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q)
 {
+  FUNCTION_DEBUG();
+
   glTexCoord4f(gl_fptof(s), gl_fptof(t), gl_fptof(r), gl_fptof(q));
 }
 
@@ -415,5 +474,7 @@ CAGLFixedToFloat::glTexCoord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q)
 void
 CAGLFixedToFloat::glNormal3x(GLfixed nx, GLfixed ny, GLfixed nz)
 {
+  FUNCTION_DEBUG();
+
   glNormal3f(gl_fptof(nx), gl_fptof(ny), gl_fptof(nz));
 }
