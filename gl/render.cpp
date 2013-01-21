@@ -1926,7 +1926,7 @@ CRenderer::vertexShaderLight(SVertexF & v)
 
     f = mathlib::clamp(f, 0.0f, 1.0f);
 
-    v.c = mathlib_LERP(f, state_.fog.color, v.c);
+    v.c = mathlib::lerp(f, state_.fog.color, v.c);
   }
 }
 
@@ -2229,7 +2229,7 @@ CRenderer::interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLfloat t
 
   // Color
   if(state_.smoothShading == true)
-    c.c = mathlib_LERP(t, a.c, b.c);
+    c.c = mathlib::lerp(t, a.c, b.c);
   else
     c.c = b.c;
 

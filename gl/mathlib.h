@@ -16,44 +16,58 @@ namespace mathlib
 
 //-----------------------------------------------------------------------------
 template<class T>
-inline T abs(T a)
+inline T abs(const T & a)
 {
   return a > 0 ? a : -a;
 }
 
 //-----------------------------------------------------------------------------
 template<class T>
-inline T min(T a, T b)
+inline T min(const T & a, const T & b)
 {
   return a < b ? a : b;
 }
 
 //-----------------------------------------------------------------------------
 template<class T>
-inline T max(T a, T b)
+inline T max(const T & a, const T & b)
 {
   return a > b ? a : b;
 }
 
 //-----------------------------------------------------------------------------
 template<class T>
-inline T min(T a, T b, T c)
+inline T min(const T & a, const T & b, const T & c)
 {
   return a < b ? (a < c ? a : c) : (b < c ? b : c);
 }
 
 //-----------------------------------------------------------------------------
 template<class T>
-inline T max(T a, T b, T c)
+inline T max(const T & a, const T & b, const T & c)
 {
   return a > b ? (a > c ? a : c) : (b > c ? b : c);
 }
 
 //-----------------------------------------------------------------------------
 template<class T>
-inline T clamp(T a, T min, T max)
+inline T clamp(const T & a, const T & min, const T & max)
 {
   return a < min ? min : (a > max ? max : a);
+}
+
+//-----------------------------------------------------------------------------
+template<class T>
+inline T clamp_min(const T & a, const T & min)
+{
+  return a < min ? min : a;
+}
+
+//-----------------------------------------------------------------------------
+template<class T>
+inline T clamp_max(const T & a, const T & max)
+{
+  return a > max ? max : a;
 }
 
 //-----------------------------------------------------------------------------
@@ -66,20 +80,23 @@ inline void swap(T & a, T & b)
 }
 
 //-----------------------------------------------------------------------------
-// NOTE: Use the template functions below if possible
-#define mathlib_LERP(a,v0,v1) ((v0) + ((v1) - (v0)) * (a))
+template<class T, class F>
+inline T lerp(const F & a, const T & v0, const T & v1)
+{
+  return v0 + (v1 - v0) * a;
+}
 
 //-----------------------------------------------------------------------------
-template<class T>
-inline T lerp(T a, T v0, T v1)
+template<class T, class F>
+inline T lerp_fx(const F & a, const T & v0, const T & v1, const unsigned int sh)
 {
-  return v0 + a * (v1 - v0);
+  return v0 + (((v1 - v0) * a) >> sh);
 }
 
 //-----------------------------------------------------------------------------
 template<class T>
-inline T lerp_2d(T a, T b,
-  T v00, T v10, T v01, T v11)
+inline T lerp_2d(const T & a, const T & b,
+  const T & v00, const T & v10, const T & v01, const T & v11)
 {
    const T temp0 = lerp(a, v00, v10);
    const T temp1 = lerp(a, v01, v11);
@@ -88,9 +105,9 @@ inline T lerp_2d(T a, T b,
 
 //-----------------------------------------------------------------------------
 template<class T>
-inline T lerp_3d(T a, T b, T c,
-  T v000, T v100, T v010, T v110,
-  T v001, T v101, T v011, T v111)
+inline T lerp_3d(const T & a, const T & b, const T & c,
+  const T & v000, const T & v100, const T & v010, const T & v110,
+  const T & v001, const T & v101, const T & v011, const T & v111)
 {
    const T temp0 = lerp_2d(a, b, v000, v100, v010, v110);
    const T temp1 = lerp_2d(a, b, v001, v101, v011, v111);
@@ -99,7 +116,7 @@ inline T lerp_3d(T a, T b, T c,
 
 //-----------------------------------------------------------------------------
 template<class T>
-inline T fast_int_pow(T x, unsigned int y)
+inline T fast_int_pow(const T & x, unsigned int y)
 {
   T rv(1);
 
