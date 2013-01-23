@@ -23,7 +23,7 @@
 #define GL_RASTER_H
 
 
-#include "context.h"
+#include "renderContext.h"
 #include "GL/gl.h"
 #include "kernel/videoManager.h"
 

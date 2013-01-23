@@ -19,8 +19,8 @@
  */
 
 
-#ifndef GL_CONTEXT_H
-#define GL_CONTEXT_H
+#ifndef GL_RENDERCONTEXT_H
+#define GL_RENDERCONTEXT_H
 
 
 #include "GL/gl.h"
@@ -162,4 +162,4 @@ public:
 };
 
 
-#endif // GL_CONTEXT_H
+#endif // GL_RENDERCONTEXT_H

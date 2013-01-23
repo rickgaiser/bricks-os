@@ -23,7 +23,7 @@
 #ifdef __BRICKS__
 #include "GLES/gl.h"
 #endif
-#include "context.h"
+#include "renderContext.h"
 
 
 I3DRenderer * pCurrentContext = 0;

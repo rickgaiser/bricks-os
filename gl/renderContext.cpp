@@ -19,7 +19,7 @@
  */
 
 
-#include "context.h"
+#include "renderContext.h"
 #include "CFuncDebug.h"
 #include "vhl/fixedPoint.h"
 

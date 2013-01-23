@@ -23,7 +23,7 @@
 #define TEXTURES_H
 
 
-#include "context.h"
+#include "renderContext.h"
 #include "raster.h"
 #include "color.h"
 #include "vhl/CInt32_4.h"

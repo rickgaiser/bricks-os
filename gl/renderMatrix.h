@@ -19,11 +19,11 @@
  */
 
 
-#ifndef GL_MATRIX_H
-#define GL_MATRIX_H
+#ifndef GL_RENDERMATRIX_H
+#define GL_RENDERMATRIX_H
 
 
-#include "context.h"
+#include "renderContext.h"
 #include "vhl/matrix.h"
 
 
@@ -76,4 +76,4 @@ protected:
 };
 
 
-#endif
+#endif // GL_RENDERMATRIX_H
