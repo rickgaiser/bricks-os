@@ -27,10 +27,6 @@
 #include "vector.h"
 
 
-#define MATRIX_MATH_TABLE_BITS (10) // 10bits == 1024 values
-#define MATRIX_MATH_TABLE_SIZE 1024 // (1<<MATRIX_MATH_TABLE_BITS) <-- Does not work with GCC 3.2.2
-
-
 // Row major vs column major notation:
 //
 //   Row major matrix, row vector (Notation used by DirectX)
@@ -57,31 +53,24 @@ class TMatrix4x4
 public:
   // Constructors
   TMatrix4x4();
-  TMatrix4x4(const TMatrix4x4 & m);
+  TMatrix4x4(const TMatrix4x4<T> & m);
   TMatrix4x4(const T * m);
   TMatrix4x4(T _m00, T _m01, T _m02, T _m03,
              T _m10, T _m11, T _m12, T _m13,
              T _m20, T _m21, T _m22, T _m23,
              T _m30, T _m31, T _m32, T _m33);
 
-  // Initialize the sin and cos tables
-  static void init();
-
-  // Assignment Operators
-  TMatrix4x4 & operator= (const TMatrix4x4 & m);
-  TMatrix4x4 & operator= (const T * m);
-
   // Initializers
   void clear();
   void loadIdentity();
 
   // Compound Assignment Operators
-  TMatrix4x4 & operator*=(const TMatrix4x4 & m);
-  TMatrix4x4 & operator*=(const T * m);
+  TMatrix4x4<T> & operator*=(const TMatrix4x4<T> & m);
 
   // Binary Arithmetic Operators
-  TMatrix4x4   operator* (const TMatrix4x4 & m);
-  TMatrix4x4   operator* (const T * m);
+  TMatrix4x4<T>   operator* (const TMatrix4x4<T> & m) const;
+  TVector4<T>     operator* (const TVector4<T> & v) const;
+  TVector3<T>     operator* (const TVector3<T> & v) const;
 
   void translate (T x, T y, T z);
   void translate (const T * vec);
@@ -94,19 +83,8 @@ public:
   void rotatey   (T angle);
   void rotatez   (T angle);
 
-  void transform3(const T * from, T * to);
-  void transform3(const TVector3<T> & from, TVector3<T> & to);
-  void transform3(const TVector4<T> & from, TVector4<T> & to);
-  void transform4(const T * from, T * to);
-  void transform4(const TVector4<T> & from, TVector4<T> & to);
-
 public:
   T m_[16];
-
-private:
-  static bool bInitialized_;
-  static T sinTable_[MATRIX_MATH_TABLE_SIZE];
-  static T cosTable_[MATRIX_MATH_TABLE_SIZE];
 } __attribute__ ((aligned (16)));
 
 

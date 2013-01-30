@@ -33,36 +33,34 @@ class CInt32_4
 {
 public:
   CInt32_4();
-  CInt32_4(const CInt32_4 & c);
-  CInt32_4(const int32_t * c);
-  CInt32_4(int32_t _r, int32_t _g, int32_t _b, int32_t _a);
+  CInt32_4(const CInt32_4 & v);
+  CInt32_4(const int32_t * v);
+  CInt32_4(const int32_t & e0
+         , const int32_t & e1
+         , const int32_t & e2
+         , const int32_t & e3);
+  CInt32_4(const int32_t & s);
 
-  CInt32_4 & operator=  (const CInt32_4 & c);
-  CInt32_4 & operator=  (const int32_t * c);
+  CInt32_4 & operator+= (const CInt32_4 & v);
+  CInt32_4 & operator-= (const CInt32_4 & v);
+  CInt32_4 & operator*= (const CInt32_4 & v);
+  CInt32_4 & operator/= (const CInt32_4 & v);
+  CInt32_4 & operator>>=(const int32_t  & s);
+  CInt32_4 & operator<<=(const int32_t  & s);
+  CInt32_4 & operator&= (const CInt32_4 & v);
 
-  CInt32_4   operator+  (const CInt32_4 & c) const;
-  CInt32_4   operator-  (const CInt32_4 & c) const;
-  CInt32_4   operator*  (const CInt32_4 & c) const;
-  CInt32_4   operator/  (const CInt32_4 & c) const;
+  // Comparison
+  CInt32_4   operator== (const CInt32_4 & v) const;
+  CInt32_4   operator<  (const CInt32_4 & v) const;
+  CInt32_4   operator>  (const CInt32_4 & v) const;
 
-  CInt32_4   operator+  (int32_t s) const;
-  CInt32_4   operator-  (int32_t s) const;
-  CInt32_4   operator*  (int32_t s) const;
-  CInt32_4   operator/  (int32_t s) const;
-  CInt32_4   operator>> (int32_t s) const;
-  CInt32_4   operator<< (int32_t s) const;
-
-  CInt32_4 & operator+= (const CInt32_4 & c);
-  CInt32_4 & operator-= (const CInt32_4 & c);
-  CInt32_4 & operator*= (const CInt32_4 & c);
-  CInt32_4 & operator/= (const CInt32_4 & c);
-
-  CInt32_4 & operator+= (int32_t s);
-  CInt32_4 & operator-= (int32_t s);
-  CInt32_4 & operator*= (int32_t s);
-  CInt32_4 & operator/= (int32_t s);
-  CInt32_4 & operator>>=(int32_t s);
-  CInt32_4 & operator<<=(int32_t s);
+  CInt32_4   operator+  (const CInt32_4 & v) const { return (CInt32_4(*this)  += v); }
+  CInt32_4   operator-  (const CInt32_4 & v) const { return (CInt32_4(*this)  -= v); }
+  CInt32_4   operator*  (const CInt32_4 & v) const { return (CInt32_4(*this)  *= v); }
+  CInt32_4   operator/  (const CInt32_4 & v) const { return (CInt32_4(*this)  /= v); }
+  CInt32_4   operator>> (const int32_t  & s) const { return (CInt32_4(*this) >>= s); }
+  CInt32_4   operator<< (const int32_t  & s) const { return (CInt32_4(*this) <<= s); }
+  CInt32_4   operator&  (const CInt32_4 & v) const { return (CInt32_4(*this)  &= v); }
 
 public:
   union
@@ -88,4 +86,4 @@ public:
 #include "CInt32_4.inl"
 
 
-#endif
+#endif // CINT32_4_H

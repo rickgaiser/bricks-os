@@ -34,337 +34,201 @@
 inline
 CInt32_4::CInt32_4()
 {
-#ifdef CINT32_4_USE_SSE2
-  xmm = _mm_setzero_si128();
-#else
-  r = 0;
-  g = 0;
-  b = 0;
-  a = 0;
-#endif
 }
 
 //---------------------------------------------------------------------------
 inline
-CInt32_4::CInt32_4(const int32_t * c)
+CInt32_4::CInt32_4(const int32_t * v)
 {
-  *this = c;
+#ifdef CINT32_4_USE_SSE2
+  xmm = _mm_set_epi32(v[0], v[1], v[2], v[3]);
+#else
+  for(int i = 0; i < 4; i++)
+    e[i] = v[i];
+#endif // CINT32_4_USE_SSE2
 }
 
 //---------------------------------------------------------------------------
 inline
-CInt32_4::CInt32_4(const CInt32_4 & c)
+CInt32_4::CInt32_4(const CInt32_4 & v)
 {
-  *this = c;
+#ifdef CINT32_4_USE_SSE2
+  xmm = v.xmm;
+#else
+  for(int i = 0; i < 4; i++)
+    e[i] = v.e[i];
+#endif // CINT32_4_USE_SSE2
 }
 
 //---------------------------------------------------------------------------
 inline
-CInt32_4::CInt32_4(int32_t _r, int32_t _g, int32_t _b, int32_t _a)
+CInt32_4::CInt32_4(const int32_t & e0
+                 , const int32_t & e1
+                 , const int32_t & e2
+                 , const int32_t & e3)
 {
 #ifdef CINT32_4_USE_SSE2
-  xmm = _mm_set_epi32(r, g, b, a);
+  //xmm = _mm_set_epi32(e0, e1, e2, e3);
+  xmm = _mm_set_epi32(e3, e2, e1, e0);
 #else
-  r = _r;
-  g = _g;
-  b = _b;
-  a = _a;
-#endif
+  e[0] = e0;
+  e[1] = e1;
+  e[2] = e2;
+  e[3] = e3;
+#endif // CINT32_4_USE_SSE2
+}
+
+//---------------------------------------------------------------------------
+inline
+CInt32_4::CInt32_4(const int32_t & s)
+{
+#ifdef CINT32_4_USE_SSE2
+  xmm = _mm_set1_epi32(s);
+#else
+  for(int i = 0; i < 4; i++)
+    e[i] = s;
+#endif // CINT32_4_USE_SSE2
 }
 
 //---------------------------------------------------------------------------
 inline CInt32_4 &
-CInt32_4::operator= (const int32_t * c)
+CInt32_4::operator+=(const CInt32_4 & v)
 {
 #ifdef CINT32_4_USE_SSE2
-  xmm = _mm_set_epi32(c[0], c[1], c[2], c[3]);
+  xmm = _mm_add_epi32(xmm, v.xmm);
 #else
-  r = c[0];
-  g = c[1];
-  b = c[2];
-  a = c[3];
-#endif
+  for(int i = 0; i < 4; i++)
+    e[i] += v.e[i];
+#endif // CINT32_4_USE_SSE2
 
   return (*this);
 }
 
 //---------------------------------------------------------------------------
 inline CInt32_4 &
-CInt32_4::operator= (const CInt32_4 & c)
+CInt32_4::operator-=(const CInt32_4 & v)
 {
 #ifdef CINT32_4_USE_SSE2
-  xmm = c.xmm;
+  xmm = _mm_sub_epi32(xmm, v.xmm);
 #else
-  r = c.r;
-  g = c.g;
-  b = c.b;
-  a = c.a;
-#endif
-
-  return (*this);
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4
-CInt32_4::operator+(const CInt32_4 & c) const
-{
-  CInt32_4 rv(*this);
-
-  rv += c;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4
-CInt32_4::operator-(const CInt32_4 & c) const
-{
-  CInt32_4 rv(*this);
-
-  rv -= c;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4
-CInt32_4::operator*(const CInt32_4 & c) const
-{
-  CInt32_4 rv(*this);
-
-  rv *= c;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4
-CInt32_4::operator/(const CInt32_4 & c) const
-{
-  CInt32_4 rv(*this);
-
-  rv /= c;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4
-CInt32_4::operator+(int32_t s) const
-{
-  CInt32_4 rv(*this);
-
-  rv += s;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4
-CInt32_4::operator-(int32_t s) const
-{
-  CInt32_4 rv(*this);
-
-  rv -= s;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4
-CInt32_4::operator*(int32_t s) const
-{
-  CInt32_4 rv(*this);
-
-  rv *= s;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4
-CInt32_4::operator/(int32_t s) const
-{
-  CInt32_4 rv(*this);
-
-  rv /= s;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4
-CInt32_4::operator>>(int32_t s) const
-{
-  CInt32_4 rv(*this);
-
-  rv >>= s;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4
-CInt32_4::operator<<(int32_t s) const
-{
-  CInt32_4 rv(*this);
-
-  rv <<= s;
-
-  return rv;
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4 &
-CInt32_4::operator+=(const CInt32_4 & c)
-{
-#ifdef CINT32_4_USE_SSE2
-  xmm = _mm_add_epi32(xmm, c.xmm);
-#else
-  r += c.r;
-  g += c.g;
-  b += c.b;
-  a += c.a;
-#endif
+  for(int i = 0; i < 4; i++)
+    e[i] -= v.e[i];
+#endif // CINT32_4_USE_SSE2
 
   return (*this);
 }
 
 //---------------------------------------------------------------------------
 inline CInt32_4 &
-CInt32_4::operator-=(const CInt32_4 & c)
-{
-#ifdef CINT32_4_USE_SSE2
-  xmm = _mm_sub_epi32(xmm, c.xmm);
-#else
-  r -= c.r;
-  g -= c.g;
-  b -= c.b;
-  a -= c.a;
-#endif
-
-  return (*this);
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4 &
-CInt32_4::operator*=(const CInt32_4 & c)
+CInt32_4::operator*=(const CInt32_4 & v)
 {
 #ifdef CINT32_4_USE_SSE4_1
-  xmm = _mm_mullo_epi32(xmm, c.xmm);
+  xmm = _mm_mullo_epi32(xmm, v.xmm);
 #else
-  r *= c.r;
-  g *= c.g;
-  b *= c.b;
-  a *= c.a;
-#endif
+  for(int i = 0; i < 4; i++)
+    e[i] *= v.e[i];
+#endif // CINT32_4_USE_SSE4_1
 
   return (*this);
 }
 
 //---------------------------------------------------------------------------
 inline CInt32_4 &
-CInt32_4::operator/=(const CInt32_4 & c)
+CInt32_4::operator/=(const CInt32_4 & v)
 {
-  r /= c.r;
-  g /= c.g;
-  b /= c.b;
-  a /= c.a;
+  for(int i = 0; i < 4; i++)
+    e[i] /= v.e[i];
 
   return (*this);
 }
 
 //---------------------------------------------------------------------------
 inline CInt32_4 &
-CInt32_4::operator+=(const int32_t s)
-{
-#ifdef CINT32_4_USE_SSE2
-  __m128i xmm_tmp = _mm_set_epi32(s, s, s, s);
-  xmm = _mm_add_epi32(xmm, xmm_tmp);
-#else
-  r += s;
-  g += s;
-  b += s;
-  a += s;
-#endif
-
-  return (*this);
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4 &
-CInt32_4::operator-=(const int32_t s)
-{
-#ifdef CINT32_4_USE_SSE2
-  __m128i xmm_tmp = _mm_set_epi32(s, s, s, s);
-  xmm = _mm_sub_epi32(xmm, xmm_tmp);
-#else
-  r -= s;
-  g -= s;
-  b -= s;
-  a -= s;
-#endif
-
-  return (*this);
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4 &
-CInt32_4::operator*=(const int32_t s)
-{
-#ifdef CINT32_4_USE_SSE4_1
-  __m128i xmm_tmp = _mm_set_epi32(s, s, s, s);
-  xmm = _mm_mullo_epi32(xmm, xmm_tmp);
-#else
-  r *= s;
-  g *= s;
-  b *= s;
-  a *= s;
-#endif
-
-  return (*this);
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4 &
-CInt32_4::operator/=(const int32_t s)
-{
-  r /= s;
-  g /= s;
-  b /= s;
-  a /= s;
-
-  return (*this);
-}
-
-//---------------------------------------------------------------------------
-inline CInt32_4 &
-CInt32_4::operator>>=(const int32_t s)
+CInt32_4::operator>>=(const int32_t & s)
 {
 #ifdef CINT32_4_USE_SSE2
   xmm = _mm_srai_epi32(xmm, s);
 #else
-  r >>= s;
-  g >>= s;
-  b >>= s;
-  a >>= s;
-#endif
+  for(int i = 0; i < 4; i++)
+    e[i] >>= s;
+#endif // CINT32_4_USE_SSE2
 
   return (*this);
 }
 
 //---------------------------------------------------------------------------
 inline CInt32_4 &
-CInt32_4::operator<<=(const int32_t s)
+CInt32_4::operator<<=(const int32_t & s)
 {
 #ifdef CINT32_4_USE_SSE2
   xmm = _mm_slli_epi32(xmm, s);
 #else
-  r <<= s;
-  g <<= s;
-  b <<= s;
-  a <<= s;
-#endif
+  for(int i = 0; i < 4; i++)
+    e[i] <<= s;
+#endif // CINT32_4_USE_SSE2
 
   return (*this);
 }
+
+//---------------------------------------------------------------------------
+inline CInt32_4 &
+CInt32_4::operator&=(const CInt32_4 & v)
+{
+#ifdef CINT32_4_USE_SSE2
+  xmm = _mm_and_si128(xmm, v.xmm);
+#else
+  for(int i = 0; i < 4; i++)
+    e[i] = e[i] & v.e[i];
+#endif // CINT32_4_USE_SSE2
+
+  return (*this);
+}
+
+//---------------------------------------------------------------------------
+inline CInt32_4
+CInt32_4::operator==(const CInt32_4 & v) const
+{
+  CInt32_4 rv;
+
+#ifdef CINT32_4_USE_SSE2
+  rv.xmm = _mm_cmpeq_epi32(xmm, v.xmm);
+#else
+  for(int i = 0; i < 4; i++)
+    rv.e[i] = e[i] == v.e[i] ? 0xffffffff : 0x00000000;
+#endif // CINT32_4_USE_SSE2
+
+  return rv;
+}
+
+//---------------------------------------------------------------------------
+inline CInt32_4
+CInt32_4::operator<(const CInt32_4 & v) const
+{
+  CInt32_4 rv;
+
+#ifdef CINT32_4_USE_SSE2
+  rv.xmm = _mm_cmplt_epi32(xmm, v.xmm);
+#else
+  for(int i = 0; i < 4; i++)
+    rv.e[i] = e[i] < v.e[i] ? 0xffffffff : 0x00000000;
+#endif // CINT32_4_USE_SSE2
+
+  return rv;
+}
+
+//---------------------------------------------------------------------------
+inline CInt32_4
+CInt32_4::operator>(const CInt32_4 & v) const
+{
+  CInt32_4 rv;
+
+#ifdef CINT32_4_USE_SSE2
+  rv.xmm = _mm_cmpgt_epi32(xmm, v.xmm);
+#else
+  for(int i = 0; i < 4; i++)
+    rv.e[i] = e[i] > v.e[i] ? 0xffffffff : 0x00000000;
+#endif // CINT32_4_USE_SSE2
+
+  return rv;
+}
+
