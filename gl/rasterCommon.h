@@ -54,29 +54,6 @@ enum EFastBlendMode
 };
 
 //-----------------------------------------------------------------------------
-inline void
-FloorDivMod(int32_t Numerator, int32_t Denominator, int32_t &Floor, int32_t &Mod)
-{
-  if(Numerator >= 0)
-  {
-    // positive case, C is okay
-    Floor = Numerator / Denominator;
-    Mod   = Numerator % Denominator;
-  }
-  else
-  {
-    // Numerator is negative, do the right thing
-    Floor = -((-Numerator) / Denominator);
-    Mod   =   (-Numerator) % Denominator;
-    if(Mod)
-    {
-      // there is a remainder
-      Floor--; Mod = Denominator - Mod;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
 template<class T>
 inline bool
 rasterTest(GLenum func, const T & a, const T & b)
@@ -94,6 +71,21 @@ rasterTest(GLenum func, const T & a, const T & b)
   };
 
   return false;
+}
+
+//-----------------------------------------------------------------------------
+inline uint32_t
+CREATE_COLOR(const CFloat_4 & c)
+{
+  return (((uint32_t)(c.r * 255) << 16) | ((uint32_t)(c.g * 255) << 8) | (uint32_t)(c.b * 255));
+  //return (((uint32_t)(c[0] * 255) << 16) | ((uint32_t)(c[1] * 255) << 8) | (uint32_t)(c[2] * 255));
+}
+
+//-----------------------------------------------------------------------------
+inline uint32_t
+CREATE_COLOR(const CInt32_4 & c)
+{
+  return (((uint32_t)(c.r >> 14) << 16) | ((uint32_t)(c.g >> 14) << 8) | (uint32_t)(c.b >> 14));
 }
 
 //-----------------------------------------------------------------------------
@@ -146,7 +138,7 @@ public:
   virtual void flush();
 
 protected:
-  TColor<GLfloat> clClear;
+  CFloat_4    clClear;
   GLfloat   * pZBuffer_;
 
   // Shading model
@@ -163,7 +155,7 @@ protected:
   // Textures
   bool        bTexturesEnabled_;
   GLenum      texEnvMode_;
-  TColor<GLfloat> texEnvColor_;
+  CFloat_4    texEnvColor_;
   CTexture  * pCurrentTex_;
   CTexture  * textures_[MAX_TEXTURE_COUNT];
 

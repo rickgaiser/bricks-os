@@ -35,8 +35,6 @@ CAGLMatrixFloat::CAGLMatrixFloat()
 {
   FUNCTION_DEBUG();
 
-  TMatrix4x4<GLfloat>::init();
-
   // All stacks contain 1 identity matrix
   stackModelView[0].loadIdentity();
   stackProjection[0].loadIdentity();

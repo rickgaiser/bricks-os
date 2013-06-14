@@ -40,7 +40,9 @@ extern CTimeProfiler prof_rasterInit;      //  |- Initialization of raster buffe
 extern CTimeProfiler prof_rasterMain;      //  |- Main rasterization process
 extern CTimeProfiler prof_rasterCopy;      //  |- Copying of render buffer to back buffer (tile-based only?)
 
+#ifdef ENABLE_PROFILING_FILLRATE
 extern uint64_t fillRate;                  // Number of pixels rastered per frame
+#endif // ENABLE_PROFILING_FILLRATE
 
 
 #endif // ENABLE_PROFILING

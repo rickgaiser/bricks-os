@@ -19,8 +19,7 @@
  */
 
 #include "render.h"
-#include "vhl/fixedPoint.h"
-#include "vhl/matrix.h"
+#include "vhl/vhl.h"
 #include "color.h"
 #ifdef ENABLE_PROFILING
 #include "glProfiling.h"
@@ -35,13 +34,15 @@
 //-----------------------------------------------------------------------------
 // Perspective division
 //   from 'clip coordinates' to 'normalized device coordinates'
-#define CALC_CLIP_TO_NDEV(v) \
-  GLfloat inv_w; \
-  inv_w = 1.0f / (v).vc.w; \
-  (v).vd.x = (v).vc.x * inv_w; \
-  (v).vd.y = (v).vc.y * inv_w; \
-  (v).vd.z = (v).vc.z * inv_w; \
-  (v).vd.w = inv_w
+inline void
+clipToNDev(SVertexF & v)
+{
+  GLfloat inv_w = 1.0f / v.vc.w;
+  v.vd.x = v.vc.x * inv_w;
+  v.vd.y = v.vc.y * inv_w;
+  v.vd.z = v.vc.z * inv_w;
+  v.vd.w = inv_w;
+}
 
 #define CLIP_ROUNDING_ERROR (0.00001f) // (1E-5)
 inline uint32_t
@@ -97,7 +98,7 @@ CRenderer::CRenderer()
   state_.texturing.coordCurrent[2] = 0.0f;
   state_.texturing.coordCurrent[3] = 1.0f;
   state_.texturing.envMode = GL_MODULATE;
-  state_.texturing.envColor = TColor<GLfloat>(0, 0, 0, 0);
+  state_.texturing.envColor = CFloat_4(0, 0, 0, 0);
 
   state_.depthTest.enabled = false;
   state_.depthTest.mask = true;
@@ -185,7 +186,7 @@ CRenderer::CRenderer()
   state_.fog.start = 0.0f;
   state_.fog.end = 1.0f;
   state_.fog.linear_scale = 1.0f;
-  state_.fog.color = TColor<GLfloat>(0.0f, 0.0f, 0.0f, 0.0f);
+  state_.fog.color = CFloat_4(0.0f, 0.0f, 0.0f, 0.0f);
 
   bInBeginEnd_ = false;
 
@@ -782,12 +783,12 @@ CRenderer::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufTexCoord_.type)
       {
         case GL_FLOAT:
-          v.t[0] = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
-          v.t[1] = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
+          v.t.u = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
+          v.t.v = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
           break;
         case GL_FIXED:
-          v.t[0] = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
-          v.t[1] = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+          v.t.u = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+          v.t.v = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
           break;
       };
     }
@@ -1187,17 +1188,17 @@ CRenderer::glLightf(GLenum light, GLenum pname, GLfloat param)
     return;
   }
 
-  TLight<GLfloat> * pLight = 0;
+  //TLight<GLfloat> * pLight = 0;
   switch(light)
   {
-    case GL_LIGHT0: pLight = &state_.lighting.light[0]; break;
-    case GL_LIGHT1: pLight = &state_.lighting.light[1]; break;
-    case GL_LIGHT2: pLight = &state_.lighting.light[2]; break;
-    case GL_LIGHT3: pLight = &state_.lighting.light[3]; break;
-    case GL_LIGHT4: pLight = &state_.lighting.light[4]; break;
-    case GL_LIGHT5: pLight = &state_.lighting.light[5]; break;
-    case GL_LIGHT6: pLight = &state_.lighting.light[6]; break;
-    case GL_LIGHT7: pLight = &state_.lighting.light[7]; break;
+    case GL_LIGHT0: /*pLight = &state_.lighting.light[0];*/ break;
+    case GL_LIGHT1: /*pLight = &state_.lighting.light[1];*/ break;
+    case GL_LIGHT2: /*pLight = &state_.lighting.light[2];*/ break;
+    case GL_LIGHT3: /*pLight = &state_.lighting.light[3];*/ break;
+    case GL_LIGHT4: /*pLight = &state_.lighting.light[4];*/ break;
+    case GL_LIGHT5: /*pLight = &state_.lighting.light[5];*/ break;
+    case GL_LIGHT6: /*pLight = &state_.lighting.light[6];*/ break;
+    case GL_LIGHT7: /*pLight = &state_.lighting.light[7];*/ break;
     default:
       setError(GL_INVALID_ENUM);
       return;
@@ -1245,7 +1246,7 @@ CRenderer::glLightfv(GLenum light, GLenum pname, const GLfloat * params)
       return;
   }
 
-  TColor<GLfloat> * pColor = 0;
+  CFloat_4 * pColor = 0;
   switch(pname)
   {
     case GL_AMBIENT:  pColor = &pLight->ambient; break;
@@ -1739,8 +1740,8 @@ CRenderer::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
   // Set color
   v.c = state_.clCurrent;
   // Set texture
-  v.t[0] = state_.texturing.coordCurrent[0];
-  v.t[1] = state_.texturing.coordCurrent[1];
+  v.t.u = state_.texturing.coordCurrent[0];
+  v.t.v = state_.texturing.coordCurrent[1];
   // Vertex not processed yet
   v.processed = false;
 
@@ -1796,10 +1797,15 @@ CRenderer::vertexShaderTransform(SVertexF & v)
   // --------------
   // Model-View matrix
   //   from 'object coordinates' to 'eye coordinates'
-  pCurrentModelView_->transform4(v.vo, v.ve);
+  v.ve = *pCurrentModelView_ * v.vo;
   // Projection matrix
   //   from 'eye coordinates' to 'clip coordinates'
-  pCurrentProjection_->transform4(v.ve, v.vc);
+  v.vc = *pCurrentProjection_ * v.ve;
+
+  // --------
+  // Lighting
+  // --------
+  v.ne = *pCurrentModelView_ * v.no;
 
   // Set clip flags
   v.clip = getClipFlags(v.vc);
@@ -1807,7 +1813,7 @@ CRenderer::vertexShaderTransform(SVertexF & v)
   {
     // Perspective division
     //   from 'clip coordinates' to 'normalized device coordinates'
-    CALC_CLIP_TO_NDEV(v);
+    clipToNDev(v);
   }
 
   primitiveAssembly(v);
@@ -1825,12 +1831,9 @@ CRenderer::vertexShaderLight(SVertexF & v)
   if(state_.lighting.enabled == true)
   {
     TMaterial<GLfloat> * pMaterial;
-    TColor<GLfloat> cAmbient (0, 0, 0, 0);
-    TColor<GLfloat> cDiffuse (0, 0, 0, 0);
-    TColor<GLfloat> cSpecular(0, 0, 0, 0);
-
-    // Normalized vertex normal
-    pCurrentModelView_->transform3(v.no, v.ne);
+    CFloat_4 cAmbient (0, 0, 0, 0);
+    CFloat_4 cDiffuse (0, 0, 0, 0);
+    CFloat_4 cSpecular(0, 0, 0, 0);
 
     // Normalized vector from vertex to eye
     TVector3<GLfloat> vVertexToEye = v.ve.getInverted();
@@ -1891,7 +1894,10 @@ CRenderer::vertexShaderLight(SVertexF & v)
     // Final color
     v.c = cAmbient + cDiffuse + cSpecular;
     // Clamp to 0..1
-    v.c.clamp();
+    mathlib::clamp(v.c.r, 0.0f, 1.0f);
+    mathlib::clamp(v.c.g, 0.0f, 1.0f);
+    mathlib::clamp(v.c.b, 0.0f, 1.0f);
+    mathlib::clamp(v.c.a, 0.0f, 1.0f);
   }
 
   // ---
@@ -2216,30 +2222,30 @@ CRenderer::rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint3
 
 //-----------------------------------------------------------------------------
 void
-CRenderer::interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLfloat t)
+CRenderer::interpolateVertex(SVertexF & v, SVertexF & a, SVertexF & b, GLfloat t)
 {
   FUNCTION_DEBUG2();
 
   // Color
   if(state_.smoothShading == true)
-    c.c = mathlib::lerp(t, a.c, b.c);
+    v.c = mathlib::lerp(t, a.c, b.c);
   else
-    c.c = b.c;
+    v.c = b.c;
 
   // Texture coordinates
   if(state_.texturing.enabled == true)
   {
-    c.t[0] = mathlib::lerp(t, a.t[0], b.t[0]);
-    c.t[1] = mathlib::lerp(t, a.t[1], b.t[1]);
+    v.t.u = mathlib::lerp(t, a.t.u, b.t.u);
+    v.t.v = mathlib::lerp(t, a.t.v, b.t.v);
   }
 
   // Set clip flags
-  c.clip = getClipFlags(c.vc);
+  v.clip = getClipFlags(v.vc);
 
-  if(c.clip == 0)
+  if(v.clip == 0)
   {
     // Perspective division
     //   from 'clip coordinates' to 'normalized device coordinates'
-    CALC_CLIP_TO_NDEV(c);
+    clipToNDev(v);
   }
 }

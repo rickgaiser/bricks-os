@@ -31,11 +31,11 @@
 #define MATRIX_MATH_TABLE_SIZE 1024 // (1<<MATRIX_MATH_TABLE_BITS) <-- Does not work with GCC 3.2.2
 
 
-bool  bInitialized_(false);
-float sinTable_[MATRIX_MATH_TABLE_SIZE];
-float cosTable_[MATRIX_MATH_TABLE_SIZE];
-const float indexToAngle = M_PI / ((float)(MATRIX_MATH_TABLE_SIZE >> 1));
-const float angleToIndex = ((float)MATRIX_MATH_TABLE_SIZE) / 360.0f;
+static bool  bInitialized_(false);
+static float sinTable_[MATRIX_MATH_TABLE_SIZE];
+static float cosTable_[MATRIX_MATH_TABLE_SIZE];
+static const float indexToAngle = M_PI / ((float)(MATRIX_MATH_TABLE_SIZE >> 1));
+static const float angleToIndex = ((float)MATRIX_MATH_TABLE_SIZE) / 360.0f;
 
 
 //---------------------------------------------------------------------------

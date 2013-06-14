@@ -29,8 +29,7 @@
 #include "kernel/videoManager.h"
 #include "kernel/3dRenderer.h"
 #include "textures.h"
-#include "vhl/vector.h"
-#include "vhl/color.h"
+#include "vhl/vhl.h"
 
 
 //-----------------------------------------------------------------------------
@@ -59,7 +58,7 @@ struct TTexturing
 
   T             coordCurrent[4];
   GLenum        envMode;
-  TColor<T>     envColor;
+  CFloat_4      envColor;
 };
 
 //-----------------------------------------------------------------------------
@@ -100,9 +99,9 @@ struct TLight
 {
   bool          enabled;
 
-  TColor<T>     ambient;
-  TColor<T>     diffuse;
-  TColor<T>     specular;
+  CFloat_4      ambient;
+  CFloat_4      diffuse;
+  CFloat_4      specular;
 
   TVector4<T>   position;
   TVector3<T>   positionNormal;
@@ -125,10 +124,10 @@ struct TLighting
 template <class T>
 struct TMaterial
 {
-  TColor<T>   ambient;
-  TColor<T>   diffuse;
-  TColor<T>   specular;
-  TColor<T>   emission;
+  CFloat_4    ambient;
+  CFloat_4    diffuse;
+  CFloat_4    specular;
+  CFloat_4    emission;
   T           shininess;
   GLenum      colorMode;
 };
@@ -144,7 +143,7 @@ struct TFog
   T           start;
   T           end;
   T           linear_scale; // 1 / (end - start)
-  TColor<T>   color;
+  CFloat_4    color;
 };
 
 //-----------------------------------------------------------------------------
@@ -156,8 +155,8 @@ struct TGLState
   // Hints
   SHints          hints;
   // Colors
-  TColor<T>       clCurrent;
-  TColor<T>       clClear;
+  CFloat_4        clCurrent;
+  CFloat_4        clClear;
   GLenum          shadingModel;
   bool            smoothShading;
   // Textures

@@ -100,29 +100,26 @@ CRasterizerScanline::rasterTriangle(const SVertexF & v0, const SVertexF & v1, co
   prof_rasterMain.start();
 #endif
 
-  vtx0.x   = fpfromf(SHIFT_XY, (fXA_ * v0.vd.x) + fXB_);
-  vtx0.y   = fpfromf(SHIFT_XY, (fYA_ * v0.vd.y) + fYB_);
-  vtx0.z   = (fZA_ * v0.vd.z) + fZB_;
-  vtx0.w   = v0.vd.w;
-  vtx0.c   = v0.c;
-  vtx0.t.u = v0.t[0];
-  vtx0.t.v = v0.t[1];
+  vtx0.x = fpfromf(SHIFT_XY, (fXA_ * v0.vd.x) + fXB_);
+  vtx0.y = fpfromf(SHIFT_XY, (fYA_ * v0.vd.y) + fYB_);
+  vtx0.z = (fZA_ * v0.vd.z) + fZB_;
+  vtx0.w = v0.vd.w;
+  vtx0.c = v0.c;
+  vtx0.t = v0.t;
 
-  vtx1.x   = fpfromf(SHIFT_XY, (fXA_ * v1.vd.x) + fXB_);
-  vtx1.y   = fpfromf(SHIFT_XY, (fYA_ * v1.vd.y) + fYB_);
-  vtx1.z   = (fZA_ * v1.vd.z) + fZB_;
-  vtx1.w   = v1.vd.w;
-  vtx1.c   = v1.c;
-  vtx1.t.u = v1.t[0];
-  vtx1.t.v = v1.t[1];
+  vtx1.x = fpfromf(SHIFT_XY, (fXA_ * v1.vd.x) + fXB_);
+  vtx1.y = fpfromf(SHIFT_XY, (fYA_ * v1.vd.y) + fYB_);
+  vtx1.z = (fZA_ * v1.vd.z) + fZB_;
+  vtx1.w = v1.vd.w;
+  vtx1.c = v1.c;
+  vtx1.t = v1.t;
 
-  vtx2.x   = fpfromf(SHIFT_XY, (fXA_ * v2.vd.x) + fXB_);
-  vtx2.y   = fpfromf(SHIFT_XY, (fYA_ * v2.vd.y) + fYB_);
-  vtx2.z   = (fZA_ * v2.vd.z) + fZB_;
-  vtx2.w   = v2.vd.w;
-  vtx2.c   = v2.c;
-  vtx2.t.u = v2.t[0];
-  vtx2.t.v = v2.t[1];
+  vtx2.x = fpfromf(SHIFT_XY, (fXA_ * v2.vd.x) + fXB_);
+  vtx2.y = fpfromf(SHIFT_XY, (fYA_ * v2.vd.y) + fYB_);
+  vtx2.z = (fZA_ * v2.vd.z) + fZB_;
+  vtx2.w = v2.vd.w;
+  vtx2.c = v2.c;
+  vtx2.t = v2.t;
 
   _rasterTriangle(vtx0, vtx1, vtx2);
 

@@ -27,9 +27,7 @@
 #include "raster.h"
 #include "rasterCommon.h"
 #include "textures.h"
-#include "vhl/color.h"
-#include "vhl/CInt32_4.h"
-#include "vhl/TTexCoord.h"
+#include "vhl/vhl.h"
 
 
 #define CONFIG_GL_ENABLE_ALPHA_TEST
@@ -44,13 +42,13 @@ namespace raster
 //-----------------------------------------------------------------------------
 struct SVertex
 {
-  int32_t            x;
-  int32_t            y;
-  GLfloat            z;
-  GLfloat            w;
+  int32_t  x;
+  int32_t  y;
+  GLfloat  z;
+  GLfloat  w;
 
-  TColor<GLfloat>    c;
-  TTexCoord<GLfloat> t;
+  CFloat_4 c;
+  CFloat_2 t;
 };
 
 //-----------------------------------------------------------------------------
@@ -113,20 +111,20 @@ private:
   GLfloat                 scan_w_current;
   GLfloat                 scan_w_ddx;
   // Texture (t/z)
-  TTexCoord<GLfloat>      grad_tz_ddx;
-  TTexCoord<GLfloat>      grad_tz_ddy;
-  TTexCoord<GLfloat>      edge_tz_current;
-  TTexCoord<GLfloat>      edge_tz_increment;
-  TTexCoord<GLfloat>      scan_tz_current;
-  TTexCoord<GLfloat>      scan_tz_ddx;
+  CFloat_2                grad_tz_ddx;
+  CFloat_2                grad_tz_ddy;
+  CFloat_2                edge_tz_current;
+  CFloat_2                edge_tz_increment;
+  CFloat_2                scan_tz_current;
+  CFloat_2                scan_tz_ddx;
 #else
   // Texture
-  TTexCoord<GLfloat>      grad_t_ddx;
-  TTexCoord<GLfloat>      grad_t_ddy;
-  TTexCoord<GLfloat>      edge_t_current;
-  TTexCoord<GLfloat>      edge_t_increment;
-  TTexCoord<GLfloat>      scan_t_current;
-  TTexCoord<GLfloat>      scan_t_ddx;
+  CFloat_2                grad_t_ddx;
+  CFloat_2                grad_t_ddy;
+  CFloat_2                edge_t_current;
+  CFloat_2                edge_t_increment;
+  CFloat_2                scan_t_current;
+  CFloat_2                scan_t_ddx;
 #endif
 
   CInt32_4                texEnvColorFX_;

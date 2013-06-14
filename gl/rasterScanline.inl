@@ -331,7 +331,7 @@
 
       if(iLineWidth > 0)
       {
-#ifdef ENABLE_PROFILING
+#ifdef ENABLE_PROFILING_FILLRATE
         fillRate += iLineWidth;
 #endif
 #ifdef RASTER_ENABLE_SMOOTH_SHADING

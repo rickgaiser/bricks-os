@@ -63,10 +63,7 @@ CASoftRasterizer::CASoftRasterizer()
  , fZA_(0.5f)
  , fZB_(0.5f)
 {
-  texEnvColor_.r = 0;
-  texEnvColor_.g = 0;
-  texEnvColor_.b = 0;
-  texEnvColor_.a = 0;
+  texEnvColor_ = CFloat_4(0.0f, 0.0f, 0.0f, 0.0f);
 
   for(int i(0); i < MAX_TEXTURE_COUNT; i++)
     textures_[i] = NULL;
@@ -637,10 +634,7 @@ CASoftRasterizer::texEnvfv(GLenum target, GLenum pname, const GLfloat * params)
       texEnvMode_ = (GLenum)params[0];
       break;
     case GL_TEXTURE_ENV_COLOR:
-      texEnvColor_.r = params[0];
-      texEnvColor_.g = params[1];
-      texEnvColor_.b = params[2];
-      texEnvColor_.a = params[3];
+      texEnvColor_ = CFloat_4(params);
       break;
     //case GL_COMBINE_RGB_EXT:
     //case GL_COMBINE_ALPHA_EXT:

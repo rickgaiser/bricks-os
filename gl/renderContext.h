@@ -29,35 +29,27 @@
 #endif
 #include "kernel/videoManager.h"
 #include "kernel/3dRenderer.h"
-#include "vhl/fixedPoint.h"
-#include "vhl/vector.h"
-#include "vhl/color.h"
+#include "vhl/vhl.h"
 
 
 //-----------------------------------------------------------------------------
-template <class T>
-struct TVertex
+struct SVertexF
 {
   // Vertices
-  TVector4<T> vo; // Object Coordinates
-  TVector4<T> ve; // Eye Coordinates
-  TVector4<T> vc; // Clip Coordinates
-  TVector4<T> vd; // Normalized Device Coordinates
+  TVector4<GLfloat> vo; // Object Coordinates
+  TVector4<GLfloat> ve; // Eye Coordinates
+  TVector4<GLfloat> vc; // Clip Coordinates
+  TVector4<GLfloat> vd; // Normalized Device Coordinates
 
   // Normals
-  TVector3<T> no; // Object Coordinates
-  TVector3<T> ne; // Eye Coordinates
+  TVector3<GLfloat> no; // Object Coordinates
+  TVector3<GLfloat> ne; // Eye Coordinates
 
   // Color
-  TColor<T> c;    // Color
+  CFloat_4 c;
+
   // Texture coordinates
-  T t[2];
-
-  // Window coordinates
-  GLint  sx, sy;
-
-  // Depth (on screen)
-  uint32_t sz;
+  CFloat_2 t;
 
   // Clipping flags
   uint32_t clip;
@@ -65,7 +57,6 @@ struct TVertex
   // Processed by post vertex shader
   bool processed;
 };
-typedef TVertex<GLfloat> SVertexF;
 
 //-----------------------------------------------------------------------------
 struct SBufferPointer
