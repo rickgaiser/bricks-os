@@ -1,0 +1,20 @@
+MAKEFLAGS	+=--no-print-directory -s
+
+
+all:
+	make -f Makefile.dc all
+	make -f Makefile.gba all
+	make -f Makefile.nds all
+	make -f Makefile.ngc all
+	make -f Makefile.ps2-ee all
+	make -f Makefile.psp all
+	make -f Makefile.wii all
+
+clean:
+	make -f Makefile.dc clean
+	make -f Makefile.gba clean
+	make -f Makefile.nds clean
+	make -f Makefile.ngc clean
+	make -f Makefile.ps2-ee clean
+	make -f Makefile.psp clean
+	make -f Makefile.wii clean

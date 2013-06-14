@@ -3,16 +3,19 @@ include $(BRICKS_ROOT)/kernel/include/include-$(ARCH)/include-$(TARGET)/asm/arch
 
 LIB             =gl
 OBJS            =\
-                context \
+                CDDA \
+                CFuncDebug \
                 gl \
-                glMatrix \
+                glProfiling \
                 glu \
                 glut \
-                textures \
+                mathlib \
                 rasterCommon \
                 rasterScanline \
-                mathlib \
                 render \
+                renderContext \
+                renderMatrix \
+                textures \
 
 
 include $(BRICKS_ROOT)/include/makeinclude/rules.user
