@@ -170,8 +170,12 @@ CPS2Texture::bind(uint16_t envMode)
 CPS23DRenderer::CPS23DRenderer(CPS2VideoDevice & device)
  : CAPS2Renderer()
  , device_(device)
+ , zNear_(0.0f)
+ , zFar_(1.0f)
+ , fZA_(0.5f)
+ , fZB_(0.5f)
 {
-  clClear = TColor<GLfloat>(0, 0, 0, 0);
+  clClear = CFloat_4(0, 0, 0, 0);
 
   bDepthTestEnabled_ = false;
   ps2ZPSM_ = GS_PSM_16S;
@@ -323,6 +327,17 @@ CPS23DRenderer::clearDepthf(GLclampf depth)
 {
   depthClear_ = depth;
   zClearValue_ = (uint32_t)(depthClear_ * (GLfloat)zMax_);
+}
+
+//-----------------------------------------------------------------------------
+void
+CPS23DRenderer::depthRange(GLclampf zNear, GLclampf zFar)
+{
+  zNear_ = zNear;
+  zFar_  = zFar;
+
+  fZA_   = (zFar - zNear) / 2;
+  fZB_   = (mathlib::abs(zFar - zNear) / 2) + mathlib::min(zNear, zFar);
 }
 
 //-----------------------------------------------------------------------------
@@ -869,6 +884,66 @@ CPS23DRenderer::texEnvf(GLenum target, GLenum pname, GLfloat param)
 
 //-----------------------------------------------------------------------------
 void
+CPS23DRenderer::texEnvfv(GLenum target, GLenum pname, const GLfloat * params)
+{
+/*
+  switch(target)
+  {
+    case GL_TEXTURE_ENV:
+      break;
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+
+  switch(pname)
+  {
+    case GL_TEXTURE_ENV_MODE:
+      switch((GLenum)params[0])
+      {
+        case GL_MODULATE:
+        case GL_DECAL:
+        case GL_BLEND:
+        //case GL_COMBINE_EXT:
+        case GL_ADD:
+        case GL_REPLACE:
+        //case GL_ADD_SIGNED_EXT:
+        //case GL_INTERPOLATE_EXT:
+          break;
+        default:
+          setError(GL_INVALID_ENUM);
+          return;
+      };
+      texEnvMode_ = (GLenum)params[0];
+      break;
+    case GL_TEXTURE_ENV_COLOR:
+      texEnvColor_ = CFloat_4(params);
+      break;
+    //case GL_COMBINE_RGB_EXT:
+    //case GL_COMBINE_ALPHA_EXT:
+    //case GL_SOURCE0_RGB_EXT:
+    //case GL_SOURCE1_RGB_EXT:
+    //case GL_SOURCE2_RGB_EXT:
+    //case GL_SOURCE0_ALPHA_EXT:
+    //case GL_SOURCE1_ALPHA_EXT:
+    //case GL_SOURCE2_ALPHA_EXT:
+    //case GL_OPERAND0_RGB_EXT:
+    //case GL_OPERAND1_RGB_EXT:
+    //case GL_OPERAND2_RGB_EXT:
+    //case GL_OPERAND0_ALPHA_EXT:
+    //case GL_OPERAND1_ALPHA_EXT:
+    //case GL_OPERAND2_ALPHA_EXT:
+    //case GL_RGB_SCALE_EXT:
+    //case GL_ALPHA_SCALE:
+    default:
+      setError(GL_INVALID_ENUM);
+      return;
+  };
+*/
+}
+
+//-----------------------------------------------------------------------------
+void
 CPS23DRenderer::colorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table)
 {
   switch(target)
@@ -1103,13 +1178,24 @@ CPS23DRenderer::clear(GLbitfield mask)
 }
 
 //-----------------------------------------------------------------------------
+// Convert from normalized device coordinates. Example (640x480)
+// x: in = -1..1  out = 0..640
+// y: in = -1..1  out = 480..0 (NOTE: y is inverted)
 void
 CPS23DRenderer::viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+  if(pSurface_ == NULL)
+    return;
+
   viewportXOffset = x;
-  viewportYOffset = y;
+  viewportYOffset = (pSurface_->height() - height) - y;
   viewportWidth   = width;
   viewportHeight  = height;
+
+  fXA_ = (GLfloat)(  (viewportWidth  >> 1));
+  fXB_ = (GLfloat)(  (viewportWidth  >> 1) + viewportXOffset);
+  fYA_ = (GLfloat)(- (viewportHeight >> 1));
+  fYB_ = (GLfloat)(  (viewportHeight >> 1) + viewportYOffset);
 }
 
 //-----------------------------------------------------------------------------
@@ -1154,19 +1240,19 @@ CPS23DRenderer::end()
 
 //-----------------------------------------------------------------------------
 void
-CPS23DRenderer::rasterTriangle(const raster::SVertex & v0, const raster::SVertex & v1, const raster::SVertex & v2)
+CPS23DRenderer::rasterTriangle(const SVertexF & v0, const SVertexF & v1, const SVertexF & v2)
 {
-  const raster::SVertex * va[3] = {&v0, &v1, &v2};
+  const SVertexF * va[3] = {&v0, &v1, &v2};
 
   for(int iVertex(0); iVertex < 3; iVertex++)
   {
-    const raster::SVertex & v = *va[iVertex];
+    const SVertexF & v = *va[iVertex];
 
     // Add to message
     if(bTexturesEnabled_ == true)
     {
       // Use S/T/Q for perspective correct texture mapping
-      GLfloat tq = v.w;
+      GLfloat tq = v.vc.w;
       GLfloat ts = v.t.u * tq;
       GLfloat tt = v.t.v * tq;
 
@@ -1176,9 +1262,9 @@ CPS23DRenderer::rasterTriangle(const raster::SVertex & v0, const raster::SVertex
         // color range: 0x00 - 0x80 !!!! greater values will make the texture brighter
         // alpha range: 0x00 - 0x80
         if(bForceWhiteColor_ == true)
-          packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(0x80, 0x80, 0x80, (v.c.a*0x80)>>SHIFT_COLOR, tq));
+          packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ(0x80, 0x80, 0x80, (uint8_t)(v.c.a*0x80), tq));
         else
-          packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((v.c.r*0x80)>>SHIFT_COLOR, (v.c.g*0x80)>>SHIFT_COLOR, (v.c.b*0x80)>>SHIFT_COLOR, (v.c.a*0x80)>>SHIFT_COLOR, tq));
+          packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((uint8_t)(v.c.r*0x80), (uint8_t)(v.c.g*0x80), (uint8_t)(v.c.b*0x80), (uint8_t)(v.c.a*0x80), tq));
       }
       else
       {
@@ -1190,12 +1276,12 @@ CPS23DRenderer::rasterTriangle(const raster::SVertex & v0, const raster::SVertex
     {
       // color range: 0x00 - 0xff
       // alpha range: 0x00 - 0x80
-      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((v.c.r*255)>>SHIFT_COLOR, (v.c.g*255)>>SHIFT_COLOR, (v.c.b*255)>>SHIFT_COLOR, (v.c.a*0x80)>>SHIFT_COLOR, 0));
+      packet_.gifAddPackedAD(GIF::REG::rgbaq, GIF::REG::RGBAQ((uint8_t)(v.c.r*255), (uint8_t)(v.c.g*255), (uint8_t)(v.c.b*255), (uint8_t)(v.c.a*0x80), 0));
     }
 
-    int32_t x = v.x;
-    int32_t y = v.y;
-    int32_t z = (ps2DepthInvert_ == true) ? (zMax_ - v.z) : v.z;
+    int32_t x = fpfromf(4, (fXA_ * v.vd.x) + fXB_);
+    int32_t y = fpfromf(4, (fYA_ * v.vd.y) + fYB_);
+    int32_t z = 0; //(ps2DepthInvert_ == true) ? (zMax_ - v.z) : v.z;
 
     packet_.gifAddPackedAD(GIF::REG::xyz2, GIF::REG::XYZ2((GS_X_BASE<<4) + x, (GS_Y_BASE<<4) + y, z));
   }

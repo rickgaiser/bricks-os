@@ -113,6 +113,7 @@ public:
 
   // Depth testing
   virtual void clearDepthf(GLclampf depth);
+  virtual void depthRange(GLclampf zNear, GLclampf zFar);
   virtual void depthFunc(GLenum func);
   virtual void depthMask(GLboolean flag);
 
@@ -123,6 +124,7 @@ public:
   virtual void texImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid * pixels);
   virtual void texParameterf(GLenum target, GLenum pname, GLfloat param);
   virtual void texEnvf(GLenum target, GLenum pname, GLfloat param);
+  virtual void texEnvfv(GLenum target, GLenum pname, const GLfloat * params);
   virtual void colorTable(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table);
 
   // Blending
@@ -138,7 +140,7 @@ public:
   // RASTER!
   virtual void begin(GLenum mode);
   virtual void end();
-  virtual void rasterTriangle(const raster::SVertex & v0, const raster::SVertex & v1, const raster::SVertex & v2);
+  virtual void rasterTriangle(const SVertexF & v0, const SVertexF & v1, const SVertexF & v2);
 
   // Flush all triangles (very important for tile based rendering)
   virtual void flush();
@@ -150,7 +152,7 @@ private:
 private:
   CPS2VideoDevice & device_;
 
-  TColor<GLfloat> clClear;
+  CFloat_4    clClear;
 
   // Depth testing
   bool        bDepthTestEnabled_;
@@ -162,6 +164,8 @@ private:
   uint16_t    ps2DepthFunction_;
   bool        ps2DepthInvert_;
   bool        bDepthMask_;
+  GLclampf    zNear_;
+  GLclampf    zFar_;
 
   // Shading model
   bool        bSmoothShadingEnabled_;
@@ -196,6 +200,14 @@ private:
   GLint       viewportYOffset;
   GLsizei     viewportWidth;
   GLsizei     viewportHeight;
+  
+  // Vertex transformations
+  GLfloat     fXA_;
+  GLfloat     fXB_;
+  GLfloat     fYA_;
+  GLfloat     fYB_;
+  GLfloat     fZA_;
+  GLfloat     fZB_;
 };
 
 
