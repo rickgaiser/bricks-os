@@ -25,7 +25,7 @@
 #include "gx.h"
 
 #ifdef CONFIG_GL
-  #include "../../../../gl/3DRendererFloat.h"
+  #include "../../../../gl/render.h"
 #endif
 
 
@@ -361,7 +361,7 @@ void
 CNGCVideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
 #ifdef CONFIG_GL
-  CSoft3DRendererFloat * pRender = new CSoft3DRendererFloat;
+  CRenderer * pRender = new CRenderer;
   raster::IRasterizer  * pRaster = new CNGCSoftRasterizer(this);
 
   pRender->setRaster(pRaster);

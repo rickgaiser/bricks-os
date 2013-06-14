@@ -29,7 +29,7 @@
 #include "string.h"
 
 #ifdef CONFIG_GL
-  #include "../../../../gl/3DRendererFloat.h"
+  #include "../../../../gl/render.h"
 #endif
 
 
@@ -514,7 +514,7 @@ CPS2VideoDevice::get3DRenderer(I3DRenderer ** renderer)
 {
 #ifdef CONFIG_GL
   // Create common renderer
-  CSoft3DRendererFloat * pRenderer   = new CSoft3DRendererFloat();
+  CRenderer * pRenderer = new CRenderer;
 
   // Attach PS2 GS hardware rasterizer to it
   CPS23DRenderer  * pRasterizer = new CPS23DRenderer(*this);
