@@ -25,13 +25,12 @@
 
 #include "fixedPoint.h"
 
+#include "CFloat_2.h"
 #include "CFloat_4.h"
 #include "CInt32_4.h"
 
 #include "matrix.h"
 #include "vector.h"
-
-#include "TTexCoord.h"
 
 
 #endif // GL_VHL_H
