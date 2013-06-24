@@ -1,0 +1,7 @@
+# Generated files #
+###################
+.creation_stamp
+*.d
+*.o
+*.o.S
+*.a

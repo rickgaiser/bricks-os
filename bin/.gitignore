@@ -1,0 +1,12 @@
+# Generated files #
+###################
+*.elf
+*.elf.map
+*.dol
+*.gba
+*.nds
+*.PBP
+*.SFO
+*.BIN
+*.bin
+*.srec
