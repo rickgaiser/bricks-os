@@ -31,6 +31,13 @@
 #include "CFuncDebug.h"
 
 
+//#define ENABLE_TEXTURE_LOGGING
+#ifdef ENABLE_TEXTURE_LOGGING
+#include <fstream>
+std::ofstream texlog("texlog.txt");
+#endif
+
+
 //-----------------------------------------------------------------------------
 // Perspective division
 //   from 'clip coordinates' to 'normalized device coordinates'
@@ -196,12 +203,32 @@ CRenderer::CRenderer()
   clipPlane_[3] = TVector4<GLfloat>( 0.0, -1.0,  0.0,  1.0); // top
   clipPlane_[4] = TVector4<GLfloat>( 0.0,  0.0,  1.0,  1.0); // near
   clipPlane_[5] = TVector4<GLfloat>( 0.0,  0.0, -1.0,  1.0); // far
+
+  pVertexBuffer_ = new SVertexF[VERTEX_BUFFER_SIZE];
+  iVertexCount_ = 0;
+  iCurrentVertex_ = 0;
+
+  pTriangleBuffer_ = new STriangleF[TRIANGLE_BUFFER_SIZE];
+  iTriangleCount_ = 0;
+  iCurrentTriangle_ = 0;
 }
 
 //-----------------------------------------------------------------------------
 CRenderer::~CRenderer()
 {
   FUNCTION_DEBUG();
+
+  if(pVertexBuffer_ != NULL)
+  {
+    delete[] pVertexBuffer_;
+    pVertexBuffer_ = 0;
+  }
+
+  if(pTriangleBuffer_ != NULL)
+  {
+    delete[] pTriangleBuffer_;
+    pTriangleBuffer_ = 0;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -224,6 +251,9 @@ CRenderer::setSurface(CSurface * surface)
 
   IRenderer::setSurface(surface);
 
+#ifdef ENABLE_TEXTURE_LOGGING
+  texlog<<"SWAP"<<std::endl;
+#endif
   if(pRaster_ != NULL)
     pRaster_->setSurface(renderSurface);
 }
@@ -274,6 +304,9 @@ CRenderer::glBindTexture(GLenum target, GLuint texture)
     return;
   }
 
+#ifdef ENABLE_TEXTURE_LOGGING
+  texlog<<"glBindTexture "<<texture<<std::endl;
+#endif
   pRaster_->bindTexture(target, texture);
 }
 
@@ -708,13 +741,14 @@ CRenderer::glDrawArrays(GLenum mode, GLint first, GLsizei count)
   GLint idxColor   (first * bufColor_.size);
   GLint idxNormal  (first * bufNormal_.size);
   GLint idxTexCoord(first * bufTexCoord_.size);
-  SVertexF v;
 
   glBegin(mode);
 
   // Process all vertices
   for(GLint i(0); i < count; i++)
   {
+    SVertexF & v = pVertexBuffer_[iVertexCount_];
+
     // Vertex
     switch(bufVertex_.type)
     {
@@ -783,18 +817,25 @@ CRenderer::glDrawArrays(GLenum mode, GLint first, GLsizei count)
       switch(bufTexCoord_.type)
       {
         case GL_FLOAT:
-          v.t.u = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
-          v.t.v = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
+          v.t[0] = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
+          v.t[1] = ((GLfloat *)bufTexCoord_.pointer)[idxTexCoord++];
           break;
         case GL_FIXED:
-          v.t.u = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
-          v.t.v = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+          v.t[0] = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
+          v.t[1] = gl_fptof(((GLfixed *)bufTexCoord_.pointer)[idxTexCoord++]);
           break;
       };
     }
 
     v.processed = false;
-    vertexShaderTransform(v);
+
+    // Finish saving of the vertex to the vertex buffer
+    iVertexCount_++;
+    if(iVertexCount_ >= VERTEX_BUFFER_SIZE)
+    {
+      // ERROR!
+      glEnd();
+    }
   }
 
   glEnd();
@@ -1569,6 +1610,9 @@ CRenderer::glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsize
     return;
   }
 
+#ifdef ENABLE_TEXTURE_LOGGING
+  texlog<<"glTexImage2D "<<level<<" "<<width<<" "<<height<<std::endl;
+#endif
   // NOTE: Parameters validated in rasterizer
   pRaster_->texImage2D(target, level, internalformat, width, height, border, format, type, pixels);
 }
@@ -1689,11 +1733,8 @@ CRenderer::glBegin(GLenum mode)
   rasterMode_ = mode;
 
   // Initialize for default triangle
-  triangle_[0] = &vertices_[0];
-  triangle_[1] = &vertices_[1];
-  triangle_[2] = &vertices_[2];
   bFlipFlop_ = true;
-  vertIdx_   = 0;
+  iTriangleIdx_ = 0;
 
   pRaster_->begin(GL_TRIANGLES);
 }
@@ -1709,6 +1750,19 @@ CRenderer::glEnd()
     setError(GL_INVALID_OPERATION);
     return;
   }
+
+#ifdef ENABLE_PROFILING
+  prof_renderTotal.start();
+#endif
+
+  // Flush all vertices
+  flushVertexBuffer();
+  // Flush all triangles
+  flushTriangleBuffer();
+
+#ifdef ENABLE_PROFILING
+  prof_renderTotal.end();
+#endif
 
   bInBeginEnd_ = false;
 
@@ -1728,7 +1782,7 @@ CRenderer::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
     return;
   }
 
-  SVertexF v;
+  SVertexF & v = pVertexBuffer_[iVertexCount_];
 
   // Set vertex
   v.vo.x = x;
@@ -1740,12 +1794,18 @@ CRenderer::glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
   // Set color
   v.c = state_.clCurrent;
   // Set texture
-  v.t.u = state_.texturing.coordCurrent[0];
-  v.t.v = state_.texturing.coordCurrent[1];
+  v.t[0] = state_.texturing.coordCurrent[0];
+  v.t[1] = state_.texturing.coordCurrent[1];
   // Vertex not processed yet
   v.processed = false;
 
-  vertexShaderTransform(v);
+  // Finish saving of the vertex to the vertex buffer
+  iVertexCount_++;
+  if(iVertexCount_ >= VERTEX_BUFFER_SIZE)
+  {
+    // ERROR!
+    glEnd();
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -1788,35 +1848,96 @@ CRenderer::glNormal3f(GLfloat nx, GLfloat ny, GLfloat nz)
 
 //-----------------------------------------------------------------------------
 void
-CRenderer::vertexShaderTransform(SVertexF & v)
+CRenderer::flushVertexBuffer()
 {
   FUNCTION_DEBUG();
 
   // --------------
   // Transformation
   // --------------
-  // Model-View matrix
-  //   from 'object coordinates' to 'eye coordinates'
-  v.ve = *pCurrentModelView_ * v.vo;
-  // Projection matrix
-  //   from 'eye coordinates' to 'clip coordinates'
-  v.vc = *pCurrentProjection_ * v.ve;
+#ifdef ENABLE_PROFILING
+  prof_renderTransform.start();
+#endif
+  for(iCurrentVertex_ = 0; iCurrentVertex_ < iVertexCount_; iCurrentVertex_++)
+  {
+    SVertexF & v = pVertexBuffer_[iCurrentVertex_];
+    // Model-View matrix
+    //   from 'object coordinates' to 'eye coordinates'
+    v.ve = *pCurrentModelView_ * v.vo;
+    // Projection matrix
+    //   from 'eye coordinates' to 'clip coordinates'
+    v.vc = *pCurrentProjection_ * v.ve;
+  }
+#ifdef ENABLE_PROFILING
+  prof_renderTransform.end();
+#endif
 
   // --------
   // Lighting
   // --------
-  v.ne = *pCurrentModelView_ * v.no;
-
-  // Set clip flags
-  v.clip = getClipFlags(v.vc);
-  if(v.clip == 0)
+#ifdef ENABLE_PROFILING
+  prof_renderLight.start();
+#endif
+  if(state_.lighting.enabled == true)
   {
-    // Perspective division
-    //   from 'clip coordinates' to 'normalized device coordinates'
-    clipToNDev(v);
+    for(iCurrentVertex_ = 0; iCurrentVertex_ < iVertexCount_; iCurrentVertex_++)
+    {
+      SVertexF & v = pVertexBuffer_[iCurrentVertex_];
+      v.ne = *pCurrentModelView_ * v.no;
+      vertexShaderLight(v);
+    }
+  }
+#ifdef ENABLE_PROFILING
+  prof_renderLight.end();
+#endif
+
+  for(iCurrentVertex_ = 0; iCurrentVertex_ < iVertexCount_; iCurrentVertex_++)
+  {
+    SVertexF & v = pVertexBuffer_[iCurrentVertex_];
+    // Set clip flags
+    v.clip = getClipFlags(v.vc);
+    if(v.clip == 0)
+    {
+      // Perspective division
+      //   from 'clip coordinates' to 'normalized device coordinates'
+      clipToNDev(v);
+    }
+    primitiveAssembly(v);
   }
 
-  primitiveAssembly(v);
+  iVertexCount_ = 0;
+}
+
+//-----------------------------------------------------------------------------
+void
+CRenderer::flushTriangleBuffer()
+{
+  FUNCTION_DEBUG();
+
+  for(iCurrentTriangle_ = 0; iCurrentTriangle_ < iTriangleCount_; iCurrentTriangle_++)
+  {
+    STriangleF & t = pTriangleBuffer_[iCurrentTriangle_];
+    rasterTriangleClip(*t.v[0], *t.v[1], *t.v[2]);
+  }
+
+  iTriangleCount_ = 0;
+}
+
+//-----------------------------------------------------------------------------
+void
+CRenderer::addTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2)
+{
+  FUNCTION_DEBUG2();
+
+  pTriangleBuffer_[iTriangleCount_].v[0] = &v0;
+  pTriangleBuffer_[iTriangleCount_].v[1] = &v1;
+  pTriangleBuffer_[iTriangleCount_].v[2] = &v2;
+  iTriangleCount_++;
+  if(iTriangleCount_ >= VERTEX_BUFFER_SIZE)
+  {
+    // ERROR!
+    flushTriangleBuffer();
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -1835,6 +1956,8 @@ CRenderer::vertexShaderLight(SVertexF & v)
     CFloat_4 cDiffuse (0, 0, 0, 0);
     CFloat_4 cSpecular(0, 0, 0, 0);
 
+    TVector3<GLfloat> vVertexNormal = v.ne;
+
     // Normalized vector from vertex to eye
     TVector3<GLfloat> vVertexToEye = v.ve.getInverted();
     vVertexToEye.normalize();
@@ -1849,7 +1972,7 @@ CRenderer::vertexShaderLight(SVertexF & v)
         cAmbient += state_.lighting.light[iLight].ambient * pMaterial->ambient;
 
         // Diffuse light
-        GLfloat diffuse = state_.lighting.light[iLight].positionNormal.dot(v.ne);
+        GLfloat diffuse = state_.lighting.light[iLight].positionNormal.dot(vVertexNormal);
         if(diffuse > 0.0f)
         {
           cDiffuse += state_.lighting.light[iLight].diffuse * pMaterial->diffuse * diffuse;
@@ -1858,7 +1981,7 @@ CRenderer::vertexShaderLight(SVertexF & v)
         if(pMaterial->shininess >= 0.5f)
         {
           // Specular light
-          GLfloat specular = state_.lighting.light[iLight].positionNormal.getReflection(v.ne).dot(vVertexToEye);
+          GLfloat specular = state_.lighting.light[iLight].positionNormal.getReflection(vVertexNormal).dot(vVertexToEye);
           if(specular > 0.0f)
           {
             specular = mathlib::fast_int_pow(specular, (int)(pMaterial->shininess + 0.5f));
@@ -1965,36 +2088,14 @@ CRenderer::fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2)
     };
   }
 
+#ifdef ENABLE_PROFILING
+  // Pause render profiling during rasterization
+  prof_renderTotal.end();
+#endif
   pRaster_->rasterTriangle(v0, v1, v2);
-}
-
-//-----------------------------------------------------------------------------
-void
-CRenderer::fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2)
-{
-  // ----------------------
-  // Vertex shader lighting
-  // ----------------------
-  if(state_.smoothShading == true)
-  {
-    if(v0.processed == false)
-    {
-      vertexShaderLight(v0);
-      v0.processed = true;
-    }
-    if(v1.processed == false)
-    {
-      vertexShaderLight(v1);
-      v1.processed = true;
-    }
-  }
-  if(v2.processed == false)
-  {
-    vertexShaderLight(v2);
-    v2.processed = true;
-  }
-
-  rasterTriangleClip(v0, v1, v2);
+#ifdef ENABLE_PROFILING
+  prof_renderTotal.start();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2003,9 +2104,6 @@ CRenderer::primitiveAssembly(SVertexF & v)
 {
   FUNCTION_DEBUG2();
 
-  // Copy vertex into vertex buffer
-  *triangle_[vertIdx_] = v;
-
   // ------------------
   // Primitive Assembly
   // ------------------
@@ -2013,69 +2111,42 @@ CRenderer::primitiveAssembly(SVertexF & v)
   {
     case GL_TRIANGLES:
     {
-      if(vertIdx_ == 2)
-        fragmentClip(*triangle_[0], *triangle_[1], *triangle_[2]);
-      vertIdx_++;
-      if(vertIdx_ > 2)
-        vertIdx_ = 0;
+      if(iTriangleIdx_ == 2)
+        addTriangle(pVertexBuffer_[iCurrentVertex_ - 2], pVertexBuffer_[iCurrentVertex_ - 1], pVertexBuffer_[iCurrentVertex_]);
+      iTriangleIdx_++;
+      if(iTriangleIdx_ > 2)
+        iTriangleIdx_ = 0;
       break;
     }
+    case GL_QUAD_STRIP:
     case GL_TRIANGLE_STRIP:
     {
-      if(vertIdx_ == 2)
+      if(iCurrentVertex_ >= 2)
       {
-        fragmentClip(*triangle_[0], *triangle_[1], *triangle_[2]);
-        // Swap 3rd with 1st or 2nd vertex pointer
-        if(bFlipFlop_ == true)
-      {
-          SVertexF * pTemp = triangle_[0];
-          triangle_[0] = triangle_[2];
-          triangle_[2] = pTemp;
-        }
+        if(iCurrentVertex_ & 1)
+          addTriangle(pVertexBuffer_[iCurrentVertex_ - 1], pVertexBuffer_[iCurrentVertex_ - 2], pVertexBuffer_[iCurrentVertex_]);
         else
-        {
-          SVertexF * pTemp = triangle_[1];
-          triangle_[1] = triangle_[2];
-          triangle_[2] = pTemp;
+          addTriangle(pVertexBuffer_[iCurrentVertex_ - 2], pVertexBuffer_[iCurrentVertex_ - 1], pVertexBuffer_[iCurrentVertex_]);
       }
-        bFlipFlop_ = !bFlipFlop_;
-      }
-      else
-        vertIdx_++;
       break;
     }
     case GL_POLYGON:
     case GL_TRIANGLE_FAN:
     {
-      if(vertIdx_ == 2)
-      {
-        fragmentClip(*triangle_[0], *triangle_[1], *triangle_[2]);
-        // Swap 3rd with 2nd vertex pointer
-        SVertexF * pTemp = triangle_[1];
-        triangle_[1] = triangle_[2];
-        triangle_[2] = pTemp;
-      }
-      else
-        vertIdx_++;
+      if(iCurrentVertex_ >= 2)
+        addTriangle(pVertexBuffer_[0], pVertexBuffer_[iCurrentVertex_ - 1], pVertexBuffer_[iCurrentVertex_]);
       break;
     }
     case GL_QUADS:
     {
-      if(vertIdx_ == 2)
+      if(iTriangleIdx_ == 3)
       {
-        fragmentClip(*triangle_[0], *triangle_[1], *triangle_[2]);
-        // Swap 3rd with 2nd vertex pointer
-        SVertexF * pTemp = triangle_[1];
-        triangle_[1] = triangle_[2];
-        triangle_[2] = pTemp;
-        // QUADS are TRIANGLE_FAN with only 2 triangles
-        if(bFlipFlop_ == true)
-          bFlipFlop_ = false;
-        else
-          vertIdx_ = 0;
+        addTriangle(pVertexBuffer_[iCurrentVertex_ - 3], pVertexBuffer_[iCurrentVertex_ - 2], pVertexBuffer_[iCurrentVertex_ - 1]);
+        addTriangle(pVertexBuffer_[iCurrentVertex_ - 3], pVertexBuffer_[iCurrentVertex_ - 1], pVertexBuffer_[iCurrentVertex_]);
+        iTriangleIdx_ = 0;
       }
       else
-        vertIdx_++;
+        iTriangleIdx_++;
       break;
     }
   };
@@ -2235,8 +2306,8 @@ CRenderer::interpolateVertex(SVertexF & v, SVertexF & a, SVertexF & b, GLfloat t
   // Texture coordinates
   if(state_.texturing.enabled == true)
   {
-    v.t.u = mathlib::lerp(t, a.t.u, b.t.u);
-    v.t.v = mathlib::lerp(t, a.t.v, b.t.v);
+    v.t[0] = mathlib::lerp(t, a.t[0], b.t[0]);
+    v.t[1] = mathlib::lerp(t, a.t[1], b.t[1]);
   }
 
   // Set clip flags

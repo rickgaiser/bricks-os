@@ -96,12 +96,12 @@
 #ifdef RASTER_ENABLE_TEXTURES
   #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
   // Premultiply u and v with w (1/z)
-  float top_u_inv    = vtop->t.u    * vtop->w;
-  float top_v_inv    = vtop->t.v    * vtop->w;
-  float middle_u_inv = vmiddle->t.u * vmiddle->w;
-  float middle_v_inv = vmiddle->t.v * vmiddle->w;
-  float bottom_u_inv = vbottom->t.u * vbottom->w;
-  float bottom_v_inv = vbottom->t.v * vbottom->w;
+  float top_u_inv    = vtop->t[0]    * vtop->w;
+  float top_v_inv    = vtop->t[1]    * vtop->w;
+  float middle_u_inv = vmiddle->t[0] * vmiddle->w;
+  float middle_v_inv = vmiddle->t[1] * vmiddle->w;
+  float bottom_u_inv = vbottom->t[0] * vbottom->w;
+  float bottom_v_inv = vbottom->t[1] * vbottom->w;
   #endif
 #endif
 
@@ -191,23 +191,23 @@
   #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
   d1 = middle_u_inv - top_u_inv;
   d2 = bottom_u_inv - top_u_inv;
-  grad_tz_ddx.u = DDX();
-  grad_tz_ddy.u = DDY();
+  grad_tz_ddx[0] = DDX();
+  grad_tz_ddy[0] = DDY();
   d1 = middle_v_inv - top_v_inv;
   d2 = bottom_v_inv - top_v_inv;
-  grad_tz_ddx.v = DDX();
-  grad_tz_ddy.v = DDY();
+  grad_tz_ddx[1] = DDX();
+  grad_tz_ddy[1] = DDY();
 
   scan_tz_ddx = grad_tz_ddx;
   #else
-  d1 = vmiddle->t.u - vtop->t.u;
-  d2 = vbottom->t.u - vtop->t.u;
-  grad_t_ddx.u = DDX();
-  grad_t_ddy.u = DDY();
-  d1 = vmiddle->t.v - vtop->t.v;
-  d2 = vbottom->t.v - vtop->t.v;
-  grad_t_ddx.v = DDX();
-  grad_t_ddy.v = DDY();
+  d1 = vmiddle->t[0] - vtop->t[0];
+  d2 = vbottom->t[0] - vtop->t[0];
+  grad_t_ddx[0] = DDX();
+  grad_t_ddy[0] = DDY();
+  d1 = vmiddle->t[1] - vtop->t[1];
+  d2 = vbottom->t[1] - vtop->t[1];
+  grad_t_ddx[1] = DDX();
+  grad_t_ddy[1] = DDY();
 
   scan_t_ddx = grad_t_ddx;
 
@@ -306,15 +306,15 @@
 
 #ifdef RASTER_ENABLE_TEXTURES
   #ifdef CONFIG_GL_PERSPECTIVE_CORRECT_TEXTURES
-      edge_tz_increment.u = (f_dxdy_left * grad_tz_ddx.u) + grad_tz_ddy.u;
-      edge_tz_increment.v = (f_dxdy_left * grad_tz_ddx.v) + grad_tz_ddy.v;
-      edge_tz_current.u = (vtop_l->t.u * vtop_l->w)+ (grad_tz_ddx.u * fXOff) + (grad_tz_ddy.u * fYOff);
-      edge_tz_current.v = (vtop_l->t.v * vtop_l->w)+ (grad_tz_ddx.v * fXOff) + (grad_tz_ddy.v * fYOff);
+      edge_tz_increment[0] = (f_dxdy_left * grad_tz_ddx[0]) + grad_tz_ddy[0];
+      edge_tz_increment[1] = (f_dxdy_left * grad_tz_ddx[1]) + grad_tz_ddy[1];
+      edge_tz_current[0] = (vtop_l->t[0] * vtop_l->w)+ (grad_tz_ddx[0] * fXOff) + (grad_tz_ddy[0] * fYOff);
+      edge_tz_current[1] = (vtop_l->t[1] * vtop_l->w)+ (grad_tz_ddx[1] * fXOff) + (grad_tz_ddy[1] * fYOff);
   #else
-      edge_t_increment.u = (f_dxdy_left * grad_t_ddx.u) + grad_t_ddy.u;
-      edge_t_increment.v = (f_dxdy_left * grad_t_ddx.v) + grad_t_ddy.v;
-      edge_t_current.u = vtop_l->t.u + (grad_t_ddx.u * fXOff) + (grad_t_ddy.u * fYOff);
-      edge_t_current.v = vtop_l->t.v + (grad_t_ddx.v * fXOff) + (grad_t_ddy.v * fYOff);
+      edge_t_increment[0] = (f_dxdy_left * grad_t_ddx[0]) + grad_t_ddy[0];
+      edge_t_increment[1] = (f_dxdy_left * grad_t_ddx[1]) + grad_t_ddy[1];
+      edge_t_current[0] = vtop_l->t[0] + (grad_t_ddx[0] * fXOff) + (grad_t_ddy[0] * fYOff);
+      edge_t_current[1] = vtop_l->t[1] + (grad_t_ddx[1] * fXOff) + (grad_t_ddy[1] * fYOff);
   #endif
 #endif
 
@@ -384,11 +384,11 @@
 
             // Get the level of detail (lambda)
             //float lodbias = 0.0f;
-            //float lod = pCurrentTex_->lambda(grad_tz_ddx.u * z, grad_tz_ddy.u * z, grad_tz_ddx.v * z, grad_tz_ddy.v * z) + lodbias;
+            //float lod = pCurrentTex_->lambda(grad_tz_ddx[0] * z, grad_tz_ddy[0] * z, grad_tz_ddx[1] * z, grad_tz_ddy[1] * z) + lodbias;
 
-            pCurrentTex_->getTexel(ctexture, scan_tz_current.u * z, scan_tz_current.v * z/*, lod*/);
+            pCurrentTex_->getTexel(ctexture, scan_tz_current[0] * z, scan_tz_current[1] * z/*, lod*/);
     #else
-            pCurrentTex_->getTexel(ctexture, scan_t_current.u, scan_t_current.v/*, lod*/);
+            pCurrentTex_->getTexel(ctexture, scan_t_current[0], scan_t_current[1]/*, lod*/);
     #endif
             rasterTexture(caccu, caccu, ctexture);
   #endif

@@ -32,6 +32,9 @@
 #include "vhl/vhl.h"
 
 
+#define VERTEX_BUFFER_SIZE   4096
+#define TRIANGLE_BUFFER_SIZE ((VERTEX_BUFFER_SIZE) >> 1)
+
 //-----------------------------------------------------------------------------
 struct SCulling
 {
@@ -240,19 +243,17 @@ public:
 
 protected:
   // Vertex shader
-  virtual void vertexShaderTransform(SVertexF & v);
   virtual void vertexShaderLight(SVertexF & v);
 
   // Fragment shader
   virtual void fragmentCull(SVertexF & v0, SVertexF & v1, SVertexF & v2);
-  virtual void fragmentClip(SVertexF & v0, SVertexF & v1, SVertexF & v2);
 
   // Rasterizer
   virtual void primitiveAssembly(SVertexF & v);
 
   virtual void rasterTriangleClip(SVertexF & v0, SVertexF & v1, SVertexF & v2, uint32_t clipBit = 0);
 
-  void interpolateVertex(SVertexF & c, SVertexF & a, SVertexF & b, GLfloat t);
+  void interpolateVertex(SVertexF & v, SVertexF & a, SVertexF & b, GLfloat t);
 
 protected:
   raster::IRasterizer * pRaster_;
@@ -262,13 +263,32 @@ protected:
   // Primitive assembly
   bool        bInBeginEnd_;
   GLenum      rasterMode_;
-  SVertexF    vertices_[3]; // Vertex buffer for primitive assembly
-  SVertexF  * triangle_[3]; // Assembled triangle
-  bool        bFlipFlop_;   // Triangle strip
-  GLint       vertIdx_;     // Current index into vertex buffer
+
+  // Vertex buffer
+  SVertexF  * pVertexBuffer_;
+  int         iVertexCount_;
+  int         iCurrentVertex_;
+
+  struct STriangleF
+  {
+    SVertexF * v[3];
+  };
+
+  // Triangle buffer
+  STriangleF * pTriangleBuffer_;
+  int         iTriangleCount_;
+  int         iCurrentTriangle_;
+
+  int         iTriangleIdx_;
+  bool        bFlipFlop_;
 
   // Clipping planes
   TVector4<GLfloat> clipPlane_[6];
+
+private:
+  void flushVertexBuffer();
+  void flushTriangleBuffer();
+  void addTriangle(SVertexF & v0, SVertexF & v1, SVertexF & v2);
 };
 
 

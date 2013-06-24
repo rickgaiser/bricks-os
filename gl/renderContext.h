@@ -51,6 +51,12 @@ struct SVertexF
   // Texture coordinates
   CFloat_2 t;
 
+  // Window coordinates
+  GLint  sx, sy;
+
+  // Depth (on screen)
+  uint32_t sz;
+
   // Clipping flags
   uint32_t clip;
 
